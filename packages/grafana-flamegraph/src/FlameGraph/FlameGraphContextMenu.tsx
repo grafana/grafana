@@ -4,14 +4,31 @@ import { MenuItem, ContextMenu } from '@grafana/ui';
 
 import { ClickedItemData } from '../types';
 
+import { CollapseConfig } from './dataTransform';
+
 type Props = {
   itemData: ClickedItemData;
   onMenuItemClick: () => void;
   onItemFocus: () => void;
   onSandwich: () => void;
+  onExpandGroup: () => void;
+  onCollapseGroup: () => void;
+  onExpandAllGroups: () => void;
+  onCollapseAllGroups: () => void;
+  collapseConfig?: CollapseConfig;
 };
 
-const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus, onSandwich }: Props) => {
+const FlameGraphContextMenu = ({
+  itemData,
+  onMenuItemClick,
+  onItemFocus,
+  onSandwich,
+  collapseConfig,
+  onExpandGroup,
+  onCollapseGroup,
+  onExpandAllGroups,
+  onCollapseAllGroups,
+}: Props) => {
   function renderItems() {
     return (
       <>
@@ -37,6 +54,43 @@ const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus, onSandw
           icon={'gf-show-context'}
           onClick={() => {
             onSandwich();
+            onMenuItemClick();
+          }}
+        />
+        {collapseConfig ? (
+          collapseConfig.collapsed ? (
+            <MenuItem
+              label="Expand group"
+              icon={'angle-double-down'}
+              onClick={() => {
+                onExpandGroup();
+                onMenuItemClick();
+              }}
+            />
+          ) : (
+            <MenuItem
+              label="Collapse group"
+              icon={'angle-double-up'}
+              onClick={() => {
+                onCollapseGroup();
+                onMenuItemClick();
+              }}
+            />
+          )
+        ) : null}
+        <MenuItem
+          label="Expand all groups"
+          icon={'angle-double-down'}
+          onClick={() => {
+            onExpandAllGroups();
+            onMenuItemClick();
+          }}
+        />
+        <MenuItem
+          label="Collapse all groups"
+          icon={'angle-double-up'}
+          onClick={() => {
+            onCollapseAllGroups();
             onMenuItemClick();
           }}
         />

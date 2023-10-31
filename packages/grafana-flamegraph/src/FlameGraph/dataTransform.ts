@@ -40,12 +40,15 @@ export type CollapsedMap = Map<LevelItem, CollapseConfig>;
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
  * rendering code.
  */
-export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelItem[][], Record<string, LevelItem[]>] {
+export function nestedSetToLevels(
+  container: FlameGraphDataContainer
+): [LevelItem[][], Record<string, LevelItem[]>, CollapsedMap] {
   const levels: LevelItem[][] = [];
   let offset = 0;
 
   let parent: LevelItem | undefined = undefined;
   const uniqueLabels: Record<string, LevelItem[]> = {};
+  const collapsedMap: CollapsedMap = new Map();
 
   for (let i = 0; i < container.data.length; i++) {
     const currentLevel = container.getLevel(i);
@@ -76,6 +79,20 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
       level: currentLevel,
     };
 
+    // We collapse similar items here, where it seems like parent and child are the same thing and so the distinction
+    // isn't that important. We create a map of items that should be collapsed together.
+    if (parent && newItem.value === parent.value) {
+      if (collapsedMap.has(parent)) {
+        const config = collapsedMap.get(parent)!;
+        collapsedMap.set(newItem, config);
+        config.items.push(newItem);
+      } else {
+        const config = { items: [parent, newItem], collapsed: true };
+        collapsedMap.set(parent, config);
+        collapsedMap.set(newItem, config);
+      }
+    }
+
     if (uniqueLabels[container.getLabel(i)]) {
       uniqueLabels[container.getLabel(i)].push(newItem);
     } else {
@@ -90,7 +107,7 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
     levels[currentLevel].push(newItem);
   }
 
-  return [levels, uniqueLabels];
+  return [levels, uniqueLabels, collapsedMap];
 }
 
 export function getMessageCheckFieldsResult(wrongFields: CheckFieldsResult) {
@@ -161,6 +178,7 @@ export class FlameGraphDataContainer {
 
   private levels: LevelItem[][] | undefined;
   private uniqueLabelsMap: Record<string, LevelItem[]> | undefined;
+  private collapsedMap: Map<LevelItem, CollapseConfig> | undefined;
 
   constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
@@ -275,11 +293,17 @@ export class FlameGraphDataContainer {
     return this.uniqueLabelsMap![label];
   }
 
+  getCollapsedMap() {
+    this.initLevels();
+    return this.collapsedMap!;
+  }
+
   private initLevels() {
     if (!this.levels) {
-      const [levels, uniqueLabelsMap] = nestedSetToLevels(this);
+      const [levels, uniqueLabelsMap, collapsedMap] = nestedSetToLevels(this);
       this.levels = levels;
       this.uniqueLabelsMap = uniqueLabelsMap;
+      this.collapsedMap = collapsedMap;
     }
   }
 }
