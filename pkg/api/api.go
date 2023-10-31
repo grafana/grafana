@@ -499,14 +499,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// Playlist
-		apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-			playlistRoute.Get("/", routing.Wrap(hs.SearchPlaylists))
-			playlistRoute.Get("/:uid", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
-			playlistRoute.Get("/:uid/items", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
-			playlistRoute.Delete("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
-			playlistRoute.Put("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
-			playlistRoute.Post("/", reqEditorRole, routing.Wrap(hs.CreatePlaylist))
-		})
+		hs.registerPlaylistAPI(apiRoute)
 
 		// Search
 		apiRoute.Get("/search/sorting", routing.Wrap(hs.ListSortOptions))
