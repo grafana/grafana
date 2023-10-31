@@ -29,7 +29,7 @@ load(
 load(
     "scripts/drone/steps/rgm.star",
     "rgm_build_docker_step",
-    "rgm_package_step",
+    "rgm_artifacts_step",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -70,14 +70,15 @@ def build_e2e(trigger, ver_mode):
             [
                 build_frontend_package_step(),
                 enterprise_downstream_step(ver_mode = ver_mode),
-                rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"),
+                rgm_artifacts_step(artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64"], file = "packages.txt"),
             ],
         )
     else:
         build_steps.extend([
             update_package_json_version(),
             build_frontend_package_step(depends_on = ["update-package-json-version"]),
-            rgm_package_step(depends_on = ["update-package-json-version"], distros = "linux/amd64,linux/arm64", file = "packages.txt"),
+            rgm_artifacts_step(depends_on = ["update-package-json-version"], artifacts = ["targz:grafana:linux/amd64",
+            "targz:grafana:linux/arm64"], file = "packages.txt"),
         ])
 
     build_steps.extend(
