@@ -277,6 +277,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(", ? as folder_name ", cmd.FolderName)
 		builder.Write(", '' as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
+		// nolint:staticcheck
 		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderID})...)
 		builder.Write(" UNION ")
 		builder.Write(selectLibraryElementDTOWithMeta)
