@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -78,9 +79,13 @@ type TeamHTTPHeader struct {
 }
 
 func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
-	teamHTTPHeadersJSON := TeamHTTPHeadersJSONData{}
-	if ds.JsonData != nil {
-		jsonData, err := ds.JsonData.MarshalJSON()
+	return GetTeamHTTPHeaders(ds.JsonData)
+}
+
+func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
+	teamHTTPHeadersJSON := TeamHTTPHeaders{}
+	if jsonData != nil && jsonData.Get("teamHttpHeaders") != nil {
+		jsonData, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
@@ -88,9 +93,23 @@ func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
 		if err != nil {
 			return nil, err
 		}
+		for teamID, headers := range teamHTTPHeadersJSON {
+			if teamID == "" {
+				return nil, errors.New("teamID is missing or empty in teamHttpHeaders")
+			}
+
+			for _, header := range headers {
+				if header.Header == "" {
+					return nil, errors.New("header name is missing or empty")
+				}
+				if header.Value == "" {
+					return nil, errors.New("header value is missing or empty")
+				}
+			}
+		}
 	}
 
-	return teamHTTPHeadersJSON.TeamHTTPHeaders, nil
+	return teamHTTPHeadersJSON, nil
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of

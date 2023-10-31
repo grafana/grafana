@@ -221,7 +221,7 @@ def rgm_main():
     return pipeline(
         name = "rgm-main-prerelease",
         trigger = main_trigger,
-        steps = rgm_run("rgm-build", "drone_publish_main.sh"),
+        steps = rgm_run("rgm-build", "drone_build_main.sh"),
         depends_on = ["main-test-backend", "main-test-frontend"],
     )
 
@@ -230,7 +230,7 @@ def rgm_tag():
     return pipeline(
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
-        steps = rgm_run("rgm-build", "drone_publish_tag_grafana.sh"),
+        steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
@@ -251,7 +251,7 @@ def rgm_version_branch():
     return pipeline(
         name = "rgm-version-branch-prerelease",
         trigger = version_branch_trigger,
-        steps = rgm_run("rgm-build", "drone_publish_tag_grafana.sh"),
+        steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 

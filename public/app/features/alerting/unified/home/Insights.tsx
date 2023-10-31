@@ -175,7 +175,7 @@ export function getInsightsScenes() {
 
 function getGrafanaManagedScenes() {
   return new NestedScene({
-    title: 'Grafana-managed rules',
+    title: 'Grafana-managed alert rules',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -282,7 +282,7 @@ function getGrafanaAlertmanagerScenes() {
 
 function getCloudScenes() {
   return new NestedScene({
-    title: 'Mimir alertmanager',
+    title: 'Mimir Alertmanager',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -316,7 +316,7 @@ function getCloudScenes() {
 
 function getMimirManagedRulesScenes() {
   return new NestedScene({
-    title: 'Mimir-managed rules',
+    title: 'Mimir-managed alert rules',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -364,7 +364,7 @@ function getMimirManagedRulesPerGroupScenes() {
   });
 
   return new NestedScene({
-    title: 'Mimir-managed Rules - Per Rule Group',
+    title: 'Mimir-managed alert rules - per rule group',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({

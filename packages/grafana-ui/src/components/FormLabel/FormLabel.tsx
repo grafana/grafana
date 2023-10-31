@@ -37,7 +37,7 @@ export const FormLabel = ({
       {children}
       {tooltip && (
         <Tooltip placement="top" content={tooltip} theme={'info'} interactive={interactive}>
-          <Icon tabIndex={0} name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
+          <Icon name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
         </Tooltip>
       )}
     </label>

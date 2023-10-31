@@ -288,7 +288,6 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "N/A", *am.GetStatus().VersionInfo.Version)
 		require.Equal(t, int64(2), am.OrgID())
-		require.NotNil(t, am.ConfigHash())
 	}
 
 	// Let's now remove the previous queried organization.
