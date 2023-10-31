@@ -17,7 +17,7 @@ def artifacts_cmd(artifacts = []):
     return cmd
 
 # rgm_artifacts_step will create artifacts using the '/src/build artifacts' command.
-def rgm_artifacts_step(name="rgm-package", artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64"], file = "packages.txt", depends_on = ["yarn-install"]):
+def rgm_artifacts_step(name = "rgm-package", artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64"], file = "packages.txt", depends_on = ["yarn-install"]):
     cmd = artifacts_cmd(artifacts = artifacts)
 
     return {
@@ -38,8 +38,8 @@ def rgm_artifacts_step(name="rgm-package", artifacts = ["targz:grafana:linux/amd
 # rgm_build_backend will create compile the grafana backend for various platforms. It's preferred to use
 # 'rgm_package_step' if you creating a "usable" artifact. This should really only be used to verify that the code is
 # compilable.
-def rgm_build_backend_step(artifacts = ["backend:grafana:linux/amd64","backend:grafana:linux/arm64"]):
-    return rgm_artifacts_step(name="rgm-build-backend", artifacts = artifacts, depends_on = [])
+def rgm_build_backend_step(artifacts = ["backend:grafana:linux/amd64", "backend:grafana:linux/arm64"]):
+    return rgm_artifacts_step(name = "rgm-build-backend", artifacts = artifacts, depends_on = [])
 
 def rgm_build_docker_step(packages, ubuntu, alpine, depends_on = ["yarn-install"], file = "docker.txt", tag_format = "{{ .version }}-{{ .arch }}", ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}"):
     return {
