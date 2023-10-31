@@ -433,6 +433,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-table-before-7-0.png',
     imageRenderType,
+    // Distinguish alt text for multiple images by appending a number.
     'Filter fields by name' + 1
   )}
 
