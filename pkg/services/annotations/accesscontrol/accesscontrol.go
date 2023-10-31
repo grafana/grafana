@@ -66,7 +66,7 @@ func (authz *AuthService) userVisibleDashboards(ctx context.Context, user identi
 	}
 	filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 
-	sb := &searchstore.Builder{Dialect: authz.db.GetDialect(), Filters: filters}
+	sb := &searchstore.Builder{Dialect: authz.db.GetDialect(), Filters: filters, Features: authz.features}
 
 	visibleDashboards := make(map[string]int64)
 

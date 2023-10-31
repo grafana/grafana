@@ -20,7 +20,7 @@ var (
 	orgScopeType  = annotations.Organization.String()
 )
 
-func TestAuthService_Authorize(t *testing.T) {
+func TestIntegrationAuthorize(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
