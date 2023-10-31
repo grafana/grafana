@@ -15,53 +15,55 @@ import (
 func NewPluginRequestMetaMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &PluginRequestMetaMiddleware{
-			next: next,
+			next:                next,
+			defaultStatusSource: pluginrequestmeta.StatusSourcePlugin,
 		}
 	})
 }
 
 type PluginRequestMetaMiddleware struct {
-	next plugins.Client
+	next                plugins.Client
+	defaultStatusSource pluginrequestmeta.StatusSource
 }
 
-func withDefaultPluginRequestMeta(ctx context.Context) context.Context {
+func (m *PluginRequestMetaMiddleware) withDefaultPluginRequestMeta(ctx context.Context) context.Context {
 	// Setup plugin request status source
-	ctx = pluginrequestmeta.WithStatusSource(ctx, pluginrequestmeta.StatusSourcePlugin)
+	ctx = pluginrequestmeta.WithStatusSource(ctx, m.defaultStatusSource)
 
 	return ctx
 }
 
 func (m *PluginRequestMetaMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	ctx = withDefaultPluginRequestMeta(ctx)
+	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.QueryData(ctx, req)
 }
 
 func (m *PluginRequestMetaMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctx = withDefaultPluginRequestMeta(ctx)
+	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.CallResource(ctx, req, sender)
 }
 
 func (m *PluginRequestMetaMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	ctx = withDefaultPluginRequestMeta(ctx)
+	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.CheckHealth(ctx, req)
 }
 
 func (m *PluginRequestMetaMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	ctx = withDefaultPluginRequestMeta(ctx)
+	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.CollectMetrics(ctx, req)
 }
 
 func (m *PluginRequestMetaMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	ctx = withDefaultPluginRequestMeta(ctx)
+	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.SubscribeStream(ctx, req)
 }
 
 func (m *PluginRequestMetaMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	ctx = withDefaultPluginRequestMeta(ctx)
+	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.PublishStream(ctx, req)
 }
 
 func (m *PluginRequestMetaMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	ctx = withDefaultPluginRequestMeta(ctx)
+	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.RunStream(ctx, req, sender)
 }
