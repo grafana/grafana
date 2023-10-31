@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
@@ -12,8 +11,8 @@ import { AccessControlAction } from 'app/types';
 import { ShareModal } from '../ShareModal';
 
 import { ConfirmModal } from './ConfirmModal';
-import { getUnsupportedDashboardDatasources, panelTypes } from './CreatePublicDashboard';
 import { SharePublicDashboardTab } from './SharePublicDashboardTab';
+import { useUnsupportedDatasources } from './hooks';
 
 export function ConfigPublicDashboard({ model }: SceneComponentProps<SharePublicDashboardTab>) {
   const styles = useStyles2(getStyles);
@@ -21,14 +20,10 @@ export function ConfigPublicDashboard({ model }: SceneComponentProps<SharePublic
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const { dashboardRef, publicDashboard, isGetLoading, isUpdateLoading } = model.useState();
   const dashboard = dashboardRef.resolve();
-  const { title: dashboardTitle, isDirty } = dashboard.useState();
+  const { isDirty } = dashboard.useState();
 
   const hasTemplateVariables = (dashboard.state.$variables?.state.variables.length ?? 0) > 0;
-  const { value: unsupportedDataSources } = useAsync(async () => {
-    const types = panelTypes(dashboard);
-    return getUnsupportedDashboardDatasources(types);
-  }, []);
-
+  const unsupportedDataSources = useUnsupportedDatasources(dashboard);
   const isDataLoading = isUpdateLoading || isGetLoading;
   const timeRangeState = sceneGraph.getTimeRange(model);
   const timeRange = timeRangeState.useState();
@@ -48,9 +43,7 @@ export function ConfigPublicDashboard({ model }: SceneComponentProps<SharePublic
             confirmText: 'Revoke public URL',
             body: (
               <p className={styles.description}>
-                {dashboardTitle
-                  ? 'Are you sure you want to revoke this URL? The dashboard will no longer be public.'
-                  : 'Orphaned public dashboard will no longer be public.'}
+                Are you sure you want to revoke this URL? The dashboard will no longer be public.
               </p>
             ),
             onDismiss: () => {
