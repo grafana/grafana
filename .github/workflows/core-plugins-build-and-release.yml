@@ -17,6 +17,11 @@ env:
   GCP_BUCKET: integration-artifacts # Dev: plugins-community-staging
   GCOM_API: https://grafana.com # Dev: https://grafana-dev.com
 
+# These permissions are needed to assume roles from Github's OIDC.
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   build-and-publish:
     name: Build and publish ${{ inputs.plugin_id }}
@@ -31,10 +36,18 @@ jobs:
       - name: Verify inputs
         run: |
           if [ -z ${{ inputs.plugin_id }} ]; then echo "Missing plugin ID"; exit 1; fi
+      - id: get-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/repo/grafana/<repo>/<path> path in Vault
+          repo_secrets: |
+            PLUGINS_GOOGLE_CREDENTIALS=core-plugins-build-and-release:PLUGINS_GOOGLE_CREDENTIALS
+            PLUGINS_GRAFANA_API_KEY=core-plugins-build-and-release:PLUGINS_GRAFANA_API_KEY
+            PLUGINS_GCOM_TOKEN=core-plugins-build-and-release:PLUGINS_GCOM_TOKEN
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
         with:
-          credentials_json: '${{ secrets.PLUGINS_GOOGLE_CREDENTIALS }}'
+          credentials_json: '${{ env.PLUGINS_GOOGLE_CREDENTIALS }}'
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v1'
       - name: Setup nodejs environment
@@ -140,11 +153,11 @@ jobs:
           mkdir -p ci/jobs/package
           bin/grabpl plugin package
         env:
-          GRAFANA_API_KEY: ${{ secrets.PLUGINS_GRAFANA_API_KEY }}
+          GRAFANA_API_KEY: ${{ env.PLUGINS_GRAFANA_API_KEY }}
           PLUGIN_SIGNATURE_TYPE: grafana
       - name: Check existing release
         env:
-          GCOM_TOKEN: ${{ secrets.PLUGINS_GCOM_TOKEN }}
+          GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
           VERSION: ${{ steps.build_frontend.outputs.version }}  
         run: |
           api_res=$(curl -X 'GET' -H "Authorization: Bearer $GCOM_TOKEN" \
@@ -177,7 +190,7 @@ jobs:
       - name: Publish new plugin version on grafana.com
         working-directory: ${{ steps.get_dir.outputs.dir }}
         env:
-          GCOM_TOKEN: ${{ secrets.PLUGINS_GCOM_TOKEN }}
+          GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
           VERSION: ${{ steps.build_frontend.outputs.version }}  
         run: |
           echo "Publish new plugin version on grafana.com:"

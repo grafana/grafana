@@ -131,3 +131,7 @@ pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backen
 costManagementUi,experimental,@grafana/databases-frontend,false,false,false,false
 managedPluginsInstall,experimental,@grafana/plugins-platform-backend,false,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,false,true
+alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false,false
+alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false,false
+alertmanagerRemoteOnly,experimental,@grafana/alerting-squad,false,false,false,false
+annotationPermissionUpdate,experimental,@grafana/grafana-authnz-team,false,false,false,false
