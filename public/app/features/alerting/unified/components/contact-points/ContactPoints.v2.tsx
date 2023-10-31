@@ -48,8 +48,8 @@ import { UnusedContactPointBadge } from '../receivers/ReceiversTable';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
-import { MessageTemplates } from './MessageTemplates';
 import { useDeleteContactPointModal } from './Modals';
+import { NotificationTemplates } from './NotificationTemplates';
 import {
   RECEIVER_META_KEY,
   RECEIVER_PLUGIN_META_KEY,
@@ -61,7 +61,7 @@ import { ContactPointWithMetadata, getReceiverDescription, isProvisioned, Receiv
 
 enum ActiveTab {
   ContactPoints,
-  MessageTemplates,
+  NotificationTemplates,
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -83,7 +83,7 @@ const ContactPoints = () => {
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
-  const showingMessageTemplates = activeTab === ActiveTab.MessageTemplates;
+  const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
 
   if (error) {
     // TODO fix this type casting, when error comes from "getContactPointsStatus" it probably won't be a SerializedError
@@ -105,9 +105,9 @@ const ContactPoints = () => {
             onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
           />
           <Tab
-            label="Message Templates"
-            active={showingMessageTemplates}
-            onChangeTab={() => setActiveTab(ActiveTab.MessageTemplates)}
+            label="Notification Templates"
+            active={showNotificationTemplates}
+            onChangeTab={() => setActiveTab(ActiveTab.NotificationTemplates)}
           />
         </TabsBar>
         <TabContent>
@@ -162,19 +162,19 @@ const ContactPoints = () => {
                   )}
                 </>
               )}
-              {/* Message Templates tab */}
-              {showingMessageTemplates && (
+              {/* Notification Templates tab */}
+              {showNotificationTemplates && (
                 <>
                   <Stack direction="row" alignItems="center">
                     <Text variant="body" color="secondary">
-                      Create message templates to customize your notifications.
+                      Create notification templates to customize your notifications.
                     </Text>
                     <Spacer />
                     <LinkButton icon="plus" variant="primary" href="/alerting/notifications/templates/new">
-                      Add message template
+                      Add notification template
                     </LinkButton>
                   </Stack>
-                  <MessageTemplates />
+                  <NotificationTemplates />
                 </>
               )}
             </>
