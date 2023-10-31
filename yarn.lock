@@ -1915,6 +1915,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@cypress/webpack-preprocessor@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@cypress/webpack-preprocessor@npm:6.0.0"
+  dependencies:
+    bluebird: 3.7.1
+    debug: ^4.3.4
+    lodash: ^4.17.20
+  peerDependencies:
+    "@babel/core": ^7.0.1
+    "@babel/preset-env": ^7.0.0
+    babel-loader: ^8.3 || ^9
+    webpack: ^4 || ^5
+  checksum: 257c470e5a3bf9795fd7d388bdc0e91b3da87dbb94ec4aa70966e63b8d0640efedf3ad9258b84e83b99a112fa5dbdbbc83b4aaeeeb5511a91e2ee2c8a659df43
+  languageName: node
+  linkType: hard
+
 "@cypress/xvfb@npm:^1.2.4":
   version: 1.2.4
   resolution: "@cypress/xvfb@npm:1.2.4"
@@ -17113,7 +17129,7 @@ __metadata:
     "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.4.0
     "@betterer/regexp": 5.4.0
-    "@cypress/webpack-preprocessor": 5.17.1
+    "@cypress/webpack-preprocessor": 6.0.0
     "@daybrush/utils": 1.13.0
     "@emotion/css": 11.11.2
     "@emotion/eslint-plugin": 11.11.0
