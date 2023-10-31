@@ -2,7 +2,6 @@ package annotationsimpl
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 
@@ -13,8 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-var ErrMissingPermissions = errors.New("missing permissions")
 
 type RepositoryImpl struct {
 	db       db.DB

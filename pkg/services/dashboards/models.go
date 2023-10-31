@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/kinds"
@@ -16,7 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const RootFolderName = "General"
@@ -479,7 +479,7 @@ type GetDashboardACLInfoListQuery struct {
 type FindPersistedDashboardsQuery struct {
 	Title         string
 	OrgId         int64
-	SignedInUser  identity.Requester
+	SignedInUser  *user.SignedInUser
 	DashboardIds  []int64
 	DashboardUIDs []string
 	Type          string

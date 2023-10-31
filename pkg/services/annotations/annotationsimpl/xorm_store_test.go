@@ -127,7 +127,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		require.NoError(t, err)
 		assert.Greater(t, organizationAnnotation1.ID, int64(0))
 
-		globalAnnotation2 := &annotations.Item{
+		organizationAnnotation2 := &annotations.Item{
 			OrgID:  1,
 			UserID: 1,
 			Text:   "rollback",
@@ -135,9 +135,10 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Epoch:  17,
 			Tags:   []string{"rollback"},
 		}
-		err = store.Add(context.Background(), globalAnnotation2)
+		err = store.Add(context.Background(), organizationAnnotation2)
 		require.NoError(t, err)
-		assert.Greater(t, globalAnnotation2.ID, int64(0))
+		assert.Greater(t, organizationAnnotation2.ID, int64(0))
+
 		t.Run("Can query for annotation by dashboard id", func(t *testing.T) {
 			items, err := store.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -590,8 +591,9 @@ func BenchmarkFindTags_100k(b *testing.B) {
 
 func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	sql := db.InitTestDB(b)
-	var maximumTagsLength int64 = 60
-	store := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
+	cfg := setting.NewCfg()
+	cfg.AnnotationMaximumTagsLength = 60
+	store := xormRepositoryImpl{db: sql, cfg: cfg, log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg)}
 
 	type annotationTag struct {
 		ID           int64 `xorm:"pk autoincr 'id'"`

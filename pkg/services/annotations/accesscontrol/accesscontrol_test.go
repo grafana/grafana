@@ -72,7 +72,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 			},
 		},
 		{
-			name: "should have only organization scope",
+			name: "should have only organization scope and no dashboards",
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization},
 			},

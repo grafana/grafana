@@ -1,10 +1,10 @@
 package accesscontrol
 
-// AccessResources is a struct that contains resources that are used to check access to annotations.
+// AccessResources contains resources that are used to filter annotations based on RBAC.
 type AccessResources struct {
 	// Dashboards is a map of dashboard UIDs to IDs
 	Dashboards map[string]int64
-	// ScopeTypes are parsed scopes, filtered to at most `dashboard` and `organization`
+	// ScopeTypes contains the scope types that the user has access to. At most `dashboard` and `organization`
 	ScopeTypes map[any]struct{}
 }
 

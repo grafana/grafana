@@ -3,7 +3,6 @@ package accesscontrol
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -31,22 +30,22 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles) *AuthService 
 
 // Authorize checks if the user has permission to read annotations, then returns a struct containing dashboards and scope types that the user has access to.
 func (authz *AuthService) Authorize(ctx context.Context, orgID int64, user identity.Requester) (*AccessResources, error) {
-	if orgID == 0 {
-		return nil, fmt.Errorf("missing orgID")
-	}
-
 	if user == nil || user.IsNil() {
-		return nil, fmt.Errorf("missing user")
+		return nil, ErrMissingPermissions
 	}
 
-	scopeTypes, err := userScopeTypes(user)
+	scopeTypes, err := annotationScopeTypes(user)
 	if err != nil {
 		return nil, err
 	}
 
-	visibleDashboards, err := authz.userVisibleDashboards(ctx, user, orgID)
-	if err != nil {
-		return nil, err
+	var visibleDashboards map[string]int64
+
+	if _, ok := scopeTypes[annotations.Dashboard.String()]; ok {
+		visibleDashboards, err = authz.userVisibleDashboards(ctx, user, orgID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &AccessResources{
@@ -63,8 +62,8 @@ func (authz *AuthService) userVisibleDashboards(ctx context.Context, user identi
 
 	filters := []any{
 		permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, authz.features, recursiveQueriesSupported),
+		searchstore.OrgFilter{OrgId: orgID},
 	}
-	filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 
 	sb := &searchstore.Builder{Dialect: authz.db.GetDialect(), Filters: filters, Features: authz.features}
 
@@ -98,27 +97,27 @@ func (authz *AuthService) userVisibleDashboards(ctx context.Context, user identi
 	return visibleDashboards, nil
 }
 
-func userScopeTypes(user identity.Requester) (map[any]struct{}, error) {
-	annotationScopeTypes := map[any]struct{}{
+func annotationScopeTypes(user identity.Requester) (map[any]struct{}, error) {
+	allScopeTypes := map[any]struct{}{
 		annotations.Dashboard.String():    {},
 		annotations.Organization.String(): {},
 	}
 
 	scopes, has := user.GetPermissions()[ac.ActionAnnotationsRead]
 	if !has {
-		return nil, fmt.Errorf("%w: %s", ErrMissingPermissions, ac.ActionAnnotationsRead)
+		return nil, ErrMissingPermissions
 	}
 
 	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
 	if hasWildcardScope {
-		types = annotationScopeTypes
+		types = allScopeTypes
 	}
 
-	for t := range annotationScopeTypes {
+	for t := range allScopeTypes {
 		if _, ok := types[t]; ok {
 			return types, nil
 		}
 	}
 
-	return nil, fmt.Errorf("%w: no applicable scopes", ErrMissingPermissions)
+	return nil, ErrMissingPermissions
 }

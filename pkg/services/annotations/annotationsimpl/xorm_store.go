@@ -38,20 +38,18 @@ func validateTimeRange(item *annotations.Item) error {
 }
 
 type xormRepositoryImpl struct {
-	cfg               *setting.Cfg
-	db                db.DB
-	log               log.Logger
-	maximumTagsLength int64
-	tagService        tag.Service
+	cfg        *setting.Cfg
+	db         db.DB
+	log        log.Logger
+	tagService tag.Service
 }
 
 func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Service) *xormRepositoryImpl {
 	return &xormRepositoryImpl{
-		cfg:               cfg,
-		db:                db,
-		log:               l.New("store", "xorm"),
-		tagService:        tagService,
-		maximumTagsLength: cfg.AnnotationMaximumTagsLength,
+		cfg:        cfg,
+		db:         db,
+		log:        l.New("store", "xorm"),
+		tagService: tagService,
 	}
 }
 
@@ -348,9 +346,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 		if err != nil {
 			return err
 		}
-		if acFilter != "" {
-			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
-		}
+		sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
 
 		if query.Limit == 0 {
 			query.Limit = 100
@@ -513,8 +509,8 @@ func (r *xormRepositoryImpl) validateTagsLength(item *annotations.Item) error {
 		}
 	}
 	estimatedTagsLength += 1 // trailing: ]
-	if estimatedTagsLength > int(r.maximumTagsLength) {
-		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.maximumTagsLength)
+	if estimatedTagsLength > int(r.cfg.AnnotationMaximumTagsLength) {
+		return annotations.ErrBaseTagLimitExceeded.Errorf("tags length (%d) exceeds the maximum allowed (%d): modify the configuration to increase it", estimatedTagsLength, r.cfg.AnnotationMaximumTagsLength)
 	}
 	return nil
 }
