@@ -1,5 +1,14 @@
-import { SceneVariableSet, QueryVariable, CustomVariable, DataSourceVariable, ConstantVariable } from '@grafana/scenes';
+import {
+  SceneVariableSet,
+  QueryVariable,
+  CustomVariable,
+  DataSourceVariable,
+  ConstantVariable,
+  IntervalVariable,
+} from '@grafana/scenes';
 import { VariableModel, VariableHide, VariableRefresh, VariableSort } from '@grafana/schema';
+
+import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
 export function sceneVariablesSetToVariables(set: SceneVariableSet) {
   const variables: VariableModel[] = [];
@@ -77,6 +86,22 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
         // @ts-expect-error
         query: variable.state.value,
         hide: VariableHide.hideVariable,
+      });
+    } else if (variable instanceof IntervalVariable) {
+      const intervals = getIntervalsQueryFromNewIntervalModel(variable.state.intervals);
+      variables.push({
+        ...commonProperties,
+        current: {
+          text: variable.state.value,
+          value: variable.state.value,
+        },
+        query: intervals,
+        hide: VariableHide.hideVariable,
+        refresh: variable.state.refresh,
+        // @ts-expect-error ?? how to fix this without adding the ts-expect-error
+        auto: variable.state.autoEnabled,
+        auto_min: variable.state.autoMinInterval,
+        auto_count: variable.state.autoStepCount,
       });
     } else {
       throw new Error('Unsupported variable type');

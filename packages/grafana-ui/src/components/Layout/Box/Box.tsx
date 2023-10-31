@@ -14,7 +14,7 @@ export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 's
 export type BorderRadius = keyof ThemeShape['radius'];
 export type BoxShadow = keyof ThemeShadows;
 
-interface BoxProps {
+interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   // Margin props
   /** Sets the property `margin` */
   margin?: ResponsiveProp<ThemeSpacingTokens>;
@@ -59,6 +59,7 @@ interface BoxProps {
   shrink?: ResponsiveProp<number>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
+  gap?: ResponsiveProp<ThemeSpacingTokens>;
 
   // Other props
   backgroundColor?: ResponsiveProp<BackgroundColor>;
@@ -96,6 +97,8 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     alignItems,
     boxShadow,
     element,
+    gap,
+    ...rest
   } = props;
   const styles = useStyles2(
     getStyles,
@@ -122,12 +125,13 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     borderRadius,
     justifyContent,
     alignItems,
-    boxShadow
+    boxShadow,
+    gap
   );
   const Element = element ?? 'div';
 
   return (
-    <Element ref={ref} className={styles.root}>
+    <Element ref={ref} className={styles.root} {...rest}>
       {children}
     </Element>
   );
@@ -184,7 +188,8 @@ const getStyles = (
   borderRadius: BoxProps['borderRadius'],
   justifyContent: BoxProps['justifyContent'],
   alignItems: BoxProps['alignItems'],
-  boxShadow: BoxProps['boxShadow']
+  boxShadow: BoxProps['boxShadow'],
+  gap: BoxProps['gap']
 ) => {
   return {
     root: css([
@@ -266,6 +271,9 @@ const getStyles = (
       })),
       getResponsiveStyle(theme, boxShadow, (val) => ({
         boxShadow: theme.shadows[val],
+      })),
+      getResponsiveStyle(theme, gap, (val) => ({
+        gap: theme.spacing(val),
       })),
     ]),
   };

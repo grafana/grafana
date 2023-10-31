@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { ChangeEvent } from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import {
   Button,
   HorizontalGroup,
@@ -31,6 +31,7 @@ export interface BrowserProps {
   lastUsedLabels: string[];
   storeLastUsedLabels: (labels: string[]) => void;
   deleteLastUsedLabels: () => void;
+  timeRange?: TimeRange;
 }
 
 interface BrowserState {
@@ -319,7 +320,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     const { languageProvider, lastUsedLabels } = this.props;
     if (languageProvider) {
       const selectedLabels: string[] = lastUsedLabels;
-      languageProvider.start().then(() => {
+      languageProvider.start(this.props.timeRange).then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
         // Get metrics
         this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
