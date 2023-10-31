@@ -153,4 +153,5 @@ export interface FeatureToggles {
   alertmanagerRemoteSecondary?: boolean;
   alertmanagerRemotePrimary?: boolean;
   alertmanagerRemoteOnly?: boolean;
+  dashboardSceneForViewers?: boolean;
 }

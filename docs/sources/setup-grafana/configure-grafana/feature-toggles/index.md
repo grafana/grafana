@@ -159,6 +159,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertmanagerRemoteSecondary`               | Enable Grafana to sync configuration and state with a remote Alertmanager.                                                                                                                                                                                                        |
 | `alertmanagerRemotePrimary`                 | Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.                                                                                                                                                                                                |
 | `alertmanagerRemoteOnly`                    | Disable the internal Alertmanager and only use the external one defined.                                                                                                                                                                                                          |
+| `dashboardSceneForViewers`                  | Enables dashboard rendering using Scenes for viewer roles                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 

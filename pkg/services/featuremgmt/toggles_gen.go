@@ -546,4 +546,8 @@ const (
 	// FlagAlertmanagerRemoteOnly
 	// Disable the internal Alertmanager and only use the external one defined.
 	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
+
+	// FlagDashboardSceneForViewers
+	// Enables dashboard rendering using Scenes for viewer roles
+	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
 )
