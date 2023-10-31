@@ -220,7 +220,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 
   // Allocate a new frame
   const table = new MutableDataFrame();
-  table.refId = 'TimeSeriesTable';
+  table.refId = 'A';
 
 
   // Rather than having a label fields for each refId
