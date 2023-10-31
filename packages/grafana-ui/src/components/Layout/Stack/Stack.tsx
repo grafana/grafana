@@ -33,7 +33,7 @@ export type Direction = 'row' | 'row-reverse' | 'column' | 'column-reverse';
 
 export type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
-interface FlexProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
+interface StackProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   gap?: ResponsiveProp<ThemeSpacingTokens>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
@@ -42,7 +42,7 @@ interface FlexProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' 
   children?: React.ReactNode;
 }
 
-export const Stack = React.forwardRef<HTMLDivElement, FlexProps>(
+export const Stack = React.forwardRef<HTMLDivElement, StackProps>(
   ({ gap = 1, alignItems, justifyContent, direction, wrap, children, ...rest }, ref) => {
     const styles = useStyles2(getStyles, gap, alignItems, justifyContent, direction, wrap);
 
@@ -54,15 +54,15 @@ export const Stack = React.forwardRef<HTMLDivElement, FlexProps>(
   }
 );
 
-Stack.displayName = 'Flex';
+Stack.displayName = 'Stack';
 
 const getStyles = (
   theme: GrafanaTheme2,
-  gap: FlexProps['gap'],
-  alignItems: FlexProps['alignItems'],
-  justifyContent: FlexProps['justifyContent'],
-  direction: FlexProps['direction'],
-  wrap: FlexProps['wrap']
+  gap: StackProps['gap'],
+  alignItems: StackProps['alignItems'],
+  justifyContent: StackProps['justifyContent'],
+  direction: StackProps['direction'],
+  wrap: StackProps['wrap']
 ) => {
   return {
     flex: css([
