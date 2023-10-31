@@ -21,8 +21,10 @@ import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 import { GraphDimensions } from './GraphTooltip/types';
 
+/** @deprecated */
 export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
 
+/** @deprecated */
 export type GraphContextMenuProps = ContextMenuProps & {
   getContextMenuSource: () => FlotDataPoint | null;
   timeZone?: TimeZone;
