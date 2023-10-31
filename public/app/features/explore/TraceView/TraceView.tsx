@@ -317,7 +317,8 @@ function useFocusSpanLink(options: {
     // Check if the link is to a different trace or not.
     // If it's the same trace, only update panel state with setFocusedSpanId (no navigation).
     // If it's a different trace, use splitOpenFn to open a new explore panel
-    const sameTrace = query?.queryType === 'traceql' && (query as TempoQuery).query === traceId;
+    // Note: we prepend 0(s) to the traceId
+    const sameTrace = query?.queryType === 'traceql' && traceId.includes((query as TempoQuery).query ?? '');
 
     return mapInternalLinkToExplore({
       link,
