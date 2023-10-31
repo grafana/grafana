@@ -208,12 +208,14 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 
 	if cmd.FolderUID != nil {
 		if *cmd.FolderUID == "" {
+			// nolint:staticcheck
 			cmd.FolderID = 0
 		} else {
 			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
 				return response.Error(http.StatusBadRequest, "failed to get folder", err)
 			}
+			// nolint:staticcheck
 			cmd.FolderID = folder.ID
 		}
 	}

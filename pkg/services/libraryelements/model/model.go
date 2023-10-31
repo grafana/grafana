@@ -215,6 +215,8 @@ type CreateLibraryElementCommand struct {
 // PatchLibraryElementCommand is the command for patching a LibraryElement
 type PatchLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
+	//
+	// Deprecated: use FolderUID instead
 	FolderID int64 `json:"folderId" binding:"Default(-1)"`
 	// UID of the folder where the library element is stored.
 	FolderUID *string `json:"folderUid"`
