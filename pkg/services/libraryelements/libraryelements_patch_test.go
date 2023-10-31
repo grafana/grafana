@@ -49,7 +49,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Result: libraryElement{
 					ID:          1,
 					OrgID:       1,
-					FolderID:    newFolder.ID,
+					FolderID:    newFolder.ID, // nolint:staticcheck
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Panel - New name",
 					Kind:        int64(model.PanelElement),
@@ -100,6 +100,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
+			// nolint:staticcheck
 			sc.initialResult.Result.FolderID = newFolder.ID
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar

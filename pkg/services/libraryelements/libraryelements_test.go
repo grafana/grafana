@@ -193,7 +193,7 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 type libraryElement struct {
 	ID          int64                       `json:"id"`
 	OrgID       int64                       `json:"orgId"`
-	FolderID    int64                       `json:"folderId"`
+	FolderID    int64                       `json:"folderId"` // Deprecated: use FolderUID instead
 	UID         string                      `json:"uid"`
 	Name        string                      `json:"name"`
 	Kind        int64                       `json:"kind"`
