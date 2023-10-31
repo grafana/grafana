@@ -24,11 +24,11 @@ jobs:
         path: './pr'
     - uses: actions/setup-node@v4
       with:
-        node-version: 16.16.0
+        node-version: 20.9.0
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
-      run: echo "dir=$(yarn config get --json cacheFolder)" >> $GITHUB_OUTPUT
+      run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
     - name: Restore yarn cache
       uses: actions/cache@v3.3.1
@@ -72,11 +72,11 @@ jobs:
 
     - uses: actions/setup-node@v4
       with:
-        node-version: 16.16.0
+        node-version: 20.9.0
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
-      run: echo "dir=$(yarn config get --json cacheFolder)" >> $GITHUB_OUTPUT
+      run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
     - name: Restore yarn cache
       uses: actions/cache@v3.3.1
