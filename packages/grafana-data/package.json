@@ -76,7 +76,7 @@
     "@types/jquery": "3.5.16",
     "@types/lodash": "4.14.195",
     "@types/marked": "5.0.1",
-    "@types/node": "18.18.4",
+    "@types/node": "20.8.10",
     "@types/papaparse": "5.3.7",
     "@types/react": "18.2.15",
     "@types/react-dom": "18.2.7",

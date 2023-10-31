@@ -145,7 +145,7 @@
     "@types/jquery": "3.5.16",
     "@types/lodash": "4.14.195",
     "@types/mock-raf": "1.0.3",
-    "@types/node": "18.18.4",
+    "@types/node": "20.8.10",
     "@types/prismjs": "1.26.0",
     "@types/react": "18.2.15",
     "@types/react-beautiful-dnd": "13.1.4",

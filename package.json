@@ -124,7 +124,7 @@
     "@types/lucene": "^2",
     "@types/marked": "5.0.1",
     "@types/mousetrap": "1.6.11",
-    "@types/node": "18.18.4",
+    "@types/node": "20.8.10",
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0",
     "@types/papaparse": "5.3.7",
