@@ -227,6 +227,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		if err != nil {
 			return err
 		}
+		// nolint:staticcheck
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 			return err
 		}
@@ -314,7 +315,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		leDtos[i] = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
-			FolderID:    libraryElement.FolderID,
+			FolderID:    libraryElement.FolderID, // nolint:staticcheck
 			FolderUID:   libraryElement.FolderUID,
 			UID:         libraryElement.UID,
 			Name:        libraryElement.Name,
@@ -436,7 +437,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			retDTOs = append(retDTOs, model.LibraryElementDTO{
 				ID:          element.ID,
 				OrgID:       element.OrgID,
-				FolderID:    element.FolderID,
+				FolderID:    element.FolderID, // nolint:staticcheck
 				FolderUID:   element.FolderUID,
 				UID:         element.UID,
 				Name:        element.Name,
@@ -593,6 +594,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		if cmd.Model == nil {
 			libraryElement.Model = elementInDB.Model
 		}
+		// nolint:staticcheck
 		if err := l.handleFolderIDPatches(c, &libraryElement, elementInDB.FolderID, cmd.FolderID, signedInUser); err != nil {
 			return err
 		}
@@ -711,7 +713,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 			libraryElementMap[element.UID] = model.LibraryElementDTO{
 				ID:          element.ID,
 				OrgID:       element.OrgID,
-				FolderID:    element.FolderID,
+				FolderID:    element.FolderID, // nolint:staticcheck
 				UID:         element.UID,
 				Name:        element.Name,
 				Kind:        element.Kind,
@@ -757,6 +759,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 			if err != nil {
 				return err
 			}
+			// nolint:staticcheck
 			if err := l.requireViewPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 				return err
 			}
