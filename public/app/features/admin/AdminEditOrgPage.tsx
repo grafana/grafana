@@ -31,10 +31,7 @@ const getOrgUsers = async (orgId: UrlQueryValue, page: number) => {
 
 const getUsersRoles = async (orgId: number, users: OrgUser[]) => {
   const userIds = users.map((u: OrgUser) => u.userId);
-  const roles = await getBackendSrv().get(
-    `/api/access-control/users/roles`,
-    accessControlQueryParam({ userIds, targetOrgId: orgId })
-  );
+  const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, { userIds, orgId });
   users.forEach((u: OrgUser) => {
     u.roles = roles ? roles[u.userId] || [] : [];
   });

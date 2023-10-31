@@ -33,10 +33,7 @@ export function loadUsers(): ThunkResult<void> {
         dispatch(rolesFetchBegin());
         const orgId = contextSrv.user.orgId;
         const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);
-        const roles = await getBackendSrv().get(
-          `/api/access-control/users/roles`,
-          accessControlQueryParam({ userIds, targetOrgId: orgId })
-        );
+        const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, { userIds, orgId });
         users.orgUsers.forEach((u: OrgUser) => {
           u.roles = roles ? roles[u.userId] || [] : [];
         });

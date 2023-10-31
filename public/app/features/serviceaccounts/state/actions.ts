@@ -3,7 +3,6 @@ import { debounce } from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
 
 import { ServiceAccountToken } from '../components/CreateTokenModal';
@@ -59,10 +58,7 @@ export function fetchServiceAccounts(
           dispatch(rolesFetchBegin());
           const orgId = contextSrv.user.orgId;
           const userIds = result?.serviceAccounts.map((u: ServiceAccountDTO) => u.id);
-          const roles = await getBackendSrv().get(
-            `/api/access-control/users/roles`,
-            accessControlQueryParam({ userIds, targetOrgId: orgId })
-          );
+          const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, { userIds, orgId });
           result.serviceAccounts.forEach((u: ServiceAccountDTO) => {
             u.roles = roles ? roles[u.id] || [] : [];
           });
