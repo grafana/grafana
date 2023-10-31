@@ -498,6 +498,8 @@ function getOTLPReferences(
   return links;
 }
 
+export const RelatedProfilesTitle = 'Related profiles';
+
 export function transformTrace(
   response: DataQueryResponse,
   instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -521,7 +523,7 @@ export function transformTrace(
     if (traceToProfilesOptions && profilesDataSourceSettings) {
       const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
       const dataLink: DataLink = {
-        title: 'Related profiles',
+        title: RelatedProfilesTitle,
         url: '',
         internal: {
           datasourceUid: profilesDataSourceSettings.uid,

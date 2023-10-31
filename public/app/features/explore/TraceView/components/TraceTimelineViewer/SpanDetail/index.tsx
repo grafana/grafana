@@ -20,6 +20,7 @@ import React from 'react';
 import { dateTimeFormat, GrafanaTheme2, IconName, LinkModel, TimeZone } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
 import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
@@ -281,7 +282,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       logLinkButton = createLinkButton(logsLink[0], SpanLinkType.Logs, 'Logs for this span', 'gf-logs');
     }
     const profilesLink = links?.filter(
-      (link) => link.type === SpanLinkType.Profiles && link.title === 'Related profiles'
+      (link) => link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle
     );
     if (links && profilesLink && profilesLink.length > 0) {
       profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
