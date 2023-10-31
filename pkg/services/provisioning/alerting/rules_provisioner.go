@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -134,5 +135,12 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 
 // UserID is 0 to use org quota
 var provisionerUser = func(orgID int64) identity.Requester {
-	return &user.SignedInUser{UserID: 0, Login: "alert_provisioner", OrgID: orgID}
+	return &user.SignedInUser{UserID: 0, Login: "alert_provisioner", OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionFoldersRead:                        []string{dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			accesscontrol.ActionAlertingProvisioningRead:        []string{dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			accesscontrol.ActionAlertingProvisioningReadSecrets: []string{dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+			accesscontrol.ActionAlertingProvisioningWrite:       []string{dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+		},
+	}}
 }
