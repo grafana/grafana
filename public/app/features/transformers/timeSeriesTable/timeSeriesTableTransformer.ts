@@ -77,7 +77,6 @@ interface RefCount {
  */
 export interface RefIdTransformerOptions {
   stat?: ReducerID;
-  mergeSeries?: boolean;
   timeField?: string;
   inlineStat?: boolean;
 }

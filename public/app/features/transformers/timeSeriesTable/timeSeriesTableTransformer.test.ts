@@ -96,6 +96,34 @@ describe('timeSeriesTableTransformer', () => {
   });
 });
 
+  it('Will transform multiple data series with the same label', () => {
+    const series = [
+      getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
+      getTimeSeries('B', { instance: 'A', pod: 'B' }, [3, 4, 5]),
+      getTimeSeries('C', { instance: 'A', pod: 'B' }, [3, 4, 5]),
+    ];
+
+
+    const results = timeSeriesToTableTransform({}, series);
+    
+    // Check series A
+    expect(results[0].fields).toHaveLength(3);
+    expect(results[0].fields[0].values[0]).toBe('A');
+    expect(results[0].fields[1].values[0]).toBe('B');
+
+    // Check series B
+    expect(results[1].fields).toHaveLength(3);
+    expect(results[1].fields[0].values[0]).toBe('A');
+    expect(results[1].fields[1].values[0]).toBe('B');
+
+    // Check series C
+    expect(results[2].fields).toHaveLength(3);
+    expect(results[2].fields[0].values[0]).toBe('A');
+    expect(results[2].fields[1].values[0]).toBe('B');
+
+    // console.log(results[0].fields);
+  });
+
 function assertFieldsEqual(field1: Field, field2: Field) {
   expect(field1.type).toEqual(field2.type);
   expect(field1.name).toEqual(field2.name);
