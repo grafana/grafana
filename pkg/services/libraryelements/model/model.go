@@ -69,10 +69,9 @@ type LibraryElementWithMeta struct {
 
 // LibraryElementDTO is the frontend DTO for entities.
 type LibraryElementDTO struct {
-	ID    int64 `json:"id"`
-	OrgID int64 `json:"orgId"`
-	// Deprecated: use FolderUID instead
-	FolderID      int64                 `json:"folderId"`
+	ID            int64                 `json:"id"`
+	OrgID         int64                 `json:"orgId"`
+	FolderID      int64                 `json:"folderId"` // Deprecated: use FolderUID instead
 	FolderUID     string                `json:"folderUid"`
 	UID           string                `json:"uid"`
 	Name          string                `json:"name"`
