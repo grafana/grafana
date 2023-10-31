@@ -41,7 +41,7 @@ import {
 import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
-import { DeclareIncident } from '../bridges/DeclareIncidentButton';
+import { DeclareIncidentButton } from '../bridges/DeclareIncidentButton';
 
 import { RedirectToCloneRule } from './CloneRule';
 
@@ -197,7 +197,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   if (isFiringRule && shouldShowDeclareIncidentButton()) {
     buttons.push(
       <Fragment key="declare-incident">
-        <DeclareIncident title={rule.name} url={buildShareUrl()} />
+        <DeclareIncidentButton title={rule.name} url={buildShareUrl()} />
       </Fragment>
     );
   }

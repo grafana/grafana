@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { Button, LinkButton, Tooltip } from '@grafana/ui';
+import { Button, LinkButton, Menu, Tooltip } from '@grafana/ui';
 
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
@@ -12,7 +12,7 @@ interface Props {
   url?: string;
 }
 
-export const DeclareIncident: FC<Props> = ({ title = '', severity = '', url = '' }) => {
+export const DeclareIncidentButton: FC<Props> = ({ title = '', severity = '', url = '' }) => {
   const bridgeURL = createBridgeURL(SupportedPlugin.Incident, '/incidents/declare', { title, severity, url });
 
   const { loading, installed, settings } = usePluginBridge(SupportedPlugin.Incident);
@@ -36,6 +36,24 @@ export const DeclareIncident: FC<Props> = ({ title = '', severity = '', url = ''
           Declare Incident
         </LinkButton>
       )}
+    </>
+  );
+};
+
+export const DeclareIncidentMenuItem = ({ title = '', severity = 'minor', url = '' }: Props) => {
+  const bridgeURL = createBridgeURL(SupportedPlugin.Incident, '/incidents/declare', { title, severity, url });
+
+  const { loading, installed, settings } = usePluginBridge(SupportedPlugin.Incident);
+
+  return (
+    <>
+      {loading === true && <Menu.Item label="Declare incident" icon="fire" disabled />}
+      {installed === false && (
+        <Tooltip content={'Grafana Incident is not installed or is not configured correctly'}>
+          <Menu.Item label="Declare incident" icon="fire" disabled />
+        </Tooltip>
+      )}
+      {settings && <Menu.Item label="Declare incident" url={bridgeURL} icon="fire" />}
     </>
   );
 };

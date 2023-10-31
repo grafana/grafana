@@ -1,17 +1,43 @@
+import { isEmpty, truncate } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  Icon,
+  LinkButton,
+  LoadingPlaceholder,
+  Menu,
+  Tab,
+  TabContent,
+  TabsBar,
+  Text,
+} from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
+import { Annotations, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useRuleViewerPageTitle } from '../../../hooks/alert-details/useRuleViewerPageTitle';
 import { useCombinedRule } from '../../../hooks/useCombinedRule';
+import { Annotation } from '../../../utils/constants';
+import {
+  createShareLink,
+  isLocalDevEnv,
+  isOpenSourceEdition,
+  makeDashboardLink,
+  makePanelLink,
+} from '../../../utils/misc';
 import * as ruleId from '../../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../../utils/rules';
+import { AlertLabels } from '../../AlertLabels';
 import { AlertStateDot } from '../../AlertStateDot';
+import { Link } from '../../ExternalLink';
+import { MetaText } from '../../MetaText';
+import MoreButton from '../../MoreButton';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { Spacer } from '../../Spacer';
+import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
 import { History } from '../tabs/History';
 import { InstancesList } from '../tabs/Instances';
 import { QueryResults } from '../tabs/Query';
@@ -59,7 +85,8 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   }
 
   if (rule) {
-    const summary = rule.annotations['summary'];
+    // should fit in a tweet
+    const summary = rule.annotations[Annotation.summary];
     const promRule = rule.promRule;
 
     const isAlertType = isAlertingRule(promRule);
@@ -68,58 +95,96 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
     const isFederatedRule = isFederatedRuleGroup(rule.group);
     const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
+    /**
+     * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
+     * We should show it in development mode
+     */
+    const shouldShowDeclareIncidentButton = !isOpenSourceEdition() || isLocalDevEnv();
+    const buildShareUrl = () => createShareLink(rule.namespace.rulesSource, rule);
+
     return (
       <>
-        <Stack direction="column" gap={3}>
+        <Stack direction="column" gap={1}>
           {/* breadcrumb and actions */}
-          <Stack>
-            <BreadCrumb folder={rule.namespace.name} evaluationGroup={rule.group.name} />
-            <Spacer />
-            <Stack gap={1}>
-              <Button variant="secondary" icon="pen">
-                Edit
-              </Button>
-              <Button variant="secondary">
-                <Stack alignItems="center" gap={1}>
-                  More <Icon name="angle-down" />
+          <BreadCrumb folder={rule.namespace.name} evaluationGroup={rule.group.name} />
+
+          <Stack direction="column" gap={2}>
+            {/* header */}
+            <Stack direction="column" gap={1}>
+              <Stack direction="row" alignItems="center">
+                {/* // TODO normalize states from prom to grafana and pass to title */}
+                <Title name={rule.name} state={isAlertType ? promRule.state : undefined} />
+                <Spacer />
+                <Stack gap={1}>
+                  <Button variant="secondary" icon="pen">
+                    Edit
+                  </Button>
+                  <Dropdown
+                    overlay={
+                      <Menu>
+                        {/* TODO add "declare incident" */}
+                        <Menu.Item label="Silence" icon="bell-slash" />
+                        {shouldShowDeclareIncidentButton && (
+                          <DeclareIncidentMenuItem title={rule.name} url={buildShareUrl()} />
+                        )}
+                        <Menu.Item label="Duplicate" icon="copy" />
+                        <Menu.Divider />
+                        <Menu.Item label="Copy link" icon="clipboard-alt" />
+                        <Menu.Item
+                          label="Export"
+                          icon="download-alt"
+                          childItems={[
+                            <Menu.Item key="no-modifications" label="Without modifications" icon="file-blank" />,
+                            <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
+                          ]}
+                        />
+                        <Menu.Divider />
+                        <Menu.Item label="Delete" icon="trash-alt" destructive />
+                      </Menu>
+                    }
+                  >
+                    <MoreButton size="md" />
+                  </Dropdown>
                 </Stack>
-              </Button>
-            </Stack>
-          </Stack>
-          {/* header */}
-          <Stack direction="column" gap={1}>
-            <Stack alignItems="center">
-              <Title name={rule.name} state={GrafanaAlertState.Alerting} />
-            </Stack>
-            {summary && <Summary text={summary} />}
-          </Stack>
-          {/* alerts and notifications and stuff */}
-          {isFederatedRule && (
-            <Alert severity="info" title="This rule is part of a federated rule group.">
-              <Stack direction="column">
-                Federated rule groups are currently an experimental feature.
-                <Button fill="text" icon="book">
-                  <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
-                    Read documentation
-                  </a>
-                </Button>
               </Stack>
-            </Alert>
-          )}
-          {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
-          {/* tabs and tab content */}
-          <TabsBar>
-            <Tab label="Instances" active counter={numberOfInstance} onChangeTab={() => setActiveTab(Tabs.Instances)} />
-            <Tab label="Query" onChangeTab={() => setActiveTab(Tabs.Query)} />
-            <Tab label="Routing" onChangeTab={() => setActiveTab(Tabs.Routing)} />
-            <Tab label="History" onChangeTab={() => setActiveTab(Tabs.History)} />
-          </TabsBar>
-          <TabContent>
-            {activeTab === Tabs.Instances && <InstancesList />}
-            {activeTab === Tabs.Query && <QueryResults />}
-            {activeTab === Tabs.Routing && <Routing />}
-            {activeTab === Tabs.History && <History />}
-          </TabContent>
+              {summary && <Summary text={summary} />}
+            </Stack>
+
+            <Metadata labels={rule.labels} annotations={rule.annotations} interval={rule.group.interval} />
+
+            {/* alerts and notifications and stuff */}
+            {isFederatedRule && (
+              <Alert severity="info" title="This rule is part of a federated rule group.">
+                <Stack direction="column">
+                  Federated rule groups are currently an experimental feature.
+                  <Button fill="text" icon="book">
+                    <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
+                      Read documentation
+                    </a>
+                  </Button>
+                </Stack>
+              </Alert>
+            )}
+            {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
+            {/* tabs and tab content */}
+            <TabsBar>
+              <Tab
+                label="Instances"
+                active
+                counter={numberOfInstance}
+                onChangeTab={() => setActiveTab(Tabs.Instances)}
+              />
+              <Tab label="Query" onChangeTab={() => setActiveTab(Tabs.Query)} />
+              <Tab label="Routing" onChangeTab={() => setActiveTab(Tabs.Routing)} />
+              <Tab label="History" onChangeTab={() => setActiveTab(Tabs.History)} />
+            </TabsBar>
+            <TabContent>
+              {activeTab === Tabs.Query && <QueryResults />}
+              {activeTab === Tabs.Instances && <InstancesList rule={rule} />}
+              {activeTab === Tabs.Routing && <Routing />}
+              {activeTab === Tabs.History && <History />}
+            </TabContent>
+          </Stack>
         </Stack>
       </>
     );
@@ -128,12 +193,86 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   return null;
 };
 
+interface MetadataProps {
+  labels: Record<string, string>;
+  annotations: Annotations;
+  interval?: string;
+}
+
+const Metadata = ({ labels, annotations, interval }: MetadataProps) => {
+  const runbookUrl = annotations[Annotation.runbookURL];
+  const dashboardUID = annotations[Annotation.dashboardUID];
+  const panelID = annotations[Annotation.panelID];
+
+  const hasPanel = dashboardUID && panelID;
+  const hasDashboardNoPanel = dashboardUID && !panelID;
+
+  return (
+    <>
+      <Stack direction="row">
+        {runbookUrl && (
+          <MetaText direction="column">
+            Runbook
+            <Link href={runbookUrl} size="sm" external>
+              {runbookHostname(runbookUrl)}
+            </Link>
+          </MetaText>
+        )}
+
+        {hasPanel && (
+          <MetaText direction="column">
+            Dashboard and panel
+            <Link href={makePanelLink(dashboardUID, panelID)} size="sm" external>
+              View panel
+            </Link>
+          </MetaText>
+        )}
+
+        {hasDashboardNoPanel && (
+          <MetaText direction="column">
+            Dashboard
+            <Link href={makeDashboardLink(dashboardUID)} size="sm" external>
+              View dashboard
+            </Link>
+          </MetaText>
+        )}
+
+        {interval && (
+          <MetaText direction="column">
+            Evaluation interval
+            <Text color="primary">Every {interval}</Text>
+          </MetaText>
+        )}
+
+        {/* TODO truncate, maybe build in to component? */}
+        {!isEmpty(labels) && (
+          <MetaText direction="column">
+            Custom labels
+            <AlertLabels labels={labels} size="sm" />
+          </MetaText>
+        )}
+      </Stack>
+    </>
+  );
+};
+
+// TODO move to utils file
+function runbookHostname(runbookUrl: string): string {
+  try {
+    new URL(runbookUrl); // if it's a valid URL we'll truncate it
+    return truncate(runbookUrl, { length: 42 });
+  } catch (errr) {
+    return 'View runbook';
+  }
+}
+
 interface BreadcrumbProps {
   folder: string;
   evaluationGroup: string;
 }
 
 const BreadCrumb = ({ folder, evaluationGroup }: BreadcrumbProps) => (
+  // TODO fix vertical alignment here
   <Stack alignItems="center" gap={0.5}>
     <Text color="secondary">
       <Icon name="folder" />
@@ -152,17 +291,18 @@ const BreadCrumb = ({ folder, evaluationGroup }: BreadcrumbProps) => (
 
 interface TitleProps {
   name: string;
-  state: GrafanaAlertState;
+  // recording rules don't have a state
+  state?: PromAlertingRuleState;
 }
 
 const Title = ({ name, state }: TitleProps) => (
   <header>
-    <Stack alignItems={'center'} gap={1}>
-      <AlertStateDot size="md" state={state} />
-      {/* <Button variant="secondary" fill="outline" icon="angle-left" /> */}
+    <Stack alignItems="center" gap={1}>
+      <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
       <Text element="h1" variant="h2" weight="bold">
         {name}
       </Text>
+      {state && <AlertStateDot size="md" state={state} includeState />}
       {/* <Badge color="red" text={state} icon="exclamation-circle" /> */}
     </Stack>
   </header>
