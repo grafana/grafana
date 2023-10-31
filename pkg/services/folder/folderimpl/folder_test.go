@@ -421,9 +421,11 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			_ = createRule(t, alertStore, parent.UID, "parent alert")
 			_ = createRule(t, alertStore, subfolder.UID, "sub alert")
 
+			// nolint:staticcheck
 			libraryElementCmd.FolderID = parent.ID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
+			// nolint:staticcheck
 			libraryElementCmd.FolderID = subfolder.ID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
@@ -496,9 +498,11 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			_ = createRule(t, alertStore, parent.UID, "parent alert")
 			_ = createRule(t, alertStore, subfolder.UID, "sub alert")
 
+			// nolint:staticcheck
 			libraryElementCmd.FolderID = parent.ID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
+			// nolint:staticcheck
 			libraryElementCmd.FolderID = subfolder.ID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
@@ -631,11 +635,12 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 					subfolder, err = serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
 					require.NoError(t, err)
 					_ = createRule(t, alertStore, subfolder.UID, "sub alert")
+					// nolint:staticcheck
 					libraryElementCmd.FolderID = subfolder.ID
 					subPanel, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 					require.NoError(t, err)
 				}
-
+				// nolint:staticcheck
 				libraryElementCmd.FolderID = parent.ID
 				parentPanel, err := lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 				require.NoError(t, err)

@@ -175,6 +175,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 				return err
 			}
 		} else {
+			// nolint:staticcheck
 			if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 				return err
 			}
