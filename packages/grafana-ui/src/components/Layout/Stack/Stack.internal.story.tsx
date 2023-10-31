@@ -27,7 +27,7 @@ const Item = ({ color, text, height }: { color: string; text?: string | number; 
 };
 
 const meta: Meta<typeof Stack> = {
-  title: 'General/Layout/Flex',
+  title: 'General/Layout/Stack',
   component: Stack,
   parameters: {
     docs: {
