@@ -492,7 +492,7 @@ const (
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
 	// FlagKubernetesPlaylistsAPI
-	// Route /api/playlist/* API to k8s handlers
+	// Route /api/playlist API to k8s handlers
 	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"
 
 	// FlagCloudWatchBatchQueries

@@ -852,7 +852,7 @@ var (
 		},
 		{
 			Name:            "kubernetesPlaylistsAPI",
-			Description:     "Route /api/playlist/* API to k8s handlers",
+			Description:     "Route /api/playlist API to k8s handlers",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
