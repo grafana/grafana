@@ -20,8 +20,30 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+type playlistAPIHandler struct {
+	SearchPlaylists  []web.Handler
+	GetPlaylist      []web.Handler
+	GetPlaylistItems []web.Handler
+	DeletePlaylist   []web.Handler
+	UpdatePlaylist   []web.Handler
+	CreatePlaylist   []web.Handler
+}
+
+func chainHandlers(h ...web.Handler) []web.Handler {
+	return h
+}
+
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
-	searchHandler := routing.Wrap(hs.SearchPlaylists)
+	handler := playlistAPIHandler{
+		SearchPlaylists:  chainHandlers(routing.Wrap(hs.SearchPlaylists)),
+		GetPlaylist:      chainHandlers(hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylist)),
+		GetPlaylistItems: chainHandlers(hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems)),
+		DeletePlaylist:   chainHandlers(middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.DeletePlaylist)),
+		UpdatePlaylist:   chainHandlers(middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist)),
+		CreatePlaylist:   chainHandlers(middleware.ReqEditorRole, routing.Wrap(hs.CreatePlaylist)),
+	}
+
+	// Alternative implementations for k8s
 	if hs.Features.IsEnabled(featuremgmt.FlagKubernetesPlaylistsAPI) {
 		namespacer := request.GetNamespaceMapper(hs.Cfg)
 		gvr := schema.GroupVersionResource{
@@ -30,16 +52,28 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 			Resource: "playlists",
 		}
 
-		// For now -- test a single endpoint
-		searchHandler = func(c *contextmodel.ReqContext) response.Response {
+		clientGetter := func(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
 			dyn, err := dynamic.NewForConfig(hs.clientConfigProvider.GetDirectRestConfig(c))
 			if err != nil {
-				return response.Error(http.StatusInternalServerError, "config", err)
+				c.JsonApiErr(500, "client", err)
+				return nil, false
 			}
-			client := dyn.Resource(gvr).Namespace(namespacer(c.OrgID))
+			return dyn.Resource(gvr).Namespace(namespacer(c.OrgID)), true
+		}
+
+		errorWriter := func(c *contextmodel.ReqContext, err error) {
+			c.JsonApiErr(500, "TODO, convert k8s error", err)
+		}
+
+		handler.SearchPlaylists = []web.Handler{func(c *contextmodel.ReqContext) {
+			client, ok := clientGetter(c)
+			if !ok {
+				return // error is already sent
+			}
 			out, err := client.List(c.Req.Context(), v1.ListOptions{})
 			if err != nil {
-				return response.Error(http.StatusBadRequest, "list error", err)
+				errorWriter(c, err)
+				return
 			}
 
 			query := strings.ToUpper(c.Query("query"))
@@ -54,18 +88,46 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 				}
 				playlists = append(playlists, *p)
 			}
-			return response.JSON(http.StatusOK, playlists)
-		}
+			c.JSON(http.StatusOK, playlists)
+		}}
+
+		handler.GetPlaylist = []web.Handler{func(c *contextmodel.ReqContext) {
+			client, ok := clientGetter(c)
+			if !ok {
+				return // error is already sent
+			}
+			uid := web.Params(c.Req)[":uid"]
+			out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+			if err != nil {
+				errorWriter(c, err)
+				return
+			}
+			c.JSON(http.StatusOK, v0alpha1.UnstructuredToLegacyPlaylistDTO(out))
+		}}
+
+		handler.GetPlaylistItems = []web.Handler{func(c *contextmodel.ReqContext) {
+			client, ok := clientGetter(c)
+			if !ok {
+				return // error is already sent
+			}
+			uid := web.Params(c.Req)[":uid"]
+			out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+			if err != nil {
+				errorWriter(c, err)
+				return
+			}
+			c.JSON(http.StatusOK, v0alpha1.UnstructuredToLegacyPlaylistDTO(out).Items)
+		}}
 	}
 
-	// Playlist API
+	// Register the actual handlers
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-		playlistRoute.Get("/", searchHandler)
-		playlistRoute.Get("/:uid", hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
-		playlistRoute.Get("/:uid/items", hs.validateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
-		playlistRoute.Delete("/:uid", middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
-		playlistRoute.Put("/:uid", middleware.ReqEditorRole, hs.validateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
-		playlistRoute.Post("/", middleware.ReqEditorRole, routing.Wrap(hs.CreatePlaylist))
+		playlistRoute.Get("/", handler.SearchPlaylists)
+		playlistRoute.Get("/:uid", handler.GetPlaylist)
+		playlistRoute.Get("/:uid/items", handler.GetPlaylistItems)
+		playlistRoute.Delete("/:uid", handler.DeletePlaylist)
+		playlistRoute.Put("/:uid", handler.UpdatePlaylist)
+		playlistRoute.Post("/", handler.CreatePlaylist)
 	})
 }
 

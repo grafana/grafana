@@ -25,6 +25,17 @@ func UnstructuredToLegacyPlaylist(item *unstructured.Unstructured) *playlist.Pla
 	}
 }
 
+func UnstructuredToLegacyPlaylistDTO(item *unstructured.Unstructured) *playlist.PlaylistDTO {
+	spec := item.Object["spec"].(map[string]any)
+	dto := &playlist.PlaylistDTO{
+		Uid:      item.GetName(),
+		Name:     spec["title"].(string),
+		Interval: spec["interval"].(string),
+		Id:       getLegacyID(item),
+	}
+	return dto
+}
+
 func convertToK8sResource(v *playlist.PlaylistDTO, namespacer request.NamespaceMapper) *Playlist {
 	spec := Spec{
 		Title:    v.Name,

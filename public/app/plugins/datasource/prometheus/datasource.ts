@@ -38,9 +38,10 @@ import {
   getBackendSrv,
   isFetchError,
   toDataQueryResponse,
+  getTemplateSrv,
+  TemplateSrv,
 } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
