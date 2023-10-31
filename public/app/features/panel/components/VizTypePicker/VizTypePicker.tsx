@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, PanelData, PanelPluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, EmptySearchResult, useStyles2 } from '@grafana/ui';
+import { Button, EmptySearchResult, useStyles2, LinkButton } from '@grafana/ui';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 
 import { filterPluginList, getAllPanelPluginMeta, getVizPluginMeta, getWidgetPluginMeta } from '../../state/util';
@@ -42,30 +42,29 @@ export function VizTypePicker({ searchQuery, onChange, current, data, isWidget =
   } else if (filteredPluginTypes.length === 0 && config.featureToggles.vizAndWidgetSplit && !isWidget) {
     return (
       <EmptySearchResult>
-        <div>
-          Could not find any visualization matching your query,are you looking for a Widget? Check the
-          <Button
-            variant="primary"
-            fill="text"
-            onClick={() => onTabChange && onTabChange(VisualizationSelectPaneTab.Widgets)}
-          >
-            Widget Tab
-          </Button>
-        </div>
+        <>
+          Could not find any visualization matching your query. Are you looking for a{' '}
+          {/* eslint-disable-next-line jsx-a11y/anchor-is-valid,jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          <a className="external-link" onClick={() => onTabChange && onTabChange(VisualizationSelectPaneTab.Widgets)}>
+            Widget
+          </a>{' '}
+          ?
+        </>
       </EmptySearchResult>
     );
   } else if (filteredPluginTypes.length === 0 && config.featureToggles.vizAndWidgetSplit && isWidget) {
     return (
       <EmptySearchResult>
         <div>
-          could not find any widget matching your query,are you looking for a Visualization? check the
-          <Button
-            variant="primary"
-            fill="text"
+          Could not find any widget matching your query. Are you looking for a{' '}
+          {/* eslint-disable-next-line jsx-a11y/anchor-is-valid,jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          <a
+            className="external-link"
             onClick={() => onTabChange && onTabChange(VisualizationSelectPaneTab.Visualizations)}
           >
-            Visualization Tab
-          </Button>
+            Visualization
+          </a>
+          ?
         </div>
       </EmptySearchResult>
     );
