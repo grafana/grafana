@@ -685,7 +685,7 @@ steps:
       include:
       - packages/grafana-ui/**
 - commands:
-  - yarn wait-on http://$HOST:$PORT
+  - npx wait-on@7.0.1 http://$HOST:$PORT
   - pa11y-ci --config .pa11yci-pr.conf.js
   depends_on:
   - grafana-server
@@ -1936,7 +1936,7 @@ steps:
       include:
       - packages/grafana-ui/**
 - commands:
-  - yarn wait-on http://$HOST:$PORT
+  - npx wait-on@7.0.1 http://$HOST:$PORT
   - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
   depends_on:
   - grafana-server
@@ -4670,6 +4670,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 64de498d74f13b64f233fe5d37751903a0efb03b3cab28e046797dc80d390965
+hmac: 920b57d70a96a29872ce77dc83ca26e2d141ba37627eee58c9d3beebf9ec4055
 
 ...
