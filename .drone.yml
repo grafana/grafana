@@ -17,7 +17,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -67,7 +67,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -117,7 +117,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -217,7 +217,7 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -306,7 +306,7 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -390,7 +390,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -485,7 +485,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -556,9 +556,9 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64 --go-version=1.20.10
-    --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD
-    > packages.txt
+  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
+    --go-version=1.20.10 --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
+    --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
   image: grafana/grafana-build:main
@@ -579,7 +579,7 @@ steps:
     GF_APP_MODE: development
     GF_SERVER_HTTP_PORT: "3001"
     GF_SERVER_ROUTER_LOGGING: "1"
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
@@ -699,13 +699,15 @@ steps:
   name: test-a11y-frontend
 - commands:
   - docker run --privileged --rm tonistiigi/binfmt --install all
-  - /src/grafana-build docker $(cat packages.txt | grep tar.gz | grep -v docker |
-    grep -v sha256 | awk '{print "--package=" $0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.3
-    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+  - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
+    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.4
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD
+    --ubuntu-tag-format='{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' >
+    docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
-  - rgm-package
+  - yarn-install
   image: grafana/grafana-build:main
   name: rgm-build-docker
   pull: always
@@ -844,7 +846,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1026,7 +1028,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -1320,7 +1322,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -1395,7 +1397,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -1452,7 +1454,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -1519,7 +1521,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1598,7 +1600,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -1672,7 +1674,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -1742,11 +1744,11 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64 --go-version=1.20.10
-    --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD
-    > packages.txt
+  - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
+    --go-version=1.20.10 --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
+    --grafana-dir=$$PWD > packages.txt
   depends_on:
-  - yarn-install
+  - update-package-json-version
   image: grafana/grafana-build:main
   name: rgm-package
   pull: always
@@ -1765,7 +1767,7 @@ steps:
     GF_APP_MODE: development
     GF_SERVER_HTTP_PORT: "3001"
     GF_SERVER_ROUTER_LOGGING: "1"
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
@@ -1921,13 +1923,15 @@ steps:
     - grafana/grafana
 - commands:
   - docker run --privileged --rm tonistiigi/binfmt --install all
-  - /src/grafana-build docker $(cat packages.txt | grep tar.gz | grep -v docker |
-    grep -v sha256 | awk '{print "--package=" $0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.3
-    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+  - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
+    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.4
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD
+    --ubuntu-tag-format='{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' >
+    docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
-  - rgm-package
+  - yarn-install
   image: grafana/grafana-build:main
   name: rgm-build-docker
   pull: always
@@ -2128,7 +2132,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2469,7 +2473,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -2801,6 +2805,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ALPINE_BASE: alpine:3.18.4
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -2828,6 +2833,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
+    UBUNTU_BASE: ubuntu:22.04
   image: grafana/grafana-build:main
   name: rgm-build
   pull: always
@@ -2914,7 +2920,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -2969,7 +2975,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3050,6 +3056,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ALPINE_BASE: alpine:3.18.4
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3077,6 +3084,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
+    UBUNTU_BASE: ubuntu:22.04
   image: grafana/grafana-build:main
   name: rgm-build
   pull: always
@@ -3231,6 +3239,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ALPINE_BASE: alpine:3.18.4
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3258,6 +3267,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
+    UBUNTU_BASE: ubuntu:22.04
   image: grafana/grafana-build:main
   name: rgm-build
   pull: always
@@ -3329,7 +3339,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -3382,7 +3392,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3461,6 +3471,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ALPINE_BASE: alpine:3.18.4
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3488,6 +3499,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
+    UBUNTU_BASE: ubuntu:22.04
   image: grafana/grafana-build:main
   name: rgm-build
   pull: always
@@ -3605,6 +3617,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ALPINE_BASE: alpine:3.18.4
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3632,6 +3645,7 @@ steps:
       from_secret: npm_token
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
+    UBUNTU_BASE: ubuntu:22.04
   image: grafana/grafana-build:main
   name: rgm-publish
   pull: always
@@ -3812,7 +3826,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -4030,7 +4044,7 @@ steps:
 - commands:
   - if [ -z "${BUILD_CONTAINER_VERSION}" ]; then echo Missing BUILD_CONTAINER_VERSION;
     false; fi
-  image: alpine:3.18.3
+  image: alpine:3.18.4
   name: validate-version
 - commands:
   - printenv GCP_KEY > /tmp/key.json
@@ -4354,7 +4368,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:18.12.0-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.18.3
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.18.4
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ubuntu:22.04
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM byrnedo/alpine-curl:0.1.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
@@ -4388,7 +4402,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:18.12.0-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
-  - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.18.3
+  - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.18.4
   - trivy --exit-code 1 --severity HIGH,CRITICAL ubuntu:22.04
   - trivy --exit-code 1 --severity HIGH,CRITICAL byrnedo/alpine-curl:0.1.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
@@ -4632,6 +4646,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d6ca1af2c8f3bd02975317f97bf4e0ab47530f99be2f8dead5252950c16b4678
+hmac: 10384e5602b853e97aaeeb3c1e132571dc5a5bf2df7f662161089950f13987ac
 
 ...
