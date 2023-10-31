@@ -113,11 +113,5 @@ func annotationScopeTypes(user identity.Requester) (map[any]struct{}, error) {
 		types = allScopeTypes
 	}
 
-	for t := range allScopeTypes {
-		if _, ok := types[t]; ok {
-			return types, nil
-		}
-	}
-
-	return nil, ErrMissingPermissions
+	return types, nil
 }
