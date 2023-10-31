@@ -211,9 +211,23 @@ function generateRowStatesFromTrace(
     : [];
 }
 
+function childSpansMap(trace: Trace | TNil) {
+  const childSpansMap = new Map<string, string[]>();
+  if (!trace) {
+    return childSpansMap;
+  }
+  trace.spans.forEach((span) => {
+    if (span.childSpanIds.length) {
+      childSpansMap.set(span.spanID, span.childSpanIds);
+    }
+  });
+  return childSpansMap;
+}
+
 const memoizedGenerateRowStates = memoizeOne(generateRowStatesFromTrace);
 const memoizedViewBoundsFunc = memoizeOne(createViewedBoundsFunc, isEqual);
 const memoizedGetClipping = memoizeOne(getClipping, isEqual);
+const memoizedChildSpansMap = memoizeOne(childSpansMap);
 
 // export from tests
 export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
@@ -288,6 +302,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       viewStart: zoomStart,
       viewEnd: zoomEnd,
     });
+  }
+
+  getChildSpansMap() {
+    return memoizedChildSpansMap(this.props.trace);
   }
 
   getAccessors() {
@@ -461,10 +479,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     // This function called recursively to find all descendants of a span
     const findAllDescendants = (currentChildSpanIds: string[]) => {
       currentChildSpanIds.forEach((eachId) => {
-        const currentChildSpan = trace.spans.find((a) => a.spanID === eachId)!;
-        if (currentChildSpan.hasChildren) {
-          allChildSpanIds.push(...currentChildSpan.childSpanIds);
-          findAllDescendants(currentChildSpan.childSpanIds);
+        const childrenOfCurrent = this.getChildSpansMap().get(eachId);
+        if (childrenOfCurrent?.length) {
+          allChildSpanIds.push(...childrenOfCurrent);
+          findAllDescendants(childrenOfCurrent);
         }
       });
     };

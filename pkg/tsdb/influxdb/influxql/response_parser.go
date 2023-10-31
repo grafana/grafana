@@ -258,6 +258,7 @@ func buildFrameNameFromQuery(row models.Row, column string, frameName []byte, re
 		first := true
 		for k, v := range row.Tags {
 			if !first {
+				frameName = append(frameName, ',')
 				frameName = append(frameName, ' ')
 			} else {
 				first = false
