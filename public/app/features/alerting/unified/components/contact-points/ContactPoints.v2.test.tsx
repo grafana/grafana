@@ -124,6 +124,23 @@ describe('ContactPoints', () => {
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
       expect(deleteButton).toBeDisabled();
     });
+
+    it('should be able to search', async () => {
+      render(
+        <AlertmanagerProvider accessType={'notification'}>
+          <ContactPoints />
+        </AlertmanagerProvider>,
+        { wrapper: TestProvider }
+      );
+
+      const searchInput = screen.getByRole('textbox', { name: 'search contact points' });
+      await userEvent.type(searchInput, 'slack');
+
+      await waitFor(() => {
+        expect(screen.getByText('Slack with multiple channels')).toBeInTheDocument();
+        expect(screen.getAllByTestId('contact-point')).toHaveLength(1);
+      });
+    });
   });
 
   describe('Mimir-flavored alertmanager', () => {

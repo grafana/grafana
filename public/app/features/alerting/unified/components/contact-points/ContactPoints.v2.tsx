@@ -238,7 +238,10 @@ const ContactPointsList = ({
 };
 
 // let's search in two different haystacks, the name of the contact point and the type of the receiver(s)
-function useContactPointsSearch(contactPoints: ContactPointWithMetadata[], search?: string) {
+function useContactPointsSearch(
+  contactPoints: ContactPointWithMetadata[],
+  search?: string
+): ContactPointWithMetadata[] {
   const finder = useMemo(() => new uFuzzy({ unicode: true }), []);
 
   const nameHaystack = useMemo(() => {
@@ -246,9 +249,9 @@ function useContactPointsSearch(contactPoints: ContactPointWithMetadata[], searc
   }, [contactPoints]);
 
   const typeHaystack = useMemo(() => {
-    return contactPoints.flatMap((contactPoint) =>
+    return contactPoints.map((contactPoint) =>
       // we're using the resolved metadata key here instead of the "type" property – ex. we alias "teams" to "microsoft teams"
-      contactPoint.grafana_managed_receiver_configs.map((receiver) => receiver[RECEIVER_META_KEY].name)
+      contactPoint.grafana_managed_receiver_configs.map((receiver) => receiver[RECEIVER_META_KEY].name).join(' ')
     );
   }, [contactPoints]);
 

@@ -37,7 +37,7 @@ const ContactPointsFilter = () => {
     <Stack direction="row" alignItems="end" gap={0.5}>
       <Field className={styles.noBottom} label="Search by name or type">
         <Input
-          data-testid="search-query-input"
+          aria-label="search contact points"
           placeholder="Search"
           width={46}
           prefix={<Icon name="search" />}
