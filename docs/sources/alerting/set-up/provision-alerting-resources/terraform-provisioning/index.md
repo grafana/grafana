@@ -11,8 +11,7 @@ keywords:
   - Terraform
 labels:
   products:
-    - enterprise
-    - oss
+    - cloud
 title: Create and manage alerting resources using Terraform
 weight: 200
 ---

@@ -24,19 +24,15 @@ Alerting infrastructure is often complex, with many pieces of the pipeline that 
 
 There are three options to choose from:
 
-1. Use file provisioning to provision your Grafana Alerting resources, such as alert rules and contact points, through files on disk.
-
 1. Provision your alerting resources using the Alerting Provisioning HTTP API.
 
    For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][alerting_provisioning].
 
-1. {{% admonition type="note" %}}
-   If you are using Open Source, you can provision your alerting resources using [Terraform](https://www.terraform.io/).
-   {{% /admonition %}}
+1. If you are using Open Source, use file provisioning to provision your Grafana Alerting resources,
+   such as alert rules and contact points, through files on disk.
 
-**Note:**
-
-Currently, provisioning for Grafana Alerting supports alert rules, contact points, notification policies, mute timings, and templates. Provisioned alerting resources using file provisioning or Terraform can only be edited in the source that created them and not from within Grafana or any other source. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
+1. If you are using Grafana Cloud, you can provision your alerting resources using
+   [Terraform](https://www.terraform.io/).
 
 **Useful Links:**
 

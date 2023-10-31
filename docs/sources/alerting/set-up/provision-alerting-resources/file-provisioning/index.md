@@ -11,7 +11,6 @@ keywords:
   - provisioning
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Create and manage alerting resources using file provisioning
