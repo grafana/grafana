@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -1410,6 +1412,7 @@ type testEnvironment struct {
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
 	ac               *recordingAccessControlFake
+	folderService    folder.Service
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1463,6 +1466,24 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
+	folderService := foldertest.NewFakeService()
+	folderService.ExpectedFolder = &folder.Folder{
+		UID:   "folder-uid",
+		Title: "Folder Title",
+		OrgID: 1,
+	}
+	folderService.ExpectedFolders = []*folder.Folder{
+		{
+			UID:   "folder-uid",
+			Title: "Folder Title",
+			OrgID: 1,
+		},
+		{
+			UID:   "folder-uid2",
+			Title: "Folder Title2",
+			OrgID: 1,
+		},
+	}
 
 	return testEnvironment{
 		secrets:          secretsService,
@@ -1474,6 +1495,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		prov:             prov,
 		quotas:           quotas,
 		ac:               ac,
+		folderService:    folderService,
 	}
 }
 
@@ -1493,7 +1515,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log, env.ac),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.dashboardService, env.quotas, env.xact, 60, 10, env.log),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, env.log),
 	}
 }
 

@@ -145,6 +145,7 @@ type ProvisioningServiceImpl struct {
 	searchService                searchV2.SearchService
 	quotaService                 quota.Service
 	secretService                secrets.Service
+	folderService                folder.Service
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -273,7 +274,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	ruleService := provisioning.NewAlertRuleService(
 		st,
 		st,
-		ps.dashboardService,
+		ps.folderService,
 		ps.quotaService,
 		ps.SQLStore,
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),

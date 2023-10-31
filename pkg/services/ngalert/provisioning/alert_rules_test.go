@@ -3,25 +3,38 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/util"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestAlertRuleService(t *testing.T) {
-	ruleService := createAlertRuleService(t)
+	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 
 	t.Run("group creation should set the right provenance", func(t *testing.T) {
@@ -496,7 +509,7 @@ func TestAlertRuleService(t *testing.T) {
 	})
 
 	t.Run("quota met causes create to be rejected", func(t *testing.T) {
-		ruleService := createAlertRuleService(t)
+		ruleService := createAlertRuleService(t, nil)
 		checker := &MockQuotaChecker{}
 		checker.EXPECT().LimitExceeded()
 		ruleService.quotas = checker
@@ -507,7 +520,7 @@ func TestAlertRuleService(t *testing.T) {
 	})
 
 	t.Run("quota met causes group write to be rejected", func(t *testing.T) {
-		ruleService := createAlertRuleService(t)
+		ruleService := createAlertRuleService(t, nil)
 		checker := &MockQuotaChecker{}
 		checker.EXPECT().LimitExceeded()
 		ruleService.quotas = checker
@@ -520,7 +533,7 @@ func TestAlertRuleService(t *testing.T) {
 }
 
 func TestCreateAlertRule(t *testing.T) {
-	ruleService := createAlertRuleService(t)
+	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 
 	t.Run("should return the created id", func(t *testing.T) {
@@ -558,9 +571,96 @@ func TestCreateAlertRule(t *testing.T) {
 	})
 }
 
-func createAlertRuleService(t *testing.T) AlertRuleService {
+func TestProvisiongWithFullpath(t *testing.T) {
+	tracer := tracing.InitializeTracerForTest()
+	inProcBus := bus.ProvideBus(tracer)
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
+	ac := acmock.New()
+	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+	folderService := folderimpl.ProvideService(ac, inProcBus, cfg, dashboardStore, folderStore, sqlStore, features)
+
+	ruleService := createAlertRuleService(t, folderService)
+	var orgID int64 = 1
+
+	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
+	}}
+	namespace := "my-namespace"
+	rootFolder, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
+		UID:          namespace,
+		Title:        namespace,
+		OrgID:        orgID,
+		SignedInUser: &signedInUser,
+	})
+	require.NoError(t, err)
+
+	t.Run("for a rule under a root folder should set the right fullpath", func(t *testing.T) {
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
+			createTestRule("my-cool-group", "my-cool-group", orgID, namespace),
+		})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		c := context.Background()
+		c = appcontext.WithUser(c, &signedInUser)
+
+		res, err := ruleService.GetAlertRuleWithFolderFullpath(c, orgID, r[0].UID)
+		require.NoError(t, err)
+		assert.Equal(t, namespace, res.FolderFullpath)
+
+		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(c, orgID, namespace, "my-cool-group")
+		require.NoError(t, err)
+		assert.Equal(t, namespace, res2.FolderFullpath)
+
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(c, orgID, []string{namespace})
+		require.NoError(t, err)
+		assert.Equal(t, namespace, res3[0].FolderFullpath)
+	})
+
+	t.Run("for a rule under a subfolder should set the right fullpath", func(t *testing.T) {
+		otherNamespace := "my-other-namespace"
+		_, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
+			UID:          otherNamespace,
+			Title:        otherNamespace,
+			OrgID:        orgID,
+			ParentUID:    rootFolder.UID,
+			SignedInUser: &signedInUser,
+		})
+		require.NoError(t, err)
+
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
+			createTestRule("my-cool-group-2", "my-cool-group-2", orgID, otherNamespace),
+		})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		c := context.Background()
+		c = appcontext.WithUser(c, &signedInUser)
+
+		res, err := ruleService.GetAlertRuleWithFolderFullpath(c, orgID, r[0].UID)
+		require.NoError(t, err)
+		fullpath := fmt.Sprintf("%s/%s", namespace, otherNamespace)
+		assert.Equal(t, fullpath, res.FolderFullpath)
+
+		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(c, orgID, otherNamespace, "my-cool-group-2")
+		require.NoError(t, err)
+		assert.Equal(t, fullpath, res2.FolderFullpath)
+
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(c, orgID, []string{otherNamespace})
+		require.NoError(t, err)
+		assert.Equal(t, fullpath, res3[0].FolderFullpath)
+	})
+}
+
+func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRuleService {
 	t.Helper()
 	sqlStore := db.InitTestDB(t)
+
 	store := store.DBstore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
@@ -570,6 +670,11 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 	}
 	quotas := MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
+
+	if folderService == nil {
+		folderService = foldertest.NewFakeService()
+	}
+
 	return AlertRuleService{
 		ruleStore:              store,
 		provenanceStore:        store,
@@ -578,6 +683,7 @@ func createAlertRuleService(t *testing.T) AlertRuleService {
 		log:                    log.New("testing"),
 		baseIntervalSeconds:    10,
 		defaultIntervalSeconds: 60,
+		folderService:          folderService,
 	}
 }
 

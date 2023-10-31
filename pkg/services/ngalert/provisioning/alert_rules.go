@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -19,15 +20,16 @@ type AlertRuleService struct {
 	baseIntervalSeconds    int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
-	dashboardService       dashboards.DashboardService
-	quotas                 QuotaChecker
-	xact                   TransactionManager
-	log                    log.Logger
+	//dashboardService       dashboards.DashboardService
+	folderService folder.Service
+	quotas        QuotaChecker
+	xact          TransactionManager
+	log           log.Logger
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
-	dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 	quotas QuotaChecker,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
@@ -38,7 +40,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		baseIntervalSeconds:    baseIntervalSeconds,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
-		dashboardService:       dashboardService,
+		folderService:          folderService,
 		quotas:                 quotas,
 		xact:                   xact,
 		log:                    log,
@@ -80,35 +82,43 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 	return *rule, provenance, nil
 }
 
-type AlertRuleWithFolderTitle struct {
-	AlertRule   models.AlertRule
-	FolderTitle string
+type AlertRuleWithFolderFullpath struct {
+	AlertRule      models.AlertRule
+	FolderFullpath string
 }
 
-// GetAlertRuleWithFolderTitle returns a single alert rule with its folder title.
-func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (AlertRuleWithFolderTitle, error) {
+// GetAlertRuleWithFolderFullpath returns a single alert rule with its folder full path.
+func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Context, orgID int64, ruleUID string) (AlertRuleWithFolderFullpath, error) {
 	query := &models.GetAlertRuleByUIDQuery{
 		OrgID: orgID,
 		UID:   ruleUID,
 	}
 	rule, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
 	if err != nil {
-		return AlertRuleWithFolderTitle{}, err
+		return AlertRuleWithFolderFullpath{}, err
 	}
 
-	dq := dashboards.GetDashboardQuery{
-		OrgID: orgID,
-		UID:   rule.NamespaceUID,
-	}
-
-	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
+	signinUser, err := appcontext.User(ctx)
 	if err != nil {
-		return AlertRuleWithFolderTitle{}, err
+		service.log.Error("failed to get user from context", "err", err)
+		return AlertRuleWithFolderFullpath{}, err
 	}
 
-	return AlertRuleWithFolderTitle{
-		AlertRule:   *rule,
-		FolderTitle: dash.Title,
+	fq := folder.GetFolderQuery{
+		OrgID:           orgID,
+		UID:             &rule.NamespaceUID,
+		IncludeFullpath: true,
+		SignedInUser:    signinUser,
+	}
+
+	f, err := service.folderService.Get(ctx, &fq)
+	if err != nil {
+		return AlertRuleWithFolderFullpath{}, err
+	}
+
+	return AlertRuleWithFolderFullpath{
+		AlertRule:      *rule,
+		FolderFullpath: f.Fullpath,
 	}, nil
 }
 
@@ -424,8 +434,8 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 	return nil
 }
 
-// GetAlertRuleGroupWithFolderTitle returns the alert rule group with folder title.
-func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, namespaceUID, group string) (models.AlertRuleGroupWithFolderTitle, error) {
+// GetAlertRuleGroupWithFolderFullpath returns the alert rule group with folder title.
+func (service *AlertRuleService) GetAlertRuleGroupWithFolderFullpath(ctx context.Context, orgID int64, namespaceUID, group string) (models.AlertRuleGroupWithFolderFullpath, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{namespaceUID},
@@ -433,27 +443,35 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 	}
 	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
-		return models.AlertRuleGroupWithFolderTitle{}, err
+		return models.AlertRuleGroupWithFolderFullpath{}, err
 	}
 	if len(ruleList) == 0 {
-		return models.AlertRuleGroupWithFolderTitle{}, store.ErrAlertRuleGroupNotFound
+		return models.AlertRuleGroupWithFolderFullpath{}, store.ErrAlertRuleGroupNotFound
 	}
 
-	dq := dashboards.GetDashboardQuery{
-		OrgID: orgID,
-		UID:   namespaceUID,
-	}
-	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
+	signinUser, err := appcontext.User(ctx)
 	if err != nil {
-		return models.AlertRuleGroupWithFolderTitle{}, err
+		service.log.Error("failed to get user from context", "err", err)
+		return models.AlertRuleGroupWithFolderFullpath{}, err
 	}
 
-	res := models.NewAlertRuleGroupWithFolderTitleFromRulesGroup(ruleList[0].GetGroupKey(), ruleList, dash.Title)
+	fq := folder.GetFolderQuery{
+		OrgID:           orgID,
+		UID:             &namespaceUID,
+		IncludeFullpath: true,
+		SignedInUser:    signinUser,
+	}
+	f, err := service.folderService.Get(ctx, &fq)
+	if err != nil {
+		return models.AlertRuleGroupWithFolderFullpath{}, err
+	}
+
+	res := models.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(ruleList[0].GetGroupKey(), ruleList, f.Fullpath)
 	return res, nil
 }
 
-// GetAlertGroupsWithFolderTitle returns all groups with folder title in the folders identified by folderUID that have at least one alert. If argument folderUIDs is nil or empty - returns groups in all folders.
-func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUIDs []string) ([]models.AlertRuleGroupWithFolderTitle, error) {
+// GetAlertGroupsWithFolderFullpath returns all groups with folder title in the folders identified by folderUID that have at least one alert. If argument folderUIDs is nil or empty - returns groups in all folders.
+func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Context, orgID int64, folderUIDs []string) ([]models.AlertRuleGroupWithFolderFullpath, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: orgID,
 	}
@@ -479,33 +497,35 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 	}
 
 	if len(namespaces) == 0 {
-		return []models.AlertRuleGroupWithFolderTitle{}, nil
+		return []models.AlertRuleGroupWithFolderFullpath{}, nil
 	}
 
-	dq := dashboards.GetDashboardsQuery{
-		DashboardUIDs: nil,
+	fq := folder.GetFoldersQuery{
+		OrgID:           orgID,
+		UIDs:            nil,
+		IncludeFullpath: true,
 	}
 	for uid := range namespaces {
-		dq.DashboardUIDs = append(dq.DashboardUIDs, uid)
+		fq.UIDs = append(fq.UIDs, uid)
 	}
 
 	// We need folder titles for the provisioning file format. We do it this way instead of using GetUserVisibleNamespaces to avoid folder:read permissions that should not apply to those with alert.provisioning:read.
-	dashes, err := service.dashboardService.GetDashboards(ctx, &dq)
+	folders, err := service.folderService.GetFolders(ctx, &fq)
 	if err != nil {
 		return nil, err
 	}
-	folderUidToTitle := make(map[string]string)
-	for _, dash := range dashes {
-		folderUidToTitle[dash.UID] = dash.Title
+	folderUidToFullpath := make(map[string]string)
+	for _, dash := range folders {
+		folderUidToFullpath[dash.UID] = dash.Fullpath
 	}
 
-	result := make([]models.AlertRuleGroupWithFolderTitle, 0)
+	result := make([]models.AlertRuleGroupWithFolderFullpath, 0)
 	for groupKey, rules := range groups {
-		title, ok := folderUidToTitle[groupKey.NamespaceUID]
+		fullpath, ok := folderUidToFullpath[groupKey.NamespaceUID]
 		if !ok {
 			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
 		}
-		result = append(result, models.NewAlertRuleGroupWithFolderTitle(groupKey, rules, title))
+		result = append(result, models.NewAlertRuleGroupWithFolderFullpath(groupKey, rules, fullpath))
 	}
 
 	// Return results in a stable manner.

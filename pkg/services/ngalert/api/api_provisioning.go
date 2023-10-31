@@ -64,9 +64,9 @@ type AlertRuleService interface {
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
 	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
 	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
-	GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
-	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
-	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
+	GetAlertRuleWithFolderFullpath(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderFullpath, error)
+	GetAlertRuleGroupWithFolderFullpath(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroupWithFolderFullpath, error)
+	GetAlertGroupsWithFolderFullpath(ctx context.Context, orgID int64, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderFullpath, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -416,15 +416,15 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return srv.RouteGetAlertRuleGroupExport(c, folderUIDs[0], group)
 	}
 
-	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), folderUIDs)
+	groupsWithFullpath, err := srv.alertRules.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser.GetOrgID(), folderUIDs)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
-	if len(groupsWithTitle) == 0 {
+	if len(groupsWithFullpath) == 0 {
 		return response.Empty(http.StatusNotFound)
 	}
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groupsWithTitle)
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath(groupsWithFullpath)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -434,7 +434,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 
 // RouteGetAlertRuleGroupExport retrieves the given alert rule group in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqContext, folder string, group string) response.Response {
-	g, err := srv.alertRules.GetAlertRuleGroupWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
+	g, err := srv.alertRules.GetAlertRuleGroupWithFolderFullpath(c.Req.Context(), c.SignedInUser.GetOrgID(), folder, group)
 	if err != nil {
 		if errors.Is(err, store.ErrAlertRuleGroupNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -442,7 +442,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rule group")
 	}
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{g})
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]alerting_models.AlertRuleGroupWithFolderFullpath{g})
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -452,7 +452,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 
 // RouteGetAlertRuleExport retrieves the given alert rule in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, UID string) response.Response {
-	rule, err := srv.alertRules.GetAlertRuleWithFolderTitle(c.Req.Context(), c.SignedInUser.GetOrgID(), UID)
+	rule, err := srv.alertRules.GetAlertRuleWithFolderFullpath(c.Req.Context(), c.SignedInUser.GetOrgID(), UID)
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -460,8 +460,8 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{
-		alerting_models.NewAlertRuleGroupWithFolderTitleFromRulesGroup(rule.AlertRule.GetGroupKey(), alerting_models.RulesGroup{&rule.AlertRule}, rule.FolderTitle),
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]alerting_models.AlertRuleGroupWithFolderFullpath{
+		alerting_models.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(rule.AlertRule.GetGroupKey(), alerting_models.RulesGroup{&rule.AlertRule}, rule.FolderFullpath),
 	})
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
