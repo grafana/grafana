@@ -97,20 +97,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Wrapper method over fetchSeriesLabels to retrieve series labels and handle errors.
-   * @todo remove this in favor of fetchSeriesLabels as we already in this.request do the same thing
-   */
-  async getSeriesLabels(selector: string) {
-    try {
-      return await this.fetchSeriesLabels(selector);
-    } catch (error) {
-      // TODO: better error handling
-      console.error(error);
-      return undefined;
-    }
-  }
-
-  /**
    * Fetch all label keys
    * This asynchronous function returns all available label keys from the data source.
    * It returns a promise that resolves to an array of strings containing the label keys.
@@ -184,13 +170,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
   // Round nanoseconds epoch to nearest 5 minute interval
   private roundTime(nanoseconds: number): number {
     return nanoseconds ? Math.floor(nanoseconds / NS_IN_MS / 1000 / 60 / 5) : 0;
-  }
-
-  /**
-   * @todo remove this in favor of fetchLabelValues as it is the same thing
-   */
-  async getLabelValues(key: string): Promise<string[]> {
-    return await this.fetchLabelValues(key);
   }
 
   /**
