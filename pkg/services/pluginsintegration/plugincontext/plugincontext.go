@@ -64,7 +64,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 	}
 
 	pCtx := backend.PluginContext{
-		PluginID:      pluginID,
+		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,
 	}
 	if user != nil && !user.IsNil() {
@@ -99,7 +99,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 	}
 
 	pCtx := backend.PluginContext{
-		PluginID:      pluginID,
+		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,
 	}
 	if user != nil && !user.IsNil() {

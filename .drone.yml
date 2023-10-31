@@ -122,14 +122,14 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
   - apk add --update curl jq bash
@@ -158,7 +158,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: test-frontend
 trigger:
   event:
@@ -222,7 +222,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -232,7 +232,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: lint-frontend
 - commands:
   - apk add --update git
@@ -247,7 +247,7 @@ steps:
   - yarn run i18n:compile
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: verify-i18n
 trigger:
   event:
@@ -529,7 +529,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update jq bash
@@ -540,7 +540,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: build-frontend-packages
 - failure: ignore
   image: grafana/drone-downstream
@@ -678,7 +678,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: build-storybook
   when:
     paths:
@@ -1035,7 +1035,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - pip3 install codespell
@@ -1048,7 +1048,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1056,8 +1056,9 @@ steps:
     true\n---\n'' > /hugo/content/docs/grafana/_index.md'
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  image: grafana/docs-base:dbd975af06
+  image: grafana/docs-base:latest
   name: build-docs-website
+  pull: always
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -1157,6 +1158,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
+  failure: ignore
   image: alpine/git:2.40.1
   name: clone-enterprise
 - commands:
@@ -1388,7 +1390,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - pip3 install codespell
@@ -1401,7 +1403,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1409,8 +1411,9 @@ steps:
     true\n---\n'' > /hugo/content/docs/grafana/_index.md'
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  image: grafana/docs-base:dbd975af06
+  image: grafana/docs-base:latest
   name: build-docs-website
+  pull: always
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -1462,14 +1465,14 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -1477,7 +1480,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: test-frontend
 trigger:
   branch: main
@@ -1519,7 +1522,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -1529,7 +1532,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: lint-frontend
 - commands:
   - apk add --update git
@@ -1544,7 +1547,7 @@ steps:
   - yarn run i18n:compile
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: verify-i18n
 trigger:
   branch: main
@@ -1778,7 +1781,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update jq
@@ -1789,7 +1792,7 @@ steps:
   - yarn install --mode=update-lockfile
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: update-package-json-version
 - commands:
   - apk add --update jq bash
@@ -1801,7 +1804,7 @@ steps:
   - update-package-json-version
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
   - /src/grafana-build package --distro=linux/amd64,linux/arm64 --go-version=1.20.10
@@ -1926,7 +1929,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: build-storybook
   when:
     paths:
@@ -1976,7 +1979,7 @@ steps:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: publish-frontend-metrics
   when:
     repo:
@@ -2058,7 +2061,7 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: release-canary-npm-packages
   when:
     paths:
@@ -2686,7 +2689,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - ./bin/build artifacts npm retrieve --tag ${DRONE_TAG}
@@ -2710,7 +2713,7 @@ steps:
     NPM_TOKEN:
       from_secret: npm_token
   failure: ignore
-  image: golang:1.20.10-alpine
+  image: node:20.9.0-alpine
   name: release-npm-packages
 trigger:
   event:
@@ -2953,14 +2956,14 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -2968,7 +2971,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: test-frontend
 trigger:
   event:
@@ -3365,14 +3368,14 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: yarn-install
 - commands:
   - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -3380,7 +3383,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: node:18.12.0-alpine
+  image: node:20.9.0-alpine
   name: test-frontend
 trigger:
   cron:
@@ -4386,7 +4389,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.20.10-alpine
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:18.12.0-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20.9.0-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.18.3
@@ -4404,7 +4407,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM osixia/openldap:1.4.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:dbd975af06
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:latest
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
@@ -4420,7 +4423,7 @@ steps:
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.20.10-alpine
-  - trivy --exit-code 1 --severity HIGH,CRITICAL node:18.12.0-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL node:20.9.0-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.18.3
@@ -4438,7 +4441,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL osixia/openldap:1.4.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:dbd975af06
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:latest
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
@@ -4667,6 +4670,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 29a933affceb9cc39b285d936de9e6327deedbb80f1285fa645d596f89ede442
+hmac: 64de498d74f13b64f233fe5d37751903a0efb03b3cab28e046797dc80d390965
 
 ...

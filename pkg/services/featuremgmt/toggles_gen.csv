@@ -84,7 +84,6 @@ prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-me
 logsExploreTableVisualisation,experimental,@grafana/observability-logs,false,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false,false
 transformationsRedesign,GA,@grafana/observability-metrics,false,false,false,true
-toggleLabelsInLogsUI,GA,@grafana/observability-logs,false,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false,false
 traceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 metricsSummary,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
@@ -132,3 +131,6 @@ pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backen
 costManagementUi,experimental,@grafana/databases-frontend,false,false,false,false
 managedPluginsInstall,experimental,@grafana/plugins-platform-backend,false,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,false,true
+alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false,false
+alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false,false
+alertmanagerRemoteOnly,experimental,@grafana/alerting-squad,false,false,false,false
