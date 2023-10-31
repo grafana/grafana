@@ -96,13 +96,27 @@ export function LogsTableWrap(props: Props) {
    *
    */
   useEffect(() => {
+    // If the data frame is empty, there's nothing to viz, it could mean the user has unselected all columns
+    if (!dataFrame.length) {
+      return;
+    }
     const numberOfLogLines = dataFrame ? dataFrame.length : 0;
     const logsFrame = parseLogsFrame(dataFrame);
     const labels = logsFrame?.getAttributesAsLabels();
 
-    const otherFields = logsFrame ? logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden) : [];
+    const otherFields = [];
+
+    if (logsFrame) {
+      otherFields.push(...logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden));
+    }
     if (logsFrame?.severityField) {
       otherFields.push(logsFrame?.severityField);
+    }
+    if (logsFrame?.bodyField) {
+      otherFields.push(logsFrame?.bodyField);
+    }
+    if (logsFrame?.timeField) {
+      otherFields.push(logsFrame?.timeField);
     }
 
     // Use a map to dedupe labels and count their occurrences in the logs
@@ -158,6 +172,19 @@ export function LogsTableWrap(props: Props) {
     });
 
     pendingLabelState = getColumnsFromProps(pendingLabelState);
+
+    // Get all active columns
+    const active = Object.keys(pendingLabelState).filter((key) => pendingLabelState[key].active);
+
+    // If nothing is selected, then select the default columns
+    if (active.length === 0) {
+      if (logsFrame?.bodyField?.name) {
+        pendingLabelState[logsFrame.bodyField.name].active = true;
+      }
+      if (logsFrame?.timeField?.name) {
+        pendingLabelState[logsFrame.timeField.name].active = true;
+      }
+    }
 
     setColumnsWithMeta(pendingLabelState);
 
