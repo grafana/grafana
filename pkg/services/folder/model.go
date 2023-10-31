@@ -43,6 +43,8 @@ type Folder struct {
 	UpdatedBy int64
 	CreatedBy int64
 	HasACL    bool
+
+	Fullpath string
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
@@ -133,7 +135,8 @@ type GetFolderQuery struct {
 	Title *string
 	OrgID int64
 
-	SignedInUser identity.Requester `json:"-"`
+	SignedInUser    identity.Requester `json:"-"`
+	IncludeFullpath bool               `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
@@ -156,6 +159,14 @@ type GetChildrenQuery struct {
 	Page  int64
 
 	SignedInUser identity.Requester `json:"-"`
+}
+
+// GetFoldersQuery captures the information required by the folder service to
+// return a list of all folders of a given UIDs.
+type GetFoldersQuery struct {
+	UIDs            []string
+	OrgID           int64
+	IncludeFullpath bool `json:"-"`
 }
 
 type HasEditPermissionInFoldersQuery struct {

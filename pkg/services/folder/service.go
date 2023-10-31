@@ -26,6 +26,9 @@ type Service interface {
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 	RegisterService(service RegistryService) error
 	GetDescendantCounts(ctx context.Context, cmd *GetDescendantCountsQuery) (DescendantCounts, error)
+	// GetFolders returns all folders for the given orgID and UIDs (regardless of permissions)
+	// If IncludeFullPaths is true, the full path of each folder will be included in the response.
+	GetFolders(ctx context.Context, q *GetFoldersQuery) ([]*Folder, error)
 }
 
 // FolderStore is a folder store.

@@ -2,6 +2,8 @@ package folderimpl
 
 import (
 	"context"
+	"fmt"
+	"runtime"
 	"strings"
 	"time"
 
@@ -13,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+const FULLPATH_SEPARATOR = "/"
 
 type sqlStore struct {
 	db  db.DB
@@ -178,6 +182,15 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		}
 		return nil
 	})
+
+	if q.IncludeFullpath {
+		fullpath, err := ss.getFullpath(ctx, foldr)
+		if err != nil {
+			ss.log.Debug("failed to get fullpath", "error", err, "uid", foldr.UID, "orgID", foldr.OrgID)
+		}
+		foldr.Fullpath = fullpath
+	}
+
 	return foldr.WithURL(), err
 }
 
@@ -324,4 +337,70 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
 	}
 	return height, nil
+}
+
+func (ss *sqlStore) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	var folders []*folder.Folder
+	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		b := strings.Builder{}
+		args := make([]any, 0, len(q.UIDs)+1)
+
+		b.WriteString("SELECT * FROM folder WHERE org_id=? ")
+		args = append(args, q.OrgID)
+		for i, uid := range q.UIDs {
+			if i == 0 {
+				b.WriteString("  AND (")
+			}
+
+			if i > 0 {
+				b.WriteString(" OR ")
+			}
+			b.WriteString(" uid=? ")
+			args = append(args, uid)
+
+			if i == len(q.UIDs)-1 {
+				b.WriteString(")")
+			}
+		}
+		return sess.SQL(b.String(), args...).Find(&folders)
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, i int) error {
+		fullpath, err := ss.getFullpath(ctx, folders[i])
+		if err != nil {
+			return err
+		}
+		folders[i].Fullpath = fullpath
+		return nil
+	}); err != nil {
+		ss.log.Error("failed to fetch folders from folder store", "error", err)
+		return nil, err
+	}
+
+	return folders, nil
+}
+
+func (ss *sqlStore) getFullpath(ctx context.Context, f *folder.Folder) (string, error) {
+	ancestors, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+	if err != nil {
+		return "", err
+	}
+
+	fullpath := ""
+	for _, ancestor := range ancestors {
+		if fullpath != "" {
+			fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, ancestor.Title)
+		} else {
+			fullpath += ancestor.Title
+		}
+	}
+
+	if fullpath != "" {
+		fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, f.Title)
+	} else {
+		fullpath += f.Title
+	}
+	return fullpath, nil
 }
