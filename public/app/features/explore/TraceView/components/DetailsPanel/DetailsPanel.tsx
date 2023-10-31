@@ -132,6 +132,7 @@ export function DetailsPanel(props: Props) {
   }
 
   const linksGetter = () => [];
+  const attrsTabStyle = window.innerWidth > 800 ? { display: 'flex', gap: '0 1rem' } : { display: 'block' };
 
   return (
     <div className={styles.container}>
@@ -196,7 +197,7 @@ export function DetailsPanel(props: Props) {
 
         <TabContent className={styles.tab}>
           {activeTab === TabLabels.Attributes && (
-            <div style={{ display: 'flex', gap: '0 1rem' }}>
+            <div style={attrsTabStyle}>
               <div className={styles.attributesContainer}>
                 <AccordianKeyValues
                   className={styles.attributeValues}
@@ -204,22 +205,18 @@ export function DetailsPanel(props: Props) {
                   label="Span Attributes"
                   linksGetter={linksGetter}
                   isOpen={true}
-                  onToggle={() => {}}
                   interactive={false}
                 />
               </div>
               <div className={styles.attributesContainer}>
-                {process.tags && (
-                  <AccordianKeyValues
-                    className={styles.attributeValues}
-                    data={process.tags}
-                    label="Resource Attributes"
-                    linksGetter={linksGetter}
-                    isOpen={true}
-                    interactive={false}
-                    onToggle={() => {}}
-                  />
-                )}
+                <AccordianKeyValues
+                  className={styles.attributeValues}
+                  data={process.tags}
+                  label="Resource Attributes"
+                  linksGetter={linksGetter}
+                  isOpen={true}
+                  interactive={false}
+                />
               </div>
             </div>
           )}
@@ -302,7 +299,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   attributesContainer: css({
-    label: 'attrscontainer',
+    label: 'DetailsPanelAttrsContainer',
     display: 'flex',
     flexDirection: 'column',
     flex: '0 50%',

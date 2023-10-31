@@ -67,7 +67,6 @@ const getStyles = () => {
 export type AccordianReferencesProps = {
   data: TraceSpanReference[];
   highContrast?: boolean;
-  interactive?: boolean;
   openedItems?: Set<TraceSpanReference>;
   onItemToggle?: (reference: TraceSpanReference) => void;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
@@ -75,7 +74,6 @@ export type AccordianReferencesProps = {
 
 type ReferenceItemProps = {
   data: TraceSpanReference[];
-  interactive?: boolean;
   openedItems?: Set<TraceSpanReference>;
   onItemToggle?: (reference: TraceSpanReference) => void;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
@@ -83,7 +81,7 @@ type ReferenceItemProps = {
 
 // export for test
 export function References(props: ReferenceItemProps) {
-  const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
+  const { data, createFocusSpanLink, openedItems, onItemToggle } = props;
   const styles = useStyles2(getStyles);
 
   return (
@@ -118,11 +116,10 @@ export function References(props: ReferenceItemProps) {
                 className={i < data.length - 1 ? ubMb1 : null}
                 data={reference.tags || []}
                 highContrast
-                interactive={interactive}
                 isOpen={openedItems ? openedItems.has(reference) : false}
                 label={'attributes'}
                 linksGetter={null}
-                onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
+                onToggle={onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>
           )}
@@ -132,13 +129,7 @@ export function References(props: ReferenceItemProps) {
   );
 }
 
-const AccordianReferences = ({
-  data,
-  interactive = true,
-  onItemToggle,
-  openedItems,
-  createFocusSpanLink,
-}: AccordianReferencesProps) => {
+const AccordianReferences = ({ data, onItemToggle, openedItems, createFocusSpanLink }: AccordianReferencesProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -148,7 +139,6 @@ const AccordianReferences = ({
         openedItems={openedItems}
         createFocusSpanLink={createFocusSpanLink}
         onItemToggle={onItemToggle}
-        interactive={interactive}
       />
     </div>
   );
