@@ -81,7 +81,11 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
   };
 
   const deleteRule = async (ruleWithLocation: RuleWithLocation): Promise<void> => {
-    const { namespace, group, rule } = ruleWithLocation;
+    let { namespace, group, rule } = ruleWithLocation;
+
+    if (isGrafanaRulerRule(rule)) {
+      namespace = rule.grafana_alert.namespace_uid;
+    }
 
     // it was the last rule, delete the entire group
     if (group.rules.length === 1) {
