@@ -75,6 +75,7 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, err
 	defer span.End()
 	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
 	if err != nil {
+		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -108,6 +109,7 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 
 	resp, err := c.connectClient.SelectSeries(ctx, req)
 	if err != nil {
+		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -162,6 +164,7 @@ func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSe
 
 	resp, err := c.connectClient.SelectMergeStacktraces(ctx, req)
 	if err != nil {
+		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -207,9 +210,10 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
 	defer span.End()
 	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{}))
 	if err != nil {
+		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, fmt.Errorf("error seding LabelNames request %v", err)
+		return nil, fmt.Errorf("error sending LabelNames request %v", err)
 	}
 
 	var filtered []string
@@ -227,6 +231,7 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string) ([]stri
 	defer span.End()
 	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&typesv1.LabelValuesRequest{Name: label}))
 	if err != nil {
+		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err

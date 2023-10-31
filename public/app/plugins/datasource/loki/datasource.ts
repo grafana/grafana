@@ -868,10 +868,6 @@ export class LokiDatasource
     return annotations;
   }
 
-  showContextToggle(row?: LogRowModel): boolean {
-    return true;
-  }
-
   addAdHocFilters(queryExpr: string) {
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     let expr = replaceVariables(queryExpr);

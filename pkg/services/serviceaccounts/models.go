@@ -191,7 +191,7 @@ type ExtSvcAccount struct {
 
 type ManageExtSvcAccountCmd struct {
 	ExtSvcSlug  string
-	Enabled     bool // disabled: the service account and its permissions will be deleted
+	Enabled     bool
 	OrgID       int64
 	Permissions []accesscontrol.Permission
 }

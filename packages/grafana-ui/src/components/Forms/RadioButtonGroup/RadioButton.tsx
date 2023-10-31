@@ -110,6 +110,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
     radioLabel: css({
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
       fontSize,
       height: `${labelHeight}px`,
       // Deduct border from line-height for perfect vertical centering on windows and linux
