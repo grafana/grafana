@@ -1115,7 +1115,7 @@ export class LokiDatasource
   }
   /**
    * Retrieves query hints for query improvements based on a Loki query and its result data.
-   * Used in Query builder to provide hints for query improvements, such as adding a parser, etc.
+   * Used by the Query builder to provide hints for query suggestions, such as adding a parser, etc.
    * @returns An array of query hints for potential query improvements.
    */
   getQueryHints(query: LokiQuery, result: DataFrame[]): QueryHint[] {
