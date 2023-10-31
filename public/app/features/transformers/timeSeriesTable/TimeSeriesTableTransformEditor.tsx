@@ -9,7 +9,7 @@ import {
   SelectableValue,
   getFieldDisplayName,
 } from '@grafana/data';
-import { InlineFieldRow, InlineField, StatsPicker, InlineSwitch, Select } from '@grafana/ui';
+import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 
 import {
   timeSeriesTableTransformer,
@@ -22,18 +22,7 @@ export function TimeSeriesTableTransformEditor({
   options,
   onChange,
 }: TransformerUIProps<TimeSeriesTableTransformerOptions>) {
-  const timeFields: Array<SelectableValue<string>> = [];
   const refIdMap = getRefData(input);
-
-  // Retrieve time fields
-  for (const frame of input) {
-    for (const field of frame.fields) {
-      if (field.type === 'time') {
-        const name = getFieldDisplayName(field, frame, input);
-        timeFields.push({ label: name, value: name });
-      }
-    }
-  }
 
   const onSelectTimefield = useCallback(
     (refId: string, value: SelectableValue<string>) => {
@@ -65,24 +54,31 @@ export function TimeSeriesTableTransformEditor({
     [onChange, options]
   );
 
-  const onMergeSeriesToggle = useCallback(
-    (refId: string) => {
-      const mergeSeries = options[refId]?.mergeSeries !== undefined ? !options[refId].mergeSeries : false;
-      onChange({
-        ...options,
-        [refId]: {
-          ...options[refId],
-          mergeSeries,
-        },
-      });
-    },
-    [onChange, options]
-  );
 
   let configRows = [];
   for (const refId of Object.keys(refIdMap)) {
+
+    // Get time fields for the current refId
+    const timeFields: Array<SelectableValue<string>> = [];
+    for (const frame of input) {
+
+      if (frame.refId === refId) {
+        for (const field of frame.fields) {
+          if (field.type === 'time') {
+            const name = getFieldDisplayName(field, frame, input);
+            timeFields.push({ label: name, value: name });
+          }
+        }
+      }
+    }
+
     configRows.push(
       <InlineFieldRow key={refId}>
+        <InlineField>
+          <InlineLabel>
+            {`Trend #${refId}`}
+          </InlineLabel>
+        </InlineField>
         <InlineField
           label="Time field"
           tooltip="The time field that will be used for the time series. If not selected the first found will be used."
@@ -98,15 +94,6 @@ export function TimeSeriesTableTransformEditor({
             stats={[options[refId]?.stat ?? ReducerID.lastNotNull]}
             onChange={onSelectStat.bind(null, refId)}
             filterOptions={(ext) => ext.id !== ReducerID.allValues && ext.id !== ReducerID.uniqueValues}
-          />
-        </InlineField>
-        <InlineField
-          label="Merge series"
-          tooltip="If selected, multiple series from a single datasource will be merged into one series."
-        >
-          <InlineSwitch
-            value={options[refId]?.mergeSeries !== undefined ? options[refId]?.mergeSeries : true}
-            onChange={onMergeSeriesToggle.bind(null, refId)}
           />
         </InlineField>
       </InlineFieldRow>
