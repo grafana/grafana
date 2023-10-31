@@ -34,7 +34,11 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
 }
 
-export type fieldNameMeta = { percentOfLinesWithLabel: number; active: boolean | undefined };
+export type fieldNameMeta = {
+  percentOfLinesWithLabel: number;
+  active: boolean | undefined;
+  type?: 'BODY_FIELD' | 'TIME_FIELD';
+};
 type fieldName = string;
 type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
@@ -184,6 +188,11 @@ export function LogsTableWrap(props: Props) {
       if (logsFrame?.timeField?.name) {
         pendingLabelState[logsFrame.timeField.name].active = true;
       }
+    }
+
+    if (logsFrame) {
+      pendingLabelState[logsFrame.bodyField.name].type = 'BODY_FIELD';
+      pendingLabelState[logsFrame.timeField.name].type = 'TIME_FIELD';
     }
 
     setColumnsWithMeta(pendingLabelState);
