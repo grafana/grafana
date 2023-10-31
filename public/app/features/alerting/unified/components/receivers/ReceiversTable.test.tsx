@@ -183,29 +183,13 @@ describe('ReceiversTable', () => {
 
       const notifiers: NotifierDTO[] = [mockNotifier('googlechat', 'Google Chat'), mockNotifier('sensugo', 'Sensu Go')];
 
-      it('should be visible when user has permissions to read provisioning', async () => {
-        grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
-
-        await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);
-
-        const buttons = within(screen.getByTestId('dynamic-table')).getAllByTestId('export');
-        expect(buttons).toHaveLength(2);
-      });
-      it('should be visible when user has permissions to read provisioning with secrets', async () => {
-        grantUserPermissions([AccessControlAction.AlertingProvisioningReadSecrets]);
-
-        await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);
-
-        const buttons = within(screen.getByTestId('dynamic-table')).getAllByTestId('export');
-        expect(buttons).toHaveLength(2);
-      });
-      it('should not be visible when user has no provisioning permissions', async () => {
+      it('should be visible when user has permissions to read notifications', async () => {
         grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
 
-        await renderReceieversTable(receivers, [], GRAFANA_RULES_SOURCE_NAME);
+        await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);
 
-        const buttons = within(screen.getByTestId('dynamic-table')).queryAllByTestId('export');
-        expect(buttons).toHaveLength(0);
+        const buttons = within(screen.getByTestId('dynamic-table')).getAllByTestId('export');
+        expect(buttons).toHaveLength(2);
       });
     });
   });
@@ -232,7 +216,7 @@ describe('ReceiversTable', () => {
 
       const notifiers: NotifierDTO[] = [mockNotifier('googlechat', 'Google Chat'), mockNotifier('sensugo', 'Sensu Go')];
 
-      grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
+      grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
 
       // Act
       await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);
