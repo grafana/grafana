@@ -47,6 +47,7 @@ export const Messages = {
       'These are technical preview features, not recommended to be used in production environments. Read more\n' +
       '                  about feature status',
     technicalPreviewLinkText: 'here',
+    deprecatedFeatures: 'Deprecated features',
   },
   alertmanager: {
     warningPre: "Note: integration with Alertmanager is needed only in cases when you can't use",

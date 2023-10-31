@@ -23,6 +23,7 @@ import { fetchDBClustersAction } from '../../../shared/core/reducers/dbaas/dbClu
 import { selectDBCluster, selectKubernetesCluster } from '../../../shared/core/reducers/dbaas/dbaas';
 import { useUpdateOfKubernetesList } from '../../hooks/useKubernetesList';
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
+import DbaasDeprecationWarning from '../DeprecationWarning';
 import { isKubernetesListUnavailable } from '../Kubernetes/Kubernetes.utils';
 import { KubernetesClusterStatus } from '../Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
 
@@ -215,6 +216,7 @@ export const DBCluster: FC = () => {
       <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={DBaaSMessages.dbaas} featureSelector={featureSelector}>
+          <DbaasDeprecationWarning />
           <div>
             <div className={styles.actionPanel}>
               <AddNewClusterButton />

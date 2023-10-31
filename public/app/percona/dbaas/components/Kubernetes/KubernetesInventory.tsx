@@ -22,6 +22,7 @@ import { useSelector } from 'app/types';
 import { useAppDispatch } from '../../../../store/store';
 import { useKubernetesList } from '../../hooks/useKubernetesList';
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
+import DbaasDeprecationWarning from '../DeprecationWarning';
 
 import { clusterActionsRender } from './ColumnRenderers/ColumnRenderers';
 import { K8sPageMode } from './K8sRouting/K8sRouting';
@@ -37,7 +38,6 @@ import { KubernetesClusterStatus as K8SStatus } from './KubernetesClusterStatus/
 import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
 import { UpdateOperatorModal } from './OperatorStatusItem/KubernetesOperatorStatus/UpdateOperatorModal/UpdateOperatorModal';
 import { OperatorStatusRow } from './OperatorStatusRow/OperatorStatusRow';
-import { PortalK8sFreeClusterPromotingMessage } from './PortalK8sFreeClusterPromotingMessage/PortalK8sFreeClusterPromotingMessage';
 import { ViewClusterConfigModal } from './ViewClusterConfigModal/ViewClusterConfigModal';
 
 interface KubernetesInventoryProps {
@@ -159,6 +159,7 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
       <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={Messages.dbaas} featureSelector={featureSelector}>
+          <DbaasDeprecationWarning />
           <div>
             <div className={styles.actionPanel}>
               <AddNewClusterButton />
@@ -231,7 +232,6 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
             />
           </div>
         </FeatureLoader>
-        {kubernetes && kubernetes.length === 0 && <PortalK8sFreeClusterPromotingMessage />}
       </OldPage.Contents>
     </OldPage>
   );
