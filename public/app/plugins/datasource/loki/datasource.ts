@@ -549,7 +549,7 @@ export class LokiDatasource
             start: start,
             end: end,
           },
-          { showErrorAlert: false }
+          { ConErrorAlert: false }
         );
 
         statsForAll = {
@@ -966,10 +966,6 @@ export class LokiDatasource
    */
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
     return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery));
-  }
-
-  showContextToggle(row?: LogRowModel): boolean {
-    return true;
   }
 
   /**

@@ -72,10 +72,26 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   };
 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
-    onUpdate({
-      ...annotation,
-      datasource: getDataSourceRef(ds),
-    });
+    const dsRef = getDataSourceRef(ds);
+
+    if (annotation.datasource?.type !== dsRef.type) {
+      onUpdate({
+        datasource: dsRef,
+        builtIn: annotation.builtIn,
+        enable: annotation.enable,
+        iconColor: annotation.iconColor,
+        name: annotation.name,
+        hide: annotation.hide,
+        filter: annotation.filter,
+        mappings: annotation.mappings,
+        type: annotation.type,
+      });
+    } else {
+      onUpdate({
+        ...annotation,
+        datasource: dsRef,
+      });
+    }
   };
 
   const onChange = (ev: React.FocusEvent<HTMLInputElement>) => {

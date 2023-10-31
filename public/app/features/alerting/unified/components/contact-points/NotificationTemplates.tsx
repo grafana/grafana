@@ -6,12 +6,12 @@ import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { TemplatesTable } from '../receivers/TemplatesTable';
 
-export const MessageTemplates = () => {
+export const NotificationTemplates = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const { data, error } = useAlertmanagerConfig(selectedAlertmanager);
 
   if (error) {
-    return <Alert title="Failed to fetch message templates">{String(error)}</Alert>;
+    return <Alert title="Failed to fetch notification templates">{String(error)}</Alert>;
   }
 
   if (data) {
