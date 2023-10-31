@@ -224,12 +224,16 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, m
 		)
 	}
 
-	listResponse, err := store.List(ctx, path, &filestorage.Paging{First: maxFiles}, &filestorage.ListOptions{
-		Recursive:   false,
-		WithFolders: true,
-		WithFiles:   true,
-		Filter:      pathFilter,
-	})
+	listResponse, err := store.List(ctx, path,
+		&filestorage.Paging{
+			Limit: maxFiles,
+		},
+		&filestorage.ListOptions{
+			Recursive:   false,
+			WithFolders: true,
+			WithFiles:   true,
+			Filter:      pathFilter,
+		})
 
 	if err != nil {
 		return nil, err
