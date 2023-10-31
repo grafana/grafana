@@ -7,6 +7,7 @@ import { DataFrame, EnumFieldConfig, GrafanaTheme2 } from '@grafana/data';
 import { ConvertFieldTypeTransformerOptions } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import {
   Button,
+  FieldValidationMessage,
   HorizontalGroup,
   Icon,
   IconButton,
@@ -29,6 +30,8 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
   const [enumRows, updateEnumRows] = useState<string[]>(
     options.conversions[convertFieldTransformIndex].enumConfig?.text ?? []
   );
+
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) {
@@ -89,6 +92,10 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
   };
 
   const onChangeEnumValue = (index: number, value: string) => {
+    if (enumRows.includes(value)) {
+      return;
+    }
+
     onChangeEnumMapping(index, value);
   };
 
@@ -156,12 +163,25 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
                                 <Input
                                   type="text"
                                   value={editingValue}
-                                  onChange={(event) => setEditingValue(event.currentTarget.value)}
+                                  onChange={(event) => {
+                                    if (
+                                      event.currentTarget.value !== '' &&
+                                      enumRows.includes(event.currentTarget.value)
+                                    ) {
+                                      setValidationError('Enum value already exists');
+                                    } else {
+                                      setValidationError(null);
+                                    }
+
+                                    setEditingValue(event.currentTarget.value);
+                                  }}
                                   onBlur={() => {
                                     setEditingIndex(null);
+                                    setValidationError(null);
                                     onChangeEnumValue(mappedIndex, editingValue);
                                   }}
                                 />
+                                {validationError && <FieldValidationMessage>{validationError}</FieldValidationMessage>}
                               </td>
                             ) : (
                               <td onClick={() => setEditRow(mappedIndex, value)} className={styles.clickableTableCell}>
