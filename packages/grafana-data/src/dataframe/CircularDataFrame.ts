@@ -3,8 +3,8 @@ import { CircularVector } from '../vector/CircularVector';
 import { MutableDataFrame } from './MutableDataFrame';
 
 interface CircularOptions {
-  // append?: 'head' | 'tail';
-  // capacity?: number;
+  append?: 'head' | 'tail';
+  capacity?: number;
 }
 
 /**
