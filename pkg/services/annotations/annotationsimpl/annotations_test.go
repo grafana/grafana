@@ -4,17 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"testing"
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
@@ -41,38 +40,28 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 	tagService := tagimpl.ProvideService(sql, sql.Cfg)
-	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, features, tagService, quotaService)
 
-	repo := ProvideService(
-		sql,
-		cfg,
-		features,
-		tagService,
-	)
+	repo := ProvideService(sql, cfg, features, tagService)
 
-	require.NoError(t, err)
-
-	testDashboard1 := dashboards.SaveDashboardCommand{
+	dashboard1 := testutil.CreateDashboard(t, sql, features, dashboards.SaveDashboardCommand{
 		UserID:   1,
 		OrgID:    1,
 		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "Dashboard 1",
 		}),
-	}
-	dashboard1, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
-	require.NoError(t, err)
+	})
 
-	testDashboard2 := dashboards.SaveDashboardCommand{
-		UserID: 1,
-		OrgID:  1,
+	_ = testutil.CreateDashboard(t, sql, features, dashboards.SaveDashboardCommand{
+		UserID:   1,
+		OrgID:    1,
+		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "Dashboard 2",
 		}),
-	}
-	_, err = dashboardStore.SaveDashboard(context.Background(), testDashboard2)
-	require.NoError(t, err)
+	})
+
+	var err error
 
 	dash1Annotation := &annotations.Item{
 		OrgID:       1,
@@ -98,11 +87,11 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	err = repo.Save(context.Background(), organizationAnnotation)
 	require.NoError(t, err)
 
-	user := &user.SignedInUser{
+	u := &user.SignedInUser{
 		UserID: 1,
 		OrgID:  1,
 	}
-	role := setupRBACRole(t, sql, user)
+	role := testutil.SetupRBACRole(t, sql, u)
 
 	type testStruct struct {
 		description           string
@@ -162,12 +151,12 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			user.Permissions = map[int64]map[string][]string{1: tc.permissions}
-			setupRBACPermission(t, sql, role, user)
+			u.Permissions = map[int64]map[string][]string{1: tc.permissions}
+			testutil.SetupRBACPermission(t, sql, role, u)
 
 			results, err := repo.Find(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
-				SignedInUser: user,
+				SignedInUser: u,
 			})
 			if tc.expectedError {
 				require.Error(t, err)
@@ -213,16 +202,14 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	annotationsTexts := make([]string, 0, folder.MaxNestedFolderDepth+1)
 
 	setupFolderStructure := func() *sqlstore.SQLStore {
-		db := db.InitTestDB(t)
+		sql := db.InitTestDB(t)
 
 		// enable nested folders so that the folder table is populated for all the tests
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
-		tagService := tagimpl.ProvideService(db, db.Cfg)
+		tagService := tagimpl.ProvideService(sql, sql.Cfg)
 
-		quotaService := quotatest.New(false, nil)
-
-		dashStore, err := dashboardstore.ProvideDashboardStore(db, db.Cfg, features, tagService, quotaService)
+		dashStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, features, tagService, quotatest.New(false, nil))
 		require.NoError(t, err)
 
 		origNewGuardian := guardian.New
@@ -231,12 +218,13 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)
+		ac := acimpl.ProvideAccessControl(sql.Cfg)
+		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sql.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features)
 
 		cfg := setting.NewCfg()
 		cfg.AnnotationMaximumTagsLength = 60
 
-		store := NewXormStore(cfg, log.New("annotation.test"), db, tagService)
+		store := NewXormStore(cfg, log.New("annotation.test"), sql, tagService)
 
 		parentUID := ""
 		for i := 0; ; i++ {
@@ -257,7 +245,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 				t.Fail()
 			}
 
-			dashInFolder := dashboards.SaveDashboardCommand{
+			dashboard := testutil.CreateDashboard(t, sql, features, dashboards.SaveDashboardCommand{
 				UserID:   usr.UserID,
 				OrgID:    orgID,
 				IsFolder: false,
@@ -266,9 +254,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 				}),
 				FolderID:  f.ID,
 				FolderUID: f.UID,
-			}
-			dashboard, err := dashStore.SaveDashboard(context.Background(), dashInFolder)
-			require.NoError(t, err)
+			})
 
 			allDashboards = append(allDashboards, dashInfo{UID: dashboard.UID, ID: dashboard.ID})
 
@@ -287,11 +273,11 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			annotationsTexts = append(annotationsTexts, annotationTxt)
 		}
 
-		role = setupRBACRole(t, db, usr)
-		return db
+		role = testutil.SetupRBACRole(t, sql, usr)
+		return sql
 	}
 
-	db := setupFolderStructure()
+	sql := setupFolderStructure()
 
 	testCases := []struct {
 		desc                   string
@@ -325,10 +311,10 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationMaximumTagsLength = 60
 
-			repo := ProvideService(db, cfg, tc.features, tagimpl.ProvideService(db, db.Cfg))
+			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql, sql.Cfg))
 
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
-			setupRBACPermission(t, db, role, usr)
+			testutil.SetupRBACPermission(t, sql, role, usr)
 
 			results, err := repo.Find(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -345,62 +331,4 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			}
 		})
 	}
-}
-
-func setupRBACRole(t *testing.T, db *sqlstore.SQLStore, user *user.SignedInUser) *accesscontrol.Role {
-	t.Helper()
-	var role *accesscontrol.Role
-	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		role = &accesscontrol.Role{
-			OrgID:   user.OrgID,
-			UID:     "test_role",
-			Name:    "test:role",
-			Updated: time.Now(),
-			Created: time.Now(),
-		}
-		_, err := sess.Insert(role)
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Insert(accesscontrol.UserRole{
-			OrgID:   role.OrgID,
-			RoleID:  role.ID,
-			UserID:  user.UserID,
-			Created: time.Now(),
-		})
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-
-	require.NoError(t, err)
-	return role
-}
-
-func setupRBACPermission(t *testing.T, db *sqlstore.SQLStore, role *accesscontrol.Role, user *user.SignedInUser) {
-	t.Helper()
-	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Exec("DELETE FROM permission WHERE role_id = ?", role.ID); err != nil {
-			return err
-		}
-
-		var acPermission []accesscontrol.Permission
-		for action, scopes := range user.Permissions[user.OrgID] {
-			for _, scope := range scopes {
-				acPermission = append(acPermission, accesscontrol.Permission{
-					RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now(),
-				})
-			}
-		}
-
-		if _, err := sess.InsertMulti(&acPermission); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	require.NoError(t, err)
 }

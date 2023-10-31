@@ -3,8 +3,12 @@ package annotationsimpl
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/annotations/testutil"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"strings"
 	"testing"
+
+	annotation_ac "github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,14 +19,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	dashScopeType = annotations.Dashboard.String()
+	orgScopeType  = annotations.Organization.String()
 )
 
 func TestIntegrationAnnotations(t *testing.T) {
@@ -59,30 +65,23 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
-		require.NoError(t, err)
-
-		testDashboard1 := dashboards.SaveDashboardCommand{
+		dashboard := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": "Dashboard 1",
 			}),
-		}
+		})
 
-		dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
-		require.NoError(t, err)
-
-		testDashboard2 := dashboards.SaveDashboardCommand{
+		dashboard2 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 			UserID: 1,
 			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": "Dashboard 2",
 			}),
-		}
-		dashboard2, err := dashboardStore.SaveDashboard(context.Background(), testDashboard2)
-		require.NoError(t, err)
+		})
+
+		var err error
 
 		annotation := &annotations.Item{
 			OrgID:       1,
@@ -145,11 +144,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
-			}, annotations.AccessResources{
+			}, &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard.UID: dashboard.ID,
 				},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			})
 
 			require.NoError(t, err)
@@ -189,7 +188,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 			require.NoError(t, err)
 			query := &annotations.ItemQuery{OrgID: 100, SignedInUser: testUser}
-			accRes := annotations.AccessResources{ScopeTypes: scopeTypeGen(withOrgType())}
+			accRes := &annotation_ac.AccessResources{ScopeTypes: map[any]struct{}{orgScopeType: {}}}
 			inserted, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
@@ -216,7 +215,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 			require.NoError(t, err)
 			query := &annotations.ItemQuery{OrgID: 101, SignedInUser: testUser}
-			accRes := annotations.AccessResources{ScopeTypes: scopeTypeGen(withOrgType())}
+			accRes := &annotation_ac.AccessResources{ScopeTypes: map[any]struct{}{orgScopeType: {}}}
 			inserted, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
@@ -227,11 +226,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 				OrgID:        1,
 				AnnotationID: annotation2.ID,
 				SignedInUser: testUser,
-			}, annotations.AccessResources{
+			}, &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard2.UID: dashboard2.ID,
 				},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			})
 			require.NoError(t, err)
 			assert.Len(t, items, 1)
@@ -239,9 +238,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find any when item is outside time range", func(t *testing.T) {
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -255,9 +254,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find one when tag filter does not match", func(t *testing.T) {
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -272,9 +271,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find one when type filter does not match", func(t *testing.T) {
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -289,9 +288,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find one when all tag filters does match", func(t *testing.T) {
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -306,7 +305,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find two annotations using partial match", func(t *testing.T) {
-			accRes := annotations.AccessResources{ScopeTypes: scopeTypeGen(withDashType())}
+			accRes := &annotation_ac.AccessResources{ScopeTypes: map[any]struct{}{orgScopeType: {}}}
 			items, err := store.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
 				From:         1,
@@ -320,9 +319,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find one when all key value tag filters does match", func(t *testing.T) {
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -344,9 +343,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -379,9 +378,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -412,9 +411,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -445,9 +444,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -481,9 +480,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 				To:           15,
 				SignedInUser: testUser,
 			}
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{"foo": 1},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 			items, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -511,11 +510,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err = store.Add(context.Background(), annotation3)
 			require.NoError(t, err)
 
-			accRes := annotations.AccessResources{
+			accRes := &annotation_ac.AccessResources{
 				Dashboards: map[string]int64{
 					dashboard2.UID: dashboard2.ID,
 				},
-				ScopeTypes: scopeTypeGen(withDashType()),
+				ScopeTypes: map[any]struct{}{dashScopeType: {}},
 			}
 
 			query := &annotations.ItemQuery{
@@ -665,27 +664,5 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 		require.Equal(b, "type:outage", result.Tags[1].Tag)
 		require.Equal(b, int64(1), result.Tags[0].Count)
 		require.Equal(b, int64(1), result.Tags[1].Count)
-	}
-}
-
-type accessTypeMutator func(map[any]struct{})
-
-func scopeTypeGen(mutators ...accessTypeMutator) map[any]struct{} {
-	types := make(map[any]struct{})
-	for _, mutator := range mutators {
-		mutator(types)
-	}
-	return types
-}
-
-func withDashType() func(types map[any]struct{}) {
-	return func(types map[any]struct{}) {
-		types["dashboard"] = struct{}{}
-	}
-}
-
-func withOrgType() func(types map[any]struct{}) {
-	return func(types map[any]struct{}) {
-		types["organization"] = struct{}{}
 	}
 }
