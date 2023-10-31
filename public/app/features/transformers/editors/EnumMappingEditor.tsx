@@ -49,6 +49,14 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
     updateEnumRows(copy);
   };
 
+  useEffect(() => {
+    // Generate enum values from scratch when none exist in save model
+    if (!options.conversions[convertFieldTransformIndex].enumConfig?.text?.length && input.length) {
+      generateEnumValues();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [input]);
+
   const generateEnumValues = () => {
     // Loop through all fields in provided data frames to find the target field
     const targetField = input
