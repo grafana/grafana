@@ -85,6 +85,7 @@ enable = [
   "exhaustive",
   "typecheck",
   "revive",
+  "whitespace",
 ]
 
 [[issues.exclude-rules]]
