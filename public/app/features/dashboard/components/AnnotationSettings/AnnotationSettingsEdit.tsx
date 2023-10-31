@@ -73,8 +73,15 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
     onUpdate({
-      ...annotation,
       datasource: getDataSourceRef(ds),
+      builtIn: annotation.builtIn,
+      enable: annotation.enable,
+      iconColor: annotation.iconColor,
+      name: annotation.name,
+      hide: annotation.hide,
+      filter: annotation.filter,
+      mappings: annotation.mappings,
+      type: annotation.type,
     });
   };
 
