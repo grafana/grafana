@@ -46,6 +46,8 @@ export interface ExploreTracePanelState {
 
 export interface ExploreLogsPanelState {
   id?: string;
+  columns?: Record<number, string>;
+  visualisationType?: 'table' | 'logs';
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
