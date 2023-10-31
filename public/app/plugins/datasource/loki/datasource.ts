@@ -549,7 +549,7 @@ export class LokiDatasource
             start: start,
             end: end,
           },
-          { ConErrorAlert: false }
+          { showErrorAlert: false }
         );
 
         statsForAll = {
