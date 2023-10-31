@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { noop } from 'lodash';
 import React from 'react';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
@@ -38,9 +38,20 @@ const ui = {
 };
 
 describe('DashboardPicker', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('Renders panels without ids', async () => {
     render(<DashboardPicker isOpen={true} onChange={noop} onDismiss={noop} dashboardUid="dash-2" panelId={2} />, {
       wrapper: TestProvider,
+    });
+    act(() => {
+      jest.advanceTimersByTime(500);
     });
 
     expect(await ui.dashboardButton(/Dashboard 1/).find()).toBeInTheDocument();

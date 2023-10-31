@@ -134,4 +134,5 @@ prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,false
 alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false,false
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false,false
 alertmanagerRemoteOnly,experimental,@grafana/alerting-squad,false,false,false,false
+annotationPermissionUpdate,experimental,@grafana/grafana-authnz-team,false,false,false,false
 dashboardSceneForViewers,experimental,@grafana/dashboards-squad,false,false,false,true
