@@ -503,5 +503,3 @@ replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20230627081928-d04aa38a
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20230918083811-3513be6760b7
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
-
-replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
