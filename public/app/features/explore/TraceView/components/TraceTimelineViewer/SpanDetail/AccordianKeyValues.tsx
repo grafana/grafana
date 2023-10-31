@@ -159,6 +159,7 @@ export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
         {!isOpen && <KeyValuesSummary data={data} />}
       </div>
       {isOpen && <KeyValuesTable data={data} linksGetter={linksGetter} />}
+      {isEmpty && <span>No tags to display.</span>}
     </div>
   );
 }
