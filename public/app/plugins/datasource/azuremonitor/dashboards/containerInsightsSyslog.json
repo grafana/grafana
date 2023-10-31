@@ -4,12 +4,6 @@
     "__requires": [
       {
         "type": "panel",
-        "id": "azure-welcome",
-        "name": "Azure Welcome",
-        "version": "1.0.0"
-      },
-      {
-        "type": "panel",
         "id": "barchart",
         "name": "Bar chart",
         "version": ""
@@ -57,21 +51,6 @@
     "links": [],
     "liveNow": false,
     "panels": [
-      {
-        "gridPos": {
-          "h": 3,
-          "w": 24,
-          "x": 0,
-          "y": 0
-        },
-        "id": 19,
-        "options": {
-          "seriesCountSize": "sm",
-          "showSeriesCount": false,
-          "text": "Default value of text input option"
-        },
-        "type": "azure-welcome"
-      },
       { "description": "",
         "gridPos": {
           "h": 7,
