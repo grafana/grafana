@@ -38,6 +38,7 @@ import MoreButton from '../../MoreButton';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { Spacer } from '../../Spacer';
 import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
+import { Details } from '../tabs/Details';
 import { History } from '../tabs/History';
 import { InstancesList } from '../tabs/Instances';
 import { QueryResults } from '../tabs/Query';
@@ -49,10 +50,11 @@ type RuleViewerProps = GrafanaRouteComponentProps<{
 }>;
 
 enum Tabs {
-  Instances,
   Query,
-  Routing,
+  Instances,
   History,
+  Routing,
+  Details,
 }
 
 // @TODO
@@ -60,7 +62,7 @@ enum Tabs {
 // figure out why we needed <AlertingPageWrapper>
 // add provisioning and federation stuff back in
 const RuleViewer = ({ match }: RuleViewerProps) => {
-  const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Instances);
+  const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Query);
 
   const id = ruleId.getRuleIdFromPathname(match.params);
   const identifier = useMemo(() => {
@@ -169,20 +171,26 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
             {/* tabs and tab content */}
             <TabsBar>
               <Tab
+                label="Query and conditions"
+                onChangeTab={() => setActiveTab(Tabs.Query)}
+                active={activeTab === Tabs.Query}
+              />
+              <Tab
                 label="Instances"
-                active
                 counter={numberOfInstance}
                 onChangeTab={() => setActiveTab(Tabs.Instances)}
+                active={activeTab === Tabs.Instances}
               />
-              <Tab label="Query" onChangeTab={() => setActiveTab(Tabs.Query)} />
-              <Tab label="Routing" onChangeTab={() => setActiveTab(Tabs.Routing)} />
-              <Tab label="History" onChangeTab={() => setActiveTab(Tabs.History)} />
+              <Tab label="History" onChangeTab={() => setActiveTab(Tabs.History)} active={activeTab === Tabs.History} />
+              <Tab label="Routing" onChangeTab={() => setActiveTab(Tabs.Routing)} active={activeTab === Tabs.Routing} />
+              <Tab label="Details" onChangeTab={() => setActiveTab(Tabs.Details)} active={activeTab === Tabs.Details} />
             </TabsBar>
             <TabContent>
-              {activeTab === Tabs.Query && <QueryResults />}
+              {activeTab === Tabs.Query && <QueryResults rule={rule} />}
               {activeTab === Tabs.Instances && <InstancesList rule={rule} />}
-              {activeTab === Tabs.Routing && <Routing />}
               {activeTab === Tabs.History && <History />}
+              {activeTab === Tabs.Routing && <Routing />}
+              {activeTab === Tabs.Details && <Details />}
             </TabContent>
           </Stack>
         </Stack>

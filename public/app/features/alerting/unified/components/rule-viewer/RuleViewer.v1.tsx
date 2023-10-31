@@ -1,23 +1,18 @@
 import { css } from '@emotion/css';
-import { produce } from 'immer';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useObservable, useToggle } from 'react-use';
+import React, { useMemo } from 'react';
+import { useToggle } from 'react-use';
 
-import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config, isFetchError } from '@grafana/runtime';
+import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, useStyles2, VerticalGroup } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
-import { AlertQuery, GrafanaRuleDefinition } from '../../../../../types/unified-alerting-dto';
-import { GrafanaRuleQueryViewer, QueryPreview } from '../../GrafanaRuleQueryViewer';
-import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
+import { GrafanaRuleDefinition } from '../../../../../types/unified-alerting-dto';
 import { useCombinedRule } from '../../hooks/useCombinedRule';
-import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
 import { useCleanAnnotations } from '../../utils/annotations';
 import { getRulesSourceByName } from '../../utils/datasource';
-import { alertRuleToQueries } from '../../utils/query';
 import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
@@ -32,6 +27,8 @@ import { RuleDetailsFederatedSources } from '../rules/RuleDetailsFederatedSource
 import { RuleDetailsMatchingInstances } from '../rules/RuleDetailsMatchingInstances';
 import { RuleHealth } from '../rules/RuleHealth';
 import { RuleState } from '../rules/RuleState';
+
+import { QueryResults } from './tabs/Query';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
@@ -54,54 +51,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
 
   const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
 
-  const runner = useMemo(() => new AlertingQueryRunner(), []);
-  const data = useObservable(runner.get());
-  const queries = useMemo(() => alertRuleToQueries(rule), [rule]);
   const annotations = useCleanAnnotations(rule?.annotations || {});
-
-  const [evaluationTimeRanges, setEvaluationTimeRanges] = useState<Record<string, RelativeTimeRange>>({});
-
-  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
-
-  const onRunQueries = useCallback(() => {
-    if (queries.length > 0 && allDataSourcesAvailable) {
-      const evalCustomizedQueries = queries.map<AlertQuery>((q) => ({
-        ...q,
-        relativeTimeRange: evaluationTimeRanges[q.refId] ?? q.relativeTimeRange,
-      }));
-
-      runner.run(evalCustomizedQueries);
-    }
-  }, [queries, evaluationTimeRanges, runner, allDataSourcesAvailable]);
-
-  useEffect(() => {
-    const alertQueries = alertRuleToQueries(rule);
-    const defaultEvalTimeRanges = Object.fromEntries(
-      alertQueries.map((q) => [q.refId, q.relativeTimeRange ?? { from: 0, to: 0 }])
-    );
-
-    setEvaluationTimeRanges(defaultEvalTimeRanges);
-  }, [rule]);
-
-  useEffect(() => {
-    if (allDataSourcesAvailable && expandQuery) {
-      onRunQueries();
-    }
-  }, [onRunQueries, allDataSourcesAvailable, expandQuery]);
-
-  useEffect(() => {
-    return () => runner.destroy();
-  }, [runner]);
-
-  const onQueryTimeRangeChange = useCallback(
-    (refId: string, timeRange: RelativeTimeRange) => {
-      const newEvalTimeRanges = produce(evaluationTimeRanges, (draft) => {
-        draft[refId] = timeRange;
-      });
-      setEvaluationTimeRanges(newEvalTimeRanges);
-    },
-    [evaluationTimeRanges, setEvaluationTimeRanges]
-  );
 
   if (!identifier?.ruleSourceName) {
     return (
@@ -208,44 +158,10 @@ export function RuleViewer({ match }: RuleViewerProps) {
         label="Query & Results"
         isOpen={expandQuery}
         onToggle={setExpandQuery}
-        loading={data && isLoading(data)}
         collapsible={true}
         className={styles.collapse}
       >
-        {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (
-          <GrafanaRuleQueryViewer
-            condition={rule.rulerRule.grafana_alert.condition}
-            queries={queries}
-            evalDataByQuery={data}
-            evalTimeRanges={evaluationTimeRanges}
-            onTimeRangeChange={onQueryTimeRangeChange}
-          />
-        )}
-
-        {!isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && data && Object.keys(data).length > 0 && (
-          <div className={styles.queries}>
-            {queries.map((query) => {
-              return (
-                <QueryPreview
-                  key={query.refId}
-                  refId={query.refId}
-                  model={query.model}
-                  dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
-                  queryData={data[query.refId]}
-                  relativeTimeRange={query.relativeTimeRange}
-                  evalTimeRange={evaluationTimeRanges[query.refId]}
-                  onEvalTimeRangeChange={(timeRange) => onQueryTimeRangeChange(query.refId, timeRange)}
-                  isAlertCondition={false}
-                />
-              );
-            })}
-          </div>
-        )}
-        {!isFederatedRule && !allDataSourcesAvailable && (
-          <Alert title="Query not available" severity="warning" className={styles.queryWarning}>
-            Cannot display the query preview. Some of the data sources used in the queries are not available.
-          </Alert>
-        )}
+        {expandQuery && <QueryResults rule={rule} />}
       </Collapse>
     </>
   );
@@ -260,10 +176,6 @@ function GrafanaRuleUID({ rule }: { rule: GrafanaRuleDefinition }) {
       {rule.uid} <IconButton name="copy" onClick={copyUID} tooltip="Copy rule UID" />
     </DetailsField>
   );
-}
-
-function isLoading(data: Record<string, PanelData>): boolean {
-  return !!Object.values(data).find((d) => d.state === LoadingState.Loading);
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
