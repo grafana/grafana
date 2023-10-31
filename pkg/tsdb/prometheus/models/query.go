@@ -225,6 +225,7 @@ func calculateRateInterval(
 // interpolateVariables interpolates built-in variables
 // expr                         PromQL query
 // queryInterval                Requested interval in milliseconds. This value may be overridden by MinStep in query options
+// calculatedMinStep            Calculated final step value. It was calculated in calculatePrometheusInterval
 // requestedMinStep             Requested minimum step value. QueryModel.interval
 // timeRange                    Requested time range for query
 func interpolateVariables(
