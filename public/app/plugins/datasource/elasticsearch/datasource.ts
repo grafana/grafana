@@ -501,10 +501,6 @@ export class ElasticDatasource
     return text;
   }
 
-  showContextToggle(): boolean {
-    return true;
-  }
-
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
     const { enableElasticsearchBackendQuerying } = config.featureToggles;
     if (enableElasticsearchBackendQuerying) {

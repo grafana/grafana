@@ -12,6 +12,7 @@ import (
 
 func TestPlaylistConversion(t *testing.T) {
 	src := &playlist.PlaylistDTO{
+		Id:        123,
 		OrgID:     3,
 		Uid:       "abc",         // becomes k8s name
 		Name:      "MyPlaylists", // becomes title
@@ -32,14 +33,19 @@ func TestPlaylistConversion(t *testing.T) {
 
 	out, err := json.MarshalIndent(dst, "", "  ")
 	require.NoError(t, err)
-	//fmt.Printf("%s", string(out))
+	// fmt.Printf("%s", string(out))
 	require.JSONEq(t, `{
 		"metadata": {
 		  "name": "abc",
 		  "namespace": "org-3",
 		  "uid": "abc",
 		  "resourceVersion": "54321",
-		  "creationTimestamp": "1970-01-01T00:00:12Z"
+		  "creationTimestamp": "1970-01-01T00:00:12Z",
+		  "annotations": {
+			"grafana.app/originKey": "123",
+			"grafana.app/originName": "SQL",
+			"grafana.app/updatedTimestamp": "1970-01-01T00:00:54Z"
+		  }
 		},
 		"spec": {
 		  "title": "MyPlaylists",
