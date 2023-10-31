@@ -690,6 +690,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Enabled:         true,
 		},
 		{
 			Name:         "angularDeprecationUI",
@@ -925,6 +926,24 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteSecondary",
+			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemotePrimary",
+			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteOnly",
+			Description: "Disable the internal Alertmanager and only use the external one defined.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
 		},
 	}
 )
