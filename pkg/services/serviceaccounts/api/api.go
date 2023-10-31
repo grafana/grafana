@@ -29,7 +29,7 @@ type ServiceAccountsAPI struct {
 	permissionService    accesscontrol.ServiceAccountPermissionsService
 }
 
-func ProvideServiceAccountsAPI(
+func NewServiceAccountsAPI(
 	cfg *setting.Cfg,
 	service serviceaccounts.Service,
 	accesscontrol accesscontrol.AccessControl,
@@ -37,7 +37,7 @@ func ProvideServiceAccountsAPI(
 	routerRegister routing.RouteRegister,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) *ServiceAccountsAPI {
-	saApi := &ServiceAccountsAPI{
+	return &ServiceAccountsAPI{
 		cfg:                  cfg,
 		service:              service,
 		accesscontrol:        accesscontrol,
@@ -46,8 +46,6 @@ func ProvideServiceAccountsAPI(
 		log:                  log.New("serviceaccounts.api"),
 		permissionService:    permissionService,
 	}
-	saApi.RegisterAPIEndpoints()
-	return saApi
 }
 
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
