@@ -218,10 +218,11 @@ const ContactPointsList = ({
       {pageItems.map((contactPoint, index) => {
         const provisioned = isProvisioned(contactPoint);
         const policies = contactPoint.numberOfPolicies;
+        const key = `${contactPoint.name}-${index}`;
 
         return (
           <ContactPoint
-            key={`${contactPoint.name}-${index}`}
+            key={key}
             name={contactPoint.name}
             disabled={disabled}
             onDelete={onDelete}

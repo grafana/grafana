@@ -1,61 +1,53 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
-import { Button, Field, Icon, Input, Tooltip, Label, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, Input, useStyles2 } from '@grafana/ui';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 
-interface ContactPointsFilterProps {}
-
-const ContactPointsFilter = ({}: ContactPointsFilterProps) => {
-  const [searchParams, setSearchParams] = useURLSearchParams();
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
+const ContactPointsFilter = () => {
   const styles = useStyles2(getStyles);
 
-  const setSearchParamsDebounced = useMemo(() => debounce(setSearchParams, 300), [setSearchParams]);
+  const [searchParams, setSearchParams] = useURLSearchParams();
 
+  const defaultValue = searchParams.get('search') ?? '';
+  const [searchValue, setSearchValue] = useState(defaultValue);
+
+  // update search params, cancel debounce when component is unmounted
+  const [, cancel] = useDebounce(
+    () => {
+      setSearchParams({ search: searchValue }, true);
+    },
+    300,
+    [setSearchParams, searchValue]
+  );
+  useEffect(() => cancel, [cancel]);
+
+  // clear search input, skip debounce
   const clearFilters = useCallback(() => {
-    if (searchInputRef.current) {
-      searchInputRef.current.value = '';
-    }
-    setSearchParams({ search: undefined });
-  }, [setSearchParams]);
+    setSearchParams({ search: '' }, true);
+    cancel();
+  }, [cancel, setSearchParams]);
 
-  const defaultValue = searchParams?.get('search') ?? '';
-  const hasFilters = Boolean(defaultValue);
+  const hasInput = Boolean(defaultValue);
 
   return (
     <Stack direction="row" alignItems="end" gap={0.5}>
-      <Field
-        className={styles.noBottom}
-        label={
-          <Label>
-            <Stack gap={0.5}>
-              <span>Search by name or type</span>
-              <Tooltip content={<div>Filter contact points by name or type</div>}>
-                <Icon name="info-circle" size="sm" />
-              </Tooltip>
-            </Stack>
-          </Label>
-        }
-      >
+      <Field className={styles.noBottom} label="Search by name or type">
         <Input
-          ref={searchInputRef}
           data-testid="search-query-input"
           placeholder="Search"
           width={46}
           prefix={<Icon name="search" />}
           onChange={(event) => {
-            setSearchParamsDebounced({
-              search: event.currentTarget.value,
-            });
+            setSearchValue(event.currentTarget.value);
           }}
-          defaultValue={defaultValue}
+          value={searchValue}
         />
       </Field>
-      <Button variant="secondary" icon="times" onClick={clearFilters} disabled={!hasFilters}>
+      <Button variant="secondary" icon="times" onClick={clearFilters} disabled={!hasInput}>
         Clear
       </Button>
     </Stack>
