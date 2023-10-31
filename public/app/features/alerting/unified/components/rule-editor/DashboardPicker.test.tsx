@@ -1,5 +1,4 @@
 import { act, render } from '@testing-library/react';
-import { screen, waitFor } from '@testing-library/react';
 import { noop } from 'lodash';
 import React from 'react';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
