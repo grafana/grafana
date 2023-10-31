@@ -147,7 +147,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	element := model.LibraryElement{
 		OrgID:    signedInUser.GetOrgID(),
-		FolderID: cmd.FolderID,
+		FolderID: cmd.FolderID, // nolint:staticcheck
 		UID:      createUID,
 		Name:     cmd.Name,
 		Model:    updatedModel,
@@ -191,7 +191,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	dto := model.LibraryElementDTO{
 		ID:          element.ID,
 		OrgID:       element.OrgID,
-		FolderID:    element.FolderID,
+		FolderID:    element.FolderID, // nolint:staticcheck
 		UID:         element.UID,
 		Name:        element.Name,
 		Kind:        element.Kind,
@@ -524,7 +524,7 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 	if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
 		return err
 	}
-
+	// nolint:staticcheck
 	elementToPatch.FolderID = toFolderID
 
 	return nil
@@ -574,7 +574,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		var libraryElement = model.LibraryElement{
 			ID:          elementInDB.ID,
 			OrgID:       signedInUser.GetOrgID(),
-			FolderID:    cmd.FolderID,
+			FolderID:    cmd.FolderID, // nolint:staticcheck
 			UID:         updateUID,
 			Name:        cmd.Name,
 			Kind:        elementInDB.Kind,
@@ -613,7 +613,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		dto = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
-			FolderID:    libraryElement.FolderID,
+			FolderID:    libraryElement.FolderID, // nolint:staticcheck
 			UID:         libraryElement.UID,
 			Name:        libraryElement.Name,
 			Kind:        libraryElement.Kind,
