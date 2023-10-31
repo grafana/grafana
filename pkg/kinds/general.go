@@ -82,6 +82,15 @@ func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
 	return nil
 }
 
+func (m *GrafanaResourceMetadata) SetUpdatedTimestampMillis(v int64) {
+	if v > 0 {
+		t := time.UnixMilli(v)
+		m.SetUpdatedTimestamp(&t)
+	} else {
+		m.SetUpdatedTimestamp(nil)
+	}
+}
+
 func (m *GrafanaResourceMetadata) SetUpdatedTimestamp(v *time.Time) {
 	txt := ""
 	if v != nil {

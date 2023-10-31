@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *playlist.Playlist {
@@ -57,9 +56,7 @@ func convertToK8sResource(v *playlist.PlaylistDTO, namespacer request.NamespaceM
 	}
 
 	meta := kinds.GrafanaResourceMetadata{}
-	if v.UpdatedAt > 0 {
-		meta.SetUpdatedTimestamp(util.Pointer(time.UnixMilli(v.UpdatedAt)))
-	}
+	meta.SetUpdatedTimestampMillis(v.UpdatedAt)
 	if v.Id > 0 {
 		meta.SetOriginInfo(&kinds.ResourceOriginInfo{
 			Name: "SQL",
