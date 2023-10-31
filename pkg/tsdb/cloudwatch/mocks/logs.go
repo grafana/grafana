@@ -31,7 +31,7 @@ type LogsService struct {
 	mock.Mock
 }
 
-func (l *LogsService) GetLogGroups(request resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
+func (l *LogsService) GetLogGroupsWithContext(ctx context.Context, request resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
 	args := l.Called(request)
 
 	return args.Get(0).([]resources.ResourceResponse[resources.LogGroup]), args.Error(1)

@@ -20,7 +20,7 @@ func NewLogGroupsService(logsClient models.CloudWatchLogsAPIProvider, isCrossAcc
 	return &LogGroupsService{logGroupsAPI: logsClient, isCrossAccountEnabled: isCrossAccountEnabled}
 }
 
-func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
+func (s *LogGroupsService) GetLogGroupsWithContext(ctx context.Context, req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
 	input := &cloudwatchlogs.DescribeLogGroupsInput{
 		Limit:              aws.Int64(req.Limit),
 		LogGroupNamePrefix: req.LogGroupNamePrefix,
