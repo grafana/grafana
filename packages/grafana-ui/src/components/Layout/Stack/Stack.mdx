@@ -5,133 +5,22 @@ import { Stack } from './Stack';
 
 # Stack
 
-The Stack Component aims at providing a more efficient way to lay out, align and distribute space among items in a container and
-the decision to create it is to ensure consistency in design across Grafana.
+The Stack component is a simple wrapper around the flexbox layout model that allows to easily create responsive and flexible layouts. It provides a simple and intuitive way to align and distribute items within a container either horizontally or vertically.
 
 ### Usage
 
 #### When to use
 
-Use when in need to align components and small parts of the application. Use as parent container to wrap elements that you wish to align in a certain way.
-
-Also:
-
-    * when working with one dimension layout
-    * to display the direction of the elements
-    * to set the elements to wrap
-    * to align items (vertically or horizontally)
+- For creating responsive and flexible layouts that can adapt to different screen sizes and orientations.
+- When needing a simple and intuitive way to align and distribute items within a container either horizontally or vertically.
+- To easily reorder and rearrange elements without changing the HTML structure.
+- When aiming to create equal height columns.
+- To create a grid-like structure with automatic wrapping and sizing of items based on the available space.
 
 #### When not to use
 
-When you need to lay out bigger parts of the application or when you want to create page lay out.
-
-Also:
-
-    * for complex grid layouts with various rows and columns
-    * bidirectional layouts
-    * complex nesting
-    * equal height columns
-
-### Variants
-
-Stack component has few variants that can be used based on the desired alignment you need for your case.
-
-Some examples of how to use the Stack component can be seen below:
-
-- AlignItems stretch
-
-```ts
-import { Stack } from '@grafana/ui'
-import { useTheme2 } from '../../themes';
-
-const theme = useTheme2();
-
-<header>
-    <h1>Using Stack component to align-items stretch and justify-content to be center</h1>
-</header>
-<Stack direction="row" wrap="wrap"  alignItems="stretch" justifyContent="center" gap={2}>
-    <Item color={theme.colors.warning.main} height="10em" />
-    <Item color={theme.colors.warning.main} />
-    <Item color={theme.colors.warning.main} height="3em" />
-    <Item color={theme.colors.warning.main} />
-</Stack>
-```
-
-- Wrap items wrap-reverse
-
-```ts
-import { Stack } from '@grafana/ui'
-import { useTheme2 } from '../../themes';
-
-const theme = useTheme2();
-
-<header>
-    <h1>Using Stack component to align-items with wrap-reverse property</h1>
-</header>
-<Stack direction="row" wrap="wrap-reverse"  alignItems="center" justifyContent="center" gap={4}>
-    <Item color={theme.colors.warning.main}  />
-    <Item color={theme.colors.warning.main} />
-    <Item color={theme.colors.warning.main} />
-    <Item color={theme.colors.warning.main} />
- </Stack>
-```
-
-- JustifyContent flex-start
-
-```ts
-import { Stack } from '@grafana/ui'
-import { useTheme2 } from '../../themes';
-
-const theme = useTheme2();
-
-<header>
-    <h1>Using Stack component to align-items with justify-content property</h1>
-</header>
-<Stack direction="row" wrap="wrap"  alignItems="center" justifyContent="flex-start" gap={2}>
-    <Item color={theme.colors.warning.main}  />
-    <Item color={theme.colors.warning.main} />
-    <Item color={theme.colors.warning.main} />
-    <Item color={theme.colors.warning.main} />
- </Stack>
-```
-
-- Gap of 16px using the ThemeSpacingTokens
-
-```ts
-import { Stack } from '@grafana/ui'
-import { useTheme2 } from '../../themes';
-
-const theme = useTheme2();
-
-<header>
-    <h1>Using Stack component to align-items with gap of 16px</h1>
-</header>
-<Stack direction="row" wrap="wrap"  alignItems="center" justifyContent="center" gap={2}>
-    <Item color={theme.colors.warning.main}  />
-    <Item color={theme.colors.warning.main} />
-    <Item color={theme.colors.warning.main} />
-    <Item color={theme.colors.warning.main} />
- </Stack>
-```
-
-- Direction column
-
-```ts
-import { Stack } from '@grafana/ui'
-import { useTheme2 } from '../../themes';
-
-const theme = useTheme2();
-
-<header>
-    <h1>Using Stack component to align-items with direction column</h1>
-</header>
-<Stack direction="column" wrap="wrap"  alignItems="center" justifyContent="center" gap={2}>
-    <Item color={theme.colors.warning.main}  />
-    <Item color={theme.colors.warning.main} />
-    <Item color={theme.colors.warning.main} />
-    <Item color={theme.colors.warning.main} />
- </Stack>
-```
+- For complex multi-dimensional layouts with intricate requirements that are better suited for CSS frameworks or grid systems.
+- When precise control over spacing and positioning of elements is necessary.
 
 ### Props
 
