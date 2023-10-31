@@ -590,14 +590,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "toggleLabelsInLogsUI",
-			Description:  "Enable toggleable filters in log details view",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "mlExpressions",
 			Description:  "Enable support for Machine Learning in server-side expressions",
 			Stage:        FeatureStageExperimental,
@@ -698,6 +690,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Enabled:         true,
 		},
 		{
 			Name:         "angularDeprecationUI",
@@ -858,6 +851,13 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:            "kubernetesPlaylistsAPI",
+			Description:     "Route /api/playlist API to k8s handlers",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -933,6 +933,31 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteSecondary",
+			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemotePrimary",
+			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteOnly",
+			Description: "Disable the internal Alertmanager and only use the external one defined.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:            "annotationPermissionUpdate",
+			Description:     "Separate annotation permissions from dashboard permissions to allow for more granular control.",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: false,
+			Owner:           grafanaAuthnzSquad,
 		},
 	}
 )
