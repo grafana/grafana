@@ -2,6 +2,7 @@ package grpcplugin
 
 import (
 	"context"
+	"errors"
 
 	goplugin "github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
@@ -10,6 +11,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
+)
+
+var (
+	errClientNotStarted = errors.New("plugin client has not been started")
 )
 
 var _ ProtoClient = (*protoClient)(nil)
@@ -76,29 +81,50 @@ func (r *protoClient) Stop(ctx context.Context) error {
 }
 
 func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
+	if r.plugin.pluginClient == nil {
+		return nil, errClientNotStarted
+	}
 	return r.plugin.pluginClient.DataClient.QueryData(ctx, in, opts...)
 }
 
 func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourceRequest, opts ...grpc.CallOption) (pluginv2.Resource_CallResourceClient, error) {
+	if r.plugin.pluginClient == nil {
+		return nil, errClientNotStarted
+	}
 	return r.plugin.pluginClient.ResourceClient.CallResource(ctx, in, opts...)
 }
 
 func (r *protoClient) CheckHealth(ctx context.Context, in *pluginv2.CheckHealthRequest, opts ...grpc.CallOption) (*pluginv2.CheckHealthResponse, error) {
+	if r.plugin.pluginClient == nil {
+		return nil, errClientNotStarted
+	}
 	return r.plugin.pluginClient.DiagnosticsClient.CheckHealth(ctx, in, opts...)
 }
 
 func (r *protoClient) CollectMetrics(ctx context.Context, in *pluginv2.CollectMetricsRequest, opts ...grpc.CallOption) (*pluginv2.CollectMetricsResponse, error) {
+	if r.plugin.pluginClient == nil {
+		return nil, errClientNotStarted
+	}
 	return r.plugin.pluginClient.DiagnosticsClient.CollectMetrics(ctx, in, opts...)
 }
 
 func (r *protoClient) SubscribeStream(ctx context.Context, in *pluginv2.SubscribeStreamRequest, opts ...grpc.CallOption) (*pluginv2.SubscribeStreamResponse, error) {
+	if r.plugin.pluginClient == nil {
+		return nil, errClientNotStarted
+	}
 	return r.plugin.pluginClient.StreamClient.SubscribeStream(ctx, in, opts...)
 }
 
 func (r *protoClient) RunStream(ctx context.Context, in *pluginv2.RunStreamRequest, opts ...grpc.CallOption) (pluginv2.Stream_RunStreamClient, error) {
+	if r.plugin.pluginClient == nil {
+		return nil, errClientNotStarted
+	}
 	return r.plugin.pluginClient.StreamClient.RunStream(ctx, in, opts...)
 }
 
 func (r *protoClient) PublishStream(ctx context.Context, in *pluginv2.PublishStreamRequest, opts ...grpc.CallOption) (*pluginv2.PublishStreamResponse, error) {
+	if r.plugin.pluginClient == nil {
+		return nil, errClientNotStarted
+	}
 	return r.plugin.pluginClient.StreamClient.PublishStream(ctx, in, opts...)
 }
