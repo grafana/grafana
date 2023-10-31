@@ -34,7 +34,7 @@ composableKinds: PanelCfg: {
 					sizing:        common.BarGaugeSizing & (*"auto" | _)
 					minVizWidth:   uint32 | *16
 					minVizHeight:  uint32 | *16
-					maxVizHeight:  uint32 | *1000
+					maxVizHeight:  uint32 | *256
 				} @cuetsy(kind="interface")
 			}
 		}]

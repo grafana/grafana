@@ -73,27 +73,42 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
         defaultValue: defaultOptions.sizing,
         showIf: (options) => options.orientation !== VizOrientation.Auto,
       })
-      .addNumberInput({
+      .addSliderInput({
         path: 'minVizWidth',
         name: 'Min width',
         description: 'Minimum column width',
         defaultValue: defaultOptions.minVizWidth,
+        settings: {
+          min: 0,
+          max: 256,
+          step: 1,
+        },
         showIf: (options) =>
           options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Vertical,
       })
-      .addNumberInput({
+      .addSliderInput({
         path: 'minVizHeight',
         name: 'Min height',
         description: 'Minimum row height',
         defaultValue: defaultOptions.minVizHeight,
+        settings: {
+          min: 0,
+          max: 256,
+          step: 1,
+        },
         showIf: (options) =>
           options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
       })
-      .addNumberInput({
+      .addSliderInput({
         path: 'maxVizHeight',
         name: 'Max height',
         description: 'Maximum row height',
         defaultValue: defaultOptions.maxVizHeight,
+        settings: {
+          min: 0,
+          max: 256,
+          step: 1,
+        },
         showIf: (options) =>
           options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
       });
