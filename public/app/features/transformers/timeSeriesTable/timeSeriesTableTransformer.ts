@@ -14,7 +14,6 @@ import {
   TransformationApplicabilityLevels,
 } from '@grafana/data';
 
-
 /**
  * Maps a refId to a Field which can contain
  * different types of data. In our case we
@@ -25,7 +24,7 @@ interface RefFieldMap<T> {
 }
 
 /**
- * A map of RefIds to labels where each 
+ * A map of RefIds to labels where each
  * label maps to a field of the given
  * type. It's technically possible
  * to use the above type to achieve
@@ -33,7 +32,7 @@ interface RefFieldMap<T> {
  * but the RefIds are on the outer map
  * in this case, so we use a different type
  * to avoid future issues.
- * 
+ *
  *  RefId: {
  *     label1: Field<T>
  *     label2: Field<T>
@@ -42,7 +41,7 @@ interface RefFieldMap<T> {
 interface RefLabelFieldMap<T> {
   [index: string]: {
     [index: string]: Field<T>;
-  }
+  };
 }
 
 /**
@@ -143,7 +142,6 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     // Intialize object for this refId
     refId2trends[refId] = {};
 
-
     for (let i = 0; i < framesForRef.length; i++) {
       const frame = framesForRef[i];
 
@@ -194,12 +192,10 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
           });
         }
 
-        
         // If there are labels add them to the appropriate fields
         // Because we iterate each frame
         if (field.labels !== undefined) {
           for (const [labelKey, labelValue] of Object.entries(field.labels)) {
-
             if (refId2labelz[refId] === undefined) {
               refId2labelz[refId] = {};
             }
@@ -212,7 +208,6 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
           }
         }
       }
-      
     }
   }
 
@@ -223,19 +218,17 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     const table = new MutableDataFrame();
     table.refId = refId;
 
-
     // Rather than having a label fields for each refId
     // we combine them into a single set of labels
     // taking the first value available
     const labels = refId2labelz[refId];
     if (labels !== undefined) {
-    for (const [labelName, labelField] of Object.entries(labels)) {
+      for (const [labelName, labelField] of Object.entries(labels)) {
         if (label2fields[labelName] === undefined) {
           label2fields[labelName] = labelField;
         }
       }
     }
-    
 
     // Add label fields to the the resulting frame
     for (const label of Object.values(label2fields)) {

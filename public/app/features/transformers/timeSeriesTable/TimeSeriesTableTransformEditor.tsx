@@ -54,14 +54,11 @@ export function TimeSeriesTableTransformEditor({
     [onChange, options]
   );
 
-
   let configRows = [];
   for (const refId of Object.keys(refIdMap)) {
-
     // Get time fields for the current refId
     const timeFields: Array<SelectableValue<string>> = [];
     for (const frame of input) {
-
       if (frame.refId === refId) {
         for (const field of frame.fields) {
           if (field.type === 'time') {
@@ -75,9 +72,7 @@ export function TimeSeriesTableTransformEditor({
     configRows.push(
       <InlineFieldRow key={refId}>
         <InlineField>
-          <InlineLabel>
-            {`Trend #${refId}`}
-          </InlineLabel>
+          <InlineLabel>{`Trend #${refId}`}</InlineLabel>
         </InlineField>
         <InlineField
           label="Time field"
