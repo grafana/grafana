@@ -614,6 +614,7 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
       Drone step.
     """
     commands = [
+        # Note - this runs in a container running node 14, which does not support the -y option to npx
         "npx wait-on@7.0.1 http://$HOST:$PORT",
     ]
     failure = "ignore"
