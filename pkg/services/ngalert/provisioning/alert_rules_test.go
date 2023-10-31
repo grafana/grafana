@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -590,10 +589,11 @@ func TestProvisiongWithFullpath(t *testing.T) {
 			dashboards.ActionFoldersCreate: {},
 			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
 	}}
-	namespace := "my-namespace"
+	namespaceUID := "my-namespace"
+	namespaceTitle := namespaceUID
 	rootFolder, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
-		UID:          namespace,
-		Title:        namespace,
+		UID:          namespaceUID,
+		Title:        namespaceTitle,
 		OrgID:        orgID,
 		SignedInUser: &signedInUser,
 	})
@@ -601,7 +601,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 
 	t.Run("for a rule under a root folder should set the right fullpath", func(t *testing.T) {
 		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
-			createTestRule("my-cool-group", "my-cool-group", orgID, namespace),
+			createTestRule("my-cool-group", "my-cool-group", orgID, namespaceUID),
 		})
 		require.NoError(t, err)
 		require.Len(t, r, 1)
@@ -611,22 +611,23 @@ func TestProvisiongWithFullpath(t *testing.T) {
 
 		res, err := ruleService.GetAlertRuleWithFolderFullpath(c, orgID, r[0].UID)
 		require.NoError(t, err)
-		assert.Equal(t, namespace, res.FolderFullpath)
+		assert.Equal(t, namespaceTitle, res.FolderFullpath)
 
-		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(c, orgID, namespace, "my-cool-group")
+		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(c, orgID, namespaceUID, "my-cool-group")
 		require.NoError(t, err)
-		assert.Equal(t, namespace, res2.FolderFullpath)
+		assert.Equal(t, namespaceTitle, res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(c, orgID, []string{namespace})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(c, orgID, []string{namespaceUID})
 		require.NoError(t, err)
-		assert.Equal(t, namespace, res3[0].FolderFullpath)
+		assert.Equal(t, namespaceTitle, res3[0].FolderFullpath)
 	})
 
 	t.Run("for a rule under a subfolder should set the right fullpath", func(t *testing.T) {
-		otherNamespace := "my-other-namespace"
+		otherNamespaceUID := "my-other-namespace"
+		otherNamespaceTitle := "my-other-namespace containing multiple //"
 		_, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
-			UID:          otherNamespace,
-			Title:        otherNamespace,
+			UID:          otherNamespaceUID,
+			Title:        otherNamespaceTitle,
 			OrgID:        orgID,
 			ParentUID:    rootFolder.UID,
 			SignedInUser: &signedInUser,
@@ -634,7 +635,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		require.NoError(t, err)
 
 		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{
-			createTestRule("my-cool-group-2", "my-cool-group-2", orgID, otherNamespace),
+			createTestRule("my-cool-group-2", "my-cool-group-2", orgID, otherNamespaceUID),
 		})
 		require.NoError(t, err)
 		require.Len(t, r, 1)
@@ -644,16 +645,15 @@ func TestProvisiongWithFullpath(t *testing.T) {
 
 		res, err := ruleService.GetAlertRuleWithFolderFullpath(c, orgID, r[0].UID)
 		require.NoError(t, err)
-		fullpath := fmt.Sprintf("%s/%s", namespace, otherNamespace)
-		assert.Equal(t, fullpath, res.FolderFullpath)
+		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res.FolderFullpath)
 
-		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(c, orgID, otherNamespace, "my-cool-group-2")
+		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(c, orgID, otherNamespaceUID, "my-cool-group-2")
 		require.NoError(t, err)
-		assert.Equal(t, fullpath, res2.FolderFullpath)
+		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(c, orgID, []string{otherNamespace})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(c, orgID, []string{otherNamespaceUID})
 		require.NoError(t, err)
-		assert.Equal(t, fullpath, res3[0].FolderFullpath)
+		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res3[0].FolderFullpath)
 	})
 }
 

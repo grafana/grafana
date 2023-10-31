@@ -388,17 +388,21 @@ func (ss *sqlStore) getFullpath(ctx context.Context, f *folder.Folder) (string, 
 		return "", err
 	}
 
+	escapedTitle := func(title string) string {
+		return strings.ReplaceAll(title, FULLPATH_SEPARATOR, "\\"+FULLPATH_SEPARATOR)
+	}
+
 	fullpath := ""
 	for _, ancestor := range ancestors {
 		if fullpath != "" {
-			fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, ancestor.Title)
+			fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, escapedTitle(ancestor.Title))
 		} else {
 			fullpath += ancestor.Title
 		}
 	}
 
 	if fullpath != "" {
-		fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, f.Title)
+		fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, escapedTitle(f.Title))
 	} else {
 		fullpath += f.Title
 	}
