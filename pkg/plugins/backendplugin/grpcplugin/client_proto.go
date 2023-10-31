@@ -15,10 +15,10 @@ import (
 var _ ProtoClient = (*protoClient)(nil)
 
 type ProtoClient interface {
-	grpcplugin.DiagnosticsClient
-	grpcplugin.ResourceClient
-	grpcplugin.DataClient
-	grpcplugin.StreamClient
+	pluginv2.DataClient
+	pluginv2.ResourceClient
+	pluginv2.DiagnosticsClient
+	pluginv2.StreamClient
 
 	PluginID() string
 	Logger() log.Logger
@@ -30,22 +30,29 @@ type protoClient struct {
 	plugin *grpcPlugin
 }
 
-func NewProtoClient(pluginID, executablePath string, executableArgs ...string) (ProtoClient, error) {
-	descriptor := PluginDescriptor{
-		pluginID:       pluginID,
-		executablePath: executablePath,
-		executableArgs: executableArgs,
+type ProtoClientOpts struct {
+	PluginID       string
+	ExecutablePath string
+	ExecutableArgs []string
+	Env            []string
+}
+
+func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
+	d := PluginDescriptor{
+		pluginID:       opts.PluginID,
+		executablePath: opts.ExecutablePath,
+		executableArgs: opts.ExecutableArgs,
 		managed:        true,
 		versionedPlugins: map[int]goplugin.PluginSet{
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 	}
-	logger := log.New(pluginID)
+	logger := log.New(opts.PluginID)
 	p := &grpcPlugin{
-		descriptor: descriptor,
+		descriptor: d,
 		logger:     logger,
 		clientFactory: func() *goplugin.Client {
-			return goplugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, []string{}, logger, descriptor.versionedPlugins))
+			return goplugin.NewClient(newClientConfig(opts.ExecutablePath, opts.ExecutableArgs, opts.Env, logger, d.versionedPlugins))
 		},
 	}
 
