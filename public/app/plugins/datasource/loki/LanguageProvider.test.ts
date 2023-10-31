@@ -233,7 +233,23 @@ describe('Language completion provider', () => {
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey');
-      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
+        end: 1560163909000,
+        start: 1560153109000,
+      });
+      expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
+    });
+
+    it('fetch label when options.streamSelector provided and values is not cached', async () => {
+      const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const requestSpy = jest.spyOn(provider, 'request');
+      const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
+      expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
+        end: 1560163909000,
+        query: '%7Bfoo%3D%22bar%22%7D',
+        start: 1560153109000,
+      });
       expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
     });
 
@@ -247,6 +263,28 @@ describe('Language completion provider', () => {
 
       const nextLabelValues = await provider.fetchLabelValues('testkey');
       expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
+        end: 1560163909000,
+        start: 1560153109000,
+      });
+      expect(nextLabelValues).toEqual(['label1_val1', 'label1_val2']);
+    });
+
+    it('should return cached values when options.streamSelector provided', async () => {
+      const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const requestSpy = jest.spyOn(provider, 'request');
+      const labelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith('label/testkey/values', {
+        end: 1560163909000,
+        query: '%7Bfoo%3D%22bar%22%7D',
+        start: 1560153109000,
+      });
+      expect(labelValues).toEqual(['label1_val1', 'label1_val2']);
+
+      const nextLabelValues = await provider.fetchLabelValues('testkey', { streamSelector: '{foo="bar"}' });
+      expect(requestSpy).toHaveBeenCalledTimes(1);
       expect(nextLabelValues).toEqual(['label1_val1', 'label1_val2']);
     });
 
@@ -257,6 +295,19 @@ describe('Language completion provider', () => {
       await provider.fetchLabelValues('`\\"testkey');
 
       expect(requestSpy).toHaveBeenCalledWith('label/%60%5C%22testkey/values', expect.any(Object));
+    });
+
+    it('should encode special characters in options.streamSelector', async () => {
+      const datasource = setup({ '`\\"testkey': ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const requestSpy = jest.spyOn(provider, 'request');
+      await provider.fetchLabelValues('`\\"testkey', { streamSelector: '{foo="\\bar"}' });
+
+      expect(requestSpy).toHaveBeenCalledWith(expect.any(String), {
+        query: '%7Bfoo%3D%22%5Cbar%22%7D',
+        start: expect.any(Number),
+        end: expect.any(Number),
+      });
     });
   });
 });

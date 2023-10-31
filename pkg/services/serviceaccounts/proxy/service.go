@@ -92,6 +92,20 @@ func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, or
 	return s.proxiedService.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
 }
 
+func (s *ServiceAccountsProxy) EnableServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64, enable bool) error {
+	if s.isProxyEnabled {
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		if err != nil {
+			return err
+		}
+		if isExternalServiceAccount(sa.Login) {
+			s.log.Error("unable to enable/disable external service accounts", "serviceAccountID", serviceAccountID)
+			return extsvcaccounts.ErrCannotBeUpdated
+		}
+	}
+	return s.proxiedService.EnableServiceAccount(ctx, orgID, serviceAccountID, enable)
+}
+
 func (s *ServiceAccountsProxy) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	return s.proxiedService.ListTokens(ctx, query)
 }
