@@ -1555,7 +1555,7 @@ function createTraceSpan(overrides: Partial<TraceSpan> = {}) {
         value: 'host',
       },
       {
-        key: 'pyroscope.profile.id',
+        key: 'pyroscope.profiling.enabled',
         value: 'hdgfljn23u982nj',
       },
     ],

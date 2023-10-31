@@ -531,7 +531,7 @@ export function transformTrace(
             groupBy: [],
             profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
             queryType: 'profile',
-            spanSelector: ['${__span.tags["pyroscope.profile.id"]}'],
+            spanSelector: ['${__span.spanId}'],
             refId: 'profile',
           },
         },
