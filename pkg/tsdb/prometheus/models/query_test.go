@@ -571,7 +571,7 @@ func TestRateInterval(t *testing.T) {
 				},
 			},
 			want: &models.Query{
-				Expr: "rate(rpc_durations_seconds_count[2m0s])",
+				Expr: "rate(rpc_durations_seconds_count[2m30s])",
 				Step: time.Second * 30,
 			},
 		},
