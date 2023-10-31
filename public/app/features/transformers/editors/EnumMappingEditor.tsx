@@ -172,7 +172,7 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
                               <HorizontalGroup spacing="sm">
                                 <IconButton
                                   name="trash-alt"
-                                  onClick={() => onRemoveEnumRow(index)}
+                                  onClick={() => onRemoveEnumRow(mappedIndex)}
                                   data-testid="remove-enum-row"
                                   aria-label="Delete enum row"
                                   tooltip="Delete"
