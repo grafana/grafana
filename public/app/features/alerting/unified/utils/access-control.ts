@@ -123,8 +123,5 @@ export function getRulesAccess() {
     canEditRules: (rulesSourceName: string) => {
       return contextSrv.hasPermission(getRulesPermissions(rulesSourceName).update);
     },
-    canReadProvisioning:
-      contextSrv.hasPermission(provisioningPermissions.read) ||
-      contextSrv.hasPermission(provisioningPermissions.readSecrets),
   };
 }
