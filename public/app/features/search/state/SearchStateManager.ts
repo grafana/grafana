@@ -174,7 +174,14 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type || this.state.sort;
+    return (
+      this.state.query ||
+      this.state.tag.length ||
+      this.state.starred ||
+      this.state.panel_type ||
+      this.state.sort ||
+      this.state.layout === SearchLayout.List
+    );
   }
 
   getSearchQuery() {
