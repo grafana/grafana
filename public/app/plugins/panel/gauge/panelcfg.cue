@@ -31,7 +31,6 @@ composableKinds: PanelCfg: {
 					showThresholdMarkers: bool | *true
 					minVizWidth:          uint32 | *75
 					minVizHeight:         uint32 | *75
-					maxVizHeight:         uint32 | *1000
 				} @cuetsy(kind="interface")
 			}
 		}]

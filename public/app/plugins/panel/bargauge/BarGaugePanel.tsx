@@ -94,13 +94,39 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
     return 10;
   }
 
+  getOrientation(): VizOrientation {
+    const { options, width, height } = this.props;
+    const { orientation } = options;
+
+    if (orientation === VizOrientation.Auto) {
+      if (width > height) {
+        return VizOrientation.Vertical;
+      } else {
+        return VizOrientation.Horizontal;
+      }
+    }
+
+    return orientation;
+  }
+
+  calcBarSize() {
+    const { options } = this.props;
+
+    const orientation = this.getOrientation();
+    const isManualSizing = options.sizing === BarGaugeSizing.Manual;
+    const isVertical = orientation === VizOrientation.Vertical;
+    const isHorizontal = orientation === VizOrientation.Horizontal;
+    const minVizWidth = isManualSizing && isVertical ? options.minVizWidth : defaultOptions.minVizWidth;
+    const minVizHeight = isManualSizing && isHorizontal ? options.minVizHeight : defaultOptions.minVizHeight;
+    const maxVizHeight = isManualSizing && isHorizontal ? options.maxVizHeight : defaultOptions.maxVizHeight;
+
+    return { minVizWidth, minVizHeight, maxVizHeight };
+  }
+
   render() {
     const { height, width, options, data, renderCounter } = this.props;
 
-    const isAutoSizing = options.sizing === BarGaugeSizing.Auto || options.orientation === VizOrientation.Auto;
-    const maxVizHeight = isAutoSizing ? defaultOptions.maxVizHeight : options.maxVizHeight;
-    const minVizWidth = isAutoSizing ? defaultOptions.minVizWidth : options.minVizWidth;
-    const minVizHeight = isAutoSizing ? defaultOptions.minVizHeight : options.minVizHeight;
+    const { minVizWidth, minVizHeight, maxVizHeight } = this.calcBarSize();
 
     return (
       <VizRepeater

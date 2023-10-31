@@ -26,9 +26,9 @@ export interface Options extends common.SingleStatBaseOptions {
 
 export const defaultOptions: Partial<Options> = {
   displayMode: common.BarGaugeDisplayMode.Gradient,
-  maxVizHeight: 256,
-  minVizHeight: 16,
-  minVizWidth: 16,
+  maxVizHeight: 300,
+  minVizHeight: 75,
+  minVizWidth: 75,
   namePlacement: common.BarGaugeNamePlacement.Auto,
   showUnfilled: true,
   sizing: common.BarGaugeSizing.Auto,

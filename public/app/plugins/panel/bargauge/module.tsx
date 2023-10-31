@@ -52,7 +52,7 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
           ],
         },
         defaultValue: defaultOptions.namePlacement,
-        showIf: (options) => options.orientation === VizOrientation.Horizontal,
+        showIf: (options) => options.orientation !== VizOrientation.Vertical,
       })
       .addBooleanSwitch({
         path: 'showUnfilled',
@@ -71,46 +71,42 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
           ],
         },
         defaultValue: defaultOptions.sizing,
-        showIf: (options) => options.orientation !== VizOrientation.Auto,
       })
       .addSliderInput({
         path: 'minVizWidth',
         name: 'Min width',
-        description: 'Minimum column width',
+        description: 'Minimum column width (vertical orientation)',
         defaultValue: defaultOptions.minVizWidth,
         settings: {
           min: 0,
-          max: 256,
+          max: 300,
           step: 1,
         },
-        showIf: (options) =>
-          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Vertical,
+        showIf: (options) => options.sizing === BarGaugeSizing.Manual,
       })
       .addSliderInput({
         path: 'minVizHeight',
         name: 'Min height',
-        description: 'Minimum row height',
+        description: 'Minimum row height (horizontal orientation)',
         defaultValue: defaultOptions.minVizHeight,
         settings: {
           min: 0,
-          max: 256,
+          max: 300,
           step: 1,
         },
-        showIf: (options) =>
-          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
+        showIf: (options) => options.sizing === BarGaugeSizing.Manual,
       })
       .addSliderInput({
         path: 'maxVizHeight',
         name: 'Max height',
-        description: 'Maximum row height',
+        description: 'Maximum row height (horizontal orientation)',
         defaultValue: defaultOptions.maxVizHeight,
         settings: {
           min: 0,
-          max: 256,
+          max: 300,
           step: 1,
         },
-        showIf: (options) =>
-          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
+        showIf: (options) => options.sizing === BarGaugeSizing.Manual,
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)

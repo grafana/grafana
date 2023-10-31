@@ -28,7 +28,6 @@ It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 
 | Property               | Type                                            | Required | Default | Description                                                                                                                                 |
 |------------------------|-------------------------------------------------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| `maxVizHeight`         | uint32                                          | **Yes**  | `1000`  |                                                                                                                                             |
 | `minVizHeight`         | uint32                                          | **Yes**  | `75`    |                                                                                                                                             |
 | `minVizWidth`          | uint32                                          | **Yes**  | `75`    |                                                                                                                                             |
 | `showThresholdLabels`  | boolean                                         | **Yes**  | `false` |                                                                                                                                             |
