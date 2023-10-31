@@ -12,10 +12,10 @@ import (
 
 type Mode int
 
+// NOTE: we don't really need ModeRemoteOnly in the forked Alertmanager.
 const (
 	ModeRemoteSecondary Mode = iota
 	ModeRemotePrimary
-	ModeRemoteOnly
 )
 
 type forkedAlertmanager struct {
@@ -26,7 +26,6 @@ type forkedAlertmanager struct {
 	mode       Mode
 }
 
-// TODO: not string...
 func NewForkedAlertmanager(internal notifier.Alertmanager, remote *Alertmanager, m Mode) *forkedAlertmanager {
 	return &forkedAlertmanager{
 		internal: internal,
@@ -43,14 +42,12 @@ func (fam *forkedAlertmanager) ApplyConfig(ctx context.Context, config *models.A
 		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 			return err
 		}
+		fam.configSent = true
 	} else {
 		// TODO: delet
 		fmt.Println("tried to send config but config was already sent")
 	}
-	if fam.mode != ModeRemoteOnly {
-		return fam.internal.ApplyConfig(ctx, config)
-	}
-	return nil
+	return fam.internal.ApplyConfig(ctx, config)
 }
 
 func (fam *forkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
@@ -84,30 +81,28 @@ func (fam *forkedAlertmanager) GetStatus() apimodels.GettableStatus {
 	return fam.remote.GetStatus()
 }
 
-// Silences
 func (fam *forkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	if fam.mode != ModeRemoteSecondary {
-		id, err := fam.remote.CreateSilence(ctx, silence)
-		if err != nil {
-			return "", err
-		}
-		if fam.mode == ModeRemoteOnly {
-			return id, nil
-		}
+	id, err := fam.internal.CreateSilence(ctx, silence)
+	if err != nil {
+		return "", err
 	}
-	return fam.internal.CreateSilence(ctx, silence)
+	// In ModeRemoteSecondary we just create the silence in the internal Alertmanager.
+	if fam.mode == ModeRemoteSecondary {
+		return id, nil
+	}
+
+	// If were not in ModeRemoteSecodary we care about the id returned from the remote Alertmanager.
+	return fam.remote.CreateSilence(ctx, silence)
 }
 
 func (fam *forkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
-	if fam.mode != ModeRemoteSecondary {
+	if fam.mode == ModeRemotePrimary {
 		if err := fam.remote.DeleteSilence(ctx, id); err != nil {
 			return err
 		}
 	}
-	if fam.mode != ModeRemoteOnly {
-		return fam.internal.DeleteSilence(ctx, id)
-	}
-	return nil
+
+	return fam.internal.DeleteSilence(ctx, id)
 }
 
 func (fam *forkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {
@@ -167,24 +162,18 @@ func (fam *forkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.Tes
 // State
 func (fam *forkedAlertmanager) CleanUp() {
 	// No cleanup to do in the remote Alertmanager.
-	if fam.mode != ModeRemoteOnly {
-		fam.internal.CleanUp()
-	}
+	fam.internal.CleanUp()
 }
 
 func (fam *forkedAlertmanager) StopAndWait() {
-	if fam.mode != ModeRemoteOnly {
-		fam.internal.StopAndWait()
-	}
+	fam.internal.StopAndWait()
 	// Stop senders.
 	fam.remote.StopAndWait()
 }
 
 func (fam *forkedAlertmanager) Ready() bool {
-	if fam.mode != ModeRemoteOnly {
-		if ready := fam.internal.Ready(); !ready {
-			return false
-		}
+	if ready := fam.internal.Ready(); !ready {
+		return false
 	}
 	return fam.remote.Ready()
 }
