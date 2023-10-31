@@ -12,7 +12,7 @@ import {
   calculateFieldTransformer,
   ReduceOptions,
   WindowSizeMode,
-  WindowType,
+  WindowAlignment,
 } from './calculateField';
 import { DataTransformerID } from './ids';
 
@@ -411,7 +411,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Centered,
+          windowAlignment: WindowAlignment.Centered,
           field: 'x',
           windowSize: 1,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -440,7 +440,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Centered,
+          windowAlignment: WindowAlignment.Centered,
           field: 'x',
           windowSize: 0.5,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -469,7 +469,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Centered,
+          windowAlignment: WindowAlignment.Centered,
           field: 'x',
           windowSize: 5,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -498,7 +498,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Trailing,
+          windowAlignment: WindowAlignment.Trailing,
           field: 'x',
           windowSize: 1,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -527,7 +527,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Trailing,
+          windowAlignment: WindowAlignment.Trailing,
           field: 'x',
           windowSize: 0,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -631,7 +631,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Trailing,
+          windowAlignment: WindowAlignment.Trailing,
           field: 'x',
           windowSize: 0.75,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -661,7 +661,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Trailing,
+          windowAlignment: WindowAlignment.Trailing,
           field: 'x',
           windowSize: 1,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -690,7 +690,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Centered,
+          windowAlignment: WindowAlignment.Centered,
           field: 'x',
           windowSize: 1,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -719,7 +719,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Centered,
+          windowAlignment: WindowAlignment.Centered,
           field: 'x',
           windowSize: 0.75,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -749,7 +749,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Centered,
+          windowAlignment: WindowAlignment.Centered,
           field: 'x',
           windowSize: 0.75,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -779,7 +779,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Centered,
+          windowAlignment: WindowAlignment.Centered,
           field: 'x',
           windowSize: 0.75,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -809,7 +809,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Centered,
+          windowAlignment: WindowAlignment.Centered,
           field: 'x',
           windowSize: 0.75,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -839,7 +839,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Trailing,
+          windowAlignment: WindowAlignment.Trailing,
           field: 'x',
           windowSize: 0.75,
           windowSizeMode: WindowSizeMode.Percentage,
@@ -869,7 +869,7 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.WindowFunctions,
         window: {
-          type: WindowType.Trailing,
+          windowAlignment: WindowAlignment.Trailing,
           field: 'x',
           windowSize: 0.75,
           windowSizeMode: WindowSizeMode.Percentage,

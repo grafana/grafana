@@ -28,7 +28,7 @@ export enum WindowSizeMode {
   Fixed = 'fixed',
 }
 
-export enum WindowType {
+export enum WindowAlignment {
   Trailing = 'trailing',
   Centered = 'centered',
 }
@@ -47,7 +47,7 @@ export interface CumulativeOptions {
 export interface WindowOptions extends CumulativeOptions {
   windowSize?: number;
   windowSizeMode?: WindowSizeMode;
-  type?: WindowType;
+  windowAlignment?: WindowAlignment;
 }
 
 export interface UnaryOptions {
@@ -71,7 +71,7 @@ const defaultReduceOptions: ReduceOptions = {
 
 export const defaultWindowOptions: WindowOptions = {
   reducer: ReducerID.mean,
-  type: WindowType.Trailing,
+  windowAlignment: WindowAlignment.Trailing,
   windowSizeMode: WindowSizeMode.Percentage,
   windowSize: 0.1,
 };
@@ -240,12 +240,6 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
     });
   }
 
-  const info = fieldReducers.get(options.reducer);
-
-  if (!info) {
-    throw new Error(`Unknown reducer: ${options.reducer}`);
-  }
-
   return (frame: DataFrame) => {
     const window = Math.ceil(
       options.windowSize! * (options.windowSizeMode === WindowSizeMode.Percentage ? frame.length : 1)
@@ -264,9 +258,13 @@ function getWindowCreator(options: WindowOptions, allFrames: DataFrame[]): Value
       return;
     }
 
+    if (![ReducerID.mean, ReducerID.stdDev, ReducerID.variance].includes(options.reducer)) {
+      throw new Error(`Add field from calculation transformation - Unsupported reducer: ${options.reducer}`);
+    }
+
     const vals: number[] = [];
 
-    if (options.type === WindowType.Centered) {
+    if (options.windowAlignment === WindowAlignment.Centered) {
       let sum = 0;
       let count = 0;
       // Current value (i) is included in the leading part of the window. Which means if the window size is odd,
@@ -389,10 +387,8 @@ function getCumulativeCreator(options: CumulativeOptions, allFrames: DataFrame[]
     });
   }
 
-  const info = fieldReducers.get(options.reducer);
-
-  if (!info) {
-    throw new Error(`Unknown reducer: ${options.reducer}`);
+  if (![ReducerID.mean, ReducerID.sum].includes(options.reducer)) {
+    throw new Error(`Add field from calculation transformation - Unsupported reducer: ${options.reducer}`);
   }
 
   return (frame: DataFrame) => {
@@ -561,7 +557,9 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
     }
     case CalculateFieldMode.WindowFunctions: {
       const { window } = options;
-      return `${window?.type ?? ''} moving ${window?.reducer ?? ''}${window?.field ? `(${window.field})` : ''}`;
+      return `${window?.windowAlignment ?? ''} moving ${window?.reducer ?? ''}${
+        window?.field ? `(${window.field})` : ''
+      }`;
     }
     case CalculateFieldMode.UnaryOperation: {
       const { unary } = options;

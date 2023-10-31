@@ -24,7 +24,7 @@ import {
   BinaryOptions,
   UnaryOptions,
   CalculateFieldMode,
-  WindowType,
+  WindowAlignment,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
   IndexOptions,
@@ -272,7 +272,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
   updateWindowOptions = (v: WindowOptions) => {
     const { options, onChange } = this.props;
-    console.log(v);
     onChange({
       ...options,
       mode: CalculateFieldMode.WindowFunctions,
@@ -324,7 +323,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const { window } = this.props.options;
     this.updateWindowOptions({
       ...window!,
-      type: val as WindowType,
+      windowAlignment: val as WindowAlignment,
     });
   };
 
@@ -333,8 +332,8 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     options = defaults(options, { reducer: ReducerID.sum });
     const selectOptions = names.map((v) => ({ label: v, value: v }));
     const typeOptions = [
-      { label: 'Trailing', value: WindowType.Trailing },
-      { label: 'Centered', value: WindowType.Centered },
+      { label: 'Trailing', value: WindowAlignment.Trailing },
+      { label: 'Centered', value: WindowAlignment.Centered },
     ];
     const windowSizeModeOptions = [
       { label: 'Percentage', value: WindowSizeMode.Percentage },
@@ -366,7 +365,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </InlineField>
         <InlineField label="Type" labelWidth={labelWidth}>
           <RadioButtonGroup
-            value={options.type ?? WindowType.Trailing}
+            value={options.windowAlignment ?? WindowAlignment.Trailing}
             options={typeOptions}
             onChange={this.onTypeChange}
           />
