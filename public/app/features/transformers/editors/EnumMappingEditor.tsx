@@ -35,10 +35,14 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
       return;
     }
 
+    // Necessary to match the order of enum values to the order shown in the visualization
+    const mappedSourceIndex = enumRows.length - result.source.index - 1;
+    const mappedDestinationIndex = enumRows.length - result.destination.index - 1;
+
     const copy = [...enumRows];
-    const element = copy[result.source.index];
-    copy.splice(result.source.index, 1);
-    copy.splice(result.destination.index, 0, element);
+    const element = copy[mappedSourceIndex];
+    copy.splice(mappedSourceIndex, 1);
+    copy.splice(mappedDestinationIndex, 0, element);
     updateEnumRows(copy);
   };
 
@@ -81,7 +85,7 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
   };
 
   const onAddEnumRow = () => {
-    updateEnumRows([...enumRows, '']);
+    updateEnumRows(['', ...enumRows]);
   };
 
   const onChangeEnumValue = (index: number, value: string) => {
@@ -132,51 +136,55 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
             <Droppable droppableId="sortable-enum-config-mappings" direction="vertical">
               {(provided) => (
                 <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                  {enumRows.map((value: string, index: number) => (
-                    <Draggable
-                      key={`${convertFieldTransformIndex}/${value}`}
-                      draggableId={`${convertFieldTransformIndex}/${value}`}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
-                          <td>
-                            <div className={styles.dragHandle} {...provided.dragHandleProps}>
-                              <Icon name="draggabledots" size="lg" />
-                            </div>
-                          </td>
-                          {editingIndex === index ? (
+                  {[...enumRows].reverse().map((value: string, index: number) => {
+                    // Reverse the order of the enum values to match the order of the enum values in the table to the order in the visualization
+                    const mappedIndex = enumRows.length - index - 1;
+                    return (
+                      <Draggable
+                        key={`${convertFieldTransformIndex}/${value}`}
+                        draggableId={`${convertFieldTransformIndex}/${value}`}
+                        index={index}
+                      >
+                        {(provided) => (
+                          <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
                             <td>
-                              <Input
-                                type="text"
-                                value={editingValue}
-                                onChange={(event) => setEditingValue(event.currentTarget.value)}
-                                onBlur={() => {
-                                  setEditingIndex(null);
-                                  onChangeEnumValue(index, editingValue);
-                                }}
-                              />
+                              <div className={styles.dragHandle} {...provided.dragHandleProps}>
+                                <Icon name="draggabledots" size="lg" />
+                              </div>
                             </td>
-                          ) : (
-                            <td onClick={() => setEditRow(index, value)} className={styles.clickableTableCell}>
-                              {value && value !== '' ? value : 'Click to edit'}
+                            {editingIndex === mappedIndex ? (
+                              <td>
+                                <Input
+                                  type="text"
+                                  value={editingValue}
+                                  onChange={(event) => setEditingValue(event.currentTarget.value)}
+                                  onBlur={() => {
+                                    setEditingIndex(null);
+                                    onChangeEnumValue(mappedIndex, editingValue);
+                                  }}
+                                />
+                              </td>
+                            ) : (
+                              <td onClick={() => setEditRow(mappedIndex, value)} className={styles.clickableTableCell}>
+                                {value && value !== '' ? value : 'Click to edit'}
+                              </td>
+                            )}
+                            <td className={styles.textAlignCenter}>
+                              <HorizontalGroup spacing="sm">
+                                <IconButton
+                                  name="trash-alt"
+                                  onClick={() => onRemoveEnumRow(index)}
+                                  data-testid="remove-enum-row"
+                                  aria-label="Delete enum row"
+                                  tooltip="Delete"
+                                />
+                              </HorizontalGroup>
                             </td>
-                          )}
-                          <td className={styles.textAlignCenter}>
-                            <HorizontalGroup spacing="sm">
-                              <IconButton
-                                name="trash-alt"
-                                onClick={() => onRemoveEnumRow(index)}
-                                data-testid="remove-enum-row"
-                                aria-label="Delete enum row"
-                                tooltip="Delete"
-                              />
-                            </HorizontalGroup>
-                          </td>
-                        </tr>
-                      )}
-                    </Draggable>
-                  ))}
+                          </tr>
+                        )}
+                      </Draggable>
+                    );
+                  })}
                   {provided.placeholder}
                 </tbody>
               )}
