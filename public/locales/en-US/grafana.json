@@ -339,6 +339,115 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "rich-history": {
+      "close-tooltip": "Close query history",
+      "datasource-a-z": "Data source A-Z",
+      "datasource-z-a": "Data source Z-A",
+      "newest-first": "Newest first",
+      "oldest-first": "Oldest first",
+      "query-history": "Query history",
+      "settings": "Settings",
+      "starred": "Starred"
+    },
+    "rich-history-card": {
+      "add-comment-form": "Add comment form",
+      "add-comment-tooltip": "Add comment",
+      "cancel": "Cancel",
+      "confirm-delete": "Delete",
+      "copy-query-tooltip": "Copy query to clipboard",
+      "copy-shortened-link-tooltip": "Copy shortened link to clipboard",
+      "datasource-icon-label": "Data source icon",
+      "datasource-name-label": "Data source name",
+      "datasource-not-exist": "Data source does not exist anymore",
+      "delete-query-confirmation-title": "Delete",
+      "delete-query-title": "Delete query",
+      "delete-query-tooltip": "Delete query",
+      "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
+      "edit-comment-tooltip": "Edit comment",
+      "loading-text": "loading...",
+      "optional-description": "An optional description of what the query does.",
+      "query-comment-label": "Query comment",
+      "query-text-label": "Query text",
+      "run-query-button": "Run query",
+      "save-comment": "Save comment",
+      "star-query-tooltip": "Star query",
+      "switch-datasource-button": "Switch data source and run query",
+      "unstar-query-tooltip": "Unstar query",
+      "update-comment-form": "Update comment form"
+    },
+    "rich-history-container": {
+      "loading": "Loading..."
+    },
+    "rich-history-notification": {
+      "query-copied": "Query copied to clipboard",
+      "query-deleted": "Query deleted"
+    },
+    "rich-history-queries-tab": {
+      "displaying-partial-queries": "Displaying {{ count }} queries",
+      "displaying-queries": "{{ count }} queries",
+      "filter-aria-label": "Filter queries for data sources(s)",
+      "filter-history": "Filter history",
+      "filter-placeholder": "Filter queries for data sources(s)",
+      "history-local": "The history is local to your browser and is not shared with others.",
+      "loading": "Loading...",
+      "loading-results": "Loading results...",
+      "search-placeholder": "Search queries",
+      "showing-queries": "Showing {{ shown }} of {{ total }} <0>Load more</0>",
+      "sort-aria-label": "Sort queries",
+      "sort-placeholder": "Sort queries by"
+    },
+    "rich-history-settings-tab": {
+      "alert-info": "Grafana will keep entries up to {{optionLabel}}.Starred entries won't be deleted.",
+      "change-default-tab": "Change the default active tab from “Query history” to “Starred”",
+      "clear-history-info": "Delete all of your query history, permanently.",
+      "clear-query-history": "Clear query history",
+      "clear-query-history-button": "Clear query history",
+      "delete-confirm": "Delete",
+      "delete-confirm-text": "Are you sure you want to permanently delete your query history?",
+      "delete-title": "Delete",
+      "history-time-span": "History time span",
+      "history-time-span-description": "Select the period of time for which Grafana will save your query history. Up to {{MAX_HISTORY_ITEMS}} entries will be stored.",
+      "only-show-active-datasource": "Only show queries for data source currently active in Explore",
+      "query-history-deleted": "Query history deleted",
+      "retention-period": {
+        "1-week": "1 week",
+        "2-days": "2 days",
+        "2-weeks": "2 weeks",
+        "5-days": "5 days"
+      }
+    },
+    "rich-history-starred-tab": {
+      "filter-queries-aria-label": "Filter queries for data sources(s)",
+      "filter-queries-placeholder": "Filter queries for data sources(s)",
+      "loading": "Loading...",
+      "loading-results": "Loading results...",
+      "local-history-message": "The history is local to your browser and is not shared with others.",
+      "search-queries-placeholder": "Search queries",
+      "showing-queries": "Showing {{ shown }} of {{ total }} <0>Load more</0>",
+      "sort-queries-aria-label": "Sort queries",
+      "sort-queries-placeholder": "Sort queries by"
+    },
+    "rich-history-utils": {
+      "a-week-ago": "a week ago",
+      "days-ago": "{{num}} days ago",
+      "default-from": "now-1h",
+      "default-to": "now",
+      "today": "today",
+      "two-weeks-ago": "two weeks ago",
+      "yesterday": "yesterday"
+    },
+    "rich-history-utils-notification": {
+      "saving-failed": "Saving rich history failed",
+      "update-failed": "Rich History update failed"
+    },
+    "secondary-actions": {
+      "query-add-button": "Add query",
+      "query-add-button-aria-label": "Add query",
+      "query-history-button": "Query history",
+      "query-history-button-aria-label": "Query history",
+      "query-inspector-button": "Query inspector",
+      "query-inspector-button-aria-label": "Query inspector"
+    },
     "table": {
       "no-data": "0 series returned",
       "title": "Table",

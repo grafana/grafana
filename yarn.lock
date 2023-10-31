@@ -2964,7 +2964,7 @@ __metadata:
     tinycolor2: 1.6.0
     tslib: 2.6.0
     typescript: 4.8.4
-    uplot: 1.6.26
+    uplot: 1.6.27
     xss: ^1.0.14
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
@@ -3304,9 +3304,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^1.18.0":
-  version: 1.20.0
-  resolution: "@grafana/scenes@npm:1.20.0"
+"@grafana/scenes@npm:^1.20.1":
+  version: 1.20.1
+  resolution: "@grafana/scenes@npm:1.20.1"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3318,7 +3318,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: cc56fa2aec1e31598a9cbb7f4837d25fc03f32879247fc2063269c1d9c8d8543c518f6cac3c4b64ea32b4f0841e334bd1af4bd38b45860c0a89473680385cafd
+  checksum: 44f81303cc096885afb1bce32c3ce80739091c961dfd5a21268deb90cbbc2af2b8b5647357a833f1db4106eb4618b43e403e0fe127157ed1a302a68f89a59907
   languageName: node
   linkType: hard
 
@@ -3495,7 +3495,7 @@ __metadata:
     tinycolor2: 1.6.0
     tslib: 2.6.0
     typescript: 4.8.4
-    uplot: 1.6.26
+    uplot: 1.6.27
     uuid: 9.0.0
     webpack: 5.89.0
   peerDependencies:
@@ -17152,7 +17152,7 @@ __metadata:
     "@grafana/lezer-traceql": 0.0.8
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^1.18.0
+    "@grafana/scenes": ^1.20.1
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
@@ -17451,7 +17451,7 @@ __metadata:
     tslib: 2.6.0
     tween-functions: ^1.2.0
     typescript: 4.8.4
-    uplot: 1.6.26
+    uplot: 1.6.27
     uuid: 9.0.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -29218,10 +29218,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.26":
-  version: 1.6.26
-  resolution: "uplot@npm:1.6.26"
-  checksum: 873b5b049b0b2e00534e4a02bfcab7df6972099a2cedec0cd8b1ba949b318628a7d59b988e0f45fd3f8ed4eb6cc5a84d59f83a15b702c21f7396c664dc41a124
+"uplot@npm:1.6.27":
+  version: 1.6.27
+  resolution: "uplot@npm:1.6.27"
+  checksum: 73fc02524a7d37c00fcc46f6f63a1dfe1edc4ec6538aaf2eb2c11d7e72b60a919cdb9fc13891380aa237a59defc861d38acafb2996842e2a852bc75d5b11453c
   languageName: node
   linkType: hard
 
