@@ -1,4 +1,4 @@
-import memoize from 'micro-memoize';
+import memoizeOne from 'memoize-one';
 
 import { NavModel, NavModelItem, NavIndex } from '@grafana/data';
 import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
@@ -21,7 +21,7 @@ const getNotFoundModel = (): NavModel => {
   };
 };
 
-export const getNavModel = memoize(
+export const getNavModel = memoizeOne(
   (navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel => {
     if (navIndex[id]) {
       const node = navIndex[id];

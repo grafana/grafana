@@ -17353,7 +17353,6 @@ __metadata:
     marked: 5.1.1
     marked-mangle: 1.1.0
     memoize-one: 6.0.0
-    micro-memoize: 4.1.2
     mini-css-extract-plugin: 2.7.6
     moment: 2.29.4
     moment-timezone: 0.5.43
@@ -21304,7 +21303,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"micro-memoize@npm:4.1.2, micro-memoize@npm:^4.1.2":
+"micro-memoize@npm:^4.1.2":
   version: 4.1.2
   resolution: "micro-memoize@npm:4.1.2"
   checksum: 4b02750622d44b5ab31573c629b5d91927dd0c2727743ff75e790c223ab6cd02c48cc3bddea69da0dffb688091a0a71a17944947dd165f8ba9e03728bc30a76d

@@ -1,9 +1,9 @@
-import memoize from 'micro-memoize';
+import memoizeOne from 'memoize-one';
 
 import { DataSourcePluginMeta, DataSourceSettings, UrlQueryValue } from '@grafana/data';
 import { DataSourcesState } from 'app/types/datasources';
 
-export const getDataSources = memoize((state: DataSourcesState) => {
+export const getDataSources = memoizeOne((state: DataSourcesState) => {
   const regex = new RegExp(state.searchQuery, 'i');
 
   const filteredDataSources = state.dataSources.filter((dataSource: DataSourceSettings) => {
@@ -15,7 +15,7 @@ export const getDataSources = memoize((state: DataSourcesState) => {
   );
 });
 
-export const getFilteredDataSourcePlugins = memoize((state: DataSourcesState) => {
+export const getFilteredDataSourcePlugins = memoizeOne((state: DataSourcesState) => {
   const regex = new RegExp(state.dataSourceTypeSearchQuery, 'i');
 
   return state.plugins.filter((type: DataSourcePluginMeta) => {
