@@ -54,7 +54,7 @@ func (fam *forkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *a
 	// NOTE: this is used in:
 	//	- ActivateHistoricalConfiguration
 	//	- ApplyAlertmanagerConfiguration, used in RoutePostAlertingConfig
-	if fam.mode != ModeRemoteSecondary {
+	if fam.mode == ModeRemotePrimary {
 		if err := fam.remote.SaveAndApplyConfig(ctx, config); err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ func (fam *forkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) er
 	// NOTE: this is used in
 	//	- RouteDeleteAlertingConfig
 	//	- SyncAlertmanagersForOrgs when no db config is found
-	if fam.mode != ModeRemoteSecondary {
+	if fam.mode == ModeRemotePrimary {
 		// TODO: do we have to use this method in the remote AM?
 		if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
 			return err
@@ -107,44 +107,42 @@ func (fam *forkedAlertmanager) DeleteSilence(ctx context.Context, id string) err
 }
 
 func (fam *forkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {
-	if fam.mode != ModeRemoteSecondary {
+	if fam.mode == ModeRemotePrimary {
 		return fam.remote.GetSilence(ctx, id)
 	}
 	return fam.internal.GetSilence(ctx, id)
 }
 
 func (fam *forkedAlertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
-	if fam.mode != ModeRemoteSecondary {
+	if fam.mode == ModeRemotePrimary {
 		return fam.remote.ListSilences(ctx, filter)
 	}
 	return fam.internal.ListSilences(ctx, filter)
 }
 
-// Alerts
 func (fam *forkedAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
-	if fam.mode != ModeRemoteSecondary {
+	if fam.mode == ModeRemotePrimary {
 		return fam.remote.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
 	}
 	return fam.internal.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *forkedAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
-	if fam.mode != ModeRemoteSecondary {
+	if fam.mode == ModeRemotePrimary {
 		return fam.remote.GetAlertGroups(ctx, active, silenced, inhibited, filter, receiver)
 	}
 	return fam.internal.GetAlertGroups(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *forkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
-	if fam.mode != ModeRemoteSecondary {
+	if fam.mode == ModeRemotePrimary {
 		return fam.remote.PutAlerts(ctx, alerts)
 	}
 	return fam.internal.PutAlerts(ctx, alerts)
 }
 
-// Receivers
 func (fam *forkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	if fam.mode != ModeRemoteSecondary {
+	if fam.mode == ModeRemotePrimary {
 		return fam.remote.GetReceivers(ctx)
 	}
 	return fam.internal.GetReceivers(ctx)
@@ -160,7 +158,6 @@ func (fam *forkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.Tes
 	return fam.internal.TestTemplate(ctx, c)
 }
 
-// State
 func (fam *forkedAlertmanager) CleanUp() {
 	// No cleanup to do in the remote Alertmanager.
 	fam.internal.CleanUp()
