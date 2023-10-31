@@ -210,8 +210,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       return false;
     }
 
-    const ds = this.state.logContextSupport[row.dataFrame.refId];
-    return ds.showContextToggle(row);
+    return true;
   };
 
   getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
