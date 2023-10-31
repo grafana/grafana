@@ -26,7 +26,9 @@ type EnumMappingEditorProps = {
 export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, onChange }: EnumMappingEditorProps) => {
   const styles = useStyles2(getStyles);
 
-  const [enumRows, updateEnumRows] = useState<string[]>([]);
+  const [enumRows, updateEnumRows] = useState<string[]>(
+    options.conversions[convertFieldTransformIndex].enumConfig?.text ?? []
+  );
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) {
@@ -98,7 +100,7 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
   useEffect(() => {
     const applyEnumConfig = () => {
       // Reverse the order of the enum values to match the order of the enum values in the table
-      const textValues = enumRows.map((value) => value).reverse();
+      const textValues = enumRows.map((value) => value);
 
       const conversions = options.conversions;
       const enumConfig: EnumFieldConfig = { text: textValues };
@@ -110,7 +112,8 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
     };
 
     applyEnumConfig();
-  }, [convertFieldTransformIndex, enumRows, onChange, options]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convertFieldTransformIndex, enumRows]);
 
   return (
     <InlineFieldRow>
