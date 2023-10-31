@@ -34,13 +34,15 @@ func (authz *AuthService) Authorize(ctx context.Context, orgID int64, user ident
 		return nil, ErrMissingPermissions
 	}
 
-	scopeTypes, err := annotationScopeTypes(user)
-	if err != nil {
-		return nil, err
+	scopes, has := user.GetPermissions()[ac.ActionAnnotationsRead]
+	if !has {
+		return nil, ErrMissingPermissions
 	}
 
-	var visibleDashboards map[string]int64
+	scopeTypes := annotationScopeTypes(scopes)
 
+	var visibleDashboards map[string]int64
+	var err error
 	if _, ok := scopeTypes[annotations.Dashboard.String()]; ok {
 		visibleDashboards, err = authz.userVisibleDashboards(ctx, user, orgID)
 		if err != nil {
@@ -97,15 +99,10 @@ func (authz *AuthService) userVisibleDashboards(ctx context.Context, user identi
 	return visibleDashboards, nil
 }
 
-func annotationScopeTypes(user identity.Requester) (map[any]struct{}, error) {
+func annotationScopeTypes(scopes []string) map[any]struct{} {
 	allScopeTypes := map[any]struct{}{
 		annotations.Dashboard.String():    {},
 		annotations.Organization.String(): {},
-	}
-
-	scopes, has := user.GetPermissions()[ac.ActionAnnotationsRead]
-	if !has {
-		return nil, ErrMissingPermissions
 	}
 
 	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
@@ -113,5 +110,5 @@ func annotationScopeTypes(user identity.Requester) (map[any]struct{}, error) {
 		types = allScopeTypes
 	}
 
-	return types, nil
+	return types
 }
