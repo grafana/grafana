@@ -17,7 +17,6 @@ export * from './themes';
 export * from './monaco';
 export * from './geo/layer';
 export {
-  type ValueMatcherOptions,
   type BasicValueMatcherOptions,
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';

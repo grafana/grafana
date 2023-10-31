@@ -18,7 +18,7 @@ export interface DateTimeOptionsWithFormat extends DateTimeOptions {
   /**
    * Set this value to `true` if you want to include milliseconds when formatting date and time
    */
-  defaultWithMS: boolean;
+  defaultWithMS?: boolean;
 }
 
 type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc: DateTimeInput, options?: T) => string;
