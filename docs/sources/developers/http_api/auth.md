@@ -19,72 +19,15 @@ title: 'Authentication HTTP API '
 
 # Authentication API
 
+The Authentication HTTP API is used to manage API keys.
+
+{{% admonition type="note" %}}
+If you use Grafana v9.1 or newer, use service accounts instead of API keys. For more information, refer to [Grafana service account API reference]({{< relref "./serviceaccount/" >}}).
+{{% /admonition %}}
+
 > If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
 
-## Tokens
-
-Currently, you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or OAuth).
-
-## X-Grafana-Org-Id Header
-
-**X-Grafana-Org-Id** is an optional property that specifies the organization to which the action is applied. If it is not set, the created key belongs to the current context org. Use this header in all requests except those regarding admin.
-
-**Example Request**:
-
-```http
-POST /api/auth/keys HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-X-Grafana-Org-Id: 2
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-{
-  "name": "mykey",
-  "role": "Admin",
-  "secondsToLive": 86400
-}
-```
-
-## Basic Auth
-
-If basic auth is enabled (it is enabled by default), then you can authenticate your HTTP request via
-standard basic auth. Basic auth will also authenticate LDAP users.
-
-curl example:
-
-```bash
-curl http://admin:admin@localhost:3000/api/org
-{"id":1,"name":"Main Org."}
-```
-
-## Create API Token
-
-Open the sidemenu and click the organization dropdown and select the `API Keys` option.
-
-You use the token in all requests in the `Authorization` header, like this:
-
-**Example**:
-
-```http
-GET http://your.grafana.com/api/dashboards/db/mydash HTTP/1.1
-Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-The `Authorization` header value should be `Bearer <your api key>`.
-
-The API Token can also be passed as a Basic authorization password with the special username `api_key`:
-
-curl example:
-
-```bash
-curl http://api_key:eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk@localhost:3000/api/org
-{"id":1,"name":"Main Org."}
-```
-
-# Auth HTTP resources / actions
-
-## Api Keys
+## List API keys
 
 `GET /api/auth/keys`
 
