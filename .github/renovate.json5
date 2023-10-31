@@ -73,7 +73,7 @@
       "groupName": "locker",
       "matchPackagePrefixes": [
         "@locker/"
-      ]
+      ],
       "reviewers": ["team:grafana/plugins-platform-frontend"],
     },
   ],
