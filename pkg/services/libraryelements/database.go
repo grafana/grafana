@@ -147,7 +147,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	element := model.LibraryElement{
 		OrgID:    signedInUser.GetOrgID(),
-		FolderID: cmd.FolderID,
+		FolderID: cmd.FolderID, // nolint:staticcheck
 		UID:      createUID,
 		Name:     cmd.Name,
 		Model:    updatedModel,
@@ -572,7 +572,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		var libraryElement = model.LibraryElement{
 			ID:          elementInDB.ID,
 			OrgID:       signedInUser.GetOrgID(),
-			FolderID:    cmd.FolderID,
+			FolderID:    cmd.FolderID, // nolint:staticcheck
 			UID:         updateUID,
 			Name:        cmd.Name,
 			Kind:        elementInDB.Kind,
