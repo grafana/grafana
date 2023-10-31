@@ -63,6 +63,8 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 	if cmd.FolderUID != nil {
 		if *cmd.FolderUID == "" {
 			cmd.FolderID = 0
+			generalFolderUID := ac.GeneralFolderUID
+			cmd.FolderUID = &generalFolderUID
 		} else {
 			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {

@@ -44,8 +44,9 @@ var (
 		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
@@ -84,6 +85,14 @@ var (
 			Description: "Correlations page",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaExploreSquad,
+		},
+		{
+			Name:         "exploreContentOutline",
+			Description:  "Content outline sidebar",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaExploreSquad,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -206,8 +215,7 @@ var (
 		{
 			Name:        "cloudwatchNewRegionsHandler",
 			Description: "Refactor of /regions endpoint, no user-facing changes",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
+			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -293,9 +301,10 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -327,9 +336,10 @@ var (
 		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "clientTokenRotation",
@@ -428,6 +438,7 @@ var (
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:        "enableElasticsearchBackendQuerying",
@@ -579,14 +590,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "toggleLabelsInLogsUI",
-			Description:  "Enable toggleable filters in log details view",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "mlExpressions",
 			Description:  "Enable support for Machine Learning in server-side expressions",
 			Stage:        FeatureStageExperimental,
@@ -687,6 +690,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Enabled:         true,
 		},
 		{
 			Name:         "angularDeprecationUI",
@@ -698,9 +702,10 @@ var (
 		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // on by default
 		},
 		{
 			Name:            "reportingRetries",
@@ -762,6 +767,13 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:         "alertingContactPointsV2",
+			Description:  "Show the new contacpoints list view",
+			FrontendOnly: true,
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
 			Name:        "externalCorePlugins",
 			Description: "Allow core plugins to be loaded as external",
 			Stage:       FeatureStageExperimental,
@@ -818,6 +830,13 @@ var (
 			Owner:        hostedGrafanaTeam,
 		},
 		{
+			Name:         "formatString",
+			Description:  "Enable format string transformer",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
+		{
 			Name:         "transformationsVariableSupport",
 			Description:  "Allows using variables in transformations",
 			FrontendOnly: true,
@@ -830,6 +849,12 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "cloudWatchBatchQueries",
+			Description: "Runs CloudWatch metrics queries as separate batches",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:         "navAdminSubsections",
@@ -845,6 +870,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "teamHttpHeaders",
+			Description:  "Enables datasources to apply team headers to the client requests",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAuthnzSquad,
 		},
 		{
 			Name:         "awsDatasourcesNewFormStyling",
@@ -866,6 +898,52 @@ var (
 			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaBackendPlatformSquad,
+		},
+		{
+			Name:         "pluginsInstrumentationStatusSource",
+			Description:  "Include a status source label for plugin request metrics and logs",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "costManagementUi",
+			Description:  "Toggles the display of the cost management ui plugin",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaDatabasesFrontend,
+		},
+		{
+			Name:            "managedPluginsInstall",
+			Description:     "Install managed plugins directly from plugins catalog",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: false,
+			Owner:           grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "prometheusPromQAIL",
+			Description:  "Prometheus and AI/ML to assist users in creating a query",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteSecondary",
+			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemotePrimary",
+			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteOnly",
+			Description: "Disable the internal Alertmanager and only use the external one defined.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
 		},
 	}
 )

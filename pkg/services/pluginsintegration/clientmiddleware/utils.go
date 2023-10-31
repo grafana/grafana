@@ -9,10 +9,13 @@ const (
 	statusError     = "error"
 	statusCancelled = "cancelled"
 
-	endpointCallResource   = "callResource"
-	endpointCheckHealth    = "checkHealth"
-	endpointCollectMetrics = "collectMetrics"
-	endpointQueryData      = "queryData"
+	endpointCallResource    = "callResource"
+	endpointCheckHealth     = "checkHealth"
+	endpointCollectMetrics  = "collectMetrics"
+	endpointQueryData       = "queryData"
+	endpointSubscribeStream = "subscribeStream"
+	endpointPublishStream   = "publishStream"
+	endpointRunStream       = "runStream"
 )
 
 type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error

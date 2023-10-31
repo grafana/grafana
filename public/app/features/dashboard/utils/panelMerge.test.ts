@@ -41,7 +41,7 @@ describe('Merge dashboard panels', () => {
           }),
         ],
       });
-      rawPanels = dashboard.getSaveModelClone().panels;
+      rawPanels = dashboard.getSaveModelCloneOld().panels;
     });
 
     it('should load and support noop', () => {

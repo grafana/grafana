@@ -11,7 +11,7 @@ import {
   LinkModel,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
+import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
 export interface Props {
@@ -60,8 +60,10 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     if (mode === TooltipDisplayMode.Single && columnIndex != null && !field.hovered) {
       continue;
     }
+
     const value = field.values[rowIndex];
     const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
+
     if (field.getLinks) {
       field.getLinks({ calculatedValue: fieldDisplay, valueRowIndex: rowIndex }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
@@ -87,29 +89,6 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
   }
 
-  const renderLinks = () =>
-    links.length > 0 && (
-      <tr>
-        <td colSpan={2}>
-          <VerticalGroup>
-            {links.map((link, i) => (
-              <LinkButton
-                key={i}
-                icon={'external-link-alt'}
-                target={link.target}
-                href={link.href}
-                onClick={link.onClick}
-                fill="text"
-                style={{ width: '100%' }}
-              >
-                {link.title}
-              </LinkButton>
-            ))}
-          </VerticalGroup>
-        </td>
-      </tr>
-    );
-
   return (
     <div className={styles.wrapper}>
       {header && (
@@ -125,7 +104,16 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
               <td>{renderValue(displayValue.valueString)}</td>
             </tr>
           ))}
-          {renderLinks()}
+          {links.map((link, i) => (
+            <tr key={i}>
+              <th>Link</th>
+              <td colSpan={2}>
+                <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
+                  {link.title}
+                </TextLink>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

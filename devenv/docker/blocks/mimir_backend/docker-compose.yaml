@@ -1,0 +1,16 @@
+  mimir_backend:
+    image: grafana/mimir
+    container_name: mimir_backend
+    command:
+      - -target=backend
+  nginx:
+    environment:
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
+      - MIMIR_BACKEND_URL=mimir_backend:8080
+    hostname: nginx
+    image: nginxinc/nginx-unprivileged:1.22-alpine
+    ports:
+      - 8080:8080
+    volumes:
+      - "./docker/blocks/mimir_backend/nginx/nginx.conf.template:/etc/nginx/templates/nginx.conf.template"
+      - "./docker/blocks/mimir_backend/nginx/.htpasswd:/etc/nginx/.htpasswd"

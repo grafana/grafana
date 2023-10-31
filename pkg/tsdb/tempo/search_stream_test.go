@@ -18,7 +18,10 @@ import (
 )
 
 func TestProcessStream_ValidInput_ReturnsNoError(t *testing.T) {
-	service := &Service{}
+	logger := log.New("tsdb.tempo.test")
+	service := &Service{
+		logger: logger,
+	}
 	searchClient := &mockStreamer{}
 	streamSender := &mockSender{}
 	err := service.processStream(context.Background(), searchClient, streamSender)

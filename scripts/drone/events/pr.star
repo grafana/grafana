@@ -33,6 +33,10 @@ load(
     "shellcheck_pipeline",
 )
 load(
+    "scripts/drone/pipelines/swagger_gen.star",
+    "swagger_gen",
+)
+load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
 )
@@ -137,6 +141,10 @@ def pr_pipelines():
         ),
         docs_pipelines(ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
+        swagger_gen(
+            get_pr_trigger(include_paths = ["pkg/**"]),
+            ver_mode,
+        ),
         integration_benchmarks(
             prefix = ver_mode,
         ),

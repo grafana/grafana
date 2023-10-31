@@ -33,7 +33,7 @@ export type Direction = 'row' | 'row-reverse' | 'column' | 'column-reverse';
 
 export type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
-interface FlexProps {
+interface FlexProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   gap?: ResponsiveProp<ThemeSpacingTokens>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
@@ -43,11 +43,11 @@ interface FlexProps {
 }
 
 export const Flex = React.forwardRef<HTMLDivElement, FlexProps>(
-  ({ gap = 1, alignItems, justifyContent, direction, wrap, children }, ref) => {
+  ({ gap = 1, alignItems, justifyContent, direction, wrap, children, ...rest }, ref) => {
     const styles = useStyles2(getStyles, gap, alignItems, justifyContent, direction, wrap);
 
     return (
-      <div ref={ref} className={styles.flex}>
+      <div ref={ref} className={styles.flex} {...rest}>
         {children}
       </div>
     );

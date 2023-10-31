@@ -125,12 +125,12 @@ type mockEC2Client struct {
 	mock.Mock
 }
 
-func (c *mockEC2Client) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+func (c *mockEC2Client) DescribeRegionsWithContext(ctx aws.Context, in *ec2.DescribeRegionsInput, option ...request.Option) (*ec2.DescribeRegionsOutput, error) {
 	args := c.Called(in)
 	return args.Get(0).(*ec2.DescribeRegionsOutput), args.Error(1)
 }
 
-func (c *mockEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+func (c *mockEC2Client) DescribeInstancesPagesWithContext(ctx aws.Context, in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool, opts ...request.Option) error {
 	args := c.Called(in, fn)
 	return args.Error(0)
 }
@@ -143,7 +143,7 @@ type oldEC2Client struct {
 	reservations []*ec2.Reservation
 }
 
-func (c oldEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
+func (c oldEC2Client) DescribeRegionsWithContext(ctx aws.Context, in *ec2.DescribeRegionsInput, option ...request.Option) (*ec2.DescribeRegionsOutput, error) {
 	regions := []*ec2.Region{}
 	for _, region := range c.regions {
 		regions = append(regions, &ec2.Region{
@@ -155,8 +155,8 @@ func (c oldEC2Client) DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeR
 	}, nil
 }
 
-func (c oldEC2Client) DescribeInstancesPages(in *ec2.DescribeInstancesInput,
-	fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
+func (c oldEC2Client) DescribeInstancesPagesWithContext(ctx aws.Context, in *ec2.DescribeInstancesInput,
+	fn func(*ec2.DescribeInstancesOutput, bool) bool, opts ...request.Option) error {
 	reservations := []*ec2.Reservation{}
 	for _, r := range c.reservations {
 		instances := []*ec2.Instance{}
@@ -187,8 +187,8 @@ type fakeRGTAClient struct {
 	tagMapping []*resourcegroupstaggingapi.ResourceTagMapping
 }
 
-func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesInput,
-	fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool) error {
+func (c fakeRGTAClient) GetResourcesPagesWithContext(ctx context.Context, in *resourcegroupstaggingapi.GetResourcesInput,
+	fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool, opts ...request.Option) error {
 	fn(&resourcegroupstaggingapi.GetResourcesOutput{
 		ResourceTagMappingList: c.tagMapping,
 	}, true)
@@ -200,7 +200,7 @@ type fakeCheckHealthClient struct {
 	describeLogGroups func(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
 }
 
-func (c fakeCheckHealthClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+func (c fakeCheckHealthClient) ListMetricsPagesWithContext(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error {
 	if c.listMetricsPages != nil {
 		return c.listMetricsPages(input, fn)
 	}
@@ -214,7 +214,7 @@ func (c fakeCheckHealthClient) DescribeLogGroups(input *cloudwatchlogs.DescribeL
 	return nil, nil
 }
 
-func (c fakeCheckHealthClient) GetLogGroupFields(input *cloudwatchlogs.GetLogGroupFieldsInput) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+func (c fakeCheckHealthClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return nil, nil
 }
 

@@ -85,7 +85,6 @@ const FlameGraphContainer = ({
     }
     return new FlameGraphDataContainer(data, theme);
   }, [data, theme]);
-
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme, vertical);
 

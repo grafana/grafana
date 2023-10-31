@@ -10,27 +10,31 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
 // log requests.
-func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger) plugins.ClientMiddleware {
+func NewLoggerMiddleware(cfg *setting.Cfg, logger plog.Logger, features featuremgmt.FeatureToggles) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		if !cfg.PluginLogBackendRequests {
 			return next
 		}
 
 		return &LoggerMiddleware{
-			next:   next,
-			logger: logger,
+			next:     next,
+			logger:   logger,
+			features: features,
 		}
 	})
 }
 
 type LoggerMiddleware struct {
-	next   plugins.Client
-	logger plog.Logger
+	next     plugins.Client
+	logger   plog.Logger
+	features featuremgmt.FeatureToggles
 }
 
 func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.Context) error) error {
@@ -45,7 +49,6 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 			status = statusCancelled
 		}
 	}
-
 	logParams := []any{
 		"status", status,
 		"duration", time.Since(start),
@@ -54,6 +57,9 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 	}
 	if status == statusError {
 		logParams = append(logParams, "error", err)
+	}
+	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+		logParams = append(logParams, "status_source", pluginrequestmeta.StatusSourceFromContext(ctx))
 	}
 	m.logger.FromContext(ctx).Info("Plugin Request Completed", logParams...)
 	return err
@@ -67,7 +73,19 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 	var resp *backend.QueryDataResponse
 	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
-		return innerErr
+
+		if innerErr != nil {
+			return innerErr
+		}
+
+		ctxLogger := m.logger.FromContext(ctx)
+		for refID, dr := range resp.Responses {
+			if dr.Error != nil {
+				ctxLogger.Error("Partial data response error", "refID", refID, "error", dr.Error)
+			}
+		}
+
+		return nil
 	})
 
 	return resp, err

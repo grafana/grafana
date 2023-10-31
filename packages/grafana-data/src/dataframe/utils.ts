@@ -3,10 +3,16 @@ import { DataFrame, FieldType } from '../types/dataFrame';
 import { getTimeField } from './processDataFrame';
 
 export function isTimeSeriesFrame(frame: DataFrame) {
-  if (frame.fields.length > 2) {
+  // If we have less than two frames we can't have a timeseries
+  if (frame.fields.length < 2) {
     return false;
   }
-  return Boolean(frame.fields.find((field) => field.type === FieldType.time));
+
+  // In order to have a time series we need a time field
+  // and at least one number field
+  const timeField = frame.fields.find((field) => field.type === FieldType.time);
+  const numberField = frame.fields.find((field) => field.type === FieldType.number);
+  return timeField !== undefined && numberField !== undefined;
 }
 
 export function isTimeSeriesFrames(data: DataFrame[]) {

@@ -151,6 +151,7 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
 		Features:              e.features,
+		Logger:                logger,
 	}, nil
 }
 
@@ -225,7 +226,7 @@ func (e *cloudWatchExecutor) checkHealthMetrics(ctx context.Context, pluginCtx b
 		return err
 	}
 	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), e.cfg)
-	_, err = metricClient.ListMetricsWithPageLimit(params)
+	_, err = metricClient.ListMetricsWithPageLimit(ctx, params)
 	return err
 }
 
