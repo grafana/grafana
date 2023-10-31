@@ -47,9 +47,10 @@ func getFromLegacy(data map[string]interface{}, secureData map[string]string) (a
 		// but they imply App Registration authentication
 		if tenantId != "" && clientId != "" {
 			authType = azcredentials.AzureAuthClientSecret
+		} else {
+			// No configuration present
+			return nil, nil
 		}
-
-		return nil, nil
 	}
 
 	switch authType {
@@ -72,9 +73,8 @@ func getFromLegacy(data map[string]interface{}, secureData map[string]string) (a
 		}
 		clientSecret := secureData["clientSecret"]
 
-		// If any of the required fields are not set then credentials are not configured
-		if tenantId == "" || clientId == "" || clientSecret == "" {
-			return nil, nil
+		if secureData["clientSecret"] == "" {
+			return nil, fmt.Errorf("unable to instantiate credentials, clientSecret must be set")
 		}
 
 		credentials := &azcredentials.AzureClientSecretCredentials{

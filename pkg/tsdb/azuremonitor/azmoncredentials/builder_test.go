@@ -8,258 +8,208 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestCredentials_getAuthType(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: &azsettings.AzureSettings{},
-	}
+func TestFromDatasourceData(t *testing.T) {
+	t.Run("should return nil when no credentials configured", func(t *testing.T) {
+		var data = map[string]interface{}{}
+		var secureData = map[string]string{}
 
-	t.Run("when managed identities enabled", func(t *testing.T) {
-		cfg.Azure.ManagedIdentityEnabled = true
+		result, err := FromDatasourceData(data, secureData)
+		require.NoError(t, err)
 
-		t.Run("should be client secret if auth type is set to client secret", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: azcredentials.AzureAuthClientSecret,
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
-		})
-
-		t.Run("should be managed identity if datasource not configured", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: "",
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthManagedIdentity, authType)
-		})
-
-		t.Run("should be client secret if auth type not specified but credentials configured", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: "",
-				TenantId:      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",
-				ClientId:      "849ccbb0-92eb-4226-b228-ef391abd8fe6",
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
-		})
+		assert.Nil(t, result)
 	})
 
-	t.Run("when managed identities disabled", func(t *testing.T) {
-		cfg.Azure.ManagedIdentityEnabled = false
-
-		t.Run("should be managed identity if auth type is set to managed identity", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: azcredentials.AzureAuthManagedIdentity,
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthManagedIdentity, authType)
-		})
-
-		t.Run("should be client secret if datasource not configured", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: "",
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
-		})
-	})
-
-	t.Run("when workload identities enabled", func(t *testing.T) {
-		cfg.Azure.WorkloadIdentityEnabled = true
-
-		t.Run("should be client secret if auth type is set to client secret", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: azcredentials.AzureAuthClientSecret,
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
-		})
-
-		t.Run("should be workload identity if datasource not configured and managed identity is disabled", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: "",
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthWorkloadIdentity, authType)
-		})
-
-		t.Run("should be client secret if auth type not specified but credentials configured", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: "",
-				TenantId:      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",
-				ClientId:      "849ccbb0-92eb-4226-b228-ef391abd8fe6",
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
-		})
-	})
-
-	t.Run("when workload identities disabled", func(t *testing.T) {
-		cfg.Azure.WorkloadIdentityEnabled = false
-
-		t.Run("should be workload identity if auth type is set to workload identity", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: azcredentials.AzureAuthWorkloadIdentity,
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthWorkloadIdentity, authType)
-		})
-
-		t.Run("should be client secret if datasource not configured", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: "",
-			}
-
-			authType := getAuthType(cfg, jsonData)
-
-			assert.Equal(t, azcredentials.AzureAuthClientSecret, authType)
-		})
-	})
-}
-
-func TestCredentials_getAzureCloud(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: &azsettings.AzureSettings{
-			Cloud: azsettings.AzureChina,
-		},
-	}
-
-	t.Run("when auth type is managed identity", func(t *testing.T) {
-		jsonData := &azureClientSettings{
-			AzureAuthType: azcredentials.AzureAuthManagedIdentity,
-			CloudName:     azureMonitorUSGovernment,
+	t.Run("should return managed identity credentials when auth type is managed identity", func(t *testing.T) {
+		data := map[string]interface{}{
+			"azureAuthType": "msi",
+			"cloudName":     "chinaazuremonitor",
+			"tenantId":      "LEGACY-TENANT-ID",
+			"clientId":      "LEGACY-CLIENT-ID",
+		}
+		var secureData = map[string]string{
+			"clientSecret": "FAKE-LEGACY-SECRET",
 		}
 
-		t.Run("should be from server configuration regardless of datasource value", func(t *testing.T) {
-			cloud, err := getAzureCloud(cfg, jsonData)
-			require.NoError(t, err)
+		credentials, err := FromDatasourceData(data, secureData)
+		require.NoError(t, err)
+		require.IsType(t, &azcredentials.AzureManagedIdentityCredentials{}, credentials)
+		msiCredentials := credentials.(*azcredentials.AzureManagedIdentityCredentials)
 
-			assert.Equal(t, azsettings.AzureChina, cloud)
-		})
-
-		t.Run("should be public if not set in server configuration", func(t *testing.T) {
-			cfg := &setting.Cfg{
-				Azure: &azsettings.AzureSettings{
-					Cloud: "",
-				},
-			}
-
-			cloud, err := getAzureCloud(cfg, jsonData)
-			require.NoError(t, err)
-
-			assert.Equal(t, azsettings.AzurePublic, cloud)
-		})
+		// Azure Monitor datasource doesn't support user-assigned managed identities (ClientId is always empty)
+		assert.Equal(t, "", msiCredentials.ClientId)
 	})
 
-	t.Run("when auth type is client secret", func(t *testing.T) {
-		t.Run("should be from datasource value normalized to known cloud name", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: azcredentials.AzureAuthClientSecret,
-				CloudName:     azureMonitorUSGovernment,
-			}
-
-			cloud, err := getAzureCloud(cfg, jsonData)
-			require.NoError(t, err)
-
-			assert.Equal(t, azsettings.AzureUSGovernment, cloud)
-		})
-
-		t.Run("should be from server configuration if not set in datasource", func(t *testing.T) {
-			jsonData := &azureClientSettings{
-				AzureAuthType: azcredentials.AzureAuthClientSecret,
-				CloudName:     "",
-			}
-
-			cloud, err := getAzureCloud(cfg, jsonData)
-			require.NoError(t, err)
-
-			assert.Equal(t, azsettings.AzureChina, cloud)
-		})
-	})
-}
-
-func TestCredentials_getAzureCredentials(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: &azsettings.AzureSettings{
-			Cloud: azsettings.AzureChina,
-		},
-	}
-
-	secureJsonData := map[string]string{
-		"clientSecret": "59e3498f-eb12-4943-b8f0-a5aa42640058",
-	}
-
-	t.Run("when auth type is managed identity", func(t *testing.T) {
-		jsonData := &azureClientSettings{
-			AzureAuthType: azcredentials.AzureAuthManagedIdentity,
-			CloudName:     azureMonitorUSGovernment,
-			TenantId:      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",
-			ClientId:      "849ccbb0-92eb-4226-b228-ef391abd8fe6",
+	t.Run("should return workload identity credentials when auth type is workload identity", func(t *testing.T) {
+		data := map[string]interface{}{
+			"azureAuthType": azcredentials.AzureAuthWorkloadIdentity,
 		}
+		var secureData = map[string]string{}
 
-		t.Run("should return managed identity credentials", func(t *testing.T) {
-			credentials, err := getAzureCredentials(cfg, jsonData, secureJsonData)
-			require.NoError(t, err)
-			require.IsType(t, &azcredentials.AzureManagedIdentityCredentials{}, credentials)
-			msiCredentials := credentials.(*azcredentials.AzureManagedIdentityCredentials)
-
-			// Azure Monitor datasource doesn't support user-assigned managed identities (ClientId is always empty)
-			assert.Equal(t, "", msiCredentials.ClientId)
-		})
+		credentials, err := FromDatasourceData(data, secureData)
+		require.NoError(t, err)
+		require.IsType(t, &azcredentials.AzureWorkloadIdentityCredentials{}, credentials)
 	})
 
-	t.Run("when auth type is client secret", func(t *testing.T) {
-		jsonData := &azureClientSettings{
-			AzureAuthType: azcredentials.AzureAuthClientSecret,
-			CloudName:     azureMonitorUSGovernment,
-			TenantId:      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",
-			ClientId:      "849ccbb0-92eb-4226-b228-ef391abd8fe6",
-		}
+	t.Run("when legacy client secret configuration present", func(t *testing.T) {
+		t.Run("should return client secret credentials when auth type is client secret", func(t *testing.T) {
+			var data = map[string]interface{}{
+				"azureAuthType": "clientsecret",
+				"cloudName":     "chinaazuremonitor",
+				"tenantId":      "LEGACY-TENANT-ID",
+				"clientId":      "LEGACY-CLIENT-ID",
+			}
+			var secureData = map[string]string{
+				"clientSecret": "FAKE-LEGACY-SECRET",
+			}
 
-		t.Run("should return client secret credentials", func(t *testing.T) {
-			cfg := &setting.Cfg{}
-
-			credentials, err := getAzureCredentials(cfg, jsonData, secureJsonData)
+			result, err := FromDatasourceData(data, secureData)
 			require.NoError(t, err)
-			require.IsType(t, &azcredentials.AzureClientSecretCredentials{}, credentials)
-			clientSecretCredentials := credentials.(*azcredentials.AzureClientSecretCredentials)
 
-			assert.Equal(t, azsettings.AzureUSGovernment, clientSecretCredentials.AzureCloud)
-			assert.Equal(t, "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c", clientSecretCredentials.TenantId)
-			assert.Equal(t, "849ccbb0-92eb-4226-b228-ef391abd8fe6", clientSecretCredentials.ClientId)
-			assert.Equal(t, "59e3498f-eb12-4943-b8f0-a5aa42640058", clientSecretCredentials.ClientSecret)
+			require.NotNil(t, result)
+			assert.IsType(t, &azcredentials.AzureClientSecretCredentials{}, result)
+			credential := (result).(*azcredentials.AzureClientSecretCredentials)
 
-			// Azure Monitor datasource doesn't support custom IdP authorities (Authority is always empty)
-			assert.Equal(t, "", clientSecretCredentials.Authority)
+			assert.Equal(t, azsettings.AzureChina, credential.AzureCloud)
+			assert.Equal(t, "LEGACY-TENANT-ID", credential.TenantId)
+			assert.Equal(t, "LEGACY-CLIENT-ID", credential.ClientId)
+			assert.Equal(t, "FAKE-LEGACY-SECRET", credential.ClientSecret)
+		})
+
+		t.Run("should return client secret credentials when auth type is specified but configuration present", func(t *testing.T) {
+			var data = map[string]interface{}{
+				"cloudName": "chinaazuremonitor",
+				"tenantId":  "LEGACY-TENANT-ID",
+				"clientId":  "LEGACY-CLIENT-ID",
+			}
+			var secureData = map[string]string{
+				"clientSecret": "FAKE-LEGACY-SECRET",
+			}
+
+			result, err := FromDatasourceData(data, secureData)
+			require.NoError(t, err)
+
+			require.NotNil(t, result)
+			assert.IsType(t, &azcredentials.AzureClientSecretCredentials{}, result)
+			credential := (result).(*azcredentials.AzureClientSecretCredentials)
+
+			assert.Equal(t, azsettings.AzureChina, credential.AzureCloud)
+			assert.Equal(t, "LEGACY-TENANT-ID", credential.TenantId)
+			assert.Equal(t, "LEGACY-CLIENT-ID", credential.ClientId)
+			assert.Equal(t, "FAKE-LEGACY-SECRET", credential.ClientSecret)
 		})
 
 		t.Run("should error if no client secret is set", func(t *testing.T) {
-			cfg := &setting.Cfg{}
-			_, err := getAzureCredentials(cfg, jsonData, map[string]string{
-				"clientSecret": "",
-			})
-			require.ErrorContains(t, err, "clientSecret must be set")
+			var data = map[string]interface{}{
+				"azureAuthType": "clientsecret",
+				"cloudName":     "chinaazuremonitor",
+				"tenantId":      "LEGACY-TENANT-ID",
+				"clientId":      "LEGACY-CLIENT-ID",
+			}
+			var secureData = map[string]string{}
+
+			_, err := FromDatasourceData(data, secureData)
+			require.Error(t, err)
+
+			assert.ErrorContains(t, err, "clientSecret must be set")
 		})
+	})
+
+	t.Run("should return client secret credentials when client secret auth configured even if legacy configuration present", func(t *testing.T) {
+		var data = map[string]interface{}{
+			"azureCredentials": map[string]interface{}{
+				"authType":   "clientsecret",
+				"azureCloud": "AzureChinaCloud",
+				"tenantId":   "TENANT-ID",
+				"clientId":   "CLIENT-TD",
+			},
+			"azureAuthType": "clientsecret",
+			"cloudName":     "azuremonitor",
+			"tenantId":      "LEGACY-TENANT-ID",
+			"clientId":      "LEGACY-CLIENT-ID",
+		}
+		var secureData = map[string]string{
+			"azureClientSecret": "FAKE-SECRET",
+			"clientSecret":      "FAKE-LEGACY-SECRET",
+		}
+
+		result, err := FromDatasourceData(data, secureData)
+		require.NoError(t, err)
+
+		require.NotNil(t, result)
+		assert.IsType(t, &azcredentials.AzureClientSecretCredentials{}, result)
+		credential := (result).(*azcredentials.AzureClientSecretCredentials)
+
+		assert.Equal(t, credential.AzureCloud, azsettings.AzureChina)
+		assert.Equal(t, credential.TenantId, "TENANT-ID")
+		assert.Equal(t, credential.ClientId, "CLIENT-TD")
+		assert.Equal(t, credential.ClientSecret, "FAKE-SECRET")
+	})
+
+	t.Run("should return error when credentials not supported even if legacy configuration present", func(t *testing.T) {
+		var data = map[string]interface{}{
+			"azureCredentials": map[string]interface{}{
+				"authType":   "invalid",
+				"azureCloud": "AzureChinaCloud",
+				"tenantId":   "TENANT-ID",
+				"clientId":   "CLIENT-TD",
+			},
+			"cloudName":     "azuremonitor",
+			"tenantId":      "LEGACY-TENANT-ID",
+			"clientId":      "LEGACY-CLIENT-ID",
+			"onBehalfOf":    true,
+			"oauthPassThru": true,
+		}
+		var secureData = map[string]string{
+			"azureClientSecret": "FAKE-SECRET",
+			"clientSecret":      "FAKE-LEGACY-SECRET",
+		}
+
+		_, err := FromDatasourceData(data, secureData)
+		assert.Error(t, err)
+	})
+}
+
+func TestNormalizedCloudName(t *testing.T) {
+	t.Run("should return normalized cloud name", func(t *testing.T) {
+		tests := []struct {
+			description     string
+			legacyCloud     string
+			normalizedCloud string
+		}{
+			{
+				legacyCloud:     azureMonitorPublic,
+				normalizedCloud: azsettings.AzurePublic,
+			},
+			{
+				legacyCloud:     azureMonitorChina,
+				normalizedCloud: azsettings.AzureChina,
+			},
+			{
+				legacyCloud:     azureMonitorUSGovernment,
+				normalizedCloud: azsettings.AzureUSGovernment,
+			},
+			{
+				legacyCloud:     "",
+				normalizedCloud: azsettings.AzurePublic,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.description, func(t *testing.T) {
+				actualCloud, err := resolveLegacyCloudName(tt.legacyCloud)
+				require.NoError(t, err)
+
+				assert.Equal(t, tt.normalizedCloud, actualCloud)
+			})
+		}
+	})
+
+	t.Run("should fail when cloud is unknown", func(t *testing.T) {
+		legacyCloud := "unknown"
+
+		_, err := resolveLegacyCloudName(legacyCloud)
+		assert.Error(t, err)
 	})
 }
