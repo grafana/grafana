@@ -289,9 +289,10 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 
 	// Create Dashboard
 	saveDashboardCmd := dashboards.SaveDashboardCommand{
-		OrgID:    1,
-		FolderID: 1,
-		IsFolder: false,
+		OrgID:     1,
+		FolderID:  1,
+		FolderUID: "1",
+		IsFolder:  false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test",

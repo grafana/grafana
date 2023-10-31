@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "",
+      "serviceaccount-label": "",
       "team-label": "",
       "title": "",
       "user-label": ""
@@ -18,6 +19,7 @@
       "no-permissions": "",
       "permissions-change-warning": "",
       "role": "",
+      "serviceaccount": "",
       "team": "",
       "title": "",
       "user": ""
@@ -43,21 +45,21 @@
       "new-folder-name-required-phrase": ""
     },
     "counts": {
-      "alertRule__one": "",
-      "alertRule__many": "",
-      "alertRule__other": "",
-      "dashboard__one": "",
-      "dashboard__many": "",
-      "dashboard__other": "",
-      "folder__one": "",
-      "folder__many": "",
-      "folder__other": "",
-      "libraryPanel__one": "",
-      "libraryPanel__many": "",
-      "libraryPanel__other": "",
-      "total__one": "",
-      "total__many": "",
-      "total__other": ""
+      "alertRule_one": "",
+      "alertRule_many": "",
+      "alertRule_other": "",
+      "dashboard_one": "",
+      "dashboard_many": "",
+      "dashboard_other": "",
+      "folder_one": "",
+      "folder_many": "",
+      "folder_other": "",
+      "libraryPanel_one": "",
+      "libraryPanel_many": "",
+      "libraryPanel_other": "",
+      "total_one": "",
+      "total_many": "",
+      "total_other": ""
     },
     "dashboards-tree": {
       "collapse-folder-button": "",
@@ -387,6 +389,20 @@
     }
   },
   "data-source-picker": {
+    "add-new-data-source": "",
+    "built-in-list": {
+      "description-dashboard": "",
+      "description-grafana": "",
+      "description-mixed": ""
+    },
+    "list": {
+      "no-data-source-message": ""
+    },
+    "modal": {
+      "configure-new-data-source": "",
+      "input-placeholder": "",
+      "title": ""
+    },
     "open-advanced-button": ""
   },
   "data-sources": {
@@ -396,6 +412,115 @@
   },
   "explore": {
     "add-to-dashboard": "",
+    "rich-history": {
+      "close-tooltip": "",
+      "datasource-a-z": "",
+      "datasource-z-a": "",
+      "newest-first": "",
+      "oldest-first": "",
+      "query-history": "",
+      "settings": "",
+      "starred": ""
+    },
+    "rich-history-card": {
+      "add-comment-form": "",
+      "add-comment-tooltip": "",
+      "cancel": "",
+      "confirm-delete": "",
+      "copy-query-tooltip": "",
+      "copy-shortened-link-tooltip": "",
+      "datasource-icon-label": "",
+      "datasource-name-label": "",
+      "datasource-not-exist": "",
+      "delete-query-confirmation-title": "",
+      "delete-query-title": "",
+      "delete-query-tooltip": "",
+      "delete-starred-query-confirmation-text": "",
+      "edit-comment-tooltip": "",
+      "loading-text": "",
+      "optional-description": "",
+      "query-comment-label": "",
+      "query-text-label": "",
+      "run-query-button": "",
+      "save-comment": "",
+      "star-query-tooltip": "",
+      "switch-datasource-button": "",
+      "unstar-query-tooltip": "",
+      "update-comment-form": ""
+    },
+    "rich-history-container": {
+      "loading": ""
+    },
+    "rich-history-notification": {
+      "query-copied": "",
+      "query-deleted": ""
+    },
+    "rich-history-queries-tab": {
+      "displaying-partial-queries": "",
+      "displaying-queries": "",
+      "filter-aria-label": "",
+      "filter-history": "",
+      "filter-placeholder": "",
+      "history-local": "",
+      "loading": "",
+      "loading-results": "",
+      "search-placeholder": "",
+      "showing-queries": "",
+      "sort-aria-label": "",
+      "sort-placeholder": ""
+    },
+    "rich-history-settings-tab": {
+      "alert-info": "",
+      "change-default-tab": "",
+      "clear-history-info": "",
+      "clear-query-history": "",
+      "clear-query-history-button": "",
+      "delete-confirm": "",
+      "delete-confirm-text": "",
+      "delete-title": "",
+      "history-time-span": "",
+      "history-time-span-description": "",
+      "only-show-active-datasource": "",
+      "query-history-deleted": "",
+      "retention-period": {
+        "1-week": "",
+        "2-days": "",
+        "2-weeks": "",
+        "5-days": ""
+      }
+    },
+    "rich-history-starred-tab": {
+      "filter-queries-aria-label": "",
+      "filter-queries-placeholder": "",
+      "loading": "",
+      "loading-results": "",
+      "local-history-message": "",
+      "search-queries-placeholder": "",
+      "showing-queries": "",
+      "sort-queries-aria-label": "",
+      "sort-queries-placeholder": ""
+    },
+    "rich-history-utils": {
+      "a-week-ago": "",
+      "days-ago": "",
+      "default-from": "",
+      "default-to": "",
+      "today": "",
+      "two-weeks-ago": "",
+      "yesterday": ""
+    },
+    "rich-history-utils-notification": {
+      "saving-failed": "",
+      "update-failed": ""
+    },
+    "secondary-actions": {
+      "query-add-button": "",
+      "query-add-button-aria-label": "",
+      "query-history-button": "",
+      "query-history-button-aria-label": "",
+      "query-inspector-button": "",
+      "query-inspector-button-aria-label": ""
+    },
     "table": {
       "no-data": "",
       "title": "",
@@ -429,6 +554,14 @@
     "select": {
       "no-options-label": "",
       "placeholder": ""
+    }
+  },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
     }
   },
   "help-modal": {
@@ -471,6 +604,16 @@
     },
     "title": ""
   },
+  "inspector": {
+    "query": {
+      "collapse-all": "",
+      "copy-to-clipboard": "",
+      "description": "",
+      "expand-all": "",
+      "no-data": "",
+      "refresh": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancelar",
@@ -486,9 +629,9 @@
   },
   "library-panels": {
     "modal": {
-      "body__one": "",
-      "body__many": "",
-      "body__other": "",
+      "body_one": "",
+      "body_many": "",
+      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
@@ -574,6 +717,18 @@
     },
     "config": {
       "title": "Administración"
+    },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
     },
     "connect-data": {
       "title": ""
@@ -780,6 +935,11 @@
     "kiosk": {
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
     },
+    "megamenu": {
+      "close": "",
+      "dock": "",
+      "undock": ""
+    },
     "toolbar": {
       "enable-kiosk": "Activar el modo de quiosco",
       "toggle-menu": "Activar o desactivar menú",
@@ -796,6 +956,7 @@
   "panel": {
     "header-menu": {
       "copy": "Copiar",
+      "create-alert": "",
       "create-library-panel": "Crear panel de librería",
       "duplicate": "Duplicar",
       "edit": "Editar",

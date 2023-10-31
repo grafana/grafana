@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { FetchError } from '@grafana/runtime';
+import { FetchError, setTemplateSrv } from '@grafana/runtime';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -35,9 +36,11 @@ jest.mock('../language_provider', () => {
 });
 
 describe('SearchField', () => {
+  let templateSrv = initTemplateSrv('key', [{ name: 'templateVariable1' }, { name: 'templateVariable2' }]);
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
+    setTemplateSrv(templateSrv);
     jest.useFakeTimers();
     // Need to use delay: null here to work with fakeTimers
     // see https://github.com/testing-library/user-event/issues/833
@@ -87,7 +90,6 @@ describe('SearchField', () => {
     });
     const filter: TraceqlFilter = {
       id: 'test1',
-      value: 'old',
       valueType: 'string',
       tag: 'test-tag',
     };
@@ -172,6 +174,8 @@ describe('SearchField', () => {
       expect(await screen.findByText('span')).toBeInTheDocument();
       expect(await screen.findByText('unscoped')).toBeInTheDocument();
       expect(screen.queryByText('intrinsic')).not.toBeInTheDocument();
+      expect(await screen.findByText('$templateVariable1')).toBeInTheDocument();
+      expect(await screen.findByText('$templateVariable2')).toBeInTheDocument();
     }
   });
 });

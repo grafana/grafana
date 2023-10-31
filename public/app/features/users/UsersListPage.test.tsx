@@ -16,7 +16,7 @@ jest.mock('../../core/app_events', () => ({
 jest.mock('app/core/core', () => ({
   contextSrv: {
     user: { orgId: 1 },
-    hasAccess: () => false,
+    hasPermission: () => false,
     licensedAccessControlEnabled: () => false,
   },
 }));

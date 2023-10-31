@@ -81,6 +81,7 @@ const ServiceAccountListItem = memo(
                 roleOptions={roleOptions}
                 basicRoleDisabled={!canUpdateRole}
                 disabled={serviceAccount.isDisabled}
+                width={40}
               />
             )}
           </td>

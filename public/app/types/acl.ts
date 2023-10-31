@@ -88,6 +88,7 @@ export enum DataSourcePermissionLevel {
 export enum AclTarget {
   Team = 'Team',
   User = 'User',
+  ServiceAccount = 'ServiceAccount',
   Viewer = 'Viewer',
   Editor = 'Editor',
 }

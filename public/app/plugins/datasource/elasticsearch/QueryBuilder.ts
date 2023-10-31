@@ -26,6 +26,9 @@ import {
 } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
+// Omitting 1m, 1h, 1d for now, as these cover the main use cases for calendar_interval
+export const calendarIntervals: string[] = ['1w', '1M', '1q', '1y'];
+
 export class ElasticQueryBuilder {
   timeField: string;
 
@@ -115,7 +118,11 @@ export class ElasticQueryBuilder {
 
     const interval = settings.interval === 'auto' ? '${__interval_ms}ms' : settings.interval;
 
-    esAgg.fixed_interval = interval;
+    if (interval !== undefined && calendarIntervals.includes(interval)) {
+      esAgg.calendar_interval = interval;
+    } else {
+      esAgg.fixed_interval = interval;
+    }
 
     return esAgg;
   }

@@ -30,18 +30,20 @@ export const enrichHelpItem = (helpItem: NavModelItem) => {
 };
 
 export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {
-  const onClick = item.onClick;
-  item.onClick = () => {
+  // creating a new object here to not mutate the original item object
+  const newItem = { ...item };
+  const onClick = newItem.onClick;
+  newItem.onClick = () => {
     reportInteraction('grafana_navigation_item_clicked', {
-      path: item.url ?? item.id,
+      path: newItem.url ?? newItem.id,
       state: expandedState ? 'expanded' : 'collapsed',
     });
     onClick?.();
   };
-  if (item.children) {
-    item.children = item.children.map((item) => enrichWithInteractionTracking(item, expandedState));
+  if (newItem.children) {
+    newItem.children = newItem.children.map((item) => enrichWithInteractionTracking(item, expandedState));
   }
-  return item;
+  return newItem;
 };
 
 export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {

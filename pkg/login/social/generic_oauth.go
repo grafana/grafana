@@ -228,7 +228,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 
 	var data UserInfoJson
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
-		s.log.Error("Error decoding id_token JSON", "raw_json", string(data.rawJSON), "error", err)
+		s.log.Error("Error decoding id_token JSON", "raw_json", string(rawJSON), "error", err)
 		return nil
 	}
 

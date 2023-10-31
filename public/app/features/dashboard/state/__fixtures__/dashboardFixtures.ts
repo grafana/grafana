@@ -29,16 +29,8 @@ export function createDashboardModelFixture(
   return new DashboardModel(dashboardJson, meta, { getVariablesFromState });
 }
 
-export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel | RowPanel> = {}): Panel {
+export function createPanelSaveModel(panelInput: Partial<Panel | GraphPanel | RowPanel> = {}): Panel {
   return {
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    options: {},
-    repeatDirection: 'h',
-    transformations: [],
-    transparent: false,
     type: 'timeseries',
     ...panelInput,
   };

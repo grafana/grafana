@@ -18,6 +18,16 @@ describe('buildPluginSectionNav', () => {
         text: 'page2',
         url: '/a/plugin1/page2',
       },
+      {
+        text: 'page3',
+        url: '/a/plugin1/page3',
+        children: [
+          {
+            text: 'page4',
+            url: '/a/plugin1/page3/page4',
+          },
+        ],
+      },
     ],
   };
 
@@ -76,5 +86,11 @@ describe('buildPluginSectionNav', () => {
     const result = buildPluginSectionNav(adminSection, pluginNav, '/a/app2/config');
     expect(result?.main.text).toBe('Admin');
     expect(result?.node.text).toBe('Standalone page');
+  });
+
+  it('Should set nested active page', () => {
+    const result = buildPluginSectionNav(appsSection, null, '/a/plugin1/page3/page4');
+    expect(result?.main.children![0].children![2].children![0].active).toBe(true);
+    expect(result?.node.text).toBe('page4');
   });
 });

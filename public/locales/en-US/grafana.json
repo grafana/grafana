@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "Role",
+      "serviceaccount-label": "Service Account",
       "team-label": "Team",
       "title": "Add permission for",
       "user-label": "User"
@@ -18,6 +19,7 @@
       "no-permissions": "There are no permissions",
       "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
       "role": "Role",
+      "serviceaccount": "Service Account",
       "team": "Team",
       "title": "Permissions",
       "user": "User"
@@ -43,16 +45,16 @@
       "new-folder-name-required-phrase": "Folder name is required."
     },
     "counts": {
-      "alertRule__one": "{{count}} alert rule",
-      "alertRule__other": "{{count}} alert rules",
-      "dashboard__one": "{{count}} dashboard",
-      "dashboard__other": "{{count}} dashboards",
-      "folder__one": "{{count}} folder",
-      "folder__other": "{{count}} folders",
-      "libraryPanel__one": "{{count}} library panel",
-      "libraryPanel__other": "{{count}} library panels",
-      "total__one": "{{count}} item",
-      "total__other": "{{count}} items"
+      "alertRule_one": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
+      "dashboard_one": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
+      "folder_one": "{{count}} folder",
+      "folder_other": "{{count}} folders",
+      "libraryPanel_one": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
+      "total_one": "{{count}} item",
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -382,6 +384,20 @@
     }
   },
   "data-source-picker": {
+    "add-new-data-source": "Configure a new data source",
+    "built-in-list": {
+      "description-dashboard": "Reuse query results from other visualizations",
+      "description-grafana": "Discover visualizations using mock data",
+      "description-mixed": "Use multiple data sources"
+    },
+    "list": {
+      "no-data-source-message": "No data sources found"
+    },
+    "modal": {
+      "configure-new-data-source": "Open a new tab and configure a data source",
+      "input-placeholder": "Select data source",
+      "title": "Select data source"
+    },
     "open-advanced-button": "Open advanced data source picker"
   },
   "data-sources": {
@@ -391,6 +407,115 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "rich-history": {
+      "close-tooltip": "Close query history",
+      "datasource-a-z": "Data source A-Z",
+      "datasource-z-a": "Data source Z-A",
+      "newest-first": "Newest first",
+      "oldest-first": "Oldest first",
+      "query-history": "Query history",
+      "settings": "Settings",
+      "starred": "Starred"
+    },
+    "rich-history-card": {
+      "add-comment-form": "Add comment form",
+      "add-comment-tooltip": "Add comment",
+      "cancel": "Cancel",
+      "confirm-delete": "Delete",
+      "copy-query-tooltip": "Copy query to clipboard",
+      "copy-shortened-link-tooltip": "Copy shortened link to clipboard",
+      "datasource-icon-label": "Data source icon",
+      "datasource-name-label": "Data source name",
+      "datasource-not-exist": "Data source does not exist anymore",
+      "delete-query-confirmation-title": "Delete",
+      "delete-query-title": "Delete query",
+      "delete-query-tooltip": "Delete query",
+      "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
+      "edit-comment-tooltip": "Edit comment",
+      "loading-text": "loading...",
+      "optional-description": "An optional description of what the query does.",
+      "query-comment-label": "Query comment",
+      "query-text-label": "Query text",
+      "run-query-button": "Run query",
+      "save-comment": "Save comment",
+      "star-query-tooltip": "Star query",
+      "switch-datasource-button": "Switch data source and run query",
+      "unstar-query-tooltip": "Unstar query",
+      "update-comment-form": "Update comment form"
+    },
+    "rich-history-container": {
+      "loading": "Loading..."
+    },
+    "rich-history-notification": {
+      "query-copied": "Query copied to clipboard",
+      "query-deleted": "Query deleted"
+    },
+    "rich-history-queries-tab": {
+      "displaying-partial-queries": "Displaying {{ count }} queries",
+      "displaying-queries": "{{ count }} queries",
+      "filter-aria-label": "Filter queries for data sources(s)",
+      "filter-history": "Filter history",
+      "filter-placeholder": "Filter queries for data sources(s)",
+      "history-local": "The history is local to your browser and is not shared with others.",
+      "loading": "Loading...",
+      "loading-results": "Loading results...",
+      "search-placeholder": "Search queries",
+      "showing-queries": "Showing {{ shown }} of {{ total }} <0>Load more</0>",
+      "sort-aria-label": "Sort queries",
+      "sort-placeholder": "Sort queries by"
+    },
+    "rich-history-settings-tab": {
+      "alert-info": "Grafana will keep entries up to {{optionLabel}}.Starred entries won't be deleted.",
+      "change-default-tab": "Change the default active tab from “Query history” to “Starred”",
+      "clear-history-info": "Delete all of your query history, permanently.",
+      "clear-query-history": "Clear query history",
+      "clear-query-history-button": "Clear query history",
+      "delete-confirm": "Delete",
+      "delete-confirm-text": "Are you sure you want to permanently delete your query history?",
+      "delete-title": "Delete",
+      "history-time-span": "History time span",
+      "history-time-span-description": "Select the period of time for which Grafana will save your query history. Up to {{MAX_HISTORY_ITEMS}} entries will be stored.",
+      "only-show-active-datasource": "Only show queries for data source currently active in Explore",
+      "query-history-deleted": "Query history deleted",
+      "retention-period": {
+        "1-week": "1 week",
+        "2-days": "2 days",
+        "2-weeks": "2 weeks",
+        "5-days": "5 days"
+      }
+    },
+    "rich-history-starred-tab": {
+      "filter-queries-aria-label": "Filter queries for data sources(s)",
+      "filter-queries-placeholder": "Filter queries for data sources(s)",
+      "loading": "Loading...",
+      "loading-results": "Loading results...",
+      "local-history-message": "The history is local to your browser and is not shared with others.",
+      "search-queries-placeholder": "Search queries",
+      "showing-queries": "Showing {{ shown }} of {{ total }} <0>Load more</0>",
+      "sort-queries-aria-label": "Sort queries",
+      "sort-queries-placeholder": "Sort queries by"
+    },
+    "rich-history-utils": {
+      "a-week-ago": "a week ago",
+      "days-ago": "{{num}} days ago",
+      "default-from": "now-1h",
+      "default-to": "now",
+      "today": "today",
+      "two-weeks-ago": "two weeks ago",
+      "yesterday": "yesterday"
+    },
+    "rich-history-utils-notification": {
+      "saving-failed": "Saving rich history failed",
+      "update-failed": "Rich History update failed"
+    },
+    "secondary-actions": {
+      "query-add-button": "Add query",
+      "query-add-button-aria-label": "Add query",
+      "query-history-button": "Query history",
+      "query-history-button-aria-label": "Query history",
+      "query-inspector-button": "Query inspector",
+      "query-inspector-button-aria-label": "Query inspector"
+    },
     "table": {
       "no-data": "0 series returned",
       "title": "Table",
@@ -424,6 +549,14 @@
     "select": {
       "no-options-label": "No options found",
       "placeholder": "Choose"
+    }
+  },
+  "graph": {
+    "container": {
+      "content": "Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.",
+      "show-all-series": "Show all {{length}}",
+      "show-only-series": "Showing only {{MAX_NUMBER_OF_TIME_SERIES}} series",
+      "title": "Graph"
     }
   },
   "help-modal": {
@@ -466,6 +599,16 @@
     },
     "title": "Shortcuts"
   },
+  "inspector": {
+    "query": {
+      "collapse-all": "Collapse all",
+      "copy-to-clipboard": "Copy to clipboard",
+      "description": "Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a new query. Click refresh button below to trigger a new query.",
+      "expand-all": "Expand all",
+      "no-data": "No request and response collected yet. Hit refresh button",
+      "refresh": "Refresh"
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancel",
@@ -481,8 +624,8 @@
   },
   "library-panels": {
     "modal": {
-      "body__one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body__other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
       "button-cancel": "<0>Cancel</0>",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -568,6 +711,18 @@
     },
     "config": {
       "title": "Administration"
+    },
+    "config-access": {
+      "subtitle": "Configure access for individual users, teams, and service accounts",
+      "title": "Users and access"
+    },
+    "config-general": {
+      "subtitle": "Manage default preferences and settings across Grafana",
+      "title": "General"
+    },
+    "config-plugins": {
+      "subtitle": "Install plugins and define the relationships between data",
+      "title": "Plugins and data"
     },
     "connect-data": {
       "title": "Connect data"
@@ -774,6 +929,11 @@
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
     },
+    "megamenu": {
+      "close": "Close menu",
+      "dock": "Dock menu",
+      "undock": "Undock menu"
+    },
     "toolbar": {
       "enable-kiosk": "Enable kiosk mode",
       "toggle-menu": "Toggle menu",
@@ -790,6 +950,7 @@
   "panel": {
     "header-menu": {
       "copy": "Copy",
+      "create-alert": "Create alert",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",

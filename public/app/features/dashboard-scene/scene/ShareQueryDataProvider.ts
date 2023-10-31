@@ -1,6 +1,6 @@
 import { Observable, ReplaySubject, Unsubscribable } from 'rxjs';
 
-import { getDefaultTimeRange } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import {
   SceneDataProvider,
   SceneDataProviderResult,
@@ -10,7 +10,6 @@ import {
   SceneObject,
   SceneObjectBase,
 } from '@grafana/scenes';
-import { LoadingState } from '@grafana/schema';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 
 import { getVizPanelKeyForPanelId } from '../utils/utils';

@@ -351,43 +351,82 @@ export async function getAfterSelectorCompletions(
 export async function getLogfmtCompletions(
   logQuery: string,
   flags: boolean,
+  trailingComma: boolean | undefined,
+  trailingSpace: boolean | undefined,
   otherLabels: string[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const trailingComma = logQuery.trimEnd().endsWith(',');
+  let completions: Completion[] = [];
+
   if (trailingComma) {
-    // The user is typing a new label, so we remove the last comma
+    // Remove the trailing comma, otherwise the sample query will fail.
     logQuery = trimEnd(logQuery, ', ');
   }
   const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(logQuery);
-  const hasQueryParser = isQueryWithParser(logQuery).queryWithParser;
-
-  let completions: Completion[] = [];
-
-  const parserCompletions = await getParserCompletions(
-    '| ',
-    hasJSON,
-    hasLogfmt,
-    hasPack,
-    extractedLabelKeys,
-    hasQueryParser
-  );
   const pipeOperations = getPipeOperationsCompletions('| ');
 
-  if (!flags && !trailingComma) {
-    completions = [...completions, ...LOGFMT_ARGUMENT_COMPLETIONS, ...parserCompletions, ...pipeOperations];
-  } else if (!trailingComma) {
+  /**
+   * The user is not in the process of writing another label, and has not specified 2 flags.
+   * The current grammar doesn't allow us to know which flags were used (by node name), so we consider flags = true
+   * when 2 have been used.
+   * For example:
+   * - {label="value"} | logfmt ^
+   * - {label="value"} | logfmt --strict ^
+   * - {label="value"} | logfmt --strict --keep-empty ^
+   */
+  if (!trailingComma && !flags) {
+    completions = [...LOGFMT_ARGUMENT_COMPLETIONS];
+  }
+
+  /**
+   * If the user has no trailing comma and has a trailing space it can mean that they finished writing the logfmt
+   * part and want to move on, for example, with other parsers or pipe operations.
+   * For example:
+   * - {label="value"} | logfmt --flag ^
+   * - {label="value"} | logfmt label, label2 ^
+   */
+  if (!trailingComma && trailingSpace) {
+    /**
+     * Don't offer parsers if there is no label argument: {label="value"} | logfmt ^
+     * The reason is that it would be unusual that they would want to use another parser just after logfmt, and
+     * more likely that they would want a flag, labels, or continue with pipe operations.
+     *
+     * Offer parsers with at least one label argument: {label="value"} | logfmt label ^
+     * The rationale here is to offer the same completions as getAfterSelectorCompletions().
+     */
+    const parserCompletions =
+      otherLabels.length > 0
+        ? await getParserCompletions('| ', hasJSON, hasLogfmt, hasPack, extractedLabelKeys, true)
+        : [];
     completions = [...completions, ...parserCompletions, ...pipeOperations];
   }
 
-  const labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
   const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
+
+  /**
+   * We want to decide whether to use a trailing comma or not based on the data we have of the current
+   * situation. In particular, the following scenarios will not lead to a trailing comma:
+   * {label="value"} | logfmt ^
+   * - trailingSpace: true, trailingComma: false, otherLabels: []
+   * {label="value"} | logfmt lab^
+   * trailingSpace: false, trailignComma: false, otherLabels: [lab]
+   * {label="value"} | logfmt label,^
+   * trailingSpace: false, trailingComma: true, otherLabels: [label]
+   * {label="value"} | logfmt label, ^
+   * trailingSpace: true, trailingComma: true, otherLabels: [label]
+   */
+  let labelPrefix = '';
+  if (otherLabels.length > 0 && trailingSpace) {
+    labelPrefix = trailingComma ? '' : ', ';
+  }
+
   const labelCompletions: Completion[] = labels.map((label) => ({
     type: 'LABEL_NAME',
     label,
     insertText: labelPrefix + label,
     triggerOnInsert: false,
   }));
+
   completions = [...completions, ...labelCompletions];
 
   return completions;
@@ -472,7 +511,14 @@ export async function getCompletions(
     case 'AFTER_KEEP_AND_DROP':
       return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
     case 'IN_LOGFMT':
-      return getLogfmtCompletions(situation.logQuery, situation.flags, situation.otherLabels, dataProvider);
+      return getLogfmtCompletions(
+        situation.logQuery,
+        situation.flags,
+        situation.trailingComma,
+        situation.trailingSpace,
+        situation.otherLabels,
+        dataProvider
+      );
     default:
       throw new NeverCaseError(situation);
   }

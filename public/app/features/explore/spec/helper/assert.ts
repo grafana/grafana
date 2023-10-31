@@ -10,6 +10,15 @@ export const assertQueryHistoryExists = async (query: string, exploreId = 'left'
   expect(queryItem).toHaveTextContent(query);
 };
 
+export const assertQueryHistoryContains = async (query: string, exploreId = 'left') => {
+  const selector = withinExplore(exploreId);
+
+  await waitFor(() => {
+    const containsQuery = selector.getAllByLabelText('Query text').map((e) => (e.textContent || '').includes(query));
+    expect(containsQuery).toContain(true);
+  });
+};
+
 export const assertQueryHistory = async (expectedQueryTexts: string[], exploreId = 'left') => {
   const selector = withinExplore(exploreId);
   await waitFor(() => {

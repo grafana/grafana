@@ -381,6 +381,11 @@ export const processVariable = (
       }
     }
 
+    if (variable.type === 'custom') {
+      await dispatch(updateOptions(toKeyedVariableIdentifier(variable)));
+      return;
+    }
+
     // for variables that aren't updated via URL or refresh, let's simulate the same state changes
     dispatch(completeVariableLoading(identifier));
   };

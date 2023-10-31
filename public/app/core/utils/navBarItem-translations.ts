@@ -74,6 +74,12 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-admin.title', 'Admin');
     case 'cfg':
       return t('nav.config.title', 'Administration');
+    case 'cfg/general':
+      return t('nav.config-general.title', 'General');
+    case 'cfg/plugins':
+      return t('nav.config-plugins.title', 'Plugins and data');
+    case 'cfg/access':
+      return t('nav.config-access.title', 'Users and access');
     case 'datasources':
       return t('nav.datasources.title', 'Data sources');
     case 'authentication':
@@ -230,6 +236,12 @@ export function getNavSubTitle(navId: string | undefined) {
         'nav.admin.subtitle',
         'Manage server-wide settings and access to resources such as organizations, users, and licenses'
       );
+    case 'cfg/general':
+      return t('nav.config-general.subtitle', 'Manage default preferences and settings across Grafana');
+    case 'cfg/plugins':
+      return t('nav.config-plugins.subtitle', 'Install plugins and define the relationships between data');
+    case 'cfg/access':
+      return t('nav.config-access.subtitle', 'Configure access for individual users, teams, and service accounts');
     case 'apps':
       return t('nav.apps.subtitle', 'App plugins that extend the Grafana experience');
     case 'monitoring':

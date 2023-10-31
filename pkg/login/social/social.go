@@ -63,6 +63,7 @@ type OAuthInfo struct {
 	TlsClientKey            string   `toml:"tls_client_key"`
 	TokenUrl                string   `toml:"token_url"`
 	AllowedDomains          []string `toml:"allowed_domains"`
+	AllowedGroups           []string `toml:"allowed_groups"`
 	Scopes                  []string `toml:"scopes"`
 	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin"`
 	AllowSignup             bool     `toml:"allow_signup"`
@@ -120,6 +121,7 @@ func ProvideService(cfg *setting.Cfg,
 			UseRefreshToken:         sec.Key("use_refresh_token").MustBool(false),
 			AllowAssignGrafanaAdmin: sec.Key("allow_assign_grafana_admin").MustBool(false),
 			AutoLogin:               sec.Key("auto_login").MustBool(false),
+			AllowedGroups:           util.SplitString(sec.Key("allowed_groups").String()),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value
@@ -178,7 +180,6 @@ func ProvideService(cfg *setting.Cfg,
 			ss.socialMap["gitlab"] = &SocialGitlab{
 				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				apiUrl:          info.ApiUrl,
-				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
 				skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 			}
 		}
@@ -202,7 +203,6 @@ func ProvideService(cfg *setting.Cfg,
 				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				cache:                cache,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
 				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
 				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 			}
@@ -305,6 +305,7 @@ type SocialBase struct {
 	allowSignup             bool
 	allowAssignGrafanaAdmin bool
 	allowedDomains          []string
+	allowedGroups           []string
 
 	roleAttributePath   string
 	roleAttributeStrict bool
@@ -356,9 +357,10 @@ func newSocialBase(name string,
 		allowSignup:             info.AllowSignup,
 		allowAssignGrafanaAdmin: info.AllowAssignGrafanaAdmin,
 		allowedDomains:          info.AllowedDomains,
-		autoAssignOrgRole:       autoAssignOrgRole,
+		allowedGroups:           info.AllowedGroups,
 		roleAttributePath:       info.RoleAttributePath,
 		roleAttributeStrict:     info.RoleAttributeStrict,
+		autoAssignOrgRole:       autoAssignOrgRole,
 		skipOrgRoleSync:         skipOrgRoleSync,
 		features:                features,
 		useRefreshToken:         info.UseRefreshToken,
@@ -569,6 +571,22 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]interfac
 	}
 
 	return m, nil
+}
+
+func (s *SocialBase) isGroupMember(groups []string) bool {
+	if len(s.allowedGroups) == 0 {
+		return true
+	}
+
+	for _, allowedGroup := range s.allowedGroups {
+		for _, group := range groups {
+			if group == allowedGroup {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {

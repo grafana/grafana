@@ -238,7 +238,7 @@ func TestAPI_Annotations(t *testing.T) {
 				body = strings.NewReader(tt.body)
 			}
 
-			req := webtest.RequestWithSignedInUser(server.NewRequest(tt.method, tt.path, body), userWithPermissions(1, tt.permissions))
+			req := webtest.RequestWithSignedInUser(server.NewRequest(tt.method, tt.path, body), authedUserWithPermissions(1, 1, tt.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)

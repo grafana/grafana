@@ -12,6 +12,7 @@ import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID } from '../constants';
 import { createCustomVariableAdapter } from '../custom/adapter';
+import { createCustomOptionsFromQuery } from '../custom/reducer';
 import { changeVariableName } from '../editor/actions';
 import { changeVariableNameFailed, changeVariableNameSucceeded, cleanEditorState } from '../editor/reducer';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
@@ -192,7 +193,7 @@ describe('shared actions', () => {
         .whenAsyncActionIsDispatched(processVariables(key), true);
 
       await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-        expect(dispatchedActions.length).toEqual(5);
+        expect(dispatchedActions.length).toEqual(7);
 
         expect(dispatchedActions[0]).toEqual(
           toKeyedAction(
@@ -213,7 +214,7 @@ describe('shared actions', () => {
         expect(dispatchedActions[2]).toEqual(
           toKeyedAction(
             key,
-            variableStateCompleted(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.action.payload.id }))
+            variableStateFetching(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.action.payload.id }))
           )
         );
 
@@ -229,7 +230,23 @@ describe('shared actions', () => {
         expect(dispatchedActions[4]).toEqual(
           toKeyedAction(
             key,
-            variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[4].payload.action.payload.id }))
+            createCustomOptionsFromQuery(
+              toVariablePayload({ ...custom, id: dispatchedActions[4].payload.action.payload.id })
+            )
+          )
+        );
+
+        expect(dispatchedActions[5]).toEqual(
+          toKeyedAction(
+            key,
+            variableStateCompleted(toVariablePayload({ ...custom, id: dispatchedActions[5].payload.action.payload.id }))
+          )
+        );
+
+        expect(dispatchedActions[6]).toEqual(
+          toKeyedAction(
+            key,
+            variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[6].payload.action.payload.id }))
           )
         );
 
