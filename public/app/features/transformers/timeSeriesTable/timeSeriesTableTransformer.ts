@@ -125,7 +125,6 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   // Initialize maps for labels, sparklines, and reduced values
   const refId2trends: RefLabelFieldMap<DataFrameWithValue> = {};
   const refId2labelz: RefLabelFieldMap<string> = {};
-  const label2fields: RefFieldMap<string> = {};
 
   // Accumulator for our final value
   // which we'll return
@@ -218,37 +217,43 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     }
   }
 
-  // Allocate a new frame
-  const table = new MutableDataFrame();
-  table.refId = 'A';
+  for (const refId of Object.keys(refIdMap)) {
+    const label2fields: RefFieldMap<string> = {};
+
+    // Allocate a new frame
+    const table = new MutableDataFrame();
+    table.refId = refId;
 
 
-  // Rather than having a label fields for each refId
-  // we combine them into a single set of labels
-  // taking the first value available
-  for (const labels of Object.values(refId2labelz)) {
+    // Rather than having a label fields for each refId
+    // we combine them into a single set of labels
+    // taking the first value available
+    const labels = refId2labelz[refId];
+    if (labels !== undefined) {
     for (const [labelName, labelField] of Object.entries(labels)) {
-      if (label2fields[labelName] === undefined) {
-
-        label2fields[labelName] = labelField;
+        if (label2fields[labelName] === undefined) {
+          label2fields[labelName] = labelField;
+        }
       }
     }
-  }
+    
 
-  // Add label fields to the the resulting frame
-  for (const label of Object.values(label2fields)) {
-    table.addField(label);
-  }
+    // Add label fields to the the resulting frame
+    for (const label of Object.values(label2fields)) {
+      table.addField(label);
+    }
 
-  // Add trend fields to frame
-  for (const trends of Object.values(refId2trends)) {
-      for (const trend of Object.values(trends)) {
-        table.addField(trend);
-      }
-  }
+    // Add trend fields to frame
+    const refTrends = refId2trends[refId];
+    for (const trend of Object.values(refTrends)) {
+      table.addField(trend);
+    }
 
-  // Finaly push to the result
-  result.push(table);
+    // Finaly push to the result
+    if (table.fields.length > 0) {
+      result.push(table);
+    }
+  }
 
   return result;
 }

@@ -48,6 +48,7 @@ describe('timeSeriesTableTransformer', () => {
     ];
 
     const results = timeSeriesToTableTransform({}, series);
+
     expect(results).toHaveLength(2);
     expect(results[0].refId).toBe('A');
     expect(results[0].fields).toHaveLength(3);
@@ -81,12 +82,15 @@ describe('timeSeriesTableTransformer', () => {
 
     const results = timeSeriesToTableTransform(
       {
-        refIdToStat: {
-          B: ReducerID.mean,
+        B: {
+            stat: ReducerID.mean,
         },
       },
       series
     );
+
+    // console.log(results);
+
     expect(results[0].fields[2].values[0].value).toEqual(3);
     expect(results[1].fields[2].values[0].value).toEqual(4);
   });
