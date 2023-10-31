@@ -79,11 +79,14 @@ func convertToK8sResource(v *playlist.PlaylistDTO, namespacer request.NamespaceM
 	}
 }
 
-// Convert Legacy ID to
+// Read legacy ID from metadata annotations
 func getLegacyID(item *unstructured.Unstructured) int64 {
-	s, ok := item.GetAnnotations()["grafana.com/originKey"]
-	if ok {
-		i, err := strconv.ParseInt(s, 10, 64)
+	meta := kinds.GrafanaResourceMetadata{
+		Annotations: item.GetAnnotations(),
+	}
+	info := meta.GetOriginInfo()
+	if info != nil && info.Name == "SQL" {
+		i, err := strconv.ParseInt(info.Key, 10, 64)
 		if err == nil {
 			return i
 		}
