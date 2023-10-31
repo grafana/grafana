@@ -41,7 +41,7 @@ def rgm_artifacts_step(name = "rgm-package", artifacts = ["targz:grafana:linux/a
 def rgm_build_backend_step(artifacts = ["backend:grafana:linux/amd64", "backend:grafana:linux/arm64"]):
     return rgm_artifacts_step(name = "rgm-build-backend", artifacts = artifacts, depends_on = [])
 
-def rgm_build_docker_step(packages, ubuntu, alpine, depends_on = ["yarn-install"], file = "docker.txt", tag_format = "{{ .version }}-{{ .arch }}", ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}"):
+def rgm_build_docker_step(ubuntu, alpine, depends_on = ["yarn-install"], file = "docker.txt", tag_format = "{{ .version }}-{{ .arch }}", ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}"):
     return {
         "name": "rgm-build-docker",
         "image": "grafana/grafana-build:main",
