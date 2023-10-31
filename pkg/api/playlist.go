@@ -122,12 +122,12 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 
 	// Register the actual handlers
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-		playlistRoute.Get("/", handler.SearchPlaylists)
-		playlistRoute.Get("/:uid", handler.GetPlaylist)
-		playlistRoute.Get("/:uid/items", handler.GetPlaylistItems)
-		playlistRoute.Delete("/:uid", handler.DeletePlaylist)
-		playlistRoute.Put("/:uid", handler.UpdatePlaylist)
-		playlistRoute.Post("/", handler.CreatePlaylist)
+		playlistRoute.Get("/", handler.SearchPlaylists...)
+		playlistRoute.Get("/:uid", handler.GetPlaylist...)
+		playlistRoute.Get("/:uid/items", handler.GetPlaylistItems...)
+		playlistRoute.Delete("/:uid", handler.DeletePlaylist...)
+		playlistRoute.Put("/:uid", handler.UpdatePlaylist...)
+		playlistRoute.Post("/", handler.CreatePlaylist...)
 	})
 }
 

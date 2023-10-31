@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -32,6 +33,13 @@ func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlist.P
 		Name:     spec["title"].(string),
 		Interval: spec["interval"].(string),
 		Id:       getLegacyID(&item),
+	}
+	items := spec["items"]
+	if items != nil {
+		b, err := json.Marshal(items)
+		if err == nil {
+			_ = json.Unmarshal(b, &dto.Items)
+		}
 	}
 	return dto
 }
