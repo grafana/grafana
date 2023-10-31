@@ -945,5 +945,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
 		},
+		{
+			Name:            "annotationPermissionUpdate",
+			Description:     "Separate annotation permissions from dashboard permissions to allow for more granular control.",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: false,
+			Owner:           grafanaAuthnzSquad,
+		},
 	}
 )

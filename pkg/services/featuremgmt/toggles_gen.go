@@ -546,4 +546,8 @@ const (
 	// FlagAlertmanagerRemoteOnly
 	// Disable the internal Alertmanager and only use the external one defined.
 	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
+
+	// FlagAnnotationPermissionUpdate
+	// Separate annotation permissions from dashboard permissions to allow for more granular control.
+	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 )
