@@ -35,5 +35,9 @@
       "name": "Streaming Example",
       "path": "dashboards/streaming.json"
     }
-  ]
+  ],
+
+  "dependencies": {
+    "grafanaDependency": ">=5.0.0"
+  }
 }
