@@ -8,6 +8,7 @@ export function getTransformationContent(id: string): { name: string; helperDocs
 
     const cleansedMarkdown = cleanMarkdownOfUnwantedSyntax(helperDocs);
 
+    // NOTE: string interpolation whitespace/indentation formatting is intentional.
     if (links?.length) {
       const renderedLinks = links
         .map((link) => {
