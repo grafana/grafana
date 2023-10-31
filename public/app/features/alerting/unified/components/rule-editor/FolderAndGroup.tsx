@@ -28,7 +28,7 @@ import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
 
-export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
+export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGroups: boolean) => {
   const dispatch = useDispatch();
 
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
@@ -44,13 +44,18 @@ export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
 
   const groupOptions = folderGroups
-    .map<SelectableValue<string>>((group) => ({
-      label: group.name,
-      value: group.name,
-      description: group.interval ?? MINUTE,
-      // we include provisioned folders, but disable the option to select them
-      isDisabled: isProvisionedGroup(group),
-    }))
+    .map<SelectableValue<string>>((group) => {
+      const isProvisioned = isProvisionedGroup(group);
+      return {
+        label: group.name,
+        value: group.name,
+        description: group.interval ?? MINUTE,
+        // we include provisioned folders, but disable the option to select them
+        isDisabled: !enableProvisionedGroups ? isProvisioned : false,
+        isProvisioned: isProvisioned,
+      };
+    })
+
     .sort(sortByLabel);
 
   return { groupOptions, loading: groupfoldersForGrafana?.loading };
@@ -70,7 +75,13 @@ const findGroupMatchingLabel = (group: SelectableValue<string>, query: string) =
   return group.label?.toLowerCase().includes(query.toLowerCase());
 };
 
-export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGrafana?: RulerRulesConfigDTO | null }) {
+export function FolderAndGroup({
+  groupfoldersForGrafana,
+  enableProvisionedGroups,
+}: {
+  groupfoldersForGrafana?: RulerRulesConfigDTO | null;
+  enableProvisionedGroups: boolean;
+}) {
   const {
     formState: { errors },
     watch,
@@ -83,7 +94,7 @@ export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGraf
   const folder = watch('folder');
   const group = watch('group');
 
-  const { groupOptions, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '');
+  const { groupOptions, loading } = useFolderGroupOptions(folder?.title ?? '', enableProvisionedGroups);
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
@@ -213,8 +224,7 @@ export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGraf
                     getOptionLabel={(option: SelectableValue<string>) => (
                       <div>
                         <span>{option.label}</span>
-                        {/* making the assumption here that it's provisioned when it's disabled, should probably change this */}
-                        {option.isDisabled && (
+                        {option['isProvisioned'] && (
                           <>
                             {' '}
                             <ProvisioningBadge />

@@ -9,12 +9,12 @@ load(
 )
 
 # rgm_package_step will create a tar.gz for use in e2e tests or other PR testing related activities..
-def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"):
+def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt", depends_on = ["yarn-install"]):
     return {
         "name": "rgm-package",
         "image": "grafana/grafana-build:main",
         "pull": "always",
-        "depends_on": ["yarn-install"],
+        "depends_on": depends_on,
         "commands": [
             "/src/grafana-build package --distro={} ".format(distros) +
             "--go-version={} ".format(golang_version) +

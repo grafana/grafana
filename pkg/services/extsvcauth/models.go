@@ -3,12 +3,15 @@ package extsvcauth
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 const (
-	OAuth2Server AuthProvider = "OAuth2Server"
+	OAuth2Server    AuthProvider = "OAuth2Server"
+	ServiceAccounts AuthProvider = "ServiceAccounts"
+
+	// TmpOrgID is the orgID we use while global service accounts are not supported.
+	TmpOrgID int64 = 1
 )
 
 type AuthProvider string
@@ -18,31 +21,6 @@ type ExternalServiceRegistry interface {
 	// it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
 	// associated service account has the correct permissions.
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ExternalService, error)
-}
-
-//go:generate mockery --name ExtSvcAccountsService --structname MockExtSvcAccountsService --output extsvcmocks --outpkg extsvcmocks --filename extsvcaccmock.go
-type ExtSvcAccountsService interface {
-	// ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
-	ManageExtSvcAccount(ctx context.Context, cmd *ManageExtSvcAccountCmd) (int64, error)
-	// RetrieveExtSvcAccount fetches an external service account by ID
-	RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*ExtSvcAccount, error)
-}
-
-// ExtSvcAccount represents the service account associated to an external service
-type ExtSvcAccount struct {
-	ID         int64
-	Login      string
-	Name       string
-	OrgID      int64
-	IsDisabled bool
-	Role       roletype.RoleType
-}
-
-type ManageExtSvcAccountCmd struct {
-	ExtSvcSlug  string
-	Enabled     bool // disabled: the service account and its permissions will be deleted
-	OrgID       int64
-	Permissions []accesscontrol.Permission
 }
 
 type SelfCfg struct {

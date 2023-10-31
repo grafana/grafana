@@ -43,6 +43,7 @@ export function textToDataContainer(text: string) {
         itemIndexes: [dfValues.length - 1],
         start: match.index - leftMargin,
         children: [],
+        level: i,
       };
 
       itemLevels[i] = itemLevels[i] || [];

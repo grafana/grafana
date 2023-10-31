@@ -10,10 +10,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
 	"github.com/xlab/treeprint"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -34,11 +38,16 @@ const (
 
 // query processes single Pyroscope query transforming the response to data.Frame packaged in DataResponse
 func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.query", trace.WithAttributes(attribute.String("query_type", query.QueryType)))
+	defer span.End()
+
 	var qm queryModel
 	response := backend.DataResponse{}
 
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		response.Error = fmt.Errorf("error unmarshaling query model: %v", err)
 		return response
 	}
@@ -50,6 +59,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			var dsJson dsJsonModel
 			err = json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				return fmt.Errorf("error unmarshaling datasource json model: %v", err)
 			}
 
@@ -58,10 +69,10 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
 				if err != nil {
 					parsedInterval = time.Second * 15
-					logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
+					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 				}
 			}
-			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm)
+			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm, "function", logEntrypoint())
 			seriesResp, err := d.client.GetSeries(
 				gCtx,
 				qm.ProfileTypeId,
@@ -72,7 +83,9 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
 			)
 			if err != nil {
-				logger.Error("Querying SelectSeries()", "err", err)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
 				return err
 			}
 			// add the frames to the response.
@@ -85,10 +98,12 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
 		g.Go(func() error {
-			logger.Debug("Calling GetProfile", "queryModel", qm)
+			logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
 			prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 			if err != nil {
-				logger.Error("Error GetProfile()", "err", err)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				logger.Error("Error GetProfile()", "err", err, "function", logEntrypoint())
 				return err
 			}
 
@@ -120,6 +135,8 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 	}
 
 	if err := g.Wait(); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		response.Error = g.Wait()
 	}
 
@@ -184,7 +201,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 
 		// If we still have levels to go, this should not happen. Something is probably wrong with the flamebearer data.
 		if len(parentsStack) == 0 {
-			logger.Error("ParentsStack is empty but we are not at the the last level", "currentLevel", currentLevel)
+			logger.Error("ParentsStack is empty but we are not at the the last level", "currentLevel", currentLevel, "function", logEntrypoint())
 			break
 		}
 
@@ -228,7 +245,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 				// We went out of parents bounds so lets move to next parent. We will evaluate the same item again, but
 				// we will check if it is a child of the next parent item in line.
 				if len(parentsStack) == 0 {
-					logger.Error("ParentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex)
+					logger.Error("ParentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex, "function", logEntrypoint())
 					break
 				}
 				currentParent = parentsStack[:1][0]

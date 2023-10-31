@@ -134,6 +134,9 @@ func TestParsePluginTestdata(t *testing.T) {
 		"external-registration": {
 			rootid: "grafana-test-datasource",
 		},
+		"oauth-external-registration": {
+			rootid: "grafana-test-datasource",
+		},
 	}
 
 	staticRootPath, err := filepath.Abs("../manager/testdata")
