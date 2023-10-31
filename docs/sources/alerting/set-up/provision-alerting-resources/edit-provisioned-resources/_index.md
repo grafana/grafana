@@ -45,6 +45,3 @@ To edit provisioned alerting resources from the Grafana UI, complete the followi
 
    Choose **Copy Code** to go to an existing file and paste in the code.
    Choose **Download** to download a file with the exported data.
-
-
-
