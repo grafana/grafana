@@ -79,7 +79,7 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 			query := strings.ToUpper(c.Query("query"))
 			playlists := []playlist.Playlist{}
 			for _, item := range out.Items {
-				p := v0alpha1.UnstructuredToLegacyPlaylist(&item)
+				p := v0alpha1.UnstructuredToLegacyPlaylist(item)
 				if p == nil {
 					continue
 				}
@@ -102,7 +102,7 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 				errorWriter(c, err)
 				return
 			}
-			c.JSON(http.StatusOK, v0alpha1.UnstructuredToLegacyPlaylistDTO(out))
+			c.JSON(http.StatusOK, v0alpha1.UnstructuredToLegacyPlaylistDTO(*out))
 		}}
 
 		handler.GetPlaylistItems = []web.Handler{func(c *contextmodel.ReqContext) {
@@ -116,7 +116,7 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 				errorWriter(c, err)
 				return
 			}
-			c.JSON(http.StatusOK, v0alpha1.UnstructuredToLegacyPlaylistDTO(out).Items)
+			c.JSON(http.StatusOK, v0alpha1.UnstructuredToLegacyPlaylistDTO(*out).Items)
 		}}
 	}
 

@@ -15,23 +15,23 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func UnstructuredToLegacyPlaylist(item *unstructured.Unstructured) *playlist.Playlist {
+func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *playlist.Playlist {
 	spec := item.Object["spec"].(map[string]any)
 	return &playlist.Playlist{
 		UID:      item.GetName(),
 		Name:     spec["title"].(string),
 		Interval: spec["interval"].(string),
-		Id:       getLegacyID(item),
+		Id:       getLegacyID(&item),
 	}
 }
 
-func UnstructuredToLegacyPlaylistDTO(item *unstructured.Unstructured) *playlist.PlaylistDTO {
+func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlist.PlaylistDTO {
 	spec := item.Object["spec"].(map[string]any)
 	dto := &playlist.PlaylistDTO{
 		Uid:      item.GetName(),
 		Name:     spec["title"].(string),
 		Interval: spec["interval"].(string),
-		Id:       getLegacyID(item),
+		Id:       getLegacyID(&item),
 	}
 	return dto
 }
