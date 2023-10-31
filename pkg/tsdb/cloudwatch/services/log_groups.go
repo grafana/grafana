@@ -39,7 +39,7 @@ func (s *LogGroupsService) GetLogGroupsWithContext(ctx context.Context, req reso
 	result := []resources.ResourceResponse[resources.LogGroup]{}
 
 	for {
-		response, err := s.logGroupsAPI.DescribeLogGroupsWithContext(context.Background(), input)
+		response, err := s.logGroupsAPI.DescribeLogGroupsWithContext(ctx, input)
 		if err != nil || response == nil {
 			return nil, err
 		}
