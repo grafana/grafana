@@ -6,30 +6,34 @@ import (
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Playlist struct {
-	metav1.TypeMeta
-	metav1.ObjectMeta
+	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec Spec
+	Spec Spec `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type PlaylistList struct {
-	metav1.TypeMeta
-	metav1.ListMeta
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []Playlist
+	Items []Playlist `json:"items,omitempty"`
 }
 
 // Spec defines model for Spec.
 type Spec struct {
 	// Name of the playlist.
-	Title string
+	Title string `json:"title"`
 
 	// Interval sets the time between switching views in a playlist.
-	Interval string
+	Interval string `json:"interval"`
 
 	// The ordered list of items that the playlist will iterate over.
-	Items []Item
+	Items []Item `json:"items,omitempty"`
 }
 
 // Defines values for ItemType.
@@ -44,7 +48,7 @@ const (
 // Item defines model for Item.
 type Item struct {
 	// Type of the item.
-	Type ItemType
+	Type ItemType `json:"type"`
 
 	// Value depends on type and describes the playlist item.
 	//
@@ -54,7 +58,7 @@ type Item struct {
 	//  - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
 	//  dashboards behind the tag will be added to the playlist.
 	//  - dashboard_by_uid: The value is the dashboard UID
-	Value string
+	Value string `json:"value"`
 }
 
 // Type of the item.
