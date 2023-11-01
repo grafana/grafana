@@ -1,15 +1,15 @@
 package playlist
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/constraints"
-	"golang.org/x/exp/slices"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -131,6 +131,11 @@ func TestPlaylist(t *testing.T) {
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
+			  "annotations": {
+				"grafana.app/originKey": "${originKey}",
+				"grafana.app/originName": "SQL",
+				"grafana.app/updatedTimestamp": "${updatedTimestamp}"
+			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",
 			  "namespace": "default",
@@ -138,7 +143,6 @@ func TestPlaylist(t *testing.T) {
 			  "uid": "${uid}"
 			},
 			"spec": {
-			  "title": "Test",
 			  "interval": "20s",
 			  "items": [
 				{
@@ -149,7 +153,8 @@ func TestPlaylist(t *testing.T) {
 				  "type": "dashboard_by_tag",
 				  "value": "graph-ng"
 				}
-			  ]
+			  ],
+			  "title": "Test"
 			}
 		  }`
 
@@ -255,29 +260,27 @@ func TestPlaylist(t *testing.T) {
 		require.Equal(t, first.GetUID(), updated.GetUID())
 		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
 		out := getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
-			Name:     "This one is updated and only has one item",
-			Interval: "222s",
+			Name:     "Test playlist (replaced from k8s; 22m; 1 items; PUT)",
+			Interval: "22m",
 		})
 		require.Equal(t, updated.GetResourceVersion(), out.GetResourceVersion())
 
 		// PATCH :: apply only some fields
-		if false { // DOES NOT WORK YET????? :(
-			updated, err = client.Resource.Apply(context.Background(), "test",
-				helper.LoadYAMLOrJSONFile("testdata/playlist-test-apply.yaml"),
-				metav1.ApplyOptions{
-					Force:        true,
-					FieldManager: "testing",
-				},
-			)
-			require.NoError(t, err)
-			require.Equal(t, first.GetName(), updated.GetName())
-			require.Equal(t, first.GetUID(), updated.GetUID())
-			require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
-			getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
-				Name:     "The patched title!",
-				Interval: "222s", // has not changed from previous update
-			})
-		}
+		updated, err = client.Resource.Apply(context.Background(), "test",
+			helper.LoadYAMLOrJSONFile("testdata/playlist-test-apply.yaml"),
+			metav1.ApplyOptions{
+				Force:        true,
+				FieldManager: "testing",
+			},
+		)
+		require.NoError(t, err)
+		require.Equal(t, first.GetName(), updated.GetName())
+		require.Equal(t, first.GetUID(), updated.GetUID())
+		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+		getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
+			Name:     "Test playlist (apply from k8s; ??m; ?? items; PATCH)",
+			Interval: "22m", // has not changed from previous update
+		})
 
 		// Now delete all playlist (three)
 		for _, uid := range uids {
@@ -311,7 +314,7 @@ func Map[A any, B any](input []A, m func(A) B) []B {
 	return output
 }
 
-func SortSlice[A constraints.Ordered](input []A) []A {
+func SortSlice[A cmp.Ordered](input []A) []A {
 	slices.Sort(input)
 	return input
 }
