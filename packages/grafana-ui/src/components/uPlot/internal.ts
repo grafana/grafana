@@ -1,10 +1,7 @@
 import { FieldConfig, FieldType } from '@grafana/data';
 import { AxisPlacement, GraphFieldConfig, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
-/**
- * @internal -- not a public API
- */
-export const FIXED_UNIT = '__fixed';
+import { FIXED_UNIT } from './types';
 
 /**
  * @internal -- not a public API

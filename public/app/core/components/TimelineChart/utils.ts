@@ -35,8 +35,13 @@ import {
   HideableFieldConfig,
   MappingType,
 } from '@grafana/schema';
-import { SeriesVisibilityChangeMode, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
-import { FIXED_UNIT } from '@grafana/ui/src/components/uPlot/internal';
+import {
+  FIXED_UNIT,
+  SeriesVisibilityChangeMode,
+  UPlotConfigBuilder,
+  UPlotConfigPrepFn,
+  VizLegendItem,
+} from '@grafana/ui';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 

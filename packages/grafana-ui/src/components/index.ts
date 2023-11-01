@@ -289,8 +289,14 @@ export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
-export { type PlotTooltipInterpolator, type PlotSelection } from './uPlot/types';
+export { type PlotTooltipInterpolator, type PlotSelection, FIXED_UNIT } from './uPlot/types';
 export { type UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
+
+export { GraphNG, type GraphNGProps } from '../graveyard/GraphNG/GraphNG';
+export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
+export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
+export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
+export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
