@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
-import { TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { TimeRangeUpdatedEvent, reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, RefreshPicker } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { appEvents } from 'app/core/core';
@@ -36,6 +36,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onRefresh = () => {
+    reportInteraction('dashboards_toolbar_actions_clicked', { item: 'refresh' });
     getTimeSrv().refreshTimeModel();
     return Promise.resolve();
   };
@@ -75,6 +76,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onZoom = () => {
+    reportInteraction('dashboards_toolbar_actions_clicked', { item: 'zoom_out_time_range' });
     appEvents.publish(new ZoomOutEvent({ scale: 2 }));
   };
 
