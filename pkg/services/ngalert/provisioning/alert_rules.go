@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -98,17 +98,11 @@ func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Cont
 		return AlertRuleWithFolderFullpath{}, err
 	}
 
-	signinUser, err := appcontext.User(ctx)
-	if err != nil {
-		service.log.Error("failed to get user from context", "err", err)
-		return AlertRuleWithFolderFullpath{}, err
-	}
-
 	fq := folder.GetFolderQuery{
 		OrgID:           orgID,
 		UID:             &rule.NamespaceUID,
 		IncludeFullpath: true,
-		SignedInUser:    signinUser,
+		SignedInUser:    &user.SignedInUser{},
 	}
 
 	f, err := service.folderService.Get(ctx, &fq)
@@ -449,17 +443,11 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderFullpath(ctx context
 		return models.AlertRuleGroupWithFolderFullpath{}, store.ErrAlertRuleGroupNotFound
 	}
 
-	signinUser, err := appcontext.User(ctx)
-	if err != nil {
-		service.log.Error("failed to get user from context", "err", err)
-		return models.AlertRuleGroupWithFolderFullpath{}, err
-	}
-
 	fq := folder.GetFolderQuery{
 		OrgID:           orgID,
 		UID:             &namespaceUID,
 		IncludeFullpath: true,
-		SignedInUser:    signinUser,
+		SignedInUser:    &user.SignedInUser{},
 	}
 	f, err := service.folderService.Get(ctx, &fq)
 	if err != nil {

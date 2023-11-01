@@ -75,6 +75,7 @@ func ProvideService(
 		secretService:                secrectService,
 		log:                          log.New("provisioning"),
 		orgService:                   orgService,
+		folderService:                folderService,
 	}
 	return s, nil
 }

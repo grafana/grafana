@@ -33,9 +33,9 @@ func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, ruleGroupConfi
 		rules = append(rules, optional.AlertRule)
 	}
 
-	groupsWithTitle := ngmodels.NewAlertRuleGroupWithFolderFullpath(rules[0].GetGroupKey(), rules, namespace.Title)
+	groupsWithFullpath := ngmodels.NewAlertRuleGroupWithFolderFullpath(rules[0].GetGroupKey(), rules, namespace.Fullpath)
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]ngmodels.AlertRuleGroupWithFolderFullpath{groupsWithTitle})
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]ngmodels.AlertRuleGroupWithFolderFullpath{groupsWithFullpath})
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -110,7 +110,7 @@ func (srv RulerSrv) getRuleWithFolderTitleByRuleUid(c *contextmodel.ReqContext, 
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderFullpath{}, errors.Join(errFolderAccess, err)
 	}
-	return ngmodels.NewAlertRuleGroupWithFolderFullpath(rule.GetGroupKey(), []ngmodels.AlertRule{rule}, namespace.Title), nil
+	return ngmodels.NewAlertRuleGroupWithFolderFullpath(rule.GetGroupKey(), []ngmodels.AlertRule{rule}, namespace.Fullpath), nil
 }
 
 // getRuleGroupWithFolderTitle calls getAuthorizedRuleGroup and combines its result with folder (aka namespace) title.
@@ -126,7 +126,7 @@ func (srv RulerSrv) getRuleGroupWithFolderTitle(c *contextmodel.ReqContext, rule
 	if len(rules) == 0 {
 		return ngmodels.AlertRuleGroupWithFolderFullpath{}, ngmodels.ErrAlertRuleNotFound
 	}
-	return ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(ruleGroupKey, rules, namespace.Title), nil
+	return ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(ruleGroupKey, rules, namespace.Fullpath), nil
 }
 
 // getRulesWithFolderTitleInFolders gets list of folders to which user has access, and then calls searchAuthorizedAlertRules.
@@ -166,7 +166,7 @@ func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext,
 		if !ok {
 			continue // user does not have access
 		}
-		result = append(result, ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey, rulesGroup, namespace.Title))
+		result = append(result, ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey, rulesGroup, namespace.Fullpath))
 	}
 	return result, nil
 }

@@ -6,11 +6,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -44,6 +46,7 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 		for _, group := range file.Groups {
 			folderUID, err := prov.getOrCreateFolderFullpath(ctx, group.FolderFullpath, group.OrgID)
 			if err != nil {
+				prov.logger.Error("failed to get or create folder", "folder", group.FolderFullpath, "org", group.OrgID, "err", err)
 				return err
 			}
 			prov.logger.Debug("provisioning alert rule group",
@@ -104,7 +107,7 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
 
 	var folderUID *string
 	for i := range folderTitles {
-		uid, err := prov.getOrCreateFolderByTitle(ctx, folderTitles[i], orgID, *folderUID)
+		uid, err := prov.getOrCreateFolderByTitle(ctx, folderTitles[i], orgID, folderUID)
 		if err != nil {
 			prov.logger.Error("failed to get or create folder", "folder", folderTitles[i], "org", orgID, "err", err)
 			return "", err
@@ -115,32 +118,40 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
 }
 
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
-	ctx context.Context, folderName string, orgID int64, parentUID string) (string, error) {
+	ctx context.Context, folderName string, orgID int64, parentUID *string) (string, error) {
 	cmd := &folder.GetFolderQuery{
 		Title:     &folderName,
-		ParentUID: &parentUID,
+		ParentUID: parentUID,
 		OrgID:     orgID,
+		SignedInUser: accesscontrol.BackgroundUser("alerting_provisioning", orgID, org.RoleAdmin, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+		}),
 	}
-	f, err := prov.folderService.Get(ctx, cmd)
-	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+
+	cmdResult, err := prov.folderService.Get(ctx, cmd)
+	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
 		return "", err
 	}
 
 	// dashboard folder not found. create one.
-	if errors.Is(err, folder.ErrFolderNotFound) {
-		dash := &dashboards.SaveDashboardDTO{}
-		dash.Dashboard = dashboards.NewDashboardFolder(folderName)
-		dash.Dashboard.IsFolder = true
-		dash.Overwrite = true
-		dash.OrgID = orgID
-		dash.Dashboard.SetUID(util.GenerateShortUID())
-		dbDash, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, dash) //nolint:staticcheck
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		createCmd := &folder.CreateFolderCommand{
+			OrgID: orgID,
+			UID:   util.GenerateShortUID(),
+			Title: folderName,
+		}
+
+		if parentUID != nil {
+			createCmd.ParentUID = *parentUID
+		}
+
+		f, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, createCmd)
 		if err != nil {
 			return "", err
 		}
 
-		return dbDash.UID, nil
+		return f.UID, nil
 	}
 
-	return f.UID, nil
+	return cmdResult.UID, nil
 }

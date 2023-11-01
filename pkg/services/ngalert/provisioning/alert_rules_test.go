@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/util"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -606,18 +605,15 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, r, 1)
 
-		c := context.Background()
-		c = appcontext.WithUser(c, &signedInUser)
-
-		res, err := ruleService.GetAlertRuleWithFolderFullpath(c, orgID, r[0].UID)
+		res, err := ruleService.GetAlertRuleWithFolderFullpath(context.Background(), orgID, r[0].UID)
 		require.NoError(t, err)
 		assert.Equal(t, namespaceTitle, res.FolderFullpath)
 
-		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(c, orgID, namespaceUID, "my-cool-group")
+		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(context.Background(), orgID, namespaceUID, "my-cool-group")
 		require.NoError(t, err)
 		assert.Equal(t, namespaceTitle, res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(c, orgID, []string{namespaceUID})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), orgID, []string{namespaceUID})
 		require.NoError(t, err)
 		assert.Equal(t, namespaceTitle, res3[0].FolderFullpath)
 	})
@@ -640,18 +636,15 @@ func TestProvisiongWithFullpath(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, r, 1)
 
-		c := context.Background()
-		c = appcontext.WithUser(c, &signedInUser)
-
-		res, err := ruleService.GetAlertRuleWithFolderFullpath(c, orgID, r[0].UID)
+		res, err := ruleService.GetAlertRuleWithFolderFullpath(context.Background(), orgID, r[0].UID)
 		require.NoError(t, err)
 		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res.FolderFullpath)
 
-		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(c, orgID, otherNamespaceUID, "my-cool-group-2")
+		res2, err := ruleService.GetAlertRuleGroupWithFolderFullpath(context.Background(), orgID, otherNamespaceUID, "my-cool-group-2")
 		require.NoError(t, err)
 		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res2.FolderFullpath)
 
-		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(c, orgID, []string{otherNamespaceUID})
+		res3, err := ruleService.GetAlertGroupsWithFolderFullpath(context.Background(), orgID, []string{otherNamespaceUID})
 		require.NoError(t, err)
 		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", res3[0].FolderFullpath)
 	})
