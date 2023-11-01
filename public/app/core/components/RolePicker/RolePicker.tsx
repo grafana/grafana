@@ -1,11 +1,11 @@
 import React, { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
 
-import { ClickOutsideWrapper, useTheme2 } from '@grafana/ui';
+import { ClickOutsideWrapper, Portal, useTheme2 } from '@grafana/ui';
 import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
-import { MENU_MAX_HEIGHT, ROLE_PICKER_SUBMENU_MIN_WIDTH, ROLE_PICKER_WIDTH } from './constants';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_MAX_MENU_WIDTH, ROLE_PICKER_WIDTH } from './constants';
 
 export interface Props {
   basicRole?: OrgRole;
@@ -48,6 +48,7 @@ export const RolePicker = ({
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
+  const [menuLeft, setMenuLeft] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
   const widthPx = typeof width === 'number' ? theme.spacing(width) : width;
@@ -59,20 +60,20 @@ export const RolePicker = ({
 
   useEffect(() => {
     const dimensions = ref?.current?.getBoundingClientRect();
+    console.log(dimensions?.top, dimensions?.left);
     if (!dimensions || !isOpen) {
       return;
     }
-    const { bottom, top, left, right, width: currentRolePickerWidth } = dimensions;
-    const distance = window.innerHeight - bottom;
-    const offsetVertical = bottom - top + 10; // Add extra 10px to offset to account for border and outline
-    const offsetHorizontal = right - left;
-    let horizontal = -offsetHorizontal;
-    let vertical = -offsetVertical;
+    const { bottom, top, left, right } = dimensions;
+    let horizontal = left;
+    let vertical = bottom + 10; // Add extra 10px to offset to account for border and outline
+    let menuToLeft = false;
 
+    const distance = window.innerHeight - bottom;
     if (distance < MENU_MAX_HEIGHT + 20) {
       // Off set to display the role picker menu at the bottom of the screen
       // without resorting to scroll the page
-      vertical = 50 + (MENU_MAX_HEIGHT - distance) - offsetVertical;
+      vertical = top - MENU_MAX_HEIGHT - 50;
     }
 
     /*
@@ -82,14 +83,13 @@ export const RolePicker = ({
      * both (the role picker menu and its sub menu) aligned to the left edge of the input.
      * Otherwise, it aligns the role picker menu to the right.
      */
-    if (
-      window.innerWidth - right < currentRolePickerWidth &&
-      currentRolePickerWidth < 2 * ROLE_PICKER_SUBMENU_MIN_WIDTH
-    ) {
-      horizontal = offsetHorizontal;
+    if (left + ROLE_PICKER_MAX_MENU_WIDTH > window.innerWidth) {
+      horizontal = window.innerWidth - right;
+      menuToLeft = true;
     }
 
     setOffset({ horizontal, vertical });
+    setMenuLeft(menuToLeft);
   }, [isOpen, selectedRoles]);
 
   const onOpen = useCallback(
@@ -175,21 +175,24 @@ export const RolePicker = ({
           isLoading={isLoading}
         />
         {isOpen && (
-          <RolePickerMenu
-            options={getOptions()}
-            basicRole={selectedBuiltInRole}
-            appliedRoles={appliedRoles}
-            onBasicRoleSelect={onBasicRoleSelect}
-            onSelect={onSelect}
-            onUpdate={onUpdate}
-            showGroups={query.length === 0 || query.trim() === ''}
-            basicRoleDisabled={basicRoleDisabled}
-            disabledMessage={basicRoleDisabledMessage}
-            showBasicRole={showBasicRole}
-            updateDisabled={basicRoleDisabled && !canUpdateRoles}
-            apply={apply}
-            offset={offset}
-          />
+          <Portal>
+            <RolePickerMenu
+              options={getOptions()}
+              basicRole={selectedBuiltInRole}
+              appliedRoles={appliedRoles}
+              onBasicRoleSelect={onBasicRoleSelect}
+              onSelect={onSelect}
+              onUpdate={onUpdate}
+              showGroups={query.length === 0 || query.trim() === ''}
+              basicRoleDisabled={basicRoleDisabled}
+              disabledMessage={basicRoleDisabledMessage}
+              showBasicRole={showBasicRole}
+              updateDisabled={basicRoleDisabled && !canUpdateRoles}
+              apply={apply}
+              offset={offset}
+              menuLeft={menuLeft}
+            />
+          </Portal>
         )}
       </ClickOutsideWrapper>
     </div>
