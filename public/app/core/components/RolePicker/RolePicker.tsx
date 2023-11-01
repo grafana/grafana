@@ -60,7 +60,6 @@ export const RolePicker = ({
 
   useEffect(() => {
     const dimensions = ref?.current?.getBoundingClientRect();
-    console.log(dimensions?.top, dimensions?.left);
     if (!dimensions || !isOpen) {
       return;
     }
