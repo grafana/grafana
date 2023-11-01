@@ -1,49 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { NavModelItem } from '@grafana/data';
 import { Form, Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { OrgUser, AccessControlAction, OrgRole } from 'app/types';
 
 import { OrgUsersTable } from './Users/OrgUsersTable';
-
-const perPage = 30;
+import { getOrg, getOrgUsers, getUsersRoles, removeOrgUser, updateOrgName, updateOrgUserRole } from './api';
 
 interface OrgNameDTO {
   orgName: string;
 }
-
-const getOrg = async (orgId: UrlQueryValue) => {
-  return await getBackendSrv().get(`/api/orgs/${orgId}`);
-};
-
-const getOrgUsers = async (orgId: UrlQueryValue, page: number) => {
-  if (contextSrv.hasPermission(AccessControlAction.OrgUsersRead)) {
-    return getBackendSrv().get(`/api/orgs/${orgId}/users/search`, accessControlQueryParam({ perpage: perPage, page }));
-  }
-  return { orgUsers: [] };
-};
-
-const getUsersRoles = async (orgId: number, users: OrgUser[]) => {
-  const userIds = users.map((u) => u.userId);
-  const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, { userIds, orgId });
-  users.forEach((u) => {
-    u.roles = roles ? roles[u.userId] || [] : [];
-  });
-};
-
-const updateOrgUserRole = (orgUser: OrgUser, orgId: UrlQueryValue) => {
-  return getBackendSrv().patch(`/api/orgs/${orgId}/users/${orgUser.userId}`, orgUser);
-};
-
-const removeOrgUser = (orgUser: OrgUser, orgId: UrlQueryValue) => {
-  return getBackendSrv().delete(`/api/orgs/${orgId}/users/${orgUser.userId}`);
-};
 
 interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
 
@@ -75,8 +45,8 @@ const AdminEditOrgPage = ({ match }: Props) => {
     fetchOrgUsers(page);
   }, [fetchOrg, fetchOrgUsers, page]);
 
-  const updateOrgName = async (name: string) => {
-    return await getBackendSrv().put(`/api/orgs/${orgId}`, { ...orgState.value, name });
+  const onUpdateOrgName = async (name: string) => {
+    await updateOrgName(name, orgId);
   };
 
   const renderMissingPermissionMessage = () => (
@@ -114,7 +84,7 @@ const AdminEditOrgPage = ({ match }: Props) => {
           {orgState.value && (
             <Form
               defaultValues={{ orgName: orgState.value.name }}
-              onSubmit={(values: OrgNameDTO) => updateOrgName(values.orgName)}
+              onSubmit={(values: OrgNameDTO) => onUpdateOrgName(values.orgName)}
             >
               {({ register, errors }) => (
                 <>
