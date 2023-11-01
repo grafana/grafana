@@ -65,6 +65,8 @@ export function VariableQueryEditor(props: QueryEditorProps<PyroscopeDataSource,
               props.onChange({ ...props.query, profileTypeId: val });
             }
           }}
+          from={props.range?.from.valueOf() || Date.now().valueOf() - 1000 * 60 * 60 * 24}
+          to={props.range?.to.valueOf() || Date.now().valueOf()}
         />
       )}
 
@@ -131,8 +133,10 @@ function ProfileTypeRow(props: {
   datasource: PyroscopeDataSource;
   onChange: (val: string) => void;
   initialValue?: string;
+  from: number;
+  to: number;
 }) {
-  const profileTypes = useProfileTypes(props.datasource);
+  const profileTypes = useProfileTypes(props.datasource, props.from, props.to);
   return (
     <InlineFieldRow>
       <InlineField

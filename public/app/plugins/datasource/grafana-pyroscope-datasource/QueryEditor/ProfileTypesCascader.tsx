@@ -69,15 +69,15 @@ function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption
  * the profileTypes before rendering the cascader.
  * @param datasource
  */
-export function useProfileTypes(datasource: PyroscopeDataSource) {
+export function useProfileTypes(datasource: PyroscopeDataSource, start: number, end: number) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>();
 
   useEffect(() => {
     (async () => {
-      const profileTypes = await datasource.getProfileTypes();
+      const profileTypes = await datasource.getProfileTypes(start, end);
       setProfileTypes(profileTypes);
     })();
-  }, [datasource]);
+  }, [datasource, start, end]);
 
   return profileTypes;
 }
