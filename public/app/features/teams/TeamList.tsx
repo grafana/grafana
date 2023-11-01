@@ -46,6 +46,7 @@ export const TeamList = ({
   changeQuery,
   totalPages,
   page,
+  rolesLoading,
   changePage,
   changeSort,
 }: Props) => {
@@ -100,7 +101,17 @@ export const TeamList = ({
                   AccessControlAction.ActionTeamsRolesList,
                   original
                 );
-                return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} width={40} />;
+                return (
+                  canSeeTeamRoles && (
+                    <TeamRolePicker
+                      teamId={original.id}
+                      roles={original.roles || []}
+                      isLoading={rolesLoading}
+                      roleOptions={roleOptions}
+                      width={40}
+                    />
+                  )
+                );
               },
             },
           ]
@@ -136,7 +147,7 @@ export const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, roleOptions, deleteTeam]
+    [displayRolePicker, rolesLoading, roleOptions, deleteTeam]
   );
 
   return (
@@ -225,6 +236,7 @@ function mapStateToProps(state: StoreState) {
     noTeams: state.teams.noTeams,
     totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
+    rolesLoading: state.teams.rolesLoading,
   };
 }
 
