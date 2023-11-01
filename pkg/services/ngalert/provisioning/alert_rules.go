@@ -88,7 +88,7 @@ type AlertRuleWithFolderFullpath struct {
 }
 
 // GetAlertRuleWithFolderFullpath returns a single alert rule with its folder full path.
-func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Context, orgID int64, ruleUID string) (AlertRuleWithFolderFullpath, error) {
+func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Context, orgID int64, ruleUID string, u *user.SignedInUser) (AlertRuleWithFolderFullpath, error) {
 	query := &models.GetAlertRuleByUIDQuery{
 		OrgID: orgID,
 		UID:   ruleUID,
@@ -102,7 +102,7 @@ func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Cont
 		OrgID:           orgID,
 		UID:             &rule.NamespaceUID,
 		IncludeFullpath: true,
-		SignedInUser:    &user.SignedInUser{},
+		SignedInUser:    u,
 	}
 
 	f, err := service.folderService.Get(ctx, &fq)
@@ -429,7 +429,7 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 }
 
 // GetAlertRuleGroupWithFolderFullpath returns the alert rule group with folder title.
-func (service *AlertRuleService) GetAlertRuleGroupWithFolderFullpath(ctx context.Context, orgID int64, namespaceUID, group string) (models.AlertRuleGroupWithFolderFullpath, error) {
+func (service *AlertRuleService) GetAlertRuleGroupWithFolderFullpath(ctx context.Context, orgID int64, namespaceUID, group string, u *user.SignedInUser) (models.AlertRuleGroupWithFolderFullpath, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{namespaceUID},
@@ -447,7 +447,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderFullpath(ctx context
 		OrgID:           orgID,
 		UID:             &namespaceUID,
 		IncludeFullpath: true,
-		SignedInUser:    &user.SignedInUser{},
+		SignedInUser:    u,
 	}
 	f, err := service.folderService.Get(ctx, &fq)
 	if err != nil {
@@ -459,7 +459,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderFullpath(ctx context
 }
 
 // GetAlertGroupsWithFolderFullpath returns all groups with folder title in the folders identified by folderUID that have at least one alert. If argument folderUIDs is nil or empty - returns groups in all folders.
-func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Context, orgID int64, folderUIDs []string) ([]models.AlertRuleGroupWithFolderFullpath, error) {
+func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Context, orgID int64, folderUIDs []string, u *user.SignedInUser) ([]models.AlertRuleGroupWithFolderFullpath, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: orgID,
 	}
@@ -492,6 +492,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 		OrgID:           orgID,
 		UIDs:            nil,
 		IncludeFullpath: true,
+		SignedInUser:    u,
 	}
 	for uid := range namespaces {
 		fq.UIDs = append(fq.UIDs, uid)

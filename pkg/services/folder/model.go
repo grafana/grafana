@@ -168,6 +168,8 @@ type GetFoldersQuery struct {
 	UIDs            []string
 	OrgID           int64
 	IncludeFullpath bool `json:"-"`
+
+	SignedInUser identity.Requester `json:"-"`
 }
 
 type HasEditPermissionInFoldersQuery struct {

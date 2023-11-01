@@ -176,13 +176,32 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 }
 
 func (s *Service) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	if q.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
 	folders, err := s.store.GetFolders(ctx, q)
 	if err != nil {
 		s.log.Error("failed to fetch folders from folder store", "error", err)
 		return nil, err
 	}
 
-	return folders, nil
+	filtered := make([]*folder.Folder, 0, len(folders))
+	for _, f := range folders {
+		g, err := guardian.NewByFolder(ctx, f, f.OrgID, q.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+		canView, err := g.CanView()
+		if err != nil {
+			return nil, err
+		}
+		if canView {
+			filtered = append(filtered, f)
+		}
+	}
+
+	return filtered, nil
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
