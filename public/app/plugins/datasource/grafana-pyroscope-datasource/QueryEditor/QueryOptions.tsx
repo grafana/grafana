@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, RadioButtonGroup, MultiSelect, Input } from '@grafana/ui';
 
 import { QueryOptionGroup } from '../../prometheus/querybuilder/shared/QueryOptionGroup';
@@ -83,6 +84,21 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               }}
             />
           </EditorField>
+          {config.featureToggles.traceToProfiles && (
+            <EditorField label={'Span ID'} tooltip={<>Sets the span ID from which to search for profiles.</>}>
+              <Input
+                value={query.spanSelector || ['']}
+                type="string"
+                placeholder="64f170a95f537095"
+                onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                  onQueryChange({
+                    ...query,
+                    spanSelector: event.currentTarget.value !== '' ? [event.currentTarget.value] : [],
+                  });
+                }}
+              />
+            </EditorField>
+          )}
           <EditorField label={'Max Nodes'} tooltip={<>Sets the maximum number of nodes to return in the flamegraph.</>}>
             <Input
               value={query.maxNodes || ''}
