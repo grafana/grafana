@@ -1996,7 +1996,7 @@ steps:
     docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
-  - yarn-install
+  - update-package-json-version
   image: grafana/grafana-build:main
   name: rgm-build-docker
   pull: always
@@ -4684,6 +4684,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 88aa054b297d39ae9757ee3a13d16b51491931fabf7c78ba0d0c125a4088da33
+hmac: 06bd63b82c56b77c48511ab3a41558122abd7df3f82c3d7b1c71f7acb8f27dc6
 
 ...
