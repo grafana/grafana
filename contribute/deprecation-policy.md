@@ -4,9 +4,6 @@ We do our best to limit breaking changes and the deprecation of features to majo
 
 To minimize the negative effects of removing a feature we require a deprecation plan that includes:
 
-If we cannot remove a feature without introducing a breaking change we will create a deprecation plan as listed below:
-
-- A deprecation plan should have the following steps.
 - Determine usage levels of the feature.
 - Find alternative solutions and possible migration paths.
 - Announce deprecation of the feature.
