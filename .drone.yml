@@ -1485,7 +1485,7 @@ steps:
   image: node:20.9.0-alpine
   name: test-frontend
 trigger:
-  branch: main
+  branch: km/run-docker-after-packages-updated
   event:
   - push
   paths:
@@ -1552,7 +1552,7 @@ steps:
   image: node:20.9.0-alpine
   name: verify-i18n
 trigger:
-  branch: main
+  branch: km/run-docker-after-packages-updated
   event:
   - push
   paths:
@@ -1631,7 +1631,7 @@ steps:
   image: golang:1.20.10-alpine
   name: test-backend-integration
 trigger:
-  branch: main
+  branch: km/run-docker-after-packages-updated
   event:
   - push
   paths:
@@ -1705,7 +1705,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: lint-drone
 trigger:
-  branch: main
+  branch: km/run-docker-after-packages-updated
   event:
   - push
   paths:
@@ -2105,7 +2105,7 @@ steps:
     repo:
     - grafana/grafana
 trigger:
-  branch: main
+  branch: km/run-docker-after-packages-updated
   event:
   - push
   paths:
@@ -2336,7 +2336,7 @@ steps:
   image: golang:1.20.10-alpine
   name: remote-alertmanager-integration-tests
 trigger:
-  branch: main
+  branch: km/run-docker-after-packages-updated
   event:
   - push
   paths:
@@ -2391,7 +2391,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   name: windows-init
 trigger:
-  branch: main
+  branch: km/run-docker-after-packages-updated
   event:
   - push
   paths:
@@ -2478,7 +2478,7 @@ steps:
     webhook:
       from_secret: slack_webhook
 trigger:
-  branch: main
+  branch: km/run-docker-after-packages-updated
   event:
   - push
   paths:
@@ -4684,6 +4684,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 06bd63b82c56b77c48511ab3a41558122abd7df3f82c3d7b1c71f7acb8f27dc6
+hmac: 4dc3ea22cf8828750ad6370ae31c9f221ff3d7473b95f65db8f5ba7a581844e8
 
 ...
