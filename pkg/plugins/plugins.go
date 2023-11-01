@@ -158,6 +158,14 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		}
 	}
 
+	if plugin.Info.Version == "%VERSION%" {
+		plugin.Info.Version = ""
+	}
+
+	if plugin.Info.Updated == "%TODAY%" {
+		plugin.Info.Updated = ""
+	}
+
 	return plugin, nil
 }
 
