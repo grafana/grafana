@@ -13,15 +13,15 @@ jobs:
       - name: Update procedure
         run: |
           BRANCH=update-make-docs
-          git checkout -B "${BRANCH}"
+          git checkout -b "${BRANCH}"
           curl -s -Lo docs/docs.mk https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/docs.mk
           curl -s -Lo docs/make-docs https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/make-docs
           if git diff --exit-code; then exit 0; fi
           git add .
           git config --local user.email "bot@grafana.com"
           git config --local user.name "grafanabot"
-          git commit --allow-empty --message "Update \`make docs\` procedure"
-          git push --force -v origin "refs/heads/${BRANCH}"
+          git commit --message "Update \`make docs\` procedure"
+          git push -v origin "refs/heads/${BRANCH}"
           gh pr create --fill \
             --label 'backport v10.0.x' \
             --label 'backport v10.1.x' \
