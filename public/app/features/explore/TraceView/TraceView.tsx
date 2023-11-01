@@ -110,7 +110,6 @@ export function TraceView(props: Props) {
   const [selectedSpan, setSelectedSpan] = useState<TraceSpan | undefined>();
 
   const styles = useStyles2(getStyles);
-  const defaultDetailsPanelHeight = theme.components.horizontalDrawer.defaultHeight - (exploreId ? 80 : 165);
 
   /**
    * Keeps state of resizable name column width
@@ -254,7 +253,6 @@ export function TraceView(props: Props) {
               detailLogItemToggle={detailLogItemToggle}
               detailReferenceItemToggle={detailReferenceItemToggle}
               createFocusSpanLink={createFocusSpanLink}
-              defaultDetailsPanelHeight={defaultDetailsPanelHeight}
               createSpanLink={createSpanLink}
               datasourceType={datasourceType}
               topOfViewRefType={topOfViewRefType}

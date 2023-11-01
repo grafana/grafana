@@ -93,7 +93,6 @@ const setup = () => {
         origin: {},
       } as LinkModel;
     },
-    defaultDetailsPanelHeight: 200,
     createSpanLink: () => {
       return [
         {

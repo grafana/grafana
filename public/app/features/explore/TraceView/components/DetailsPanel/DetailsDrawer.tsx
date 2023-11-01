@@ -1,6 +1,6 @@
 // Libraries
 import { css, cx, keyframes } from '@emotion/css';
-import { Resizable, ResizeCallback } from 're-resizable';
+import { Resizable } from 're-resizable';
 import React from 'react';
 
 // Services & Utils
@@ -21,19 +21,20 @@ const drawerSlide = (theme: GrafanaTheme2) => keyframes`
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    container: css`
-      position: fixed !important;
-      bottom: 0;
-      background: ${theme.colors.background.primary};
-      border-top: 1px solid ${theme.colors.border.weak};
-      margin: ${theme.spacing(0, -2, 0, -2)};
-      box-shadow: ${theme.shadows.z3};
-      z-index: ${theme.zIndex.navbarFixed};
-    `,
-    drawerActive: css`
-      opacity: 1;
-      animation: 0.5s ease-out ${drawerSlide(theme)};
-    `,
+    container: css({
+      bottom: 0,
+      background: `${theme.colors.background.primary}`,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      margin: `${theme.spacing(0, -2, 0, -2)}`,
+      boxShadow: `${theme.shadows.z3}`,
+      zIndex: `${theme.zIndex.navbarFixed}`,
+    }),
+    drawerActive: css({
+      opacity: 1,
+      animation: `0.5s ease-out ${drawerSlide(theme)}`,
+      margin: 0,
+      position: 'relative',
+    }),
     rzHandle: css`
       background: ${theme.colors.secondary.main};
       transition: 0.3s background ease-in-out;
@@ -54,19 +55,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
 export interface Props {
   width: number;
   children: React.ReactNode;
-  onResize?: ResizeCallback;
+  defaultHeight: number;
+  minHeight: number;
 }
 
-export function ExploreDrawer(props: Props) {
-  const { width, children, onResize } = props;
+export function DetailsDrawer(props: Props) {
+  const { width, children, defaultHeight, minHeight } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const drawerWidth = `${width + 31.5}px`;
+  const drawerWidth = `${width}px`;
 
   return (
     <Resizable
       className={cx(styles.container, styles.drawerActive)}
-      defaultSize={{ width: drawerWidth, height: `${theme.components.horizontalDrawer.defaultHeight}px` }}
+      defaultSize={{
+        width: drawerWidth,
+        height: `${defaultHeight}px`,
+      }}
       handleClasses={{ top: styles.rzHandle }}
       enable={{
         top: true,
@@ -80,8 +85,8 @@ export function ExploreDrawer(props: Props) {
       }}
       maxHeight="100vh"
       maxWidth={drawerWidth}
+      minHeight={minHeight}
       minWidth={drawerWidth}
-      onResize={onResize}
     >
       {children}
     </Resizable>

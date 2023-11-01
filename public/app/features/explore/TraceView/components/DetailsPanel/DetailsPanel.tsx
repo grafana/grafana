@@ -3,10 +3,9 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone, TraceLog } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, DataLinkButton, Icon, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, DataLinkButton, Icon, Tab, TabContent, TabsBar, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { autoColor, DetailState, TraceSpan } from '..';
-import { ExploreDrawer } from '../../../ExploreDrawer';
 import { getOverviewItems } from '../TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from '../TraceTimelineViewer/SpanDetail/AccordianKeyValues';
 import TextList from '../TraceTimelineViewer/SpanDetail/TextList';
@@ -18,6 +17,7 @@ import { uAlignIcon, ubTxRightAlign } from '../uberUtilityStyles';
 
 import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
+import { DetailsDrawer } from './DetailsDrawer';
 import { StackTraces } from './StackTraces';
 
 type Props = {
@@ -30,7 +30,6 @@ type Props = {
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  defaultDetailsPanelHeight: number;
   createSpanLink?: SpanLinkFunc;
   datasourceType: string;
   topOfViewRefType?: TopOfViewRefType;
@@ -55,13 +54,13 @@ export function DetailsPanel(props: Props) {
     detailLogItemToggle,
     detailReferenceItemToggle,
     createFocusSpanLink,
-    defaultDetailsPanelHeight,
     createSpanLink,
     datasourceType,
     topOfViewRefType,
   } = props;
   const [activeTab, setActiveTab] = useState(TabLabels.Attributes);
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   useEffect(() => {
     setActiveTab(TabLabels.Attributes);
@@ -136,12 +135,13 @@ export function DetailsPanel(props: Props) {
 
   return (
     <div className={styles.container}>
-      {/* The first child here needs to be the ExploreDrawer to we can get it's height via onDrawerResize. This is so we can set a paddingBottom in the TraceView according to this components height */}
-      <ExploreDrawer
+      {/* The first child here needs to be the DetailsDrawer to we can get it's height via onDrawerResize. This is so we can set a paddingBottom in the TraceView according to this components height */}
+      <DetailsDrawer
         width={width}
-        defaultHeight={defaultDetailsPanelHeight}
+        defaultHeight={
+          theme.components.horizontalDrawer.defaultHeight - (topOfViewRefType === TopOfViewRefType.Explore ? 80 : 165)
+        }
         minHeight={topOfViewRefType === TopOfViewRefType.Explore ? 200 : 150}
-        className={styles.drawer}
       >
         <div className={cx(styles.header, styles.flexSpaceBetween)}>
           <div className={cx(styles.flexSpaceBetween, css({ flex: '1 0 auto' }))}>
@@ -240,7 +240,7 @@ export function DetailsPanel(props: Props) {
             />
           )}
         </TabContent>
-      </ExploreDrawer>
+      </DetailsDrawer>
     </div>
   );
 }
@@ -253,10 +253,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
     zIndex: `${theme.zIndex.activePanel}`,
   }),
-  drawer: css`
-    margin: 0;
-    position: relative !important;
-  `,
   header: css({
     gap: '0 1rem',
     padding: '0.6rem',
@@ -267,37 +263,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
   }),
-  tab: css`
-    label: DetailsPanelTab;
-    padding: 0.5rem 1rem;
-
-    & .json-markup {
-      line-height: 17px;
-      font-size: 13px;
-      font-family: monospace;
-      white-space: pre-wrap;
-    }
-
-    & .json-markup-key {
-      font-weight: bold;
-    }
-
-    & .json-markup-bool {
-      color: ${autoColor(theme, 'firebrick')};
-    }
-
-    & .json-markup-string {
-      color: ${autoColor(theme, 'teal')};
-    }
-
-    & .json-markup-null {
-      color: ${autoColor(theme, 'teal')};
-    }
-
-    & .json-markup-number {
-      color: ${autoColor(theme, 'blue', 'black')};
-    }
-  `,
+  tab: css({
+    label: 'DetailsPanelTab',
+    padding: '0.5rem 1rem',
+    '.json-markup': {
+      lineHeight: '17px',
+      fontSize: '13px',
+      fontFamily: 'monospace',
+      whiteSpace: 'pre-wrap',
+    },
+    '.json-markup-key': {
+      fontWeight: 'bold',
+    },
+    '.json-markup-bool': {
+      color: autoColor(theme, 'firebrick'),
+    },
+    '.json-markup-string': {
+      color: autoColor(theme, 'teal'),
+    },
+    '.json-markup-null': {
+      color: autoColor(theme, 'teal'),
+    },
+    '.json-markup-number': {
+      color: autoColor(theme, 'blue', 'black'),
+    },
+  }),
   attributesContainer: css({
     label: 'DetailsPanelAttrsContainer',
     display: 'flex',
