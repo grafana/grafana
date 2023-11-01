@@ -95,13 +95,17 @@ func (d *dashboardStore) DBMigration(db db.DB) {
 
 		// #TODO refactor
 		for _, dash := range dashboards {
+			panelTitles := getPanelTitles(dash)
+			if panelTitles == "" {
+				continue
+			}
 			if d.store.GetDialect().DriverName() == migrator.Postgres {
-				_, err = sess.Exec("UPDATE dashboard SET panel_titles = to_tsvector(?) WHERE id = ?", getPanelTitles(dash), dash.ID)
+				_, err = sess.Exec("UPDATE dashboard SET panel_titles = to_tsvector(?) WHERE id = ?", panelTitles, dash.ID)
 				if err != nil {
 					return err
 				}
 			} else {
-				_, err = sess.Exec("UPDATE dashboard SET panel_titles = ? WHERE id = ?", getPanelTitles(dash), dash.ID)
+				_, err = sess.Exec("UPDATE dashboard SET panel_titles = ? WHERE id = ?", panelTitles, dash.ID)
 				if err != nil {
 					return err
 				}
@@ -125,7 +129,7 @@ func getPanelTitles(dash *dashboards.Dashboard) string {
 		titles = append(titles, panel.Get("title").MustString())
 	}
 	const sep = " ,,, "
-	return strings.Join(titles, sep)
+	return strings.TrimSpace(strings.Join(titles, sep))
 }
 
 func (d *dashboardStore) emitEntityEvent() bool {

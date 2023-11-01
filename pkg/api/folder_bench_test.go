@@ -457,9 +457,11 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 		// #TODO refactor
 		if db.GetDialect().DriverName() == migrator.Postgres {
 			_, err = sess.Exec(fmt.Sprintf(`UPDATE dashboard SET panel_titles = to_tsvector('%s');`, lorem))
+			require.NoError(b, err)
 
 			// panel title to search for
 			_, err = sess.Exec(fmt.Sprintf(`UPDATE dashboard SET panel_titles = to_tsvector('%s apple') WHERE title = 'dashboard_99999';`, lorem))
+			require.NoError(b, err)
 		}
 
 		return err

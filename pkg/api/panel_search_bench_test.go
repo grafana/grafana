@@ -37,7 +37,6 @@ func BenchmarkPanelTitleSearch(b *testing.B) {
 			url:         "/api/search?type=dash-db&panelTitle=apple",
 			expectedLen: 1,
 			features: featuremgmt.WithFeatures(
-				featuremgmt.FlagNestedFolders,
 				featuremgmt.FlagPanelTitleSearchInV1,
 				featuremgmt.FlagPermissionsFilterRemoveSubquery,
 			),
