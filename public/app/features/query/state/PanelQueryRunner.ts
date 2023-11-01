@@ -31,6 +31,7 @@ import {
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
@@ -250,6 +251,14 @@ export class PanelQueryRunner {
       minInterval,
       app,
     } = options;
+
+    if (panelId !== undefined) {
+      const dashboard = getDashboardSrv().getCurrent();
+      const panel = dashboard?.getPanelById(panelId);
+      if (panel) {
+        panel.refreshWhenInView = false;
+      }
+    }
 
     if (isSharedDashboardQuery(datasource)) {
       this.pipeToSubject(runSharedRequest(options, queries[0]), panelId, true);
