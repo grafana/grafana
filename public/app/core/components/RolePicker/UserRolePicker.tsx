@@ -77,7 +77,7 @@ export const UserRolePicker = ({
     if (orgId) {
       getUserRoles();
     }
-  }, [orgId, getUserRoles, pendingRoles, roles]);
+  }, [getUserRoles, orgId]);
 
   const onRolesChange = async (roles: Role[]) => {
     if (!apply) {

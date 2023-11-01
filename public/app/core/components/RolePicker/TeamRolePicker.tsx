@@ -60,11 +60,11 @@ export const TeamRolePicker = ({
       console.error('Error loading options', e);
     }
     return [];
-  }, [teamId, pendingRoles]);
+  }, [teamId, pendingRoles, roles]);
 
   useEffect(() => {
     getTeamRoles();
-  }, [teamId, getTeamRoles, pendingRoles]);
+  }, [getTeamRoles]);
 
   const onRolesChange = async (roles: Role[]) => {
     if (!apply) {
