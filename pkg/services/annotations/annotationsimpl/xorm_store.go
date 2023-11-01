@@ -390,36 +390,54 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester) (ac
 	if !has {
 		return acFilter{}, errors.New("missing permissions")
 	}
+	// TODO double-check the scopes - what counts as wildcard in the new world? Avoid the situation of someone being granted ann:type:* and that meaning read all
+	// 	a bit messy with wildcards in general
 	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
-	if hasWildcardScope {
-		types = map[interface{}]struct{}{annotations.Dashboard.String(): {}, annotations.Organization.String(): {}}
-	}
 
 	var filters []string
 	var params []interface{}
-	for t := range types {
-		// annotation read permission with scope annotations:type:organization allows listing annotations that are not associated with a dashboard
-		if t == annotations.Organization.String() {
+	if hasWildcardScope && !r.features.IsEnabled(featuremgmt.FlagAnnotationPermissionUpdate) {
+		types = map[interface{}]struct{}{annotations.Dashboard.String(): {}, annotations.Organization.String(): {}}
+	}
+
+	var addAnnotationDashFilter bool
+	var dashQueryType string
+	if !r.features.IsEnabled(featuremgmt.FlagAnnotationPermissionUpdate) {
+		for t := range types {
+			// annotation read permission with scope annotations:type:organization allows listing annotations that are not associated with a dashboard
+			if t == annotations.Organization.String() {
+				filters = append(filters, "a.dashboard_id = 0")
+			}
+			// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
+			if t == annotations.Dashboard.String() {
+				addAnnotationDashFilter = true
+				dashQueryType = searchstore.TypeDashboard
+			}
+		}
+	} else {
+		if _, hasOrgAnnotationAccess := types[annotations.Organization.String()]; hasOrgAnnotationAccess {
 			filters = append(filters, "a.dashboard_id = 0")
 		}
-		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
-		if t == annotations.Dashboard.String() {
-			recursiveQueriesAreSupported, err := r.db.RecursiveQueriesAreSupported()
-			if err != nil {
-				return acFilter{}, err
-			}
+		addAnnotationDashFilter = true
+		dashQueryType = searchstore.TypeAnnotation
+	}
 
-			filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, recursiveQueriesAreSupported)
-			dashboardFilter, dashboardParams := filterRBAC.Where()
-			recQueries, recQueriesParams = filterRBAC.With()
-			leftJoin := filterRBAC.LeftJoin()
-			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
-			if leftJoin != "" {
-				filter = fmt.Sprintf("a.dashboard_id IN(SELECT dashboard.id FROM dashboard LEFT OUTER JOIN %s WHERE %s)", leftJoin, dashboardFilter)
-			}
-			filters = append(filters, filter)
-			params = dashboardParams
+	recursiveQueriesAreSupported, err := r.db.RecursiveQueriesAreSupported()
+	if err != nil {
+		return acFilter{}, err
+	}
+
+	if addAnnotationDashFilter {
+		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, dashQueryType, r.features, recursiveQueriesAreSupported)
+		dashboardFilter, dashboardParams := filterRBAC.Where()
+		recQueries, recQueriesParams = filterRBAC.With()
+		leftJoin := filterRBAC.LeftJoin()
+		filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
+		if leftJoin != "" {
+			filter = fmt.Sprintf("a.dashboard_id IN(SELECT dashboard.id FROM dashboard LEFT OUTER JOIN %s WHERE %s)", leftJoin, dashboardFilter)
 		}
+		filters = append(filters, filter)
+		params = dashboardParams
 	}
 
 	f := acFilter{

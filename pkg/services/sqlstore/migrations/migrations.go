@@ -106,6 +106,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.CreatedFoldersMigration(mg)
 
 	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
+	accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

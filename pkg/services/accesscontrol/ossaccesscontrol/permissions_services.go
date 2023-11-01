@@ -111,8 +111,8 @@ type DashboardPermissionsService struct {
 	*resourcepermissions.Service
 }
 
-var DashboardViewActions = []string{dashboards.ActionDashboardsRead}
-var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete}...)
+var DashboardViewActions = []string{dashboards.ActionDashboardsRead, accesscontrol.ActionAnnotationsRead}
+var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete, accesscontrol.ActionAnnotationsCreate, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsWrite}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
 func ProvideDashboardPermissions(

@@ -1195,6 +1195,9 @@ export class DashboardModel implements TimeModel {
     } else {
       canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
     }
+    if (config.featureToggles.annotationPermissionUpdate) {
+      return canEdit;
+    }
     return this.canEditDashboard() && canEdit;
   }
 
@@ -1207,18 +1210,25 @@ export class DashboardModel implements TimeModel {
     } else {
       canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
     }
+    if (config.featureToggles.annotationPermissionUpdate) {
+      return canDelete;
+    }
     return canDelete && this.canEditDashboard();
   }
 
   canAddAnnotations() {
     // When the builtin annotations are disabled, we should not add any in the UI
     const found = this.annotations.list.find((item) => item.builtIn === 1);
-    if (found?.enable === false || !this.canEditDashboard()) {
+    if (found?.enable === false) {
       return false;
     }
 
     // If RBAC is enabled there are additional conditions to check.
-    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    if (config.featureToggles.annotationPermissionUpdate) {
+      return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    }
+
+    return Boolean(this.meta.annotationsPermissions?.dashboard.canAdd) && this.canEditDashboard();
   }
 
   canEditDashboard() {
