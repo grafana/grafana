@@ -163,6 +163,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       minHeight: 0,
       minWidth: 0,
+      overflow: 'auto',
     }),
     skipLink: css({
       position: 'absolute',
