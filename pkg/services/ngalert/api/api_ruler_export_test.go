@@ -260,7 +260,7 @@ func TestExportRules(t *testing.T) {
 		))
 
 	ruleStore.PutRule(context.Background(), noAccessByFolder...)
-	// overwrite the folders visible to user because PutRule automatically creates folders.
+	// overwrite the folders visible to user because PutRule automatically creates folders in production.
 	ruleStore.Folders[orgID] = []*folder2.Folder{f1, f2}
 
 	srv := createService(ruleStore)
