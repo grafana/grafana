@@ -14,7 +14,7 @@ import {
   Pagination,
   Avatar,
 } from '@grafana/ui';
-import { Stack, Flex } from '@grafana/ui/src/unstable';
+import { Stack } from '@grafana/ui/src/unstable';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -180,14 +180,14 @@ export const TeamList = ({
                   getRowId={(team) => String(team.id)}
                   fetchData={changeSort}
                 />
-                <Flex justifyContent="flex-end">
+                <Stack justifyContent="flex-end">
                   <Pagination
                     hideWhenSinglePage
                     currentPage={page}
                     numberOfPages={totalPages}
                     onNavigate={changePage}
                   />
-                </Flex>
+                </Stack>
               </TableWrapper>
             </Stack>
           </>

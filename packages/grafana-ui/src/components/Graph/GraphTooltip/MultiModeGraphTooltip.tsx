@@ -8,11 +8,13 @@ import { getMultiSeriesGraphHoverInfo } from '../utils';
 
 import { GraphTooltipContentProps } from './types';
 
+/** @deprecated */
 type Props = GraphTooltipContentProps & {
   // We expect position to figure out correct values when not hovering over a datapoint
   pos: FlotPosition;
 };
 
+/** @deprecated */
 export const MultiModeGraphTooltip = ({ dimensions, activeDimensions, pos, timeZone }: Props) => {
   let activeSeriesIndex: number | null = null;
   // when no x-axis provided, skip rendering
