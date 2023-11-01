@@ -190,7 +190,7 @@ export function LogsTableWrap(props: Props) {
       }
     }
 
-    if (logsFrame) {
+    if (logsFrame?.bodyField?.name && logsFrame?.timeField?.name) {
       pendingLabelState[logsFrame.bodyField.name].type = 'BODY_FIELD';
       pendingLabelState[logsFrame.timeField.name].type = 'TIME_FIELD';
     }
