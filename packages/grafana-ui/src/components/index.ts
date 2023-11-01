@@ -117,9 +117,6 @@ export {
 export { Sparkline } from './Sparkline/Sparkline';
 
 export { Gauge } from './Gauge/Gauge';
-export { Graph } from './Graph/Graph';
-export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge } from './BarGauge/BarGauge';
 export {
   VizTooltip,
@@ -130,7 +127,6 @@ export {
   type SeriesTableRowProps,
 } from './VizTooltip';
 export { VizRepeater, type VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
-export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export {
   PanelChrome,
   type PanelChromeProps,
@@ -154,7 +150,6 @@ export { VizLegend } from './VizLegend/VizLegend';
 export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
 export { Alert, type AlertVariant } from './Alert/Alert';
-export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
