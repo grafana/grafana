@@ -7,7 +7,8 @@ import {
   ReducerID,
   isReducerID,
   SelectableValue,
-  getFieldDisplayName,
+  Field,
+  FieldType,
 } from '@grafana/data';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 
@@ -57,16 +58,27 @@ export function TimeSeriesTableTransformEditor({
   let configRows = [];
   for (const refId of Object.keys(refIdMap)) {
     // Get time fields for the current refId
-    const timeFields: Array<SelectableValue<string>> = [];
+    const timeFields: Record<string, Field<FieldType.time>> = {};
+    const timeValues: Array<SelectableValue<string>> = [];
+
+    // Get a map of time fields, we map
+    // by field name and assume that time fields
+    // in the same query with the same name
+    // are the same
     for (const frame of input) {
       if (frame.refId === refId) {
         for (const field of frame.fields) {
           if (field.type === 'time') {
-            const name = getFieldDisplayName(field, frame, input);
-            timeFields.push({ label: name, value: name });
+            console.log(field);
+            timeFields[field.name] = field;
           }
         }
       }
+    }
+
+    for (const timeField of Object.values(timeFields)) {
+      const { name } = timeField;
+      timeValues.push({ label: name, value: name });
     }
 
     configRows.push(
@@ -80,8 +92,9 @@ export function TimeSeriesTableTransformEditor({
         >
           <Select
             onChange={onSelectTimefield.bind(null, refId)}
-            options={timeFields}
+            options={timeValues}
             value={options[refId]?.timeField}
+            isClearable={true}
           />
         </InlineField>
         <InlineField label="Stat" tooltip="The statistic that should be calculated for this time series.">
