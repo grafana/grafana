@@ -763,6 +763,7 @@ export class LokiDatasource
       queryType: LokiQueryType.Range,
       refId: REF_ID_DATA_SAMPLES,
       maxLines: query.maxLines || DEFAULT_MAX_LINES_SAMPLE,
+      supportingQueryType: SupportingQueryType.DataSample,
     };
 
     const timeRange = this.getTimeRange();

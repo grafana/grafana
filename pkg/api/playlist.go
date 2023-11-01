@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	internalplaylist "github.com/grafana/grafana/pkg/apis/playlist"
 	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -49,8 +49,8 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	if hs.Features.IsEnabled(featuremgmt.FlagKubernetesPlaylistsAPI) {
 		namespacer := request.GetNamespaceMapper(hs.Cfg)
 		gvr := schema.GroupVersionResource{
-			Group:    v0alpha1.GroupName,
-			Version:  v0alpha1.VersionID,
+			Group:    internalplaylist.GroupName,
+			Version:  internalplaylist.VersionID,
 			Resource: "playlists",
 		}
 
@@ -88,7 +88,7 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 			query := strings.ToUpper(c.Query("query"))
 			playlists := []playlist.Playlist{}
 			for _, item := range out.Items {
-				p := v0alpha1.UnstructuredToLegacyPlaylist(item)
+				p := internalplaylist.UnstructuredToLegacyPlaylist(item)
 				if p == nil {
 					continue
 				}
@@ -111,7 +111,7 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 				errorWriter(c, err)
 				return
 			}
-			c.JSON(http.StatusOK, v0alpha1.UnstructuredToLegacyPlaylistDTO(*out))
+			c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out))
 		}}
 
 		handler.GetPlaylistItems = []web.Handler{func(c *contextmodel.ReqContext) {
@@ -125,7 +125,7 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 				errorWriter(c, err)
 				return
 			}
-			c.JSON(http.StatusOK, v0alpha1.UnstructuredToLegacyPlaylistDTO(*out).Items)
+			c.JSON(http.StatusOK, internalplaylist.UnstructuredToLegacyPlaylistDTO(*out).Items)
 		}}
 	}
 
