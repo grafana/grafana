@@ -763,6 +763,7 @@ export class LokiDatasource
       refId: REF_ID_DATA_SAMPLES,
       // For samples we limit the request to 10 lines, so queries are small and fast
       maxLines: 10,
+      supportingQueryType: SupportingQueryType.DataSample,
     };
 
     const timeRange = this.getTimeRange();

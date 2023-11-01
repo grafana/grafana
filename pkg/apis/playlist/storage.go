@@ -1,4 +1,4 @@
-package v0alpha1
+package playlist
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
