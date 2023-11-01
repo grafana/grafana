@@ -966,10 +966,6 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 	tsField.Name = "TS"
 
 	labels := data.Labels{}
-	labelMap, err := labelsToMap(labels)
-	if err != nil {
-		return backend.DataResponse{Error: err}
-	}
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -987,10 +983,6 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 				// only appends to it
 				labels := data.Labels{}
 				if err = iter.ReadVal(&labels); err != nil {
-					return rspErr(err)
-				}
-
-				if labelMap, err = labelsToMap(labels); err != nil {
 					return rspErr(err)
 				}
 
@@ -1037,30 +1029,30 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 						return rspErr(err)
 					}
 
-					typeMap := map[string]string{}
+					typeMap := data.Labels{}
 
-					for k := range labelMap {
+					for k := range labels {
 						typeMap[k] = "I"
 					}
 
 					// then, merge the clabelMap into the labelMap
 					for k, v := range clabelsMap {
-						labelMap[k] = v
+						labels[k] = fmt.Sprintf("%s", v)
 						typeMap[k] = "S"
 					}
 
 					// then, merge the plabelMap into the labelMap
 					for k, v := range plabelsMap {
-						labelMap[k] = v
+						labels[k] = fmt.Sprintf("%s", v)
 						typeMap[k] = "P"
 					}
 
-					labelJson, err := mapToRawJson(labelMap)
+					labelJson, err := labelsToRawJson(labels)
 					if err != nil {
 						return rspErr(err)
 					}
 
-					labelTypesJson, err := mapToRawJson(typeMap)
+					labelTypesJson, err := labelsToRawJson(typeMap)
 					if err != nil {
 						return rspErr(err)
 					}
@@ -1154,16 +1146,6 @@ func timeFromLokiString(str string) (time.Time, error) {
 func labelsToRawJson(labels data.Labels) (json.RawMessage, error) {
 	// data.Labels when converted to JSON keep the fields sorted
 	bytes, err := jsoniter.Marshal(labels)
-	if err != nil {
-		return nil, err
-	}
-
-	return json.RawMessage(bytes), nil
-}
-
-func mapToRawJson(labelMap any) (json.RawMessage, error) {
-	// data.Labels when converted to JSON keep the fields sorted
-	bytes, err := jsoniter.Marshal(labelMap)
 	if err != nil {
 		return nil, err
 	}
