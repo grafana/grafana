@@ -113,9 +113,9 @@ def build_e2e(trigger, ver_mode):
                 rgm_build_docker_step(
                     images["ubuntu"],
                     images["alpine"],
+                    depends_on = ["update-package-json-version"],
                     tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
                     ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
-                    depends_on=["update-package-json-version"],
                 ),
                 publish_images_step(
                     docker_repo = "grafana",
