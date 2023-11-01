@@ -122,6 +122,17 @@ export function LogsTableWrap(props: Props) {
     }
   }, [dedupStrategy, dedupedRows, tableFrame]);
 
+  useEffect(() => {
+    if (dataFrame && !tableFrame) {
+      setTableFrame(dataFrame);
+    }
+    if (dataFrame && tableFrame) {
+      if (dataFrame.fields[0].values !== tableFrame.fields[0].values) {
+        setTableFrame(dataFrame);
+      }
+    }
+  }, [dataFrame, tableFrame]);
+
   /**
    * Keeps the filteredColumnsWithMeta state in sync with the columnsWithMeta state,
    * which can be updated by explore browser history state changes
