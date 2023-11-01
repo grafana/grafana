@@ -296,7 +296,7 @@ describe('Query imports', () => {
     it('calls dataSample with correctly set sampleSize', async () => {
       jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
 
-      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}', { logsCount: 5 })).toEqual({
+      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}', { maxLines: 5 })).toEqual({
         extractedLabelKeys: [],
         unwrapLabelKeys: [],
         hasJSON: false,

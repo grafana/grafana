@@ -252,19 +252,19 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *
    * @param streamSelector - The selector for the log stream you want to analyze.
    * @param {Object} [options] - Optional parameters.
-   * @param {number} [options.logsCount] - The number of log lines to use in determining parsers and label keys.
-   * Smaller count is recommended for improved query performance. The default count is 10.
+   * @param {number} [options.maxLines] - The number of log lines requested when determining parsers and label keys.
+   * Smaller maxLines is recommended for improved query performance. The default count is 10.
    * @returns A promise containing an object with parser and label key information.
    * @throws An error if the fetch operation fails.
    */
   async getParserAndLabelKeys(
     streamSelector: string,
-    options?: { logsCount?: number }
+    options?: { maxLines?: number }
   ): Promise<ParserAndLabelKeysResult> {
     const series = await this.datasource.getDataSamples({
       expr: streamSelector,
       refId: 'data-samples',
-      maxLines: options?.logsCount || DEFAULT_MAX_LINES_SAMPLE,
+      maxLines: options?.maxLines || DEFAULT_MAX_LINES_SAMPLE,
     });
 
     if (!series.length) {
