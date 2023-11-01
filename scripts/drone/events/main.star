@@ -50,7 +50,7 @@ trigger = {
     "event": [
         "push",
     ],
-    "branch": "km/run-docker-after-packages-updated",
+    "branch": "main",
     "paths": {
         "exclude": [
             "*.md",
