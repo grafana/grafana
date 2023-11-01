@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
@@ -13,28 +13,25 @@ import (
 //
 // It uses the process.Manager to stop the backend plugin process.
 type BackendProcessTerminator struct {
-	clientRegistry client.Registry
+	processManager process.Manager
 	log            log.Logger
 }
 
 // BackendProcessTerminatorStep returns a new TerminateFunc for stopping a backend plugin process.
-func BackendProcessTerminatorStep(clientRegistry client.Registry) TerminateFunc {
-	return newBackendProcessTerminator(clientRegistry).Terminate
+func BackendProcessTerminatorStep(processManager process.Manager) TerminateFunc {
+	return newBackendProcessTerminator(processManager).Terminate
 }
 
-func newBackendProcessTerminator(clientRegistry client.Registry) *BackendProcessTerminator {
+func newBackendProcessTerminator(processManager process.Manager) *BackendProcessTerminator {
 	return &BackendProcessTerminator{
-		clientRegistry: clientRegistry,
+		processManager: processManager,
 		log:            log.New("plugins.backend.termination"),
 	}
 }
 
 // Terminate stops a backend plugin process.
 func (t *BackendProcessTerminator) Terminate(ctx context.Context, p *plugins.Plugin) error {
-	if p.Backend {
-		return t.clientRegistry.Deregister(ctx, p)
-	}
-	return nil
+	return t.processManager.Stop(ctx, p)
 }
 
 // Deregister implements a TerminateFunc for removing a plugin from the plugin registry.

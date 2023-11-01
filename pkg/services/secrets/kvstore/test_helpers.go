@@ -227,9 +227,9 @@ func (mg *fakePluginManager) SecretsManager(_ context.Context) *plugins.Plugin {
 			kv: make(map[Key]string),
 		},
 	}
-	//p.RegisterClient(&fakePluginClient{
-	//	shouldFailOnStart: mg.shouldFailOnStart,
-	//})
+	p.RegisterClient(&fakePluginClient{
+		shouldFailOnStart: mg.shouldFailOnStart,
+	})
 	mg.plugin = p
 	return p
 }

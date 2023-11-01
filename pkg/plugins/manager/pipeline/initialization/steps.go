@@ -2,10 +2,11 @@ package initialization
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
@@ -17,28 +18,41 @@ import (
 //
 // Note: This step does not start the backend plugin process. Please see BackendClientStarter for starting the backend plugin process.
 type BackendClientInit struct {
-	clientRegistry client.Registry
-	log            log.Logger
+	envVarProvider  envvars.Provider
+	backendProvider plugins.BackendFactoryProvider
+	log             log.Logger
 }
 
 // BackendClientInitStep returns a new InitializeFunc for registering a backend plugin process.
-func BackendClientInitStep(clientRegistry client.Registry) InitializeFunc {
-	return newBackendProcessRegistration(clientRegistry).Initialize
+func BackendClientInitStep(envVarProvider envvars.Provider,
+	backendProvider plugins.BackendFactoryProvider) InitializeFunc {
+	return newBackendProcessRegistration(envVarProvider, backendProvider).Initialize
 }
 
-func newBackendProcessRegistration(clientRegistry client.Registry) *BackendClientInit {
+func newBackendProcessRegistration(envVarProvider envvars.Provider,
+	backendProvider plugins.BackendFactoryProvider) *BackendClientInit {
 	return &BackendClientInit{
-		clientRegistry: clientRegistry,
-		log:            log.New("plugins.backend.registration"),
+		backendProvider: backendProvider,
+		envVarProvider:  envVarProvider,
+		log:             log.New("plugins.backend.registration"),
 	}
 }
 
 // Initialize will initialize a backend plugin client, if the plugin is a backend plugin.
 func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.Backend {
-		_, err := b.clientRegistry.Register(ctx, p)
-		if err != nil {
+		backendFactory := b.backendProvider.BackendFactory(ctx, p)
+		if backendFactory == nil {
+			return nil, errors.New("could not find backend factory for plugin")
+		}
+
+		// this will ensure that the env variables are calculated every time a plugin is started
+		envFunc := func() []string { return b.envVarProvider.Get(ctx, p) }
+
+		if backendClient, err := backendFactory(p.ID, p.Logger(), envFunc); err != nil {
 			return nil, err
+		} else {
+			p.RegisterClient(backendClient)
 		}
 	}
 	return p, nil
@@ -51,25 +65,25 @@ type BackendClientStarter struct {
 }
 
 // BackendProcessStartStep returns a new InitializeFunc for starting a backend plugin process.
-//func BackendProcessStartStep(processManager process.Manager) InitializeFunc {
-//	return newBackendProcessStarter(processManager).Start
-//}
-//
-//func newBackendProcessStarter(processManager process.Manager) *BackendClientStarter {
-//	return &BackendClientStarter{
-//		processManager: processManager,
-//		log:            log.New("plugins.backend.start"),
-//	}
-//}
-//
-//// Start will start the backend plugin process.
-//func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-//	if err := b.processManager.Start(ctx, p); err != nil {
-//		b.log.Error("Could not start plugin", "pluginId", p.ID, "error", err)
-//		return nil, err
-//	}
-//	return p, nil
-//}
+func BackendProcessStartStep(processManager process.Manager) InitializeFunc {
+	return newBackendProcessStarter(processManager).Start
+}
+
+func newBackendProcessStarter(processManager process.Manager) *BackendClientStarter {
+	return &BackendClientStarter{
+		processManager: processManager,
+		log:            log.New("plugins.backend.start"),
+	}
+}
+
+// Start will start the backend plugin process.
+func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if err := b.processManager.Start(ctx, p); err != nil {
+		b.log.Error("Could not start plugin", "pluginId", p.ID, "error", err)
+		return nil, err
+	}
+	return p, nil
+}
 
 // PluginRegistration implements an InitializeFunc for registering a plugin with the plugin registry.
 type PluginRegistration struct {

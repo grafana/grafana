@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -52,14 +51,11 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	proc := process.ProvideService()
 	errTracker := pluginerrs.ProvideSignatureErrorTracker()
 
-	env := envvars.NewProvider(pCfg, fakes.NewFakeLicensingService())
-	clientReg := client.ProvideBackendClientRegistry(provider.ProvideService(coreRegistry), env, proc)
-
 	disc := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(true), reg)
 	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pCfg, cdn))
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector, errTracker)
-	init := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), clientReg)
-	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc, clientReg)
+	init := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry())
+	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
 	require.NoError(t, err)
 
 	l := CreateTestLoader(t, pCfg, LoaderOpts{
@@ -74,7 +70,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{
-		PluginClient:   client.ProvideService(pCfg, clientReg),
+		PluginClient:   client.ProvideService(reg, pCfg),
 		PluginStore:    ps,
 		PluginRegistry: reg,
 	}
@@ -101,17 +97,16 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.Cfg, opts LoaderOpts) *loade
 		opts.Validator = pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularinspector.NewStaticInspector(), pluginerrs.ProvideSignatureErrorTracker())
 	}
 
-	reg := registry.ProvideService()
-	coreRegistry := coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))
-	clientRegistry := client.ProvideBackendClientRegistry(provider.ProvideService(coreRegistry), envvars.NewProvider(cfg, fakes.NewFakeLicensingService()), process.ProvideService())
-
 	if opts.Initializer == nil {
-		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), process.ProvideService(), &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), clientRegistry)
+		reg := registry.ProvideService()
+		coreRegistry := coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))
+		opts.Initializer = pipeline.ProvideInitializationStage(cfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), process.ProvideService(), &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry())
 	}
 
 	if opts.Terminator == nil {
 		var err error
-		opts.Terminator, err = pipeline.ProvideTerminationStage(cfg, reg, process.ProvideService(), clientRegistry)
+		reg := registry.ProvideService()
+		opts.Terminator, err = pipeline.ProvideTerminationStage(cfg, reg, process.ProvideService())
 		require.NoError(t, err)
 	}
 

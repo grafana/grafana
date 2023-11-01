@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
 const (
@@ -27,13 +28,13 @@ var (
 )
 
 type Service struct {
-	clientProvider *Provider
+	pluginRegistry registry.Service
 	cfg            *config.Cfg
 }
 
-func ProvideService(cfg *config.Cfg, backendClientRegistry Registry) *Service {
+func ProvideService(pluginRegistry registry.Service, cfg *config.Cfg) *Service {
 	return &Service{
-		clientProvider: NewProvider(cfg, backendClientRegistry),
+		pluginRegistry: pluginRegistry,
 		cfg:            cfg,
 	}
 }
@@ -43,9 +44,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, errNilRequest
 	}
 
-	p, err := s.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	resp, err := p.QueryData(ctx, req)
@@ -86,9 +87,9 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return errNilSender
 	}
 
-	p, err := s.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return err
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return plugins.ErrPluginNotRegistered
 	}
 
 	removeConnectionHeaders(req.Headers)
@@ -112,7 +113,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return sender.Send(res)
 	})
 
-	err = p.CallResource(ctx, req, wrappedSender)
+	err := p.CallResource(ctx, req, wrappedSender)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
@@ -129,9 +130,9 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 		return nil, errNilRequest
 	}
 
-	p, err := s.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	resp, err := p.CollectMetrics(ctx, req)
@@ -151,9 +152,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return nil, errNilRequest
 	}
 
-	p, err := s.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	resp, err := p.CheckHealth(ctx, req)
@@ -181,9 +182,9 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 		return nil, errNilRequest
 	}
 
-	plugin, err := s.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	return plugin.SubscribeStream(ctx, req)
@@ -194,9 +195,9 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 		return nil, errNilRequest
 	}
 
-	plugin, err := s.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	return plugin.PublishStream(ctx, req)
@@ -211,22 +212,26 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return errNilSender
 	}
 
-	plugin, err := s.plugin(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return err
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return plugins.ErrPluginNotRegistered
 	}
 
 	return plugin.RunStream(ctx, req, sender)
 }
 
-// plugin finds a plugin with `pluginID` from the client provider
-func (s *Service) plugin(ctx context.Context, pluginID string) (plugins.Client, error) {
-	pc, err := s.clientProvider.PluginClient(ctx, pluginID)
-	if err != nil {
-		return nil, err
+// plugin finds a plugin with `pluginID` from the registry that is not decommissioned
+func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
+	p, exists := s.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists {
+		return nil, false
 	}
 
-	return pc, nil
+	if p.IsDecommissioned() {
+		return nil, false
+	}
+
+	return p, true
 }
 
 // removeConnectionHeaders removes hop-by-hop headers listed in the "Connection" header of h.

@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
@@ -60,23 +60,23 @@ func ProvideValidationStage(cfg *config.Cfg, sv signature.Validator, ai angulari
 
 func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
 	bp plugins.BackendFactoryProvider, pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
-	roleRegistry plugins.RoleRegistry, clientRegistry client.Registry) *initialization.Initialize {
+	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
-			initialization.BackendClientInitStep(clientRegistry), // will auto-start plugin
+			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), bp),
 			initialization.PluginRegistrationStep(pr),
+			initialization.BackendProcessStartStep(pm),
 			RegisterPluginRolesStep(roleRegistry),
 			ReportBuildMetrics,
 		},
 	})
 }
 
-func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Manager,
-	clientRegistry client.Registry) (*termination.Terminate, error) {
+func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Manager) (*termination.Terminate, error) {
 	return termination.New(cfg, termination.Opts{
 		TerminateFuncs: []termination.TerminateFunc{
-			termination.BackendProcessTerminatorStep(clientRegistry),
+			termination.BackendProcessTerminatorStep(pm),
 			termination.DeregisterStep(pr),
 		},
 	})
