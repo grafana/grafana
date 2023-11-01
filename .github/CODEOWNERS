@@ -313,7 +313,6 @@
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
