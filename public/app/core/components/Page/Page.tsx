@@ -54,7 +54,7 @@ export const Page: PageType = ({
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={cx(styles.pageInner, config.featureToggles.dockedMegaMenu && styles.newPageInner)}>
+          <div className={styles.pageInner}>
             {pageHeaderNav && (
               <PageHeader
                 actions={actions}
@@ -96,34 +96,33 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'page-content',
       flexGrow: 1,
     }),
-    pageInner: css({
-      label: 'page-inner',
-      padding: theme.spacing(2),
-      borderRadius: theme.shape.radius.default, // removed by dockedMegaMenu toggle
-      border: `1px solid ${theme.colors.border.weak}`, // removed by dockedMegaMenu toggle
-      borderBottom: 'none',
-      background: theme.colors.background.primary,
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-      margin: theme.spacing(0, 0, 0, 0),
-
-      [theme.breakpoints.up('md')]: {
-        margin: theme.spacing(2, 2, 0, config.featureToggles.dockedMegaMenu ? 2 : 1), // removed by dockedMegaMenu toggle
-        padding: theme.spacing(3), // changed by dockedMegaMenu toggle
+    pageInner: css(
+      {
+        label: 'page-inner',
+        padding: theme.spacing(2),
+        borderBottom: 'none',
+        background: theme.colors.background.primary,
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+        margin: theme.spacing(0, 0, 0, 0),
       },
-    }),
+      config.featureToggles.dockedMegaMenu
+        ? {
+            [theme.breakpoints.up('md')]: {
+              padding: theme.spacing(4),
+            },
+          }
+        : {
+            borderRadius: theme.shape.radius.default,
+            border: `1px solid ${theme.colors.border.weak}`,
 
-    // Only applied when the dockedMegaMenu feature toggle is enabled
-    newPageInner: css({
-      borderRadius: 0,
-      border: 'none',
-
-      [theme.breakpoints.up('md')]: {
-        margin: 0,
-        padding: theme.spacing(4),
-      },
-    }),
+            [theme.breakpoints.up('md')]: {
+              margin: theme.spacing(2, 2, 0, 1),
+              padding: theme.spacing(3),
+            },
+          }
+    ),
 
     canvasContent: css({
       label: 'canvas-content',
