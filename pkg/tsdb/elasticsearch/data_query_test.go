@@ -1431,7 +1431,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			res, err := executeElasticsearchDataQuery(c, `{
 				"query": "foo",
 			}`, from, to)
-			require.Error(t, err)
+			require.NoError(t, err)
 			require.Equal(t, res.Responses["A"].ErrorSource, backend.ErrorSourcePlugin)
 			require.Equal(t, res.Responses["A"].Error.Error(), "invalid character '}' looking for beginning of object key string")
 		}))
