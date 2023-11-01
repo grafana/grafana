@@ -115,6 +115,7 @@ def build_e2e(trigger, ver_mode):
                     images["alpine"],
                     tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
                     ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
+                    depends_on=["update-package-json-version"],
                 ),
                 publish_images_step(
                     docker_repo = "grafana",
