@@ -858,6 +858,13 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:            "kubernetesPlaylistsAPI",
+			Description:     "Route /api/playlist API to k8s handlers",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
