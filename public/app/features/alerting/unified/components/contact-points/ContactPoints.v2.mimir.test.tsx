@@ -1,12 +1,10 @@
 import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import React, { PropsWithChildren } from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions, mockDataSource } from '../../mocks';
-import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
@@ -64,9 +62,3 @@ describe('Contact points with Mimir-flavored alertmanager', () => {
     expect(screen.getAllByTestId('contact-point')).toHaveLength(2);
   });
 });
-
-const wrapper = ({ children }: PropsWithChildren) => (
-  <TestProvider>
-    <AlertmanagerProvider accessType={'notification'}>{children}</AlertmanagerProvider>
-  </TestProvider>
-);
