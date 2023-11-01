@@ -51,6 +51,8 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a streams response with parse errors", filepath: "streams_parse_errors", query: streamsQuery},
 
 		{name: "parse an empty response", filepath: "empty", query: matrixQuery},
+
+		{name: "parse structured metadata", filepath: "streams_structured_metadata", query: streamsQuery},
 	}
 
 	runTest := func(folder string, path string, query lokiQuery, responseOpts ResponseOpts) {
@@ -68,7 +70,7 @@ func TestSuccessResponse(t *testing.T) {
 			Frames: frames,
 			Error:  err,
 		}
-		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, dr, true)
+		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, dr, false)
 	}
 
 	for _, test := range tt {
