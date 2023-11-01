@@ -654,6 +654,13 @@ var (
 			Expression:  "true", // on by default
 		},
 		{
+			Name:         "traceToProfiles",
+			Description:  "Enables linking between traces and profiles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
@@ -849,6 +856,13 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
+		},
+		{
+			Name:            "kubernetesPlaylistsAPI",
+			Description:     "Route /api/playlist API to k8s handlers",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:        "cloudWatchBatchQueries",
