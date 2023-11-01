@@ -1885,7 +1885,7 @@ steps:
     docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
-  - yarn-install
+  - update-package-json-version
   image: grafana/grafana-build:main
   name: rgm-build-docker
   pull: always
@@ -4573,6 +4573,10 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
+<<<<<<< HEAD
 hmac: b62d31b05e01279b55e4d29aeb12248dd8f7b399d72a72ff827e3d5d2c4869b0
+=======
+hmac: 06bd63b82c56b77c48511ab3a41558122abd7df3f82c3d7b1c71f7acb8f27dc6
+>>>>>>> f6d3238505 (CI: Fix race condition when building docker on main (#77504))
 
 ...
