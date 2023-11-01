@@ -383,6 +383,10 @@ const (
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 
+	// FlagTraceToProfiles
+	// Enables linking between traces and profiles
+	FlagTraceToProfiles = "traceToProfiles"
+
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
