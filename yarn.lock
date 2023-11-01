@@ -2866,7 +2866,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.1"
     "@types/jest": "npm:29.5.4"
     "@types/lodash": "npm:4.14.195"
-    "@types/node": "npm:18.18.5"
+    "@types/node": "npm:20.8.10"
     "@types/react": "npm:18.2.15"
     "@types/testing-library__jest-dom": "npm:5.14.8"
     lodash: "npm:4.17.21"
@@ -2944,7 +2944,7 @@ __metadata:
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.195"
     "@types/marked": "npm:5.0.1"
-    "@types/node": "npm:18.18.4"
+    "@types/node": "npm:20.8.10"
     "@types/papaparse": "npm:5.3.7"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
@@ -3006,7 +3006,7 @@ __metadata:
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
     "@rollup/plugin-commonjs": "npm:25.0.2"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
-    "@types/node": "npm:18.18.4"
+    "@types/node": "npm:20.8.10"
     esbuild: "npm:0.18.12"
     rimraf: "npm:5.0.1"
     rollup: "npm:2.79.1"
@@ -3422,7 +3422,7 @@ __metadata:
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.195"
     "@types/mock-raf": "npm:1.0.3"
-    "@types/node": "npm:18.18.4"
+    "@types/node": "npm:20.8.10"
     "@types/prismjs": "npm:1.26.0"
     "@types/react": "npm:18.2.15"
     "@types/react-beautiful-dnd": "npm:13.1.4"
@@ -8762,10 +8762,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:18.18.5, @types/node@npm:>=13.7.0":
-  version: 18.18.5
-  resolution: "@types/node@npm:18.18.5"
-  checksum: a7363aab9f402290799d3e2696fbc70c76a8a65e2354f72b8f399c38edc346f600066f8ac59dde985cfc64160cfeb63ed7fc917aecdfe7ec469345d3ce029bda
+"@types/node@npm:*, @types/node@npm:20.8.10, @types/node@npm:>=13.7.0":
+  version: 20.8.10
+  resolution: "@types/node@npm:20.8.10"
+  dependencies:
+    undici-types: "npm:~5.26.4"
+  checksum: 8930039077c8ad74de74c724909412bea8110c3f8892bcef8dda3e9629073bed65632ee755f94b252bcdae8ca71cf83e89a4a440a105e2b1b7c9797b43483049
   languageName: node
   linkType: hard
 
@@ -17195,7 +17197,7 @@ __metadata:
     "@types/lucene": "npm:^2"
     "@types/marked": "npm:5.0.1"
     "@types/mousetrap": "npm:1.6.11"
-    "@types/node": "npm:18.18.4"
+    "@types/node": "npm:20.8.10"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0"
     "@types/papaparse": "npm:5.3.7"
@@ -28976,6 +28978,13 @@ __metadata:
   version: 1.13.6
   resolution: "underscore@npm:1.13.6"
   checksum: 58cf5dc42cb0ac99c146ae4064792c0a2cc84f3a3c4ad88f5082e79057dfdff3371d896d1ec20379e9ece2450d94fa78f2ef5bfefc199ba320653e32c009bd66
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~5.26.4":
+  version: 5.26.5
+  resolution: "undici-types@npm:5.26.5"
+  checksum: 0097779d94bc0fd26f0418b3a05472410408877279141ded2bd449167be1aed7ea5b76f756562cb3586a07f251b90799bab22d9019ceba49c037c76445f7cddd
   languageName: node
   linkType: hard
 
