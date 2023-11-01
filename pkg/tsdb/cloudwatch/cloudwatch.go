@@ -170,7 +170,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
 	fromExpression := req.GetHTTPHeader(query.HeaderFromExpression) != ""
-	isSyncLogQuery := (fromAlert || fromExpression) && model.QueryMode == logsQueryMode
+	isSyncLogQuery := (fromAlert || fromExpression) && model.QueryMode == logsQueryMode || (model.Type == "" && model.QueryMode == logsQueryMode)
 	if isSyncLogQuery {
 		return executeSyncLogQuery(ctx, e, req)
 	}

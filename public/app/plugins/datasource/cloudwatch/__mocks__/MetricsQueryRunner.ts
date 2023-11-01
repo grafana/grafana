@@ -1,7 +1,7 @@
 import { of, throwError } from 'rxjs';
 
 import { CustomVariableModel, DataQueryError, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendDataSourceResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchMetricsQueryRunner } from '../query-runner/CloudWatchMetricsQueryRunner';
@@ -16,13 +16,13 @@ export function setupMockedMetricsQueryRunner({
   },
   variables,
   mockGetVariableName = true,
-  throws = false,
+  errorResponse,
   instanceSettings = CloudWatchSettings,
 }: {
-  data?: BackendDataSourceResponse | DataQueryError;
+  data?: BackendDataSourceResponse;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
-  throws?: boolean;
+  errorResponse?: DataQueryError;
   instanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {
   let templateService = new TemplateSrv();
@@ -33,15 +33,10 @@ export function setupMockedMetricsQueryRunner({
     }
   }
 
-  const runner = new CloudWatchMetricsQueryRunner(instanceSettings, templateService);
-  const fetchMock = throws
-    ? jest.fn().mockImplementation(() => throwError(data))
-    : jest.fn().mockReturnValue(of({ data }));
-
-  setBackendSrv({
-    ...getBackendSrv(),
-    fetch: fetchMock,
-  });
+  const queryMock = errorResponse
+    ? jest.fn().mockImplementation(() => throwError(errorResponse))
+    : jest.fn().mockReturnValue(of(toDataQueryResponse({ data })));
+  const runner = new CloudWatchMetricsQueryRunner(instanceSettings, templateService, queryMock);
 
   const request: DataQueryRequest<CloudWatchQuery> = {
     range: TimeRangeMock,
@@ -56,5 +51,5 @@ export function setupMockedMetricsQueryRunner({
     startTime: 0,
   };
 
-  return { runner, fetchMock, templateService, instanceSettings, request, timeRange: TimeRangeMock };
+  return { runner, queryMock: queryMock, templateService, instanceSettings, request, timeRange: TimeRangeMock };
 }

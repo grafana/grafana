@@ -152,6 +152,40 @@ func Test_executeSyncLogQuery(t *testing.T) {
 
 		executeSyncLogQuery = origExecuteSyncLogQuery
 	})
+
+	t.Run("when query mode is 'Logs' and does not include type or subtype", func(t *testing.T) {
+		origExecuteSyncLogQuery := executeSyncLogQuery
+		syncCalled := false
+		executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			syncCalled = true
+			return nil, nil
+		}
+
+		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}}, nil
+		})
+		sess := fakeSessionCache{}
+
+		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+								"queryMode":    "Logs",
+								"region":      "default",
+								"queryString": "fields @message"
+							}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, true, syncCalled)
+		executeSyncLogQuery = origExecuteSyncLogQuery
+	})
 }
 func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 	origNewCWClient := NewCWClient
