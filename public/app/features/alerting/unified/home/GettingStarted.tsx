@@ -93,6 +93,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     grid-template-rows: min-content auto auto;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
     gap: ${theme.spacing(2)};
+    width: 100%;
   `,
   ctaContainer: css`
     grid-column: 1 / span 5;

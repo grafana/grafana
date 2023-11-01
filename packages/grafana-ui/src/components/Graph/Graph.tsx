@@ -15,6 +15,7 @@ import { GraphDimensions } from './GraphTooltip/types';
 import { FlotPosition, FlotItem } from './types';
 import { graphTimeFormat, graphTickFormatter } from './utils';
 
+/** @deprecated */
 export interface GraphProps {
   ariaLabel?: string;
   children?: JSX.Element | JSX.Element[];
@@ -31,6 +32,7 @@ export interface GraphProps {
   onHorizontalRegionSelected?: (from: number, to: number) => void;
 }
 
+/** @deprecated */
 interface GraphState {
   pos?: FlotPosition;
   contextPos?: FlotPosition;
