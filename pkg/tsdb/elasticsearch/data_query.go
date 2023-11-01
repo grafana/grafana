@@ -48,7 +48,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mq, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to parse queries", "error", err, "queries", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		return addPluginErrorToResponse(e.dataQueries[0].RefID, response, err), err
+		return errorsource.AddPluginErrorToResponse(e.dataQueries[0].RefID, response, err), err
 	}
 
 	ms := e.client.MultiSearch()
@@ -59,7 +59,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		if err := e.processQuery(q, ms, from, to); err != nil {
 			mq, _ := json.Marshal(q)
 			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-			return addPluginErrorToResponse(q.RefID, response, err), err
+			return errorsource.AddPluginErrorToResponse(q.RefID, response, err), err
 		}
 	}
 
@@ -67,7 +67,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mqs, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		return addPluginErrorToResponse(e.dataQueries[0].RefID, response, err), err
+		return errorsource.AddPluginErrorToResponse(e.dataQueries[0].RefID, response, err), err
 	}
 
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
@@ -496,10 +496,4 @@ func stringToIntWithDefaultValue(valueStr string, defaultValue int) int {
 		value = defaultValue
 	}
 	return value
-}
-
-func addPluginErrorToResponse(refID string, response *backend.QueryDataResponse, err error) *backend.QueryDataResponse {
-	pluginErr := errorsource.PluginError(err, false)
-	response.Responses[refID] = errorsource.Response(pluginErr)
-	return response
 }
