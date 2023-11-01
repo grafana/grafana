@@ -50,6 +50,13 @@ export const transformationDocsContent: TransformationDocsContentType = {
       - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
       - **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
       - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
+    - **Cumulative functions** - Apply functions on the current row and all preceding rows.
+      - **Total** - Calculates the cumulative total up to and including the current row.
+      - **Mean** - Calculates the mean up to and including the current row.
+    - **Window functions** - Apply window functions. The window can either be **trailing** or **centered**. With a trailing window the current row will be the last row in the window. With a centered window the window will be centered on the current row. For even window sizes, the window will be centered between the current row, and the previous row.
+      - **Mean** - Calculates the moving mean or running average.
+      - **Stddev** - Calculates the moving standard deviation.
+      - **Variance** - Calculates the moving variance.
     - **Row index -** Insert a field with the row index.
   - **Field name -** Select the names of fields you want to use in the calculation for the new field.
   - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
