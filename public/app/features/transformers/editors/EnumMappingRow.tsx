@@ -26,8 +26,6 @@ const EnumMappingRow = ({
 }: EnumMappingRowProps) => {
   const styles = useStyles2(getStyles);
 
-  // This current approach leads to sticky input (not dismissed when clicking outside input, and only through tabbing)
-  // This can be addressed via adding a outside click handler and keeping track of inputRefs of each rows
   const [enumValue, setEnumValue] = useState<string>(value);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
