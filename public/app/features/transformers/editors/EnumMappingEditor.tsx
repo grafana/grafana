@@ -23,30 +23,32 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
     options.conversions[convertFieldTransformIndex].enumConfig?.text ?? []
   );
 
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination) {
-      return;
-    }
-
-    // Necessary to match the order of enum values to the order shown in the visualization
-    const mappedSourceIndex = enumRows.length - result.source.index - 1;
-    const mappedDestinationIndex = enumRows.length - result.destination.index - 1;
-
-    const copy = [...enumRows];
-    const element = copy[mappedSourceIndex];
-    copy.splice(mappedSourceIndex, 1);
-    copy.splice(mappedDestinationIndex, 0, element);
-    updateEnumRows(copy);
-  };
-
+  // Generate enum values from scratch when none exist in save model
   useEffect(() => {
-    // Generate enum values from scratch when none exist in save model
     // TODO: consider case when changing target field
     if (!options.conversions[convertFieldTransformIndex].enumConfig?.text?.length && input.length) {
       generateEnumValues();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input]);
+
+  // Apply enum config to save model when enumRows change
+  useEffect(() => {
+    const applyEnumConfig = () => {
+      const textValues = enumRows.map((value) => value);
+      const conversions = options.conversions;
+      const enumConfig: EnumFieldConfig = { text: textValues };
+      conversions[convertFieldTransformIndex] = { ...conversions[convertFieldTransformIndex], enumConfig };
+
+      onChange({
+        ...options,
+        conversions: conversions,
+      });
+    };
+
+    applyEnumConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convertFieldTransformIndex, enumRows]);
 
   const generateEnumValues = () => {
     // Loop through all fields in provided data frames to find the target field
@@ -58,8 +60,6 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
       return;
     }
 
-    // create set of values for enum without any duplicate values (from targetField.values)
-    // maybe this should run automatically on first render?
     const enumValues = new Set(targetField?.values);
 
     if (enumRows.length > 0 && !isEqual(enumRows, Array.from(enumValues))) {
@@ -92,31 +92,31 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
 
   const onChangeEnumValue = (index: number, value: string) => {
     if (enumRows.includes(value)) {
+      // Do not allow duplicate enum values
       return;
     }
 
     onChangeEnumMapping(index, value);
   };
 
-  useEffect(() => {
-    const applyEnumConfig = () => {
-      const textValues = enumRows.map((value) => value);
-      const conversions = options.conversions;
-      const enumConfig: EnumFieldConfig = { text: textValues };
-      conversions[convertFieldTransformIndex] = { ...conversions[convertFieldTransformIndex], enumConfig };
-
-      onChange({
-        ...options,
-        conversions: conversions,
-      });
-    };
-
-    applyEnumConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [convertFieldTransformIndex, enumRows]);
-
   const checkIsEnumUniqueValue = (value: string) => {
     return enumRows.includes(value);
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+
+    // Conversion necessary to match the order of enum values to the order shown in the visualization
+    const mappedSourceIndex = enumRows.length - result.source.index - 1;
+    const mappedDestinationIndex = enumRows.length - result.destination.index - 1;
+
+    const copy = [...enumRows];
+    const element = copy[mappedSourceIndex];
+    copy.splice(mappedSourceIndex, 1);
+    copy.splice(mappedDestinationIndex, 0, element);
+    updateEnumRows(copy);
   };
 
   return (

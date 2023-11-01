@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useState, KeyboardEvent } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -30,7 +30,6 @@ const EnumMappingRow = ({
   // This can be addressed via adding a outside click handler and keeping track of inputRefs of each rows
   const [enumValue, setEnumValue] = useState<string>(value);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const onEnumInputChange = (event: FormEvent<HTMLInputElement>) => {
@@ -51,6 +50,13 @@ const EnumMappingRow = ({
     setIsEditing(false);
     setValidationError(null);
     onChangeEnumValue(mappedIndex, enumValue);
+  };
+
+  const onEnumInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      onEnumInputBlur();
+    }
   };
 
   const onEnumValueClick = () => {
@@ -76,7 +82,13 @@ const EnumMappingRow = ({
           </td>
           {isEditing ? (
             <td>
-              <Input type="text" value={enumValue} onChange={onEnumInputChange} onBlur={onEnumInputBlur} />
+              <Input
+                type="text"
+                value={enumValue}
+                onChange={onEnumInputChange}
+                onBlur={onEnumInputBlur}
+                onKeyDown={onEnumInputKeyDown}
+              />
               {validationError && <FieldValidationMessage>{validationError}</FieldValidationMessage>}
             </td>
           ) : (
