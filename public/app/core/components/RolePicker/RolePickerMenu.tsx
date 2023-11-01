@@ -251,7 +251,7 @@ export const RolePickerMenu = ({
               selectedOptions={selectedOptions}
               onRoleChange={onChange}
               onClearSubMenu={onClearSubMenu}
-              showOnLeftSubMenu={offset.horizontal > 0}
+              showOnLeftSubMenu={menuLeft}
             />
           ))}
         </CustomScrollbar>
