@@ -16,7 +16,7 @@ import {
   Avatar,
   Box,
 } from '@grafana/ui';
-import { Flex, Stack } from '@grafana/ui/src/unstable';
+import { Stack } from '@grafana/ui/src/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -223,9 +223,9 @@ export const OrgUsersTable = ({
           getRowId={(user) => String(user.userId)}
           fetchData={fetchData}
         />
-        <Flex justifyContent="flex-end">
+        <Stack justifyContent="flex-end">
           <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
-        </Flex>
+        </Stack>
       </TableWrapper>
       {Boolean(userToRemove) && (
         <ConfirmModal
