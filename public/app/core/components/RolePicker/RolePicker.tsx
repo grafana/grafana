@@ -58,10 +58,25 @@ export const RolePicker = ({
     setSelectedRoles(appliedRoles);
   }, [appliedRoles, basicRole, onBasicRoleChange]);
 
+  const setMenuPosition = useCallback(() => {
+    const { horizontal, vertical, menuToLeft } = calculateMenuPosition();
+    if (horizontal && vertical && menuToLeft) {
+      setOffset({ horizontal, vertical });
+      setMenuLeft(menuToLeft);
+    }
+  }, []);
+
   useEffect(() => {
-    const dimensions = ref?.current?.getBoundingClientRect();
-    if (!dimensions || !isOpen) {
+    if (!isOpen) {
       return;
+    }
+    setMenuPosition();
+  }, [isOpen, selectedRoles, setMenuPosition]);
+
+  const calculateMenuPosition = () => {
+    const dimensions = ref?.current?.getBoundingClientRect();
+    if (!dimensions) {
+      return {};
     }
     const { bottom, top, left, right } = dimensions;
     let horizontal = left;
@@ -87,19 +102,19 @@ export const RolePicker = ({
       menuToLeft = true;
     }
 
-    setOffset({ horizontal, vertical });
-    setMenuLeft(menuToLeft);
-  }, [isOpen, selectedRoles]);
+    return { horizontal, vertical, menuToLeft };
+  };
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
       if (!disabled) {
         event.preventDefault();
         event.stopPropagation();
+        setMenuPosition();
         setOpen(true);
       }
     },
-    [setOpen, disabled]
+    [disabled, setMenuPosition]
   );
 
   const onClose = useCallback(() => {
