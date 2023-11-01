@@ -4,7 +4,7 @@ Welcome to the developer documentation for the Loki data source! The purpose of 
 
 ## Introduction
 
-The Loki data source provides a variety of methods, but not all of them are suitable for external use. In this documentation, we will focus on the key methods that are highly recommended for app plugin development.
+The Loki data source provides a variety of methods and components, but not all of them are suitable for external use. In this documentation, we will focus on the key methods that are highly recommended for app plugin development.
 
 It's important to note some methods and APIs were deliberately omitted, as those may undergo changes or are not suitable for external integration. Therefore, we do not recommend relying on them for your development needs.
 
@@ -168,3 +168,9 @@ try {
 ```
 
 If you find that there are methods missing or have ideas for new features, please don't hesitate to inform us. You can submit your suggestions and feature requests through the [Grafana repository](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md). Your feedback is essential to help us improve and enhance the Loki data source and Grafana as a whole. We appreciate your contributions and look forward to hearing your ideas!
+
+## Recommended components
+
+### QueryEditor
+
+The Loki data source provides an export of the `QueryEditor` component, which can be accessed through `components?.QueryEditor`. This component is designed to enable users to create and customize Loki queries to suit their specific requirements.
