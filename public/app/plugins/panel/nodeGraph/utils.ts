@@ -15,19 +15,32 @@ import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions }
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
 /**
- * Makes line shorter while keeping the middle in he same place.
+ * Makes line shorter while keeping its middle in the same place.
+ * This is manly used to add some empty space between an edge line and its source and target nodes, to make it nicer.
+ *
+ * @param line a line, where x1 and y1 are the coordinates of the source node center, and x2 and y2 are the coordinates of the target node center
+ * @param sourceNodeRadius radius of the source node (possibly taking into account the thickness of the node circumference line, etc.)
+ * @param targetNodeRadius radius of the target node (possibly taking into account the thickness of the node circumference line, etc.)
+ * @param arrowHeadHeight height of the arrow head (in pixels)
  */
-export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number): Line {
+export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number, arrowHeadHeight = 1): Line {
   const vx = line.x2 - line.x1;
   const vy = line.y2 - line.y1;
   const mag = Math.sqrt(vx * vx + vy * vy);
   const cosine = (line.x2 - line.x1) / mag;
   const sine = (line.y2 - line.y1) / mag;
+  const scaledThickness = arrowHeadHeight - arrowHeadHeight / 10;
+
+  // Reduce the line length (along its main direction) by:
+  // - the radius of the source node
+  // - the radius of the target node,
+  // - a constant value, just to add some empty space
+  // - the height of the arrow head; the bigger the arrow head, the better is to add even more empty space
   return {
     x1: line.x1 + cosine * (sourceNodeRadius + 5),
     y1: line.y1 + sine * (sourceNodeRadius + 5),
-    x2: line.x2 - cosine * (targetNodeRadius + 5),
-    y2: line.y2 - sine * (targetNodeRadius + 5),
+    x2: line.x2 - cosine * (targetNodeRadius + 3 + scaledThickness),
+    y2: line.y2 - sine * (targetNodeRadius + 3 + scaledThickness),
   };
 }
 
@@ -42,6 +55,7 @@ export type NodeFields = {
   color?: Field;
   icon?: Field;
   nodeRadius?: Field;
+  highlighted?: Field;
 };
 
 export function getNodeFields(nodes: DataFrame): NodeFields {
@@ -61,6 +75,7 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
     icon: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.icon),
     nodeRadius: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()),
+    highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
   };
 }
 
@@ -71,6 +86,8 @@ export type EdgeFields = {
   mainStat?: Field;
   secondaryStat?: Field;
   details: Field[];
+  highlighted?: Field;
+  thickness?: Field;
 };
 
 export function getEdgeFields(edges: DataFrame): EdgeFields {
@@ -86,6 +103,8 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
+    highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
+    thickness: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.thickness.toLowerCase()),
   };
 }
 
@@ -215,6 +234,8 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
       secondaryStat: edgeFields.secondaryStat
         ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values[index])
         : '',
+      highlighted: edgeFields.highlighted?.values[index] || false,
+      thickness: edgeFields.thickness?.values[index] || 1,
     };
   });
 }
@@ -286,6 +307,7 @@ function makeSimpleNodeDatum(name: string, index: number): NodeDatumFromEdge {
     dataFrameRowIndex: index,
     incoming: 0,
     arcSections: [],
+    highlighted: false,
   };
 }
 
@@ -302,6 +324,7 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeD
     color: nodeFields.color,
     icon: nodeFields.icon?.values[index] || '',
     nodeRadius: nodeFields.nodeRadius,
+    highlighted: nodeFields.highlighted?.values[index] || false,
   };
 }
 
@@ -607,7 +630,7 @@ export const getGraphFrame = (frames: DataFrame[]) => {
   return frames.reduce<GraphFrame>(
     (acc, frame) => {
       const sourceField = frame.fields.filter((f) => f.name === 'source');
-      if (sourceField.length) {
+      if (frame.name === 'edges' || sourceField.length) {
         acc.edges.push(frame);
       } else {
         acc.nodes.push(frame);

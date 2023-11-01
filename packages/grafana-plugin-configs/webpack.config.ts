@@ -3,7 +3,7 @@ import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
-import { Configuration } from 'webpack';
+import { Configuration, DefinePlugin } from 'webpack';
 
 import { DIST_DIR } from './constants';
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils';
@@ -20,7 +20,7 @@ function skipFiles(f: string): boolean {
   return true;
 }
 
-const config = async (env: any): Promise<Configuration> => {
+const config = async (env: Record<string, unknown>): Promise<Configuration> => {
   const pluginJson = getPluginJson();
   const baseConfig: Configuration = {
     cache: {
@@ -29,12 +29,6 @@ const config = async (env: any): Promise<Configuration> => {
         config: [__filename],
       },
       cacheDirectory: path.resolve(__dirname, '../../.yarn/.cache/webpack', path.basename(process.cwd())),
-      cacheLocation: path.resolve(
-        __dirname,
-        '../../.yarn/.cache/eslint-webpack-plugin',
-        path.basename(process.cwd()),
-        '.eslintcache'
-      ),
     },
 
     context: process.cwd(),
@@ -70,8 +64,8 @@ const config = async (env: any): Promise<Configuration> => {
       // Mark legacy SDK imports as external if their name starts with the "grafana/" prefix
       ({ request }, callback) => {
         const prefix = 'grafana/';
-        const hasPrefix = (request: any) => request.indexOf(prefix) === 0;
-        const stripPrefix = (request: any) => request.substr(prefix.length);
+        const hasPrefix = (request?: string) => request?.indexOf(prefix) === 0;
+        const stripPrefix = (request?: string) => request?.substr(prefix.length);
 
         if (hasPrefix(request)) {
           return callback(undefined, stripPrefix(request));
@@ -89,7 +83,7 @@ const config = async (env: any): Promise<Configuration> => {
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
-            loader: 'swc-loader',
+            loader: require.resolve('swc-loader'),
             options: {
               jsc: {
                 baseUrl: '.',
@@ -185,22 +179,44 @@ const config = async (env: any): Promise<Configuration> => {
             },
           ],
         },
-      ]),
-      new ForkTsCheckerWebpackPlugin({
-        async: Boolean(env.development),
-        issue: {
-          include: [{ file: '**/*.{ts,tsx}' }],
+        {
+          dir: path.resolve(DIST_DIR),
+          files: ['package.json'],
+          rules: [
+            {
+              search: `"version": "${getPackageJson().version}"`,
+              replace: env.commit
+                ? `"version": "${getPackageJson().version}-${env.commit}"`
+                : `"version": "${getPackageJson().version}"`,
+            },
+          ],
         },
-        typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
-      }),
-      new ESLintPlugin({
-        extensions: ['.ts', '.tsx'],
-        lintDirtyModulesOnly: Boolean(env.development), // don't lint on start, only lint changed files
-      }),
+      ]),
+      env.development
+        ? new ForkTsCheckerWebpackPlugin({
+            async: true,
+            issue: {
+              include: [{ file: '**/*.{ts,tsx}' }],
+            },
+            typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
+          })
+        : new DefinePlugin({}),
+      env.development
+        ? new ESLintPlugin({
+            extensions: ['.ts', '.tsx'],
+            lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
+            cacheLocation: path.resolve(
+              __dirname,
+              '../../.yarn/.cache/eslint-webpack-plugin',
+              path.basename(process.cwd()),
+              '.eslintcache'
+            ),
+          })
+        : new DefinePlugin({}),
     ],
 
     resolve: {
-      extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      extensions: ['.ts', '.tsx', '.js', '.jsx'],
       unsafeCache: true,
     },
 

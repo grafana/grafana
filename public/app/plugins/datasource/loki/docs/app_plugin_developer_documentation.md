@@ -4,7 +4,7 @@ Welcome to the developer documentation for the Loki data source! The purpose of 
 
 ## Introduction
 
-The Loki data source provides a variety of methods, but not all of them are suitable for external use. In this documentation, we will focus on the key methods that are highly recommended for app plugin development.
+The Loki data source provides a variety of methods and components, but not all of them are suitable for external use. In this documentation, we will focus on the key methods that are highly recommended for app plugin development.
 
 It's important to note some methods and APIs were deliberately omitted, as those may undergo changes or are not suitable for external integration. Therefore, we do not recommend relying on them for your development needs.
 
@@ -58,18 +58,33 @@ The `datasource.languageProvider.fetchLabelValues()` method is designed for fetc
  * It returns a promise that resolves to an array of strings containing the label values.
  *
  * @param labelName - The name of the label for which you want to retrieve values.
+ * @param options - (Optional) An object containing additional options - currently only stream selector.
+ * @param options.streamSelector - (Optional) The stream selector to filter label values. If not provided, all label values are fetched.
  * @returns A promise containing an array of label values.
  * @throws An error if the fetch operation fails.
  */
-async function fetchLabelValues(labelName: string): Promise<string[]>;
+async function fetchLabelValues(labelName: string, options?: { streamSelector?: string }): Promise<string[]>;
 
 /**
- * Example usage:
+ * Example usage without stream selector:
  */
 
 const labelName = 'job';
 try {
   const values = await fetchLabelValues(labelName);
+  console.log(values);
+} catch (error) {
+  console.error(`Error fetching label values: ${error.message}`);
+}
+
+/**
+ * Example usage with stream selector:
+ */
+
+const labelName = 'job';
+const streamSelector = '{app="grafana"}';
+try {
+  const values = await fetchLabelValues(labelName, { streamSelector });
   console.log(values);
 } catch (error) {
   console.error(`Error fetching label values: ${error.message}`);
@@ -147,3 +162,9 @@ try {
 ```
 
 If you find that there are methods missing or have ideas for new features, please don't hesitate to inform us. You can submit your suggestions and feature requests through the [Grafana repository](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md). Your feedback is essential to help us improve and enhance the Loki data source and Grafana as a whole. We appreciate your contributions and look forward to hearing your ideas!
+
+## Recommended components
+
+### QueryEditor
+
+The Loki data source provides an export of the `QueryEditor` component, which can be accessed through `components?.QueryEditor`. This component is designed to enable users to create and customize Loki queries to suit their specific requirements.

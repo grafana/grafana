@@ -1,3 +1,5 @@
+import memoizeOne from 'memoize-one';
+
 import { NavModel, NavModelItem, NavIndex } from '@grafana/data';
 import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { FOLDER_ID } from 'app/features/folders/state/navModel';
@@ -19,24 +21,26 @@ const getNotFoundModel = (): NavModel => {
   };
 };
 
-export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel => {
-  if (navIndex[id]) {
-    const node = navIndex[id];
-    const main = onlyChild ? node : getRootSectionForNode(node);
-    const mainWithActive = enrichNodeWithActiveState(main, id);
+export const getNavModel = memoizeOne(
+  (navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel => {
+    if (navIndex[id]) {
+      const node = navIndex[id];
+      const main = onlyChild ? node : getRootSectionForNode(node);
+      const mainWithActive = enrichNodeWithActiveState(main, id);
 
-    return {
-      node: node,
-      main: mainWithActive,
-    };
+      return {
+        node: node,
+        main: mainWithActive,
+      };
+    }
+
+    if (fallback) {
+      return fallback;
+    }
+
+    return getNotFoundModel();
   }
-
-  if (fallback) {
-    return fallback;
-  }
-
-  return getNotFoundModel();
-};
+);
 
 export function getRootSectionForNode(node: NavModelItem): NavModelItem {
   // Don't recurse fully up the folder tree when nested folders is enabled

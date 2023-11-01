@@ -47,6 +47,9 @@ type PlaylistDTO struct {
 
 	// Returned for k8s
 	OrgID int64 `json:"-"`
+
+	// Returned for k8s and added as an annotation
+	Id int64 `json:"-"`
 }
 
 type PlaylistItemDTO struct {

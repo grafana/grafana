@@ -416,14 +416,16 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
 			require.NoError(t, err)
-			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, "prod")
-			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, "prod")
+			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, parent.UID, "prod")
+			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, subfolder.UID, "prod")
 			_ = createRule(t, alertStore, parent.UID, "parent alert")
 			_ = createRule(t, alertStore, subfolder.UID, "sub alert")
 
+			// nolint:staticcheck
 			libraryElementCmd.FolderID = parent.ID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
+			// nolint:staticcheck
 			libraryElementCmd.FolderID = subfolder.ID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
@@ -491,14 +493,16 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
 			require.NoError(t, err)
-			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, "prod")
-			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, "prod")
+			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, parent.UID, "prod")
+			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, subfolder.UID, "prod")
 			_ = createRule(t, alertStore, parent.UID, "parent alert")
 			_ = createRule(t, alertStore, subfolder.UID, "sub alert")
 
+			// nolint:staticcheck
 			libraryElementCmd.FolderID = parent.ID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
+			// nolint:staticcheck
 			libraryElementCmd.FolderID = subfolder.ID
 			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 			require.NoError(t, err)
@@ -631,11 +635,12 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 					subfolder, err = serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
 					require.NoError(t, err)
 					_ = createRule(t, alertStore, subfolder.UID, "sub alert")
+					// nolint:staticcheck
 					libraryElementCmd.FolderID = subfolder.ID
 					subPanel, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 					require.NoError(t, err)
 				}
-
+				// nolint:staticcheck
 				libraryElementCmd.FolderID = parent.ID
 				parentPanel, err := lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
 				require.NoError(t, err)
@@ -661,14 +666,14 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 				_, err = lps.LibraryElementService.GetElement(context.Background(), &signedInUser, model.GetLibraryElementCommand{
 					FolderName: parent.Title,
-					FolderID:   parent.ID,
+					FolderID:   parent.ID, // nolint:staticcheck
 					UID:        parentPanel.UID,
 				})
 				require.ErrorIs(t, err, tc.libPanelParentErr)
 				if tc.depth > 1 {
 					_, err = lps.LibraryElementService.GetElement(context.Background(), &signedInUser, model.GetLibraryElementCommand{
 						FolderName: subfolder.Title,
-						FolderID:   subfolder.ID,
+						FolderID:   subfolder.ID, // nolint:staticcheck
 						UID:        subPanel.UID,
 					})
 					require.ErrorIs(t, err, tc.libPanelSubErr)
@@ -996,9 +1001,10 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("newFolder")}}
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
-			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.NoError(t, err)
-			require.NotNil(t, f)
+			// the folder is set inside InTransaction() but the fake one is called
+			// require.NotNil(t, f)
 		})
 
 		t.Run("move to the root folder without folder creation permissions fails", func(t *testing.T) {
@@ -1032,9 +1038,10 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {}}
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), dbtest.NewFakeDB())
-			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "", OrgID: orgID, SignedInUser: nestedFolderUser})
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.NoError(t, err)
-			require.NotNil(t, f)
+			// the folder is set inside InTransaction() but the fake one is called
+			// require.NotNil(t, f)
 		})
 
 		t.Run("move when parentUID in the current subtree returns error from nested folder service", func(t *testing.T) {

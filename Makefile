@@ -141,6 +141,22 @@ build-js: ## Build frontend assets.
 	yarn run build
 	yarn run plugins:build-bundled
 
+build-plugins-go: ## Build decoupled plugins
+	@echo "build plugins"
+	@cd pkg/tsdb; \
+	mage -v
+
+PLUGIN_ID ?=
+
+build-plugin-go: ## Build decoupled plugins
+	@echo "build plugin $(PLUGIN_ID)"
+	@cd pkg/tsdb; \
+	if [ -z "$(PLUGIN_ID)" ]; then \
+		echo "PLUGIN_ID is not set"; \
+		exit 1; \
+	fi; \
+	mage -v buildplugin $(PLUGIN_ID)
+
 build: build-go build-js ## Build backend and frontend.
 
 run: $(BRA) ## Build and run web server on filesystem changes.
