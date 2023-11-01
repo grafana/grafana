@@ -186,3 +186,5 @@ FROM grafana/grafana:${GF_VERSION} as groundcover
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
+RUN grafana cli plugins install grafana-clickhouse-datasource && \
+    grafana cli plugins install marcusolsson-treemap-panel
