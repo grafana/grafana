@@ -15,11 +15,27 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { lastValueFrom } from 'rxjs';
 
-import { dateTimeFormat, GrafanaTheme2, IconName, LinkModel, TimeZone } from '@grafana/data';
+import {
+  DataFrame,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  dateTimeFormat,
+  GrafanaTheme2,
+  IconName,
+  LinkModel,
+  TimeZone,
+} from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { PyroscopeQueryType } from 'app/plugins/datasource/grafana-pyroscope-datasource/dataquery.gen';
+import { PyroscopeDataSource } from 'app/plugins/datasource/grafana-pyroscope-datasource/datasource';
+import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
 import { autoColor } from '../../Theme';
@@ -38,6 +54,7 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
+import { FlameGraphKey } from './KeyValuesTable';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -114,6 +131,8 @@ export type SpanDetailProps = {
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
   span: TraceSpan;
+  request: DataQueryRequest<DataQuery> | undefined;
+  traceToProfilesOptions?: TraceToProfilesOptions;
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
@@ -136,6 +155,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     logsToggle,
     processToggle,
     span,
+    request,
+    traceToProfilesOptions,
     tagsToggle,
     traceStartTime,
     warningsToggle,
@@ -196,6 +217,52 @@ export default function SpanDetail(props: SpanDetailProps) {
         ]
       : []),
   ];
+
+  const [flameGraphFrame, setFlameGraphFrame] = React.useState<DataFrame>();
+
+  useEffect(() => {
+    if (request) {
+      let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
+      if (traceToProfilesOptions?.datasourceUid) {
+        profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
+      }
+      const hasPyroscopeProfile = span.tags.filter((tag) => tag.key === 'pyroscope.profiling.enabled').length > 0;
+
+      if (hasPyroscopeProfile && traceToProfilesOptions && profilesDataSourceSettings) {
+        const pyroRequest = {
+          ...request,
+          targets: [
+            {
+              labelSelector: '{}',
+              groupBy: [],
+              profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
+              queryType: 'profile' as PyroscopeQueryType,
+              spanSelector: [spanID],
+              refId: 'flamegraph-in-span',
+              datasource: {
+                type: profilesDataSourceSettings.type,
+                uid: profilesDataSourceSettings.uid,
+              },
+            },
+          ],
+        };
+        queryProfile(pyroRequest, profilesDataSourceSettings.uid);
+      }
+    }
+
+    async function queryProfile(request: DataQueryRequest<Query>, datasourceUid: string) {
+      const ds = await getDatasourceSrv().get(datasourceUid);
+      if (ds instanceof PyroscopeDataSource) {
+        const result = await lastValueFrom(ds.query(request));
+        const frame = result.data.find((x: DataFrame) => {
+          return x.name === 'response';
+        });
+        if (frame && frame.length > 1) {
+          setFlameGraphFrame(frame);
+        }
+      }
+    }
+  }, [request, span.tags, spanID, traceToProfilesOptions]);
 
   if (span.kind) {
     overviewItems.push({
@@ -304,7 +371,15 @@ export default function SpanDetail(props: SpanDetailProps) {
       <div>
         <div>
           <AccordianKeyValues
-            data={tags}
+            data={
+              flameGraphFrame
+                ? tags.concat({
+                    key: FlameGraphKey,
+                    type: FlameGraphKey,
+                    value: flameGraphFrame,
+                  })
+                : tags
+            }
             label="Span Attributes"
             linksGetter={linksGetter}
             isOpen={isTagsOpen}

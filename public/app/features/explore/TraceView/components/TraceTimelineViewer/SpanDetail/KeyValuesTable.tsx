@@ -17,6 +17,8 @@ import cx from 'classnames';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { FlameGraph } from '@grafana/flamegraph';
+import { config } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -70,8 +72,13 @@ export const getStyles = (theme: GrafanaTheme2) => {
       vertical-align: middle;
       font-weight: bold;
     `,
+    flameGraph: css({
+      margin: '5px 0',
+    }),
   };
 };
+
+export const FlameGraphKey = 'flameGraph';
 
 const jsonObjectOrArrayStartRegex = /^(\[|\{)/;
 
@@ -127,6 +134,12 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                   </LinkValue>
                 </div>
               );
+            } else if (row.type === FlameGraphKey) {
+              valueMarkup = (
+                <div className={styles.flameGraph}>
+                  <FlameGraph data={row.value} getTheme={() => config.theme2} showFlameGraphOnly={true} />
+                </div>
+              );
             } else {
               valueMarkup = jsonTable;
             }
@@ -137,13 +150,15 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                   {row.key}
                 </td>
                 <td>{valueMarkup}</td>
-                <td className={styles.copyColumn}>
-                  <CopyIcon
-                    className={copyIconClassName}
-                    copyText={JSON.stringify(row, null, 2)}
-                    tooltipTitle="Copy JSON"
-                  />
-                </td>
+                {row.type !== FlameGraphKey && (
+                  <td className={styles.copyColumn}>
+                    <CopyIcon
+                      className={copyIconClassName}
+                      copyText={JSON.stringify(row, null, 2)}
+                      tooltipTitle="Copy JSON"
+                    />
+                  </td>
+                )}
               </tr>
             );
           })}

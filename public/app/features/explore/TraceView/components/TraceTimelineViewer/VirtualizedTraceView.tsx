@@ -18,9 +18,11 @@ import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import { RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { DataQueryRequest, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
+import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
 import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
@@ -83,6 +85,8 @@ type TVirtualizedTraceViewOwnProps = {
   timeZone: TimeZone;
   findMatchesIDs: Set<string> | TNil;
   trace: Trace;
+  request: DataQueryRequest<DataQuery> | undefined;
+  traceToProfilesOptions?: TraceToProfilesOptions;
   spanBarOptions: SpanBarOptions | undefined;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   childrenToggle: (spanID: string) => void;
@@ -546,6 +550,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailToggle,
       spanNameColumnWidth,
       trace,
+      request,
+      traceToProfilesOptions,
       timeZone,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
@@ -581,6 +587,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           warningsToggle={detailWarningsToggle}
           stackTracesToggle={detailStackTracesToggle}
           span={span}
+          request={request}
+          traceToProfilesOptions={traceToProfilesOptions}
           timeZone={timeZone}
           tagsToggle={detailTagsToggle}
           traceStartTime={trace.startTime}

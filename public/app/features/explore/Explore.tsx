@@ -500,7 +500,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             dataFrames={dataFrames}
             splitOpenFn={this.onSplitOpen('traceView')}
             scrollElement={this.scrollElement}
-            queryResponse={queryResponse}
+            request={queryResponse.request}
           />
         </ContentOutlineItem>
       )
