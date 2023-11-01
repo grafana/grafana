@@ -57,6 +57,7 @@ export interface Props {
   changePage: (page: number) => void;
   page: number;
   totalPages: number;
+  rolesLoading?: boolean;
 }
 
 export const OrgUsersTable = ({
@@ -68,6 +69,7 @@ export const OrgUsersTable = ({
   changePage,
   page,
   totalPages,
+  rolesLoading,
 }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
@@ -127,6 +129,8 @@ export const OrgUsersTable = ({
           return contextSrv.licensedAccessControlEnabled() ? (
             <UserRolePicker
               userId={original.userId}
+              roles={original.roles || []}
+              isLoading={rolesLoading}
               orgId={orgId}
               roleOptions={roleOptions}
               basicRole={value}
@@ -211,7 +215,7 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [orgId, roleOptions, onRoleChange]
+    [rolesLoading, orgId, roleOptions, onRoleChange]
   );
 
   return (

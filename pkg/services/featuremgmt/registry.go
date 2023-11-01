@@ -654,6 +654,13 @@ var (
 			Expression:  "true", // on by default
 		},
 		{
+			Name:         "traceToProfiles",
+			Description:  "Enables linking between traces and profiles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
