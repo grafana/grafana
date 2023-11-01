@@ -138,10 +138,16 @@ try {
  * - `unwrapLabelKeys`: An array of label keys that can be used for unwrapping log data.
  *
  * @param streamSelector - The selector for the log stream you want to analyze.
+ * @param {Object} [options] - Optional parameters.
+ * @param {number} [options.maxLines] - The number of log lines requested when determining parsers and label keys.
+ * Smaller maxLines is recommended for improved query performance. The default count is 10.
  * @returns A promise containing an object with parser and label key information.
  * @throws An error if the fetch operation fails.
  */
-async function getParserAndLabelKeys(streamSelector: string): Promise<{
+async function getParserAndLabelKeys(
+  streamSelector: string,
+  options?: { maxLines?: number }
+): Promise<{
   extractedLabelKeys: string[];
   hasJSON: boolean;
   hasLogfmt: boolean;
@@ -154,7 +160,7 @@ async function getParserAndLabelKeys(streamSelector: string): Promise<{
  */
 const streamSelector = '{job="grafana"}';
 try {
-  const parserAndLabelKeys = await getParserAndLabelKeys(streamSelector);
+  const parserAndLabelKeys = await getParserAndLabelKeys(streamSelector, { maxLines: 5 });
   console.log(parserAndLabelKeys);
 } catch (error) {
   console.error(`Error fetching parser and label keys: ${error.message}`);
