@@ -1579,6 +1579,10 @@
           "application/json": {
             "schema": {
               "properties": {
+                "folderUid": {
+                  "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
+                  "type": "string"
+                },
                 "id": {
                   "description": "ID The unique identifier (id) of the created/updated dashboard.",
                   "example": 1,
@@ -3962,7 +3966,7 @@
         "description": "CreateLibraryElementCommand is the command for adding a LibraryElement",
         "properties": {
           "folderId": {
-            "description": "ID of the folder where the library element is stored.",
+            "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
