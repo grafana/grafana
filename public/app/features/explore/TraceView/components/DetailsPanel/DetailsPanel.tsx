@@ -131,7 +131,6 @@ export function DetailsPanel(props: Props) {
   }
 
   const linksGetter = () => [];
-  const attrsTabStyle = window.innerWidth > 800 ? { display: 'flex', gap: '0 1rem' } : { display: 'block' };
 
   return (
     <div className={styles.container}>
@@ -197,7 +196,7 @@ export function DetailsPanel(props: Props) {
 
         <TabContent className={styles.tab}>
           {activeTab === TabLabels.Attributes && (
-            <div style={attrsTabStyle}>
+            <div className={styles.attributes}>
               <div className={styles.attributesContainer}>
                 <AccordianKeyValues
                   className={styles.attributeValues}
@@ -286,6 +285,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     '.json-markup-number': {
       color: autoColor(theme, 'blue', 'black'),
+    },
+  }),
+  attributes: css({
+    label: 'DetailsPanelAttributes',
+    display: 'flex',
+    gap: '0 1rem',
+
+    '@media(max-width: 800px)': {
+      display: 'block',
     },
   }),
   attributesContainer: css({

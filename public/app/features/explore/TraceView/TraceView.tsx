@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { config, getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { getTraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -97,7 +97,6 @@ export function TraceView(props: Props) {
     detailStackTracesToggle,
   } = useDetailState(props.dataFrames[0]);
 
-  const theme = useTheme2();
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
