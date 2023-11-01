@@ -1,16 +1,14 @@
-import React, { useMemo } from 'react';
+import { css } from '@emotion/css';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Spinner, useStyles2, Tooltip } from '@grafana/ui';
 
 import { DashboardModel } from '../../state';
 
-import { GenAIButton } from './GenAIButton';
-import { EventTrackingSrc } from './tracking';
-import { getDashboardChanges, Message, Role } from './utils';
-
-interface GenAIDashboardChangesButtonProps {
-  dashboard: DashboardModel;
-  onGenerate: (title: string) => void;
-  disabled?: boolean;
-}
+import { StreamStatus, DiffSummaryMessages, useDiffSummaryHook } from './hooks';
+import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
+import { getDashboardChanges, OAI_MODEL, sanitizeReply, Role } from './utils';
 
 const CHANGES_GENERATION_PREFIX_PROMPT = [
   'You are an expert in Grafana Dashboards',
@@ -20,8 +18,8 @@ const CHANGES_GENERATION_PREFIX_PROMPT = [
 
 const CHANGES_GENERATION_POSTFIX_PROMPT = [
   `Respond only with the diff description, which is meant to be loaded directly into the application for the user.`,
-  `If there are no substantial user or migration changes, the correct description is "Minor changes only"`,
-  `If there are too many changes of either kind, and those changes have a message saying 'too long', the correct response for that section is "Too many changes to auto-summarize"`,
+  `If there are no substantial changes, the correct description is "Minor changes only"`,
+  `If the changes are listed as "Changes too long to summarize", the correct response for that section is "Too many changes to auto-summarize"`,
   'In a diff, lines beginning with - are removed, and lines beginning with + are added.',
   'Lines with neither + nor - are included for context. Be careful not to mark them as added or removed if they do not start with + or -.',
   'If a line is changed, it will show a previous version removed and a new version added',
@@ -31,69 +29,209 @@ const CHANGES_GENERATION_POSTFIX_PROMPT = [
   'When an entire panel is added or removed, use the panel title and only say it was added or removed and disregard the rest of the changes for that panel',
   'Group together similar changes into one line when multiple panels are affected',
   'Refer to templating elements as variables',
+  'Ignore any threshold step changes or templating list changes.',
   'Try to make the response as short as possible',
 ].join('.\n');
 
-export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }: GenAIDashboardChangesButtonProps) => {
+interface GenAIButtonProps {
+  // Button label text
+  text?: string;
+  // Button label text when loading
+  loadingText?: string;
+  toggleTipTitle?: string;
+  // Button click handler
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  // Callback function that the LLM plugin streams responses to
+  onGenerate: (response: string) => void;
+  // Temperature for the LLM plugin. Default is 1.
+  // Closer to 0 means more conservative, closer to 1 means more creative.
+  temperature?: number;
+  model?: OAI_MODEL;
+  // Event tracking source. Send as `src` to Rudderstack event
+  eventTrackingSrc?: EventTrackingSrc;
+  // Whether the button should be disabled
+  disabled?: boolean;
+  dashboard: DashboardModel;
+}
+
+// This currently duplicates much of the functionality in GenAIButton
+// This was necessary because the GenAIButton only allows one call
+// to the LLM plugin, and we need to call it twice for the dashboard
+export const GenAIDashboardChangesButton = ({
+  text = 'Auto-generate',
+  loadingText = 'Generating changes summary',
+  onClick: onClickProp,
+  model = 'gpt-3.5-turbo-16k',
+  onGenerate,
+  temperature = 0,
+  eventTrackingSrc = EventTrackingSrc.dashboardChanges,
+  disabled = false,
+  dashboard,
+}: GenAIButtonProps) => {
   const messages = useMemo(() => getMessages(dashboard), [dashboard]);
 
+  const styles = useStyles2(getStyles);
+
+  const { setMessages, reply, value, error, streamStatus } = useDiffSummaryHook(model, temperature);
+
+  const [history, setHistory] = useState<string[]>([]);
+
+  const hasHistory = history.length > 0;
+  const isFirstHistoryEntry = streamStatus === StreamStatus.GENERATING && !hasHistory;
+  const isButtonDisabled = disabled || isFirstHistoryEntry || (value && !value.enabled && !error);
+  const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
+
+  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    onClickProp?.(e);
+    setMessages(messages);
+    const buttonItem = error
+      ? AutoGenerateItem.erroredRetryButton
+      : hasHistory
+      ? AutoGenerateItem.improveButton
+      : AutoGenerateItem.autoGenerateButton;
+    reportInteraction(buttonItem);
+  };
+
+  const pushHistoryEntry = useCallback(
+    (historyEntry: string) => {
+      if (history.indexOf(historyEntry) === -1) {
+        setHistory([historyEntry, ...history]);
+      }
+    },
+    [history]
+  );
+
+  useEffect(() => {
+    // Todo: Consider other options for `"` sanitation
+    if (isFirstHistoryEntry && reply) {
+      onGenerate(sanitizeReply(reply));
+    }
+  }, [streamStatus, reply, onGenerate, isFirstHistoryEntry]);
+
+  useEffect(() => {
+    if (streamStatus === StreamStatus.COMPLETED) {
+      pushHistoryEntry(sanitizeReply(reply));
+    }
+  }, [history, streamStatus, reply, pushHistoryEntry]);
+
+  // The button is disabled if the plugin is not installed or enabled
+  if (!value?.enabled) {
+    return null;
+  }
+
+  const getIcon = () => {
+    if (isFirstHistoryEntry) {
+      return undefined;
+    }
+    if (error || (value && !value?.enabled)) {
+      return 'exclamation-circle';
+    }
+    return 'ai';
+  };
+
+  const getText = () => {
+    let buttonText = text;
+
+    if (error) {
+      buttonText = 'Retry';
+    }
+
+    if (isFirstHistoryEntry) {
+      buttonText = loadingText;
+    }
+
+    if (hasHistory) {
+      buttonText = 'Improve';
+    }
+
+    return buttonText;
+  };
+
+  const button = (
+    <Button
+      icon={getIcon()}
+      onClick={onClick}
+      fill="text"
+      size="sm"
+      disabled={isButtonDisabled}
+      variant={error ? 'destructive' : 'primary'}
+    >
+      {getText()}
+    </Button>
+  );
+
+  function getMessages(dashboard: DashboardModel): DiffSummaryMessages {
+    let { userChanges, migrationChanges } = getDashboardChanges(dashboard);
+    if (userChanges.length > 8000) {
+      userChanges = 'Changes too long to summarize';
+    }
+
+    if (migrationChanges.split('\n').length < 10) {
+      migrationChanges = 'No significant migration changes';
+    } else if (migrationChanges.length > 8000) {
+      migrationChanges = 'Changes too long to summarize';
+    }
+
+    const userMessages = [
+      {
+        content: CHANGES_GENERATION_PREFIX_PROMPT,
+        role: Role.system,
+      },
+      {
+        content: `Summarize the following user changes diff with one item per line:\n${userChanges}`,
+        role: Role.system,
+      },
+      {
+        content: CHANGES_GENERATION_POSTFIX_PROMPT,
+        role: Role.system,
+      },
+    ];
+
+    const migrationMessages = [
+      {
+        content: CHANGES_GENERATION_PREFIX_PROMPT,
+        role: Role.system,
+      },
+      {
+        content: `Summarize the following migration changes diff with one item per line:\n${migrationChanges}`,
+        role: Role.system,
+      },
+      {
+        content:
+          `Be sure to only include substantial migration changes, such as adding or removing entire panels, changing panel titles or descriptions, etc.\n` +
+          `Ignore other changes and do not include them in the summary. Do not include "Migration Changes" section if there are no substantial migration changes to report.\n` +
+          `If there are substantial migration changes, add "Some autogenerated changes are included to update the dashboard to the latest valid schema version" at the end.`,
+        role: Role.system,
+      },
+      {
+        content: CHANGES_GENERATION_POSTFIX_PROMPT,
+        role: Role.system,
+      },
+    ];
+
+    return { userMessages, migrationMessages };
+  }
+
   return (
-    <GenAIButton
-      messages={messages}
-      onGenerate={onGenerate}
-      temperature={0}
-      model={'gpt-3.5-turbo-16k'}
-      eventTrackingSrc={EventTrackingSrc.dashboardChanges}
-      toggleTipTitle={'Improve your dashboard changes summary'}
-      disabled={disabled}
-    />
+    <div className={styles.wrapper}>
+      {isFirstHistoryEntry && <Spinner size="sm" />}
+      {!hasHistory && (
+        <Tooltip
+          show={error ? undefined : false}
+          interactive
+          content={
+            'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
+          }
+        >
+          {button}
+        </Tooltip>
+      )}
+    </div>
   );
 };
 
-function getMessages(dashboard: DashboardModel): Message[] {
-  let { userChanges, migrationChanges } = getDashboardChanges(dashboard);
-  if (userChanges.length > 8000) {
-    userChanges =
-      "User changes were too long, fill in the user changes section with 'User changes too long to auto-summarize'";
-  }
-
-  if (migrationChanges.split('\n').length < 10) {
-    migrationChanges = 'No significant migration changes';
-  } else if (migrationChanges.length > 8000) {
-    migrationChanges =
-      "Migration changes were too long, fill in the migration changes section with 'Migration changes too long to auto-summarize'";
-  }
-
-  return [
-    {
-      content: CHANGES_GENERATION_PREFIX_PROMPT,
-      role: Role.system,
-    },
-    {
-      content: `Summarize the following user changes diff under "User changes":\n${userChanges}`,
-      role: Role.system,
-    },
-    {
-      content:
-        `Be sure to only include substantial user changes, such as adding or removing entire panels, changing panel titles or descriptions, etc.\n` +
-        `Do not include "User Changes" section if there are no substantial user changes to report.`,
-      role: Role.system,
-    },
-    {
-      content: `Summarize the following migration changes diff under "Migration changes":\n${migrationChanges}`,
-      role: Role.system,
-    },
-    {
-      content:
-        `Be sure to only include substantial migration changes, such as adding or removing entire panels, changing panel titles or descriptions, etc.\n` +
-        `Ignore any threshold step changes or templating list changes.\n` +
-        `Ignore other changes and do not include them in the summary. Do not include "Migration Changes" section if there are no substantial migration changes to report.\n` +
-        `If there are substantial migration changes, add "Some autogenerated changes are included to update the dashboard to the latest valid schema version" at the end.`,
-      role: Role.system,
-    },
-    {
-      content: CHANGES_GENERATION_POSTFIX_PROMPT,
-      role: Role.system,
-    },
-  ];
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    display: 'flex',
+  }),
+});

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
-import { Subscription } from 'rxjs';
+import { combineLatest, map, Subscription } from 'rxjs';
 
 import { llms } from '@grafana/experimental';
 import { logError } from '@grafana/runtime';
@@ -154,6 +154,153 @@ export function useOpenAIStream(
   return {
     setMessages,
     setStopGeneration,
+    reply,
+    streamStatus,
+    error,
+    value,
+  };
+}
+
+export interface DiffSummaryMessages {
+  migrationMessages: Message[];
+  userMessages: Message[];
+}
+
+// Separate hook only for diff summarization
+// Don't reuse this in its present form.
+export function useDiffSummaryHook(
+  model = DEFAULT_OAI_MODEL,
+  temperature = 1
+): {
+  setMessages: React.Dispatch<React.SetStateAction<DiffSummaryMessages>>;
+  reply: string;
+  streamStatus: StreamStatus;
+  error: Error | undefined;
+  value:
+    | {
+        enabled: boolean | undefined;
+        stream?: undefined;
+      }
+    | {
+        enabled: boolean | undefined;
+        stream: Subscription;
+      }
+    | undefined;
+} {
+  // Two message arrays to send when button is clicked
+  const [messages, setMessages] = useState<DiffSummaryMessages>({ migrationMessages: [], userMessages: [] });
+  // The latest reply from the LLM.
+  const [reply, setReply] = useState('');
+  // TODO: Make stream status and error handle the two streams separately
+  const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
+  const [error, setError] = useState<Error>();
+  const { error: notifyError } = useAppNotification();
+
+  const onError = useCallback(
+    (e: Error) => {
+      setStreamStatus(StreamStatus.IDLE);
+      setMessages({ migrationMessages: [], userMessages: [] });
+      setError(e);
+      notifyError(
+        'Failed to generate content using OpenAI',
+        `Please try again or if the problem persists, contact your organization admin.`
+      );
+      console.error(e);
+      logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
+    },
+    [messages, model, temperature, notifyError]
+  );
+
+  const { error: enabledError, value: enabled } = useAsync(
+    async () => await isLLMPluginEnabled(),
+    [isLLMPluginEnabled]
+  );
+
+  const { error: asyncError, value } = useAsync(async () => {
+    if (!enabled || !messages.migrationMessages.length || !messages.userMessages.length) {
+      return { enabled };
+    }
+
+    setStreamStatus(StreamStatus.GENERATING);
+    setError(undefined);
+    // Stream the completions. Each element is the next stream chunk.
+    const migrationStream = llms.openai
+      .streamChatCompletions({
+        model,
+        temperature,
+        messages: messages.migrationMessages,
+      })
+      .pipe(
+        // Accumulate the stream content into a stream of strings, where each
+        // element contains the accumulated message so far.
+        llms.openai.accumulateContent()
+        // The stream is just a regular Observable, so we can use standard rxjs
+        // functionality to update state, e.g. recording when the stream
+        // has completed.
+        // The operator decision tree on the rxjs website is a useful resource:
+        // https://rxjs.dev/operator-decision-tree.)
+      );
+
+    // Identical to migrationStream, but with user messages
+    const userStream = llms.openai
+      .streamChatCompletions({
+        model,
+        temperature,
+        messages: messages.userMessages,
+      })
+      .pipe(llms.openai.accumulateContent());
+
+    // Cross the streams
+    const mergedStream = combineLatest([userStream, migrationStream]).pipe(
+      map(([val1, val2]) => `User changes:\n${val1}\n\nMigration changes:\n${val2}`)
+    );
+
+    // Subscribe to the stream and update the state for each returned value.
+    return {
+      enabled,
+      stream: mergedStream.subscribe({
+        next: setReply,
+        error: onError,
+        complete: () => {
+          setStreamStatus(StreamStatus.COMPLETED);
+          setTimeout(() => {
+            setStreamStatus(StreamStatus.IDLE);
+          });
+          setMessages({ migrationMessages: [], userMessages: [] });
+          setError(undefined);
+        },
+      }),
+    };
+  }, [messages, enabled]);
+
+  // Unsubscribe from the stream when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (value?.stream) {
+        value.stream.unsubscribe();
+      }
+    };
+  }, [value]);
+
+  // If the stream is generating and we haven't received a reply, it times out.
+  useEffect(() => {
+    let timeout: NodeJS.Timeout | undefined;
+    if (streamStatus === StreamStatus.GENERATING && reply === '') {
+      timeout = setTimeout(() => {
+        onError(new Error(`OpenAI stream timed out after ${TIMEOUT}ms`));
+      }, TIMEOUT);
+    }
+    return () => {
+      timeout && clearTimeout(timeout);
+    };
+  }, [streamStatus, reply, onError]);
+
+  if (asyncError || enabledError) {
+    setError(asyncError || enabledError);
+  }
+
+  return {
+    setMessages,
     reply,
     streamStatus,
     error,
