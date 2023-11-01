@@ -24,11 +24,10 @@ describe('TransformationsEditor', () => {
     function renderList() {
       setup();
 
-      
       const addButton = screen.getAllByTestId(selectors.components.Transforms.addTransformationButton + 'i');
       const emptyMessage = screen.getAllByTestId(selectors.components.Transforms.noTransformationsMessage);
-      
-      console.log({addButton, emptyMessage});
+
+      console.log({ addButton, emptyMessage });
 
       expect(2).toEqual(2);
     }

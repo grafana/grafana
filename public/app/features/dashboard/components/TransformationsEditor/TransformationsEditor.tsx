@@ -170,7 +170,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     }
 
     return `${name}-${nextId}`;
-  };
+  }
 
   onTransformationAdd(selectable: SelectableValue<string>) {
     let eventName = 'panel_editor_tabs_transformations_management';
@@ -196,7 +196,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         },
       },
     ]);
-  };
+  }
 
   onTransformationChange = (idx: number, dataConfig: DataTransformerConfig) => {
     const { transformations } = this.state;
@@ -330,7 +330,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       );
     }
 
-    const oldPicker = 
+    const oldPicker = (
       <>
         <Box marginBottom={1}>
           <Input
@@ -340,27 +340,26 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             placeholder="Search for transformation"
             onChange={this.onSearchChange}
             onKeyDown={this.onSearchKeyDown}
-            suffix={suffix} 
+            suffix={suffix}
           />
         </Box>
-        <Flex direction='column' gap={1}>
-          {
-            xforms.map((t) => {
-              return (
-                <TransformationCard
-                  key={t.name}
-                  transform={t}
-                  onClick={() => {
-                    this.onTransformationAdd({ value: t.id });
-                  }}
-                />
-              );
-            })
-          }
+        <Flex direction="column" gap={1}>
+          {xforms.map((t) => {
+            return (
+              <TransformationCard
+                key={t.name}
+                transform={t}
+                onClick={() => {
+                  this.onTransformationAdd({ value: t.id });
+                }}
+              />
+            );
+          })}
         </Flex>
-      </>;
+      </>
+    );
 
-    const newPicker = 
+    const newPicker = (
       <>
         <div className={styles.searchWrapper}>
           <Input
@@ -390,9 +389,12 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           showIllustrations={this.state.showIllustrations}
           transformations={xforms}
           data={this.state.data}
-          onClick={(id) => { this.onTransformationAdd({ value: id }) }} 
+          onClick={(id) => {
+            this.onTransformationAdd({ value: id });
+          }}
         />
-      </>;
+      </>
+    );
 
     const transformPicker = config.featureToggles.transformationsRedesign ? newPicker : oldPicker;
 
@@ -436,39 +438,41 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           </Container>
         )}
         {showPicker && (
-          <Drawer onClose={() => { this.setState({ showPicker: false}) }}>
+          <Drawer
+            onClose={() => {
+              this.setState({ showPicker: false });
+            }}
+          >
             {transformPicker}
           </Drawer>
         )}
         {noTransforms && (
-
-          <Box
-            alignItems="center"
-            padding={4}>
+          <Box alignItems="center" padding={4}>
             <Flex direction="column" alignItems="center" gap={2}>
-              <Text element='h3' textAlignment='center'>
-                <Trans key='transformations.empty.add-transformation-header'>
-                  Start transforming data
-                </Trans>
+              <Text element="h3" textAlignment="center">
+                <Trans key="transformations.empty.add-transformation-header">Start transforming data</Trans>
               </Text>
-              <Text 
-                element='p' 
-                textAlignment='center' 
-                data-testid={selectors.components.Transforms.noTransformationsMessage}>
-                <Trans key='transformations.empty.add-transformation-body'>
-                  Transformations allow data to be changed in various ways before your visualization is shown.<br/> 
-                  This includes joining data together, renaming fields, making calculations, formatting data for display, and more.
+              <Text
+                element="p"
+                textAlignment="center"
+                data-testid={selectors.components.Transforms.noTransformationsMessage}
+              >
+                <Trans key="transformations.empty.add-transformation-body">
+                  Transformations allow data to be changed in various ways before your visualization is shown.
+                  <br />
+                  This includes joining data together, renaming fields, making calculations, formatting data for
+                  display, and more.
                 </Trans>
               </Text>
               <Button
-              icon="plus"
-              variant="primary"
-              size="md"
-              onClick={() => {
-                this.setState({ showPicker: true });
-              }}
-              data-testid={selectors.components.Transforms.addTransformationButton}>
-
+                icon="plus"
+                variant="primary"
+                size="md"
+                onClick={() => {
+                  this.setState({ showPicker: true });
+                }}
+                data-testid={selectors.components.Transforms.addTransformationButton}
+              >
                 Add transformation
               </Button>
             </Flex>
@@ -488,12 +492,13 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 Add another transformation
               </Button>
               <Button
-                  variant="secondary"
-                  icon="trash-alt"
-                  onClick={() => {
-                    this.setState({ showRemoveAllModal: true });
-                  }}>
-                  Delete all transformations
+                variant="secondary"
+                icon="trash-alt"
+                onClick={() => {
+                  this.setState({ showRemoveAllModal: true });
+                }}
+              >
+                Delete all transformations
               </Button>
             </Flex>
             <ConfirmModal
@@ -508,7 +513,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         )}
       </>
     );
-  }
+  };
 
   render() {
     const {
