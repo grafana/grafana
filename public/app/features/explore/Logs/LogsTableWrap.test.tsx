@@ -4,6 +4,7 @@ import React, { ComponentProps } from 'react';
 import {
   createTheme,
   ExploreLogsPanelState,
+  LogsDedupStrategy,
   LogsSortOrder,
   standardTransformersRegistry,
   toUtc,
@@ -11,12 +12,16 @@ import {
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 
+import { dataFrameToLogsModel, dedupLogRows } from '../../logs/logsModel';
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsTableWrap } from './LogsTableWrap';
 import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
 
 const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>) => {
+  const dataFrame = partialProps?.dataFrame ?? getMockLokiFrame();
+  const logsModel = dataFrameToLogsModel([dataFrame]);
+  const dedupedRows = partialProps?.dedupedRows ?? dedupLogRows(logsModel.rows);
   return (
     <LogsTableWrap
       range={{
@@ -24,6 +29,9 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
         to: toUtc('2019-01-01 16:00:00'),
         raw: { from: 'now-1h', to: 'now' },
       }}
+      dataFrame={dataFrame}
+      dedupedRows={dedupedRows}
+      dedupStrategy={LogsDedupStrategy.none}
       onClickFilterOutLabel={() => undefined}
       onClickFilterLabel={() => undefined}
       updatePanelState={() => undefined}
@@ -32,7 +40,6 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
       splitOpen={() => undefined}
       timeZone={'utc'}
       width={50}
-      logsFrames={[getMockLokiFrame()]}
       theme={createTheme()}
       {...partialProps}
     />
@@ -71,7 +78,7 @@ describe('LogsTableWrap', () => {
 
   it('should render 4 table rows (dataplane)', async () => {
     config.featureToggles.lokiLogsDataplane = true;
-    setup({ logsFrames: [getMockLokiFrameDataPlane()] });
+    setup({ dataFrame: getMockLokiFrameDataPlane() });
 
     await waitFor(() => {
       const rows = screen.getAllByRole('row');
@@ -146,7 +153,7 @@ describe('LogsTableWrap', () => {
     setup({
       panelState: {},
       updatePanelState: updatePanelState,
-      logsFrames: [getMockLokiFrameDataPlane()],
+      dataFrame: getMockLokiFrameDataPlane(),
     });
 
     await waitFor(() => {

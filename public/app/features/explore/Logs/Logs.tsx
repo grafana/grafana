@@ -50,6 +50,7 @@ import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { dispatch, getState } from 'app/store/store';
 
+import { cloneDataFrame } from '../../../plugins/datasource/loki/responseUtils';
 import { ExploreItemState } from '../../../types';
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
@@ -634,7 +635,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           loadingState={loading ? LoadingState.Loading : LoadingState.Done}
         >
           <div className={styles.stickyNavigation}>
-            {this.state.visualisationType !== 'table' && (
+            {
               <div className={styles.logOptions}>
                 <InlineFieldRow>
                   <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
@@ -710,7 +711,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   </InlineField>
                 </div>
               </div>
-            )}
+            }
             <div ref={this.topLogsRef} />
             <LogsMetaRow
               logRows={logRows}
@@ -729,12 +730,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logs navigation and padding */}
                 <LogsTableWrap
+                  dedupStrategy={dedupStrategy}
+                  dedupedRows={dedupedRows}
+                  dataFrame={cloneDataFrame(this.props.logsFrames?.length ? this.props.logsFrames[0] : undefined)}
                   logsSortOrder={this.state.logsSortOrder}
                   range={this.props.range}
                   splitOpen={this.props.splitOpen}
                   timeZone={timeZone}
                   width={width - 80}
-                  logsFrames={this.props.logsFrames ?? []}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   panelState={this.props.panelState?.logs}

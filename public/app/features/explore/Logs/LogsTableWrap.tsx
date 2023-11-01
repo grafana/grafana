@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import {
   DataFrame,
   ExploreLogsPanelState,
+  FieldType,
   GrafanaTheme2,
   Labels,
+  LogRowModel,
+  LogsDedupStrategy,
   LogsSortOrder,
   SplitOpen,
   TimeRange,
@@ -22,7 +25,9 @@ import { LogsTableMultiSelect } from './LogsTableMultiSelect';
 import { fuzzySearch } from './utils/uFuzzy';
 
 interface Props extends Themeable2 {
-  logsFrames: DataFrame[];
+  dedupStrategy: LogsDedupStrategy;
+  dedupedRows: LogRowModel[];
+  dataFrame: DataFrame;
   width: number;
   timeZone: string;
   splitOpen: SplitOpen;
@@ -37,22 +42,28 @@ interface Props extends Themeable2 {
 export type fieldNameMeta = {
   percentOfLinesWithLabel: number;
   active: boolean | undefined;
-  type?: 'BODY_FIELD' | 'TIME_FIELD';
+  type?: 'BODY_FIELD' | 'TIME_FIELD' | 'DEDUPLICATION_COUNT_FIELD';
 };
 type fieldName = string;
 type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
+// Deduplication is being added as a field to the dataFrame
+// @todo prevent name conflicts?
+export const logsTableDedupeFieldName = 'Deduplication Count';
+
 export function LogsTableWrap(props: Props) {
-  const { logsFrames } = props;
+  const { dataFrame, dedupedRows, dedupStrategy } = props;
+  const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(dataFrame);
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
+
+  const dedupeColumnActive: boolean | undefined =
+    columnsWithMeta !== undefined ? columnsWithMeta[logsTableDedupeFieldName]?.active : undefined;
 
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
   const [height, setHeight] = useState<number>(600);
-
-  const dataFrame = logsFrames[0];
 
   const getColumnsFromProps = useCallback(
     (fieldNames: fieldNameMetaStore) => {
@@ -68,6 +79,48 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
+
+  // When deduplication or the dataFrame changes, we need to recalculate the deduplication count field
+  useEffect(() => {
+    const deduplicationFieldIdx = tableFrame?.fields.findIndex((fields) => fields.name === logsTableDedupeFieldName);
+    const dedupedValues = Array(tableFrame?.length);
+    dedupedRows?.forEach((row) => {
+      if (dedupedValues[row.rowIndex] !== null || dedupedValues[row.rowIndex] !== undefined) {
+        dedupedValues[row.rowIndex] = row.duplicates ? row.duplicates + 1 : undefined;
+      }
+    });
+
+    // Don't add the dedupe field if there are no duplicates
+    if (dedupStrategy !== LogsDedupStrategy.none && dedupedRows?.length !== tableFrame?.length) {
+      const dedupeField = {
+        name: logsTableDedupeFieldName,
+        type: FieldType.number,
+        config: {},
+        values: dedupedValues,
+      };
+
+      if (tableFrame) {
+        let newFrame: DataFrame;
+        if (deduplicationFieldIdx && tableFrame.fields[deduplicationFieldIdx]) {
+          newFrame = tableFrame;
+          newFrame.fields[deduplicationFieldIdx] = dedupeField;
+        } else {
+          newFrame = {
+            ...tableFrame,
+            fields: [...tableFrame.fields, dedupeField],
+          };
+
+          setTableFrame(newFrame);
+        }
+      }
+    }
+    // Remove the dedupe field
+    else if (deduplicationFieldIdx && tableFrame?.fields[deduplicationFieldIdx]) {
+      const pendingFrame = { ...tableFrame };
+      pendingFrame.fields.splice(deduplicationFieldIdx, 1);
+      setTableFrame(pendingFrame);
+    }
+  }, [dedupStrategy, dedupedRows, tableFrame]);
 
   /**
    * Keeps the filteredColumnsWithMeta state in sync with the columnsWithMeta state,
@@ -101,11 +154,11 @@ export function LogsTableWrap(props: Props) {
    */
   useEffect(() => {
     // If the data frame is empty, there's nothing to viz, it could mean the user has unselected all columns
-    if (!dataFrame.length) {
+    if (!tableFrame?.length) {
       return;
     }
-    const numberOfLogLines = dataFrame ? dataFrame.length : 0;
-    const logsFrame = parseLogsFrame(dataFrame);
+    const numberOfLogLines = tableFrame ? tableFrame.length : 0;
+    const logsFrame = parseLogsFrame(tableFrame);
     const labels = logsFrame?.getAttributesAsLabels();
 
     const otherFields = [];
@@ -195,15 +248,34 @@ export function LogsTableWrap(props: Props) {
       pendingLabelState[logsFrame.timeField.name].type = 'TIME_FIELD';
     }
 
-    setColumnsWithMeta(pendingLabelState);
+    if (
+      dedupStrategy !== LogsDedupStrategy.none &&
+      pendingLabelState[logsTableDedupeFieldName] &&
+      pendingLabelState[logsTableDedupeFieldName].type === undefined
+    ) {
+      pendingLabelState[logsTableDedupeFieldName].type = 'DEDUPLICATION_COUNT_FIELD';
+      if (dedupeColumnActive !== undefined && pendingLabelState[logsTableDedupeFieldName]) {
+        // previously selected
+        if (pendingLabelState[logsTableDedupeFieldName]?.active === undefined) {
+          pendingLabelState[logsTableDedupeFieldName].active = dedupeColumnActive;
+        }
+      } else {
+        // default
+        pendingLabelState[logsTableDedupeFieldName].active = true;
+      }
+    }
 
+    setColumnsWithMeta(pendingLabelState);
     // The panel state is updated when the user interacts with the multi-select sidebar
-  }, [dataFrame, getColumnsFromProps]);
+  }, [dedupeColumnActive, tableFrame, getColumnsFromProps, dedupStrategy]);
 
   // As the number of rows change, so too must the height of the table
   useEffect(() => {
-    setHeight(getTableHeight(dataFrame.length, false));
-  }, [dataFrame.length]);
+    if (!tableFrame?.length) {
+      return;
+    }
+    setHeight(getTableHeight(tableFrame.length, false));
+  }, [tableFrame?.length]);
 
   if (!columnsWithMeta) {
     return null;
@@ -329,7 +401,7 @@ export function LogsTableWrap(props: Props) {
         splitOpen={props.splitOpen}
         timeZone={props.timeZone}
         width={tableWidth}
-        logsFrames={logsFrames}
+        logsFrames={tableFrame ? [tableFrame] : []}
         columnsWithMeta={columnsWithMeta}
         height={height}
       />

@@ -24,7 +24,7 @@ import { LogsFrame, parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
-import { fieldNameMeta } from './LogsTableWrap';
+import { fieldNameMeta, logsTableDedupeFieldName } from './LogsTableWrap';
 
 interface Props {
   logsFrames: DataFrame[];
@@ -110,8 +110,10 @@ export function LogsTable(props: Props) {
       let dataFrame = logFrameRaw;
 
       // create extract JSON transformation for every field that is `json.RawMessage`
-      const transformations: Array<DataTransformerConfig | CustomTransformOperator> =
-        extractFieldsAndExclude(dataFrame);
+      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFieldsAndExclude(
+        dataFrame,
+        columnsWithMeta
+      );
 
       // remove hidden fields
       transformations.push(...removeHiddenFields(dataFrame));
@@ -181,7 +183,7 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
 
 // TODO: explore if `logsFrame.ts` can help us with getting the right fields
 // TODO Why is typeInfo not defined on the Field interface?
-function extractFieldsAndExclude(dataFrame: DataFrame) {
+function extractFieldsAndExclude(dataFrame: DataFrame, columnsWithMeta: Record<string, fieldNameMeta>) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
       const isFieldLokiLabels = field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels';
@@ -190,7 +192,10 @@ function extractFieldsAndExclude(dataFrame: DataFrame) {
         field.type === FieldType.other &&
         dataFrame?.meta?.type === DataFrameType.LogLines;
 
-      return isFieldLokiLabels || isFieldDataplaneLabels;
+      // If the dedupe field is not active, we want to filter it out from the dataframe
+      const isDedupeField = field.name === logsTableDedupeFieldName && !columnsWithMeta[field.name]?.active;
+
+      return isFieldLokiLabels || isFieldDataplaneLabels || isDedupeField;
     })
     .flatMap((field: Field) => {
       return [

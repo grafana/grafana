@@ -249,7 +249,7 @@ export function cloneQueryResponse(response: DataQueryResponse): DataQueryRespon
   return newResponse;
 }
 
-function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
+export function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
   return {
     ...frame,
     fields: frame.fields.map((field: Field) => ({

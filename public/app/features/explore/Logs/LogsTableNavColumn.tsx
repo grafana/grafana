@@ -33,6 +33,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
+// This is getting verbose, is there a better way to do this?
 function sortLabels(labels: Record<string, fieldNameMeta>) {
   return (a: string, b: string) => {
     // First sort by active
@@ -50,6 +51,12 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
       }
       // special fields are next
       if (labels[b]?.type === 'BODY_FIELD') {
+        return 1;
+      }
+      if (labels[a].type === 'DEDUPLICATION_COUNT_FIELD') {
+        return -1;
+      }
+      if (labels[b].type === 'DEDUPLICATION_COUNT_FIELD') {
         return 1;
       }
     }
