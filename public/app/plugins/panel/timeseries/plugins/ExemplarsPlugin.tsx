@@ -9,7 +9,8 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeZone,
 } from '@grafana/data';
-import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
+import { EventsCanvas, UPlotConfigBuilder } from '@grafana/ui';
+import { FIXED_UNIT } from '@grafana/ui/src/components/uPlot/internal';
 
 import { ExemplarMarker } from './ExemplarMarker';
 

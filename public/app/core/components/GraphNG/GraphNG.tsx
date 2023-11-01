@@ -16,23 +16,15 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { VizLegendOptions } from '@grafana/schema';
-
-import { Themeable2 } from '../../types';
-import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
-import { VizLayout } from '../VizLayout/VizLayout';
-import { UPlotChart } from '../uPlot/Plot';
-import { AxisProps } from '../uPlot/config/UPlotAxisBuilder';
-import { Renderers, UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { ScaleProps } from '../uPlot/config/UPlotScaleBuilder';
-import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
+import { Themeable2, PanelContext, PanelContextRoot, VizLayout } from '@grafana/ui';
+import { UPlotChart } from '@grafana/ui/src/components/uPlot/Plot';
+import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { Renderers, UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
+import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
+import { findMidPointYPosition, pluginLog } from '@grafana/ui/src/components/uPlot/utils';
 
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
-
-/**
- * @internal -- not a public API
- */
-export const FIXED_UNIT = '__fixed';
 
 /**
  * @internal -- not a public API

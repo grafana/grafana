@@ -23,6 +23,8 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import {
   VizLegendOptions,
   AxisPlacement,
@@ -33,15 +35,8 @@ import {
   HideableFieldConfig,
   MappingType,
 } from '@grafana/schema';
-import {
-  FIXED_UNIT,
-  SeriesVisibilityChangeMode,
-  UPlotConfigBuilder,
-  UPlotConfigPrepFn,
-  VizLegendItem,
-} from '@grafana/ui';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
-import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
+import { SeriesVisibilityChangeMode, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
+import { FIXED_UNIT } from '@grafana/ui/src/components/uPlot/internal';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
