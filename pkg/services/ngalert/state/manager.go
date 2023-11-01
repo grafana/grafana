@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -45,10 +44,9 @@ type Manager struct {
 	externalURL   *url.URL
 
 	doNotSaveNormalState           bool
-	maxStateSaveConcurrency        int
 	applyNoDataAndErrorToAllStates bool
 
-	saveStateAsync bool
+	statePersister StatePersister
 }
 
 type ManagerCfg struct {
@@ -58,18 +56,14 @@ type ManagerCfg struct {
 	Images        ImageCapturer
 	Clock         clock.Clock
 	Historian     Historian
-	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
-	DoNotSaveNormalState bool
-	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
-	MaxStateSaveConcurrency int
-	// SaveAsnyc controls if we save the state async on a ticker or and every evaluation.
-	SaveStateAsync bool
 	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool
 
 	Tracer tracing.Tracer
 	Log    log.Logger
+
+	StatePersister StatePersister
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
@@ -89,49 +83,17 @@ func NewManager(cfg ManagerCfg) *Manager {
 		historian:                      cfg.Historian,
 		clock:                          cfg.Clock,
 		externalURL:                    cfg.ExternalURL,
-		doNotSaveNormalState:           cfg.DoNotSaveNormalState,
-		maxStateSaveConcurrency:        cfg.MaxStateSaveConcurrency,
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
 		tracer:                         cfg.Tracer,
-		saveStateAsync:                 cfg.SaveStateAsync,
+		statePersister:                 cfg.StatePersister,
 	}
 	return m
 }
 
 func (st *Manager) Run(ctx context.Context) error {
-	if !st.saveStateAsync {
-		return nil
-	}
+	// TODO(JP): make configurable
 	ticker := st.clock.Ticker(time.Second * 30)
-infLoop:
-	for {
-		select {
-		case <-ticker.C:
-			if err := st.fullSync(ctx); err != nil {
-				st.log.Error("Failed to do a full state sync to database", "err", err)
-			}
-		case <-ctx.Done():
-			st.log.Info("Stopping state sync...")
-			if err := st.fullSync(context.Background()); err != nil {
-				st.log.Error("Failed to do a full state sync to database", "err", err)
-			}
-			ticker.Stop()
-			break infLoop
-		}
-	}
-	st.log.Info("State sync shut down")
-	return nil
-}
-
-func (st *Manager) fullSync(ctx context.Context) error {
-	startTime := time.Now()
-	st.log.Info("Full state sync start")
-	instances := st.cache.asInstances(st.doNotSaveNormalState)
-	if err := st.instanceStore.FullSync(ctx, instances); err != nil {
-		st.log.Error("Full state sync failed", "duration", time.Since(startTime), "instances", len(instances))
-		return err
-	}
-	st.log.Info("Full state sync done", "duration", time.Since(startTime), "instances", len(instances))
+	go st.statePersister.Async(ctx, ticker, st.cache)
 	return nil
 }
 
@@ -316,17 +278,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
 
-	if !st.saveStateAsync {
-		st.deleteAlertStates(tracingCtx, logger, staleStates)
-		if len(staleStates) > 0 {
-			span.AddEvent("deleted stale states", trace.WithAttributes(
-				attribute.Int64("state_transitions", int64(len(staleStates))),
-			))
-		}
-
-		st.saveAlertStates(tracingCtx, logger, states...)
-		span.AddEvent("updated database")
-	}
+	st.statePersister.Sync(tracingCtx, span, states, staleStates)
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
