@@ -5,10 +5,9 @@ import {
   FieldType,
   isLikelyAscendingVector,
   sortDataFrame,
+  applyNullInsertThreshold,
 } from '@grafana/data';
 import { GraphFieldConfig } from '@grafana/schema';
-
-import { applyNullInsertThreshold } from '../../../../grafana-data/src/transformations/transformers/nulls/nullInsertThreshold';
 
 /** @internal
  * Given a sparkline config returns a DataFrame ready to be turned into Plot data set
