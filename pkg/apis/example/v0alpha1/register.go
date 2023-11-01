@@ -22,7 +22,7 @@ import (
 )
 
 // GroupName is the group name for this API.
-const GroupName = "example.grafana.com"
+const GroupName = "example.grafana.app"
 const VersionID = "v0alpha1" //
 const APIVersion = GroupName + "/" + VersionID
 

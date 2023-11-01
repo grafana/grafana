@@ -58,7 +58,7 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
           <VerticalGroup justify="center">
             <HorizontalGroup justify="center">
               <span>Loading...</span>
-              <Spinner size={16} />
+              <Spinner />
             </HorizontalGroup>
           </VerticalGroup>
         )}

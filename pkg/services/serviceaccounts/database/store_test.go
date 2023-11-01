@@ -495,3 +495,66 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 		})
 	}
 }
+
+func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
+	ctx := context.Background()
+
+	initUsers := []tests.TestUser{
+		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-satest-1", IsServiceAccount: true},
+		{Name: "satest-2", Role: string(org.RoleEditor), Login: "sa-satest-2", IsServiceAccount: true},
+		{Name: "usertest-3", Role: string(org.RoleEditor), Login: "usertest-3", IsServiceAccount: false},
+	}
+
+	db, store := setupTestDatabase(t)
+	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
+
+	fetchStates := func() map[int64]bool {
+		sa1, err := store.RetrieveServiceAccount(ctx, orgID, 1)
+		require.NoError(t, err)
+		sa2, err := store.RetrieveServiceAccount(ctx, orgID, 2)
+		require.NoError(t, err)
+		user, err := store.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: 3})
+		require.NoError(t, err)
+		return map[int64]bool{1: !sa1.IsDisabled, 2: !sa2.IsDisabled, 3: !user.IsDisabled}
+	}
+
+	tt := []struct {
+		desc       string
+		id         int64
+		enable     bool
+		wantStates map[int64]bool
+	}{
+		{
+			desc:       "should disable service account",
+			id:         1,
+			enable:     false,
+			wantStates: map[int64]bool{1: false, 2: true, 3: true},
+		},
+		{
+			desc:       "should disable service account again",
+			id:         1,
+			enable:     false,
+			wantStates: map[int64]bool{1: false, 2: true, 3: true},
+		},
+		{
+			desc:       "should enable service account",
+			id:         1,
+			enable:     true,
+			wantStates: map[int64]bool{1: true, 2: true, 3: true},
+		},
+		{
+			desc:       "should not disable user",
+			id:         3,
+			enable:     false,
+			wantStates: map[int64]bool{1: true, 2: true, 3: true},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := store.EnableServiceAccount(ctx, orgID, tc.id, tc.enable)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.wantStates, fetchStates())
+		})
+	}
+}
