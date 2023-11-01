@@ -110,6 +110,7 @@ export async function promQailExplain(
     .streamChatCompletions({
       model: OPENAI_MODEL_NAME,
       messages: promptMessages,
+      temperature: 0,
     })
     .pipe(llms.openai.accumulateContent())
     .subscribe((response) => {
@@ -220,6 +221,7 @@ export async function promQailSuggest(
       .streamChatCompletions({
         model: OPENAI_MODEL_NAME,
         messages: promptMessages,
+        temperature: 0,
       })
       .pipe(llms.openai.accumulateContent())
       .subscribe((response) => {
