@@ -3,7 +3,8 @@ import { e2e } from '../utils';
 const DASHBOARD_ID = 'c01bf42b-b783-4447-a304-8554cee1843b';
 const DATAGRID_SELECT_SERIES = 'Datagrid Select series';
 
-describe('Datagrid data changes', () => {
+//TODO enable this test when panel goes live
+describe.skip('Datagrid data changes', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
