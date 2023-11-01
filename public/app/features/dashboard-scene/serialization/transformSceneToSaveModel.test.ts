@@ -31,7 +31,7 @@ import { reduceTransformRegistryItem } from 'app/features/transformers/editors/R
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { activateFullSceneTree } from '../utils/test-utils';
+import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
@@ -44,7 +44,13 @@ import {
   buildGridItemForPanel,
   transformSaveModelToScene,
 } from './transformSaveModelToScene';
-import { gridItemToPanel, transformSceneToSaveModel, trimDashboardForSnapshot } from './transformSceneToSaveModel';
+import {
+  gridItemToPanel,
+  gridRowToSaveModel,
+  panelRepeaterToPanels,
+  transformSceneToSaveModel,
+  trimDashboardForSnapshot,
+} from './transformSceneToSaveModel';
 
 standardTransformersRegistry.setInit(() => [reduceTransformRegistryItem]);
 setPluginImportUtils({
@@ -595,6 +601,107 @@ describe('transformSceneToSaveModel', () => {
       expect(snapshot.panels?.[4].panels).toHaveLength(1);
       // @ts-expect-error
       expect(snapshot.panels?.[4].collapsed).toEqual(true);
+    });
+
+    describe('repeats', () => {
+      it('handles repeated panels', async () => {
+        const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0, numberOfOptions: 2 });
+
+        activateFullSceneTree(scene);
+
+        expect(repeater.state.repeatedPanels?.length).toBe(2);
+        const result = panelRepeaterToPanels(repeater, true);
+
+        expect(result).toHaveLength(2);
+
+        // @ts-expect-error
+        expect(result[0].scopedVars).toEqual({
+          server: {
+            text: 'A',
+            value: '1',
+          },
+        });
+        // @ts-expect-error
+        expect(result[1].scopedVars).toEqual({
+          server: {
+            text: 'B',
+            value: '2',
+          },
+        });
+
+        expect(result[0].title).toEqual('Panel $server');
+        expect(result[1].title).toEqual('Panel $server');
+      });
+
+      it('handles row repeats ', () => {
+        const { scene, row } = buildPanelRepeaterScene({
+          variableQueryTime: 0,
+          numberOfOptions: 2,
+          useRowRepeater: true,
+          usePanelRepeater: false,
+        });
+
+        activateFullSceneTree(scene);
+
+        let panels: Panel[] = [];
+        gridRowToSaveModel(row, panels, true);
+
+        expect(panels).toHaveLength(2);
+        expect(panels[0].repeat).toBe('handler');
+
+        // @ts-expect-error
+        expect(panels[0].scopedVars).toEqual({
+          handler: {
+            text: 'AA',
+            value: '11',
+          },
+        });
+
+        expect(panels[1].title).toEqual('Panel $server');
+        expect(panels[1].gridPos).toEqual({ x: 0, y: 0, w: 10, h: 10 });
+      });
+
+      it('handles row repeats with panel repeater', () => {
+        const { scene, row } = buildPanelRepeaterScene({
+          variableQueryTime: 0,
+          numberOfOptions: 2,
+          useRowRepeater: true,
+          usePanelRepeater: true,
+        });
+
+        activateFullSceneTree(scene);
+
+        let panels: Panel[] = [];
+        gridRowToSaveModel(row, panels, true);
+
+        expect(panels[0].repeat).toBe('handler');
+
+        // @ts-expect-error
+        expect(panels[0].scopedVars).toEqual({
+          handler: {
+            text: 'AA',
+            value: '11',
+          },
+        });
+
+        // @ts-expect-error
+        expect(panels[1].scopedVars).toEqual({
+          server: {
+            text: 'A',
+            value: '1',
+          },
+        });
+        // @ts-expect-error
+        expect(panels[2].scopedVars).toEqual({
+          server: {
+            text: 'B',
+            value: '2',
+          },
+        });
+
+        expect(panels[1].title).toEqual('Panel $server');
+        expect(panels[2].title).toEqual('Panel $server');
+      });
     });
 
     describe('trimDashboardForSnapshot', () => {

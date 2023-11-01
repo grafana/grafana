@@ -122,6 +122,16 @@
         },
         "description": "BadRequestError is returned when the request is invalid and it cannot be processed."
       },
+      "badRequestPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "BadRequestPublicError is returned when the request is invalid and it cannot be processed."
+      },
       "calculateDashboardDiffResponse": {
         "content": {
           "application/json": {
@@ -270,6 +280,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Playlist"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "createPublicDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublicDashboard"
             }
           }
         },
@@ -524,6 +544,16 @@
           }
         },
         "description": "ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource."
+      },
+      "forbiddenPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource."
       },
       "genericError": {
         "content": {
@@ -1016,6 +1046,29 @@
         },
         "description": "(empty)"
       },
+      "getPublicAnnotationsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/AnnotationEvent"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getPublicDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublicDashboard"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getQueryHistoryDeleteQueryResponse": {
         "content": {
           "application/json": {
@@ -1286,6 +1339,16 @@
         },
         "description": "InternalServerError is a general error indicating something went wrong internally."
       },
+      "internalServerPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "InternalServerPublicError is a general error indicating something went wrong internally."
+      },
       "jwksResponse": {
         "content": {
           "application/json": {
@@ -1315,6 +1378,16 @@
                 "type": "array"
               },
               "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "listPublicDashboardsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublicDashboardListResponseWithPagination"
             }
           }
         },
@@ -1389,6 +1462,16 @@
           }
         },
         "description": "NotFoundError is returned when the requested resource was not found."
+      },
+      "notFoundPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "NotFoundPublicError is returned when the requested resource was not found."
       },
       "okResponse": {
         "content": {
@@ -1496,6 +1579,10 @@
           "application/json": {
             "schema": {
               "properties": {
+                "folderUid": {
+                  "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
+                  "type": "string"
+                },
                 "id": {
                   "description": "ID The unique identifier (id) of the created/updated dashboard.",
                   "example": 1,
@@ -1556,7 +1643,27 @@
         },
         "description": "PreconditionFailedError"
       },
+      "publicErrorResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "queryMetricsWithExpressionsRespons": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QueryDataResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "queryPublicDashboardResponse": {
         "content": {
           "application/json": {
             "schema": {
@@ -1768,6 +1875,16 @@
         },
         "description": "UnauthorizedError is returned when the request is not authenticated."
       },
+      "unauthorisedPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "UnauthorisedPublicError is returned when the request is not authenticated."
+      },
       "unprocessableEntityError": {
         "content": {
           "application/json": {
@@ -1793,6 +1910,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/PlaylistDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "updatePublicDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublicDashboard"
             }
           }
         },
@@ -1847,6 +1974,16 @@
             }
           }
         }
+      },
+      "viewPublicDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DashboardFullWithMeta"
+            }
+          }
+        },
+        "description": "(empty)"
       }
     },
     "schemas": {
@@ -2828,6 +2965,67 @@
         },
         "type": "object"
       },
+      "AnnotationEvent": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isRegion": {
+            "type": "boolean"
+          },
+          "panelId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "source": {
+            "$ref": "#/components/schemas/AnnotationQuery"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "text": {
+            "type": "string"
+          },
+          "time": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "timeEnd": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AnnotationPanelFilter": {
+        "properties": {
+          "exclude": {
+            "description": "Should the specified panels be included or excluded",
+            "type": "boolean"
+          },
+          "ids": {
+            "description": "Panel IDs that should be included or excluded",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
+        "type": "object"
+      },
       "AnnotationPermission": {
         "properties": {
           "dashboard": {
@@ -2835,6 +3033,72 @@
           },
           "organization": {
             "$ref": "#/components/schemas/AnnotationActions"
+          }
+        },
+        "type": "object"
+      },
+      "AnnotationQuery": {
+        "description": "TODO docs\nFROM: AnnotationQuery in grafana-data/src/types/annotations.ts",
+        "properties": {
+          "builtIn": {
+            "description": "Set to 1 for the standard annotation query all dashboards have by default.",
+            "format": "float",
+            "type": "number"
+          },
+          "datasource": {
+            "$ref": "#/components/schemas/DataSourceRef"
+          },
+          "enable": {
+            "description": "When enabled the annotation query is issued with every dashboard refresh",
+            "type": "boolean"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/AnnotationPanelFilter"
+          },
+          "hide": {
+            "description": "Annotation queries can be toggled on or off at the top of the dashboard.\nWhen hide is true, the toggle is not shown in the dashboard.",
+            "type": "boolean"
+          },
+          "iconColor": {
+            "description": "Color to use for the annotation event markers",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of annotation.",
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/AnnotationTarget"
+          },
+          "type": {
+            "description": "TODO -- this should not exist here, it is based on the --grafana-- datasource",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AnnotationTarget": {
+        "description": "TODO: this should be a regular DataQuery that depends on the selected dashboard\nthese match the properties of the \"grafana\" datasouce that is default in most dashboards",
+        "properties": {
+          "limit": {
+            "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+            "format": "int64",
+            "type": "integer"
+          },
+          "matchAny": {
+            "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+            "type": "boolean"
+          },
+          "tags": {
+            "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "type": {
+            "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+            "type": "string"
           }
         },
         "type": "object"
@@ -3702,7 +3966,7 @@
         "description": "CreateLibraryElementCommand is the command for adding a LibraryElement",
         "properties": {
           "folderId": {
-            "description": "ID of the folder where the library element is stored.",
+            "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -4534,6 +4798,20 @@
         },
         "type": "object"
       },
+      "DataSourceRef": {
+        "description": "Ref to a DataSource instance",
+        "properties": {
+          "type": {
+            "description": "The plugin type-id",
+            "type": "string"
+          },
+          "uid": {
+            "description": "Specific datasource instance",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "DataTopic": {
         "description": "nolint:revive",
         "title": "DataTopic is used to identify which topic the frame should be assigned to.",
@@ -4667,6 +4945,17 @@
           }
         },
         "title": "EmailConfig configures notifications via mail.",
+        "type": "object"
+      },
+      "EmailDTO": {
+        "properties": {
+          "recipient": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "EmbeddedContactPoint": {
@@ -8068,6 +8357,120 @@
         },
         "type": "object"
       },
+      "PublicDashboard": {
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "annotationsEnabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "recipients": {
+            "items": {
+              "$ref": "#/components/schemas/EmailDTO"
+            },
+            "type": "array"
+          },
+          "share": {
+            "$ref": "#/components/schemas/ShareType"
+          },
+          "timeSelectionEnabled": {
+            "type": "boolean"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PublicDashboardDTO": {
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "annotationsEnabled": {
+            "type": "boolean"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "share": {
+            "$ref": "#/components/schemas/ShareType"
+          },
+          "timeSelectionEnabled": {
+            "type": "boolean"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PublicDashboardListResponse": {
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PublicDashboardListResponseWithPagination": {
+        "properties": {
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "perPage": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "publicDashboards": {
+            "items": {
+              "$ref": "#/components/schemas/PublicDashboardListResponse"
+            },
+            "type": "array"
+          },
+          "totalCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "PublicKeyAlgorithm": {
         "format": "int64",
         "type": "integer"
@@ -8991,6 +9394,7 @@
             "$ref": "#/components/schemas/Json"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -9227,6 +9631,10 @@
             "example": false,
             "type": "boolean"
           },
+          "isExternal": {
+            "example": false,
+            "type": "boolean"
+          },
           "login": {
             "example": "sa-grafana",
             "type": "string"
@@ -9275,6 +9683,10 @@
             "type": "integer"
           },
           "isDisabled": {
+            "example": false,
+            "type": "boolean"
+          },
+          "isExternal": {
             "example": false,
             "type": "boolean"
           },
@@ -9385,6 +9797,9 @@
           }
         },
         "type": "object"
+      },
+      "ShareType": {
+        "type": "string"
       },
       "SigV4Config": {
         "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
@@ -11671,6 +12086,34 @@
         ],
         "type": "object"
       },
+      "publicError": {
+        "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+        "properties": {
+          "extra": {
+            "additionalProperties": false,
+            "description": "Extra Additional information about the error",
+            "type": "object"
+          },
+          "message": {
+            "description": "Message A human readable message",
+            "type": "string"
+          },
+          "messageId": {
+            "description": "MessageID A unique identifier for the error",
+            "type": "string"
+          },
+          "statusCode": {
+            "description": "StatusCode The HTTP status code returned",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "statusCode",
+          "messageId"
+        ],
+        "type": "object"
+      },
       "receiver": {
         "description": "Receiver receiver",
         "properties": {
@@ -12501,7 +12944,8 @@
         },
         "summary": "Returns the current state of the LDAP background sync integration.",
         "tags": [
-          "ldap_debug"
+          "ldap_debug",
+          "enterprise"
         ]
       }
     },
@@ -16082,6 +16526,29 @@
         ]
       }
     },
+    "/dashboards/public-dashboards": {
+      "get": {
+        "description": "Get list of public dashboards",
+        "operationId": "listPublicDashboards",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listPublicDashboardsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      }
+    },
     "/dashboards/tags": {
       "get": {
         "operationId": "getDashboardTags",
@@ -16130,6 +16597,187 @@
         "summary": "Trim defaults from dashboard.",
         "tags": [
           "dashboards"
+        ]
+      }
+    },
+    "/dashboards/uid/{dashboardUid}/public-dashboards": {
+      "get": {
+        "description": "Get public dashboard by dashboardUid",
+        "operationId": "getPublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboardUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      },
+      "post": {
+        "description": "Create public dashboard for a dashboard",
+        "operationId": "createPublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboardUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicDashboardDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/createPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      }
+    },
+    "/dashboards/uid/{dashboardUid}/public-dashboards/{uid}": {
+      "delete": {
+        "description": "Delete public dashboard for a dashboard",
+        "operationId": "deletePublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboardUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      },
+      "patch": {
+        "description": "Update public dashboard for a dashboard",
+        "operationId": "updatePublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboardUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicDashboardDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/updatePublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
         ]
       }
     },
@@ -20209,6 +20857,132 @@
         "summary": "Get playlist items.",
         "tags": [
           "playlists"
+        ]
+      }
+    },
+    "/public/dashboards/{accessToken}": {
+      "get": {
+        "description": "Get public dashboard for view",
+        "operationId": "viewPublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accessToken",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/viewPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      }
+    },
+    "/public/dashboards/{accessToken}/annotations": {
+      "get": {
+        "description": "Get annotations for a public dashboard",
+        "operationId": "getPublicAnnotations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accessToken",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getPublicAnnotationsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      }
+    },
+    "/public/dashboards/{accessToken}/panels/{panelId}/query": {
+      "post": {
+        "description": "Get results for a given panel on a public dashboard",
+        "operationId": "queryPublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accessToken",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "panelId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/queryPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
         ]
       }
     },

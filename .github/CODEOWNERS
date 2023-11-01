@@ -103,7 +103,6 @@
 /pkg/services/correlations/ @grafana/explore-squad
 /pkg/services/dashboardimport/ @grafana/backend-platform
 /pkg/services/dashboards/ @grafana/backend-platform
-/pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
@@ -118,7 +117,6 @@
 /pkg/services/plugindashboards/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
-/pkg/services/publicdashboards/ @grafana/sharing-squad
 /pkg/services/query/ @grafana/backend-platform
 /pkg/services/queryhistory/ @grafana/backend-platform
 /pkg/services/quota/ @grafana/backend-platform
@@ -293,6 +291,7 @@
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
 /pkg/tsdb/grafana-testdata-datasource/ @grafana/plugins-platform-backend
+/pkg/tsdb/Magefile.go @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
 # Backend code docs
@@ -410,7 +409,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/storage/ @grafana/grafana-app-platform-squad
 /public/app/features/teams/ @grafana/grafana-authnz-team
 /public/app/features/templating/ @grafana/dashboards-squad
-/public/app/features/transformers/ @grafana/dataviz-squad
+/public/app/features/transformers/ @grafana/grafana-bi-squad
 /public/app/features/users/ @grafana/grafana-authnz-team
 /public/app/features/variables/ @grafana/dashboards-squad
 /public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
@@ -512,6 +511,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /scripts/verify-repo-update/ @grafana/grafana-delivery
 scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 
+/scripts/docs/generate-transformations.ts @grafana/grafana-bi-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
 .pa11yci.conf.js @grafana/grafana-frontend-platform
@@ -548,6 +548,14 @@ scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/graf
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/parca/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
+
+# Grafana Sharing Squad
+/public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
+/public/app/features/manage-dashboards/components/PublicDashboardListTable/ @grafana/sharing-squad
+/public/app/features/dashboard/containers/PublicDashboardPage.tsx @grafana/sharing-squad
+/public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
+/pkg/services/dashboardsnapshots/ @grafana/sharing-squad
+/pkg/services/publicdashboards/ @grafana/sharing-squad
 
 # SSE - Server Side Expressions
 /pkg/expr/ @grafana/observability-metrics
@@ -627,7 +635,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/metrics-collector.yml @torkelo
 /.github/workflows/milestone.yml @marefr
-/.github/workflows/ox-code-coverage.yml @grafana/explore-squad
 /.github/workflows/pr-checks.yml @marefr
 /.github/workflows/pr-codeql-analysis-go.yml @DanCech
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
@@ -653,7 +660,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-delivery
-
+/.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

@@ -20,6 +20,7 @@ import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
+import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { TempoQuery } from 'app/plugins/datasource/tempo/types';
@@ -35,6 +36,7 @@ import {
   TraceTimelineViewer,
   TTraceTimeline,
 } from './components';
+import memoizedTraceCriticalPath from './components/CriticalPath';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -64,8 +66,8 @@ type Props = {
   traceProp: Trace;
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
-  topOfViewRef: RefObject<HTMLDivElement>;
-  topOfViewRefType: TopOfViewRefType;
+  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
   createSpanLink?: SpanLinkFunc;
 };
 
@@ -99,6 +101,7 @@ export function TraceView(props: Props) {
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
+  const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(100);
 
   const styles = useStyles2(getStyles);
@@ -130,6 +133,8 @@ export function TraceView(props: Props) {
   const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData);
   const traceToMetrics: TraceToMetricsData | undefined = instanceSettings?.jsonData;
   const traceToMetricsOptions = traceToMetrics?.tracesToMetrics;
+  const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
+  const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 
   const createSpanLink = useMemo(
@@ -139,6 +144,7 @@ export function TraceView(props: Props) {
         splitOpenFn: props.splitOpenFn!,
         traceToLogsOptions,
         traceToMetricsOptions,
+        traceToProfilesOptions,
         dataFrame: props.dataFrames[0],
         createFocusSpanLink,
         trace: traceProp,
@@ -147,6 +153,7 @@ export function TraceView(props: Props) {
       props.splitOpenFn,
       traceToLogsOptions,
       traceToMetricsOptions,
+      traceToProfilesOptions,
       props.dataFrames,
       createFocusSpanLink,
       traceProp,
@@ -158,6 +165,8 @@ export function TraceView(props: Props) {
   const scrollElement = props.scrollElement
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
+
+  const criticalPath = memoizedTraceCriticalPath(traceProp);
 
   return (
     <>
@@ -173,6 +182,8 @@ export function TraceView(props: Props) {
             setShowSpanFilters={setShowSpanFilters}
             showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
             setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
+            showCriticalPathSpansOnly={showCriticalPathSpansOnly}
+            setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
             setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             spanFilterMatches={spanFilterMatches}
             datasourceType={datasourceType}
@@ -218,10 +229,12 @@ export function TraceView(props: Props) {
             focusedSpanId={focusedSpanId}
             focusedSpanIdForSearch={focusedSpanIdForSearch}
             showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+            showCriticalPathSpansOnly={showCriticalPathSpansOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}
             headerHeight={headerHeight}
+            criticalPath={criticalPath}
           />
         </>
       ) : (
