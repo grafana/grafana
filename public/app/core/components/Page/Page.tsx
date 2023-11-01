@@ -54,7 +54,7 @@ export const Page: PageType = ({
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.pageInner}>
+          <div className={cx(styles.pageInner, config.featureToggles.dockedMegaMenu && styles.newPageInner)}>
             {pageHeaderNav && (
               <PageHeader
                 actions={actions}
@@ -99,8 +99,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageInner: css({
       label: 'page-inner',
       padding: theme.spacing(2),
-      borderRadius: theme.shape.radius.default,
-      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default, // removed by dockedMegaMenu toggle
+      border: `1px solid ${theme.colors.border.weak}`, // removed by dockedMegaMenu toggle
       borderBottom: 'none',
       background: theme.colors.background.primary,
       display: 'flex',
@@ -109,10 +109,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: theme.spacing(0, 0, 0, 0),
 
       [theme.breakpoints.up('md')]: {
-        margin: theme.spacing(2, 2, 0, config.featureToggles.dockedMegaMenu ? 2 : 1),
-        padding: theme.spacing(3),
+        margin: theme.spacing(2, 2, 0, config.featureToggles.dockedMegaMenu ? 2 : 1), // removed by dockedMegaMenu toggle
+        padding: theme.spacing(3), // changed by dockedMegaMenu toggle
       },
     }),
+
+    // Only applied when the dockedMegaMenu feature toggle is enabled
+    newPageInner: css({
+      borderRadius: 0,
+      border: 'none',
+
+      [theme.breakpoints.up('md')]: {
+        margin: 0,
+        padding: theme.spacing(4),
+      },
+    }),
+
     canvasContent: css({
       label: 'canvas-content',
       display: 'flex',
