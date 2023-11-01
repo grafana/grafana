@@ -89,8 +89,6 @@ describe('timeSeriesTableTransformer', () => {
       series
     );
 
-    // console.log(results);
-
     expect(results[0].fields[2].values[0].value).toEqual(3);
     expect(results[1].fields[2].values[0].value).toEqual(4);
   });
