@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"path"
 	"strconv"
 
@@ -35,7 +36,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type StorageType string
@@ -86,6 +86,13 @@ type RestConfigProvider interface {
 	GetRestConfig() *clientrest.Config
 }
 
+type DirectRestConfigProvider interface {
+	// GetDirectRestConfig returns a k8s client configuration that will use the same
+	// logged logged in user as the current request context.  This is useful when
+	// creating clients that map legacy API handlers to k8s backed services
+	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
+}
+
 type service struct {
 	*services.BasicService
 
@@ -96,7 +103,7 @@ type service struct {
 	stoppedCh chan error
 
 	rr       routing.RouteRegister
-	handler  web.Handler
+	handler  http.Handler
 	builders []APIGroupBuilder
 
 	tracing *tracing.TracingService
@@ -133,10 +140,24 @@ func ProvideService(
 				return
 			}
 
-			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
-				handle(c)
-				return
+			req := c.Req
+			if req.URL.Path == "" {
+				req.URL.Path = "/"
 			}
+
+			//TODO: add support for the existing MetricsEndpointBasicAuth config option
+			if req.URL.Path == "/apiserver-metrics" {
+				req.URL.Path = "/metrics"
+			}
+
+			ctx := req.Context()
+			signedInUser := appcontext.MustUser(ctx)
+
+			req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
+			req.Header.Set("X-Remote-Group", "grafana")
+
+			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
+			s.handler.ServeHTTP(resp, req)
 		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
@@ -301,27 +322,8 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	// TODO: this is a hack. see note in ProvideService
-	s.handler = func(c *contextmodel.ReqContext) {
-		req := c.Req
-		if req.URL.Path == "" {
-			req.URL.Path = "/"
-		}
-
-		//TODO: add support for the existing MetricsEndpointBasicAuth config option
-		if req.URL.Path == "/apiserver-metrics" {
-			req.URL.Path = "/metrics"
-		}
-
-		ctx := req.Context()
-		signedInUser := appcontext.MustUser(ctx)
-
-		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
-		req.Header.Set("X-Remote-Group", "grafana")
-
-		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-		server.Handler.ServeHTTP(resp, req)
-	}
+	// Used by the proxy wrapper registered in ProvideService
+	s.handler = server.Handler
 
 	// skip starting the server in prod mode
 	if !s.config.devMode {
@@ -333,6 +335,19 @@ func (s *service) start(ctx context.Context) error {
 		s.stoppedCh <- prepared.Run(s.stopCh)
 	}()
 	return nil
+}
+
+func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
+	return &clientrest.Config{
+		Transport: &roundTripperFunc{
+			fn: func(req *http.Request) (*http.Response, error) {
+				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+				w := httptest.NewRecorder()
+				s.handler.ServeHTTP(w, req.WithContext(ctx))
+				return w.Result(), nil
+			},
+		},
+	}
 }
 
 func (s *service) running(ctx context.Context) error {
@@ -382,4 +397,12 @@ func (s *service) ensureKubeConfig() error {
 	}
 
 	return clientcmd.WriteToFile(clientConfig, path.Join(s.config.dataPath, "grafana.kubeconfig"))
+}
+
+type roundTripperFunc struct {
+	fn func(req *http.Request) (*http.Response, error)
+}
+
+func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f.fn(req)
 }

@@ -11,6 +11,7 @@ import { SeriesTable } from '../../VizTooltip';
 
 import { GraphTooltipContentProps } from './types';
 
+/** @deprecated */
 export const SingleModeGraphTooltip = ({ dimensions, activeDimensions, timeZone }: GraphTooltipContentProps) => {
   // not hovering over a point, skip rendering
   if (
