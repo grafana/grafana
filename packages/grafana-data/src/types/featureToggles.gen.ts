@@ -156,4 +156,5 @@ export interface FeatureToggles {
   alertmanagerRemotePrimary?: boolean;
   alertmanagerRemoteOnly?: boolean;
   annotationPermissionUpdate?: boolean;
+  extractFieldsNameDeduplication?: boolean;
 }

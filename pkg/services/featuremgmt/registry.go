@@ -966,5 +966,12 @@ var (
 			RequiresDevMode: false,
 			Owner:           grafanaAuthnzSquad,
 		},
+		{
+			Name:         "extractFieldsNameDeduplication",
+			Description:  "Make sure extracted field names are unique in the dataframe",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )

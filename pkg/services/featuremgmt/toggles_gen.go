@@ -558,4 +558,8 @@ const (
 	// FlagAnnotationPermissionUpdate
 	// Separate annotation permissions from dashboard permissions to allow for more granular control.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
+
+	// FlagExtractFieldsNameDeduplication
+	// Make sure extracted field names are unique in the dataframe
+	FlagExtractFieldsNameDeduplication = "extractFieldsNameDeduplication"
 )
