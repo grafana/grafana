@@ -88,6 +88,8 @@ composableKinds: PanelCfg: {
 					inlineEditing: bool | *true
 					// Show all available element types
 					showAdvancedTypes: bool | *true
+					// Display mini map during zoom
+					displayMiniMap: bool | *true
 					// The root element of canvas (frame), where all canvas elements are nested
 					// TODO: Figure out how to define a default value for this
 					root: {

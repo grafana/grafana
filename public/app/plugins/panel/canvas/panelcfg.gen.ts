@@ -103,6 +103,10 @@ export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
 
 export interface Options {
   /**
+   * Display mini map during zoom
+   */
+  displayMiniMap: boolean;
+  /**
    * Enable inline editing
    */
   inlineEditing: boolean;
@@ -131,6 +135,7 @@ export interface Options {
 }
 
 export const defaultOptions: Partial<Options> = {
+  displayMiniMap: true,
   inlineEditing: true,
   showAdvancedTypes: true,
 };

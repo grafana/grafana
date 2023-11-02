@@ -68,6 +68,7 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
+  shouldDisplayMiniMap?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
@@ -104,10 +105,11 @@ export class Scene {
     cfg: CanvasFrameOptions,
     enableEditing: boolean,
     showAdvancedTypes: boolean,
+    displayMiniMap: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, displayMiniMap);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -140,7 +142,7 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean) {
+  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean, displayMiniMap: boolean) {
     this.root = new RootElement(
       cfg ?? {
         type: 'frame',
@@ -152,6 +154,7 @@ export class Scene {
 
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
+    this.shouldDisplayMiniMap = displayMiniMap;
 
     setTimeout(() => {
       if (this.div) {
@@ -730,9 +733,11 @@ export class Scene {
             right: '0px',
           }}
         >
-          <MiniMap width={200} borderColor={config.theme2.colors.border.weak}>
-            {element}
-          </MiniMap>
+          {this.shouldDisplayMiniMap && (
+            <MiniMap width={200} borderColor={config.theme2.colors.border.weak}>
+              {element}
+            </MiniMap>
+          )}
         </div>
         <TransformComponent>{element}</TransformComponent>
       </TransformWrapper>

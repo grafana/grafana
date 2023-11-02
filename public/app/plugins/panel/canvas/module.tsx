@@ -22,6 +22,13 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     description: 'Enable selection of experimental element types',
     defaultValue: true,
   });
+
+  builder.addBooleanSwitch({
+    path: 'displayMiniMap',
+    name: 'Mini Map',
+    description: 'Display mini map during zoom',
+    defaultValue: true,
+  });
 };
 
 export const plugin = new PanelPlugin<Options>(CanvasPanel)
