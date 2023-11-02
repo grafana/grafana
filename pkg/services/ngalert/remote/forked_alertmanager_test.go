@@ -187,6 +187,20 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		_, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.ErrorIs(tt, testErr, err)
 	})
+
+	t.Run("TestTemplate", func(tt *testing.T) {
+		// TestTemplate should be called only in the internal Alertmanager.
+		internal, _, forked := genTestAlertmanagers(tt, ModeRemoteSecondary)
+		internal.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, nil).Once()
+		_, err := forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
+		require.NoError(tt, err)
+
+		// If there's an error in the internal Alertmanager, it should be returned.
+		internal, _, forked = genTestAlertmanagers(tt, ModeRemoteSecondary)
+		internal.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, testErr).Once()
+		_, err = forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
+		require.ErrorIs(tt, testErr, err)
+	})
 }
 
 func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
@@ -377,6 +391,20 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		_, remote, forked = genTestAlertmanagers(tt, ModeRemotePrimary)
 		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, testErr).Once()
 		_, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
+		require.ErrorIs(tt, testErr, err)
+	})
+
+	t.Run("TestTemplate", func(tt *testing.T) {
+		// TestTemplate should be called only in the remote Alertmanager.
+		_, remote, forked := genTestAlertmanagers(tt, ModeRemotePrimary)
+		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, nil).Once()
+		_, err := forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
+		require.NoError(tt, err)
+
+		// If there's an error in the remote Alertmanager, it should be returned.
+		_, remote, forked = genTestAlertmanagers(tt, ModeRemotePrimary)
+		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, testErr).Once()
+		_, err = forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.ErrorIs(tt, testErr, err)
 	})
 }

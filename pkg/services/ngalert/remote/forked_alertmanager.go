@@ -119,7 +119,11 @@ func (fam *ForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.Te
 }
 
 func (fam *ForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	// TODO: not implemented in Cloud AM
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.TestTemplate(ctx, c)
+	}
+	return fam.internal.TestTemplate(ctx, c)
 }
 
 func (fam *ForkedAlertmanager) CleanUp() {}
