@@ -18,9 +18,10 @@ const (
 )
 
 type forkedAlertmanager struct {
-	log        log.Logger
-	internal   notifier.Alertmanager
-	remote     notifier.Alertmanager
+	log      log.Logger
+	internal notifier.Alertmanager
+	remote   notifier.Alertmanager
+	// TODO: send always on remote secondary?
 	configSent bool
 	mode       Mode
 }
@@ -37,8 +38,8 @@ func NewForkedAlertmanager(internal, remote notifier.Alertmanager, m Mode) *fork
 // Note: this is called on startup and on sync.
 // TODO: send state?
 func (fam *forkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	if fam.mode == ModeRemoteSecondary && !fam.configSent {
-		// If we're in Remote Secondary mode we just send the config on startup.
+	// If we're in Remote Secondary mode we just send the config on startup.
+	if fam.mode == ModeRemotePrimary || (fam.mode == ModeRemoteSecondary && !fam.configSent) {
 		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 			return err
 		}
@@ -149,12 +150,18 @@ func (fam *forkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Re
 }
 
 func (fam *forkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	// TODO: not implmented in Cloud AM
+	// TODO: not implemented in Cloud AM
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.TestReceivers(ctx, c)
+	}
 	return fam.internal.TestReceivers(ctx, c)
 }
 
 func (fam *forkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	// TODO: not implmented in Cloud AM
+	// TODO: not implemented in Cloud AM
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.TestTemplate(ctx, c)
+	}
 	return fam.internal.TestTemplate(ctx, c)
 }
 
