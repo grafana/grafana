@@ -77,10 +77,12 @@ const ServiceAccountListItem = memo(
                 userId={serviceAccount.id}
                 orgId={serviceAccount.orgId}
                 basicRole={serviceAccount.role}
+                roles={serviceAccount.roles || []}
                 onBasicRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
                 basicRoleDisabled={!canUpdateRole}
                 disabled={serviceAccount.isDisabled}
+                width={40}
               />
             )}
           </td>

@@ -68,7 +68,7 @@ export const TimeRangeInput = ({
     onChange(timeRange);
   };
 
-  const onRangeClear = (event: MouseEvent<HTMLDivElement>) => {
+  const onRangeClear = (event: MouseEvent<SVGElement>) => {
     event.stopPropagation();
     const from = dateTime(null);
     const to = dateTime(null);

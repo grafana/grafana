@@ -58,6 +58,72 @@ describe('ContactPoints', () => {
       expect(screen.getByText('grafana-default-email')).toBeInTheDocument();
       expect(screen.getAllByTestId('contact-point')).toHaveLength(4);
     });
+
+    it('should call delete when clicked and not disabled', async () => {
+      const onDelete = jest.fn();
+
+      render(<ContactPoint name={'my-contact-point'} receivers={[]} onDelete={onDelete} />, {
+        wrapper,
+      });
+
+      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      await userEvent.click(moreActions);
+
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      await userEvent.click(deleteButton);
+
+      expect(onDelete).toHaveBeenCalledWith('my-contact-point');
+    });
+
+    it('should disable edit button', async () => {
+      render(<ContactPoint name={'my-contact-point'} disabled={true} receivers={[]} onDelete={noop} />, {
+        wrapper,
+      });
+
+      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      expect(moreActions).not.toBeDisabled();
+
+      const editAction = screen.getByTestId('edit-action');
+      expect(editAction).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('should disable buttons when provisioned', async () => {
+      render(<ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} onDelete={noop} />, {
+        wrapper,
+      });
+
+      expect(screen.getByText(/provisioned/i)).toBeInTheDocument();
+
+      const editAction = screen.queryByTestId('edit-action');
+      expect(editAction).not.toBeInTheDocument();
+
+      const viewAction = screen.getByRole('link', { name: /view/i });
+      expect(viewAction).toBeInTheDocument();
+
+      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      expect(moreActions).not.toBeDisabled();
+      await userEvent.click(moreActions);
+
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      expect(deleteButton).toBeDisabled();
+    });
+
+    it('should disable delete when contact point is linked to at least one notification policy', async () => {
+      render(
+        <ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} policies={1} onDelete={noop} />,
+        {
+          wrapper,
+        }
+      );
+
+      expect(screen.getByRole('link', { name: 'is used by 1 notification policy' })).toBeInTheDocument();
+
+      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      await userEvent.click(moreActions);
+
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      expect(deleteButton).toBeDisabled();
+    });
   });
 
   describe('Mimir-flavored alertmanager', () => {
@@ -95,71 +161,6 @@ describe('ContactPoints', () => {
       expect(screen.getByText('some webhook')).toBeInTheDocument();
       expect(screen.getAllByTestId('contact-point')).toHaveLength(2);
     });
-  });
-});
-
-describe('ContactPoint', () => {
-  it('should call delete when clicked and not disabled', async () => {
-    const onDelete = jest.fn();
-
-    render(<ContactPoint name={'my-contact-point'} receivers={[]} onDelete={onDelete} />, {
-      wrapper,
-    });
-
-    const moreActions = screen.getByRole('button', { name: 'more-actions' });
-    await userEvent.click(moreActions);
-
-    const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
-    await userEvent.click(deleteButton);
-
-    expect(onDelete).toHaveBeenCalledWith('my-contact-point');
-  });
-
-  it('should disable edit button', async () => {
-    render(<ContactPoint name={'my-contact-point'} disabled={true} receivers={[]} onDelete={noop} />, {
-      wrapper,
-    });
-
-    const moreActions = screen.getByRole('button', { name: 'more-actions' });
-    expect(moreActions).not.toBeDisabled();
-
-    const editAction = screen.getByTestId('edit-action');
-    expect(editAction).toHaveAttribute('aria-disabled', 'true');
-  });
-
-  it('should disable buttons when provisioned', async () => {
-    render(<ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} onDelete={noop} />, {
-      wrapper,
-    });
-
-    expect(screen.getByText(/provisioned/i)).toBeInTheDocument();
-
-    const editAction = screen.queryByTestId('edit-action');
-    expect(editAction).not.toBeInTheDocument();
-
-    const viewAction = screen.getByRole('link', { name: /view/i });
-    expect(viewAction).toBeInTheDocument();
-
-    const moreActions = screen.getByRole('button', { name: 'more-actions' });
-    expect(moreActions).not.toBeDisabled();
-    await userEvent.click(moreActions);
-
-    const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
-    expect(deleteButton).toBeDisabled();
-  });
-
-  it('should disable delete when contact point is linked to at least one notification policy', async () => {
-    render(<ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} policies={1} onDelete={noop} />, {
-      wrapper,
-    });
-
-    expect(screen.getByRole('link', { name: 'is used by 1 notification policy' })).toBeInTheDocument();
-
-    const moreActions = screen.getByRole('button', { name: 'more-actions' });
-    await userEvent.click(moreActions);
-
-    const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
-    expect(deleteButton).toBeDisabled();
   });
 });
 

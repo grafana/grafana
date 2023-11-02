@@ -46,7 +46,7 @@ func TestOAuth2ServiceImpl_GetPublicKeyScopes(t *testing.T) {
 		{
 			name: "should error out when GetExternalService returns error",
 			initTestEnv: func(env *TestEnv) {
-				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound("my-ext-service"))
+				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFoundFn("my-ext-service"))
 			},
 			wantErr: true,
 		},

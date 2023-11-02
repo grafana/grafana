@@ -103,7 +103,11 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 
 	if s.features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
 		configNodes = append(configNodes, &navtree.NavLink{
-			Text: "Feature Toggles", SubTitle: "View and edit feature toggles", Id: "feature-toggles", Url: s.cfg.AppSubURL + "/admin/featuretoggles", Icon: "toggle-on",
+			Text:     "Feature Toggles",
+			SubTitle: "View and edit feature toggles",
+			Id:       "feature-toggles",
+			Url:      s.cfg.AppSubURL + "/admin/featuretoggles",
+			Icon:     "toggle-on",
 		})
 	}
 

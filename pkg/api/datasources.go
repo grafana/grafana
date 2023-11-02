@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -351,26 +352,62 @@ func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setti
 
 	// Prevent adding a data source team header with a name that matches the auth proxy header name
 	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
+		err := validateTeamHTTPHeaderJSON(jsonData)
 		if err != nil {
-			datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
-			return errors.New("validation error, invalid format of TeamHTTPHeaders")
-		}
-		// whitelisting X-Prom-Label-Policy
-		for _, headers := range teamHTTPHeadersJSON {
-			for _, header := range headers {
-				// TODO: currently we only allow for X-Prom-Label-Policy header to be used by our proxy
-				for _, name := range []string{"X-Prom-Label-Policy"} {
-					if http.CanonicalHeaderKey(header.Header) != http.CanonicalHeaderKey(name) {
-						datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", name)
-						return errors.New("validation error, invalid header name specified")
-					}
-				}
-			}
+			return err
 		}
 	}
 
 	return nil
+}
+
+// we only allow for now the following headers to be added to a data source team header
+var validHeaders = []string{"X-Prom-Label-Policy"}
+
+func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
+	teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
+	if err != nil {
+		datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
+		return errors.New("validation error, invalid format of TeamHTTPHeaders")
+	}
+	// whitelisting ValidHeaders
+	// each teams headers
+	for _, teamheaders := range teamHTTPHeadersJSON {
+		for _, header := range teamheaders {
+			if !contains(validHeaders, header.Header) {
+				datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", header.Header)
+				return errors.New("validation error, invalid header name specified")
+			}
+			if !teamHTTPHeaderValueRegexMatch(header.Value) {
+				datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
+				return errors.New("validation error, invalid header value syntax")
+			}
+		}
+	}
+	return nil
+}
+
+func contains(slice []string, value string) bool {
+	for _, v := range slice {
+		if http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(value) {
+			return true
+		}
+	}
+	return false
+}
+
+// teamHTTPHeaderValueRegexMatch returns true if the header value matches the regex
+// words separated by special characters
+// namespace!="auth", env="prod", env!~"dev"
+func teamHTTPHeaderValueRegexMatch(headervalue string) bool {
+	// link to regex: https://regex101.com/r/I8KhZz/1
+	// 1234:{ name!="value",foo!~"bar" }
+	exp := `^\d+:{(?:\s*\w+\s*(?:=|!=|=~|!~)\s*\"\w+\"\s*,*)+}$`
+	reg, err := regexp.Compile(exp)
+	if err != nil {
+		return false
+	}
+	return reg.Match([]byte(strings.TrimSpace(headervalue)))
 }
 
 // swagger:route POST /datasources datasources addDataSource
