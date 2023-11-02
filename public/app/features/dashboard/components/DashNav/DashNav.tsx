@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { locationService,  reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import {
   ButtonGroup,
   ModalsController,
@@ -122,6 +122,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const onStarDashboard = () => {
+    reportInteraction('dashboards_toolbar_actions_clicked', { item: 'favorites' });
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
 
