@@ -63,7 +63,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
     <li ref={item} className={styles.listItem}>
       <div
         className={cx(styles.menuItem, {
-          [styles.hasIcon]: Boolean(level === 0 && link.icon),
+          [styles.menuItemWithIcon]: Boolean(level === 0 && link.icon),
         })}
       >
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
@@ -93,6 +93,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
             <div
               className={cx(styles.labelWrapper, {
                 [styles.hasActiveChild]: hasActiveChild,
+                [styles.labelWrapperWithIcon]: Boolean(level === 0 && link.icon),
               })}
             >
               {level === 0 && link.icon && (
@@ -141,8 +142,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     height: theme.spacing(4),
-    paddingLeft: theme.spacing(1),
+    paddingLeft: theme.spacing(0.5),
     position: 'relative',
+  }),
+  menuItemWithIcon: css({
+    paddingLeft: theme.spacing(0),
   }),
   collapseButtonWrapper: css({
     display: 'flex',
@@ -178,9 +182,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(2),
     minWidth: 0,
+    paddingLeft: theme.spacing(1),
   }),
-  hasIcon: css({
-    paddingLeft: theme.spacing(0),
+  labelWrapperWithIcon: css({
+    paddingLeft: theme.spacing(0.5),
   }),
   hasActiveChild: css({
     color: theme.colors.text.primary,

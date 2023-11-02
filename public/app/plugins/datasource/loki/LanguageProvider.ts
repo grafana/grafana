@@ -4,7 +4,7 @@ import Prism from 'prismjs';
 import { LanguageProvider, AbstractQuery, KeyValue } from '@grafana/data';
 import { extractLabelMatchers, processLabels, toPromLikeExpr } from 'app/plugins/datasource/prometheus/language_utils';
 
-import { LokiDatasource } from './datasource';
+import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import {
   extractLabelKeysFromDataFrame,
   extractLogParserFromDataFrame,
@@ -97,20 +97,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Wrapper method over fetchSeriesLabels to retrieve series labels and handle errors.
-   * @todo remove this in favor of fetchSeriesLabels as we already in this.request do the same thing
-   */
-  async getSeriesLabels(selector: string) {
-    try {
-      return await this.fetchSeriesLabels(selector);
-    } catch (error) {
-      // TODO: better error handling
-      console.error(error);
-      return undefined;
-    }
-  }
-
-  /**
    * Fetch all label keys
    * This asynchronous function returns all available label keys from the data source.
    * It returns a promise that resolves to an array of strings containing the label keys.
@@ -187,13 +173,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * @todo remove this in favor of fetchLabelValues as it is the same thing
-   */
-  async getLabelValues(key: string): Promise<string[]> {
-    return await this.fetchLabelValues(key);
-  }
-
-  /**
    * Fetch label values
    *
    * This asynchronous function fetches values associated with a specified label name.
@@ -251,11 +230,21 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * - `unwrapLabelKeys`: An array of label keys that can be used for unwrapping log data.
    *
    * @param streamSelector - The selector for the log stream you want to analyze.
+   * @param {Object} [options] - Optional parameters.
+   * @param {number} [options.maxLines] - The number of log lines requested when determining parsers and label keys.
+   * Smaller maxLines is recommended for improved query performance. The default count is 10.
    * @returns A promise containing an object with parser and label key information.
    * @throws An error if the fetch operation fails.
    */
-  async getParserAndLabelKeys(streamSelector: string): Promise<ParserAndLabelKeysResult> {
-    const series = await this.datasource.getDataSamples({ expr: streamSelector, refId: 'data-samples' });
+  async getParserAndLabelKeys(
+    streamSelector: string,
+    options?: { maxLines?: number }
+  ): Promise<ParserAndLabelKeysResult> {
+    const series = await this.datasource.getDataSamples({
+      expr: streamSelector,
+      refId: 'data-samples',
+      maxLines: options?.maxLines || DEFAULT_MAX_LINES_SAMPLE,
+    });
 
     if (!series.length) {
       return { extractedLabelKeys: [], unwrapLabelKeys: [], hasJSON: false, hasLogfmt: false, hasPack: false };
