@@ -147,7 +147,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	folderUID := ""
-	if cmd.FolderUID != nil {
+	if cmd.FolderUID != nil && *cmd.FolderUID != "" {
 		folderUID = *cmd.FolderUID
 	}
 	element := model.LibraryElement{
@@ -578,10 +578,15 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 			}
 		}
 
+		folderUID := ""
+		if cmd.FolderUID != nil && *cmd.FolderUID != "" {
+			folderUID = *cmd.FolderUID
+		}
 		var libraryElement = model.LibraryElement{
 			ID:          elementInDB.ID,
 			OrgID:       signedInUser.GetOrgID(),
 			FolderID:    cmd.FolderID, // nolint:staticcheck
+			FolderUID:   folderUID,
 			UID:         updateUID,
 			Name:        cmd.Name,
 			Kind:        elementInDB.Kind,
@@ -721,6 +726,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 				ID:          element.ID,
 				OrgID:       element.OrgID,
 				FolderID:    element.FolderID, // nolint:staticcheck
+				FolderUID:   element.FolderUID,
 				UID:         element.UID,
 				Name:        element.Name,
 				Kind:        element.Kind,
