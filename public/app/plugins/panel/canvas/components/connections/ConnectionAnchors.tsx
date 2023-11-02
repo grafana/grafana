@@ -83,6 +83,7 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
       const style = {
         top: `calc(${-anchor.y * 50 + 50}% - ${halfSize}px - ${ANCHOR_PADDING}px)`,
         left: `calc(${anchor.x * 50 + 50}% - ${halfSize}px - ${ANCHOR_PADDING}px)`,
+        'pointer-events': 'auto !important',
       };
 
       return (
@@ -131,7 +132,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
     height: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
     zIndex: 100,
-    pointerEvents: 'auto',
   }),
   highlightElement: css({
     backgroundColor: '#00ff00',
