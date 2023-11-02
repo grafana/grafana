@@ -146,14 +146,19 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		}
 	}
 
+	folderUID := ""
+	if cmd.FolderUID != nil {
+		folderUID = *cmd.FolderUID
+	}
 	element := model.LibraryElement{
-		OrgID:    signedInUser.GetOrgID(),
-		FolderID: cmd.FolderID, // nolint:staticcheck
-		UID:      createUID,
-		Name:     cmd.Name,
-		Model:    updatedModel,
-		Version:  1,
-		Kind:     cmd.Kind,
+		OrgID:     signedInUser.GetOrgID(),
+		FolderID:  cmd.FolderID, // nolint:staticcheck
+		FolderUID: folderUID,
+		UID:       createUID,
+		Name:      cmd.Name,
+		Model:     updatedModel,
+		Version:   1,
+		Kind:      cmd.Kind,
 
 		Created: time.Now(),
 		Updated: time.Now(),
