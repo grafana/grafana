@@ -28,7 +28,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"k8s":                           true, // Camel case does not like this one
 	}
 
-	t.Run("check registry constraints", func(t *testing.T) {
+	t.Run("dummy test", func(t *testing.T) {
 		for _, flag := range standardFeatureFlags {
 			if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
 				t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
