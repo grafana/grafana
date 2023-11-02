@@ -1050,7 +1050,6 @@
       "cancel-button": "Cancelar",
       "info-text": "Exporte este panel de control.",
       "save-button": "Guardar en archivo",
-      "share-default-label": "Exportar con los valores predeterminados eliminados",
       "share-externally-label": "Exportar para compartir externamente",
       "view-button": "Ver JSON"
     },

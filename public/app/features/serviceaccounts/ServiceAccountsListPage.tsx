@@ -12,8 +12,8 @@ import {
   useStyles2,
   InlineField,
   Pagination,
+  Stack,
 } from '@grafana/ui';
-import { Stack } from '@grafana/ui/src/unstable';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
