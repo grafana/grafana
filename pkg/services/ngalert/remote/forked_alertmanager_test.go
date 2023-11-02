@@ -13,12 +13,10 @@ import (
 func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	ctx := context.Background()
 	t.Run("ApplyConfig", func(tt *testing.T) {
-		// ApplyConfig should be called in both Alertmanagers the first time it runs.
-		// The second time it should only be called in the internal Alertmanager.
+		// ApplyConfig should be called in both Alertmanagers.
 		internal, remote, forked := genTestAlertmanagers(tt, ModeRemoteSecondary)
 		remote.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Once()
-		internal.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Twice()
-		require.NoError(tt, forked.ApplyConfig(ctx, nil))
+		internal.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Once()
 		require.NoError(tt, forked.ApplyConfig(ctx, nil))
 	})
 
@@ -202,9 +200,8 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	t.Run("ApplyConfig", func(tt *testing.T) {
 		// ApplyConfig should be called in both Alertmanagers.
 		internal, remote, forked := genTestAlertmanagers(tt, ModeRemotePrimary)
-		remote.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Twice()
-		internal.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Twice()
-		require.NoError(tt, forked.ApplyConfig(ctx, nil))
+		remote.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Once()
+		internal.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Once()
 		require.NoError(tt, forked.ApplyConfig(ctx, nil))
 	})
 

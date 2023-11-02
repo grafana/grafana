@@ -21,9 +21,7 @@ type forkedAlertmanager struct {
 	log      log.Logger
 	internal notifier.Alertmanager
 	remote   notifier.Alertmanager
-	// TODO: send always on remote secondary?
-	configSent bool
-	mode       Mode
+	mode     Mode
 }
 
 func NewForkedAlertmanager(internal, remote notifier.Alertmanager, m Mode) *forkedAlertmanager {
@@ -38,14 +36,8 @@ func NewForkedAlertmanager(internal, remote notifier.Alertmanager, m Mode) *fork
 // Note: this is called on startup and on sync.
 // TODO: send state?
 func (fam *forkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	// If we're in Remote Secondary mode we just send the config on startup.
-	if fam.mode == ModeRemotePrimary || (fam.mode == ModeRemoteSecondary && !fam.configSent) {
-		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
-			return err
-		}
-		fam.configSent = true
-	} else {
-		fam.log.Debug("Configuration already sent to the remote Alertmanager on startup")
+	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+		return err
 	}
 
 	return fam.internal.ApplyConfig(ctx, config)
