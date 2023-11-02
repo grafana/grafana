@@ -882,7 +882,6 @@
   "panel": {
     "header-menu": {
       "copy": "Kopieren",
-      "create-alert": "",
       "create-library-panel": "Bibliotheksleiste erstellen",
       "duplicate": "Duplikat",
       "edit": "Bearbeiten",
@@ -893,6 +892,7 @@
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
+      "new-alert-rule": "Neue Warnregel",
       "query": "Abfrage",
       "remove": "Entfernen",
       "share": "Teilen",
