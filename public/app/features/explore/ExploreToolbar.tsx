@@ -109,7 +109,7 @@ export function ExploreToolbar({
     if (!isCorrelationsEditorMode) {
       dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
     } else {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // prompt will handle datasource change if needed
         dispatch(
           changeCorrelationEditorDetails({
@@ -118,6 +118,7 @@ export function ExploreToolbar({
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
               changeDatasourceUid: dsSettings.uid,
+              isActionLeft: isLeftPane,
             },
           })
         );
@@ -156,7 +157,7 @@ export function ExploreToolbar({
 
   const onCloseSplitView = () => {
     if (isCorrelationsEditorMode) {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // if dirty, prompt
         dispatch(
           changeCorrelationEditorDetails({
@@ -164,6 +165,7 @@ export function ExploreToolbar({
             postConfirmAction: {
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
+              isActionLeft: isLeftPane,
             },
           })
         );
