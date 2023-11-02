@@ -43,4 +43,10 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
       },
     };
   }
+
+  getArgCheatsheetQueries() {
+    return this.getResource(
+      'resourcegraph/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resources?api-version=2020-06-01'
+    );
+  }
 }

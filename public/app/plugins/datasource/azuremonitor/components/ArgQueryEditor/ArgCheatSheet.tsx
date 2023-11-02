@@ -56,28 +56,28 @@ const ArgCheatSheet = (props: ArgCheatSheetProps) => {
   const getCheatsheetQueries = async () => {
     await props.datasource.getArgCheatsheetQueries().then((result) => {
       console.log('result', result);
-      // result.categories.sort((a: Category, b: Category) => {
-      //   return a.displayName.toLowerCase() === b.displayName.toLowerCase()
-      //     ? 0
-      //     : a.displayName.toLowerCase() < b.displayName.toLowerCase()
-      //     ? -1
-      //     : 1;
-      // });
-      // const alphabetizedQueries = result.categories.reduce(
-      //   (queriesByCategory: CheatsheetQueries, category: Category) => {
-      //     const categoryQueries = category.related.queries.map((queryId: string) => {
-      //       return result.queries.find((query: CheatsheetQuery) => query.id === queryId);
-      //     });
-      //     queriesByCategory[category.displayName] = categoryQueries;
-      //     setAreDropdownsOpen({ ...areDropdownsOpen, [category.id]: false });
-      //     return queriesByCategory;
-      //   },
-      //   {}
-      // );
-      // setCheatsheetQueries(alphabetizedQueries);
-      // setVisibleQueries(alphabetizedQueries);
-      // setIsLoading(false);
-      // return alphabetizedQueries;
+      result.categories.sort((a: Category, b: Category) => {
+        return a.displayName.toLowerCase() === b.displayName.toLowerCase()
+          ? 0
+          : a.displayName.toLowerCase() < b.displayName.toLowerCase()
+          ? -1
+          : 1;
+      });
+      const alphabetizedQueries = result.categories.reduce(
+        (queriesByCategory: CheatsheetQueries, category: Category) => {
+          const categoryQueries = category.related.queries.map((queryId: string) => {
+            return result.queries.find((query: CheatsheetQuery) => query.id === queryId);
+          });
+          queriesByCategory[category.displayName] = categoryQueries;
+          setAreDropdownsOpen({ ...areDropdownsOpen, [category.id]: false });
+          return queriesByCategory;
+        },
+        {}
+      );
+      setCheatsheetQueries(alphabetizedQueries);
+      setVisibleQueries(alphabetizedQueries);
+      setIsLoading(false);
+      return alphabetizedQueries;
     });
   };
 

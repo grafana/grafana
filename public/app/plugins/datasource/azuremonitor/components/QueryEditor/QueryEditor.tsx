@@ -16,8 +16,9 @@ import {
 } from '../../types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
+import { ArgCheatSheetModal } from '../ArgQueryEditor/ArgCheatSheetModal';
 import LogsQueryEditor from '../LogsQueryEditor';
-import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
+import { LogsCheatSheetModal } from '../LogsQueryEditor/LogsCheatSheetModal';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
 import { QueryHeader } from '../QueryHeader';
 import { Space } from '../Space';
@@ -41,7 +42,8 @@ const QueryEditor = ({
 }: AzureMonitorQueryEditorProps) => {
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
-  const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
+  const [logsCheatSheetModalOpen, setLogsCheatSheetModalOpen] = useState(false);
+  const [argCheatSheetModalOpen, setArgCheatSheetModalOpen] = useState(false);
 
   const onQueryChange = useCallback(
     (newQuery: AzureMonitorQuery) => {
@@ -61,11 +63,17 @@ const QueryEditor = ({
 
   return (
     <div data-testid="azure-monitor-query-editor">
-      <AzureCheatSheetModal
+      <LogsCheatSheetModal
         datasource={datasource.azureLogAnalyticsDatasource}
-        isOpen={azureLogsCheatSheetModalOpen}
-        onClose={() => setAzureLogsCheatSheetModalOpen(false)}
+        isOpen={logsCheatSheetModalOpen}
+        onClose={() => setLogsCheatSheetModalOpen(false)}
         onChange={(a) => onChange({ ...a, queryType: AzureQueryType.LogAnalytics })}
+      />
+      <ArgCheatSheetModal
+        datasource={datasource.azureResourceGraphDatasource}
+        isOpen={argCheatSheetModalOpen}
+        onClose={() => setArgCheatSheetModalOpen(false)}
+        onChange={(a) => onChange({ ...a, queryType: AzureQueryType.AzureResourceGraph })}
       />
       <div className={css({ display: 'flex', alignItems: 'center' })}>
         <QueryHeader query={query} onQueryChange={onQueryChange} />
@@ -75,11 +83,28 @@ const QueryEditor = ({
             variant="secondary"
             size="sm"
             onClick={() => {
-              setAzureLogsCheatSheetModalOpen((prevValue) => !prevValue);
+              setLogsCheatSheetModalOpen((prevValue) => !prevValue);
 
               reportInteraction('grafana_azure_logs_query_patterns_opened', {
                 version: 'v2',
                 editorMode: query.azureLogAnalytics,
+              });
+            }}
+          >
+            Kick start your query
+          </Button>
+        )}
+        {query.queryType === AzureQueryType.AzureResourceGraph && (
+          <Button
+            aria-label="Azure resource graph kick start your query button"
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setArgCheatSheetModalOpen((prevValue) => !prevValue);
+
+              reportInteraction('grafana_azure_resource_graph_cheat_sheet_opened', {
+                version: 'v2',
+                editorMode: query.azureResourceGraph,
               });
             }}
           >

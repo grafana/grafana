@@ -249,7 +249,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return typeof field === 'string' && field.length > 0;
   }
 
-  async getAzureLogAnalyticsCheatsheetQueries() {
+  async getLogAnalyticsCheatsheetQueries() {
     return await this.getResource(`${this.resourcePath}/v1/metadata`);
   }
 }
