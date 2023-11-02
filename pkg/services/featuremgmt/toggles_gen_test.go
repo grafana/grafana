@@ -48,6 +48,9 @@ func TestFeatureToggleFiles(t *testing.T) {
 			if flag.Stage == FeatureStageGeneralAvailability && flag.AllowSelfServe == nil {
 				t.Errorf("feature stage FeatureStageGeneralAvailability should have the AllowSelfServe field defined")
 			}
+			if flag.AllowSelfServe != nil && flag.Stage != FeatureStageGeneralAvailability {
+				t.Errorf("only allow self-serving GA toggles")
+			}
 		}
 	})
 
