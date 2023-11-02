@@ -59,14 +59,15 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     }
 
     const layout = getLocalStorageLayout();
-
-    const sort = layout === SearchLayout.List ? stateFromUrl.sort || localStorage.getItem(SEARCH_SELECTED_SORT) : null;
+    const prevSort = localStorage.getItem(SEARCH_SELECTED_SORT) ?? undefined;
+    const sort = layout === SearchLayout.List ? stateFromUrl.sort || prevSort : null;
 
     stateManager.setState({
       ...initialState,
       ...stateFromUrl,
       layout,
       sort: sort ?? initialState.sort,
+      prevSort,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
