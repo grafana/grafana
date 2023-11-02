@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { ModalsContext, Button } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -25,6 +26,7 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
 
   return (
     <Button
+      data-testid={e2eSelectors.pages.Dashboard.DashNav.shareButton}
       size="sm"
       onClick={() => {
         showModal(ShareModal, {

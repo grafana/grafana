@@ -256,7 +256,7 @@ export const DashNav = React.memo<Props>((props) => {
 
     buttons.push(renderTimeControls());
 
-    buttons.push(<NavToolbarSeparator />);
+    buttons.push(<NavToolbarSeparator key="toolbar-separator" />);
 
     if (canStar) {
       let desc = isStarred
