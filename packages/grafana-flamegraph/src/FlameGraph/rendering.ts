@@ -139,30 +139,34 @@ function useRenderFunc(
         ctx.fill();
 
         const collapsedItemConfig = collapsedMap.get(item);
-        if (collapsedItemConfig && !collapsedItemConfig.collapsed) {
+        if (collapsedItemConfig) {
+          const groupStripX = x + 8;
+          const groupStripWidth = 6;
+
           if (width >= LABEL_THRESHOLD) {
-            renderLabel(ctx, data, label, item, width, x + 8, y, textAlign);
+            renderLabel(ctx, data, label, item, width, groupStripX + 4, y, textAlign);
           }
 
           // For item in a group that can be collapsed, we draw a small strip to mark them. On the items that are at the
           // start or and end of a group we draw just half the strip so 2 groups next to each other are separated
           // visually.
-          const groupStripX = x + 6;
-          const groupStripWidth = 6;
-
           ctx.beginPath();
-          if (collapsedItemConfig.items[0] === item) {
-            // Top item
-            ctx.rect(groupStripX, y + height / 2, groupStripWidth, height / 2);
-          } else if (collapsedItemConfig.items[collapsedItemConfig.items.length - 1] === item) {
-            // Bottom item
-            ctx.rect(groupStripX, y, groupStripWidth, height / 2);
+
+          if (collapsedItemConfig.collapsed) {
+            ctx.rect(groupStripX, y + height / 4, groupStripWidth, height / 2);
           } else {
-            ctx.rect(groupStripX, y, groupStripWidth, height);
+            if (collapsedItemConfig.items[0] === item) {
+              // Top item
+              ctx.rect(groupStripX, y + height / 2, groupStripWidth, height / 2);
+            } else if (collapsedItemConfig.items[collapsedItemConfig.items.length - 1] === item) {
+              // Bottom item
+              ctx.rect(groupStripX, y, groupStripWidth, height / 2);
+            } else {
+              ctx.rect(groupStripX, y, groupStripWidth, height);
+            }
           }
 
-          ctx.fillStyle = '#777';
-          ctx.stroke();
+          ctx.fillStyle = '#666';
           ctx.fill();
         } else {
           if (width >= LABEL_THRESHOLD) {
@@ -375,7 +379,7 @@ function renderLabel(
     }
   }
 
-  ctx.fillText(fullLabel, labelX, y + PIXELS_PER_LEVEL / 2);
+  ctx.fillText(fullLabel, labelX, y + PIXELS_PER_LEVEL / 2 + 2);
   ctx.restore();
 }
 
