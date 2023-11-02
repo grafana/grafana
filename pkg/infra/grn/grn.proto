@@ -17,4 +17,8 @@ message GRN {
 	// ResourceIdentifier is used by the underlying service to identify the
 	// resource.
 	string ResourceIdentifier = 4;
+
+	// The group represents the specific resource group the resource belongs to.
+	// This is a unique value for each plugin and maps to the k8s Group
+	string ResourceGroup = 5;
 }
