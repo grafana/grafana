@@ -312,7 +312,6 @@
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/ValuePicker/ @grafana/dataviz-squad
@@ -320,6 +319,7 @@
 /packages/grafana-ui/src/components/VizLegend/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
+/packages/grafana-ui/src/graveyard/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
