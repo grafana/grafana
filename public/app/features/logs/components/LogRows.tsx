@@ -184,9 +184,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             row={this.state.selectedRow}
             selection={this.state.selection}
             {...this.state.menuCoordinates}
-            onClickFilterLabel={rest.onClickFilterLabel}
-            onClickFilterOutLabel={rest.onClickFilterOutLabel}
-            isFilterLabelActive={rest.isFilterLabelActive}
             onClickFilterValue={rest.onClickFilterValue}
             onClickFilterOutValue={rest.onClickFilterOutValue}
           />
@@ -210,7 +207,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onUnpinLine={this.props.onUnpinLine}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleSelection={this.handleSelection}
+                  handleTextSelection={this.handleSelection}
                   {...rest}
                 />
               ))}
@@ -232,7 +229,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onUnpinLine={this.props.onUnpinLine}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleSelection={this.handleSelection}
+                  handleTextSelection={this.handleSelection}
                   {...rest}
                 />
               ))}
