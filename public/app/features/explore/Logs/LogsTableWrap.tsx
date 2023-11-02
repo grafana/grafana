@@ -340,9 +340,9 @@ export function LogsTableWrap(props: Props) {
 
   return (
     <>
-      <div className={styles.optionsWrapper}>
+      <div>
         {logsFrames.length > 1 && (
-          <div className={styles.frameSelectorWrap}>
+          <div>
             <InlineField
               label="Select query"
               htmlFor="explore_logs_table_frame_selector"
@@ -352,7 +352,6 @@ export function LogsTableWrap(props: Props) {
               <Select
                 inputId={'explore_logs_table_frame_selector'}
                 aria-label={'Select query by name'}
-                className={styles.select}
                 value={currentFrameRef}
                 options={logsFrames.map((frame) => {
                   return {
@@ -408,11 +407,6 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
       width: width,
       paddingRight: theme.spacing(1.5),
     }),
-
-    optionsWrapper: css({}),
-    frameSelectorWrap: css({}),
-    select: css({}),
-    checkbox: css({}),
   };
 }
 
