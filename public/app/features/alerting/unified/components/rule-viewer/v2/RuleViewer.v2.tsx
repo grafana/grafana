@@ -106,11 +106,11 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
     return (
       <>
-        <Stack direction="column" gap={1}>
+        <Stack direction="column" gap={1} wrap={false}>
           {/* breadcrumb and actions */}
           <BreadCrumb folder={rule.namespace.name} evaluationGroup={rule.group.name} />
 
-          <Stack direction="column" gap={2}>
+          <Stack direction="column" gap={2} wrap={false}>
             {/* header */}
             <Stack direction="column" gap={1}>
               <Stack direction="row" alignItems="center">
@@ -222,7 +222,7 @@ const Metadata = ({ labels, annotations, interval }: MetadataProps) => {
           <MetaText direction="column">
             Runbook
             <Link href={runbookUrl} size="sm" external>
-              {runbookHostname(runbookUrl)}
+              {truncate(runbookUrl, { length: 42 })}
             </Link>
           </MetaText>
         )}
@@ -263,16 +263,6 @@ const Metadata = ({ labels, annotations, interval }: MetadataProps) => {
     </>
   );
 };
-
-// TODO move to utils file
-function runbookHostname(runbookUrl: string): string {
-  try {
-    new URL(runbookUrl); // if it's a valid URL we'll truncate it
-    return truncate(runbookUrl, { length: 42 });
-  } catch (errr) {
-    return 'View runbook';
-  }
-}
 
 interface BreadcrumbProps {
   folder: string;
