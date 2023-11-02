@@ -1,5 +1,4 @@
 Name,Stage,Owner,requiresDevMode,RequiresLicense,RequiresRestart,FrontendOnly
-trimDefaults,preview,@grafana/grafana-as-code,false,false,false,false
 disableEnvelopeEncryption,GA,@grafana/grafana-as-code,false,false,false,false
 live-service-web-worker,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
 queryOverLive,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
@@ -93,6 +92,7 @@ featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,f
 awsAsyncQueryCaching,preview,@grafana/aws-datasources,false,false,false,false
 splitScopes,preview,@grafana/grafana-authnz-team,false,false,true,false
 azureMonitorDataplane,GA,@grafana/partner-datasources,false,false,false,false
+traceToProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,false,false,false,false
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,false,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,false,true,false
@@ -136,3 +136,4 @@ alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,fal
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false,false
 alertmanagerRemoteOnly,experimental,@grafana/alerting-squad,false,false,false,false
 annotationPermissionUpdate,experimental,@grafana/grafana-authnz-team,false,false,false,false
+extractFieldsNameDeduplication,experimental,@grafana/grafana-bi-squad,false,false,false,true

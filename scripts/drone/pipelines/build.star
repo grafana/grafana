@@ -28,8 +28,8 @@ load(
 )
 load(
     "scripts/drone/steps/rgm.star",
+    "rgm_artifacts_step",
     "rgm_build_docker_step",
-    "rgm_package_step",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -70,14 +70,21 @@ def build_e2e(trigger, ver_mode):
             [
                 build_frontend_package_step(),
                 enterprise_downstream_step(ver_mode = ver_mode),
-                rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"),
+                rgm_artifacts_step(artifacts = ["targz:grafana:linux/amd64", "targz:grafana:linux/arm64"], file = "packages.txt"),
             ],
         )
     else:
         build_steps.extend([
             update_package_json_version(),
             build_frontend_package_step(depends_on = ["update-package-json-version"]),
-            rgm_package_step(depends_on = ["update-package-json-version"], distros = "linux/amd64,linux/arm64", file = "packages.txt"),
+            rgm_artifacts_step(
+                artifacts = [
+                    "targz:grafana:linux/amd64",
+                    "targz:grafana:linux/arm64",
+                ],
+                depends_on = ["update-package-json-version"],
+                file = "packages.txt",
+            ),
         ])
 
     build_steps.extend(
@@ -104,9 +111,9 @@ def build_e2e(trigger, ver_mode):
                 store_storybook_step(trigger = trigger_oss, ver_mode = ver_mode),
                 frontend_metrics_step(trigger = trigger_oss),
                 rgm_build_docker_step(
-                    "packages.txt",
                     images["ubuntu"],
                     images["alpine"],
+                    depends_on = ["update-package-json-version"],
                     tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
                     ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
                 ),
@@ -135,7 +142,6 @@ def build_e2e(trigger, ver_mode):
         build_steps.extend(
             [
                 rgm_build_docker_step(
-                    "packages.txt",
                     images["ubuntu"],
                     images["alpine"],
                     tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",

@@ -287,7 +287,10 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
 	filename := s.filePath(key)
-	if !exists(filename) {
+	obj, err := readFile(s.codec, filename, func() runtime.Object {
+		return objPtr
+	})
+	if err != nil {
 		if opts.IgnoreNotFound {
 			return runtime.SetZeroValue(objPtr)
 		}
@@ -296,13 +299,6 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 			return err
 		}
 		return storage.NewKeyNotFoundError(key, int64(rv))
-	}
-
-	obj, err := readFile(s.codec, filename, func() runtime.Object {
-		return objPtr
-	})
-	if err != nil {
-		return err
 	}
 
 	currentVersion, err := s.Versioner().ObjectResourceVersion(obj)
