@@ -1579,6 +1579,10 @@
           "application/json": {
             "schema": {
               "properties": {
+                "folderUid": {
+                  "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
+                  "type": "string"
+                },
                 "id": {
                   "description": "ID The unique identifier (id) of the created/updated dashboard.",
                   "example": 1,

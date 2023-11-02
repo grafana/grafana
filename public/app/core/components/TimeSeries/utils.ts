@@ -17,6 +17,7 @@ import {
   FieldColorModeId,
   DecimalCount,
 } from '@grafana/data';
+// eslint-disable-next-line import/order
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -61,10 +62,10 @@ for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
 }
 
-import { buildScaleKey } from '../GraphNG/utils';
-import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
-import { getScaleGradientFn } from '../uPlot/config/gradientFills';
-import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
+import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
+import { getScaleGradientFn } from '@grafana/ui/src/components/uPlot/config/gradientFills';
+import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
+import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
 

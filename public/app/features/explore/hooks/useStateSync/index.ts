@@ -1,7 +1,7 @@
 import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
 import { useEffect, useRef } from 'react';
 
-import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange } from '@grafana/data';
+import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange, EventBusSrv } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
@@ -151,6 +151,7 @@ export function useStateSync(params: ExploreQueryParams) {
               range: fromURLRange(range),
               panelsState,
               position: i,
+              eventBridge: new EventBusSrv(),
             })
           );
         }
@@ -218,6 +219,7 @@ export function useStateSync(params: ExploreQueryParams) {
                 queries,
                 range: fromURLRange(range),
                 panelsState,
+                eventBridge: new EventBusSrv(),
               })
             ).unwrap();
           })
