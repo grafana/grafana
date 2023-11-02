@@ -32,8 +32,10 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 	metricNamespace := params.MetricNamespace
 
 	if metricNamespace == nil || *metricNamespace == "" {
+		if params.MetricDefinition == nil || *params.MetricDefinition == "" {
+			return nil, fmt.Errorf("no metricNamespace or metricDefiniton value provided")
+		}
 		metricNamespace = params.MetricDefinition
-		return metricNamespace, fmt.Errorf("no metricNamespace or metricDefiniton value provided")
 	}
 
 	metricNamespaceArray := strings.Split(*metricNamespace, "/")

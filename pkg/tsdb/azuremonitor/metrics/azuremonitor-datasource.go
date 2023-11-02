@@ -112,7 +112,10 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			azureURL = ub.BuildMetricsURL()
 			// POST requests are only supported at the subscription level
 			filterInBody = false
-			resourceUri, _ := ub.buildResourceURI()
+			resourceUri, err := ub.buildResourceURI()
+			if err != nil {
+				return nil, err
+			}
 			if resourceUri != nil {
 				resourceMap[*resourceUri] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
 			}
