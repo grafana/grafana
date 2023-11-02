@@ -4,8 +4,7 @@ import Highlighter from 'react-highlight-words';
 import { useForm } from 'react-hook-form';
 
 import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
-import { Button, Field, Icon, Input, InputControl, Label, Modal, Select, Tooltip } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { Button, Field, Icon, Input, InputControl, Label, Modal, Select, Tooltip, Stack } from '@grafana/ui';
 
 import {
   getSupportedTransTypeDetails,
@@ -27,12 +26,12 @@ interface ShowFormFields {
 }
 
 const LabelWithTooltip = ({ label, tooltipText }: { label: string; tooltipText: string }) => (
-  <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
+  <Stack gap={1} direction="row" wrap="wrap" alignItems="flex-start">
     <Label>{label}</Label>
     <Tooltip content={tooltipText}>
       <Icon name="info-circle" size="sm" />
     </Tooltip>
-  </Flex>
+  </Stack>
 );
 
 export const CorrelationTransformationAddModal = ({

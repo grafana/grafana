@@ -16,8 +16,8 @@ import {
   DeleteButton,
   Tooltip,
   Icon,
+  Stack,
 } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getTransformationVars } from '../correlations/transformations';
@@ -171,12 +171,12 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             setIsLabelDescOpen(!isLabelDescOpen);
           }}
           label={
-            <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
+            <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
               Label / Description
-              {!isLabelDescOpen && (
-                <span className={styles.labelCollapseDetails}>{`Label: ${getValues('label')}`}</span>
+              {!isLabelDescOpen && !loadingLabel && (
+                <span className={styles.labelCollapseDetails}>{`Label: ${getValues('label') || defaultLabel}`}</span>
               )}
-            </Flex>
+            </Stack>
           }
         >
           <Field label="Label" htmlFor={`${id}-label`}>
@@ -201,12 +201,12 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             setIsTransformOpen(!isTransformOpen);
           }}
           label={
-            <Flex gap={1} direction="row" wrap="wrap" alignItems="baseline">
+            <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
               Transformations
               <Tooltip content="A transformation extracts one or more variables out of a single field.">
                 <Icon name="info-circle" size="sm" />
               </Tooltip>
-            </Flex>
+            </Stack>
           }
         >
           <Button
