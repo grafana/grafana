@@ -191,7 +191,7 @@ const AmRoutes = () => {
 
   const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
   const policyTreeTabActive = activeTab === ActiveTab.NotificationPolicies;
-  console.log('root', rootRoute);
+
   return (
     <>
       <TabsBar>

@@ -21,7 +21,7 @@ const MetaText = ({ children, icon, color = 'secondary', ...rest }: Props) => {
       {...rest}
     >
       <Text variant="bodySmall" color={color}>
-        <Stack direction="row" alignItems="center" gap={0.5}>
+        <Stack direction="row" alignItems="center" gap={0.5} wrap={'wrap'}>
           {icon && <Icon size="sm" name={icon} />}
           {children}
         </Stack>
