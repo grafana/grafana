@@ -38,10 +38,17 @@ const teamsSlice = createSlice({
     sortChanged: (state, action: PayloadAction<TeamsState['sort']>): TeamsState => {
       return { ...state, sort: action.payload, page: 1 };
     },
+    rolesFetchBegin: (state) => {
+      return { ...state, rolesLoading: true };
+    },
+    rolesFetchEnd: (state) => {
+      return { ...state, rolesLoading: false };
+    },
   },
 });
 
-export const { teamsLoaded, queryChanged, pageChanged, sortChanged } = teamsSlice.actions;
+export const { teamsLoaded, queryChanged, pageChanged, sortChanged, rolesFetchBegin, rolesFetchEnd } =
+  teamsSlice.actions;
 
 export const teamsReducer = teamsSlice.reducer;
 
