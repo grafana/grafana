@@ -46,19 +46,41 @@ func (fam *ForkedAlertmanager) GetStatus() apimodels.GettableStatus {
 }
 
 func (fam *ForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	return "", nil
+	id, err := fam.internal.CreateSilence(ctx, silence)
+	if err != nil {
+		return "", err
+	}
+	// In ModeRemoteSecondary we just create the silence in the internal Alertmanager.
+	if fam.mode == ModeRemoteSecondary {
+		return id, nil
+	}
+
+	// If we're not in ModeRemoteSecodary we care about the id returned from the remote Alertmanager.
+	return fam.remote.CreateSilence(ctx, silence)
 }
 
 func (fam *ForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
-	return nil
+	if fam.mode == ModeRemotePrimary {
+		if err := fam.remote.DeleteSilence(ctx, id); err != nil {
+			return err
+		}
+	}
+
+	return fam.internal.DeleteSilence(ctx, id)
 }
 
 func (fam *ForkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {
-	return apimodels.GettableSilence{}, nil
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.GetSilence(ctx, id)
+	}
+	return fam.internal.GetSilence(ctx, id)
 }
 
 func (fam *ForkedAlertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
-	return apimodels.GettableSilences{}, nil
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.ListSilences(ctx, filter)
+	}
+	return fam.internal.ListSilences(ctx, filter)
 }
 
 func (fam *ForkedAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
