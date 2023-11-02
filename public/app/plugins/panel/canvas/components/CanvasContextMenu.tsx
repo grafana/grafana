@@ -247,7 +247,7 @@ export const CanvasContextMenu = ({ scene, panel, visibleFun }: Props) => {
 };
 
 const getStyles = () => ({
-  menuItem: css`
-    max-width: 200px;
-  `,
+  menuItem: css({
+    maxWidth: '200px',
+  }),
 });

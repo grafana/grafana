@@ -230,7 +230,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			require.NoError(t, err)
-			assert.Equal(t, "user already exists", respJSON.Get("error").MustString())
+			assert.Equal(t, "User with email '' or username 'existing@example.com' already exists", respJSON.Get("message").MustString())
 		})
 	})
 }

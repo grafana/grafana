@@ -395,10 +395,6 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 	return am.Base.PutAlerts(alerts)
 }
 
-func (am *alertmanager) OrgID() int64 {
-	return am.orgID
-}
-
 // CleanUp removes the directory containing the alertmanager files from disk.
 func (am *alertmanager) CleanUp() {
 	am.fileStore.CleanUp()

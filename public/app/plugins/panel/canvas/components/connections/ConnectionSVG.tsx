@@ -236,19 +236,19 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  editorSVG: css`
-    position: absolute;
-    pointer-events: none;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    display: none;
-  `,
-  connection: css`
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    pointer-events: none;
-  `,
+  editorSVG: css({
+    position: 'absolute',
+    pointerEvents: 'none',
+    width: '100%',
+    height: '100%',
+    zIndex: 1000,
+    display: 'none',
+  }),
+  connection: css({
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    zIndex: 1000,
+    pointerEvents: 'none',
+  }),
 });

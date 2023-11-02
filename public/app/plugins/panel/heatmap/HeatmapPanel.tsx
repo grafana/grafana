@@ -84,24 +84,31 @@ export const HeatmapPanel = ({
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] | undefined = []; // "Time" field
-    let exemplarsyFacet: Array<number | undefined> = [];
+    let exemplarsYFacet: Array<number | undefined> = [];
 
     const meta = readHeatmapRowsCustomMeta(info.heatmap);
-    if (info.exemplars?.length && meta.yMatchWithLabel) {
+    if (info.exemplars?.length) {
       exemplarsXFacet = info.exemplars?.fields[0].values;
 
-      // ordinal/labeled heatmap-buckets?
-      const hasLabeledY = meta.yOrdinalDisplay != null;
+      // render by match on ordinal y label
+      if (meta.yMatchWithLabel) {
+        // ordinal/labeled heatmap-buckets?
+        const hasLabeledY = meta.yOrdinalDisplay != null;
 
-      if (hasLabeledY) {
-        let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === meta.yMatchWithLabel)!.values;
-        exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label));
-      } else {
-        exemplarsyFacet = info.exemplars?.fields[1].values; // "Value" field
+        if (hasLabeledY) {
+          let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === meta.yMatchWithLabel)!.values;
+          exemplarsYFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label));
+        } else {
+          exemplarsYFacet = info.exemplars?.fields[1].values; // "Value" field
+        }
+      }
+      // render by raw value
+      else {
+        exemplarsYFacet = info.exemplars?.fields[1].values; // "Value" field
       }
     }
 
-    return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsyFacet]];
+    return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsYFacet]];
   }, [info.heatmap, info.exemplars]);
 
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
