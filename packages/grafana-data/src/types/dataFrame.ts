@@ -247,6 +247,11 @@ export interface DataFrame extends QueryResultBase {
   length: number;
 }
 
+// Data frame that include aggregate value, for use by timeSeriesTableTransformer / chart cell type
+export interface DataFrameWithValue extends DataFrame {
+  value: number | null;
+}
+
 /**
  * @public
  * Like a field, but properties are optional and values may be a simple array

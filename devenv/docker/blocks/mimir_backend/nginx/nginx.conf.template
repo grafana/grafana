@@ -1,0 +1,18 @@
+pid /tmp/nginx.pid;
+
+events {}
+
+http {
+  resolver 127.0.0.11 ipv6=off;  
+
+  server {
+    listen 8080;
+    proxy_set_header X-Scope-OrgID $http_x_scope_orgid;
+
+    location / {
+      auth_basic "Mimir Backend";
+      auth_basic_user_file /etc/nginx/.htpasswd;
+      proxy_pass http://${MIMIR_BACKEND_URL};
+    }
+  }
+}

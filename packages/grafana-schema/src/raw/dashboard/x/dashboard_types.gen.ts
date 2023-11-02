@@ -78,6 +78,10 @@ export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
  */
 export interface AnnotationQuery {
   /**
+   * Set to 1 for the standard annotation query all dashboards have by default.
+   */
+  builtIn?: number;
+  /**
    * Datasource where the annotations data is
    */
   datasource: DataSourceRef;
@@ -113,6 +117,7 @@ export interface AnnotationQuery {
 }
 
 export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
+  builtIn: 0,
   enable: true,
   hide: false,
 };

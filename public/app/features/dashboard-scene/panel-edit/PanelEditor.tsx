@@ -15,7 +15,7 @@ import {
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { getDashboardUrl } from '../utils/utils';
+import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';

@@ -214,6 +214,7 @@ export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
 export { TextLink } from './Link/TextLink';
 export { Text } from './Text/Text';
+export { Box } from './Layout/Box/Box';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -261,6 +262,7 @@ export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
 export { type UserView } from './UsersIndicator/types';
+export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
@@ -287,13 +289,14 @@ export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
-export { type PlotTooltipInterpolator, type PlotSelection } from './uPlot/types';
+export { type PlotTooltipInterpolator, type PlotSelection, FIXED_UNIT } from './uPlot/types';
 export { type UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
-export { GraphNG, type GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
-export { TimeSeries } from './TimeSeries/TimeSeries';
-export { useGraphNGContext } from './GraphNG/hooks';
-export { preparePlotFrame, buildScaleKey } from './GraphNG/utils';
-export { type GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
+
+export { GraphNG, type GraphNGProps } from '../graveyard/GraphNG/GraphNG';
+export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
+export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
+export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
+export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';

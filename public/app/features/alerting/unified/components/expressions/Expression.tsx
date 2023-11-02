@@ -60,14 +60,10 @@ export const Expression: FC<ExpressionProps> = ({
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
-  const seriesCount = series.length;
 
   const alertCondition = isAlertCondition ?? false;
 
-  const groupedByState = {
-    [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) !== 0),
-    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
-  };
+  const { seriesCount, groupedByState } = getGroupedByStateAndSeriesCount(series);
 
   const renderExpressionType = useCallback(
     (query: ExpressionQuery) => {
@@ -235,6 +231,21 @@ export const PreviewSummary: FC<{ firing: number; normal: number; isCondition: b
 
   return <span className={mutedText}>{`${seriesCount} series`}</span>;
 };
+
+export function getGroupedByStateAndSeriesCount(series: DataFrame[]) {
+  const noDataSeries = series.filter((serie) => getSeriesValue(serie) === undefined).length;
+  const groupedByState = {
+    // we need to filter out series with no data (undefined) or zero value
+    [PromAlertingRuleState.Firing]: series.filter(
+      (serie) => getSeriesValue(serie) !== undefined && getSeriesValue(serie) !== 0
+    ),
+    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
+  };
+
+  const seriesCount = series.length - noDataSeries;
+
+  return { groupedByState, seriesCount };
+}
 
 interface HeaderProps {
   refId: string;

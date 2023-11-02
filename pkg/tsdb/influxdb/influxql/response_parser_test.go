@@ -28,6 +28,10 @@ func generateQuery(query models.Query) *models.Query {
 	if query.RawQuery == "" {
 		query.RawQuery = "Test raw query"
 	}
+
+	if query.ResultFormat == "" {
+		query.ResultFormat = "time_series"
+	}
 	return &query
 }
 
@@ -82,7 +86,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			floatField,
 		)
-		floatFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		floatFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		string_test := "/usr/path"
 		stringField := data.NewField("Value", labels, []*string{
@@ -98,7 +102,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			stringField,
 		)
-		stringFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		stringFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		bool_true := true
 		bool_false := false
@@ -115,7 +119,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			boolField,
 		)
-		boolFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		boolFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
@@ -265,7 +269,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
@@ -310,13 +314,95 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
 		if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
+	})
+
+	t.Run("Influxdb response parser with $measurement alias when multiple measurement in response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu.upc",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"dc.region.name": "Northeast",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						},
+						{
+							"name": "logins.count",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"dc.region.name": "Northeast",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query := models.Query{Alias: "alias $measurement"}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.Equal(t, "alias cpu.upc", result.Frames[0].Name)
+		assert.Equal(t, "alias logins.count", result.Frames[1].Name)
+	})
+
+	t.Run("Influxdb response parser when multiple measurement in response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu.upc",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						},
+						{
+							"name": "logins.count",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query := models.Query{}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.True(t, strings.Contains(result.Frames[0].Name, ","))
+		assert.True(t, strings.Contains(result.Frames[1].Name, ","))
 	})
 
 	t.Run("Influxdb response parser with alias", func(t *testing.T) {
@@ -359,8 +445,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
+
 		t.Run("should parse aliases", func(t *testing.T) {
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -369,7 +456,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			query = models.Query{Alias: "alias $m $measurement", Measurement: "10m"}
 			result = ResponseParse(prepare(response), 200, generateQuery(query))
 
-			name := "alias 10m 10m"
+			name := "alias cpu.upc cpu.upc"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -477,7 +564,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 			query = models.Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
 			result = ResponseParse(prepare(response), 200, generateQuery(query))
-			name = "alias 10m 10m"
+			name = "alias cpu.upc cpu.upc"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -529,6 +616,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
+
 		t.Run("shouldn't parse aliases", func(t *testing.T) {
 			query = models.Query{Alias: "alias words with no brackets"}
 			result = ResponseParse(prepare(response), 200, generateQuery(query))
@@ -586,7 +674,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
 		require.EqualError(t, result.Error, "query-timeout limit exceeded")
@@ -634,6 +722,23 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
 		_, err := parseTimestamp("hello")
 		require.Error(t, err)
+	})
+
+	t.Run("InfluxDB returns empty DataResponse when there is empty response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"statement_id": 0
+				}
+			]
+		}
+		`
+
+		query := models.Query{}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.NotNil(t, result.Frames)
+		assert.Equal(t, 0, len(result.Frames))
 	})
 }
 
@@ -693,7 +798,7 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 		query := models.Query{RefID: "metricFindQuery", RawQuery: "SHOW RETENTION POLICIES"}
 		policyFrame := data.NewFrame("",
 			data.NewField("Value", nil, []string{
-				"bar", "autogen", "5m_avg", "1m_avg",
+				"autogen", "bar", "5m_avg", "1m_avg",
 			}),
 		)
 
@@ -707,12 +812,14 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 
 func TestResponseParser_Parse(t *testing.T) {
 	tests := []struct {
-		name  string
-		input string
-		f     func(t *testing.T, got backend.DataResponse)
+		name      string
+		resFormat string
+		input     string
+		f         func(t *testing.T, got backend.DataResponse)
 	}{
 		{
-			name: "Influxdb response parser with valid value when null values returned",
+			name:      "Influxdb response parser with valid value when null values returned",
+			resFormat: "time_series",
 			input: `{ "results": [ { "series": [ {
 				"name": "cpu",
 				"columns": ["time","mean"],
@@ -734,12 +841,13 @@ func TestResponseParser_Parse(t *testing.T) {
 						}),
 					newField,
 				)
-				testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+				testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 				assert.Equal(t, testFrame, got.Frames[0])
 			},
 		},
 		{
-			name: "Influxdb response parser with valid value when all values are null",
+			name:      "Influxdb response parser with valid value when all values are null",
+			resFormat: "time_series",
 			input: `{ "results": [ { "series": [ {
 				"name": "cpu",
 				"columns": ["time","mean"],
@@ -761,18 +869,88 @@ func TestResponseParser_Parse(t *testing.T) {
 						}),
 					newField,
 				)
-				testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+				testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 				assert.Equal(t, testFrame, got.Frames[0])
+			},
+		},
+		{
+			name:      "Influxdb response parser with table result",
+			resFormat: "table",
+			input: `{
+					  "results": [
+					    {
+					      "statement_id": 0,
+					      "series": [
+					        {
+					          "name": "Annotation",
+					          "columns": [
+					            "time",
+					            "domain",
+					            "type",
+					            "ASD",
+					            "details"
+					          ],
+					          "values": [
+					            [
+					              1697789142916,
+					              "AASD157",
+					              "fghg",
+					              null,
+					              "Something happened AtTime=2023-10-20T08:05:42.902036"
+					            ],
+					            [
+					              1697789142918,
+					              "HUY23",
+					              "val23",
+					              null,
+					              "Something else happened AtTime=2023-10-20T08:05:42.902036"
+					            ]
+					          ]
+					        }
+					      ]
+					    }
+					  ]
+					}`,
+			f: func(t *testing.T, got backend.DataResponse) {
+				assert.Equal(t, "domain", got.Frames[0].Name)
+				assert.Equal(t, "domain", got.Frames[0].Fields[1].Config.DisplayNameFromDS)
+				assert.Equal(t, "ASD", got.Frames[2].Name)
+				assert.Equal(t, "ASD", got.Frames[2].Fields[1].Config.DisplayNameFromDS)
+				assert.Equal(t, tableVisType, got.Frames[0].Meta.PreferredVisualization)
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ResponseParse(prepare(tt.input), 200, generateQuery(models.Query{}))
+			got := ResponseParse(prepare(tt.input), 200, generateQuery(models.Query{ResultFormat: tt.resFormat}))
 			require.NotNil(t, got)
 			if tt.f != nil {
 				tt.f(t, *got)
 			}
 		})
 	}
+}
+
+func TestParseTimestamp(t *testing.T) {
+	validValue := json.Number("1609459200000") // Milliseconds since epoch (January 1, 2021)
+	invalidValue := "invalid"
+
+	t.Run("ValidTimestamp", func(t *testing.T) {
+		parsedTime, err := parseTimestamp(validValue)
+		if err != nil {
+			t.Errorf("Expected no error, got: %v", err)
+		}
+
+		expectedTime := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
+		if !parsedTime.Equal(expectedTime) {
+			t.Errorf("Expected time: %v, got: %v", expectedTime, parsedTime)
+		}
+	})
+
+	t.Run("InvalidTimestamp", func(t *testing.T) {
+		_, err := parseTimestamp(invalidValue)
+		if err == nil {
+			t.Errorf("Expected an error, got nil")
+		}
+	})
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -40,14 +41,14 @@ func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[st
 }
 
 // MigrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
-func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, dashboardUID string, folderUID string) (*ngmodels.AlertRule, error) {
+func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migrationStore.DashAlert, info migmodels.DashboardUpgradeInfo) (*ngmodels.AlertRule, error) {
 	l.Debug("Migrating alert rule to Unified Alerting")
 	cond, err := transConditions(ctx, da, om.migrationStore)
 	if err != nil {
 		return nil, fmt.Errorf("transform conditions: %w", err)
 	}
 
-	lbls, annotations := addMigrationInfo(da, dashboardUID)
+	lbls, annotations := addMigrationInfo(da, info.DashboardUID)
 
 	message := MigrateTmpl(l.New("field", "message"), da.Message)
 	annotations["message"] = message
@@ -63,15 +64,29 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 	}
 
 	// Here we ensure that the alert rule title is unique within the folder.
-	dedupSet := om.AlertTitleDeduplicator(folderUID)
-	name := truncateRuleName(da.Name)
-	if dedupSet.contains(name) {
-		dedupedName := dedupSet.deduplicate(name)
-		l.Debug("Duplicate alert rule name detected, renaming", "old_name", name, "new_name", dedupedName)
+	titleDedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
+	name := truncate(da.Name, store.AlertDefinitionMaxTitleLength)
+	if titleDedupSet.contains(name) {
+		dedupedName := titleDedupSet.deduplicate(name)
+		l.Debug("Duplicate alert rule name detected, renaming", "oldName", name, "newName", dedupedName)
 		name = dedupedName
 	}
-	dedupSet.add(name)
+	titleDedupSet.add(name)
 
+	// Here we ensure that the alert rule group is unique within the folder.
+	// This is so that we don't have to ensure that the alerts rules have the same interval.
+	groupDedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
+	panelSuffix := fmt.Sprintf(" - %d", da.PanelID)
+	truncatedDashboard := truncate(info.DashboardName, store.AlertRuleMaxRuleGroupNameLength-len(panelSuffix))
+	groupName := fmt.Sprintf("%s%s", truncatedDashboard, panelSuffix) // Unique to this dash alert but still contains useful info.
+	if groupDedupSet.contains(groupName) {
+		dedupedGroupName := groupDedupSet.deduplicate(groupName)
+		l.Debug("Duplicate alert rule group name detected, renaming", "oldGroup", groupName, "newGroup", dedupedGroupName)
+		groupName = dedupedGroupName
+	}
+	groupDedupSet.add(groupName)
+
+	dashUID := info.DashboardUID
 	ar := &ngmodels.AlertRule{
 		OrgID:           da.OrgID,
 		Title:           name,
@@ -80,10 +95,10 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
-		NamespaceUID:    folderUID, // Folder already created, comes from env var.
-		DashboardUID:    &dashboardUID,
+		NamespaceUID:    info.NewFolderUID,
+		DashboardUID:    &dashUID,
 		PanelID:         &da.PanelID,
-		RuleGroup:       name,
+		RuleGroup:       groupName,
 		For:             da.For,
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
@@ -264,10 +279,10 @@ func transExecErr(l log.Logger, s string) ngmodels.ExecutionErrorState {
 	}
 }
 
-// truncateRuleName truncates the rule name to the maximum allowed length.
-func truncateRuleName(daName string) string {
-	if len(daName) > store.AlertDefinitionMaxTitleLength {
-		return daName[:store.AlertDefinitionMaxTitleLength]
+// truncate truncates the given name to the maximum allowed length.
+func truncate(daName string, length int) string {
+	if len(daName) > length {
+		return daName[:length]
 	}
 	return daName
 }

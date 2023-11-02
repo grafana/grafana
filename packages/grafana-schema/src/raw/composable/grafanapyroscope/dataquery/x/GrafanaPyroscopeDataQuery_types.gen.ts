@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.2.0-pre";
+export const pluginVersion = "10.3.0-pre";
 
 export type PyroscopeQueryType = ('metrics' | 'profile' | 'both');
 
@@ -34,9 +34,14 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
    * Specifies the type of profile to query.
    */
   profileTypeId: string;
+  /**
+   * Specifies the query span selectors.
+   */
+  spanSelector?: Array<string>;
 }
 
 export const defaultGrafanaPyroscopeDataQuery: Partial<GrafanaPyroscopeDataQuery> = {
   groupBy: [],
   labelSelector: '{}',
+  spanSelector: [],
 };

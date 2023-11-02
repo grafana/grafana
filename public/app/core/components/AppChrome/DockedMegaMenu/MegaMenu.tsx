@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { cloneDeep } from 'lodash';
 import React, { forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { Stack } from '@grafana/ui/src/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
@@ -14,7 +14,7 @@ import { useSelector } from 'app/types';
 import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
-export const MENU_WIDTH = '350px';
+export const MENU_WIDTH = '300px';
 
 export interface Props extends DOMAttributes {
   onClose: () => void;
@@ -22,13 +22,11 @@ export interface Props extends DOMAttributes {
 
 export const MegaMenu = React.memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
-    const navBarTree = useSelector((state) => state.navBarTree);
+    const navTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
-
-    const navTree = cloneDeep(navBarTree);
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -42,7 +40,7 @@ export const MegaMenu = React.memo(
     };
 
     return (
-      <div data-testid="navbarmenu" ref={ref} {...restProps}>
+      <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <div className={styles.mobileHeader}>
           <Icon name="bars" size="xl" />
           <IconButton
@@ -57,7 +55,7 @@ export const MegaMenu = React.memo(
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link, index) => (
-                <Flex key={link.text} direction="row" alignItems="center">
+                <Stack key={link.text} direction="row" alignItems="center">
                   <MegaMenuItem
                     link={link}
                     onClick={state.megaMenu === 'open' ? onClose : undefined}
@@ -76,7 +74,7 @@ export const MegaMenu = React.memo(
                       variant="secondary"
                     />
                   )}
-                </Flex>
+                </Stack>
               ))}
             </ul>
           </CustomScrollbar>
@@ -107,19 +105,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   itemList: css({
+    boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
     listStyleType: 'none',
-    minWidth: MENU_WIDTH,
+    padding: theme.spacing(1),
     [theme.breakpoints.up('md')]: {
       width: MENU_WIDTH,
     },
   }),
   dockMenuButton: css({
     display: 'none',
-    marginRight: theme.spacing(2),
 
-    [theme.breakpoints.up('md')]: {
+    [theme.breakpoints.up('xl')]: {
       display: 'inline-flex',
     },
   }),

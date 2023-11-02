@@ -8,6 +8,7 @@ import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
 import { SingleModeGraphTooltip } from './SingleModeGraphTooltip';
 import { GraphDimensions } from './types';
 
+/** @deprecated */
 export const GraphTooltip = ({
   mode = TooltipDisplayMode.Single,
   dimensions,

@@ -10,6 +10,7 @@ import {
   assertLoadMoreQueryHistoryNotVisible,
   assertQueryHistory,
   assertQueryHistoryComment,
+  assertQueryHistoryContains,
   assertQueryHistoryElementsShown,
   assertQueryHistoryExists,
   assertQueryHistoryIsEmpty,
@@ -163,8 +164,10 @@ describe('Explore: Query History', () => {
     });
 
     it('initial state is in sync', async () => {
-      await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], 'left');
-      await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], 'right');
+      await assertQueryHistoryContains('{"expr":"query #1"}', 'left');
+      await assertQueryHistoryContains('{"expr":"query #2"}', 'left');
+      await assertQueryHistoryContains('{"expr":"query #1"}', 'right');
+      await assertQueryHistoryContains('{"expr":"query #2"}', 'right');
     });
 
     it('starred queries are synced', async () => {

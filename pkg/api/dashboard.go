@@ -412,10 +412,13 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
-	if cmd.FolderUID != "" {
+	// nolint:staticcheck
+	if cmd.FolderUID != "" || cmd.FolderID != 0 {
 		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID:        c.SignedInUser.GetOrgID(),
-			UID:          &cmd.FolderUID,
+			OrgID: c.SignedInUser.GetOrgID(),
+			UID:   &cmd.FolderUID,
+			// nolint:staticcheck
+			ID:           &cmd.FolderID,
 			SignedInUser: c.SignedInUser,
 		})
 		if err != nil {
@@ -424,7 +427,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 			}
 			return response.Error(http.StatusInternalServerError, "Error while checking folder ID", err)
 		}
+		// nolint:staticcheck
 		cmd.FolderID = folder.ID
+		cmd.FolderUID = folder.UID
 	}
 
 	dash := cmd.GetDashboardModel()
@@ -516,12 +521,13 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"status":  "success",
-		"slug":    dashboard.Slug,
-		"version": dashboard.Version,
-		"id":      dashboard.ID,
-		"uid":     dashboard.UID,
-		"url":     dashboard.GetURL(),
+		"status":    "success",
+		"slug":      dashboard.Slug,
+		"version":   dashboard.Version,
+		"id":        dashboard.ID,
+		"uid":       dashboard.UID,
+		"url":       dashboard.GetURL(),
+		"folderUid": dashboard.FolderUID,
 	})
 }
 
@@ -1073,7 +1079,9 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	saveCmd.Dashboard.Set("version", dash.Version)
 	saveCmd.Dashboard.Set("uid", dash.UID)
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
+	// nolint:staticcheck
 	saveCmd.FolderID = dash.FolderID
+	saveCmd.FolderUID = dash.FolderUID
 
 	return hs.postDashboard(c, saveCmd)
 }
@@ -1283,7 +1291,7 @@ type PostDashboardResponse struct {
 		// ID The unique identifier (id) of the created/updated dashboard.
 		// required: true
 		// example: 1
-		ID string `json:"id"`
+		ID int64 `json:"id"`
 
 		// UID The unique identifier (uid) of the created/updated dashboard.
 		// required: true
@@ -1294,6 +1302,10 @@ type PostDashboardResponse struct {
 		// required: true
 		// example: /d/nHz3SXiiz/my-dashboard
 		URL string `json:"url"`
+
+		// FolderUID The unique identifier (uid) of the folder the dashboard belongs to.
+		// required: false
+		FolderUID string `json:"folderUid"`
 	} `json:"body"`
 }
 

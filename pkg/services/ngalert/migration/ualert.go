@@ -5,20 +5,23 @@ import (
 	"fmt"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func (om *OrgMigration) migrateAlerts(ctx context.Context, alerts []*migrationStore.DashAlert, dashboardUID string, folderUID string) ([]*AlertPair, error) {
+func (om *OrgMigration) migrateAlerts(ctx context.Context, alerts []*migrationStore.DashAlert, info migmodels.DashboardUpgradeInfo) ([]*AlertPair, error) {
 	log := om.log.New(
-		"dashboardUID", dashboardUID,
-		"newFolderUID", folderUID,
+		"dashboardUid", info.DashboardUID,
+		"dashboardName", info.DashboardName,
+		"newFolderUid", info.NewFolderUID,
+		"newFolderNane", info.NewFolderName,
 	)
 
 	pairs := make([]*AlertPair, 0, len(alerts))
 	for _, da := range alerts {
 		al := log.New("ruleID", da.ID, "ruleName", da.Name)
-		alertRule, err := om.migrateAlert(ctx, al, da, dashboardUID, folderUID)
+		alertRule, err := om.migrateAlert(ctx, al, da, info)
 		if err != nil {
 			return nil, fmt.Errorf("migrate alert: %w", err)
 		}
@@ -29,12 +32,11 @@ func (om *OrgMigration) migrateAlerts(ctx context.Context, alerts []*migrationSt
 }
 
 func (om *OrgMigration) migrateDashboard(ctx context.Context, dashID int64, alerts []*migrationStore.DashAlert) ([]*AlertPair, error) {
-	dash, newFolder, err := om.getOrCreateMigratedFolder(ctx, om.log, dashID)
+	info, err := om.migratedFolder(ctx, om.log, dashID)
 	if err != nil {
 		return nil, fmt.Errorf("get or create migrated folder: %w", err)
 	}
-
-	pairs, err := om.migrateAlerts(ctx, alerts, dash.UID, newFolder.UID)
+	pairs, err := om.migrateAlerts(ctx, alerts, *info)
 	if err != nil {
 		return nil, fmt.Errorf("migrate and save alerts: %w", err)
 	}

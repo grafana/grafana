@@ -107,12 +107,21 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 		return nil, fmt.Errorf("datasource type cannot be empty")
 	}
 
+	typeQuery := "type=?"
+	args := []interface{}{query.Type}
+	for _, alias := range query.AliasIDs {
+		typeQuery += " OR type=?"
+		args = append(args, alias)
+	}
+	typeQuery = "(" + typeQuery + ")"
+
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.OrgID > 0 {
-			return sess.Where("type=? AND org_id=?", query.Type, query.OrgID).Asc("id").Find(&dataSources)
+			args = append([]interface{}{query.OrgID}, args...)
+			return sess.Where("org_id=? AND "+typeQuery, args...).Asc("id").Find(&dataSources)
 		}
-		return sess.Where("type=?", query.Type).Asc("id").Find(&dataSources)
+		return sess.Where(typeQuery, args...).Asc("id").Find(&dataSources)
 	})
 }
 
