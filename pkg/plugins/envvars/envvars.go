@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
@@ -80,8 +81,7 @@ func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalSe
 	m := make(map[string]string)
 
 	if s.cfg.GrafanaAppURL != "" {
-		// TODO: Replace key with plugin SDK backend.AppURL once released
-		m["GF_APP_URL"] = s.cfg.GrafanaAppURL
+		m[backend.AppURL] = s.cfg.GrafanaAppURL
 	}
 
 	// TODO add support via plugin SDK
