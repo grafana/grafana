@@ -243,6 +243,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     onRunQuery={this.props.onRunQuery}
                     initialValue={query.expr ?? ''}
                     placeholder="Enter a PromQL query…"
+                    datasource={datasource}
                   />
                 </div>
               </div>
