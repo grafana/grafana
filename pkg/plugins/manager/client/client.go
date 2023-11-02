@@ -52,18 +52,18 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	resp, err := p.QueryData(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return nil, err
+			return resp, err
 		}
 
 		if errors.Is(err, plugins.ErrPluginUnavailable) {
-			return nil, err
+			return resp, err
 		}
 
 		if errors.Is(err, context.Canceled) {
-			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
+			return resp, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
 		}
 
-		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to query data: %w", err)
+		return resp, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to query data: %w", err)
 	}
 
 	for refID, res := range resp.Responses {
