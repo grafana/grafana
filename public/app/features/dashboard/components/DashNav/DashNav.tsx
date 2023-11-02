@@ -11,9 +11,9 @@ import {
   ModalsController,
   ToolbarButton,
   useForceUpdate,
-  Tag,
   ToolbarButtonRow,
   ConfirmModal,
+  Badge,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
@@ -163,36 +163,16 @@ export const DashNav = React.memo<Props>((props) => {
 
   const renderLeftActions = () => {
     const { dashboard, kioskMode } = props;
-    const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
     if (kioskMode || isPlaylistRunning()) {
       return [];
     }
 
-    if (canStar) {
-      let desc = isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
-      buttons.push(
-        <DashNavButton
-          tooltip={desc}
-          icon={isStarred ? 'favorite' : 'star'}
-          iconType={isStarred ? 'mono' : 'default'}
-          iconSize="lg"
-          onClick={onStarDashboard}
-          key="button-star"
-        />
-      );
-    }
-
-    if (canShare) {
-      buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
-    }
-
     if (dashboard.meta.publicDashboardEnabled) {
+      // TODO: This will be replaced with the new badge component. Color is required but gets override by css
       buttons.push(
-        <Tag key="public-dashboard" name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>
+        <Badge color="blue" text="Public" className={publicBadgeStyle} data-testid={selectors.publicDashboardTag} />
       );
     }
 
@@ -250,7 +230,7 @@ export const DashNav = React.memo<Props>((props) => {
 
   const renderRightActions = () => {
     const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
-    const { canSave, canEdit, showSettings } = dashboard.meta;
+    const { canSave, canEdit, showSettings, canShare, canStar, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
@@ -263,20 +243,49 @@ export const DashNav = React.memo<Props>((props) => {
       return [renderTimeControls()];
     }
 
-    if (canEdit && !isFullscreen) {
-      if (config.featureToggles.emptyDashboardPage) {
-        buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
-      } else {
-        buttons.push(
-          <ToolbarButton
-            tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
-            icon="panel-add"
-            iconSize="xl"
-            onClick={onAddPanel}
-            key="button-panel-add"
-          />
-        );
-      }
+    if (snapshotUrl) {
+      buttons.push(
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
+          onClick={onOpenSnapshotOriginal}
+          icon="link"
+          key="button-snapshot"
+        />
+      );
+    }
+
+    buttons.push(renderTimeControls());
+
+    buttons.push(<NavToolbarSeparator />);
+
+    if (canStar) {
+      let desc = isStarred
+        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
+        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
+      buttons.push(
+        <DashNavButton
+          tooltip={desc}
+          icon={isStarred ? 'favorite' : 'star'}
+          iconType={isStarred ? 'mono' : 'default'}
+          iconSize="lg"
+          onClick={onStarDashboard}
+          key="button-star"
+        />
+      );
+    }
+
+    // insights
+    addCustomContent(customRightActions, buttons);
+
+    if (showSettings) {
+      buttons.push(
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
+          icon="cog"
+          onClick={onOpenSettings}
+          key="button-settings"
+        />
+      );
     }
 
     if (canSave && !isFullscreen) {
@@ -298,32 +307,25 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (snapshotUrl) {
-      buttons.push(
-        <ToolbarButton
-          tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
-          onClick={onOpenSnapshotOriginal}
-          icon="link"
-          key="button-snapshot"
-        />
-      );
+    if (canEdit && !isFullscreen) {
+      if (config.featureToggles.emptyDashboardPage) {
+        buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
+      } else {
+        buttons.push(
+          <ToolbarButton
+            tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
+            icon="panel-add"
+            iconSize="xl"
+            onClick={onAddPanel}
+            key="button-panel-add"
+          />
+        );
+      }
     }
 
-    if (showSettings) {
-      buttons.push(
-        <ToolbarButton
-          tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
-          icon="cog"
-          onClick={onOpenSettings}
-          key="button-settings"
-        />
-      );
+    if (canShare) {
+      buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
     }
-
-    addCustomContent(customRightActions, buttons);
-
-    buttons.push(renderTimeControls());
-
     return buttons;
   };
 
@@ -347,4 +349,10 @@ export default connector(DashNav);
 const modalStyles = css({
   width: 'max-content',
   maxWidth: '80vw',
+});
+
+const publicBadgeStyle = css({
+  color: 'grey',
+  backgroundColor: 'transparent',
+  border: '1px solid',
 });

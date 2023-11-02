@@ -1,13 +1,10 @@
 import React, { useContext, useEffect } from 'react';
 
-import { ModalsContext } from '@grafana/ui';
+import { ModalsContext, Button } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { ShareModal } from '../ShareModal';
-
-import { DashNavButton } from './DashNavButton';
 
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   const [queryParams] = useQueryParams();
@@ -27,16 +24,18 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   }, [showModal, hideModal, dashboard, queryParams.shareView]);
 
   return (
-    <DashNavButton
-      tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
-      icon="share-alt"
-      iconSize="lg"
+    <Button
+      size="sm"
       onClick={() => {
         showModal(ShareModal, {
           dashboard,
           onDismiss: hideModal,
         });
       }}
-    />
+    >
+      {/*TODO: this key is being use by scenes tooltip, check with them if we can change it to Share instead of Share dashboard*/}
+      {/*<Trans i18nKey="dashboard.toolbar.share">Share</Trans>*/}
+      Share
+    </Button>
   );
 };
