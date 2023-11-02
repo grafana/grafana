@@ -88,6 +88,12 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
       return (
         <img
           id={id}
+          ref={(element) => {
+            if (element) {
+              // After React 15+, inline styles no longer support !important
+              element.style.setProperty('pointer-events', 'auto', 'important');
+            }
+          }}
           key={id}
           alt={CONNECTION_ANCHOR_ALT}
           className={styles.anchor}
@@ -131,7 +137,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
     height: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
     zIndex: 100,
-    pointerEvents: 'auto',
   }),
   highlightElement: css({
     backgroundColor: '#00ff00',
