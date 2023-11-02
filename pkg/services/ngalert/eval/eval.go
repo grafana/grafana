@@ -279,20 +279,7 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 	datasources := make(map[string]*datasources.DataSource, len(data))
 
 	for _, q := range data {
-		model, err := q.GetModel()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
-		}
-		interval, err := q.GetIntervalDuration()
-		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
-		}
-
-		maxDatapoints, err := q.GetMaxDatapoints()
-		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
-		}
-
+		var err error
 		ds, ok := datasources[q.DatasourceUID]
 		if !ok {
 			switch nodeType := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); nodeType {
@@ -305,6 +292,20 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 				return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 			}
 			datasources[q.DatasourceUID] = ds
+		}
+
+		model, err := q.GetModel()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
+		}
+		interval, err := q.GetIntervalDuration()
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
+		}
+
+		maxDatapoints, err := q.GetMaxDatapoints()
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
 		}
 
 		req.Queries = append(req.Queries, expr.Query{
