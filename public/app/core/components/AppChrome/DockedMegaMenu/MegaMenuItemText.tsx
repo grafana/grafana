@@ -88,7 +88,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     display: 'flex',
     gap: '0.5rem',
     height: '100%',
-    paddingLeft: theme.spacing(1),
     width: '100%',
   }),
 });

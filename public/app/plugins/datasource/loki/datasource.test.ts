@@ -1254,6 +1254,15 @@ describe('LokiDatasource', () => {
         })
       );
     });
+    it('sets the supporting query type in the request', () => {
+      const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
+      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targets: [expect.objectContaining({ supportingQueryType: SupportingQueryType.DataSample })],
+        })
+      );
+    });
   });
 
   describe('Query splitting', () => {
