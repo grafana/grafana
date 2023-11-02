@@ -876,7 +876,6 @@
   "panel": {
     "header-menu": {
       "copy": "复制",
-      "create-alert": "",
       "create-library-panel": "创建库面板",
       "duplicate": "复制",
       "edit": "编辑",
@@ -887,6 +886,7 @@
       "inspect-data": "数据",
       "inspect-json": "面板 JSON",
       "more": "更多...",
+      "new-alert-rule": "",
       "query": "查询",
       "remove": "删除",
       "share": "分享",
