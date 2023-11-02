@@ -6,7 +6,7 @@
 
 // A GRN string is expressed in the format:
 //
-//	grn:${tenant_id}:${kind}/${id}
+//	grn:${tenant_id}:${group}/${kind}/${id}
 //
 // The format of the final id is defined by the owning service and not
 // validated by the GRN parser. Prefer using UIDs where possible.
