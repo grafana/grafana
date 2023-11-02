@@ -83,12 +83,17 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
       const style = {
         top: `calc(${-anchor.y * 50 + 50}% - ${halfSize}px - ${ANCHOR_PADDING}px)`,
         left: `calc(${anchor.x * 50 + 50}% - ${halfSize}px - ${ANCHOR_PADDING}px)`,
-        'pointer-events': 'auto !important',
       };
 
       return (
         <img
           id={id}
+          ref={(element) => {
+            if (element) {
+              // After React 15+, inline styles no longer support !important
+              element.style.setProperty('pointer-events', 'auto', 'important');
+            }
+          }}
           key={id}
           alt={CONNECTION_ANCHOR_ALT}
           className={styles.anchor}
