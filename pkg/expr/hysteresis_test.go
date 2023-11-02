@@ -186,3 +186,36 @@ func TestLoadedDimensionsFromFrame(t *testing.T) {
 		})
 	}
 }
+
+func TestFingerprintsToFrame(t *testing.T) {
+	testCases := []struct {
+		name          string
+		input         Fingerprints
+		expected      Fingerprints
+		expectedError bool
+	}{
+		{
+			name:     "when empty map",
+			input:    Fingerprints{},
+			expected: Fingerprints{},
+		},
+		{
+			name:     "when nil",
+			input:    nil,
+			expected: Fingerprints{},
+		},
+		{
+			name:     "when has values",
+			input:    Fingerprints{1: {}, 2: {}, 3: {}, 4: {}, 5: {}},
+			expected: Fingerprints{1: {}, 2: {}, 3: {}, 4: {}, 5: {}},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			frame := FingerprintsToFrame(testCase.input)
+			actual, err := FingerprintsFromFrame(frame)
+			require.NoError(t, err)
+			require.EqualValues(t, testCase.expected, actual)
+		})
+	}
+}
