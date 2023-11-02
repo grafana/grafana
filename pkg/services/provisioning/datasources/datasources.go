@@ -80,7 +80,11 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 			updateCmd := createUpdateCommand(ds, dataSource.ID)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
 			if _, err := dc.store.UpdateDataSource(ctx, updateCmd); err != nil {
-				return err
+				if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
+					dc.log.Debug("ignoring old version of datasource", "name", updateCmd.Name, "uid", updateCmd.UID)
+				} else {
+					return err
+				}
 			}
 		}
 	}
