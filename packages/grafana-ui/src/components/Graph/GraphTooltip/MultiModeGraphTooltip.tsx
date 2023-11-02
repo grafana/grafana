@@ -3,7 +3,7 @@ import React from 'react';
 import { getValueFromDimension } from '@grafana/data';
 
 import { SeriesTable } from '../../VizTooltip';
-import { FlotPosition } from '../types';
+import { FlotPosition } from '../../VizTooltip/VizTooltip';
 import { getMultiSeriesGraphHoverInfo } from '../utils';
 
 import { GraphTooltipContentProps } from './types';

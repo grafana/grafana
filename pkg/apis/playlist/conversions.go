@@ -1,4 +1,4 @@
-package v0alpha1
+package playlist
 
 import (
 	"encoding/json"
@@ -74,6 +74,26 @@ func convertToK8sResource(v *playlist.PlaylistDTO, namespacer request.NamespaceM
 		},
 		Spec: spec,
 	}
+}
+
+func convertToLegacyUpdateCommand(p *Playlist, orgId int64) (*playlist.UpdatePlaylistCommand, error) {
+	spec := p.Spec
+	cmd := &playlist.UpdatePlaylistCommand{
+		UID:      p.Name,
+		Name:     spec.Title,
+		Interval: spec.Interval,
+		OrgId:    orgId,
+	}
+	for _, item := range spec.Items {
+		if item.Type == ItemTypeDashboardById {
+			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
+		}
+		cmd.Items = append(cmd.Items, playlist.PlaylistItem{
+			Type:  string(item.Type),
+			Value: item.Value,
+		})
+	}
+	return cmd, nil
 }
 
 // Read legacy ID from metadata annotations
