@@ -84,15 +84,24 @@ func (fam *ForkedAlertmanager) ListSilences(ctx context.Context, filter []string
 }
 
 func (fam *ForkedAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
-	return apimodels.GettableAlerts{}, nil
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
+	}
+	return fam.internal.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *ForkedAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
-	return apimodels.AlertGroups{}, nil
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.GetAlertGroups(ctx, active, silenced, inhibited, filter, receiver)
+	}
+	return fam.internal.GetAlertGroups(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *ForkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
-	return nil
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.PutAlerts(ctx, alerts)
+	}
+	return fam.internal.PutAlerts(ctx, alerts)
 }
 
 func (fam *ForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
