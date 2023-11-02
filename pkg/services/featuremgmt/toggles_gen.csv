@@ -1,5 +1,4 @@
 Name,Stage,Owner,requiresDevMode,RequiresLicense,RequiresRestart,FrontendOnly
-trimDefaults,preview,@grafana/grafana-as-code,false,false,false,false
 disableEnvelopeEncryption,GA,@grafana/grafana-as-code,false,false,false,false
 live-service-web-worker,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
 queryOverLive,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
@@ -137,3 +136,4 @@ alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,fal
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false,false
 alertmanagerRemoteOnly,experimental,@grafana/alerting-squad,false,false,false,false
 annotationPermissionUpdate,experimental,@grafana/grafana-authnz-team,false,false,false,false
+extractFieldsNameDeduplication,experimental,@grafana/grafana-bi-squad,false,false,false,true
