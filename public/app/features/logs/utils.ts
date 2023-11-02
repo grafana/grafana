@@ -292,7 +292,7 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
     document.execCommand('copy');
     textarea.remove();
   }
-}
+};
 
 export function targetIsElement(target: EventTarget | null): target is Element {
   return target instanceof Element;

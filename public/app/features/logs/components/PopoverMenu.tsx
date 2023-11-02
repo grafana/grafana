@@ -56,8 +56,8 @@ export const PopoverMenu = ({
 
     return () => {
       document.removeEventListener('keyup', handleEscape);
-    }
-  }, [close])
+    };
+  }, [close]);
 
   const supported = onClickFilterLabel || onClickFilterOutLabel;
 
@@ -77,9 +77,11 @@ export const PopoverMenu = ({
         />
         {keyValueSelection && onClickFilterLabel && (
           <Menu.Item
-            label={isFilterActive ? 'Remove from query' : `Filter for ${keyValueSelection.key} = ${keyValueSelection.value}`}
+            label={
+              isFilterActive ? 'Remove from query' : `Filter for ${keyValueSelection.key} = ${keyValueSelection.value}`
+            }
             onClick={() => {
-              onClickFilterLabel(keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId)
+              onClickFilterLabel(keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId);
               close();
             }}
           />
@@ -88,19 +90,25 @@ export const PopoverMenu = ({
           <Menu.Item
             label={`Filter out ${keyValueSelection.key} != ${keyValueSelection.value}`}
             onClick={() => {
-              onClickFilterOutLabel(keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId)
+              onClickFilterOutLabel(keyValueSelection.key, keyValueSelection.value, row.dataFrame.refId);
               close();
             }}
           />
         )}
-        <Menu.Item label="Add as line contains filter" onClick={() => {
-          onClickFilterValue?.(selection, row.dataFrame.refId);
-          close();
-        }} />
-        <Menu.Item label="Add as line does not contain filter" onClick={() => {
-          onClickFilterOutValue?.(selection, row.dataFrame.refId);
-          close();
-        }} />
+        <Menu.Item
+          label="Add as line contains filter"
+          onClick={() => {
+            onClickFilterValue?.(selection, row.dataFrame.refId);
+            close();
+          }}
+        />
+        <Menu.Item
+          label="Add as line does not contain filter"
+          onClick={() => {
+            onClickFilterOutValue?.(selection, row.dataFrame.refId);
+            close();
+          }}
+        />
       </Menu>
     </div>
   );
@@ -110,5 +118,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   menu: css({
     position: 'fixed',
     zIndex: theme.zIndex.modal,
-  })
+  }),
 });
