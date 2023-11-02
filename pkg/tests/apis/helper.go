@@ -73,6 +73,7 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 }
 
 func (c *K8sTestHelper) Shutdown() {
+	fmt.Printf("calling shutdown on: %s\n", c.env.Server.HTTPServer.Listener.Addr())
 	c.env.Server.Shutdown(context.Background(), "done")
 }
 
