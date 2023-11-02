@@ -69,7 +69,6 @@ export function TimeSeriesTableTransformEditor({
       if (frame.refId === refId) {
         for (const field of frame.fields) {
           if (field.type === 'time') {
-            console.log(field);
             timeFields[field.name] = field;
           }
         }
