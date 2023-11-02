@@ -47,7 +47,7 @@ const ContactPointsFilter = () => {
           value={searchValue}
         />
       </Field>
-      <Button variant="secondary" icon="times" onClick={clearFilters} disabled={!hasInput}>
+      <Button variant="secondary" icon="times" onClick={clearFilters} disabled={!hasInput} aria-label="clear">
         Clear
       </Button>
     </Stack>
