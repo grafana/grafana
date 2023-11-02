@@ -10,12 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "trimDefaults",
-			Description: "Use cue schema to remove values that will be applied automatically",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAsCodeSquad,
-		},
-		{
 			Name:        "disableEnvelopeEncryption",
 			Description: "Disable envelope encryption (emergency only)",
 			Stage:       FeatureStageGeneralAvailability,
@@ -965,6 +959,13 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: false,
 			Owner:           grafanaAuthnzSquad,
+		},
+		{
+			Name:         "extractFieldsNameDeduplication",
+			Description:  "Make sure extracted field names are unique in the dataframe",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )
