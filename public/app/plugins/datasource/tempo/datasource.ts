@@ -631,7 +631,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (response.error) {
           return response;
         }
-        return transformTrace(response, this.nodeGraph?.enabled);
+        return transformTrace(response, this.instanceSettings, this.nodeGraph?.enabled);
       })
     );
   }

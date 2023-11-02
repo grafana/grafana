@@ -57,7 +57,6 @@ type Alertmanager interface {
 	CleanUp()
 	StopAndWait()
 	Ready() bool
-	OrgID() int64
 }
 
 type MultiOrgAlertmanager struct {
