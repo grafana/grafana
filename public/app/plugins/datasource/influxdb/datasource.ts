@@ -296,12 +296,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       super.query({
         targets: [target],
       } as DataQueryRequest)
-    ).then((rsp) => {
-      if (rsp.data?.length) {
-        return frameToMetricFindValue(rsp.data[0]);
-      }
-      return [];
-    });
+    ).then(this.toMetricFindValue);
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
@@ -313,22 +308,25 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       };
       return lastValueFrom(
         super.query({
-          ...options, // includes 'range'
+          ...(options ?? {}), // includes 'range'
           targets: [target],
         })
-      ).then((rsp) => {
-        if (rsp.data?.length) {
-          return frameToMetricFindValue(rsp.data[0]);
-        }
-        return [];
-      });
+      ).then(this.toMetricFindValue);
     }
 
-    const interpolated = this.templateSrv.replace(query, options.scopedVars, this.interpolateQueryExpr);
+    const interpolated = this.templateSrv.replace(query, options?.scopedVars, this.interpolateQueryExpr);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);
     });
+  }
+
+  toMetricFindValue(rsp: DataQueryResponse): MetricFindValue[] {
+    const data = rsp.data ?? [];
+    // Create MetricFindValue object for all frames
+    const values = data.map((d) => frameToMetricFindValue(d)).flat();
+    // Filter out duplicate elements
+    return values.filter((elm, idx, self) => idx === self.findIndex((t) => t.text === elm.text));
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality

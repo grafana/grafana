@@ -286,4 +286,67 @@ describe('InfluxDataSource Backend Mode', () => {
       expect(qData).toBe(qe);
     });
   });
+
+  describe('metric find query', () => {
+    let ds = getMockInfluxDS(getMockDSInstanceSettings());
+    it('handles multiple frames', async () => {
+      const fetchMockImpl = () => {
+        return of(mockMetricFindQueryResponse);
+      };
+
+      fetchMock.mockImplementation(fetchMockImpl);
+      const values = await ds.getTagValues({ key: 'test_id', filters: [] });
+      expect(fetchMock).toHaveBeenCalled();
+      expect(values.length).toBe(5);
+      expect(values[0].text).toBe('test-t2-1');
+    });
+  });
 });
+
+const mockMetricFindQueryResponse = {
+  data: {
+    results: {
+      metricFindQuery: {
+        status: 200,
+        frames: [
+          {
+            schema: {
+              name: 'NoneNone',
+              refId: 'metricFindQuery',
+              fields: [
+                {
+                  name: 'Value',
+                  type: 'string',
+                  typeInfo: {
+                    frame: 'string',
+                  },
+                },
+              ],
+            },
+            data: {
+              values: [['test-t2-1', 'test-t2-10']],
+            },
+          },
+          {
+            schema: {
+              name: 'some-other',
+              refId: 'metricFindQuery',
+              fields: [
+                {
+                  name: 'Value',
+                  type: 'string',
+                  typeInfo: {
+                    frame: 'string',
+                  },
+                },
+              ],
+            },
+            data: {
+              values: [['test-t2-1', 'test-t2-10', 'test-t2-2', 'test-t2-3', 'test-t2-4']],
+            },
+          },
+        ],
+      },
+    },
+  },
+};

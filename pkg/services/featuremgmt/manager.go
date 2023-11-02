@@ -16,6 +16,7 @@ var (
 type FeatureManager struct {
 	isDevMod        bool
 	restartRequired bool
+	allowEditing    bool
 	licensing       licensing.Licensing
 	flags           map[string]*FeatureFlag
 	enabled         map[string]bool // only the "on" values
@@ -150,7 +151,7 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 }
 
 func (fm *FeatureManager) GetState() *FeatureManagerState {
-	return &FeatureManagerState{RestartRequired: fm.restartRequired}
+	return &FeatureManagerState{RestartRequired: fm.restartRequired, AllowEditing: fm.allowEditing}
 }
 
 func (fm *FeatureManager) SetRestartRequired() {

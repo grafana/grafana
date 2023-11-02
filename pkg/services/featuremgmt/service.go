@@ -24,11 +24,12 @@ var (
 
 func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*FeatureManager, error) {
 	mgmt := &FeatureManager{
-		isDevMod:  setting.Env != setting.Prod,
-		licensing: licensing,
-		flags:     make(map[string]*FeatureFlag, 30),
-		enabled:   make(map[string]bool),
-		log:       log.New("featuremgmt"),
+		isDevMod:     setting.Env != setting.Prod,
+		licensing:    licensing,
+		flags:        make(map[string]*FeatureFlag, 30),
+		enabled:      make(map[string]bool),
+		allowEditing: cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateWebhook != "",
+		log:          log.New("featuremgmt"),
 	}
 
 	// Register the standard flags

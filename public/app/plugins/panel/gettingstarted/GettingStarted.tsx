@@ -86,7 +86,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         {!checksDone ? (
           <div className={styles.loading}>
             <div className={styles.loadingText}>Checking completed setup steps</div>
-            <Spinner size={24} inline />
+            <Spinner size="xl" inline />
           </div>
         ) : (
           <>

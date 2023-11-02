@@ -7,14 +7,15 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
@@ -22,21 +23,24 @@ import (
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 )
 
+const readyPath = "/-/ready"
+
 type Alertmanager struct {
-	log           log.Logger
-	url           string
-	tenantID      string
-	orgID         int64
-	amClient      *amclient.AlertmanagerAPI
-	httpClient    *http.Client
-	defaultConfig string
+	log      log.Logger
+	orgID    int64
+	tenantID string
+	url      string
+
+	amClient   *amclient.AlertmanagerAPI
+	httpClient *http.Client
+	ready      bool
+	sender     *sender.ExternalAlertmanager
 }
 
 type AlertmanagerConfig struct {
 	URL               string
 	TenantID          string
 	BasicAuthPassword string
-	DefaultConfig     string
 }
 
 func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error) {
@@ -56,28 +60,83 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 	if err != nil {
 		return nil, err
 	}
-	u = u.JoinPath(amclient.DefaultBasePath)
 
+	u = u.JoinPath(amclient.DefaultBasePath)
 	transport := httptransport.NewWithClient(u.Host, u.Path, []string{u.Scheme}, &client)
 
-	_, err = notifier.Load([]byte(cfg.DefaultConfig))
+	// Using our client with custom headers and basic auth credentials.
+	doFunc := func(ctx context.Context, _ *http.Client, req *http.Request) (*http.Response, error) {
+		return client.Do(req.WithContext(ctx))
+	}
+	s := sender.NewExternalAlertmanagerSender(sender.WithDoFunc(doFunc))
+	s.Run()
+
+	err = s.ApplyConfig(orgID, 0, []sender.ExternalAMcfg{{
+		URL: cfg.URL,
+	}})
 	if err != nil {
 		return nil, err
 	}
 
 	return &Alertmanager{
-		amClient:      amclient.New(transport, nil),
-		httpClient:    &client,
-		log:           log.New("ngalert.notifier.external-alertmanager"),
-		url:           cfg.URL,
-		tenantID:      cfg.TenantID,
-		orgID:         orgID,
-		defaultConfig: cfg.DefaultConfig,
+		amClient:   amclient.New(transport, nil),
+		httpClient: &client,
+		log:        log.New("ngalert.remote.alertmanager"),
+		sender:     s,
+		orgID:      orgID,
+		tenantID:   cfg.TenantID,
+		url:        cfg.URL,
 	}, nil
 }
 
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	return nil
+	if am.ready {
+		return nil
+	}
+
+	return am.checkReadiness(ctx)
+}
+
+func (am *Alertmanager) checkReadiness(ctx context.Context) error {
+	readyURL := strings.TrimSuffix(am.url, "/") + readyPath
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL, nil)
+	if err != nil {
+		return fmt.Errorf("error creating readiness request: %w", err)
+	}
+
+	res, err := am.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error performing readiness check: %w", err)
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.log.Warn("Error closing response body", "err", err)
+		}
+	}()
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w, status code: %d", notifier.ErrAlertmanagerNotReady, res.StatusCode)
+	}
+
+	// Wait for active senders.
+	var attempts int
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			attempts++
+			if len(am.sender.Alertmanagers()) > 0 {
+				am.log.Debug("Alertmanager readiness check successful", "attempts", attempts)
+				am.ready = true
+				return nil
+			}
+		case <-time.After(10 * time.Second):
+			return notifier.ErrAlertmanagerNotReady
+		}
+	}
 }
 
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
@@ -195,29 +254,10 @@ func (am *Alertmanager) GetAlertGroups(ctx context.Context, active, silenced, in
 	return res.Payload, nil
 }
 
-// TODO: implement PutAlerts in a way that is similar to what Prometheus does.
-// This current implementation is only good for testing methods that retrieve alerts from the remote Alertmanager.
-// More details in issue https://github.com/grafana/grafana/issues/76692
-func (am *Alertmanager) PutAlerts(ctx context.Context, postableAlerts apimodels.PostableAlerts) error {
-	defer func() {
-		if r := recover(); r != nil {
-			am.log.Error("Panic while putting alerts", "err", r)
-		}
-	}()
-
-	alerts := make(alertingNotify.PostableAlerts, 0, len(postableAlerts.PostableAlerts))
-	for _, pa := range postableAlerts.PostableAlerts {
-		alerts = append(alerts, &alertingNotify.PostableAlert{
-			Annotations: pa.Annotations,
-			EndsAt:      pa.EndsAt,
-			StartsAt:    pa.StartsAt,
-			Alert:       pa.Alert,
-		})
-	}
-
-	params := amalert.NewPostAlertsParamsWithContext(ctx).WithAlerts(alerts)
-	_, err := am.amClient.Alert.PostAlerts(params)
-	return err
+func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
+	am.log.Debug("Sending alerts to a remote alertmanager", "url", am.url, "alerts", len(alerts.PostableAlerts))
+	am.sender.SendAlerts(alerts)
+	return nil
 }
 
 func (am *Alertmanager) GetStatus() apimodels.GettableStatus {
@@ -247,23 +287,15 @@ func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 }
 
 func (am *Alertmanager) StopAndWait() {
+	am.sender.Stop()
 }
 
 func (am *Alertmanager) Ready() bool {
-	return false
+	return am.ready
 }
 
-func (am *Alertmanager) FileStore() *notifier.FileStore {
-	return &notifier.FileStore{}
-}
-
-func (am *Alertmanager) OrgID() int64 {
-	return am.orgID
-}
-
-func (am *Alertmanager) ConfigHash() [16]byte {
-	return [16]byte{}
-}
+// We don't have files on disk, no-op.
+func (am *Alertmanager) CleanUp() {}
 
 type roundTripper struct {
 	tenantID          string

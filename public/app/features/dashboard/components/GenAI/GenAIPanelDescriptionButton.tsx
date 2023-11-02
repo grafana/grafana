@@ -12,6 +12,8 @@ interface GenAIPanelDescriptionButtonProps {
   panel: PanelModel;
 }
 
+const PANEL_DESCRIPTION_CHAR_LIMIT = 200;
+
 const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'You are an expert in creating Grafana Panels.\n' +
   'You will be given the title and description of the dashboard the panel is in as well as the JSON for the panel.\n' +
@@ -19,7 +21,7 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'The panel description is meant to explain the purpose of the panel, not just its attributes.\n' +
   'Do not refer to the panel; simply describe its purpose.\n' +
   'There should be no numbers in the description except for thresholds.\n' +
-  'The description should be, at most, 140 characters.';
+  `The description should be, at most, ${PANEL_DESCRIPTION_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
   const messages = React.useMemo(() => getMessages(panel), [panel]);
@@ -48,7 +50,7 @@ function getMessages(panel: PanelModel): Message[] {
       role: Role.system,
     },
     {
-      content: `The panel is part of a dashboard with the description: ${dashboard.title}`,
+      content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
       role: Role.system,
     },
     {

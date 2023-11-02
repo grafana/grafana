@@ -42,7 +42,7 @@ def swagger_gen_step(ver_mode):
 
 def swagger_gen(trigger, ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
     test_steps = [
-        clone_enterprise_step_pr(source = source),
+        clone_enterprise_step_pr(source = source, canFail = True),
         swagger_gen_step(ver_mode = ver_mode),
     ]
 

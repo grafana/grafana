@@ -8,59 +8,22 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 )
 
-type FakeServiceAccountsService struct {
-	ExpectedServiceAccountProfileDTO       *serviceaccounts.ServiceAccountProfileDTO
-	ExpectedSearchOrgServiceAccountsResult *serviceaccounts.SearchOrgServiceAccountsResult
-}
-
-var _ serviceaccounts.Service = (*FakeServiceAccountsService)(nil)
-
-func newServiceAccountServiceFake() *FakeServiceAccountsService {
-	return &FakeServiceAccountsService{}
-}
-
-func (f *FakeServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	return nil, nil
-}
-
-func (f *FakeServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	return nil
-}
-
-func (f *FakeServiceAccountsService) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return f.ExpectedServiceAccountProfileDTO, nil
-}
-
-func (f *FakeServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
-	return 0, nil
-}
-
-func (f *FakeServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
-	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return nil, nil
-}
-
-func (f *FakeServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64,
-	cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
-	return nil, nil
-}
-
-func (f *FakeServiceAccountsService) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
-	return f.ExpectedSearchOrgServiceAccountsResult, nil
-}
+var _ serviceaccounts.Service = (*tests.FakeServiceAccountService)(nil)
 
 func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 	testOrgId := int64(1)
 	testServiceAccountId := int64(1)
-	serviceMock := newServiceAccountServiceFake()
+	testServiceAccountTokenId := int64(1)
+	serviceMock := &tests.FakeServiceAccountService{}
 	svc := ServiceAccountsProxy{
 		log.New("test"),
 		serviceMock,
+		true,
 	}
 
 	t.Run("should create service account", func(t *testing.T) {
@@ -118,8 +81,39 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
-				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
+				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				err := svc.DeleteServiceAccount(context.Background(), testOrgId, testServiceAccountId)
+				assert.Equal(t, err, tc.expectedError, tc.description)
+			})
+		}
+	})
+
+	t.Run("should delete service account", func(t *testing.T) {
+		testCases := []struct {
+			description            string
+			expectedError          error
+			expectedServiceAccount *serviceaccounts.ServiceAccountProfileDTO
+		}{
+			{
+				description:   "should allow to delete a service account token",
+				expectedError: nil,
+				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
+					Login: "my-service-account",
+				},
+			},
+			{
+				description:   "should not allow to delete a external service account token",
+				expectedError: extsvcaccounts.ErrCannotDeleteToken,
+				expectedServiceAccount: &serviceaccounts.ServiceAccountProfileDTO{
+					Login: "sa-extsvc-my-service-account",
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.description, func(t *testing.T) {
+				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
+				err := svc.DeleteServiceAccountToken(context.Background(), testOrgId, testServiceAccountId, testServiceAccountTokenId)
 				assert.Equal(t, err, tc.expectedError, tc.description)
 			})
 		}
@@ -149,12 +143,29 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
-				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
+				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				sa, err := svc.RetrieveServiceAccount(context.Background(), testOrgId, testServiceAccountId)
 				assert.NoError(t, err, tc.description)
 				assert.Equal(t, tc.expectedIsExternal, sa.IsExternal, tc.description)
 			})
 		}
+	})
+
+	t.Run("should mark external service accounts correctly", func(t *testing.T) {
+		serviceMock.ExpectedSearchOrgServiceAccountsResult = &serviceaccounts.SearchOrgServiceAccountsResult{
+			TotalCount: 2,
+			ServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
+				{Login: "test"},
+				{Login: serviceaccounts.ServiceAccountPrefix + serviceaccounts.ExtSvcPrefix + "test"},
+			},
+			Page:    1,
+			PerPage: 2,
+		}
+		res, err := svc.SearchOrgServiceAccounts(context.Background(), &serviceaccounts.SearchOrgServiceAccountsQuery{OrgID: 1})
+		require.Len(t, res.ServiceAccounts, 2)
+		require.NoError(t, err)
+		require.False(t, res.ServiceAccounts[0].IsExternal)
+		require.True(t, res.ServiceAccounts[1].IsExternal)
 	})
 
 	t.Run("should update service account", func(t *testing.T) {
@@ -211,7 +222,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
-				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
+				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.UpdateServiceAccount(context.Background(), testOrgId, testServiceAccountId, &tc.form)
 				assert.Equal(t, tc.expectedError, err, tc.description)
 			})
@@ -250,7 +261,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
-				serviceMock.ExpectedServiceAccountProfileDTO = tc.expectedServiceAccount
+				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				_, err := svc.AddServiceAccountToken(context.Background(), testServiceAccountId, &tc.cmd)
 				assert.Equal(t, tc.expectedError, err, tc.description)
 			})
@@ -262,30 +273,5 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		assert.False(t, isExternalServiceAccount("sa-my-service-account"))
 		assert.False(t, isExternalServiceAccount("extsvc-my-service-account"))
 		assert.True(t, isExternalServiceAccount("sa-extsvc-my-service-account"))
-	})
-}
-
-func TestProvideServiceAccount_SearchServiceAccount(t *testing.T) {
-	serviceMock := newServiceAccountServiceFake()
-	svc := ServiceAccountsProxy{
-		log.New("test"),
-		serviceMock,
-	}
-
-	t.Run("should mark external service accounts correctly", func(t *testing.T) {
-		serviceMock.ExpectedSearchOrgServiceAccountsResult = &serviceaccounts.SearchOrgServiceAccountsResult{
-			TotalCount: 2,
-			ServiceAccounts: []*serviceaccounts.ServiceAccountDTO{
-				{Login: "test"},
-				{Login: serviceaccounts.ServiceAccountPrefix + serviceaccounts.ExtSvcPrefix + "test"},
-			},
-			Page:    1,
-			PerPage: 2,
-		}
-		res, err := svc.SearchOrgServiceAccounts(context.Background(), &serviceaccounts.SearchOrgServiceAccountsQuery{OrgID: 1})
-		require.Len(t, res.ServiceAccounts, 2)
-		require.NoError(t, err)
-		require.False(t, res.ServiceAccounts[0].IsExternal)
-		require.True(t, res.ServiceAccounts[1].IsExternal)
 	})
 }

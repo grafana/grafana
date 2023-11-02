@@ -22,6 +22,7 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
@@ -59,45 +60,84 @@ interface LogsContainerProps extends PropsFromRedux {
 
 interface LogsContainerState {
   logDetailsFilterAvailable: boolean;
+  logContextSupport: Record<string, DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>>;
 }
 
 class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
   state: LogsContainerState = {
     logDetailsFilterAvailable: false,
+    logContextSupport: {},
   };
 
   componentDidMount() {
-    this.checkFiltersAvailability();
+    this.checkDataSourcesFeatures();
   }
 
   componentDidUpdate(prevProps: LogsContainerProps) {
-    this.checkFiltersAvailability();
+    this.checkDataSourcesFeatures();
   }
 
-  private checkFiltersAvailability() {
+  private checkDataSourcesFeatures() {
     const { logsQueries, datasourceInstance } = this.props;
 
-    if (!logsQueries) {
+    if (!logsQueries || !datasourceInstance) {
       return;
     }
 
-    if (datasourceInstance?.modifyQuery || hasToggleableQueryFiltersSupport(datasourceInstance)) {
-      this.setState({ logDetailsFilterAvailable: true });
+    let newState: LogsContainerState = { ...this.state, logDetailsFilterAvailable: false };
+
+    // Not in mixed mode.
+    if (datasourceInstance.uid !== MIXED_DATASOURCE_NAME) {
+      if (datasourceInstance?.modifyQuery || hasToggleableQueryFiltersSupport(datasourceInstance)) {
+        newState.logDetailsFilterAvailable = true;
+      }
+      if (hasLogsContextSupport(datasourceInstance)) {
+        logsQueries.forEach(({ refId }) => {
+          newState.logContextSupport[refId] = datasourceInstance;
+        });
+      }
+      this.setState(newState);
       return;
     }
 
-    const promises = [];
+    // Mixed mode.
+    const dsPromises: Array<Promise<{ ds: DataSourceApi; refId: string }>> = [];
     for (const query of logsQueries) {
-      if (query.datasource) {
-        promises.push(getDataSourceSrv().get(query.datasource));
+      if (!query.datasource) {
+        continue;
+      }
+      const mustCheck =
+        !newState.logContextSupport[query.refId] ||
+        newState.logContextSupport[query.refId].uid !== query.datasource.uid;
+      if (mustCheck) {
+        dsPromises.push(
+          new Promise((resolve) => {
+            getDataSourceSrv()
+              .get(query.datasource)
+              .then((ds) => {
+                resolve({ ds, refId: query.refId });
+              });
+          })
+        );
       }
     }
 
-    Promise.all(promises).then((dataSources) => {
-      const logDetailsFilterAvailable = dataSources.some(
-        (ds) => ds.modifyQuery || hasToggleableQueryFiltersSupport(ds)
-      );
-      this.setState({ logDetailsFilterAvailable });
+    if (!dsPromises.length) {
+      return;
+    }
+
+    Promise.all(dsPromises).then((dsInstances) => {
+      dsInstances.forEach(({ ds, refId }) => {
+        newState.logDetailsFilterAvailable =
+          newState.logDetailsFilterAvailable || Boolean(ds.modifyQuery) || hasToggleableQueryFiltersSupport(ds);
+        if (hasLogsContextSupport(ds)) {
+          newState.logContextSupport[refId] = ds;
+        } else {
+          delete newState.logContextSupport[refId];
+        }
+      });
+
+      this.setState(newState);
     });
   }
 
@@ -123,46 +163,54 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     origRow: LogRowModel,
     options: LogRowContextOptions
   ): Promise<DataQueryResponse | []> => {
-    const { datasourceInstance, logsQueries } = this.props;
+    const { logsQueries } = this.props;
 
-    if (hasLogsContextSupport(datasourceInstance)) {
-      const query = this.getQuery(logsQueries, origRow, datasourceInstance);
-      return datasourceInstance.getLogRowContext(row, options, query);
+    if (!origRow.dataFrame.refId || !this.state.logContextSupport[origRow.dataFrame.refId]) {
+      return Promise.resolve([]);
     }
 
-    return [];
+    const ds = this.state.logContextSupport[origRow.dataFrame.refId];
+    const query = this.getQuery(logsQueries, origRow, ds);
+
+    return query ? ds.getLogRowContext(row, options, query) : Promise.resolve([]);
   };
 
   getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | null> => {
-    const { datasourceInstance, logsQueries } = this.props;
+    const { logsQueries } = this.props;
 
-    if (hasLogsContextSupport(datasourceInstance) && datasourceInstance.getLogRowContextQuery) {
-      const query = this.getQuery(logsQueries, row, datasourceInstance);
-      return datasourceInstance.getLogRowContextQuery(row, options, query);
+    if (!row.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
+      return Promise.resolve(null);
     }
 
-    return null;
+    const ds = this.state.logContextSupport[row.dataFrame.refId];
+    const query = this.getQuery(logsQueries, row, ds);
+
+    return query && ds.getLogRowContextQuery ? ds.getLogRowContextQuery(row, options, query) : Promise.resolve(null);
   };
 
   getLogRowContextUi = (row: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
-    const { datasourceInstance, logsQueries } = this.props;
+    const { logsQueries } = this.props;
 
-    if (hasLogsContextUiSupport(datasourceInstance) && datasourceInstance.getLogRowContextUi) {
-      const query = this.getQuery(logsQueries, row, datasourceInstance);
-      return datasourceInstance.getLogRowContextUi(row, runContextQuery, query);
+    if (!row.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
+      return <></>;
     }
 
-    return <></>;
+    const ds = this.state.logContextSupport[row.dataFrame.refId];
+    const query = this.getQuery(logsQueries, row, ds);
+
+    return query && hasLogsContextUiSupport(ds) && ds.getLogRowContextUi ? (
+      ds.getLogRowContextUi(row, runContextQuery, query)
+    ) : (
+      <></>
+    );
   };
 
   showContextToggle = (row?: LogRowModel): boolean => {
-    const { datasourceInstance } = this.props;
-
-    if (hasLogsContextSupport(datasourceInstance)) {
-      return datasourceInstance.showContextToggle(row);
+    if (!row?.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
+      return false;
     }
 
-    return false;
+    return true;
   };
 
   getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
