@@ -179,6 +179,18 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
             },
           ],
         },
+        {
+          dir: path.resolve(DIST_DIR),
+          files: ['package.json'],
+          rules: [
+            {
+              search: `"version": "${getPackageJson().version}"`,
+              replace: env.commit
+                ? `"version": "${getPackageJson().version}-${env.commit}"`
+                : `"version": "${getPackageJson().version}"`,
+            },
+          ],
+        },
       ]),
       env.development
         ? new ForkTsCheckerWebpackPlugin({

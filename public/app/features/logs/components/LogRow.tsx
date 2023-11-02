@@ -33,7 +33,7 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   onContextClick?: () => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
-  showContextToggle?: (row?: LogRowModel) => boolean;
+  showContextToggle?: (row: LogRowModel) => boolean;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;

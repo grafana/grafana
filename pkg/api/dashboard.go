@@ -521,12 +521,13 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"status":  "success",
-		"slug":    dashboard.Slug,
-		"version": dashboard.Version,
-		"id":      dashboard.ID,
-		"uid":     dashboard.UID,
-		"url":     dashboard.GetURL(),
+		"status":    "success",
+		"slug":      dashboard.Slug,
+		"version":   dashboard.Version,
+		"id":        dashboard.ID,
+		"uid":       dashboard.UID,
+		"url":       dashboard.GetURL(),
+		"folderUid": dashboard.FolderUID,
 	})
 }
 
@@ -1301,6 +1302,10 @@ type PostDashboardResponse struct {
 		// required: true
 		// example: /d/nHz3SXiiz/my-dashboard
 		URL string `json:"url"`
+
+		// FolderUID The unique identifier (uid) of the folder the dashboard belongs to.
+		// required: false
+		FolderUID string `json:"folderUid"`
 	} `json:"body"`
 }
 

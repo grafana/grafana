@@ -103,7 +103,6 @@
 /pkg/services/correlations/ @grafana/explore-squad
 /pkg/services/dashboardimport/ @grafana/backend-platform
 /pkg/services/dashboards/ @grafana/backend-platform
-/pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
@@ -118,7 +117,6 @@
 /pkg/services/plugindashboards/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
-/pkg/services/publicdashboards/ @grafana/sharing-squad
 /pkg/services/query/ @grafana/backend-platform
 /pkg/services/queryhistory/ @grafana/backend-platform
 /pkg/services/quota/ @grafana/backend-platform
@@ -314,9 +312,7 @@
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Graph/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/ValuePicker/ @grafana/dataviz-squad
@@ -324,6 +320,8 @@
 /packages/grafana-ui/src/components/VizLegend/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
+/packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
+/packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/transformations/ @grafana/grafana-bi-squad
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
@@ -368,6 +366,8 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
 /public/app/core/components/TraceToLogs @grafana/observability-traces-and-profiling
+/public/app/core/components/GraphNG/ @grafana/dataviz-squad
+/public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/grafana-authnz-team
 /public/app/features/auth-config/ @grafana/grafana-authnz-team
@@ -411,7 +411,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/storage/ @grafana/grafana-app-platform-squad
 /public/app/features/teams/ @grafana/grafana-authnz-team
 /public/app/features/templating/ @grafana/dashboards-squad
-/public/app/features/transformers/ @grafana/dataviz-squad
+/public/app/features/transformers/ @grafana/grafana-bi-squad
 /public/app/features/users/ @grafana/grafana-authnz-team
 /public/app/features/variables/ @grafana/dashboards-squad
 /public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
@@ -551,6 +551,14 @@ scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/graf
 /public/app/plugins/datasource/parca/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
+# Grafana Sharing Squad
+/public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
+/public/app/features/manage-dashboards/components/PublicDashboardListTable/ @grafana/sharing-squad
+/public/app/features/dashboard/containers/PublicDashboardPage.tsx @grafana/sharing-squad
+/public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
+/pkg/services/dashboardsnapshots/ @grafana/sharing-squad
+/pkg/services/publicdashboards/ @grafana/sharing-squad
+
 # SSE - Server Side Expressions
 /pkg/expr/ @grafana/observability-metrics
 
@@ -629,7 +637,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/metrics-collector.yml @torkelo
 /.github/workflows/milestone.yml @marefr
-/.github/workflows/ox-code-coverage.yml @grafana/explore-squad
 /.github/workflows/pr-checks.yml @marefr
 /.github/workflows/pr-codeql-analysis-go.yml @DanCech
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
@@ -655,7 +662,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-delivery
-
+/.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

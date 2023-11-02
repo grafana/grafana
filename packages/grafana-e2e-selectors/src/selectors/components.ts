@@ -387,7 +387,7 @@ export const Components = {
     singleLink: 'Data link',
   },
   CodeEditor: {
-    container: 'Code editor container',
+    container: 'data-testid Code editor container',
   },
   DashboardImportPage: {
     textarea: 'data-testid-import-dashboard-textarea',

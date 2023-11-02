@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
-import { isFetchError } from '@grafana/runtime';
+import { FetchError, isFetchError } from '@grafana/runtime';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
 import { PanelModel } from '../../../dashboard/state';
 import { getLibraryPanelByName } from '../../state/api';
+import { LibraryElementDTO } from '../../types';
 import { usePanelSave } from '../../utils/usePanelSave';
 
 interface AddLibraryPanelContentsProps {
@@ -28,9 +29,11 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
   const { saveLibraryPanel } = usePanelSave();
   const onCreate = useCallback(() => {
     panel.libraryPanel = { uid: '', name: panelName };
-    saveLibraryPanel(panel, folderUid!).then((res) => {
-      if (!(res instanceof Error)) {
+    saveLibraryPanel(panel, folderUid!).then((res: LibraryElementDTO | FetchError) => {
+      if (!isFetchError(res)) {
         onDismiss();
+      } else {
+        panel.libraryPanel = undefined;
       }
     });
   }, [panel, panelName, folderUid, onDismiss, saveLibraryPanel]);
