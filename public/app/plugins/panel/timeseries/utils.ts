@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldType,
@@ -22,7 +21,7 @@ type ScaleKey = string;
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
 // e.g. ['a','b'][0,1,0] + ['c','d'][1,0,1] -> ['a','b'][0,1,0] + ['c','d'][3,2,3]
-function reEnumFields(frames: DataFrame[]) {
+function reEnumFields(frames: DataFrame[]): DataFrame[] {
   let allTextsByKey: Map<ScaleKey, string[]> = new Map();
 
   let frames2: DataFrame[] = frames.map((frame) => {
@@ -55,7 +54,7 @@ function reEnumFields(frames: DataFrame[]) {
 
           return {
             ...field,
-            values: new ArrayVector(idxs),
+            values: idxs,
           };
 
           // TODO: update displayProcessor?
