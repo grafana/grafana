@@ -27,7 +27,7 @@ import { getFieldLinksForExplore } from '../utils/links';
 import { fieldNameMeta } from './LogsTableWrap';
 
 interface Props {
-  logsFrames: DataFrame[];
+  logsFrame: DataFrame;
   width: number;
   timeZone: string;
   splitOpen: SplitOpen;
@@ -40,11 +40,11 @@ interface Props {
 }
 
 export function LogsTable(props: Props) {
-  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, columnsWithMeta } = props;
+  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrame, columnsWithMeta } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
 
   // Only a single frame (query) is supported currently
-  const logFrameRaw = logsFrames ? logsFrames[0] : undefined;
+  const logFrameRaw = logsFrame ? logsFrame : undefined;
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
@@ -145,11 +145,11 @@ export function LogsTable(props: Props) {
       return;
     }
     if (operator === FILTER_FOR_OPERATOR) {
-      onClickFilterLabel(key, value);
+      onClickFilterLabel(key, value, logsFrame.refId);
     }
 
     if (operator === FILTER_OUT_OPERATOR) {
-      onClickFilterOutLabel(key, value);
+      onClickFilterOutLabel(key, value, logsFrame.refId);
     }
   };
 

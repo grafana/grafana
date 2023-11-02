@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import {
   DataFrame,
@@ -8,11 +8,12 @@ import {
   GrafanaTheme2,
   Labels,
   LogsSortOrder,
+  SelectableValue,
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Themeable2 } from '@grafana/ui/';
+import { InlineField, Select, Themeable2 } from '@grafana/ui/';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
@@ -44,6 +45,7 @@ type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
 export function LogsTableWrap(props: Props) {
   const { logsFrames } = props;
+
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
@@ -52,7 +54,11 @@ export function LogsTableWrap(props: Props) {
 
   const [height, setHeight] = useState<number>(600);
 
-  const dataFrame = logsFrames[0];
+  // The refId of the current frame being displayed
+  const [currentFrameRef, setCurrentFrameRef] = useState<string | undefined>(logsFrames[0].refId);
+  const [dataFrame, setDataFrame] = useState(
+    logsFrames.find((frame) => frame.refId === currentFrameRef) ?? logsFrames[0]
+  );
 
   const getColumnsFromProps = useCallback(
     (fieldNames: fieldNameMetaStore) => {
@@ -306,34 +312,74 @@ export function LogsTableWrap(props: Props) {
     }
   };
 
+  const onFrameSelectorChange = (value: SelectableValue) => {
+    if (value) {
+      setCurrentFrameRef(value.value);
+      const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
+      if (matchingDataFrame) {
+        setDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
+      } else {
+        console.warn('uhhhhh');
+      }
+    }
+  };
+
   const sidebarWidth = 220;
   const totalWidth = props.width;
   const tableWidth = totalWidth - sidebarWidth;
   const styles = getStyles(props.theme, height, sidebarWidth);
 
   return (
-    <div className={styles.wrapper}>
-      <section className={styles.sidebar}>
-        <LogsColumnSearch onChange={onSearchInputChange} />
-        <LogsTableMultiSelect
-          toggleColumn={toggleColumn}
-          filteredColumnsWithMeta={filteredColumnsWithMeta}
+    <>
+      <div className={styles.optionsWrapper}>
+        {logsFrames.length > 1 && (
+          <div className={styles.frameSelectorWrap}>
+            <InlineField
+              label="Select query"
+              htmlFor="explore_logs_table_frame_selector"
+              labelWidth={22}
+              tooltip="Select a query to visualize in the table."
+            >
+              <Select
+                inputId={'explore_logs_table_frame_selector'}
+                aria-label={'Select query by name'}
+                className={styles.select}
+                value={currentFrameRef}
+                options={logsFrames.map((frame) => {
+                  return {
+                    label: frame.refId,
+                    value: frame.refId,
+                  };
+                })}
+                onChange={onFrameSelectorChange}
+              />
+            </InlineField>
+          </div>
+        )}
+      </div>
+      <div className={styles.wrapper}>
+        <section className={styles.sidebar}>
+          <LogsColumnSearch onChange={onSearchInputChange} />
+          <LogsTableMultiSelect
+            toggleColumn={toggleColumn}
+            filteredColumnsWithMeta={filteredColumnsWithMeta}
+            columnsWithMeta={columnsWithMeta}
+          />
+        </section>
+        <LogsTable
+          onClickFilterLabel={props.onClickFilterLabel}
+          onClickFilterOutLabel={props.onClickFilterOutLabel}
+          logsSortOrder={props.logsSortOrder}
+          range={props.range}
+          splitOpen={props.splitOpen}
+          timeZone={props.timeZone}
+          width={tableWidth}
+          logsFrame={dataFrame}
           columnsWithMeta={columnsWithMeta}
+          height={height}
         />
-      </section>
-      <LogsTable
-        onClickFilterLabel={props.onClickFilterLabel}
-        onClickFilterOutLabel={props.onClickFilterOutLabel}
-        logsSortOrder={props.logsSortOrder}
-        range={props.range}
-        splitOpen={props.splitOpen}
-        timeZone={props.timeZone}
-        width={tableWidth}
-        logsFrames={logsFrames}
-        columnsWithMeta={columnsWithMeta}
-        height={height}
-      />
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -354,7 +400,9 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
       paddingRight: theme.spacing(1.5),
     }),
 
-    labelCount: css({}),
+    optionsWrapper: css({}),
+    frameSelectorWrap: css({}),
+    select: css({}),
     checkbox: css({}),
   };
 }

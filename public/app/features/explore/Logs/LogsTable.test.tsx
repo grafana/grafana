@@ -65,7 +65,7 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, 
         to: toUtc('2019-01-01 16:00:00'),
         raw: { from: 'now-1h', to: 'now' },
       }}
-      logsFrames={[logs ?? testDataFrame]}
+      logsFrame={[logs ?? testDataFrame]}
       {...partialProps}
     />
   );

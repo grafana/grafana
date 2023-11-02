@@ -8,7 +8,7 @@ import { fieldNameMeta } from './LogsTableWrap';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    labelCount: css({
+    optionsWrapper: css({
       marginLeft: theme.spacing(0.5),
       marginRight: theme.spacing(0.5),
     }),
@@ -112,7 +112,7 @@ export const LogsTableNavColumn = (props: {
               onChange={() => toggleColumn(labelName)}
               checked={labels[labelName]?.active ?? false}
             />
-            <span className={styles.labelCount}>({labels[labelName]?.percentOfLinesWithLabel}%)</span>
+            <span className={styles.optionsWrapper}>({labels[labelName]?.percentOfLinesWithLabel}%)</span>
           </div>
         ))}
       </div>
