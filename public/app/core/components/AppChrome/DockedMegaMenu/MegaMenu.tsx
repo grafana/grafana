@@ -5,8 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
-import { Stack } from '@grafana/ui/src/unstable';
+import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';

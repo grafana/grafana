@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagTrimDefaults
-	// Use cue schema to remove values that will be applied automatically
-	FlagTrimDefaults = "trimDefaults"
-
 	// FlagDisableEnvelopeEncryption
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
@@ -558,4 +554,8 @@ const (
 	// FlagAnnotationPermissionUpdate
 	// Separate annotation permissions from dashboard permissions to allow for more granular control.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
+
+	// FlagExtractFieldsNameDeduplication
+	// Make sure extracted field names are unique in the dataframe
+	FlagExtractFieldsNameDeduplication = "extractFieldsNameDeduplication"
 )

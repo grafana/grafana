@@ -1038,7 +1038,6 @@
       "cancel-button": "取消",
       "info-text": "导出此仪表板。",
       "save-button": "保存至文件",
-      "share-default-label": "导出时清除默认值",
       "share-externally-label": "导出以供外部分享",
       "view-button": "查看 JSON"
     },

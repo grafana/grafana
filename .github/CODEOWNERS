@@ -312,9 +312,7 @@
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Graph/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/ValuePicker/ @grafana/dataviz-squad
@@ -322,6 +320,8 @@
 /packages/grafana-ui/src/components/VizLegend/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
+/packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
+/packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/transformations/ @grafana/grafana-bi-squad
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
@@ -366,6 +366,8 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
 /public/app/core/components/TraceToLogs @grafana/observability-traces-and-profiling
+/public/app/core/components/GraphNG/ @grafana/dataviz-squad
+/public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/grafana-authnz-team
 /public/app/features/auth-config/ @grafana/grafana-authnz-team
