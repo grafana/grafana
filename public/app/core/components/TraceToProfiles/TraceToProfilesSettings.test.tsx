@@ -8,7 +8,7 @@ import { TraceToProfilesData, TraceToProfilesSettings } from './TraceToProfilesS
 
 const defaultOption: DataSourceSettings<TraceToProfilesData> = {
   jsonData: {
-    tracesToProfilesV2: {
+    tracesToProfiles: {
       datasourceUid: 'profiling1_uid',
       tags: [{ key: 'someTag', value: 'newName' }],
       spanStartTimeShift: '1m',

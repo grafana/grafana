@@ -221,7 +221,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   const [flameGraphFrame, setFlameGraphFrame] = React.useState<DataFrame>();
 
   useEffect(() => {
-    if (request) {
+    if (config.featureToggles.traceToProfiles && request) {
       let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
       if (traceToProfilesOptions?.datasourceUid) {
         profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
