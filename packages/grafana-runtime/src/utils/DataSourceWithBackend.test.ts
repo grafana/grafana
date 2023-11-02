@@ -355,11 +355,10 @@ describe('DataSourceWithBackend', () => {
     ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: '__expr__' } }],
+      targets: [{ refId: 'A' }],
       dashboardUID: 'dashA',
       panelId: 123,
       range: getDefaultTimeRange(),
-      queryGroupId: 'abc',
       skipQueryCache: true,
       requestId: 'request-123',
       interval: '5s',
@@ -390,14 +389,6 @@ describe('DataSourceWithBackend', () => {
               "queryCachingTTL": undefined,
               "refId": "A",
             },
-            {
-              "datasource": {
-                "name": "Expression",
-                "type": "__expr__",
-                "uid": "__expr__",
-              },
-              "refId": "B",
-            },
           ],
           "to": "1697155200000",
         },
@@ -405,15 +396,13 @@ describe('DataSourceWithBackend', () => {
           "X-Cache-Skip": "true",
           "X-Dashboard-Uid": "dashA",
           "X-Datasource-Uid": "abc",
-          "X-Grafana-From-Expr": "true",
           "X-Panel-Id": "123",
           "X-Plugin-Id": "dummy",
-          "X-Query-Group-Id": "abc",
         },
         "hideFromInspector": false,
         "method": "POST",
         "requestId": "request-123",
-        "url": "/api/ds/query?ds_type=dummy&expression=true&requestId=request-123",
+        "url": "/api/ds/query?ds_type=dummy&requestId=request-123",
       }
     `);
   });
