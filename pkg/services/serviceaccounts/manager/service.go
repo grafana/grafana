@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -38,15 +37,12 @@ type ServiceAccountsService struct {
 
 func ProvideServiceAccountsService(
 	cfg *setting.Cfg,
-	ac accesscontrol.AccessControl,
-	routeRegister routing.RouteRegister,
 	usageStats usagestats.Service,
 	store *sqlstore.SQLStore,
 	apiKeyService apikey.Service,
 	kvStore kvstore.KVStore,
 	userService user.Service,
 	orgService org.Service,
-	permissionService accesscontrol.ServiceAccountPermissionsService,
 	accesscontrolService accesscontrol.Service,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
