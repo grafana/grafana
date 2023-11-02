@@ -3,6 +3,7 @@ package expr
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"testing"
 
@@ -162,7 +163,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				        ],
 				        "type": "lt"
 				      },
-				      "loadedDimensions": {"schema":{"name":"test","meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[1,2,3,4,5]]}}
+				      "loadedDimensions": {"schema":{"name":"test","meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[18446744073709551615,2,3,4,5]]}}
 				    }
 				  ]
 				}`,
@@ -186,7 +187,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 					return actual[i] < actual[j]
 				})
 
-				require.EqualValues(t, []uint64{1, 2, 3, 4, 5}, actual)
+				require.EqualValues(t, []uint64{18446744073709551615, 2, 3, 4, 5}, actual)
 			},
 		},
 	}
@@ -423,7 +424,7 @@ func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 		{
 			name:           "true type is threshold and a single condition has unloadEvaluator field",
 			input:          json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : {}}] }`),
-			expectedResult: json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : {}, "loadedDimensions": {"schema":{"meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[1,2,3]]}}}] }`),
+			expectedResult: json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : {}, "loadedDimensions": {"schema":{"meta":{"type":"fingerprints","typeVersion":[1,0]},"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}]},"data":{"values":[[18446744073709551615,2,3]]}}}] }`),
 		},
 	}
 
@@ -431,7 +432,7 @@ func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			query := map[string]any{}
 			require.NoError(t, json.Unmarshal(tc.input, &query))
-			err := SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{1: {}, 2: {}, 3: {}})
+			err := SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{math.MaxUint64: {}, 2: {}, 3: {}})
 			if tc.expectedError {
 				require.Error(t, err)
 				return
