@@ -17,28 +17,25 @@ import {
 } from '@grafana/data';
 import { VizLegendOptions } from '@grafana/schema';
 
+import { PanelContext, PanelContextRoot } from '../../components/PanelChrome/PanelContext';
+import { VizLayout } from '../../components/VizLayout/VizLayout';
+import { UPlotChart } from '../../components/uPlot/Plot';
+import { AxisProps } from '../../components/uPlot/config/UPlotAxisBuilder';
+import { Renderers, UPlotConfigBuilder } from '../../components/uPlot/config/UPlotConfigBuilder';
+import { ScaleProps } from '../../components/uPlot/config/UPlotScaleBuilder';
+import { findMidPointYPosition, pluginLog } from '../../components/uPlot/utils';
 import { Themeable2 } from '../../types';
-import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
-import { VizLayout } from '../VizLayout/VizLayout';
-import { UPlotChart } from '../uPlot/Plot';
-import { AxisProps } from '../uPlot/config/UPlotAxisBuilder';
-import { Renderers, UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { ScaleProps } from '../uPlot/config/UPlotScaleBuilder';
-import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
 
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 
 /**
- * @internal -- not a public API
- */
-export const FIXED_UNIT = '__fixed';
-
-/**
+ * @deprecated
  * @internal -- not a public API
  */
 export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
 
+/** @deprecated */
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
@@ -83,6 +80,7 @@ function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | P
 
 /**
  * @internal -- not a public API
+ * @deprecated
  */
 export interface GraphNGState {
   alignedFrame: DataFrame;
@@ -92,6 +90,7 @@ export interface GraphNGState {
 
 /**
  * "Time as X" core component, expects ascending x
+ * @deprecated
  */
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;

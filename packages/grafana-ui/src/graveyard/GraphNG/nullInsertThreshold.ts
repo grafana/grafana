@@ -19,6 +19,7 @@ interface NullInsertOptions {
   insertMode?: InsertMode;
 }
 
+/** @deprecated */
 export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
   if (opts.frame.length === 0) {
     return opts.frame;

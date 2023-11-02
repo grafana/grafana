@@ -1,4 +1,4 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame } from '../../../types';
 
 export function nullToValue(frame: DataFrame) {
   return {

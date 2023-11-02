@@ -1,17 +1,17 @@
 import { DataFrameFieldIndex, FieldMatcher } from '@grafana/data';
 
-import { SeriesVisibilityChangeMode } from '../PanelChrome';
+import { SeriesVisibilityChangeMode } from '../../components/PanelChrome';
 
 /**
  * Event being triggered when the user interact with the Graph legend.
- * @alpha
+ * @deprecated
  */
 export interface GraphNGLegendEvent {
   fieldIndex: DataFrameFieldIndex;
   mode: SeriesVisibilityChangeMode;
 }
 
-/** @alpha */
+/** @deprecated */
 export interface XYFieldMatchers {
   x: FieldMatcher; // first match
   y: FieldMatcher;
