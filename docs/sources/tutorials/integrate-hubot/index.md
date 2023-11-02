@@ -19,7 +19,6 @@ tags:
 title: Integrate Hubot with Grafana
 ---
 
-
 # Integrate Hubot with Grafana
 
 Grafana 2.0 shipped with a great feature that enables it to render any graph or panel to a PNG image.
@@ -38,7 +37,7 @@ This guide shows you how to install and configure the [Hubot-Grafana](https://gi
 
 Hubot is very easy to install and host. If you do not already have a bot up and running please read the official [Getting Started With Hubot](https://hubot.github.com/docs/) guide.
 
-## Install the Hubot-Grafana script 
+## Install the Hubot-Grafana script
 
 In your Hubot project repo install the Grafana plugin using `npm`:
 
@@ -54,7 +53,7 @@ Edit the file external-scripts.json, and add hubot-grafana to the list of plugin
 
 ## Configure
 
-The Hubot-Grafana plugin requires two environment variables to be set in order to work properly. 
+The Hubot-Grafana plugin requires two environment variables to be set in order to work properly.
 
 ```bash
 export HUBOT_GRAFANA_HOST=https://play.grafana.org
