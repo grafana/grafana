@@ -456,6 +456,9 @@
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-abs-time-desc": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "",
       "refresh-picker-run": "",
       "split-close": "",
