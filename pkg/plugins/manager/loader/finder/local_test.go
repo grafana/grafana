@@ -316,6 +316,24 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		require.Error(t, err)
 		require.Empty(t, paths)
 	})
+
+	t.Run("should forward if the dist folder should be evaluated", func(t *testing.T) {
+		origWalk := walk
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+			if followDistFolder {
+				return walkFn(path, nil, errors.New("unexpected followDistFolder"))
+			}
+			return walkFn(path, nil, filepath.SkipDir)
+		}
+		t.Cleanup(func() {
+			walk = origWalk
+		})
+
+		finder := NewLocalFinder(false)
+		paths, err := finder.getAbsPluginJSONPaths("test", false)
+		require.ErrorIs(t, err, filepath.SkipDir)
+		require.Empty(t, paths)
+	})
 }
 
 var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
