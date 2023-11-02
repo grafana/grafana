@@ -62,7 +62,7 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
       const labels = provider.getLabelKeys() || [];
       const preferredLabel = PREFERRED_LABELS.find((l) => labels.includes(l));
       if (preferredLabel) {
-        const values = await provider.getLabelValues(preferredLabel);
+        const values = await provider.fetchLabelValues(preferredLabel);
         const userExamples = shuffle(values)
           .slice(0, EXAMPLES_LIMIT)
           .map((value) => `{${preferredLabel}="${value}"}`);
