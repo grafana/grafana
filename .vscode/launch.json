@@ -35,6 +35,14 @@
       "mode": "test",
       "program": "${workspaceFolder}/${relativeFileDirname}",
       "showLog": true
-    }
+    },
+    {
+      "name": "Run sample-apiserver",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "cwd": "${workspaceFolder}/devenv/sample-apiserver",
+      "program": "${workspaceFolder}/devenv/sample-apiserver/apiserver.go",
+    },
   ]
 }
