@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -49,12 +48,10 @@ type expressionService interface {
 }
 
 type conditionEvaluator struct {
-	mtx                 sync.Mutex
-	pipeline            expr.DataPipeline
-	expressionService   expressionService
-	condition           models.Condition
-	evalTimeout         time.Duration
-	loadedMetricsReader AlertingResultsReader
+	pipeline          expr.DataPipeline
+	expressionService expressionService
+	condition         models.Condition
+	evalTimeout       time.Duration
 }
 
 func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error) {
@@ -69,28 +66,6 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 			}
 		}
 	}()
-
-	// patching the hysteresis commands with the current loaded metrics.
-	// This optimization is to save resources on marshalling AlertQuery.
-	// Mutex is to make sure that the evaluation is synchronous.
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	if r.loadedMetricsReader != nil {
-		cmds := expr.GetCommandsFromPipeline[*expr.HysteresisCommand](r.pipeline)
-		if len(cmds) > 0 {
-			loaded := r.loadedMetricsReader.Read()
-			logger.FromContext(ctx).Debug("Populating loaded metrics for hysteresis command", "commands", len(cmds), "loaded", len(loaded))
-			for _, cmd := range cmds {
-				cmd.LoadedDimensions = loaded
-			}
-			// reset the data after evaluation
-			defer func() {
-				for _, cmd := range cmds {
-					cmd.LoadedDimensions = nil
-				}
-			}()
-		}
-	}
 
 	execCtx := ctx
 	if r.evalTimeout >= 0 {
@@ -745,7 +720,7 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 		case expr.TypeCMDNode:
 		}
 	}
-	_, err = e.create(ctx, condition, req)
+	_, err = e.create(condition, req)
 	return err
 }
 
@@ -760,10 +735,10 @@ func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition
 	if err != nil {
 		return nil, err
 	}
-	return e.create(ctx, condition, req)
+	return e.create(condition, req)
 }
 
-func (e *evaluatorImpl) create(ctx EvaluationContext, condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
+func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
 	pipeline, err := e.expressionService.BuildPipeline(req)
 	if err != nil {
 		return nil, err
@@ -772,11 +747,10 @@ func (e *evaluatorImpl) create(ctx EvaluationContext, condition models.Condition
 	for _, node := range pipeline {
 		if node.RefID() == condition.Condition {
 			return &conditionEvaluator{
-				pipeline:            pipeline,
-				expressionService:   e.expressionService,
-				condition:           condition,
-				evalTimeout:         e.evaluationTimeout,
-				loadedMetricsReader: ctx.AlertingResultsReader,
+				pipeline:          pipeline,
+				expressionService: e.expressionService,
+				condition:         condition,
+				evalTimeout:       e.evaluationTimeout,
 			}, nil
 		}
 		conditions = append(conditions, node.RefID())
