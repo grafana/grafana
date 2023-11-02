@@ -15,6 +15,27 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
+func LegacyUpdateCommandToUnstructured(cmd playlist.UpdatePlaylistCommand) unstructured.Unstructured {
+	items := []map[string]string{}
+	for _, item := range cmd.Items {
+		items = append(items, map[string]string{
+			"type":  item.Type,
+			"value": item.Value,
+		})
+	}
+	obj := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":    cmd.Name,
+				"interval": cmd.Interval,
+				"items":    items,
+			},
+		},
+	}
+	obj.SetName(cmd.UID)
+	return obj
+}
+
 func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *playlist.Playlist {
 	spec := item.Object["spec"].(map[string]any)
 	return &playlist.Playlist{
