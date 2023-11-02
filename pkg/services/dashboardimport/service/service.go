@@ -121,6 +121,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		Overwrite: req.Overwrite,
 		PluginID:  req.PluginId,
 		FolderID:  req.FolderId,
+		FolderUID: req.FolderUid,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{

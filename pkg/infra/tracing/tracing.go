@@ -25,6 +25,7 @@ import (
 	trace "go.opentelemetry.io/otel/trace"
 
 	"github.com/go-kit/log/level"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -108,6 +109,10 @@ func ParseSettings(cfg *setting.Cfg) (*TracingService, error) {
 	}
 	err := ots.parseSettings()
 	return ots, err
+}
+
+func (ots *TracingService) GetTracerProvider() tracerProvider {
+	return ots.tracerProvider
 }
 
 func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
