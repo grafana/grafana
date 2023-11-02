@@ -16,7 +16,6 @@ import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 import React, { useEffect } from 'react';
-import { lastValueFrom } from 'rxjs';
 
 import {
   DataFrame,
@@ -34,7 +33,6 @@ import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PyroscopeQueryType } from 'app/plugins/datasource/grafana-pyroscope-datasource/dataquery.gen';
-import { PyroscopeDataSource } from 'app/plugins/datasource/grafana-pyroscope-datasource/datasource';
 import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
@@ -55,6 +53,7 @@ import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
 import { FlameGraphKey } from './KeyValuesTable';
+import { getProfileFrame } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -251,15 +250,9 @@ export default function SpanDetail(props: SpanDetailProps) {
     }
 
     async function queryProfile(request: DataQueryRequest<Query>, datasourceUid: string) {
-      const ds = await getDatasourceSrv().get(datasourceUid);
-      if (ds instanceof PyroscopeDataSource) {
-        const result = await lastValueFrom(ds.query(request));
-        const frame = result.data.find((x: DataFrame) => {
-          return x.name === 'response';
-        });
-        if (frame && frame.length > 1) {
-          setFlameGraphFrame(frame);
-        }
+      const frame = await getProfileFrame(request, datasourceUid);
+      if (frame && frame.length > 1) {
+        setFlameGraphFrame(frame);
       }
     }
   }, [request, span.tags, spanID, traceToProfilesOptions]);

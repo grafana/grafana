@@ -11,8 +11,6 @@ const defaultOption: DataSourceSettings<TraceToProfilesData> = {
     tracesToProfiles: {
       datasourceUid: 'profiling1_uid',
       tags: [{ key: 'someTag', value: 'newName' }],
-      spanStartTimeShift: '1m',
-      spanEndTimeShift: '1m',
       customQuery: true,
       query: '{${__tags}}',
     },

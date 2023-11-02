@@ -14,9 +14,17 @@
 
 jest.mock('../utils');
 
-import { render, screen } from '@testing-library/react';
+jest.mock('./utils', () => ({
+  getProfileFrame: () => Promise.resolve(createDataFrame(data)),
+}));
+
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+
+import { createDataFrame, DataSourceInstanceSettings } from '@grafana/data';
+import { data } from '@grafana/flamegraph';
+import { config, DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
@@ -33,10 +41,29 @@ describe('<SpanDetail>', () => {
   const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
   const traceStartTime = 5;
   const topOfExploreViewRef = jest.fn();
+  const request = {
+    targets: [{ refId: 'A', target: 'query' }],
+  };
+  const traceToProfilesOptions = {
+    datasourceUid: 'profiling1_uid',
+    tags: [{ key: 'someTag', value: 'newName' }],
+    customQuery: true,
+    query: '{${__tags}}',
+    type: 'grafana-pyroscope-datasource',
+  };
+  const pyroSettings = {
+    uid: 'profiling1_uid',
+    name: 'profiling1',
+    type: 'grafana-pyroscope-datasource',
+    meta: { info: { logos: { small: '' } } },
+  } as unknown as DataSourceInstanceSettings;
+
   const props = {
     detailState,
     span,
     traceStartTime,
+    request,
+    traceToProfilesOptions,
     topOfExploreViewRef,
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
@@ -47,6 +74,19 @@ describe('<SpanDetail>', () => {
     createFocusSpanLink: jest.fn().mockReturnValue({}),
     topOfViewRefType: 'Explore',
   };
+
+  span.tags = [
+    ...span.tags,
+    {
+      key: 'pyroscope.profiling.enabled',
+      value: true,
+    },
+    {
+      key: 'flameGraph',
+      type: 'flameGraph',
+      value: createDataFrame(data),
+    },
+  ];
 
   span.kind = 'test-kind';
   span.statusCode = 2;
@@ -122,6 +162,15 @@ describe('<SpanDetail>', () => {
     props.processToggle.mockReset();
     props.logsToggle.mockReset();
     props.logItemToggle.mockReset();
+
+    setDataSourceSrv({
+      getList() {
+        return [pyroSettings];
+      },
+      getInstanceSettings() {
+        return pyroSettings;
+      },
+    } as unknown as DataSourceSrv);
   });
 
   it('renders without exploding', () => {
@@ -196,5 +245,16 @@ describe('<SpanDetail>', () => {
   it('renders deep link URL', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(document.getElementsByTagName('a').length).toBeGreaterThan(1);
+  });
+
+  it('renders the flame graph', async () => {
+    config.featureToggles.traceToProfiles = true;
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    await act(async () => {
+      expect(screen.getByText('flameGraph')).toBeInTheDocument();
+      expect(screen.getByText(/16.5 Bil/)).toBeInTheDocument();
+      expect(screen.getByText(/(Count)/)).toBeInTheDocument();
+    });
   });
 });
