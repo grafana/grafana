@@ -99,6 +99,7 @@ import { LokiVariableSupport } from './variables';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
+export const DEFAULT_MAX_LINES_SAMPLE = 10;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 export const REF_ID_DATA_SAMPLES = 'loki-data-samples';
 export const REF_ID_STARTER_ANNOTATION = 'annotation-';
@@ -761,8 +762,8 @@ export class LokiDatasource
       expr: query.expr,
       queryType: LokiQueryType.Range,
       refId: REF_ID_DATA_SAMPLES,
-      // For samples we limit the request to 10 lines, so queries are small and fast
-      maxLines: 10,
+      maxLines: query.maxLines || DEFAULT_MAX_LINES_SAMPLE,
+      supportingQueryType: SupportingQueryType.DataSample,
     };
 
     const timeRange = this.getTimeRange();

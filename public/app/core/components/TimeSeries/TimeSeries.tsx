@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 
 import { DataFrame, TimeRange } from '@grafana/data';
+import { PanelContextRoot } from '@grafana/ui/src/components/PanelChrome/PanelContext';
+import { hasVisibleLegendSeries, PlotLegend } from '@grafana/ui/src/components/uPlot/PlotLegend';
+import { UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
+import { withTheme2 } from '@grafana/ui/src/themes/ThemeContext';
 
-import { withTheme2 } from '../../themes/ThemeContext';
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
-import { PanelContextRoot } from '../PanelChrome/PanelContext';
-import { hasVisibleLegendSeries, PlotLegend } from '../uPlot/PlotLegend';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 import { preparePlotConfigBuilder } from './utils';
 

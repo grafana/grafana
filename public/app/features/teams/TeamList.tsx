@@ -2,19 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import {
-  LinkButton,
-  FilterInput,
-  InlineField,
-  CellProps,
-  DeleteButton,
-  InteractiveTable,
-  Icon,
-  Tooltip,
-  Column,
-  Pagination,
   Avatar,
+  CellProps,
+  Column,
+  DeleteButton,
+  FilterInput,
+  Icon,
+  InlineField,
+  InteractiveTable,
+  LinkButton,
+  Pagination,
+  Stack,
+  Tooltip,
 } from '@grafana/ui';
-import { Stack } from '@grafana/ui/src/unstable';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -43,6 +43,7 @@ export const TeamList = ({
   changeQuery,
   totalPages,
   page,
+  rolesLoading,
   changePage,
   changeSort,
 }: Props) => {
@@ -96,7 +97,17 @@ export const TeamList = ({
                   AccessControlAction.ActionTeamsRolesList,
                   original
                 );
-                return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} width={40} />;
+                return (
+                  canSeeTeamRoles && (
+                    <TeamRolePicker
+                      teamId={original.id}
+                      roles={original.roles || []}
+                      isLoading={rolesLoading}
+                      roleOptions={roleOptions}
+                      width={40}
+                    />
+                  )
+                );
               },
             },
           ]
@@ -132,7 +143,7 @@ export const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, roleOptions, deleteTeam]
+    [displayRolePicker, rolesLoading, roleOptions, deleteTeam]
   );
 
   return (
@@ -203,6 +214,7 @@ function mapStateToProps(state: StoreState) {
     noTeams: state.teams.noTeams,
     totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
+    rolesLoading: state.teams.rolesLoading,
   };
 }
 
