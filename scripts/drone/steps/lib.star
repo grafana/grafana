@@ -614,7 +614,8 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
       Drone step.
     """
     commands = [
-        "yarn wait-on http://$HOST:$PORT",
+        # Note - this runs in a container running node 14, which does not support the -y option to npx
+        "npx wait-on@7.0.1 http://$HOST:$PORT",
     ]
     failure = "ignore"
     if ver_mode == "pr":
@@ -786,6 +787,7 @@ def build_docs_website_step():
         "name": "build-docs-website",
         # Use latest revision here, since we want to catch if it breaks
         "image": images["docs"],
+        "pull": "always",
         "commands": [
             "mkdir -p /hugo/content/docs/grafana/latest",
             "echo -e '---\\nredirectURL: /docs/grafana/latest/\\ntype: redirect\\nversioned: true\\n---\\n' > /hugo/content/docs/grafana/_index.md",
@@ -964,10 +966,16 @@ def redis_integration_tests_steps():
 def remote_alertmanager_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run IntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/...",
+        "go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...",
     ]
 
-    return integration_tests_steps("remote-alertmanager", cmds, "mimir", "8080", None)
+    environment = {
+        "AM_TENANT_ID": "test",
+        "AM_PASSWORD": "test",
+        "AM_URL": "http://mimir_backend:8080",
+    }
+
+    return integration_tests_steps("remote-alertmanager", cmds, "mimir_backend", "8080", environment = environment)
 
 def memcached_integration_tests_steps():
     cmds = [

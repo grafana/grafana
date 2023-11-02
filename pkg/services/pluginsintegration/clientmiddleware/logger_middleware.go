@@ -73,7 +73,19 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 	var resp *backend.QueryDataResponse
 	err := m.logRequest(ctx, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
-		return innerErr
+
+		if innerErr != nil {
+			return innerErr
+		}
+
+		ctxLogger := m.logger.FromContext(ctx)
+		for refID, dr := range resp.Responses {
+			if dr.Error != nil {
+				ctxLogger.Error("Partial data response error", "refID", refID, "error", dr.Error)
+			}
+		}
+
+		return nil
 	})
 
 	return resp, err

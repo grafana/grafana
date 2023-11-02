@@ -347,10 +347,6 @@ const (
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
 
-	// FlagToggleLabelsInLogsUI
-	// Enable toggleable filters in log details view
-	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
-
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
@@ -386,6 +382,10 @@ const (
 	// FlagAzureMonitorDataplane
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
+
+	// FlagTraceToProfiles
+	// Enables linking between traces and profiles
+	FlagTraceToProfiles = "traceToProfiles"
 
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
@@ -447,6 +447,10 @@ const (
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
 
+	// FlagAlertingContactPointsV2
+	// Show the new contacpoints list view
+	FlagAlertingContactPointsV2 = "alertingContactPointsV2"
+
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
@@ -491,6 +495,14 @@ const (
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
+	// FlagKubernetesPlaylistsAPI
+	// Route /api/playlist API to k8s handlers
+	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"
+
+	// FlagCloudWatchBatchQueries
+	// Runs CloudWatch metrics queries as separate batches
+	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
+
 	// FlagNavAdminSubsections
 	// Splits the administration section of the nav tree into subsections
 	FlagNavAdminSubsections = "navAdminSubsections"
@@ -498,6 +510,10 @@ const (
 	// FlagRecoveryThreshold
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
+
+	// FlagTeamHttpHeaders
+	// Enables datasources to apply team headers to the client requests
+	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagAwsDatasourcesNewFormStyling
 	// Applies new form styling for configuration and query editors in AWS plugins
@@ -514,4 +530,32 @@ const (
 	// FlagPluginsInstrumentationStatusSource
 	// Include a status source label for plugin request metrics and logs
 	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
+
+	// FlagCostManagementUi
+	// Toggles the display of the cost management ui plugin
+	FlagCostManagementUi = "costManagementUi"
+
+	// FlagManagedPluginsInstall
+	// Install managed plugins directly from plugins catalog
+	FlagManagedPluginsInstall = "managedPluginsInstall"
+
+	// FlagPrometheusPromQAIL
+	// Prometheus and AI/ML to assist users in creating a query
+	FlagPrometheusPromQAIL = "prometheusPromQAIL"
+
+	// FlagAlertmanagerRemoteSecondary
+	// Enable Grafana to sync configuration and state with a remote Alertmanager.
+	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
+
+	// FlagAlertmanagerRemotePrimary
+	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
+	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
+
+	// FlagAlertmanagerRemoteOnly
+	// Disable the internal Alertmanager and only use the external one defined.
+	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
+
+	// FlagAnnotationPermissionUpdate
+	// Separate annotation permissions from dashboard permissions to allow for more granular control.
+	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 )

@@ -350,7 +350,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     const { languageProvider } = this.props;
     this.updateLabelState(name, { loading: true }, `Fetching values for ${name}`);
     try {
-      let rawValues = await languageProvider.getLabelValues(name);
+      let rawValues = await languageProvider.fetchLabelValues(name);
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         this.updateLabelState(name, { loading: false }, '');

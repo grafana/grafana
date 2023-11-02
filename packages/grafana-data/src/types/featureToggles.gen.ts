@@ -103,7 +103,6 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
-  toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
@@ -113,6 +112,7 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   azureMonitorDataplane?: boolean;
+  traceToProfiles?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -128,6 +128,7 @@ export interface FeatureToggles {
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
+  alertingContactPointsV2?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
@@ -139,10 +140,20 @@ export interface FeatureToggles {
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  kubernetesPlaylistsAPI?: boolean;
+  cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  teamHttpHeaders?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
   panelTitleSearchInV1?: boolean;
   pluginsInstrumentationStatusSource?: boolean;
+  costManagementUi?: boolean;
+  managedPluginsInstall?: boolean;
+  prometheusPromQAIL?: boolean;
+  alertmanagerRemoteSecondary?: boolean;
+  alertmanagerRemotePrimary?: boolean;
+  alertmanagerRemoteOnly?: boolean;
+  annotationPermissionUpdate?: boolean;
 }

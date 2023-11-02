@@ -13,6 +13,7 @@ import {
  *
  * @param posX
  * @param series
+ * @deprecated
  */
 export const findHoverIndexFromData = (xAxisDimension: Field, xPos: number) => {
   let lower = 0;
@@ -50,6 +51,7 @@ interface MultiSeriesHoverInfo {
  *
  * @param seriesList list of series visible on the Graph
  * @param pos mouse cursor position, based on jQuery.flot position
+ * @deprecated
  */
 export const getMultiSeriesGraphHoverInfo = (
   // x and y axis dimensions order is aligned
@@ -102,6 +104,7 @@ export const getMultiSeriesGraphHoverInfo = (
   };
 };
 
+/** @deprecated */
 export const graphTickFormatter = (epoch: number, axis: any) => {
   return dateTimeFormat(epoch, {
     format: axis?.options?.timeformat,
@@ -109,6 +112,7 @@ export const graphTickFormatter = (epoch: number, axis: any) => {
   });
 };
 
+/** @deprecated */
 export const graphTimeFormat = (ticks: number | null, min: number | null, max: number | null): string => {
   if (min && max && ticks) {
     const range = max - min;

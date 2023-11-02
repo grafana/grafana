@@ -14,7 +14,7 @@ import { SubMenu } from './SubMenu';
 export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivElement;
 
 /** @internal */
-export interface MenuItemProps<T = any> {
+export interface MenuItemProps<T = unknown> {
   /** Label of the menu item */
   label: string;
   /** Aria label for accessibility support */
