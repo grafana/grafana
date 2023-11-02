@@ -80,6 +80,9 @@ async function buildTestScene(options: SceneOptions) {
   const scene = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
+    meta: {
+      canEdit: true,
+    },
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({

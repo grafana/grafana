@@ -162,6 +162,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertmanagerRemoteOnly`                    | Disable the internal Alertmanager and only use the external one defined.                                                                                                                                                                                                          |
 | `annotationPermissionUpdate`                | Separate annotation permissions from dashboard permissions to allow for more granular control.                                                                                                                                                                                    |
 | `extractFieldsNameDeduplication`            | Make sure extracted field names are unique in the dataframe                                                                                                                                                                                                                       |
+| `dashboardSceneForViewers`                  | Enables dashboard rendering using Scenes for viewer roles                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 
