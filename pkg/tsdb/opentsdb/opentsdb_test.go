@@ -33,7 +33,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
 		response := `{ invalid }`
 
-		result, err := service.parseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))})
+		result, err := service.parseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))}, "A")
 		require.Nil(t, result)
 		require.Error(t, err)
 	})
@@ -63,7 +63,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := service.parseResponse(logger, &resp)
+		result, err := service.parseResponse(logger, &resp, "A")
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
