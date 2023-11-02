@@ -3,20 +3,15 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { ComponentSize, Text, useStyles2 } from '@grafana/ui';
+import { ComponentSize, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 const AlertStateDot = (props: DotStylesProps) => {
   const styles = useStyles2(getDotStyles, props);
-  const { includeState, state } = props;
 
   return (
     <Stack direction="row" gap={0.5}>
       <div className={styles.dot} />
-      {includeState && (
-        // TODO infer color from state
-        <Text variant="bodySmall">{state}</Text>
-      )}
     </Stack>
   );
 };

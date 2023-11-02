@@ -222,6 +222,7 @@ const Metadata = ({ labels, annotations, interval }: MetadataProps) => {
           <MetaText direction="column">
             Runbook
             <Link href={runbookUrl} size="sm" external>
+              {/* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */}
               {truncate(runbookUrl, { length: 42 })}
             </Link>
           </MetaText>
@@ -300,11 +301,45 @@ const Title = ({ name, state }: TitleProps) => (
       <Text element="h1" variant="h2" weight="bold">
         {name}
       </Text>
-      {state && <AlertStateDot size="md" state={state} includeState />}
+      {state && <StateBadge state={state} />}
       {/* <Badge color="red" text={state} icon="exclamation-circle" /> */}
     </Stack>
   </header>
 );
+
+interface StateBadgeProps {
+  state: PromAlertingRuleState;
+}
+
+// TODO move to separate component
+const StateBadge = ({ state }: StateBadgeProps) => {
+  let stateLabel: string;
+  let textColor: 'success' | 'error' | 'warning';
+
+  switch (state) {
+    case PromAlertingRuleState.Inactive:
+      textColor = 'success';
+      stateLabel = 'Normal';
+      break;
+    case PromAlertingRuleState.Firing:
+      textColor = 'error';
+      stateLabel = 'Firing';
+      break;
+    case PromAlertingRuleState.Pending:
+      textColor = 'warning';
+      stateLabel = 'Pending';
+      break;
+  }
+
+  return (
+    <Stack direction="row" gap={0.5}>
+      <AlertStateDot size="md" state={state} />
+      <Text variant="bodySmall" color={textColor}>
+        {stateLabel}
+      </Text>
+    </Stack>
+  );
+};
 
 interface SummaryProps {
   text: string;
