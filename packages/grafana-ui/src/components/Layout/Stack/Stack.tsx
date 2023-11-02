@@ -46,8 +46,11 @@ export const Stack = React.forwardRef<HTMLDivElement, StackProps>(
   ({ gap = 1, alignItems, justifyContent, direction, wrap, children, ...rest }, ref) => {
     const styles = useStyles2(getStyles, gap, alignItems, justifyContent, direction, wrap);
 
+    // Extract 'invalid' prop, which is implicitly passed to children by the Field component, to avoid React warning
+    // @ts-expect-error
+    const { invalid, ...divProps } = rest;
     return (
-      <div ref={ref} className={styles.flex} {...rest}>
+      <div ref={ref} className={styles.flex} {...divProps}>
         {children}
       </div>
     );
