@@ -13,7 +13,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/apis/playlist"
+	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
@@ -24,7 +24,7 @@ import (
 
 // GroupName is the group name for this API.
 const GroupName = "playlist.grafana.app"
-const VersionID = runtime.APIVersionInternal
+const VersionID = "v0alpha1"
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
@@ -57,7 +57,24 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&playlist.Playlist{},
 		&playlist.PlaylistList{},
 	)
-	return nil
+
+	// Link this version to the internal representation.
+	// This is used for server-side-apply (PATCH), and avoids the error:
+	//   "no kind is registered for the type"
+	scheme.AddKnownTypes(schema.GroupVersion{
+		Group:   b.gv.Group,
+		Version: runtime.APIVersionInternal,
+	},
+		&playlist.Playlist{},
+		&playlist.PlaylistList{},
+	)
+
+	// If multiple versions exist, then register conversions from zz_generated.conversion.go
+	// if err := playlist.RegisterConversions(scheme); err != nil {
+	//   return err
+	// }
+	metav1.AddToGroupVersion(scheme, b.gv)
+	return scheme.SetVersionPriority(b.gv)
 }
 
 func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
@@ -106,12 +123,12 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap["v0alpha1"] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return nil // no custom OpenAPI definitions
+	return playlist.GetOpenAPIDefinitions
 }
 
 func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {

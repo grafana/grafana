@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/pkg/apis/playlist"
+	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
