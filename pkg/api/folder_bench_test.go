@@ -77,7 +77,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 	sc := setupDB(b)
 	b.Log("setup time:", time.Since(start))
 
-	all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
+	//all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
 
 	// the maximum number of dashboards that can be returned by the search API
 	// otherwise the handler fails with 422 status code
@@ -131,19 +131,19 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			desc:        "get root folders with nested folders feature disabled",
 			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
 			desc:        "list all dashboards with nested folders feature disabled",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
 			desc:        "search specific dashboard with nested folders feature disabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(),
 		},
 	}
 	for _, bm := range benchmarks {
