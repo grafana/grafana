@@ -156,10 +156,6 @@ export class CloudWatchDatasource
     );
   }
 
-  showContextToggle() {
-    return true;
-  }
-
   getQueryDisplayText(query: CloudWatchQuery) {
     if (isCloudWatchLogsQuery(query)) {
       return query.expression ?? '';

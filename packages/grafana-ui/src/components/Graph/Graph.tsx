@@ -8,13 +8,15 @@ import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/da
 import { TooltipDisplayMode } from '@grafana/schema';
 
 import { VizTooltipProps, VizTooltipContentProps, ActiveDimensions, VizTooltip } from '../VizTooltip';
+import { FlotPosition } from '../VizTooltip/VizTooltip';
 
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphDimensions } from './GraphTooltip/types';
-import { FlotPosition, FlotItem } from './types';
+import { FlotItem } from './types';
 import { graphTimeFormat, graphTickFormatter } from './utils';
 
+/** @deprecated */
 export interface GraphProps {
   ariaLabel?: string;
   children?: JSX.Element | JSX.Element[];
@@ -31,6 +33,7 @@ export interface GraphProps {
   onHorizontalRegionSelected?: (from: number, to: number) => void;
 }
 
+/** @deprecated */
 interface GraphState {
   pos?: FlotPosition;
   contextPos?: FlotPosition;

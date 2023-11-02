@@ -4,7 +4,7 @@ import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { AlignItems, JustifyContent } from '../Flex/Flex';
+import { AlignItems, JustifyContent } from '../Stack/Stack';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 
 type Display = 'flex' | 'block' | 'inline' | 'none';
