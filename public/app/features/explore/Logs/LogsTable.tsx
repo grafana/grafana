@@ -1,11 +1,14 @@
-import memoizeOne from 'memoize-one';
 import React, { useCallback, useEffect, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
   applyFieldOverrides,
+  CustomTransformOperator,
   DataFrame,
+  DataFrameType,
+  DataTransformerConfig,
   Field,
+  FieldType,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -14,38 +17,41 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Table } from '@grafana/ui';
+import { AdHocFilterItem, Table } from '@grafana/ui';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { separateVisibleFields } from 'app/features/logs/components/logParser';
-import { parseLogsFrame } from 'app/features/logs/logsFrame';
+import { LogsFrame, parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
+import { fieldNameMeta } from './LogsTableWrap';
+
 interface Props {
-  logsFrames?: DataFrame[];
+  logsFrames: DataFrame[];
   width: number;
   timeZone: string;
   splitOpen: SplitOpen;
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
+  columnsWithMeta: Record<string, fieldNameMeta>;
+  height: number;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
 }
 
-const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
-  const largestFrameLength = dataFrames?.reduce((length, frame) => {
-    return frame.length > length ? frame.length : length;
-  }, 0);
-  // from TableContainer.tsx
-  return Math.min(600, Math.max(largestFrameLength ?? 0 * 36, 300) + 40 + 46);
-});
-
-export const LogsTable: React.FunctionComponent<Props> = (props) => {
-  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames } = props;
-
+export function LogsTable(props: Props) {
+  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, columnsWithMeta } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
+
+  // Only a single frame (query) is supported currently
+  const logFrameRaw = logsFrames ? logsFrames[0] : undefined;
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
+      // Parse the dataframe to a logFrame
       const logsFrame = parseLogsFrame(frame);
       const timeIndex = logsFrame?.timeField.index;
+
       const sortedFrame = sortDataFrame(frame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
 
       const [frameWithOverrides] = applyFieldOverrides({
@@ -74,93 +80,203 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
         field.config = {
           ...field.config,
           custom: {
-            filterable: true,
             inspect: true,
+            filterable: true, // This sets the columns to be filterable
             ...field.config.custom,
           },
+          // This sets the individual field value as filterable
+          filterable: isFieldFilterable(field, logsFrame ?? undefined),
         };
       }
 
       return frameWithOverrides;
     },
-    [logsSortOrder, range, splitOpen, timeZone]
+    [logsSortOrder, timeZone, splitOpen, range]
   );
 
   useEffect(() => {
     const prepare = async () => {
-      if (!logsFrames || !logsFrames.length) {
+      // Parse the dataframe to a logFrame
+      const logsFrame = logFrameRaw ? parseLogsFrame(logFrameRaw) : undefined;
+
+      if (!logFrameRaw || !logsFrame) {
         setTableFrame(undefined);
         return;
       }
-      // TODO: This does not work with multiple logs queries for now, as we currently only support one logs frame.
-      let dataFrame = logsFrames[0];
 
-      const logsFrame = parseLogsFrame(dataFrame);
-      const timeIndex = logsFrame?.timeField.index;
-      dataFrame = sortDataFrame(dataFrame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
+      let dataFrame = logFrameRaw;
 
       // create extract JSON transformation for every field that is `json.RawMessage`
-      // TODO: explore if `logsFrame.ts` can help us with getting the right fields
-      const transformations = dataFrame.fields
-        .filter((field: Field & { typeInfo?: { frame: string } }) => {
-          return field.typeInfo?.frame === 'json.RawMessage';
-        })
-        .flatMap((field: Field) => {
-          return [
-            {
-              id: 'extractFields',
-              options: {
-                format: 'json',
-                keepTime: false,
-                replace: false,
-                source: field.name,
-              },
-            },
-            // hide the field that was extracted
-            {
-              id: 'organize',
-              options: {
-                excludeByName: {
-                  [field.name]: true,
-                },
-              },
-            },
-          ];
-        });
+      const transformations: Array<DataTransformerConfig | CustomTransformOperator> =
+        extractFieldsAndExclude(dataFrame);
 
-      // remove fields that should not be displayed
+      // remove hidden fields
+      transformations.push(...removeHiddenFields(dataFrame));
+      let labelFilters = buildLabelFilters(columnsWithMeta, logsFrame);
 
-      const hiddenFields = separateVisibleFields(dataFrame, { keepBody: true, keepTimestamp: true }).hidden;
-      hiddenFields.forEach((field: Field, index: number) => {
-        transformations.push({
+      // Add the label filters to the transformations
+      const transform = getLabelFiltersTransform(labelFilters);
+      if (transform) {
+        transformations.push(transform);
+      }
+
+      if (transformations.length > 0) {
+        const transformedDataFrame = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
+        const tableFrame = prepareTableFrame(transformedDataFrame[0]);
+        setTableFrame(tableFrame);
+      } else {
+        setTableFrame(prepareTableFrame(dataFrame));
+      }
+    };
+    prepare();
+  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame]);
+
+  if (!tableFrame) {
+    return null;
+  }
+
+  const onCellFilterAdded = (filter: AdHocFilterItem) => {
+    const { value, key, operator } = filter;
+    const { onClickFilterLabel, onClickFilterOutLabel } = props;
+    if (!onClickFilterLabel || !onClickFilterOutLabel) {
+      return;
+    }
+    if (operator === FILTER_FOR_OPERATOR) {
+      onClickFilterLabel(key, value);
+    }
+
+    if (operator === FILTER_OUT_OPERATOR) {
+      onClickFilterOutLabel(key, value);
+    }
+  };
+
+  return (
+    <Table
+      data={tableFrame}
+      width={width}
+      onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
+      height={props.height}
+      footerOptions={{ show: true, reducer: ['count'], countRows: true }}
+    />
+  );
+}
+
+const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
+  if (!logsFrame) {
+    return false;
+  }
+  if (logsFrame.bodyField.name === field.name) {
+    return false;
+  }
+  if (logsFrame.timeField.name === field.name) {
+    return false;
+  }
+  // @todo not currently excluding derived fields from filtering
+
+  return true;
+};
+
+// TODO: explore if `logsFrame.ts` can help us with getting the right fields
+// TODO Why is typeInfo not defined on the Field interface?
+function extractFieldsAndExclude(dataFrame: DataFrame) {
+  return dataFrame.fields
+    .filter((field: Field & { typeInfo?: { frame: string } }) => {
+      const isFieldLokiLabels = field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels';
+      const isFieldDataplaneLabels =
+        field.name === 'attributes' &&
+        field.type === FieldType.other &&
+        dataFrame?.meta?.type === DataFrameType.LogLines;
+
+      return isFieldLokiLabels || isFieldDataplaneLabels;
+    })
+    .flatMap((field: Field) => {
+      return [
+        {
+          id: 'extractFields',
+          options: {
+            format: 'json',
+            keepTime: false,
+            replace: false,
+            source: field.name,
+          },
+        },
+        // hide the field that was extracted
+        {
           id: 'organize',
           options: {
             excludeByName: {
               [field.name]: true,
             },
           },
-        });
-      });
-      if (transformations.length > 0) {
-        const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
-        setTableFrame(prepareTableFrame(transformedDataFrame));
-      } else {
-        setTableFrame(prepareTableFrame(dataFrame));
-      }
+        },
+      ];
+    });
+}
+
+function removeHiddenFields(dataFrame: DataFrame): Array<DataTransformerConfig | CustomTransformOperator> {
+  const transformations: Array<DataTransformerConfig | CustomTransformOperator> = [];
+  const hiddenFields = separateVisibleFields(dataFrame, { keepBody: true, keepTimestamp: true }).hidden;
+  hiddenFields.forEach((field: Field) => {
+    transformations.push({
+      id: 'organize',
+      options: {
+        excludeByName: {
+          [field.name]: true,
+        },
+      },
+    });
+  });
+
+  return transformations;
+}
+
+function buildLabelFilters(columnsWithMeta: Record<string, fieldNameMeta>, logsFrame: LogsFrame) {
+  // Create object of label filters to filter out any columns not selected by the user
+  let labelFilters: Record<string, true> = {};
+  Object.keys(columnsWithMeta)
+    .filter((key) => !columnsWithMeta[key].active)
+    .forEach((key) => {
+      labelFilters[key] = true;
+    });
+
+  // We could be getting fresh data
+  const uniqueLabels = new Set<string>();
+  const logFrameLabels = logsFrame?.getAttributesAsLabels();
+
+  // Populate the set with all labels from latest dataframe
+  logFrameLabels?.forEach((labels) => {
+    Object.keys(labels).forEach((label) => {
+      uniqueLabels.add(label);
+    });
+  });
+
+  // Check if there are labels in the data, that aren't yet in the labelFilters, and set them to be hidden by the transform
+  Object.keys(labelFilters).forEach((label) => {
+    if (!uniqueLabels.has(label)) {
+      labelFilters[label] = true;
+    }
+  });
+
+  // Check if there are labels in the label filters that aren't yet in the data, and set those to also be hidden
+  // The next time the column filters are synced any extras will be removed
+  Array.from(uniqueLabels).forEach((label) => {
+    if (label in columnsWithMeta && !columnsWithMeta[label]?.active) {
+      labelFilters[label] = true;
+    } else if (!labelFilters[label] && !(label in columnsWithMeta)) {
+      labelFilters[label] = true;
+    }
+  });
+  return labelFilters;
+}
+
+function getLabelFiltersTransform(labelFilters: Record<string, true>) {
+  if (Object.keys(labelFilters).length > 0) {
+    return {
+      id: 'organize',
+      options: {
+        excludeByName: labelFilters,
+      },
     };
-    prepare();
-  }, [prepareTableFrame, logsFrames, logsSortOrder]);
-
-  if (!tableFrame) {
-    return null;
   }
-
-  return (
-    <Table
-      data={tableFrame}
-      width={width}
-      height={getTableHeight(props.logsFrames)}
-      footerOptions={{ show: true, reducer: ['count'], countRows: true }}
-    />
-  );
-};
+  return null;
+}

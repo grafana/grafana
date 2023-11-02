@@ -59,7 +59,7 @@ func TestNewAlertmanager(t *testing.T) {
 			require.NoError(tt, err)
 			require.Equal(tt, am.tenantID, test.tenantID)
 			require.Equal(tt, am.url, test.url)
-			require.Equal(tt, am.OrgID(), test.orgID)
+			require.Equal(tt, am.orgID, test.orgID)
 			require.NotNil(tt, am.amClient)
 			require.NotNil(tt, am.httpClient)
 		})

@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type IDService interface {
@@ -18,4 +20,10 @@ type IDSigner interface {
 
 type IDClaims struct {
 	jwt.Claims
+}
+
+const settingsKey = "forwardGrafanaIdToken"
+
+func IsIDForwardingEnabledForDataSource(ds *datasources.DataSource) bool {
+	return ds.JsonData != nil && ds.JsonData.Get(settingsKey).MustBool()
 }
