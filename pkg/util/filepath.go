@@ -102,24 +102,11 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 			subFiles = append(subFiles, subFile{path: path2, resolvedPath: resolvedPath2, fileInfo: fileInfo})
 		}
 
-		if containsDistFolder(subFiles) {
-			err := walk(
-				filepath.Join(path, "dist"),
-				info,
-				filepath.Join(resolvedPath, "dist"),
-				symlinkPathsFollowed,
-				walkFn)
+		for _, p := range subFiles {
+			err = walk(p.path, p.fileInfo, p.resolvedPath, symlinkPathsFollowed, walkFn)
 
 			if err != nil {
 				return err
-			}
-		} else {
-			for _, p := range subFiles {
-				err = walk(p.path, p.fileInfo, p.resolvedPath, symlinkPathsFollowed, walkFn)
-
-				if err != nil {
-					return err
-				}
 			}
 		}
 

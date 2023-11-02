@@ -155,7 +155,7 @@ func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) 
 }
 
 func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
-	var pluginJSONPaths []string
+	pluginJSONPaths := map[string]struct{}{}
 
 	var err error
 	path, err = filepath.Abs(path)
@@ -190,13 +190,29 @@ func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
 				return nil
 			}
 
-			pluginJSONPaths = append(pluginJSONPaths, currentPath)
+			pluginJSONPaths[currentPath] = struct{}{}
 			return nil
 		}); err != nil {
 		return []string{}, err
 	}
 
-	return pluginJSONPaths, nil
+	// If we found a plugin path with a dist directory, we want to ignore the plugin.json path found
+	// in the parent folder if it exists.
+	// For example, if we found a plugin.json in /path/to/plugin/dist/plugin.json, we want to ignore
+	// the path /path/to/plugin/plugin.json.
+	for pluginJSONPath := range pluginJSONPaths {
+		pluginDir := filepath.Dir(pluginJSONPath)
+		if filepath.Base(pluginDir) == "dist" {
+			delete(pluginJSONPaths, filepath.Join(filepath.Dir(pluginDir), "plugin.json"))
+		}
+	}
+
+	res := make([]string, 0, len(pluginJSONPaths))
+	for v := range pluginJSONPaths {
+		res = append(res, v)
+	}
+
+	return res, nil
 }
 
 func (l *Local) readFile(pluginJSONPath string) (io.ReadCloser, error) {
