@@ -224,7 +224,8 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			default:
 				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
 				if len(permSelectorArgs) > 0 {
-					builder.WriteString("WHERE d.uid IN ")
+					builder.WriteString("WHERE d.org_id = ? AND d.uid IN ")
+					args = append(args, orgID)
 					builder.WriteString(permSelector.String())
 					args = append(args, permSelectorArgs...)
 				} else {
@@ -389,7 +390,7 @@ func (f *accessControlDashboardPermissionFilter) nestedFoldersSelectors(permSele
 		s := fmt.Sprintf(tmpl, t, prev, onCol, t, prev, t)
 		joins = append(joins, s)
 
-		wheres = append(wheres, fmt.Sprintf("(%s IN (SELECT %s FROM dashboard d %s WHERE %s.org = ? AND %s.uid IN %s)", leftTableCol, rightTableCol, strings.Join(joins, " "), t, t, permSelector))
+		wheres = append(wheres, fmt.Sprintf("(%s IN (SELECT %s FROM dashboard d %s WHERE %s.org_id = ? AND %s.uid IN %s)", leftTableCol, rightTableCol, strings.Join(joins, " "), t, t, permSelector))
 		args = append(args, orgID)
 		args = append(args, permSelectorArgs...)
 
