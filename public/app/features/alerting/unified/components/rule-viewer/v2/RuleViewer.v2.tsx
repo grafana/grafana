@@ -15,11 +15,15 @@ import {
   TabsBar,
   Text,
 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { RuleIdentifier } from 'app/types/unified-alerting';
 import { Annotations, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useRuleViewerPageTitle } from '../../../hooks/alert-details/useRuleViewerPageTitle';
 import { useCombinedRule } from '../../../hooks/useCombinedRule';
+import { useIsRuleEditable } from '../../../hooks/useIsRuleEditable';
+import { getRulesPermissions } from '../../../utils/access-control';
 import { Annotation } from '../../../utils/constants';
 import {
   createShareLink,
@@ -30,6 +34,7 @@ import {
 } from '../../../utils/misc';
 import * as ruleId from '../../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../../utils/rules';
+import { createUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { AlertStateDot } from '../../AlertStateDot';
 import { Link } from '../../ExternalLink';
@@ -38,6 +43,7 @@ import MoreButton from '../../MoreButton';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { Spacer } from '../../Spacer';
 import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
+import { useCanSilence } from '../../rules/RuleDetailsActionButtons';
 import { Details } from '../tabs/Details';
 import { History } from '../tabs/History';
 import { InstancesList } from '../tabs/Instances';
@@ -78,12 +84,25 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   // we're setting the document title and the breadcrumb manually
   useRuleViewerPageTitle(rule);
 
+  /**
+   * Figure out if edit / create / delete is supported and allowed
+   * TODO refactor this, very confusing right now
+   */
+  const { isEditable, isRemovable } = useIsRuleEditable(identifier.ruleSourceName, rule?.rulerRule);
+  const rulesPermissions = getRulesPermissions(identifier.ruleSourceName);
+  const hasCreateRulePermission = contextSrv.hasPermission(rulesPermissions.create);
+  const canSilence = useCanSilence(rule);
+
   if (loading) {
     return <LoadingPlaceholder text={'Loading...'} />;
   }
 
   if (error) {
-    return String(error);
+    if (typeof error === 'string') {
+      return error;
+    }
+
+    return <Alert title={'Uh-oh'}>Something went wrong loading the rule</Alert>;
   }
 
   if (rule) {
@@ -92,6 +111,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
     const promRule = rule.promRule;
 
     const isAlertType = isAlertingRule(promRule);
+    const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
     const numberOfInstance = isAlertType ? promRule.alerts?.length : undefined;
 
     const isFederatedRule = isFederatedRuleGroup(rule.group);
@@ -106,9 +126,9 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
     return (
       <>
-        <Stack direction="column" gap={1} wrap={false}>
+        <Stack direction="column" gap={3} wrap={false}>
           {/* breadcrumb and actions */}
-          <BreadCrumb folder={rule.namespace.name} evaluationGroup={rule.group.name} />
+          <BreadCrumbs folder={rule.namespace.name} evaluationGroup={rule.group.name} />
 
           <Stack direction="column" gap={2} wrap={false}>
             {/* header */}
@@ -118,20 +138,21 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                 <Title name={rule.name} state={isAlertType ? promRule.state : undefined} />
                 <Spacer />
                 <Stack gap={1}>
-                  <Button variant="secondary" icon="pen">
-                    Edit
-                  </Button>
+                  {isEditable && <EditButton identifier={identifier} />}
                   <Dropdown
                     overlay={
                       <Menu>
-                        {/* TODO add "declare incident" */}
-                        <Menu.Item label="Silence" icon="bell-slash" />
+                        {/* TODO hook these up to actions and move to separate component */}
+                        {canSilence && <Menu.Item label="Silence" icon="bell-slash" />}
                         {shouldShowDeclareIncidentButton && (
                           <DeclareIncidentMenuItem title={rule.name} url={buildShareUrl()} />
                         )}
-                        <Menu.Item label="Duplicate" icon="copy" />
+                        {isGrafanaManagedRule && hasCreateRulePermission && !isFederatedRule && (
+                          <Menu.Item label="Duplicate" icon="copy" />
+                        )}
                         <Menu.Divider />
                         <Menu.Item label="Copy link" icon="clipboard-alt" />
+                        {/* TODO - RBAC check for these actions! */}
                         <Menu.Item
                           label="Export"
                           icon="download-alt"
@@ -140,8 +161,12 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                             <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
                           ]}
                         />
-                        <Menu.Divider />
-                        <Menu.Item label="Delete" icon="trash-alt" destructive />
+                        {isRemovable && !isFederatedRule && !isProvisioned && (
+                          <>
+                            <Menu.Divider />
+                            <Menu.Item label="Delete" icon="trash-alt" destructive />
+                          </>
+                        )}
                       </Menu>
                     }
                   >
@@ -199,6 +224,22 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   }
 
   return null;
+};
+
+interface EditButtonProps {
+  identifier: RuleIdentifier;
+}
+
+const EditButton = ({ identifier }: EditButtonProps) => {
+  const returnTo = location.pathname + location.search;
+  const ruleIdentifier = ruleId.stringifyIdentifier(identifier);
+  const editURL = createUrl(`/alerting/${encodeURIComponent(ruleIdentifier)}/edit`, { returnTo });
+
+  return (
+    <LinkButton variant="secondary" icon="pen" href={editURL}>
+      Edit
+    </LinkButton>
+  );
 };
 
 interface MetadataProps {
@@ -270,7 +311,7 @@ interface BreadcrumbProps {
   evaluationGroup: string;
 }
 
-const BreadCrumb = ({ folder, evaluationGroup }: BreadcrumbProps) => (
+const BreadCrumbs = ({ folder, evaluationGroup }: BreadcrumbProps) => (
   // TODO fix vertical alignment here
   <Stack alignItems="center" gap={0.5}>
     <Text color="secondary">
@@ -301,8 +342,8 @@ const Title = ({ name, state }: TitleProps) => (
       <Text element="h1" variant="h2" weight="bold">
         {name}
       </Text>
+      {/* recording rules won't have a state */}
       {state && <StateBadge state={state} />}
-      {/* <Badge color="red" text={state} icon="exclamation-circle" /> */}
     </Stack>
   </header>
 );

@@ -328,13 +328,17 @@ function shouldShowDeclareIncidentButton() {
  * 1. the user has no permissions to create silences
  * 2. the admin has configured to only send instances to external AMs
  */
-function useCanSilence(rule: CombinedRule) {
-  const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
+export function useCanSilence(rule?: CombinedRule) {
+  const isGrafanaManagedRule = isGrafanaRulerRule(rule?.rulerRule);
 
   const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
   const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
     skip: !isGrafanaManagedRule,
   });
+
+  if (!rule) {
+    return false;
+  }
 
   if (!isGrafanaManagedRule || isLoading) {
     return false;
