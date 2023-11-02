@@ -1044,7 +1044,6 @@
       "cancel-button": "Annuler",
       "info-text": "Exporter ce tableau de bord.",
       "save-button": "Enregistrer dans un fichier",
-      "share-default-label": "Exporter avec les valeurs par défaut supprimées",
       "share-externally-label": "Exporter pour un partage externe",
       "view-button": "Afficher au format JSON"
     },
