@@ -80,7 +80,6 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		_, err = forked.ListSilences(ctx, []string{})
 		require.ErrorIs(tt, expErr, err)
 	})
-
 }
 
 func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
@@ -111,7 +110,6 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("", expErr).Once()
 		_, err = forked.CreateSilence(ctx, nil)
 		require.ErrorIs(tt, expErr, err)
-
 	})
 
 	t.Run("DeleteSilence", func(tt *testing.T) {
