@@ -17368,6 +17368,7 @@ __metadata:
     react-virtualized-auto-sizer: "npm:1.0.7"
     react-window: "npm:1.8.9"
     react-window-infinite-loader: "npm:1.0.9"
+    react-zoom-pan-pinch: "npm:^3.3.0"
     redux: "npm:4.2.1"
     redux-mock-store: "npm:1.5.4"
     redux-thunk: "npm:2.4.2"
