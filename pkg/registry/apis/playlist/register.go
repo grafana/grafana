@@ -24,7 +24,7 @@ import (
 
 // GroupName is the group name for this API.
 const GroupName = "playlist.grafana.app"
-const VersionID = "v0alpha1" // runtime.APIVersionInternal
+const VersionID = "v0alpha1"
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
@@ -69,7 +69,7 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&playlist.PlaylistList{},
 	)
 
-	// If multiple versions exist, then register conversions
+	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {
 	//   return err
 	// }
