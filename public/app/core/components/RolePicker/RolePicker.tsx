@@ -60,7 +60,7 @@ export const RolePicker = ({
 
   const setMenuPosition = useCallback(() => {
     const { horizontal, vertical, menuToLeft } = calculateMenuPosition();
-    if (horizontal && vertical && menuToLeft) {
+    if (horizontal && vertical) {
       setOffset({ horizontal, vertical });
       setMenuLeft(menuToLeft);
     }
