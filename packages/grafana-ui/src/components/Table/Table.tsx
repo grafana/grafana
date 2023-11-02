@@ -328,8 +328,32 @@ export const Table = memo((props: Props) => {
     if (state.expanded[row.index] && nestedDataField) {
       return getExpandedRowHeight(nestedDataField, index, tableStyles);
     }
+    console.log('row', row);
+    console.log('cells', row.cells);
+    // Sometimes the rows aren't prepared and the columns are empty?
+    if (!row.cells[0]?.column) {
+      prepareRow(row);
+    }
+    const longestCell: Cell = row?.cells?.reduce((a: Cell, b: Cell) => {
+      const aValue = typeof a.value === 'number' ? a.value.toString() : a.value;
+      const bValue = typeof b.value === 'number' ? b.value.toString() : b.value;
+      return aValue.length >= bValue.length ? a : b;
+    });
 
-    return tableStyles.rowHeight;
+    const longestColumnWidth = Number(longestCell?.column?.width) ?? columnMinWidth;
+    const longestString = longestCell.value;
+    const charWidth = 6.5;
+    const rowHeight = 44;
+
+    console.log('cells2', row.cells);
+    console.log('longestCell', longestCell);
+    console.log('longestString', longestString);
+    console.log('longestColumnWidth', longestColumnWidth);
+    console.log('longestString?.length', longestString?.length);
+    const numberOfRows = Math.max((longestString.length * charWidth) / longestColumnWidth);
+    console.log('calculatedHeight', numberOfRows * rowHeight);
+
+    return numberOfRows * rowHeight ?? tableStyles.rowHeight;
   };
 
   const handleScroll: UIEventHandler = (event) => {

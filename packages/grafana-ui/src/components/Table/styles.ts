@@ -22,7 +22,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       padding: `${cellPadding}px`,
       width: '100%',
       // Cell height need to account for row border
-      height: `${rowHeight - 1}px`,
+      // height: `${rowHeight - 1}px`,
 
       display: asCellText ? 'block' : 'flex',
 
@@ -31,7 +31,8 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             userSelect: 'text',
-            whiteSpace: 'nowrap',
+            height: '100%',
+            // whiteSpace: 'nowrap',
           }
         : {}),
 
