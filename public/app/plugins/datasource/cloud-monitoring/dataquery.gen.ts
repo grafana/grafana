@@ -44,8 +44,8 @@ export interface CloudMonitoringQuery extends common.DataQuery {
  */
 export enum QueryType {
   ANNOTATION = 'annotation',
-  PROMQL = 'promQL',
-  SLO = 'slo',
+  PROMQL = 'promQLQuery',
+  SLO = 'sloQuery',
   TIME_SERIES_LIST = 'timeSeriesList',
   TIME_SERIES_QUERY = 'timeSeriesQuery',
 }

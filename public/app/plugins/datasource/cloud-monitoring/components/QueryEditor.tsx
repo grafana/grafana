@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
@@ -8,6 +9,7 @@ import CloudMonitoringDatasource from '../datasource';
 import { CloudMonitoringQuery, PromQLQuery, QueryType, SLOQuery } from '../types/query';
 import { CloudMonitoringOptions } from '../types/types';
 
+import { defaultTimeSeriesList, defaultTimeSeriesQuery } from './MetricQueryEditor';
 import { PromQLQueryEditor } from './PromQLEditor';
 import { QueryHeader } from './QueryHeader';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
@@ -31,7 +33,8 @@ export const QueryEditor = (props: Props) => {
     }
     return oldQ;
   }, [oldQ, datasource, onChange, migrated]);
-  const [selectedQuery, setSelectedQuery] = useState<CloudMonitoringQuery>(query);
+  const [currentQuery, setCurrentQuery] = useState<CloudMonitoringQuery>(query);
+  const [queryHasBeenEdited, setQueryHasBeenEdited] = useState<boolean>(false);
 
   const sloQuery = { ...defaultSLOQuery(datasource), ...query.sloQuery };
   const onSLOQueryChange = (q: SLOQuery) => {
@@ -45,6 +48,16 @@ export const QueryEditor = (props: Props) => {
   };
   const onPromQLQueryChange = (q: PromQLQuery) => {
     onChange({ ...query, promQLQuery: q });
+  };
+
+  const onMetricQueryChange = (q: CloudMonitoringQuery) => {
+    if (
+      (q.queryType === QueryType.TIME_SERIES_LIST && !isEqual(q.timeSeriesList, defaultTimeSeriesList(datasource))) ||
+      (q.queryType === QueryType.TIME_SERIES_QUERY && !isEqual(q.timeSeriesQuery, defaultTimeSeriesQuery(datasource)))
+    ) {
+      setQueryHasBeenEdited(true);
+    }
+    onChange(q);
   };
 
   const meta = props.data?.series.length ? props.data?.series[0].meta : {};
@@ -65,17 +78,16 @@ export const QueryEditor = (props: Props) => {
 
   const checkForModalDisplay = (q: CloudMonitoringQuery) => {
     if (
-      selectedQuery.queryType === QueryType.TIME_SERIES_LIST ||
-      selectedQuery.queryType === QueryType.TIME_SERIES_QUERY
+      queryHasBeenEdited &&
+      (currentQuery.queryType === QueryType.TIME_SERIES_LIST || currentQuery.queryType === QueryType.TIME_SERIES_QUERY)
     ) {
-      if (selectedQuery.queryType !== q.queryType) {
-        setSelectedQuery(q);
+      if (currentQuery.queryType !== q.queryType) {
         setModalIsOpen(true);
       }
     } else {
-      setSelectedQuery(q);
       onChange(q);
     }
+    setCurrentQuery(q);
   };
 
   return (
@@ -87,12 +99,13 @@ export const QueryEditor = (props: Props) => {
         isOpen={modalIsOpen}
         onConfirm={() => {
           setModalIsOpen(false);
-          onChange(selectedQuery);
+          onChange(currentQuery);
+          setQueryHasBeenEdited(false);
         }}
         confirmText="Confirm"
         onDismiss={() => {
           setModalIsOpen(false);
-          setSelectedQuery(query);
+          setCurrentQuery(query);
         }}
       ></ConfirmModal>
       <QueryHeader query={query} onChange={checkForModalDisplay} onRunQuery={onRunQuery} />
@@ -113,7 +126,7 @@ export const QueryEditor = (props: Props) => {
           refId={query.refId}
           variableOptionGroup={variableOptionGroup}
           customMetaData={customMetaData}
-          onChange={onChange}
+          onChange={onMetricQueryChange}
           onRunQuery={onRunQuery}
           datasource={datasource}
           query={query}
