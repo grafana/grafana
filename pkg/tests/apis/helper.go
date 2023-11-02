@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -50,17 +49,9 @@ type K8sTestHelper struct {
 	groups []metav1.APIGroup
 }
 
-func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
+func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	t.Helper()
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // do not start extra port 6443
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServer,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		},
-	})
-
+	dir, path := testinfra.CreateGrafDir(t, opts)
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
 	c := &K8sTestHelper{
 		env:        *env,
@@ -79,6 +70,10 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 	}, &metav1.APIGroupList{})
 	c.groups = rsp.Result.Groups
 	return c
+}
+
+func (c *K8sTestHelper) Shutdown() {
+	c.env.Server.Shutdown(context.Background(), "done")
 }
 
 type ResourceClientArgs struct {
