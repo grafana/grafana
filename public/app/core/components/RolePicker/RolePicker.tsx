@@ -174,7 +174,7 @@ export const RolePicker = ({
       }}
       ref={ref}
     >
-      <ClickOutsideWrapper onClick={onClickOutside} useCapture={true}>
+      <ClickOutsideWrapper onClick={onClickOutside} useCapture={false}>
         <RolePickerInput
           basicRole={selectedBuiltInRole}
           appliedRoles={selectedRoles}
@@ -190,22 +190,27 @@ export const RolePicker = ({
         />
         {isOpen && (
           <Portal>
-            <RolePickerMenu
-              options={getOptions()}
-              basicRole={selectedBuiltInRole}
-              appliedRoles={appliedRoles}
-              onBasicRoleSelect={onBasicRoleSelect}
-              onSelect={onSelect}
-              onUpdate={onUpdate}
-              showGroups={query.length === 0 || query.trim() === ''}
-              basicRoleDisabled={basicRoleDisabled}
-              disabledMessage={basicRoleDisabledMessage}
-              showBasicRole={showBasicRole}
-              updateDisabled={basicRoleDisabled && !canUpdateRoles}
-              apply={apply}
-              offset={offset}
-              menuLeft={menuLeft}
-            />
+            {/* Since menu rendered in portal and whole component wrapped in ClickOutsideWrapper, */}
+            {/* we need to stop event propagation to prevent closing menu */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+            <div onClick={(e) => e.stopPropagation()}>
+              <RolePickerMenu
+                options={getOptions()}
+                basicRole={selectedBuiltInRole}
+                appliedRoles={appliedRoles}
+                onBasicRoleSelect={onBasicRoleSelect}
+                onSelect={onSelect}
+                onUpdate={onUpdate}
+                showGroups={query.length === 0 || query.trim() === ''}
+                basicRoleDisabled={basicRoleDisabled}
+                disabledMessage={basicRoleDisabledMessage}
+                showBasicRole={showBasicRole}
+                updateDisabled={basicRoleDisabled && !canUpdateRoles}
+                apply={apply}
+                offset={offset}
+                menuLeft={menuLeft}
+              />
+            </div>
           </Portal>
         )}
       </ClickOutsideWrapper>
