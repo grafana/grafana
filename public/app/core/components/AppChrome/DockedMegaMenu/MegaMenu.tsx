@@ -5,8 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
@@ -55,7 +54,7 @@ export const MegaMenu = React.memo(
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link, index) => (
-                <Flex key={link.text} direction="row" alignItems="center">
+                <Stack key={link.text} direction="row" alignItems="center">
                   <MegaMenuItem
                     link={link}
                     onClick={state.megaMenu === 'open' ? onClose : undefined}
@@ -74,7 +73,7 @@ export const MegaMenu = React.memo(
                       variant="secondary"
                     />
                   )}
-                </Flex>
+                </Stack>
               ))}
             </ul>
           </CustomScrollbar>
@@ -117,7 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   dockMenuButton: css({
     display: 'none',
 
-    [theme.breakpoints.up('md')]: {
+    [theme.breakpoints.up('xl')]: {
       display: 'inline-flex',
     },
   }),

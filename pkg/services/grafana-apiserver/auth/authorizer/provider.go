@@ -28,7 +28,8 @@ func ProvideAuthorizer(
 		authorizers = append(authorizers, orgIDAuthorizer)
 	}
 
+	// org role is last -- and will return allow for verbs that match expectations
+	// Ideally FGAC happens earlier and returns an explicit answer
 	authorizers = append(authorizers, orgRoleAuthorizer)
-
 	return union.New(authorizers...)
 }
