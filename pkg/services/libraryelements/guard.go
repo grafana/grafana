@@ -46,7 +46,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 		return err
 	}
 
-	canEdit, err := g.CanEdit()
+	canEdit, err := g.CanSave()
 	if err != nil {
 		return err
 	}
