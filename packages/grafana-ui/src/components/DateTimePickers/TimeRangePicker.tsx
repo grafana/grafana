@@ -15,6 +15,7 @@ import {
   dateMath,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
