@@ -73,8 +73,8 @@ export const CanvasTooltip = ({ scene }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    margin-top: 20px;
-    background: ${theme.colors.background.primary};
-  `,
+  wrapper: css({
+    marginTop: '20px',
+    background: theme.colors.background.primary,
+  }),
 });
