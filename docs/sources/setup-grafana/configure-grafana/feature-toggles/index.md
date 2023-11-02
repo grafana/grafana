@@ -161,6 +161,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertmanagerRemotePrimary`                 | Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.                                                                                                                                                                                                |
 | `alertmanagerRemoteOnly`                    | Disable the internal Alertmanager and only use the external one defined.                                                                                                                                                                                                          |
 | `annotationPermissionUpdate`                | Separate annotation permissions from dashboard permissions to allow for more granular control.                                                                                                                                                                                    |
+| `extractFieldsNameDeduplication`            | Make sure extracted field names are unique in the dataframe                                                                                                                                                                                                                       |
 
 ## Development feature toggles
 

@@ -136,3 +136,4 @@ alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,fal
 alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false,false
 alertmanagerRemoteOnly,experimental,@grafana/alerting-squad,false,false,false,false
 annotationPermissionUpdate,experimental,@grafana/grafana-authnz-team,false,false,false,false
+extractFieldsNameDeduplication,experimental,@grafana/grafana-bi-squad,false,false,false,true
