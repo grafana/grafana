@@ -36,6 +36,7 @@ import { PyroscopeQueryType } from 'app/plugins/datasource/grafana-pyroscope-dat
 import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
+import { pyroscopeProfileTag } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
@@ -225,7 +226,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       if (traceToProfilesOptions?.datasourceUid) {
         profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
       }
-      const hasPyroscopeProfile = span.tags.filter((tag) => tag.key === 'pyroscope.profiling.enabled').length > 0;
+      const hasPyroscopeProfile = span.tags.filter((tag) => tag.key === pyroscopeProfileTag).length > 0;
 
       if (hasPyroscopeProfile && traceToProfilesOptions && profilesDataSourceSettings) {
         const pyroRequest = {

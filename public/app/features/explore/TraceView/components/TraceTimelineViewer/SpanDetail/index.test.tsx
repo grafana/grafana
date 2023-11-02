@@ -26,6 +26,7 @@ import { createDataFrame, DataSourceInstanceSettings } from '@grafana/data';
 import { data } from '@grafana/flamegraph';
 import { config, DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
+import { pyroscopeProfileTag } from '../../../createSpanLink';
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
 import { TraceSpanReference } from '../../types/trace';
@@ -78,7 +79,7 @@ describe('<SpanDetail>', () => {
   span.tags = [
     ...span.tags,
     {
-      key: 'pyroscope.profiling.enabled',
+      key: pyroscopeProfileTag,
       value: true,
     },
     {
