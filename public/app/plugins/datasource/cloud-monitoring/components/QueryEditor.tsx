@@ -107,7 +107,7 @@ export const QueryEditor = (props: Props) => {
           setModalIsOpen(false);
           setCurrentQuery(query);
         }}
-      ></ConfirmModal>
+      />
       <QueryHeader query={query} onChange={checkForModalDisplay} onRunQuery={onRunQuery} />
 
       {queryType === QueryType.PROMQL && (
