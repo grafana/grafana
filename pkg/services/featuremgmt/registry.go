@@ -661,6 +661,13 @@ var (
 			Expression:  "true", // on by default
 		},
 		{
+			Name:         "traceToProfiles",
+			Description:  "Enables linking between traces and profiles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
@@ -858,6 +865,13 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:            "kubernetesPlaylistsAPI",
+			Description:     "Route /api/playlist API to k8s handlers",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -951,6 +965,13 @@ var (
 			Description: "Disable the internal Alertmanager and only use the external one defined.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:            "annotationPermissionUpdate",
+			Description:     "Separate annotation permissions from dashboard permissions to allow for more granular control.",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: false,
+			Owner:           grafanaAuthnzSquad,
 		},
 	}
 )
