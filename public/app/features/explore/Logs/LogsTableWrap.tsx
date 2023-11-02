@@ -97,6 +97,13 @@ export function LogsTableWrap(props: Props) {
     }
   }, [columnsWithMeta, filteredColumnsWithMeta]);
 
+  // Set frame ref when the explore panel state changes
+  useEffect(() => {
+    if (props.panelState?.refId && props.panelState?.refId !== currentFrameRef) {
+      setCurrentFrameRef(props.panelState.refId);
+    }
+  }, [props?.panelState?.refId, currentFrameRef]);
+
   /**
    * when the query results change, we need to update the columnsWithMeta state
    * and reset any local search state
@@ -271,6 +278,7 @@ export function LogsTableWrap(props: Props) {
           // Only include active filters
           .filter((key) => pendingLabelState[key]?.active)
       ),
+      refId: dataFrame.refId,
       visualisationType: 'table',
     };
 
@@ -312,7 +320,7 @@ export function LogsTableWrap(props: Props) {
     }
   };
 
-  const onFrameSelectorChange = (value: SelectableValue) => {
+  const onFrameSelectorChange = (value: SelectableValue<string>) => {
     if (value) {
       setCurrentFrameRef(value.value);
       const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
@@ -321,6 +329,7 @@ export function LogsTableWrap(props: Props) {
       } else {
         console.warn('uhhhhh');
       }
+      props.updatePanelState({ refId: value.value });
     }
   };
 
