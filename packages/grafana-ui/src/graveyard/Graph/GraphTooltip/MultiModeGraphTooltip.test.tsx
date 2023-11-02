@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createDimension, createTheme, FieldType, DisplayProcessor } from '@grafana/data';
 
-import { ActiveDimensions } from '../../VizTooltip';
+import { ActiveDimensions } from '../../../components/VizTooltip';
 
 import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
 import { GraphDimensions } from './types';
