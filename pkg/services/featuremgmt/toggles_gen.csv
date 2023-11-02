@@ -1,5 +1,4 @@
 Name,Stage,Owner,requiresDevMode,RequiresLicense,RequiresRestart,FrontendOnly
-trimDefaults,preview,@grafana/grafana-as-code,false,false,false,false
 disableEnvelopeEncryption,GA,@grafana/grafana-as-code,false,false,false,false
 live-service-web-worker,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
 queryOverLive,experimental,@grafana/grafana-app-platform-squad,false,false,false,true

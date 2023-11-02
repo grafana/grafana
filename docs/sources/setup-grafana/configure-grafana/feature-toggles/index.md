@@ -59,7 +59,6 @@ Some features are enabled by default. You can disable these feature by setting t
 
 | Feature toggle name              | Description                                                                                                                                                                                  |
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `trimDefaults`                   | Use cue schema to remove values that will be applied automatically                                                                                                                           |
 | `panelTitleSearch`               | Search for dashboards using panel title                                                                                                                                                      |
 | `migrationLocking`               | Lock database during migrations                                                                                                                                                              |
 | `correlations`                   | Correlations page                                                                                                                                                                            |
