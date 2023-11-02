@@ -64,9 +64,17 @@ export const QueryEditor = (props: Props) => {
   const queryType = query.queryType;
 
   const checkForModalDisplay = (q: CloudMonitoringQuery) => {
-    if (selectedQuery.queryType !== q.queryType) {
+    if (
+      selectedQuery.queryType === QueryType.TIME_SERIES_LIST ||
+      selectedQuery.queryType === QueryType.TIME_SERIES_QUERY
+    ) {
+      if (selectedQuery.queryType !== q.queryType) {
+        setSelectedQuery(q);
+        setModalIsOpen(true);
+      }
+    } else {
       setSelectedQuery(q);
-      setModalIsOpen(true);
+      onChange(q);
     }
   };
 
@@ -87,7 +95,7 @@ export const QueryEditor = (props: Props) => {
           setSelectedQuery(query);
         }}
       ></ConfirmModal>
-      <QueryHeader query={query} onChange={(q) => checkForModalDisplay(q)} onRunQuery={onRunQuery} />
+      <QueryHeader query={query} onChange={checkForModalDisplay} onRunQuery={onRunQuery} />
 
       {queryType === QueryType.PROMQL && (
         <PromQLQueryEditor
