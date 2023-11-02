@@ -61,4 +61,10 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("alter library_element model to mediumtext", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE library_element MODIFY model MEDIUMTEXT NOT NULL;"))
+
+	mg.AddMigration("add library_element folder uid", migrator.NewAddColumnMigration(libraryElementsV1, &migrator.Column{
+		Name: "folder_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "''",
+	}))
+	mg.AddMigration("populate library_element folder_uid", migrator.NewRawSQLMigration("").
+		Default("UPDATE library_element SET folder_uid = (SELECT uid FROM dashboard WHERE id = library_element.folder_id)"))
 }

@@ -24,6 +24,7 @@ type LibraryElement struct {
 	OrgID int64 `xorm:"org_id"`
 	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
+	FolderUID   string `xorm:"folder_uid"`
 	UID         string `xorm:"uid"`
 	Name        string
 	Kind        int64
