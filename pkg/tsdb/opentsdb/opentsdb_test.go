@@ -73,6 +73,41 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		}
 	})
 
+	t.Run("ref id is not hard coded", func(t *testing.T) {
+		myRefid := "reference id"
+
+		response := `
+		[
+			{
+				"metric": "test",
+				"dps": {
+					"1405544146": 50.0
+				},
+				"tags" : {
+					"env": "prod",
+					"app": "grafana"
+				}
+			}
+		]`
+
+		testFrame := data.NewFrame("test",
+			data.NewField("time", nil, []time.Time{
+				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
+			}),
+			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
+				50}),
+		)
+
+		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
+		resp.StatusCode = 200
+		result, err := service.parseResponse(logger, &resp, myRefid)
+		require.NoError(t, err)
+
+		if diff := cmp.Diff(testFrame, result.Responses[myRefid].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
 	t.Run("Build metric with downsampling enabled", func(t *testing.T) {
 		query := backend.DataQuery{
 			JSON: []byte(`
