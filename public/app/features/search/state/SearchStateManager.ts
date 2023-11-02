@@ -35,6 +35,14 @@ export const defaultQueryParams: SearchQueryParams = {
   layout: null,
 };
 
+const getLocalStorageLayout = () => {
+  const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT);
+  if (selectedLayout === SearchLayout.List) {
+    return SearchLayout.List;
+  } else {
+    return SearchLayout.Folders;
+  }
+};
 export class SearchStateManager extends StateManagerBase<SearchState> {
   updateLocation = debounce((query) => locationService.partial(query, true), 300);
   doSearchWithDebounce = debounce(() => this.doSearch(), 300);
@@ -50,9 +58,15 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       stateFromUrl.layout = SearchLayout.List;
     }
 
+    const layout = getLocalStorageLayout();
+
+    const sort = layout === SearchLayout.List ? stateFromUrl.sort || localStorage.getItem(SEARCH_SELECTED_SORT) : null;
+
     stateManager.setState({
       ...initialState,
       ...stateFromUrl,
+      layout,
+      sort: sort ?? initialState.sort,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
