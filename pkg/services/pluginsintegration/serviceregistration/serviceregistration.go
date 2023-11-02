@@ -2,34 +2,46 @@ package serviceregistration
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
 type Service struct {
-	os extsvcauth.ExternalServiceRegistry
+	reg         extsvcauth.ExternalServiceRegistry
+	settingsSvc pluginsettings.Service
 }
 
-func ProvideService(os extsvcauth.ExternalServiceRegistry) *Service {
+func ProvideService(reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
-		os: os,
+		reg:         reg,
+		settingsSvc: settingsSvc,
 	}
 	return s
 }
 
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *Service) RegisterExternalService(ctx context.Context, svcName string, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (s *Service) RegisterExternalService(ctx context.Context, svcName string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+	// Datasource plugins can only be enabled
+	enabled := true
+	// App plugins can be disabled
+	if pType == plugindef.TypeApp {
+		settings, err := s.settingsSvc.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{PluginID: svcName})
+		if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+			return nil, err
+		}
+
+		enabled = (settings != nil) && settings.Enabled
+	}
+
 	impersonation := extsvcauth.ImpersonationCfg{}
 	if svc.Impersonation != nil {
 		impersonation.Permissions = toAccessControlPermissions(svc.Impersonation.Permissions)
-		if svc.Impersonation.Enabled != nil {
-			impersonation.Enabled = *svc.Impersonation.Enabled
-		} else {
-			impersonation.Enabled = true
-		}
+		impersonation.Enabled = enabled
 		if svc.Impersonation.Groups != nil {
 			impersonation.Groups = *svc.Impersonation.Groups
 		} else {
@@ -38,9 +50,9 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 	}
 
 	self := extsvcauth.SelfCfg{}
+	self.Enabled = enabled
 	if len(svc.Permissions) > 0 {
 		self.Permissions = toAccessControlPermissions(svc.Permissions)
-		self.Enabled = true
 	}
 
 	registration := &extsvcauth.ExternalServiceRegistration{
@@ -56,7 +68,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 		registration.OAuthProviderCfg = &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}}
 	}
 
-	extSvc, err := s.os.SaveExternalService(ctx, registration)
+	extSvc, err := s.reg.SaveExternalService(ctx, registration)
 	if err != nil || extSvc == nil {
 		return nil, err
 	}

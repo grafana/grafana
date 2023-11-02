@@ -2,16 +2,9 @@ import React from 'react';
 
 import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
 import { VisibilityMode, TimelineValueAlignment } from '@grafana/schema';
-import {
-  PanelContext,
-  PanelContextRoot,
-  GraphNG,
-  GraphNGProps,
-  UPlotConfigBuilder,
-  VizLayout,
-  VizLegend,
-  VizLegendItem,
-} from '@grafana/ui';
+import { PanelContext, PanelContextRoot, UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
+
+import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
 
 import { preparePlotConfigBuilder, TimelineMode } from './utils';
 

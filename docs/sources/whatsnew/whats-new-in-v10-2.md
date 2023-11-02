@@ -48,7 +48,7 @@ _Generally available in all editions of Grafana_
 
 Public dashboards allow you to share your visualizations and insights with a broader audience without the requirement of a login. You can effortlessly use our current sharing model and create a public dashboard URL to share with anyone using the generated public URL link. To learn more, refer to the [Public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/dashboard-public/), as well as the following video demo:
 
-{{< video-embed src="/media/docs/grafana/dashboards/public-dashboards-demo.mp4" >}}
+{{< youtube id="XHwwRCdxHMg?rel=0" >}}
 
 ## Navigate lengthy, mixed data in Explore with Content Outline
 
@@ -58,7 +58,7 @@ _Generally available in all editions of Grafana_
 
 Introducing Content Outline in Grafana Explore. It's easy to lose track of your place when you're running complex mixed queries or switching between logs and traces. Content outline is our first step towards seamless navigation from log lines to traces and back to queries, ensuring quicker searches while preserving context. Experience efficient, contextual investigations with this update in Grafana Explore. To learn more, refer to the [Content outline documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/#content-outline), as well as the following video demo.
 
-{{< video-embed src="/media/docs/grafana/explore/content-outline-demo.mp4" >}}
+{{< youtube id="cE7J1-S4ZCQ?rel=0" >}}
 
 ## Correlations
 
@@ -104,7 +104,7 @@ To enable these features, you must first enable the `dashgpt` [feature toggle](h
 
 When enabled, look for the **✨ Auto generate** option next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 
-{{< figure src="/media/docs/grafana/dashboards/auto-generate-description-10-2.gif" max-width="750px" caption="Auto-generate a panel description using AI" >}}
+{{< youtube id="tgBussaYJww?rel=0" >}}
 
 ### Find your dashboard faster with the new Dashboards browse screen
 
@@ -118,7 +118,7 @@ To make using folders easier and more consistent, there's no longer a special **
 
 To try it out, go to the **Dashboards** section of your Grafana instance.
 
-{{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
+{{< youtube id="-S_Jjuwj74k?rel=0" >}}
 
 ### Create interactive buttons in canvas visualizations
 
@@ -129,9 +129,9 @@ _Available in public preview in all editions of Grafana_
 
 You can now add buttons to your canvas visualizations. Buttons can be configured to call an API endpoint. This pushes Grafana's capabilities to new heights, allowing you to create interactive dashboards that can be used to control external systems.
 
-To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button).
+To learn more, refer to our [Canvas button element documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button), as well as the following video demo.
 
-{{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
+{{< youtube id="T6fg1TpfBUg?rel=0" >}}
 
 ### Zoom in on the y-axis of the time series and candlestick visualizations
 
@@ -209,9 +209,9 @@ We've added an **Aggregate By** option to the [TraceQL query editor](https://gra
 
 This feature is disabled by default. To enable it, use the `metricsSummary` [experimental feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
-For more information, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/#optional-use-aggregate-by).
+For more information, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/#optional-use-aggregate-by), as well as the following video demo.
 
-{{< figure src="/media/docs/tempo/metrics-summary-10-2.png" caption="Aggregate by" >}}
+{{< youtube id="g97CjKOZqT4?rel=0" >}}
 
 #### Query traces more easily with the Improved TraceQL editor
 
@@ -231,7 +231,7 @@ _Generally available in all editions of Grafana_
 
 The [TraceQL query editor](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/#traceql-query-editor) has been improved to facilitate the grouping of multiple spans per trace in TraceQL queries. For example, when `by(resource.service.name)` is added to your TraceQL query, it will group the spans in each trace by `resource.service.name`.
 
-{{< figure src="/media/docs/tempo/multiple-spansets-per-trace-10-2.png" max-width="750px" caption="Multiple spansets per trace" >}}
+{{< youtube id="fraepWra00Y?rel=0" >}}
 
 #### Create query-type template variables for the Tempo data source
 
@@ -305,9 +305,11 @@ As our work on improving the user experience of transforming data continues, we'
 
 _Experimental in all editions of Grafana_
 
-Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations. We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support them, either in the drop-down or as a suggestion when you type **$** or press Ctrl + Space:
+Previously, the only transformation that supported [dashboard variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) was the **Add field from calculation** transformation. We've now extended the support for variables to the **Filter by value**, **Create heatmap**, **Histogram**, **Sort by**, **Limit**, **Filter by name**, and **Join by field** transformations.
 
-{{< figure src="/media/docs/grafana/transformations/completion.png" caption="Input with dashboard variable suggestions" >}}
+We've also made it easier to find the correct dashboard variable by displaying available variables in the fields that support them, either in the drop-down or as a suggestion when you type **$** or press Ctrl + Space.
+
+{{< youtube id="WE0tt69ApO4?rel=0" >}}
 
 ### New modes for the Add field from calculation transformation
 
@@ -377,7 +379,9 @@ _Generally available in all editions of Grafana_
 
 Use the Grafana Alerting - Grafana OnCall integration to effortlessly connect alerts generated by Grafana Alerting with Grafana OnCall. From there, you can route them according to defined escalation chains and schedules.
 
-To learn more, refer to the [Grafana OnCall integration for Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points/configure-oncall/).
+To learn more, refer to the [Grafana OnCall integration for Alerting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points/configure-oncall/), as well as the following video demo.
+
+{{< youtube id="abRn5I61hxs?rel=0" >}}
 
 ### Export alerting resources to Terraform
 

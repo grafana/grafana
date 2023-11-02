@@ -347,10 +347,6 @@ const (
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
 
-	// FlagToggleLabelsInLogsUI
-	// Enable toggleable filters in log details view
-	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
-
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
@@ -386,6 +382,10 @@ const (
 	// FlagAzureMonitorDataplane
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
+
+	// FlagTraceToProfiles
+	// Enables linking between traces and profiles
+	FlagTraceToProfiles = "traceToProfiles"
 
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
@@ -495,6 +495,10 @@ const (
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
+	// FlagKubernetesPlaylistsAPI
+	// Route /api/playlist API to k8s handlers
+	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
@@ -539,7 +543,23 @@ const (
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 
-	// FlagPanelFilterVariable
+	// FlagAlertmanagerRemoteSecondary
+	// Enable Grafana to sync configuration and state with a remote Alertmanager.
+	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
+
+	// FlagAlertmanagerRemotePrimary
+	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
+	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
+
+	// FlagAlertmanagerRemoteOnly
+	// Disable the internal Alertmanager and only use the external one defined.
+	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
+
+	// FlagAnnotationPermissionUpdate
+	// Separate annotation permissions from dashboard permissions to allow for more granular control.
+	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
+
+  // FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
 )
