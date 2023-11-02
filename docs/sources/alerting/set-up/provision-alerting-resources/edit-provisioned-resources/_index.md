@@ -20,7 +20,7 @@ weight: 400
 
 # Export and edit provisioned alerting resources in Grafana
 
-Export your alerting resources, such as alert rules, contact points, and notification policies as Terraform resources. A new **Modify export** mode for alert rules enables you to edit provisioned alert rules and export a modified version.
+Export your alerting resources, such as alert rules, contact points, and notification policies in JSON, YAML, or Terraform format. A new **Modify export** mode for alert rules enables you to edit provisioned alert rules and export a modified version.
 
 {{% admonition type="note" %}}
 This feature is for Grafana-managed alert rules only. It is available to Admin, Viewer, and Editor roles.
