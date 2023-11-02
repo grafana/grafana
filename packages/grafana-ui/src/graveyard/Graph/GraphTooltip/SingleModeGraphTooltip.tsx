@@ -7,7 +7,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 
-import { SeriesTable } from '../../VizTooltip';
+import { SeriesTable } from '../../../components/VizTooltip';
 
 import { GraphTooltipContentProps } from './types';
 
