@@ -591,7 +591,7 @@ Create or delete templates in your Grafana instance(s).
 
    Example configuration files can be found below.
 
-2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
+1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating templates.
 
@@ -678,52 +678,52 @@ If you are a Kubernetes user, you can leverage file provisioning using Kubernete
 
 1. Create one or more configuration maps as follows.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-alerting
-data:
-  provisioning.yaml: |
-    templates:
-    - name: my_first_template
-      template: the content for my template
-```
+   ```yaml
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: grafana-alerting
+   data:
+     provisioning.yaml: |
+       templates:
+       - name: my_first_template
+       template: the content for my template
+   ```
 
-2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
+1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: grafana
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: grafana
-  template:
-    metadata:
-      name: grafana
-      labels:
-        app: grafana
-    spec:
-      containers:
-        - name: grafana
-          image: grafana/grafana:latest
-          ports:
-            - name: grafana
-              containerPort: 3000
-          volumeMounts:
-            - mountPath: /etc/grafana/provisioning/alerting
-              name: grafana-alerting
-              readOnly: false
-      volumes:
-        - name: grafana-alerting
-          configMap:
-            defaultMode: 420
-            name: grafana-alerting
-```
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: grafana
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: grafana
+     template:
+       metadata:
+         name: grafana
+         labels:
+           app: grafana
+       spec:
+         containers:
+           - name: grafana
+             image: grafana/grafana:latest
+             ports:
+               - name: grafana
+                 containerPort: 3000
+             volumeMounts:
+               - mountPath: /etc/grafana/provisioning/alerting
+                 name: grafana-alerting
+                 readOnly: false
+         volumes:
+           - name: grafana-alerting
+             configMap:
+               defaultMode: 420
+               name: grafana-alerting
+   ```
 
 This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment. Grafana still requires a database for normal operation, you do not need to persist the contents of the database between restarts if all objects are provisioned using files.
 
