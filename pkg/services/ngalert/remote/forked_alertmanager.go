@@ -105,11 +105,17 @@ func (fam *ForkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.P
 }
 
 func (fam *ForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	return []apimodels.Receiver{}, nil
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.GetReceivers(ctx)
+	}
+	return fam.internal.GetReceivers(ctx)
 }
 
 func (fam *ForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return &notifier.TestReceiversResult{}, nil
+	if fam.mode == ModeRemotePrimary {
+		return fam.remote.TestReceivers(ctx, c)
+	}
+	return fam.internal.TestReceivers(ctx, c)
 }
 
 func (fam *ForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
