@@ -30,7 +30,6 @@ You can add one or more of the following filters:
 
 To only show the spans you have matched, select the `Show matches only` toggle.
 
-For details about span filters, refer to the
 
 <!-- Adding these in case they are needed. -->
 
