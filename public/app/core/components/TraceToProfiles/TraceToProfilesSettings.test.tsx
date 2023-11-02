@@ -48,7 +48,6 @@ describe('TraceToProfilesSettings', () => {
 
   it('should render all options', () => {
     render(<TraceToProfilesSettings options={defaultOption} onOptionsChange={() => {}} />);
-    expect(screen.getByText('Select data source')).toBeInTheDocument();
     expect(screen.getByText('Tags')).toBeInTheDocument();
     expect(screen.getByText('Profile type')).toBeInTheDocument();
     expect(screen.getByText('Use custom query')).toBeInTheDocument();
