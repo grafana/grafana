@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import {
   Alert,
   Dropdown,
@@ -23,6 +22,7 @@ import {
   Tab,
   Pagination,
   Button,
+  Stack,
 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';

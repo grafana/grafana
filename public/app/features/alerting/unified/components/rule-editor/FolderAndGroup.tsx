@@ -4,8 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Button, Field, Input, InputControl, Label, Modal, Text, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, Button, Field, Input, InputControl, Label, Modal, Text, useStyles2, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';

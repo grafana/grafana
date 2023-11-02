@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SupportedTransformationType } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import {
   Button,
   Field,
@@ -17,6 +16,7 @@ import {
   Select,
   Tooltip,
   useStyles2,
+  Stack,
 } from '@grafana/ui';
 
 type Props = { readOnly: boolean };
@@ -54,7 +54,7 @@ export const TransformationsEditor = (props: Props) => {
                 <div>
                   {fields.map((fieldVal, index) => {
                     return (
-                      <Stack direction="row" key={fieldVal.id} alignItems="top">
+                      <Stack direction="row" key={fieldVal.id} alignItems="flex-start">
                         <Field
                           label={
                             <Stack gap={0.5}>

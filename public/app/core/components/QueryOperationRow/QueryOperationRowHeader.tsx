@@ -3,8 +3,7 @@ import React, { MouseEventHandler } from 'react';
 import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2, Stack } from '@grafana/ui';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -73,7 +72,7 @@ export const QueryOperationRowHeader = ({
         {headerElement}
       </div>
 
-      <Stack gap={1} alignItems="center" wrap={false}>
+      <Stack gap={1} alignItems="center">
         {actionsElement}
         {draggable && (
           <IconButton
