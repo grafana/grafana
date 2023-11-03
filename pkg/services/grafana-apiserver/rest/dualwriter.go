@@ -98,20 +98,22 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
+		// Hold on to the RV+UID for the dual write
 		theRV := accessor.GetResourceVersion()
 		theUID := accessor.GetUID()
 
-		// Changes applied within standard storage
+		// Changes applied within new storage
+		// will fail if RV is out of sync
 		updated, err := objInfo.UpdatedObject(ctx, old)
 		if err != nil {
 			return nil, false, err
 		}
 
-		fmt.Printf("AA:UPDATED: %+v\n", updated)
 		accessor, err = meta.Accessor(updated)
 		if err != nil {
 			return nil, false, err
 		}
+		accessor.SetUID("")             // clear it
 		accessor.SetResourceVersion("") // remove it so it is not a constraint
 		obj, created, err := legacy.Update(ctx, name, &updateWrapper{
 			upstream: objInfo,
@@ -120,8 +122,6 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return obj, created, err
 		}
-
-		fmt.Printf("AFTER UPDATE (OBJ): %+v\n", obj)
 
 		accessor, err = meta.Accessor(obj)
 		if err != nil {
@@ -140,26 +140,25 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 
 // Delete overrides the default behavior of the Storage and delete from both the LegacyStorage and Storage.
 func (d *DualWriter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	if legacy, ok := d.legacy.(rest.GracefulDeleter); ok {
-		obj, async, err := legacy.Delete(ctx, name, deleteValidation, options)
-		if err != nil {
-			return obj, async, err
+	// Delete from storage *first* so the item is still exists if a failure happens
+	obj, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if err == nil {
+		if legacy, ok := d.legacy.(rest.GracefulDeleter); ok {
+			obj, async, err = legacy.Delete(ctx, name, deleteValidation, options)
 		}
 	}
-
-	return d.Storage.Delete(ctx, name, deleteValidation, options)
+	return obj, async, err
 }
 
 // DeleteCollection overrides the default behavior of the Storage and delete from both the LegacyStorage and Storage.
 func (d *DualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	if legacy, ok := d.legacy.(rest.CollectionDeleter); ok {
-		_, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
-		if err != nil {
-			return nil, err
+	out, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	if err == nil {
+		if legacy, ok := d.legacy.(rest.CollectionDeleter); ok {
+			out, err = legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 		}
 	}
-
-	return d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	return out, err
 }
 
 type updateWrapper struct {
