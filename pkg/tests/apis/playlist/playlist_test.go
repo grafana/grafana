@@ -45,6 +45,17 @@ func TestPlaylist(t *testing.T) {
 			},
 		}))
 	})
+
+	t.Run("with dual write", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true, // do not start extra port 6443
+			DisableAnonymous:     true,
+			APIServerStorageType: "file",
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServer,
+			},
+		}))
+	})
 }
 
 func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) {
@@ -67,13 +78,13 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Nil(t, rsp.Status)
 
 		// Check view permissions
-		rsp = helper.List(helper.Org2.Viewer, "default", gvr)
+		rsp = helper.List(helper.OrgB.Viewer, "default", gvr)
 		require.Equal(t, 403, rsp.Response.StatusCode) // Org2 can not see default namespace
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 
 		// Check view permissions
-		rsp = helper.List(helper.Org2.Viewer, "org-22", gvr)
+		rsp = helper.List(helper.OrgB.Viewer, "org-22", gvr)
 		require.Equal(t, 403, rsp.Response.StatusCode) // Unknown/not a member
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
@@ -92,7 +103,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Check org2 viewer can not see org1 (default namespace)
 		client = helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org2.Viewer,
+			User:      helper.OrgB.Viewer,
 			Namespace: "default", // actually org1
 			GVR:       gvr,
 		})
@@ -103,7 +114,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Check invalid namespace
 		client = helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org2.Viewer,
+			User:      helper.OrgB.Viewer,
 			Namespace: "org-22", // org 22 does not exist
 			GVR:       gvr,
 		})
