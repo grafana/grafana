@@ -32,15 +32,25 @@ describe('walkTree', () => {
       { collapsing: true }
     );
 
-    walkTree(root, 'children', container, 100, 0, 1, 100, (item, x, y, width, height, label, collapsed) => {
-      expect(item).toEqual(root);
-      expect(x).toEqual(0);
-      expect(y).toEqual(0);
-      expect(width).toEqual(99); // -1 for border
-      expect(height).toEqual(22);
-      expect(label).toEqual('1');
-      expect(collapsed).toEqual(false);
-    });
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, collapsed) => {
+        expect(item).toEqual(root);
+        expect(x).toEqual(0);
+        expect(y).toEqual(0);
+        expect(width).toEqual(99); // -1 for border
+        expect(height).toEqual(22);
+        expect(label).toEqual('1');
+        expect(collapsed).toEqual(false);
+      }
+    );
   });
 
   it('should render a multiple items', () => {
@@ -59,9 +69,19 @@ describe('walkTree', () => {
       { collapsing: true }
     );
     const renderData: RenderData[] = [];
-    walkTree(root, 'children', container, 100, 0, 1, 100, (item, x, y, width, height, label, muted) => {
-      renderData.push({ item, x, y, width, height, label, muted });
-    });
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
     expect(renderData).toEqual([
       { item: root, width: 99, height: 22, x: 0, y: 0, muted: false, label: '1' },
       { item: root.children[0], width: 49, height: 22, x: 0, y: 22, muted: false, label: '2' },
@@ -85,9 +105,19 @@ describe('walkTree', () => {
       { collapsing: true }
     );
     const renderData: RenderData[] = [];
-    walkTree(root, 'children', container, 100, 0, 1, 100, (item, x, y, width, height, label, muted) => {
-      renderData.push({ item, x, y, width, height, label, muted });
-    });
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
     expect(renderData).toEqual([
       { item: root, width: 99, height: 22, x: 0, y: 0, muted: false, label: '1' },
       { item: root.children[0], width: 1, height: 22, x: 0, y: 22, muted: true, label: '2' },
@@ -111,9 +141,19 @@ describe('walkTree', () => {
       { collapsing: true }
     );
     const renderData: RenderData[] = [];
-    walkTree(root, 'children', container, 100, 0, 1, 100, (item, x, y, width, height, label, muted) => {
-      renderData.push({ item, x, y, width, height, label, muted });
-    });
+    walkTree(
+      root,
+      'children',
+      container,
+      100,
+      0,
+      1,
+      100,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
     expect(renderData).toEqual([{ item: root, width: 99, height: 22, x: 0, y: 0, muted: false, label: '1' }]);
   });
 
@@ -127,9 +167,19 @@ describe('walkTree', () => {
     const root = container.getLevels()[0][0];
 
     const renderData: RenderData[] = [];
-    walkTree(root, 'children', container, 14, 0, 1, 14, (item, x, y, width, height, label, muted) => {
-      renderData.push({ item, x, y, width, height, label, muted });
-    });
+    walkTree(
+      root,
+      'children',
+      container,
+      14,
+      0,
+      1,
+      14,
+      container.getCollapsedMap(),
+      (item, x, y, width, height, label, muted) => {
+        renderData.push({ item, x, y, width, height, label, muted });
+      }
+    );
     expect(renderData).toEqual([
       { item: root, width: 13, height: 22, x: 0, y: 0, muted: false, label: '0' },
       { item: root.children[0], width: 3, height: 22, x: 0, y: 22, muted: true, label: '1' },
