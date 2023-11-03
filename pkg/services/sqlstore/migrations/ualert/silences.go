@@ -46,7 +46,7 @@ func (m *migration) addPauseSilence(orgId int64) error {
 			StartsAt:  time.Now(),
 			EndsAt:    time.Now().Add(365 * 20 * time.Hour), // 1 year.
 			CreatedBy: "Grafana Migration",
-			Comment:   "Created during auto migration to unified alerting",
+			Comment:   "Created during migration to unified alerting to silence paused alerts",
 		},
 		ExpiresAt: time.Now().Add(365 * 20 * time.Hour), // 1 year.
 	}
@@ -84,7 +84,7 @@ func (m *migration) addErrorSilence(orgId int64) error {
 			StartsAt:  time.Now(),
 			EndsAt:    time.Now().AddDate(1, 0, 0), // 1 year
 			CreatedBy: "Grafana Migration",
-			Comment:   fmt.Sprintf("Created during migration to unified alerting to silence Error state when the option 'Keep Last State' was selected for Error state"),
+			Comment:   "Created during migration to unified alerting to silence Error state when the option 'Keep Last State' was selected for Error state",
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year
 	}
@@ -120,7 +120,7 @@ func (m *migration) addNoDataSilence(orgId int64) error {
 			StartsAt:  time.Now(),
 			EndsAt:    time.Now().AddDate(1, 0, 0), // 1 year.
 			CreatedBy: "Grafana Migration",
-			Comment:   fmt.Sprintf("Created during migration to unified alerting to silence NoData state when the option 'Keep Last State' was selected for NoData state"),
+			Comment:   "Created during migration to unified alerting to silence NoData state when the option 'Keep Last State' was selected for NoData state",
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year.
 	}

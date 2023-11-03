@@ -139,7 +139,7 @@ func TestMakeAlertRule(t *testing.T) {
 		require.True(t, ar.IsPaused)
 	})
 
-	t.Run("pased dash alert is silenced", func(t *testing.T) {
+	t.Run("paused dash alert is silenced", func(t *testing.T) {
 		m := newTestMigration(t)
 		da := createTestDashAlert()
 		da.State = "paused"
