@@ -10,4 +10,3 @@
  */
 
 export { Grid } from './components/Layout/Grid/Grid';
-export { Stack } from './components/Layout/Stack/Stack';

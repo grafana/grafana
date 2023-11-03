@@ -141,7 +141,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: theme.zIndex.navbarFixed,
       left: 0,
       right: 0,
-      boxShadow: shadow,
+      boxShadow: config.featureToggles.dockedMegaMenu ? undefined : shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
