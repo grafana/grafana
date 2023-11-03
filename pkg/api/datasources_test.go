@@ -488,8 +488,13 @@ func TestValidateLBACHeader(t *testing.T) {
 		want            bool
 	}{
 		{
-			desc:            "Should be valid regex match for team headervalue",
+			desc:            "Should allow valid header",
 			teamHeaderValue: `1234:{ name!="value",foo!~"bar" }`,
+			want:            true,
+		},
+		{
+			desc:            "Should allow valid selector",
+			teamHeaderValue: `1234:{ name!="value",foo!~"bar/baz.foo" }`,
 			want:            true,
 		},
 		{
