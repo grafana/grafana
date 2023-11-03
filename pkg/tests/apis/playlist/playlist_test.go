@@ -25,26 +25,26 @@ func TestPlaylist(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	// t.Run("default setup", func(t *testing.T) {
-	// 	doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction: true, // do not start extra port 6443
-	// 		DisableAnonymous:  true,
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagGrafanaAPIServer,
-	// 		},
-	// 	}))
-	// })
+	// 	t.Run("default setup", func(t *testing.T) {
+	// 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	// 			AppModeProduction: true, // do not start extra port 6443
+	// 			DisableAnonymous:  true,
+	// 			EnableFeatureToggles: []string{
+	// 				featuremgmt.FlagGrafanaAPIServer,
+	// 			},
+	// 		}))
+	// 	})
 
-	// t.Run("with k8s api flag", func(t *testing.T) {
-	// 	doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction: true, // do not start extra port 6443
-	// 		DisableAnonymous:  true,
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagGrafanaAPIServer,
-	// 			featuremgmt.FlagKubernetesPlaylistsAPI, // <<< The change we are testing!
-	// 		},
-	// 	}))
-	// })
+	// 	t.Run("with k8s api flag", func(t *testing.T) {
+	// 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	// 			AppModeProduction: true, // do not start extra port 6443
+	// 			DisableAnonymous:  true,
+	// 			EnableFeatureToggles: []string{
+	// 				featuremgmt.FlagGrafanaAPIServer,
+	// 				featuremgmt.FlagKubernetesPlaylistsAPI, // <<< The change we are testing!
+	// 			},
+	// 		}))
+	// 	})
 
 	t.Run("with dual write", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{

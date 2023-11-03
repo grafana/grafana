@@ -10,12 +10,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
+	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/playlist"
+	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
 
-func LegacyUpdateCommandToUnstructured(cmd playlist.UpdatePlaylistCommand) unstructured.Unstructured {
+func LegacyUpdateCommandToUnstructured(cmd playlistsvc.UpdatePlaylistCommand) unstructured.Unstructured {
 	items := []map[string]string{}
 	for _, item := range cmd.Items {
 		items = append(items, map[string]string{
@@ -36,9 +37,9 @@ func LegacyUpdateCommandToUnstructured(cmd playlist.UpdatePlaylistCommand) unstr
 	return obj
 }
 
-func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *playlist.Playlist {
+func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *playlistsvc.Playlist {
 	spec := item.Object["spec"].(map[string]any)
-	return &playlist.Playlist{
+	return &playlistsvc.Playlist{
 		UID:      item.GetName(),
 		Name:     spec["title"].(string),
 		Interval: spec["interval"].(string),
@@ -46,9 +47,9 @@ func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *playlist.Play
 	}
 }
 
-func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlist.PlaylistDTO {
+func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlistsvc.PlaylistDTO {
 	spec := item.Object["spec"].(map[string]any)
-	dto := &playlist.PlaylistDTO{
+	dto := &playlistsvc.PlaylistDTO{
 		Uid:      item.GetName(),
 		Name:     spec["title"].(string),
 		Interval: spec["interval"].(string),
@@ -64,14 +65,14 @@ func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlist.P
 	return dto
 }
 
-func convertToK8sResource(v *playlist.PlaylistDTO, namespacer request.NamespaceMapper) *Playlist {
-	spec := Spec{
+func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.NamespaceMapper) *playlist.Playlist {
+	spec := playlist.Spec{
 		Title:    v.Name,
 		Interval: v.Interval,
 	}
 	for _, item := range v.Items {
-		spec.Items = append(spec.Items, Item{
-			Type:  ItemType(item.Type),
+		spec.Items = append(spec.Items, playlist.Item{
+			Type:  playlist.ItemType(item.Type),
 			Value: item.Value,
 		})
 	}
@@ -84,7 +85,7 @@ func convertToK8sResource(v *playlist.PlaylistDTO, namespacer request.NamespaceM
 			Key:  fmt.Sprintf("%d", v.Id),
 		})
 	}
-	return &Playlist{
+	return &playlist.Playlist{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Uid,
 			UID:               types.UID(v.Uid),
@@ -97,19 +98,19 @@ func convertToK8sResource(v *playlist.PlaylistDTO, namespacer request.NamespaceM
 	}
 }
 
-func convertToLegacyUpdateCommand(p *Playlist, orgId int64) (*playlist.UpdatePlaylistCommand, error) {
+func convertToLegacyUpdateCommand(p *playlist.Playlist, orgId int64) (*playlistsvc.UpdatePlaylistCommand, error) {
 	spec := p.Spec
-	cmd := &playlist.UpdatePlaylistCommand{
+	cmd := &playlistsvc.UpdatePlaylistCommand{
 		UID:      p.Name,
 		Name:     spec.Title,
 		Interval: spec.Interval,
 		OrgId:    orgId,
 	}
 	for _, item := range spec.Items {
-		if item.Type == ItemTypeDashboardById {
+		if item.Type == playlist.ItemTypeDashboardById {
 			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
 		}
-		cmd.Items = append(cmd.Items, playlist.PlaylistItem{
+		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
 			Type:  string(item.Type),
 			Value: item.Value,
 		})
