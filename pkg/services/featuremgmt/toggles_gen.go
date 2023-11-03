@@ -562,4 +562,8 @@ const (
 	// FlagDashboardSceneForViewers
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
+
+	// FlagPanelFilterVariable
+	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
+	FlagPanelFilterVariable = "panelFilterVariable"
 )
