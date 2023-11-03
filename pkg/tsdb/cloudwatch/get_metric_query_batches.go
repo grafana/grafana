@@ -14,23 +14,29 @@ var nonWordRegex = regexp.MustCompile(`\W+`)
 // with all the queries they reference.
 func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger) [][]*models.CloudWatchQuery {
 	// We only need multiple batches if there are multiple metrics insight queries
-	if !haveMultipleMetricInsights(queries) {
+	if !haveMultipleMetricInsightsQueries(queries) {
 		return [][]*models.CloudWatchQuery{queries}
 	}
 
 	logger.Debug("Separating queries into batches")
 
-	queryLookupById, mathQueries := initializeQueryLookupAndMathQueries(queries)
+	idToQuery, mathQueries := initializeQuerySetAndMathQueries(queries)
 
-	queriesReferencedByMathQueries, queriesWhichAreReferenced := getQueriesReferencedByMathQueries(mathQueries, queryLookupById)
+	queriesReferencedByMathQueries, referencedQueries := getQueriesReferencedByMathQueries(mathQueries, idToQuery)
 
-	return createGroupsByQueriesNotReferencedInAnotherQuery(queryLookupById, queriesWhichAreReferenced, queriesReferencedByMathQueries)
+	batches := [][]*models.CloudWatchQuery{}
+	for _, query := range queries {
+		if _, ok := referencedQueries[query.Id]; !ok {
+			batches = append(batches, getBatch(query.Id, queriesReferencedByMathQueries, idToQuery))
+		}
+	}
+	return batches
 }
 
-func initializeQueryLookupAndMathQueries(queries []*models.CloudWatchQuery) (map[string]*models.CloudWatchQuery, []string) {
-	queryLookupById := make(map[string]*models.CloudWatchQuery)
+func initializeQuerySetAndMathQueries(queries []*models.CloudWatchQuery) (map[string]*models.CloudWatchQuery, []string) {
+	idToQuery := make(map[string]*models.CloudWatchQuery, len(queries))
 	for _, q := range queries {
-		queryLookupById[q.Id] = q
+		idToQuery[q.Id] = q
 	}
 
 	var mathQueries []string
@@ -39,63 +45,67 @@ func initializeQueryLookupAndMathQueries(queries []*models.CloudWatchQuery) (map
 			mathQueries = append(mathQueries, query.Id)
 		}
 	}
-	return queryLookupById, mathQueries
+
+	return idToQuery, mathQueries
 }
 
-func createGroupsByQueriesNotReferencedInAnotherQuery(queries map[string]*models.CloudWatchQuery,
-	queriesWhichAreReferenced map[string]bool, groupOfReferencedQueries map[string][]string) [][]*models.CloudWatchQuery {
-	batches := [][]*models.CloudWatchQuery{}
-	for _, query := range queries {
-		if _, ok := queriesWhichAreReferenced[query.Id]; !ok {
-			batches = append(batches, getReferencedQueries(queries, groupOfReferencedQueries, query.Id))
-		}
-	}
-	return batches
-}
-
-func getQueriesReferencedByMathQueries(mathQueries []string, queryLookupById map[string]*models.CloudWatchQuery) (map[string][]string, map[string]bool) {
-	queriesReferencedByMathQueries := make(map[string][]string)
+func getQueriesReferencedByMathQueries(mathQueries []string, idToQuery map[string]*models.CloudWatchQuery) (map[string][]string, map[string]bool) {
+	queryReferences := make(map[string][]string)
 	isReferenced := make(map[string]bool)
 	for _, mathQuery := range mathQueries {
-		substrings := nonWordRegex.Split(queryLookupById[mathQuery].Expression, -1) // i think here we could have instead stored the query in mathQueries?
+		substrings := nonWordRegex.Split(idToQuery[mathQuery].Expression, -1)
 		for _, id := range substrings {
-			_, found := queryLookupById[id]
+			_, found := idToQuery[id]
 			if found {
-				queriesReferencedByMathQueries[mathQuery] = append(queriesReferencedByMathQueries[mathQuery], id)
+				queryReferences[mathQuery] = append(queryReferences[mathQuery], id)
 				isReferenced[id] = true
 			}
 		}
 	}
-	return queriesReferencedByMathQueries, isReferenced
+	return queryReferences, isReferenced
 }
 
-// getReferencedQueries gets all the queries referenced by rootQuery and its referenced queries
-func getReferencedQueries(queries map[string]*models.CloudWatchQuery, groupOfReferencedQueries map[string][]string, rootQueryId string) []*models.CloudWatchQuery {
-	usedQueries := make(map[string]bool)
-	batch := []*models.CloudWatchQuery{}
+// getBatch gets all the queries that should be included in the same batch as the start query. The start query is also included in the response.
+// idToQuery is a map of the query id to the actual query
+func getBatch(startQueryId string, queryReferences map[string][]string, idToQuery map[string]*models.CloudWatchQuery) []*models.CloudWatchQuery {
+	connectedQueryIds := getConnectedQueriesIds(startQueryId, queryReferences)
 
-	queriesToAdd := []string{rootQueryId}
-	usedQueries[rootQueryId] = true
-	for i := 0; i < len(queriesToAdd); i++ {
-		currentQueryId := queriesToAdd[i]
-		batch = append(batch, queries[currentQueryId])
-		for _, referencedQueryId := range groupOfReferencedQueries[currentQueryId] {
-			if !usedQueries[referencedQueryId] {
-				usedQueries[referencedQueryId] = true
-				queriesToAdd = append(queriesToAdd, referencedQueryId)
-			}
-		}
+	batch := make([]*models.CloudWatchQuery, len(connectedQueryIds))
+
+	// map query ids to the actual queries
+	for _, id := range connectedQueryIds {
+		batch = append(batch, idToQuery[id])
 	}
+
 	return batch
 }
 
-func haveMultipleMetricInsights(queries []*models.CloudWatchQuery) bool {
-	metricInsightsCount := 0
+// getConnectedQueriesIds does a breadth-first search to find all the query ids connected to the start query id by references. The start query id is also returned in the response.
+func getConnectedQueriesIds(startQueryId string, queryReferences map[string][]string) []string {
+	visited := map[string]bool{startQueryId: true}
+	queriesToReturn := []string{}
+
+	queriesToVisit := []string{startQueryId}
+	for i := 0; i < len(queriesToVisit); i++ {
+		currentQueryId := queriesToVisit[i]
+		queriesToReturn = append(queriesToReturn, currentQueryId)
+		for _, queryRefId := range queryReferences[currentQueryId] {
+			if !visited[queryRefId] {
+				visited[queryRefId] = true
+				queriesToVisit = append(queriesToVisit, queryRefId) // commenting out this line doesn't break any tests, TODO: write a test
+			}
+		}
+	}
+	return queriesToReturn
+}
+
+func haveMultipleMetricInsightsQueries(queries []*models.CloudWatchQuery) bool {
+	count := 0
 	for _, query := range queries {
 		if query.GetGetMetricDataAPIMode() == models.GMDApiModeSQLExpression {
-			metricInsightsCount++
+			count++
 		}
-		if metricInsightsCount > 1 {
+		if count > 1 {
 			return true
 		}
 	}
