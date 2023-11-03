@@ -42,8 +42,8 @@ type K8sTestHelper struct {
 	env        server.TestEnv
 	namespacer request.NamespaceMapper
 
-	Org1 OrgUsers
-	Org2 OrgUsers
+	Org1 OrgUsers // default
+	OrgB OrgUsers // some other id
 
 	// // Registered groups
 	groups []metav1.APIGroup
@@ -59,8 +59,8 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 		namespacer: request.GetNamespaceMapper(nil),
 	}
 
-	c.Org1 = c.createTestUsers(int64(1))
-	c.Org2 = c.createTestUsers(int64(2))
+	c.Org1 = c.createTestUsers("Org1")
+	c.OrgB = c.createTestUsers("OrgB")
 
 	// Read the API groups
 	rsp := DoRequest(c, RequestParams{
@@ -323,25 +323,27 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: unstructuredMap}
 }
 
-func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
+func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 
 	store := c.env.SQLStore
 	defer func() {
-		store.Cfg.AutoAssignOrg = true
+		store.Cfg.AutoAssignOrg = false
 		store.Cfg.AutoAssignOrgId = 1 // the default
 	}()
 
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = int(orgId)
 	quotaService := quotaimpl.ProvideService(store, store.Cfg)
 
 	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(c.t, err)
 
-	gotID, err := orgService.GetOrCreate(context.Background(), fmt.Sprintf("Org%d", orgId))
-	require.NoError(c.t, err)
-	require.Equal(c.t, orgId, gotID)
+	orgId := int64(1)
+	if orgName != "Org1" {
+		orgId, err = orgService.GetOrCreate(context.Background(), orgName)
+		require.NoError(c.t, err)
+	}
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = int(orgId)
 
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
 	cache := localcache.ProvideService()
@@ -355,7 +357,7 @@ func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			DefaultOrgRole: string(role),
 			Password:       key,
-			Login:          fmt.Sprintf("%s%d", key, orgId),
+			Login:          fmt.Sprintf("%s-%d", key, orgId),
 			OrgID:          orgId,
 		})
 		require.NoError(c.t, err)
