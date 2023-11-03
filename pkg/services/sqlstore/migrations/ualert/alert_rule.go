@@ -156,20 +156,18 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		return nil, err
 	}
 
-	// Label for routing and silences.
-	n, v := getLabelForSilenceMatching(ar.UID)
-	ar.Labels[n] = v
-
-	if err := m.addSilence(da, ar); err != nil {
-		m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", ar.Title, "err", err)
+	// Label for routing silences.
+	if da.State == "paused" {
+		n, v := getLabelForPauseSilenceMatching()
+		ar.Labels[n] = v
 	}
-
-	if err := m.addErrorSilence(da, ar); err != nil {
-		m.mg.Logger.Error("alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
+	if da.ParsedSettings.ExecutionErrorState == "keep_state" {
+		n, v := getLabelForErrorSilenceMatching()
+		ar.Labels[n] = v
 	}
-
-	if err := m.addNoDataSilence(da, ar); err != nil {
-		m.mg.Logger.Error("alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
+	if da.ParsedSettings.NoDataState == "keep_state" {
+		n, v := getLabelForNoDataSilenceMatching()
+		ar.Labels[n] = v
 	}
 
 	return ar, nil

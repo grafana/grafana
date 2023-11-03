@@ -26,17 +26,13 @@ const (
 	ErrorAlertName = "DatasourceError"
 )
 
-func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
-	if da.State != "paused" {
-		return nil
-	}
-
+func (m *migration) addPauseSilence(orgId int64) error {
 	uid, err := uuid.NewRandom()
 	if err != nil {
 		return errors.New("failed to create uuid for silence")
 	}
 
-	n, v := getLabelForSilenceMatching(rule.UID)
+	n, v := getLabelForPauseSilenceMatching()
 	s := &pb.MeshSilence{
 		Silence: &pb.Silence{
 			Id: uid.String(),
@@ -55,24 +51,21 @@ func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 		ExpiresAt: time.Now().Add(365 * 20 * time.Hour), // 1 year.
 	}
 
-	_, ok := m.silences[da.OrgId]
+	_, ok := m.silences[orgId]
 	if !ok {
-		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
+		m.silences[orgId] = make([]*pb.MeshSilence, 0)
 	}
-	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
+	m.silences[orgId] = append(m.silences[orgId], s)
 	return nil
 }
 
-func (m *migration) addErrorSilence(da dashAlert, rule *alertRule) error {
-	if da.ParsedSettings.ExecutionErrorState != "keep_state" {
-		return nil
-	}
-
+func (m *migration) addErrorSilence(orgId int64) error {
 	uid, err := uuid.NewRandom()
 	if err != nil {
 		return errors.New("failed to create uuid for silence")
 	}
 
+	n, v := getLabelForErrorSilenceMatching()
 	s := &pb.MeshSilence{
 		Silence: &pb.Silence{
 			Id: uid.String(),
@@ -84,34 +77,31 @@ func (m *migration) addErrorSilence(da dashAlert, rule *alertRule) error {
 				},
 				{
 					Type:    pb.Matcher_EQUAL,
-					Name:    "rule_uid",
-					Pattern: rule.UID,
+					Name:    n,
+					Pattern: v,
 				},
 			},
 			StartsAt:  time.Now(),
 			EndsAt:    time.Now().AddDate(1, 0, 0), // 1 year
 			CreatedBy: "Grafana Migration",
-			Comment:   fmt.Sprintf("Created during migration to unified alerting to silence Error state for alert rule ID '%s' and Title '%s' because the option 'Keep Last State' was selected for Error state", rule.UID, rule.Title),
+			Comment:   fmt.Sprintf("Created during migration to unified alerting to silence Error state when the option 'Keep Last State' was selected for Error state"),
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year
 	}
-	if _, ok := m.silences[da.OrgId]; !ok {
-		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
+	if _, ok := m.silences[orgId]; !ok {
+		m.silences[orgId] = make([]*pb.MeshSilence, 0)
 	}
-	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
+	m.silences[orgId] = append(m.silences[orgId], s)
 	return nil
 }
 
-func (m *migration) addNoDataSilence(da dashAlert, rule *alertRule) error {
-	if da.ParsedSettings.NoDataState != "keep_state" {
-		return nil
-	}
-
+func (m *migration) addNoDataSilence(orgId int64) error {
 	uid, err := uuid.NewRandom()
 	if err != nil {
 		return errors.New("failed to create uuid for silence")
 	}
 
+	n, v := getLabelForNoDataSilenceMatching()
 	s := &pb.MeshSilence{
 		Silence: &pb.Silence{
 			Id: uid.String(),
@@ -123,22 +113,22 @@ func (m *migration) addNoDataSilence(da dashAlert, rule *alertRule) error {
 				},
 				{
 					Type:    pb.Matcher_EQUAL,
-					Name:    "rule_uid",
-					Pattern: rule.UID,
+					Name:    n,
+					Pattern: v,
 				},
 			},
 			StartsAt:  time.Now(),
 			EndsAt:    time.Now().AddDate(1, 0, 0), // 1 year.
 			CreatedBy: "Grafana Migration",
-			Comment:   fmt.Sprintf("Created during migration to unified alerting to silence NoData state for alert rule ID '%s' and Title '%s' because the option 'Keep Last State' was selected for NoData state", rule.UID, rule.Title),
+			Comment:   fmt.Sprintf("Created during migration to unified alerting to silence NoData state when the option 'Keep Last State' was selected for NoData state"),
 		},
 		ExpiresAt: time.Now().AddDate(1, 0, 0), // 1 year.
 	}
-	_, ok := m.silences[da.OrgId]
+	_, ok := m.silences[orgId]
 	if !ok {
-		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
+		m.silences[orgId] = make([]*pb.MeshSilence, 0)
 	}
-	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
+	m.silences[orgId] = append(m.silences[orgId], s)
 	return nil
 }
 
@@ -212,6 +202,14 @@ func openReplace(filename string) (*replaceFile, error) {
 	return rf, nil
 }
 
-func getLabelForSilenceMatching(ruleUID string) (string, string) {
-	return "rule_uid", ruleUID
+func getLabelForPauseSilenceMatching() (string, string) {
+	return "migration_paused", "true"
+}
+
+func getLabelForErrorSilenceMatching() (string, string) {
+	return "migration_keep_last_state_error", "true"
+}
+
+func getLabelForNoDataSilenceMatching() (string, string) {
+	return "migration_keep_last_state_nodata", "true"
 }
