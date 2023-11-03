@@ -632,7 +632,7 @@
       "title": "API keys"
     },
     "application": {
-      "title": "Application (preview)"
+      "title": "Application"
     },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",

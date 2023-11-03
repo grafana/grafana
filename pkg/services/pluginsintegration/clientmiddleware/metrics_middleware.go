@@ -3,7 +3,6 @@ package clientmiddleware
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -160,9 +159,6 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 }
 
 func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	// Setup plugin request status source
-	ctx = pluginrequestmeta.WithStatusSource(ctx, pluginrequestmeta.StatusSourcePlugin)
-
 	var requestSize float64
 	for _, v := range req.Queries {
 		requestSize += float64(len(v.JSON))
@@ -173,33 +169,7 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	var resp *backend.QueryDataResponse
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
-		if resp == nil || resp.Responses == nil || !m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-			return innerErr
-		}
-
-		// Set downstream status source in the context if there's at least one response with downstream status source,
-		// and if there's no plugin error
-		var hasPluginError bool
-		var hasDownstreamError bool
-		for _, r := range resp.Responses {
-			if r.Error == nil {
-				continue
-			}
-			if r.ErrorSource == backend.ErrorSourceDownstream {
-				hasDownstreamError = true
-			} else {
-				hasPluginError = true
-			}
-		}
-		// A plugin error has higher priority than a downstream error,
-		// so set to downstream only if there's no plugin error
-		if hasDownstreamError && !hasPluginError {
-			if err := pluginrequestmeta.WithDownstreamStatusSource(ctx); err != nil {
-				return fmt.Errorf("failed to set downstream status source: %w", err)
-			}
-		}
-
-		return innerErr
+		return
 	})
 	return resp, err
 }
