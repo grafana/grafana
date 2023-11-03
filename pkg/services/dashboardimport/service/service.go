@@ -154,8 +154,8 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		PluginId:         req.PluginId,
 		Title:            savedDashboard.Title,
 		Path:             req.Path,
-		Revision:         revision, // only used for plugin version tracking
-		FolderId:         savedDashboard.FolderID,
+		Revision:         revision,                // only used for plugin version tracking
+		FolderId:         savedDashboard.FolderID, // nolint:staticcheck
 		FolderUID:        req.FolderUid,
 		ImportedUri:      "db/" + savedDashboard.Slug,
 		ImportedUrl:      savedDashboard.GetURL(),

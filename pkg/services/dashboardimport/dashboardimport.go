@@ -31,14 +31,15 @@ type ImportDashboardRequest struct {
 
 // ImportDashboardResponse response object returned when importing a dashboard.
 type ImportDashboardResponse struct {
-	UID              string `json:"uid"`
-	PluginId         string `json:"pluginId"`
-	Title            string `json:"title"`
-	Imported         bool   `json:"imported"`
-	ImportedUri      string `json:"importedUri"`
-	ImportedUrl      string `json:"importedUrl"`
-	Slug             string `json:"slug"`
-	DashboardId      int64  `json:"dashboardId"`
+	UID         string `json:"uid"`
+	PluginId    string `json:"pluginId"`
+	Title       string `json:"title"`
+	Imported    bool   `json:"imported"`
+	ImportedUri string `json:"importedUri"`
+	ImportedUrl string `json:"importedUrl"`
+	Slug        string `json:"slug"`
+	DashboardId int64  `json:"dashboardId"`
+	// Deprecated: use FolderUID instead
 	FolderId         int64  `json:"folderId"`
 	FolderUID        string `json:"folderUid"`
 	ImportedRevision int64  `json:"importedRevision,omitempty"` // Only used for plugin imports
