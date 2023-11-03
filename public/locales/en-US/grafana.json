@@ -632,7 +632,7 @@
       "title": "API keys"
     },
     "application": {
-      "title": "Application (preview)"
+      "title": "Application"
     },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
@@ -882,7 +882,6 @@
   "panel": {
     "header-menu": {
       "copy": "Copy",
-      "create-alert": "Create alert",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
@@ -893,6 +892,7 @@
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
       "share": "Share",
@@ -1044,7 +1044,6 @@
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
       "save-button": "Save to file",
-      "share-default-label": "Export with default values removed",
       "share-externally-label": "Export for sharing externally",
       "view-button": "View JSON"
     },

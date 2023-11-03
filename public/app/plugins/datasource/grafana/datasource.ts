@@ -170,7 +170,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     return of(); // nothing
   }
 
-  listFiles(path: string): Observable<DataFrameView<FileElement>> {
+  listFiles(path: string, maxDataPoints?: number): Observable<DataFrameView<FileElement>> {
     return this.query({
       targets: [
         {
@@ -179,6 +179,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
           path,
         },
       ],
+      maxDataPoints,
     } as any).pipe(
       map((v) => {
         const frame = v.data[0] ?? new MutableDataFrame();
