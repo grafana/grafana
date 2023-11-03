@@ -575,7 +575,7 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
-	// FlagLogsRowsPopoverMenu
+	// FlagLogRowsPopoverMenu
 	// Enable filtering menu displayed when text of a log line is selected
-	FlagLogsRowsPopoverMenu = "logsRowsPopoverMenu"
+	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
 )
