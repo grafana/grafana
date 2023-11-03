@@ -190,14 +190,15 @@ export const calculateCoordinates = (
   sourceRect: DOMRect,
   parentRect: DOMRect,
   info: CanvasConnection,
-  target: ElementState
+  target: ElementState,
+  transformScale: number
 ) => {
   const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
   const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
 
   // Convert from connection coords to DOM coords
-  const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2;
-  const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2;
+  const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2 / transformScale;
+  const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2 / transformScale;
 
   let x2;
   let y2;
@@ -218,6 +219,8 @@ export const calculateCoordinates = (
     x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
     y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
   }
+  x2 /= transformScale;
+  y2 /= transformScale;
   return { x1, y1, x2, y2 };
 };
 
