@@ -297,10 +297,6 @@ func (am *Alertmanager) Ready() bool {
 // We don't have files on disk, no-op.
 func (am *Alertmanager) CleanUp() {}
 
-func (am *Alertmanager) OrgID() int64 {
-	return am.orgID
-}
-
 type roundTripper struct {
 	tenantID          string
 	basicAuthPassword string
