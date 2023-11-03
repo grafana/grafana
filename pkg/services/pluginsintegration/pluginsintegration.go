@@ -113,7 +113,7 @@ var WireSet = wire.NewSet(
 	serviceregistration.ProvideService,
 	wire.Bind(new(auth.ExternalServiceRegistry), new(*serviceregistration.Service)),
 	renderer.ProvideService,
-	wire.Bind(new(rendering.RendererManager), new(*renderer.Manager)),
+	wire.Bind(new(rendering.PluginManager), new(*renderer.Manager)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be

@@ -28,7 +28,7 @@ var _ Service = (*RenderingService)(nil)
 
 type RenderingService struct {
 	log               log.Logger
-	plugin            RendererPlugin
+	plugin            Plugin
 	renderAction      renderFunc
 	renderCSVAction   renderCSVFunc
 	sanitizeSVGAction sanitizeFunc
@@ -43,20 +43,20 @@ type RenderingService struct {
 	Cfg                         *setting.Cfg
 	features                    *featuremgmt.FeatureManager
 	RemoteCacheService          *remotecache.RemoteCache
-	RendererPluginManager       RendererManager
+	RendererPluginManager       PluginManager
 }
 
-type RendererManager interface {
-	Renderer(ctx context.Context) (RendererPlugin, bool)
+type PluginManager interface {
+	Renderer(ctx context.Context) (Plugin, bool)
 }
 
-type RendererPlugin interface {
+type Plugin interface {
 	Client() (pluginextensionv2.RendererPlugin, error)
 	Start(ctx context.Context) error
 	Version() string
 }
 
-func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remoteCache *remotecache.RemoteCache, rm RendererManager) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {

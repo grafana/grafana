@@ -35,11 +35,11 @@ func (pm *fakePluginInstaller) Remove(_ context.Context, pluginID string) error 
 	return nil
 }
 
-type fakeRendererManager struct {
-	rendering.RendererManager
+type fakeRendererPluginManager struct {
+	rendering.PluginManager
 }
 
-func (ps *fakeRendererManager) Renderer(_ context.Context) (rendering.RendererPlugin, bool) {
+func (ps *fakeRendererPluginManager) Renderer(_ context.Context) (rendering.Plugin, bool) {
 	return nil, false
 }
 

@@ -70,7 +70,7 @@ func (p *Plugin) Version() string {
 	return p.plugin.JSONData.Info.Version
 }
 
-func (m *Manager) Renderer(ctx context.Context) (rendering.RendererPlugin, bool) {
+func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 	if m.renderer != nil {
 		return m.renderer, true
 	}

@@ -12,7 +12,7 @@ import (
 
 type dummyPluginManager struct{}
 
-func (d *dummyPluginManager) Renderer(_ context.Context) (RendererPlugin, bool) {
+func (d *dummyPluginManager) Renderer(_ context.Context) (Plugin, bool) {
 	return nil, false
 }
 
