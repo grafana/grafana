@@ -22,8 +22,9 @@ type ImportDashboardRequest struct {
 	Overwrite bool                   `json:"overwrite"`
 	Dashboard *simplejson.Json       `json:"dashboard"`
 	Inputs    []ImportDashboardInput `json:"inputs"`
-	FolderId  int64                  `json:"folderId"`
-	FolderUid string                 `json:"folderUid"`
+	// Deprecated: use FolderUID instead
+	FolderId  int64  `json:"folderId"`
+	FolderUid string `json:"folderUid"`
 
 	User identity.Requester `json:"-"`
 }

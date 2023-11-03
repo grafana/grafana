@@ -93,6 +93,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		if err != nil {
 			return nil, err
 		}
+		// nolint:staticcheck
 		req.FolderId = folder.ID
 	} else {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
@@ -120,7 +121,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		UserID:    userID,
 		Overwrite: req.Overwrite,
 		PluginID:  req.PluginId,
-		FolderID:  req.FolderId,
+		FolderID:  req.FolderId, // nolint:staticcheck
 		FolderUID: req.FolderUid,
 	}
 
@@ -136,6 +137,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
+	// nolint:staticcheck
 	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId)
 	if err != nil {
 		return nil, err
