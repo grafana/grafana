@@ -20,8 +20,15 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 
 	logger.Debug("Separating queries into batches")
 
-	// let's deal with IDs and pass them around, then use this following map to convert them back to queries at the end
-	queryLookupById := make(map[string]*models.CloudWatchQuery) // maybe don't need pointers everywhere
+	queryLookupById, mathQueries := getQueryLookupAndMathQueries(queries)
+
+	groupOfReferencedQueries, isReferenced := findQueriesReferencedByMathQueries(mathQueries, queryLookupById)
+
+	return createGroupForEveryQueryNotReferencedInAnotherQuery(queryLookupById, isReferenced, groupOfReferencedQueries)
+}
+
+func getQueryLookupAndMathQueries(queries []*models.CloudWatchQuery) (map[string]*models.CloudWatchQuery, []string) {
+	queryLookupById := make(map[string]*models.CloudWatchQuery)
 	for _, q := range queries {
 		queryLookupById[q.Id] = q
 	}
@@ -32,13 +39,7 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 			mathQueries = append(mathQueries, query.Id)
 		}
 	}
-
-	// Find and track which queries are referenced by math queries
-	groupOfReferencedQueries, isReferenced := findQueriesReferencedByMathQueries(mathQueries, queryLookupById)
-
-	// root query
-	// Create a new batch for every query not used in another query
-	return createGroupForEveryQueryNotReferencedInAnotherQuery(queryLookupById, isReferenced, groupOfReferencedQueries)
+	return queryLookupById, mathQueries
 }
 
 func createGroupForEveryQueryNotReferencedInAnotherQuery(queries map[string]*models.CloudWatchQuery,
