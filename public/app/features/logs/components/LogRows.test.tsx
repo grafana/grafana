@@ -12,7 +12,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     featureToggles: {
-      logsRowsPopoverMenu: true,
+      logRowsPopoverMenu: true,
     }
   }
 }));
