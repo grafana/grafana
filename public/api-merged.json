@@ -13456,6 +13456,7 @@
           "format": "date-time"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
