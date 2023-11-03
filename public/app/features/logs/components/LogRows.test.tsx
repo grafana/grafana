@@ -8,6 +8,15 @@ import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { createLogRow } from './__mocks__/logRow';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    featureToggles: {
+      logsRowsPopoverMenu: true,
+    }
+  }
+}));
+
 describe('LogRows', () => {
   it('renders rows', () => {
     const rows: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' }), createLogRow({ uid: '3' })];

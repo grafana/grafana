@@ -12,6 +12,7 @@ import {
   CoreApp,
   DataFrame,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -100,6 +101,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   }
 
   handleSelection = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel): boolean => {
+    if (!config.featureToggles.logsRowsPopoverMenu) {
+      return false;
+    }
     // Selection is ignored if the filter functions are not defined.
     if (this.popoverMenuSupported() === false) {
       return false;
