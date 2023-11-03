@@ -936,6 +936,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "addFieldFromCalculationStatFunctions",
+			Description:  "Add cumulative and window functions to the add field from calculation transformation",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
+		{
 			Name:        "alertmanagerRemoteSecondary",
 			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
 			Stage:       FeatureStageExperimental,
