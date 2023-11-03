@@ -119,3 +119,29 @@ export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
   // So it is possibly that if we can condense it further it would be better
   return panelPrompt;
 }
+
+export function getFilteredPanelString(panel: PanelModel): string {
+  const panelObj = panel.getSaveModel();
+
+  const keysToKeep = new Set([
+    'id',
+    'datasource',
+    'title',
+    'description',
+    'targets',
+    'thresholds',
+    'type',
+    'xaxis',
+    'yaxes',
+  ]);
+
+  // This cannot avoid the use of any because the type of panelObj is any
+  const panelObjFiltered = Object.keys(panelObj).reduce((obj: { [key: string]: any }, key) => {
+    if (keysToKeep.has(key)) {
+      obj[key] = panelObj[key];
+    }
+    return obj;
+  }, {});
+
+  return JSON.stringify(panelObjFiltered, null, 2);
+}
