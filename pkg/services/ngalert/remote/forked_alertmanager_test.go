@@ -181,5 +181,4 @@ func genTestAlertmanagers(t *testing.T, mode int) (*alertmanager_mock.Alertmanag
 		return internal, remote, NewRemoteSecondaryForkedAlertmanager(internal, remote)
 	}
 	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
-
 }
