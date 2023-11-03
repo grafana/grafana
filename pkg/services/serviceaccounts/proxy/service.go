@@ -138,7 +138,7 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID
 	}
 
 	if s.isProxyEnabled {
-		sa.IsExternal = isExternalServiceAccount(sa.Login)
+		sa.IsManaged = isExternalServiceAccount(sa.Login)
 	}
 
 	return sa, nil

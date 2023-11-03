@@ -146,7 +146,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				sa, err := svc.RetrieveServiceAccount(context.Background(), testOrgId, testServiceAccountId)
 				assert.NoError(t, err, tc.description)
-				assert.Equal(t, tc.expectedIsExternal, sa.IsExternal, tc.description)
+				assert.Equal(t, tc.expectedIsExternal, sa.IsManaged, tc.description)
 			})
 		}
 	})
