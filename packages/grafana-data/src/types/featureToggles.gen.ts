@@ -160,4 +160,5 @@ export interface FeatureToggles {
   dashboardSceneForViewers?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
+  logsRowsPopoverMenu?: boolean;
 }
