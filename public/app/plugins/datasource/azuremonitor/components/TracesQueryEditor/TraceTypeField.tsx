@@ -30,7 +30,7 @@ const TraceTypeField = ({ query, variableOptionGroup, onQueryChange }: AzureQuer
 
   const options = useMemo(() => [...tables, variableOptionGroup], [tables, variableOptionGroup]);
 
-  // Select all Event Types by default
+  // Select all trace event ypes by default
   const getDefaultOptions = () => {
     const allEventTypes = tables.map((t) => t.value);
     const defaultQuery = setTraceTypes(query, allEventTypes);
