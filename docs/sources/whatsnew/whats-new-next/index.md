@@ -39,6 +39,17 @@ _Generally available in Grafana Cloud_
 
 Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
 
+## Data source Admin permission
+
+<!-- Ieva Vasiljeva -->
+<!-- Enterprise -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+In addition to `Query` and `Edit` access, you can now grant users, teams or basic roles `Admin` access on data sources. Users with `Admin` access to a data source will be able to grant and revoke permissions on this data source, as well as to manage query caching settings for the data source. Users are automatically granted `Admin` access on data sources that they create. 
+
 ## Configure refresh token handling separately for OAuth providers
 
 <!-- Mihaly Gyongyosi -->
