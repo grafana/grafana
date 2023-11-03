@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/prometheus/promql/parser"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
@@ -377,7 +378,9 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 	// each teams headers
 	for _, teamheaders := range teamHTTPHeadersJSON {
 		for _, header := range teamheaders {
-			if !contains(validHeaders, header.Header) {
+			if !slices.ContainsFunc(validHeaders, func(v string) bool {
+				return http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(header.Header)
+			}) {
 				datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", header.Header)
 				return errors.New("validation error, invalid header name specified")
 			}
@@ -388,15 +391,6 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 		}
 	}
 	return nil
-}
-
-func contains(slice []string, value string) bool {
-	for _, v := range slice {
-		if http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(value) {
-			return true
-		}
-	}
-	return false
 }
 
 // validateLBACHeader returns true if the header value matches the syntax
