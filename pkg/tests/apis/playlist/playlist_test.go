@@ -48,9 +48,9 @@ func TestPlaylist(t *testing.T) {
 
 	t.Run("with dual write", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true, // do not start extra port 6443
+			AppModeProduction:    true,
 			DisableAnonymous:     true,
-			APIServerStorageType: "file",
+			APIServerStorageType: "file", // write the files to disk
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServer,
 				featuremgmt.FlagKubernetesPlaylistsAPI, // Required so that legacy calls are also written
