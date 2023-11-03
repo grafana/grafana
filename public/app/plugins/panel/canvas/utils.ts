@@ -200,18 +200,15 @@ export const calculateCoordinates = (
   const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2 / transformScale;
   const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2 / transformScale;
 
-  let x2;
-  let y2;
+  let x2: number;
+  let y2: number;
+  const targetRect = target.div?.getBoundingClientRect();
+  if (info.targetName && targetRect) {
+    const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
+    const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
 
-  if (info.targetName) {
-    const targetRect = target.div?.getBoundingClientRect();
-    if (targetRect) {
-      const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
-      const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
-
-      x2 = targetHorizontalCenter + (info.target.x * targetRect.width) / 2;
-      y2 = targetVerticalCenter - (info.target.y * targetRect.height) / 2;
-    }
+    x2 = targetHorizontalCenter + (info.target.x * targetRect.width) / 2;
+    y2 = targetVerticalCenter - (info.target.y * targetRect.height) / 2;
   } else {
     const parentHorizontalCenter = parentRect.width / 2;
     const parentVerticalCenter = parentRect.height / 2;
