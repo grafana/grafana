@@ -916,12 +916,6 @@ type GetAlertsParams struct {
 	// in:query
 	// required:false
 	Limit int64 `json:"limit"`
-	// Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders
-	// in:query
-	// required:false
-	// type array
-	// collectionFormat: multi
-	FolderID []string `json:"folderId"`
 	// Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.
 	// in:query
 	// required:false
