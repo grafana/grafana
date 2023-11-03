@@ -24,12 +24,12 @@ func TestGeoJSONSummary(t *testing.T) {
 	//fmt.Printf(string(asjson))
 	require.NoError(t, err)
 	require.JSONEq(t, `{
-		"uid": "hello",
+		"UID": "hello",
 		"kind": "geojson",
 		"name": "hello",
 		"fields": {
 			"type": "FeatureCollection",
-			"count": 0
+			"count": "0"
 		}
 	  }`, string(asjson))
 
@@ -43,12 +43,12 @@ func TestGeoJSONSummary(t *testing.T) {
 	//fmt.Printf(string(asjson))
 	require.NoError(t, err)
 	require.JSONEq(t, `{
-		"uid": "gaz/airports.geojson",
+		"UID": "gaz/airports.geojson",
 		"kind": "geojson",
 		"name": "airports",
 		"fields": {
 			"type": "FeatureCollection",
-			"count": 888
+			"count": "888"
 		}
 	  }`, string(asjson))
 }

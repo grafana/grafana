@@ -151,10 +151,12 @@ export interface FeatureToggles {
   costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
+  addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
   alertmanagerRemotePrimary?: boolean;
   alertmanagerRemoteOnly?: boolean;
   annotationPermissionUpdate?: boolean;
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
+  panelFilterVariable?: boolean;
 }
