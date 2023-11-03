@@ -14,7 +14,7 @@ const (
 	grafanaBackendPlatformSquad                 codeowner = "@grafana/backend-platform"
 	grafanaPluginsPlatformSquad                 codeowner = "@grafana/plugins-platform-backend"
 	grafanaAsCodeSquad                          codeowner = "@grafana/grafana-as-code"
-	identityAndAccessSquad                      codeowner = "@grafana/identity-access-team"
+	identityAccessTeam                          codeowner = "@grafana/identity-access-team"
 	grafanaObservabilityLogsSquad               codeowner = "@grafana/observability-logs"
 	grafanaObservabilityTracesAndProfilingSquad codeowner = "@grafana/observability-traces-and-profiling"
 	grafanaObservabilityMetricsSquad            codeowner = "@grafana/observability-metrics"
