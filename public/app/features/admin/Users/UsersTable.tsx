@@ -1,18 +1,18 @@
 import React, { useMemo } from 'react';
 
 import {
-  InteractiveTable,
+  Avatar,
   CellProps,
-  Tooltip,
-  Icon,
-  Tag,
-  Pagination,
   Column,
   FetchDataFunc,
+  Icon,
+  InteractiveTable,
+  Pagination,
+  Stack,
+  Tag,
   Text,
-  Avatar,
+  Tooltip,
 } from '@grafana/ui';
-import { Stack } from '@grafana/ui/src/unstable';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
