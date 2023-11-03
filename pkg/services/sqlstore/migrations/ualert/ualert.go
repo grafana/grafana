@@ -392,6 +392,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 
 	for orgID := range rulesPerOrg {
+		if err := m.addPauseSilence(orgID); err != nil {
+			m.mg.Logger.Error("alert migration error: failed to create silence for paused alerts")
+		}
+		if err := m.addErrorSilence(orgID); err != nil {
+			m.mg.Logger.Error("alert migration error: failed to create silence for Error keep last state")
+		}
+		if err := m.addNoDataSilence(orgID); err != nil {
+			m.mg.Logger.Error("alert migration error: failed to create silence for Error keep last state")
+		}
 		if err := m.writeSilencesFile(orgID); err != nil {
 			m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
 		}

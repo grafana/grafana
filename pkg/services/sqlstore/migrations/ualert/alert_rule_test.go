@@ -138,6 +138,45 @@ func TestMakeAlertRule(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, ar.IsPaused)
 	})
+
+	t.Run("paused dash alert is silenced", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.State = "paused"
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(cnd, da, "folder")
+		require.NoError(t, err)
+
+		n, v := getLabelForPauseSilenceMatching()
+		require.Equal(t, ar.Labels[n], v)
+	})
+
+	t.Run("keep last state error dash alert is silenced", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.ParsedSettings.ExecutionErrorState = "keep_state"
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(cnd, da, "folder")
+		require.NoError(t, err)
+
+		n, v := getLabelForErrorSilenceMatching()
+		require.Equal(t, ar.Labels[n], v)
+	})
+
+	t.Run("keep last state nodata dash alert is silenced", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.ParsedSettings.NoDataState = "keep_state"
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(cnd, da, "folder")
+		require.NoError(t, err)
+
+		n, v := getLabelForNoDataSilenceMatching()
+		require.Equal(t, ar.Labels[n], v)
+	})
 }
 
 func createTestDashAlert() dashAlert {
