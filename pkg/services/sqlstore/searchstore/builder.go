@@ -46,6 +46,14 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 	}
 	b.sql.WriteString(`
 	LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
+
+	// #TODO for FTS
+	// #TODO figure out if there's a better way overall to update the query
+	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) {
+		b.sql.WriteString("\n" + `LEFT OUTER JOIN panel ON dashboard.id = panel.dashid`)
+		// this where clause should come after all joins
+		b.sql.WriteString("\n" + `WHERE panel.title LIKE ?`)
+	}
 	b.sql.WriteString("\n")
 	b.sql.WriteString(orderQuery)
 
@@ -73,6 +81,10 @@ func (b *Builder) buildSelect() {
 	} else {
 		b.sql.WriteString(`
 			folder.slug AS folder_slug,`)
+	}
+	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) {
+		b.sql.WriteString(`
+			panel.title,`)
 	}
 	b.sql.WriteString(`
 			folder.title AS folder_title `)

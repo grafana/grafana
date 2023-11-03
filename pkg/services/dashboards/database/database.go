@@ -962,6 +962,11 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	sql, params := sb.ToSQL(limit, page)
 
+	// #TODO: look for better way to do this
+	if d.features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && len(query.PanelTitle) > 0 {
+		params = append(params, "%"+query.PanelTitle+"%")
+	}
+
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)
 	})

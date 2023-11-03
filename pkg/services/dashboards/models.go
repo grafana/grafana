@@ -48,9 +48,8 @@ type Dashboard struct {
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
 
-	Title       string
-	PanelTitles string
-	Data        *simplejson.Json
+	Title string
+	Data  *simplejson.Json
 }
 
 func (d *Dashboard) SetID(id int64) {
@@ -488,4 +487,12 @@ type FindPersistedDashboardsQuery struct {
 	PanelTitle string
 
 	Filters []any
+}
+
+// #TODO: rename struct
+// #TODO update the name of the dashid field
+// Panel model
+type Panel struct {
+	Dashid int64
+	Title  string
 }
