@@ -15,8 +15,8 @@ var (
 
 // Service is a SSO settings service
 type Service interface {
-	// GetAll returns all SSO settings
-	GetAll(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error)
+	// List returns all SSO settings from DB and config files
+	List(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error)
 	// GetForProvider returns the SSO settings for a given provider
 	GetForProvider(ctx context.Context, provider string) (*models.SSOSetting, error)
 	// Upsert creates or updates the SSO settings for a given provider
@@ -27,7 +27,6 @@ type Service interface {
 	Patch(ctx context.Context, provider string, data map[string]interface{}) error
 	// RegisterReloadable registers a reloadable provider
 	RegisterReloadable(ctx context.Context, provider string, reloadable Reloadable)
-
 	// Reload implements ssosettings.Reloadable interface
 	Reload(ctx context.Context, provider string)
 }

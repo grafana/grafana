@@ -150,27 +150,57 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 2, len(list))
 	})
+}
 
-	t.Run("replaces an existing SSO setting for the specified provider", func(t *testing.T) {
+func TestIntegrationDeleteSSOSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	var sqlStore *sqlstore.SQLStore
+	var ssoSettingsStore *SSOSettingsStore
+
+	setup := func() {
+		sqlStore = db.InitTestDB(t)
+		ssoSettingsStore = ProvideStore(sqlStore)
+	}
+
+	t.Run("soft deletes the settings successfully", func(t *testing.T) {
 		setup()
 
-		err := ssoSettingsStore.Upsert(context.Background(), "azuread", map[string]interface{}{
+		err := insertSSOSetting(ssoSettingsStore, "azuread", map[string]interface{}{
 			"enabled": true,
 		})
 		require.NoError(t, err)
 
-		err = ssoSettingsStore.Upsert(context.Background(), "azuread", map[string]interface{}{
-			"enabled": false,
+		err = ssoSettingsStore.Delete(context.Background(), "azuread")
+
+		require.NoError(t, err)
+
+		var count int64
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			count, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(true)).Count()
+			return err
 		})
 		require.NoError(t, err)
 
-		actual, err := ssoSettingsStore.Get(context.Background(), "azuread")
+		require.Equal(t, int64(1), count)
+	})
+
+	t.Run("return without error if the integration was not found", func(t *testing.T) {
+		setup()
+
+		err := ssoSettingsStore.Delete(context.Background(), "azuread")
 		require.NoError(t, err)
 
-		list, err := ssoSettingsStore.List(context.Background())
+		var count int64
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			count, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(true)).Count()
+			return err
+		})
+		require.NoError(t, err)
 
-		require.Equal(t, 1, len(list))
-		require.Equal(t, false, actual.Settings["enabled"])
+		require.Equal(t, int64(0), count)
 	})
 }
 

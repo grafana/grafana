@@ -61,7 +61,7 @@ func (api *Api) RegisterAPIEndpoints() {
 }
 
 func (api *Api) GetSettingsForAllProviders(c *contextmodel.ReqContext) response.Response {
-	providers, err := api.SSOSettingsService.GetAll(c.Req.Context(), c.SignedInUser)
+	providers, err := api.SSOSettingsService.List(c.Req.Context(), c.SignedInUser)
 	if err != nil {
 		return response.Error(500, "Failed to get providers", err)
 	}

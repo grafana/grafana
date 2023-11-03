@@ -19,6 +19,8 @@ var (
 	allOauthes = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
 )
 
+var _ ssosettings.Service = (*SSOSettingsService)(nil)
+
 type SSOSettingsService struct {
 	log          log.Logger
 	cfg          *setting.Cfg
@@ -64,7 +66,7 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 	return dto, nil
 }
 
-func (s *SSOSettingsService) GetAll(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error) {
+func (s *SSOSettingsService) List(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error) {
 	result := make([]*models.SSOSetting, 0, len(allOauthes))
 	storedSettings, err := s.store.List(ctx)
 
