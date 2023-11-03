@@ -13,8 +13,8 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     featureToggles: {
       logRowsPopoverMenu: true,
-    }
-  }
+    },
+  },
 }));
 
 describe('LogRows', () => {
