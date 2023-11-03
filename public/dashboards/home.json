@@ -32,9 +32,9 @@
         "showHeadings": true,
         "folderId": 0,
         "maxItems": 30,
-        "tags": [],
+        "tags":[],
         "query": ""
-      },
+      }, 
       "title": "Dashboards",
       "type": "dashlist"
     },
