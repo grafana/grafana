@@ -228,7 +228,7 @@ var (
 			Name:        "accessControlOnCall",
 			Description: "Access control primitives for OnCall",
 			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:        "nestedFolders",
@@ -248,7 +248,7 @@ var (
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:         "emptyDashboardPage",
@@ -317,7 +317,7 @@ var (
 			Name:        "gcomOnlyExternalOrgRoleSync",
 			Description: "Prohibits a user from changing organization roles synced with Grafana Cloud auth provider",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
@@ -339,7 +339,7 @@ var (
 			Name:        "clientTokenRotation",
 			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:        "prometheusDataplane",
@@ -418,7 +418,7 @@ var (
 			Description:     "Starts an OAuth2 authentication provider for external services",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAccessTeam,
 		},
 		{
 			Name:        "refactorVariablesTimeRange",
@@ -637,7 +637,7 @@ var (
 			Description:     "Support faster dashboard and folder search by splitting permission scopes into parts",
 			Stage:           FeatureStagePublicPreview,
 			FrontendOnly:    false,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAccessTeam,
 			RequiresRestart: true,
 		},
 		{
@@ -799,7 +799,7 @@ var (
 			Name:            "idForwarding",
 			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAccessTeam,
 			RequiresDevMode: true,
 		},
 		{
@@ -814,7 +814,7 @@ var (
 			Description:     "Automatic service account and token setup for plugins",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAccessTeam,
 		},
 		{
 			Name:         "panelMonitoring",
@@ -884,7 +884,7 @@ var (
 			Description:  "Enables datasources to apply team headers to the client requests",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
-			Owner:        grafanaAuthnzSquad,
+			Owner:        identityAccessTeam,
 		},
 		{
 			Name:         "awsDatasourcesNewFormStyling",
@@ -936,6 +936,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "addFieldFromCalculationStatFunctions",
+			Description:  "Add cumulative and window functions to the add field from calculation transformation",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
+		{
 			Name:        "alertmanagerRemoteSecondary",
 			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -958,7 +965,7 @@ var (
 			Description:     "Separate annotation permissions from dashboard permissions to allow for more granular control.",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: false,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAccessTeam,
 		},
 		{
 			Name:         "extractFieldsNameDeduplication",
@@ -973,6 +980,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "panelFilterVariable",
+			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
 		},
 	}
 )
