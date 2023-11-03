@@ -534,4 +534,8 @@ const (
 	// FlagPrometheusPromQAIL
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
+
+	// FlagFlameGraphItemCollapsing
+	// Allow collapsing of flame graph items
+	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
 )

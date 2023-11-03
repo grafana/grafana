@@ -26,7 +26,11 @@ type RenderData = {
 describe('walkTree', () => {
   it('correctly compute sizes for a single item', () => {
     const root: LevelItem = { start: 0, itemIndexes: [0], children: [], value: 100, level: 0 };
-    const container = new FlameGraphDataContainer(makeDataFrame({ value: [100], level: [1], label: ['1'], self: [0] }));
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [100], level: [1], label: ['1'], self: [0] }),
+      { collapsing: true }
+    );
+
     walkTree(root, 'children', container, 100, 0, 1, 100, (item, x, y, width, height, label, collapsed) => {
       expect(item).toEqual(root);
       expect(x).toEqual(0);
@@ -50,7 +54,8 @@ describe('walkTree', () => {
       ],
     };
     const container = new FlameGraphDataContainer(
-      makeDataFrame({ value: [100, 50, 50], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 50, 50] })
+      makeDataFrame({ value: [100, 50, 50], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 50, 50] }),
+      { collapsing: true }
     );
     const renderData: RenderData[] = [];
     walkTree(root, 'children', container, 100, 0, 1, 100, (item, x, y, width, height, label, collapsed) => {
@@ -75,7 +80,8 @@ describe('walkTree', () => {
       ],
     };
     const container = new FlameGraphDataContainer(
-      makeDataFrame({ value: [100, 1, 1], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 1, 1] })
+      makeDataFrame({ value: [100, 1, 1], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 1, 1] }),
+      { collapsing: true }
     );
     const renderData: RenderData[] = [];
     walkTree(root, 'children', container, 100, 0, 1, 100, (item, x, y, width, height, label, collapsed) => {
@@ -100,7 +106,8 @@ describe('walkTree', () => {
       ],
     };
     const container = new FlameGraphDataContainer(
-      makeDataFrame({ value: [100, 0.1, 0.1], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 0.1, 0.1] })
+      makeDataFrame({ value: [100, 0.1, 0.1], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 0.1, 0.1] }),
+      { collapsing: true }
     );
     const renderData: RenderData[] = [];
     walkTree(root, 'children', container, 100, 0, 1, 100, (item, x, y, width, height, label, collapsed) => {

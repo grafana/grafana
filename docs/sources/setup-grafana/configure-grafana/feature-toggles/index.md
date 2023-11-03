@@ -156,6 +156,7 @@ Experimental features might be changed or removed without prior notice.
 | `costManagementUi`                          | Toggles the display of the cost management ui plugin                                                                                                                                                                                                                              |
 | `managedPluginsInstall`                     | Install managed plugins directly from plugins catalog                                                                                                                                                                                                                             |
 | `prometheusPromQAIL`                        | Prometheus and AI/ML to assist users in creating a query                                                                                                                                                                                                                          |
+| `flameGraphItemCollapsing`                  | Allow collapsing of flame graph items                                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 

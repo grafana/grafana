@@ -16,6 +16,7 @@ type Props = {
   onExpandAllGroups: () => void;
   onCollapseAllGroups: () => void;
   collapseConfig?: CollapseConfig;
+  collapsing?: boolean;
 };
 
 const FlameGraphContextMenu = ({
@@ -28,6 +29,7 @@ const FlameGraphContextMenu = ({
   onCollapseGroup,
   onExpandAllGroups,
   onCollapseAllGroups,
+  collapsing,
 }: Props) => {
   function renderItems() {
     return (
@@ -78,22 +80,26 @@ const FlameGraphContextMenu = ({
             />
           )
         ) : null}
-        <MenuItem
-          label="Expand all groups"
-          icon={'angle-double-down'}
-          onClick={() => {
-            onExpandAllGroups();
-            onMenuItemClick();
-          }}
-        />
-        <MenuItem
-          label="Collapse all groups"
-          icon={'angle-double-up'}
-          onClick={() => {
-            onCollapseAllGroups();
-            onMenuItemClick();
-          }}
-        />
+        {collapsing && (
+          <>
+            <MenuItem
+              label="Expand all groups"
+              icon={'angle-double-down'}
+              onClick={() => {
+                onExpandAllGroups();
+                onMenuItemClick();
+              }}
+            />
+            <MenuItem
+              label="Collapse all groups"
+              icon={'angle-double-up'}
+              onClick={() => {
+                onCollapseAllGroups();
+                onMenuItemClick();
+              }}
+            />
+          </>
+        )}
       </>
     );
   }

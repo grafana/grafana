@@ -44,6 +44,7 @@ type Props = {
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  collapsing?: boolean;
 };
 
 const FlameGraph = ({
@@ -61,6 +62,7 @@ const FlameGraph = ({
   onFocusPillClick,
   onSandwichPillClick,
   colorScheme,
+  collapsing,
 }: Props) => {
   const styles = getStyles();
 
@@ -105,6 +107,7 @@ const FlameGraph = ({
     totalViewTicks,
     collapsedMap,
     setCollapsedMap,
+    collapsing,
   };
   const canvas = levelsCallers ? (
     <>

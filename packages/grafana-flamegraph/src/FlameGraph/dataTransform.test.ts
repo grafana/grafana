@@ -1,6 +1,7 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
 import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
+import { textToDataContainer } from './testHelpers';
 
 describe('nestedSetToLevels', () => {
   it('converts nested set data frame to levels', () => {
@@ -17,7 +18,7 @@ describe('nestedSetToLevels', () => {
         { name: 'self', values: [0, 0, 0, 0, 0, 0, 0, 0, 0] },
       ],
     });
-    const [levels] = nestedSetToLevels(new FlameGraphDataContainer(frame));
+    const [levels] = nestedSetToLevels(new FlameGraphDataContainer(frame, { collapsing: true }));
 
     const n9: LevelItem = { itemIndexes: [8], start: 5, children: [], value: 1, level: 4 };
     const n8: LevelItem = { itemIndexes: [7], start: 5, children: [n9], value: 2, level: 3 };
@@ -54,7 +55,7 @@ describe('nestedSetToLevels', () => {
         { name: 'self', values: [10, 5, 3, 1] },
       ],
     });
-    const [levels] = nestedSetToLevels(new FlameGraphDataContainer(frame));
+    const [levels] = nestedSetToLevels(new FlameGraphDataContainer(frame, { collapsing: true }));
 
     const n4: LevelItem = { itemIndexes: [3], start: 8, children: [], value: 1, level: 1 };
     const n3: LevelItem = { itemIndexes: [2], start: 5, children: [], value: 3, level: 1 };
@@ -67,5 +68,36 @@ describe('nestedSetToLevels', () => {
 
     expect(levels[0]).toEqual([n1]);
     expect(levels[1]).toEqual([n2, n3, n4]);
+  });
+});
+
+describe('FlameGraphDataContainer', () => {
+  it('creates correct collapse map', () => {
+    const container = textToDataContainer(`
+      [0//////////////]
+      [1][3//][6///]
+      [2][4]  [7///]
+         [5]  [8///]
+              [9///]
+    `)!;
+
+    const collapsedMap = container.getCollapsedMap();
+    expect(Array.from(collapsedMap.keys()).map((item) => item.itemIndexes[0])).toEqual([1, 2, 4, 5, 6, 7, 8, 9]);
+
+    expect(Array.from(collapsedMap.values())[0]).toMatchObject({
+      collapsed: true,
+      items: [{ itemIndexes: [1] }, { itemIndexes: [2] }],
+    });
+  });
+
+  it('creates empty collapse if no items are similar', () => {
+    const container = textToDataContainer(`
+      [0//////////////]
+      [1][3//][6///]
+              [9/]
+    `)!;
+
+    const collapsedMap = container.getCollapsedMap();
+    expect(Array.from(collapsedMap.keys()).length).toEqual(0);
   });
 });

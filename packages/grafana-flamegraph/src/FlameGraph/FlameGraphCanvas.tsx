@@ -35,6 +35,7 @@ type Props = {
 
   collapsedMap: CollapsedMap;
   setCollapsedMap: (collapsedMap: CollapsedMap) => void;
+  collapsing?: boolean;
 };
 
 const FlameGraphCanvas = ({
@@ -57,6 +58,7 @@ const FlameGraphCanvas = ({
   depth,
   collapsedMap,
   setCollapsedMap,
+  collapsing,
 }: Props) => {
   const styles = getStyles();
 
@@ -183,6 +185,7 @@ const FlameGraphCanvas = ({
       {clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}
+          collapsing={collapsing}
           collapseConfig={collapsedMap.get(clickedItemData.item)}
           onMenuItemClick={() => {
             setClickedItemData(undefined);

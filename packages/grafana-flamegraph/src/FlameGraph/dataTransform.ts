@@ -41,7 +41,10 @@ export type CollapsedMap = Map<LevelItem, CollapseConfig>;
  * rendering code.
  */
 export function nestedSetToLevels(
-  container: FlameGraphDataContainer
+  container: FlameGraphDataContainer,
+  options?: {
+    collapsing: boolean;
+  }
 ): [LevelItem[][], Record<string, LevelItem[]>, CollapsedMap] {
   const levels: LevelItem[][] = [];
   let offset = 0;
@@ -79,17 +82,19 @@ export function nestedSetToLevels(
       level: currentLevel,
     };
 
-    // We collapse similar items here, where it seems like parent and child are the same thing and so the distinction
-    // isn't that important. We create a map of items that should be collapsed together.
-    if (parent && newItem.value === parent.value) {
-      if (collapsedMap.has(parent)) {
-        const config = collapsedMap.get(parent)!;
-        collapsedMap.set(newItem, config);
-        config.items.push(newItem);
-      } else {
-        const config = { items: [parent, newItem], collapsed: true };
-        collapsedMap.set(parent, config);
-        collapsedMap.set(newItem, config);
+    if (options?.collapsing) {
+      // We collapse similar items here, where it seems like parent and child are the same thing and so the distinction
+      // isn't that important. We create a map of items that should be collapsed together.
+      if (parent && newItem.value === parent.value) {
+        if (collapsedMap.has(parent)) {
+          const config = collapsedMap.get(parent)!;
+          collapsedMap.set(newItem, config);
+          config.items.push(newItem);
+        } else {
+          const config = { items: [parent, newItem], collapsed: true };
+          collapsedMap.set(parent, config);
+          collapsedMap.set(newItem, config);
+        }
       }
     }
 
@@ -163,6 +168,8 @@ export function checkFields(data: DataFrame): CheckFieldsResult | undefined {
 
 export class FlameGraphDataContainer {
   data: DataFrame;
+  options: { collapsing: boolean };
+
   labelField: Field;
   levelField: Field;
   valueField: Field;
@@ -180,8 +187,9 @@ export class FlameGraphDataContainer {
   private uniqueLabelsMap: Record<string, LevelItem[]> | undefined;
   private collapsedMap: Map<LevelItem, CollapseConfig> | undefined;
 
-  constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
+  constructor(data: DataFrame, options: { collapsing: boolean }, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
+    this.options = options;
 
     const wrongFields = checkFields(data);
     if (wrongFields) {
@@ -300,7 +308,7 @@ export class FlameGraphDataContainer {
 
   private initLevels() {
     if (!this.levels) {
-      const [levels, uniqueLabelsMap, collapsedMap] = nestedSetToLevels(this);
+      const [levels, uniqueLabelsMap, collapsedMap] = nestedSetToLevels(this, this.options);
       this.levels = levels;
       this.uniqueLabelsMap = uniqueLabelsMap;
       this.collapsedMap = collapsedMap;

@@ -93,7 +93,7 @@ export function useFlameRender(options: RenderOptions) {
     }
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    walkTree(root, direction, data, totalViewTicks, rangeMin, rangeMax, wrapperWidth, collapsedMap, renderFunc);
+    walkTree(root, direction, data, totalViewTicks, rangeMin, rangeMax, wrapperWidth, renderFunc);
   }, [ctx, data, root, wrapperWidth, rangeMin, rangeMax, totalViewTicks, direction, renderFunc, collapsedMap]);
 }
 
@@ -192,7 +192,6 @@ export function walkTree(
   rangeMin: number,
   rangeMax: number,
   wrapperWidth: number,
-  collapsedMap: CollapsedMap,
   renderFunc: RenderFunc
 ) {
   // The levelOffset here is to keep track if items that we don't render because they are collapsed into single row.
@@ -217,7 +216,7 @@ export function walkTree(
 
     let offsetModifier = 0;
     let skipRender = false;
-    const collapsedItemConfig = collapsedMap.get(item);
+    const collapsedItemConfig = data.getCollapsedMap().get(item);
     const isCollapsedItem = collapsedItemConfig && collapsedItemConfig.collapsed;
 
     if (isCollapsedItem) {
