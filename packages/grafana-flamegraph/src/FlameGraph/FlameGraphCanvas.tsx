@@ -199,46 +199,43 @@ const FlameGraphCanvas = ({
             onSandwich(data.getLabel(clickedItemData.item.itemIndexes[0]));
           }}
           onExpandGroup={() => {
-            const newMap = new Map(collapsedMap);
-            const collapsedConfig = collapsedMap.get(clickedItemData.item)!;
-            const newConfig = { ...collapsedConfig, collapsed: false };
-            for (const item of collapsedConfig.items) {
-              newMap.set(item, newConfig);
-            }
-            setCollapsedMap(newMap);
+            setCollapsedMap(setCollapsedStatus(collapsedMap, clickedItemData.item, false));
           }}
           onCollapseGroup={() => {
-            const newMap = new Map(collapsedMap);
-            const collapsedConfig = collapsedMap.get(clickedItemData.item)!;
-            const newConfig = { ...collapsedConfig, collapsed: true };
-            for (const item of collapsedConfig.items) {
-              newMap.set(item, newConfig);
-            }
-            setCollapsedMap(newMap);
+            setCollapsedMap(setCollapsedStatus(collapsedMap, clickedItemData.item, true));
           }}
           onExpandAllGroups={() => {
-            const newMap = new Map(collapsedMap);
-            for (const item of collapsedMap.keys()) {
-              const collapsedConfig = collapsedMap.get(item)!;
-              const newConfig = { ...collapsedConfig, collapsed: false };
-              newMap.set(item, newConfig);
-            }
-            setCollapsedMap(newMap);
+            setCollapsedMap(setAllCollapsedStatus(collapsedMap, false));
           }}
           onCollapseAllGroups={() => {
-            const newMap = new Map(collapsedMap);
-            for (const item of collapsedMap.keys()) {
-              const collapsedConfig = collapsedMap.get(item)!;
-              const newConfig = { ...collapsedConfig, collapsed: true };
-              newMap.set(item, newConfig);
-            }
-            setCollapsedMap(newMap);
+            setCollapsedMap(setAllCollapsedStatus(collapsedMap, true));
           }}
         />
       )}
     </div>
   );
 };
+
+function setCollapsedStatus(collapsedMap: CollapsedMap, item: LevelItem, collapsed: boolean) {
+  const newMap = new Map(collapsedMap);
+  const collapsedConfig = collapsedMap.get(item)!;
+  const newConfig = { ...collapsedConfig, collapsed };
+  for (const item of collapsedConfig.items) {
+    newMap.set(item, newConfig);
+  }
+  return newMap;
+}
+
+function setAllCollapsedStatus(collapsedMap: CollapsedMap, collapsed: boolean) {
+  const newMap = new Map(collapsedMap);
+  for (const item of collapsedMap.keys()) {
+    const collapsedConfig = collapsedMap.get(item)!;
+    const newConfig = { ...collapsedConfig, collapsed };
+    newMap.set(item, newConfig);
+  }
+
+  return newMap;
+}
 
 const getStyles = () => ({
   graph: css({
@@ -271,7 +268,7 @@ const getStyles = () => ({
   }),
 });
 
-const convertPixelCoordinatesToBarCoordinates = (
+export const convertPixelCoordinatesToBarCoordinates = (
   // position relative to the start of the graph
   pos: { x: number; y: number },
   root: LevelItem,
