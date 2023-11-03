@@ -96,7 +96,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		req.FolderId = folder.ID
 	} else {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
-			ID:           &req.FolderId,
+			ID:           &req.FolderId, // nolint:staticcheck
 			OrgID:        req.User.GetOrgID(),
 			SignedInUser: req.User,
 		})

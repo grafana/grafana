@@ -128,7 +128,8 @@ type DeleteFolderCommand struct {
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
 type GetFolderQuery struct {
-	UID   *string
+	UID *string
+	// Deprecated: use FolderUID instead
 	ID    *int64
 	Title *string
 	OrgID int64

@@ -102,7 +102,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &folderId,
+					ID:           &folderId, // nolint:staticcheck
 					OrgID:        orgID,
 					SignedInUser: usr,
 				})
@@ -112,7 +112,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			var zeroInt int64 = 0
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
 				foldr, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &zeroInt,
+					ID:           &zeroInt, // nolint:staticcheck
 					OrgID:        orgID,
 					SignedInUser: usr,
 				})
@@ -1177,7 +1177,7 @@ func TestNestedFolderService(t *testing.T) {
 			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Get(context.Background(), &folder.GetFolderQuery{
 				OrgID:        orgID,
-				ID:           &folder.GeneralFolder.ID,
+				ID:           &folder.GeneralFolder.ID, // nolint:staticcheck
 				SignedInUser: usr,
 			})
 			require.NoError(t, err)

@@ -430,7 +430,7 @@ func TestIntegrationGet(t *testing.T) {
 
 	t.Run("get folder by title should succeed", func(t *testing.T) {
 		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
-			ID: &f.ID,
+			ID: &f.ID, // nolint:staticcheck
 		})
 		require.NoError(t, err)
 		assert.Equal(t, f.ID, ff.ID)

@@ -341,6 +341,7 @@ func (om *OrgMigration) getFolder(ctx context.Context, dash *dashboards.Dashboar
 		return migratedFolder, err
 	}
 
+	// nolint:staticcheck
 	f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{ID: &dash.FolderID, OrgID: om.orgID, SignedInUser: getMigrationUser(om.orgID)})
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {

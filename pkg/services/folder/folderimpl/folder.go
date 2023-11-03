@@ -121,6 +121,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		if err != nil {
 			return nil, err
 		}
+	// nolint:staticcheck
 	case cmd.ID != nil:
 		dashFolder, err = s.getFolderByID(ctx, *cmd.ID, cmd.OrgID)
 		if err != nil {
@@ -158,6 +159,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return dashFolder, nil
 	}
 
+	// nolint:staticcheck
 	if cmd.ID != nil {
 		cmd.ID = nil
 		cmd.UID = &dashFolder.UID
