@@ -3926,36 +3926,6 @@
         }
       }
     },
-    "/dashboards/trim": {
-      "post": {
-        "tags": [
-          "dashboards"
-        ],
-        "summary": "Trim defaults from dashboard.",
-        "operationId": "trimDashboard",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/TrimDashboardCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/trimDashboardResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/dashboards/uid/{dashboardUid}/public-dashboards": {
       "get": {
         "description": "Get public dashboard by dashboardUid",
@@ -13073,7 +13043,7 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "ID of the folder where the library element is stored.",
+          "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -18740,7 +18710,7 @@
           "type": "boolean",
           "example": false
         },
-        "isExternal": {
+        "isManaged": {
           "type": "boolean",
           "example": false
         },
@@ -18795,7 +18765,7 @@
           "type": "boolean",
           "example": false
         },
-        "isExternal": {
+        "isManaged": {
           "type": "boolean",
           "example": false
         },
@@ -22456,6 +22426,10 @@
           "url"
         ],
         "properties": {
+          "folderUid": {
+            "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
+            "type": "string"
+          },
           "id": {
             "description": "ID The unique identifier (id) of the created/updated dashboard.",
             "type": "integer",

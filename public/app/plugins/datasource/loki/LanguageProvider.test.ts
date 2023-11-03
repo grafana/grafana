@@ -1,7 +1,7 @@
 import { AbstractLabelOperator, DataFrame } from '@grafana/data';
 
 import LanguageProvider from './LanguageProvider';
-import { LokiDatasource } from './datasource';
+import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import {
   extractLogParserFromDataFrame,
@@ -274,6 +274,40 @@ describe('Query imports', () => {
         hasPack: false,
       });
       expect(extractLogParserFromDataFrameMock).not.toHaveBeenCalled();
+    });
+
+    it('calls dataSample with correct default maxLines', async () => {
+      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
+
+      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+        extractedLabelKeys: [],
+        unwrapLabelKeys: [],
+        hasJSON: false,
+        hasLogfmt: false,
+        hasPack: false,
+      });
+      expect(datasource.getDataSamples).toHaveBeenCalledWith({
+        expr: '{place="luna"}',
+        maxLines: DEFAULT_MAX_LINES_SAMPLE,
+        refId: 'data-samples',
+      });
+    });
+
+    it('calls dataSample with correctly set sampleSize', async () => {
+      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
+
+      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}', { maxLines: 5 })).toEqual({
+        extractedLabelKeys: [],
+        unwrapLabelKeys: [],
+        hasJSON: false,
+        hasLogfmt: false,
+        hasPack: false,
+      });
+      expect(datasource.getDataSamples).toHaveBeenCalledWith({
+        expr: '{place="luna"}',
+        maxLines: 5,
+        refId: 'data-samples',
+      });
     });
   });
 });

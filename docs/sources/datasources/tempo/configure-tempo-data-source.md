@@ -113,6 +113,8 @@ If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/o
 
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Tempo.
 
+{{< youtube id="TkapvLeMMpc" >}}
+
 To configure trace to metrics:
 
 1. Select the target data source from the drop-down list.
