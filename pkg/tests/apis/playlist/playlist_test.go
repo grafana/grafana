@@ -79,7 +79,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		// Check view permissions
 		rsp = helper.List(helper.OrgB.Viewer, "default", gvr)
-		require.Equal(t, 403, rsp.Response.StatusCode) // Org2 can not see default namespace
+		require.Equal(t, 403, rsp.Response.StatusCode) // OrgB can not see default namespace
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 
