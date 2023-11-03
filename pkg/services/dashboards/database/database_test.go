@@ -276,7 +276,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:        1,
-			FolderIds:    []int64{savedFolder.ID},
+			FolderIds:    []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{},
 		}
 
@@ -435,7 +435,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:     1,
-			FolderIds: []int64{savedFolder.ID},
+			FolderIds: []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{
 				OrgID:   1,
 				OrgRole: org.RoleEditor,
@@ -1046,7 +1046,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 				res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
 					SignedInUser: user,
 					Type:         tc.typ,
-					FolderIds:    tc.folderIDs,
+					FolderIds:    tc.folderIDs, // nolint:staticcheck
 					FolderUIDs:   tc.folderUIDs,
 				})
 				require.NoError(t, err)

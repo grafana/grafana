@@ -83,7 +83,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		DashboardUIDs: query.DashboardUIDs,
 		DashboardIds:  query.DashboardIds,
 		Type:          query.Type,
-		FolderIds:     query.FolderIds,
+		FolderIds:     query.FolderIds, // nolint:staticcheck
 		FolderUIDs:    query.FolderUIDs,
 		Tags:          query.Tags,
 		Limit:         query.Limit,
