@@ -170,45 +170,45 @@ export const DashNav = React.memo<Props>((props) => {
       return [];
     }
 
-    if (canStar) {
-      let desc = isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
-      buttons.push(
-        <DashNavButton
-          tooltip={desc}
-          icon={isStarred ? 'favorite' : 'star'}
-          iconType={isStarred ? 'mono' : 'default'}
-          iconSize="lg"
-          onClick={onStarDashboard}
-          key="button-star"
-        />
-      );
-    }
+    // if (canStar) {
+    //   let desc = isStarred
+    //     ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
+    //     : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
+    //   buttons.push(
+    //     <DashNavButton
+    //       tooltip={desc}
+    //       icon={isStarred ? 'favorite' : 'star'}
+    //       iconType={isStarred ? 'mono' : 'default'}
+    //       iconSize="lg"
+    //       onClick={onStarDashboard}
+    //       key="button-star"
+    //     />
+    //   );
+    // }
 
-    if (canShare) {
-      buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
-    }
+    // if (canShare) {
+    //   buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
+    // }
 
-    if (dashboard.meta.publicDashboardEnabled) {
-      buttons.push(
-        <Tag key="public-dashboard" name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>
-      );
-    }
+    // if (dashboard.meta.publicDashboardEnabled) {
+    //   buttons.push(
+    //     <Tag key="public-dashboard" name="Public" colorIndex={5} data-testid={selectors.publicDashboardTag}></Tag>
+    //   );
+    // }
 
-    if (config.featureToggles.scenes) {
-      buttons.push(
-        <DashNavButton
-          key="button-scenes"
-          tooltip={'View as Scene'}
-          icon="apps"
-          onClick={() => {
-            const location = locationService.getLocation();
-            locationService.push(`/scenes/dashboard/${dashboard.uid}${location.search}`);
-          }}
-        />
-      );
-    }
+    // if (config.featureToggles.scenes) {
+    //   buttons.push(
+    //     <DashNavButton
+    //       key="button-scenes"
+    //       tooltip={'View as Scene'}
+    //       icon="apps"
+    //       onClick={() => {
+    //         const location = locationService.getLocation();
+    //         locationService.push(`/scenes/dashboard/${dashboard.uid}${location.search}`);
+    //       }}
+    //     />
+    //   );
+    // }
 
     addCustomContent(customLeftActions, buttons);
     return buttons;

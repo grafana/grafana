@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Dropdown } from '@grafana/ui';
-import { Box } from '@grafana/ui/src/unstable';
+import { Box } from '@grafana/ui';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 import { PageHistoryPopover } from './PageHistoryPopover';
@@ -12,7 +12,7 @@ export function PageHistoryButton(props: Props) {
   return (
     <Dropdown overlay={() => <PageHistoryPopover />} placement="bottom">
       <Box marginLeft={1}>
-        <DashNavButton icon="clock-nine" tooltip="Go back to a previous page" />
+        <DashNavButton icon="history-alt" tooltip="Go back to a previous page" />
       </Box>
     </Dropdown>
   );

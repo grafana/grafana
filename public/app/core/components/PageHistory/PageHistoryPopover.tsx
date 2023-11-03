@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2, Text, TextLink } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { HistoryEntryApp } from '../AppChrome/types';
@@ -17,11 +17,11 @@ export function PageHistoryPopover() {
     //<div className={styles.popover} onClick={(evt) => evt.stopPropagation()}>
     <div className={styles.popover}>
       <div className={styles.heading}>History</div>
-      <Flex direction="column" gap={0.5}>
+      <Stack direction="column" gap={0.5}>
         {history.map((entry, index) => (
           <HistoryEntryAppView key={index} entry={entry} />
         ))}
-      </Flex>
+      </Stack>
     </div>
   );
 }
@@ -42,8 +42,8 @@ function HistoryEntryAppView({ entry }: ItemProps) {
   }
 
   return (
-    <Flex direction="column" gap={1}>
-      <Flex>
+    <Stack direction="column" gap={1}>
+      <Stack>
         <IconButton
           name={isExpanded ? 'angle-up' : 'angle-down'}
           onClick={() => setIsExpanded(!isExpanded)}
@@ -51,7 +51,7 @@ function HistoryEntryAppView({ entry }: ItemProps) {
           className={styles.iconButton}
         />
         <Text weight="medium">{entry.name}</Text>
-      </Flex>
+      </Stack>
       {isExpanded && (
         <div className={styles.expanded}>
           {views.map((view, index) => (
@@ -63,7 +63,7 @@ function HistoryEntryAppView({ entry }: ItemProps) {
           ))}
         </div>
       )}
-    </Flex>
+    </Stack>
   );
 }
 

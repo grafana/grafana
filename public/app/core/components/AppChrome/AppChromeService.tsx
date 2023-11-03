@@ -1,6 +1,5 @@
 import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
-import { string } from 'yargs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
