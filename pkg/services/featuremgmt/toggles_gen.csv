@@ -126,3 +126,4 @@ awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,false,false,f
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false,false
 pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false
+panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,false,true
