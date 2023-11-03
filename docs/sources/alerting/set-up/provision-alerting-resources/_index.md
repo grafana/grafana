@@ -34,6 +34,11 @@ There are three options to choose from:
 1. If you are using Grafana Cloud, you can provision your alerting resources using
    [Terraform](https://www.terraform.io/).
 
+{{% admonition type="note" %}}
+If you delete an alerting resource created in the UI, you can no longer retrieve it.
+To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using the Alerting API. {{% /admonition %}}
+
+
 **Useful Links:**
 
 [Grafana provisioning][provisioning]
