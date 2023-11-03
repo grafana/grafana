@@ -225,10 +225,10 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
-        {(grafanaRulesLoading || (dispatched && loading && !haveResults)) && <LoadingPlaceholder text="Loading..." />}
         {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
+
         <section>
-          {props.options.viewMode === ViewMode.Stat && haveResults && (
+          {props.options.viewMode === ViewMode.Stat && (
             <BigValue
               width={props.width}
               height={props.height}
@@ -239,10 +239,10 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
               value={{ text: `${rules.length}`, numeric: rules.length }}
             />
           )}
-          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && haveResults && (
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
             <GroupedModeView rules={rules} options={parsedOptions} />
           )}
-          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
             <UngroupedModeView
               rules={rules}
               options={parsedOptions}
@@ -252,6 +252,8 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
             />
           )}
         </section>
+        {/* loading moved here to avoid twitching  */}
+        {(grafanaRulesLoading || (dispatched && loading && !haveResults)) && <LoadingPlaceholder text="Loading..." />}
       </div>
     </CustomScrollbar>
   );
