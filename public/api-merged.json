@@ -8580,7 +8580,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/ReportEmailDTO"
+              "$ref": "#/definitions/ReportEmail"
             }
           }
         ],
@@ -8764,7 +8764,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/SettingsDTO"
+              "$ref": "#/definitions/ReportSettings"
             }
           }
         ],
@@ -12734,88 +12734,6 @@
         }
       }
     },
-    "ConfigDTO": {
-      "description": "ConfigDTO is model representation in transfer",
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "dashboards": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DashboardDTO"
-          }
-        },
-        "enableCsv": {
-          "type": "boolean"
-        },
-        "enableDashboardUrl": {
-          "type": "boolean"
-        },
-        "formats": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Type"
-          }
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "message": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "options": {
-          "$ref": "#/definitions/ReportOptionsDTO"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "recipients": {
-          "type": "string"
-        },
-        "replyTo": {
-          "type": "string"
-        },
-        "scaleFactor": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "schedule": {
-          "$ref": "#/definitions/ScheduleDTO"
-        },
-        "state": {
-          "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "ContactPointExport": {
       "type": "object",
       "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
@@ -13160,7 +13078,7 @@
         "dashboards": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/DashboardDTO"
+            "$ref": "#/definitions/ReportDashboard"
           }
         },
         "enableCsv": {
@@ -13182,7 +13100,7 @@
           "type": "string"
         },
         "options": {
-          "$ref": "#/definitions/ReportOptionsDTO"
+          "$ref": "#/definitions/ReportOptions"
         },
         "recipients": {
           "type": "string"
@@ -13195,7 +13113,7 @@
           "format": "int64"
         },
         "schedule": {
-          "$ref": "#/definitions/ScheduleDTO"
+          "$ref": "#/definitions/ReportSchedule"
         },
         "state": {
           "$ref": "#/definitions/State"
@@ -13472,20 +13390,6 @@
         }
       }
     },
-    "DashboardDTO": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/DashboardReportDTO"
-        },
-        "reportVariables": {
-          "type": "object"
-        },
-        "timeRange": {
-          "$ref": "#/definitions/TimeRangeDTO"
-        }
-      }
-    },
     "DashboardFullWithMeta": {
       "type": "object",
       "properties": {
@@ -13592,21 +13496,6 @@
       "type": "object",
       "properties": {
         "redirectUri": {
-          "type": "string"
-        }
-      }
-    },
-    "DashboardReportDTO": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "uid": {
           "type": "string"
         }
       }
@@ -17999,7 +17888,118 @@
         }
       }
     },
-    "ReportEmailDTO": {
+    "Report": {
+      "description": "ConfigDTO is model representation in transfer",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardName": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReportDashboard"
+          }
+        },
+        "enableCsv": {
+          "type": "boolean"
+        },
+        "enableDashboardUrl": {
+          "type": "boolean"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Type"
+          }
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/ReportOptions"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "recipients": {
+          "type": "string"
+        },
+        "replyTo": {
+          "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schedule": {
+          "$ref": "#/definitions/ReportSchedule"
+        },
+        "state": {
+          "$ref": "#/definitions/State"
+        },
+        "templateVars": {
+          "type": "object"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ReportDashboard": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/ReportDashboardID"
+        },
+        "reportVariables": {
+          "type": "object"
+        },
+        "timeRange": {
+          "$ref": "#/definitions/ReportTimeRange"
+        }
+      }
+    },
+    "ReportDashboardID": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportEmail": {
       "type": "object",
       "properties": {
         "email": {
@@ -18020,7 +18020,7 @@
         }
       }
     },
-    "ReportOptionsDTO": {
+    "ReportOptions": {
       "type": "object",
       "properties": {
         "layout": {
@@ -18030,7 +18030,81 @@
           "type": "string"
         },
         "timeRange": {
-          "$ref": "#/definitions/TimeRangeDTO"
+          "$ref": "#/definitions/ReportTimeRange"
+        }
+      }
+    },
+    "ReportSchedule": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "string"
+        },
+        "dayOfMonth": {
+          "type": "string"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "frequency": {
+          "type": "string"
+        },
+        "hour": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalAmount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalFrequency": {
+          "type": "string"
+        },
+        "minute": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timeZone": {
+          "type": "string"
+        },
+        "workdaysOnly": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ReportSettings": {
+      "type": "object",
+      "properties": {
+        "branding": {
+          "$ref": "#/definitions/BrandingOptionsDTO"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ReportTimeRange": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
         }
       }
     },
@@ -18494,49 +18568,6 @@
         }
       }
     },
-    "ScheduleDTO": {
-      "type": "object",
-      "properties": {
-        "day": {
-          "type": "string"
-        },
-        "dayOfMonth": {
-          "type": "string"
-        },
-        "endDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "hour": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "intervalAmount": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "intervalFrequency": {
-          "type": "string"
-        },
-        "minute": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "startDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "timeZone": {
-          "type": "string"
-        },
-        "workdaysOnly": {
-          "type": "boolean"
-        }
-      }
-    },
     "SearchOrgServiceAccountsResult": {
       "description": "swagger: model",
       "type": "object",
@@ -18853,26 +18884,6 @@
         "type": "object",
         "additionalProperties": {
           "type": "string"
-        }
-      }
-    },
-    "SettingsDTO": {
-      "type": "object",
-      "properties": {
-        "branding": {
-          "$ref": "#/definitions/BrandingOptionsDTO"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -19669,17 +19680,6 @@
         "to": {
           "type": "string",
           "format": "date-time"
-        }
-      }
-    },
-    "TimeRangeDTO": {
-      "type": "object",
-      "properties": {
-        "from": {
-          "type": "string"
-        },
-        "to": {
-          "type": "string"
         }
       }
     },
@@ -22064,13 +22064,13 @@
     "getReportResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/ConfigDTO"
+        "$ref": "#/definitions/Report"
       }
     },
     "getReportSettingsResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/SettingsDTO"
+        "$ref": "#/definitions/ReportSettings"
       }
     },
     "getReportsResponse": {
@@ -22078,7 +22078,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/ConfigDTO"
+          "$ref": "#/definitions/Report"
         }
       }
     },
