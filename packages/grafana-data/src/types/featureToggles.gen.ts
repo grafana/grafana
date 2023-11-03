@@ -156,4 +156,5 @@ export interface FeatureToggles {
   alertmanagerRemoteOnly?: boolean;
   annotationPermissionUpdate?: boolean;
   extractFieldsNameDeduplication?: boolean;
+  dashboardSceneForViewers?: boolean;
 }

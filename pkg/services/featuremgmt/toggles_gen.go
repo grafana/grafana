@@ -558,4 +558,8 @@ const (
 	// FlagExtractFieldsNameDeduplication
 	// Make sure extracted field names are unique in the dataframe
 	FlagExtractFieldsNameDeduplication = "extractFieldsNameDeduplication"
+
+	// FlagDashboardSceneForViewers
+	// Enables dashboard rendering using Scenes for viewer roles
+	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
 )

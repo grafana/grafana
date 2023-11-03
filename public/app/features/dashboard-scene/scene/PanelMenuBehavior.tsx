@@ -35,19 +35,22 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         href: getViewPanelUrl(panel),
       });
 
-      // We could check isEditing here but I kind of think this should always be in the menu,
-      // and going into panel edit should make the dashboard go into edit mode is it's not already
-      items.push({
-        text: t('panel.header-menu.edit', `Edit`),
-        iconClassName: 'eye',
-        shortcut: 'e',
-        onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'edit' }),
-        href: getDashboardUrl({
-          uid: dashboard.state.uid,
-          subPath: `/panel-edit/${panelId}`,
-          currentQueryParams: location.search,
-        }),
-      });
+      if (dashboard.canEditDashboard()) {
+        // We could check isEditing here but I kind of think this should always be in the menu,
+        // and going into panel edit should make the dashboard go into edit mode is it's not already
+        items.push({
+          text: t('panel.header-menu.edit', `Edit`),
+          iconClassName: 'eye',
+          shortcut: 'e',
+          onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'edit' }),
+          href: getDashboardUrl({
+            uid: dashboard.state.uid,
+            subPath: `/panel-edit/${panelId}`,
+            currentQueryParams: location.search,
+            useExperimentalURL: true,
+          }),
+        });
+      }
 
       items.push({
         text: t('panel.header-menu.share', `Share`),

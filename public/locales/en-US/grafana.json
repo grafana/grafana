@@ -882,7 +882,6 @@
   "panel": {
     "header-menu": {
       "copy": "Copy",
-      "create-alert": "Create alert",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
@@ -893,6 +892,7 @@
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
       "share": "Share",
