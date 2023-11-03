@@ -10,12 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "trimDefaults",
-			Description: "Use cue schema to remove values that will be applied automatically",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAsCodeSquad,
-		},
-		{
 			Name:        "disableEnvelopeEncryption",
 			Description: "Disable envelope encryption (emergency only)",
 			Stage:       FeatureStageGeneralAvailability,
@@ -941,7 +935,7 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
-    {
+		{
 			Name:        "alertmanagerRemoteSecondary",
 			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -966,13 +960,27 @@ var (
 			RequiresDevMode: false,
 			Owner:           grafanaAuthnzSquad,
 		},
-    {
+		{
+			Name:         "extractFieldsNameDeduplication",
+			Description:  "Make sure extracted field names are unique in the dataframe",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "dashboardSceneForViewers",
+			Description:  "Enables dashboard rendering using Scenes for viewer roles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
-    },
+		},
 	}
 )

@@ -18,7 +18,6 @@
  * @public
  */
 export interface FeatureToggles {
-  trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
@@ -156,5 +155,7 @@ export interface FeatureToggles {
   alertmanagerRemotePrimary?: boolean;
   alertmanagerRemoteOnly?: boolean;
   annotationPermissionUpdate?: boolean;
+  extractFieldsNameDeduplication?: boolean;
+  dashboardSceneForViewers?: boolean;
   panelFilterVariable?: boolean;
 }
