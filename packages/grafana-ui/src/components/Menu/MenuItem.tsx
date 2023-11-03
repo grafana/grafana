@@ -184,7 +184,15 @@ export const MenuItem = React.memo(
             )}
           </div>
         </div>
-        {description && <div className={styles.description}>{description}</div>}
+        {description && (
+          <div
+            className={cx(styles.description, {
+              [styles.descriptionWithIcon]: icon !== undefined,
+            })}
+          >
+            {description}
+          </div>
+        )}
       </ItemElement>
     );
   })
@@ -200,7 +208,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       color: theme.colors.text.primary,
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'start',
       padding: theme.spacing(0.5, 2),
       minHeight: theme.spacing(4),
       margin: 0,
@@ -281,6 +289,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontStyle: 'italic',
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
+    }),
+    descriptionWithIcon: css({
+      marginLeft: theme.spacing(3),
     }),
   };
 };

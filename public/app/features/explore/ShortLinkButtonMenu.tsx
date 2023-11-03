@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2, IconName, urlUtil } from '@grafana/data';
+import { IconName, urlUtil } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2, ToolbarButton, Dropdown, Menu, Stack, ToolbarButtonRow } from '@grafana/ui';
+import { ToolbarButton, Dropdown, Menu, Stack, ToolbarButtonRow } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -13,7 +12,6 @@ import { getUrlStateFromPaneState } from './hooks/useStateSync';
 import { selectPanes } from './state/selectors';
 
 export function ShortLinkButtonMenu() {
-  const styles = useStyles2(getStyles);
   const panes = useSelector(selectPanes);
   const [isOpen, setIsOpen] = useState(false);
   const onCopyShortLink = (persistType?: string, url?: string) => {
@@ -80,7 +78,6 @@ export function ShortLinkButtonMenu() {
                 onCopyShortLink(option.key, url);
               }}
               description={option.description}
-              className={styles.menuItem}
             />
           );
         })}
@@ -130,14 +127,3 @@ export function ShortLinkButtonMenu() {
     </ToolbarButtonRow>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    menuItem: css({
-      alignItems: 'start',
-      '>:nth-child(2)': {
-        marginLeft: theme.spacing(3),
-      },
-    }),
-  };
-};
