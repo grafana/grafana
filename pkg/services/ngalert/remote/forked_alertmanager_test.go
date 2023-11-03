@@ -166,7 +166,7 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 
 	t.Run("GetReceivers", func(tt *testing.T) {
 		// We should retrieve the receivers from the internal Alertmanager.
-		internal, _, forked := genTestAlertmanagers(tt, ModeRemoteSecondary)
+		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 		expReceivers := []apimodels.Receiver{}
 		internal.EXPECT().GetReceivers(mock.Anything).Return(expReceivers, nil).Once()
 		receivers, err := forked.GetReceivers(ctx)
@@ -174,7 +174,7 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		require.Equal(tt, expReceivers, receivers)
 
 		// If there's an error in the internal Alertmanager, it should be returned.
-		internal, _, forked = genTestAlertmanagers(tt, ModeRemoteSecondary)
+		internal, _, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
 		internal.EXPECT().GetReceivers(mock.Anything).Return([]apimodels.Receiver{}, testErr).Once()
 		_, err = forked.GetReceivers(ctx)
 		require.ErrorIs(tt, testErr, err)
@@ -182,13 +182,13 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 
 	t.Run("TestReceivers", func(tt *testing.T) {
 		// TestReceivers should be called only in the internal Alertmanager.
-		internal, _, forked := genTestAlertmanagers(tt, ModeRemoteSecondary)
+		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, nil).Once()
 		_, err := forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the internal Alertmanager, it should be returned.
-		internal, _, forked = genTestAlertmanagers(tt, ModeRemoteSecondary)
+		internal, _, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
 		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, testErr).Once()
 		_, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.ErrorIs(tt, testErr, err)
@@ -358,7 +358,7 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 
 	t.Run("GetReceivers", func(tt *testing.T) {
 		// We should retrieve the receivers from the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, ModeRemotePrimary)
+		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
 		expReceivers := []apimodels.Receiver{}
 		remote.EXPECT().GetReceivers(mock.Anything).Return(expReceivers, nil).Once()
 		receivers, err := forked.GetReceivers(ctx)
@@ -366,7 +366,7 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		require.Equal(tt, expReceivers, receivers)
 
 		// If there's an error in the remote Alertmanager, it should be returned.
-		_, remote, forked = genTestAlertmanagers(tt, ModeRemotePrimary)
+		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
 		remote.EXPECT().GetReceivers(mock.Anything).Return([]apimodels.Receiver{}, testErr).Once()
 		_, err = forked.GetReceivers(ctx)
 		require.ErrorIs(tt, testErr, err)
@@ -374,13 +374,13 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 
 	t.Run("TestReceivers", func(tt *testing.T) {
 		// TestReceivers should be called only in the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, ModeRemotePrimary)
+		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
 		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, nil).Once()
 		_, err := forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the remote Alertmanager, it should be returned.
-		_, remote, forked = genTestAlertmanagers(tt, ModeRemotePrimary)
+		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
 		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, testErr).Once()
 		_, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.ErrorIs(tt, testErr, err)
