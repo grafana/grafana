@@ -228,7 +228,7 @@ var (
 			Name:        "accessControlOnCall",
 			Description: "Access control primitives for OnCall",
 			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAndAccessSquad,
 		},
 		{
 			Name:        "nestedFolders",
@@ -248,7 +248,7 @@ var (
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAndAccessSquad,
 		},
 		{
 			Name:         "emptyDashboardPage",
@@ -317,7 +317,7 @@ var (
 			Name:        "gcomOnlyExternalOrgRoleSync",
 			Description: "Prohibits a user from changing organization roles synced with Grafana Cloud auth provider",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAndAccessSquad,
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
@@ -339,7 +339,7 @@ var (
 			Name:        "clientTokenRotation",
 			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAndAccessSquad,
 		},
 		{
 			Name:        "prometheusDataplane",
@@ -418,7 +418,7 @@ var (
 			Description:     "Starts an OAuth2 authentication provider for external services",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAndAccessSquad,
 		},
 		{
 			Name:        "refactorVariablesTimeRange",
@@ -637,7 +637,7 @@ var (
 			Description:     "Support faster dashboard and folder search by splitting permission scopes into parts",
 			Stage:           FeatureStagePublicPreview,
 			FrontendOnly:    false,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAndAccessSquad,
 			RequiresRestart: true,
 		},
 		{
@@ -799,7 +799,7 @@ var (
 			Name:            "idForwarding",
 			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAndAccessSquad,
 			RequiresDevMode: true,
 		},
 		{
@@ -814,7 +814,7 @@ var (
 			Description:     "Automatic service account and token setup for plugins",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAndAccessSquad,
 		},
 		{
 			Name:         "panelMonitoring",
@@ -884,7 +884,7 @@ var (
 			Description:  "Enables datasources to apply team headers to the client requests",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
-			Owner:        grafanaAuthnzSquad,
+			Owner:        identityAndAccessSquad,
 		},
 		{
 			Name:         "awsDatasourcesNewFormStyling",
@@ -958,7 +958,7 @@ var (
 			Description:     "Separate annotation permissions from dashboard permissions to allow for more granular control.",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: false,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAndAccessSquad,
 		},
 		{
 			Name:         "extractFieldsNameDeduplication",
