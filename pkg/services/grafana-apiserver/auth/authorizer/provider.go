@@ -30,8 +30,10 @@ func ProvideAuthorizer(
 		authorizers = append(authorizers, orgIDAuthorizer)
 	}
 
-	// Add the ac authorizer last since it is the most expensive check
+	// Run the access control authorizer after we know we are in the right org/stack
 	authorizers = append(authorizers, acAuthorizer)
 
+	// org role is last -- and will return allow for verbs that match expectations
+	authorizers = append(authorizers, orgRoleAuthorizer)
 	return union.New(authorizers...)
 }

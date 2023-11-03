@@ -4,8 +4,8 @@ import React, { forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { selectors } from '@grafana/e2e-selectors';
+import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
@@ -39,7 +39,7 @@ export const MegaMenu = React.memo(
     };
 
     return (
-      <div data-testid="navbarmenu" ref={ref} {...restProps}>
+      <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <div className={styles.mobileHeader}>
           <Icon name="bars" size="xl" />
           <IconButton
@@ -54,26 +54,22 @@ export const MegaMenu = React.memo(
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link, index) => (
-                <Flex key={link.text} direction="row" alignItems="center">
+                <Stack key={link.text} direction="row" alignItems="center">
                   <MegaMenuItem
                     link={link}
                     onClick={state.megaMenu === 'open' ? onClose : undefined}
                     activeItem={activeItem}
                   />
-                  {index === 0 && (
+                  {index === 0 && Boolean(state.megaMenu === 'open') && (
                     <IconButton
                       className={styles.dockMenuButton}
-                      tooltip={
-                        state.megaMenu === 'docked'
-                          ? t('navigation.megamenu.undock', 'Undock menu')
-                          : t('navigation.megamenu.dock', 'Dock menu')
-                      }
+                      tooltip={t('navigation.megamenu.dock', 'Dock menu')}
                       name="web-section-alt"
                       onClick={handleDockedMenu}
                       variant="secondary"
                     />
                   )}
-                </Flex>
+                </Stack>
               ))}
             </ul>
           </CustomScrollbar>
@@ -114,10 +110,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   dockMenuButton: css({
-    color: theme.colors.text.disabled,
     display: 'none',
 
-    [theme.breakpoints.up('md')]: {
+    [theme.breakpoints.up('xl')]: {
       display: 'inline-flex',
     },
   }),

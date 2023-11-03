@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { createRef } from 'react';
+import React from 'react';
 import { Provider } from 'react-redux';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
@@ -24,17 +24,10 @@ function renderTraceViewContainer(frames = [frameOld]) {
     series: [],
     timeRange: getDefaultTimeRange(),
   };
-  const topOfViewRef = createRef<HTMLDivElement>();
 
   const { container, baseElement } = render(
     <Provider store={store}>
-      <TraceViewContainer
-        exploreId="left"
-        dataFrames={frames}
-        splitOpenFn={() => {}}
-        queryResponse={mockPanelData}
-        topOfViewRef={topOfViewRef}
-      />
+      <TraceViewContainer exploreId="left" dataFrames={frames} splitOpenFn={() => {}} queryResponse={mockPanelData} />
     </Provider>
   );
   return {
