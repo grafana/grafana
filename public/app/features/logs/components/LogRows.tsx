@@ -95,6 +95,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   handleSelection = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel): boolean => {
+    // Selection is ignored if the filter functions are not defined.
+    if (!this.props.onClickFilterOutValue && !this.props.onClickFilterValue) {
+      return false;
+    }
     const selection = document.getSelection()?.toString();
     if (!selection) {
       return false;

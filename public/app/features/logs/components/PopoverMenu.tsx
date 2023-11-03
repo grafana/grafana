@@ -48,7 +48,7 @@ export const PopoverMenu = ({
   }
 
   return (
-    <div className={styles.menu} style={{ position: 'fixed', top: y, left: x }}>
+    <div className={styles.menu} style={{ top: y, left: x }}>
       <Menu ref={containerRef}>
         <Menu.Item
           label="Copy selection"
@@ -57,20 +57,24 @@ export const PopoverMenu = ({
             close();
           }}
         />
-        <Menu.Item
-          label="Add as line contains filter"
-          onClick={() => {
-            onClickFilterValue?.(selection, row.dataFrame.refId);
-            close();
-          }}
-        />
-        <Menu.Item
-          label="Add as line does not contain filter"
-          onClick={() => {
-            onClickFilterOutValue?.(selection, row.dataFrame.refId);
-            close();
-          }}
-        />
+        {onClickFilterValue && (
+          <Menu.Item
+            label="Add as line contains filter"
+            onClick={() => {
+              onClickFilterValue(selection, row.dataFrame.refId);
+              close();
+            }}
+          />
+        )}
+        {onClickFilterOutValue && (
+          <Menu.Item
+            label="Add as line does not contain filter"
+            onClick={() => {
+              onClickFilterOutValue(selection, row.dataFrame.refId);
+              close();
+            }}
+          />
+        )}
       </Menu>
     </div>
   );
