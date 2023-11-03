@@ -77,7 +77,7 @@ func TestProvisioningApi(t *testing.T) {
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
 				require.Equal(t, 400, response.Status())
-				expBody := `{"error":"invalid object specification: invalid policy tree","message":"invalid object specification: invalid policy tree"}`
+				expBody := `{"message":"invalid object specification: invalid policy tree"}`
 				require.Equal(t, expBody, string(response.Body()))
 			})
 		})
@@ -605,7 +605,7 @@ func TestProvisioningApi(t *testing.T) {
 
     no_data_state  = "Alerting"
     exec_err_state = "Error"
-    for            = 0
+    for            = "0s"
     annotations = {
       test = "annotation"
     }
@@ -632,7 +632,7 @@ func TestProvisioningApi(t *testing.T) {
 
     no_data_state  = "OK"
     exec_err_state = "OK"
-    for            = 0
+    for            = "0s"
     is_paused      = false
   }
 }

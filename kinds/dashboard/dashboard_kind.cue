@@ -176,6 +176,9 @@ lineage: schemas: [{
 			// TODO -- this should not exist here, it is based on the --grafana-- datasource
 			type?: string @grafanamaturity(NeedsExpertReview)
 
+			// Set to 1 for the standard annotation query all dashboards have by default.
+			builtIn?: number | *0
+
 			// unless datasources have migrated to the target+mapping,
 			// they just spread their query into the base object :(
 			...

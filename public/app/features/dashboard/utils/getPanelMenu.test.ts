@@ -12,8 +12,10 @@ import {
 } from '@grafana/data';
 import { AngularComponent, getPluginLinkExtensions } from '@grafana/runtime';
 import config from 'app/core/config';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
+import { AccessControlAction } from 'app/types';
 
 import { PanelModel } from '../state';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
@@ -23,6 +25,7 @@ import { getPanelMenu } from './getPanelMenu';
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasAccessToExplore: () => true,
+    hasPermission: jest.fn(),
   },
 }));
 
@@ -38,6 +41,8 @@ describe('getPanelMenu()', () => {
   beforeEach(() => {
     getPluginLinkExtensionsMock.mockRestore();
     getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+    config.unifiedAlertingEnabled = false;
   });
 
   it('should return the correct panel menu items', () => {
@@ -266,6 +271,97 @@ describe('getPanelMenu()', () => {
         id: 1,
         title: 'My panel',
         timeZone: 'utc',
+        timeRange: {
+          from: 'now-5m',
+          to: 'now',
+        },
+        targets: [
+          {
+            refId: 'A',
+            datasource: {
+              type: 'testdata',
+            },
+          },
+        ],
+        dashboard: {
+          tags: ['database', 'panel'],
+          uid: '123',
+          title: 'My dashboard',
+        },
+        scopedVars: {
+          a: {
+            text: 'a',
+            value: 'a',
+          },
+        },
+        data,
+      };
+
+      expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+    });
+
+    it('should pass context with default time zone values when configuring extension', () => {
+      const data: PanelData = {
+        series: [
+          toDataFrame({
+            fields: [
+              { name: 'time', type: FieldType.time },
+              { name: 'score', type: FieldType.number },
+            ],
+          }),
+        ],
+        timeRange: {
+          from: dateTime(),
+          to: dateTime(),
+          raw: {
+            from: 'now',
+            to: 'now-1h',
+          },
+        },
+        state: LoadingState.Done,
+      };
+
+      const panel = new PanelModel({
+        type: 'timeseries',
+        id: 1,
+        title: 'My panel',
+        targets: [
+          {
+            refId: 'A',
+            datasource: {
+              type: 'testdata',
+            },
+          },
+        ],
+        scopedVars: {
+          a: {
+            text: 'a',
+            value: 'a',
+          },
+        },
+        queryRunner: {
+          getLastResult: jest.fn(() => data),
+        },
+      });
+
+      const dashboard = createDashboardModelFixture({
+        timezone: '',
+        time: {
+          from: 'now-5m',
+          to: 'now',
+        },
+        tags: ['database', 'panel'],
+        uid: '123',
+        title: 'My dashboard',
+      });
+
+      getPanelMenu(dashboard, panel);
+
+      const context: PluginExtensionPanelContext = {
+        pluginId: 'timeseries',
+        id: 1,
+        title: 'My panel',
+        timeZone: 'browser',
         timeRange: {
           from: 'now-5m',
           to: 'now',
@@ -526,6 +622,59 @@ describe('getPanelMenu()', () => {
       openInNewWindow(testUrl);
 
       expect(windowOpen).toHaveBeenLastCalledWith(`${testSubUrl}${testUrl}`);
+    });
+  });
+  describe('Alerting menu', () => {
+    it('should render "New alert rule" menu item if user has permissions to read and update alerts ', () => {
+      const panel = new PanelModel({});
+
+      const dashboard = createDashboardModelFixture({});
+      config.unifiedAlertingEnabled = true;
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+      const menuItems = getPanelMenu(dashboard, panel);
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'New alert rule',
+          }),
+        ])
+      );
+    });
+
+    it('should not render "New alert rule" menu item, if user does not have permissions to update alerts ', () => {
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+
+      grantUserPermissions([AccessControlAction.AlertingRuleRead]);
+      config.unifiedAlertingEnabled = true;
+
+      const menuItems = getPanelMenu(dashboard, panel);
+
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.not.objectContaining({
+            text: 'New alert rule',
+          }),
+        ])
+      );
+    });
+    it('should not render "New alert rule" menu item, if user does not have permissions to read update alerts ', () => {
+      const panel = new PanelModel({});
+
+      const dashboard = createDashboardModelFixture({});
+      grantUserPermissions([]);
+      config.unifiedAlertingEnabled = true;
+
+      const menuItems = getPanelMenu(dashboard, panel);
+
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const createAlertOption = moreSubMenu?.find((i) => i.text === 'New alert rule')?.subMenu;
+
+      expect(createAlertOption).toBeUndefined();
     });
   });
 });

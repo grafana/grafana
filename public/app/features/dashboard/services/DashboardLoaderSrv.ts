@@ -7,6 +7,7 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
@@ -35,6 +36,7 @@ export class DashboardLoaderSrv {
   }
 
   loadDashboard(type: UrlQueryValue, slug: string | undefined, uid: string | undefined): Promise<DashboardDTO> {
+    const stateManager = getDashboardScenePageStateManager();
     let promise;
 
     if (type === 'script' && slug) {
@@ -71,6 +73,11 @@ export class DashboardLoaderSrv {
           };
         });
     } else if (uid) {
+      const cachedDashboard = stateManager.getFromCache(uid);
+      if (cachedDashboard) {
+        return Promise.resolve(cachedDashboard);
+      }
+
       promise = backendSrv
         .getDashboardByUid(uid)
         .then((result) => {

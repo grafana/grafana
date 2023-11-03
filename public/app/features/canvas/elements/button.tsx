@@ -56,13 +56,7 @@ const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) =
   };
 
   return (
-    <Button
-      type="submit"
-      variant={data?.style?.variant}
-      onClick={onClick}
-      className={styles.button}
-      disabled={!data?.api?.endpoint}
-    >
+    <Button type="submit" variant={data?.style?.variant} onClick={onClick} className={styles.button}>
       <span>
         {isLoading && <Spinner inline={true} className={styles.buttonSpinner} />}
         {data?.text}
@@ -94,7 +88,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   id: 'button',
   name: 'Button',
   description: 'Button',
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   standardEditorConfig: {
     background: false,

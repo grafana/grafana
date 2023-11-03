@@ -24,10 +24,6 @@ A library panel is a reusable panel that you can use in any dashboard. When you 
 
 You can save a library panel in a folder alongside saved dashboards.
 
-{{% admonition type="note" %}}
-When [RBAC](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/) is enabled, you need to have the relevant [Permissions](https://grafana.com/docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/) to create, manage, and view library panels.
-{{% /admonition %}}
-
 ## Create a library panel
 
 When you create a library panel, the panel on the source dashboard is converted to a library panel as well. You need to save the original dashboard once a panel is converted.

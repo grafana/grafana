@@ -583,7 +583,7 @@ func TestGroupingResultsWithFromSyncQueryTrue(t *testing.T) {
 			Name: "fakelog-a1",
 			Fields: []*data.Field{
 				data.NewField("@timestamp", data.Labels{}, []*time.Time{&timeA, &timeB}),
-				data.NewField("count", data.Labels{}, []*string{
+				data.NewField("count", data.Labels{"@log": "fakelog-a", "stream": "1"}, []*string{
 					aws.String("100"),
 					aws.String("57"),
 				}),
@@ -594,7 +594,7 @@ func TestGroupingResultsWithFromSyncQueryTrue(t *testing.T) {
 			Name: "fakelog-b1",
 			Fields: []*data.Field{
 				data.NewField("@timestamp", data.Labels{}, []*time.Time{&timeA, &timeB}),
-				data.NewField("count", data.Labels{}, []*string{
+				data.NewField("count", data.Labels{"@log": "fakelog-b", "stream": "1"}, []*string{
 					aws.String("150"),
 					aws.String("62"),
 				}),

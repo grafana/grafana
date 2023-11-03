@@ -10,4 +10,5 @@ export const receiverTypeNames: Record<string, string> = {
   webex: 'Cisco Webex Teams',
   sns: 'Amazon SNS',
   telegram: 'Telegram',
+  msteams: 'Microsoft Teams',
 };
