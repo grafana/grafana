@@ -686,7 +686,7 @@ describe('LokiDatasource', () => {
       });
 
       it('adds a line filter', () => {
-        const action = { options: { }, type: 'ADD_LINE_FILTER' };
+        const action = { options: {}, type: 'ADD_LINE_FILTER' };
         const result = ds.modifyQuery(query, action);
 
         expect(result.expr).toEqual('{bar="baz"} |= ``');
@@ -708,7 +708,7 @@ describe('LokiDatasource', () => {
       });
 
       it('adds a line filter', () => {
-        const action = { options: { }, type: 'ADD_LINE_FILTER_OUT' };
+        const action = { options: {}, type: 'ADD_LINE_FILTER_OUT' };
         const result = ds.modifyQuery(query, action);
 
         expect(result.expr).toEqual('{bar="baz"} != ``');

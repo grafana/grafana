@@ -316,9 +316,13 @@ describe.each(['|=', '!='])('addLineFilter type %s', (op: string) => {
     expect(addLineFilter('{place="earth"}', 'content', op)).toBe(`{place="earth"} ${op} \`content\``);
   });
   it('Adds a line filter to a metric query', () => {
-    expect(addLineFilter('avg_over_time({place="earth"} [1m])', undefined, op)).toBe(`avg_over_time({place="earth"} ${op} \`\` [1m])`);
+    expect(addLineFilter('avg_over_time({place="earth"} [1m])', undefined, op)).toBe(
+      `avg_over_time({place="earth"} ${op} \`\` [1m])`
+    );
   });
   it('Adds a line filter with a value to a metric query', () => {
-    expect(addLineFilter('avg_over_time({place="earth"} [1m])', 'content', op)).toBe(`avg_over_time({place="earth"} ${op} \`content\` [1m])`);
+    expect(addLineFilter('avg_over_time({place="earth"} [1m])', 'content', op)).toBe(
+      `avg_over_time({place="earth"} ${op} \`content\` [1m])`
+    );
   });
 });
