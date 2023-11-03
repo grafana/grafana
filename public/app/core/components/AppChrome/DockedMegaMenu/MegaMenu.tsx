@@ -60,14 +60,10 @@ export const MegaMenu = React.memo(
                     onClick={state.megaMenu === 'open' ? onClose : undefined}
                     activeItem={activeItem}
                   />
-                  {index === 0 && (
+                  {index === 0 && Boolean(state.megaMenu === 'open') && (
                     <IconButton
                       className={styles.dockMenuButton}
-                      tooltip={
-                        state.megaMenu === 'docked'
-                          ? t('navigation.megamenu.undock', 'Undock menu')
-                          : t('navigation.megamenu.dock', 'Dock menu')
-                      }
+                      tooltip={t('navigation.megamenu.dock', 'Dock menu')}
                       name="web-section-alt"
                       onClick={handleDockedMenu}
                       variant="secondary"
