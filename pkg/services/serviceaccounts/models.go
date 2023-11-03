@@ -85,7 +85,7 @@ type ServiceAccountDTO struct {
 	// example: false
 	IsDisabled bool `json:"isDisabled" xorm:"is_disabled"`
 	// example: false
-	IsExternal bool `json:"isExternal,omitempty" xorm:"-"`
+	IsManaged bool `json:"isManaged,omitempty" xorm:"-"`
 	// example: Viewer
 	Role string `json:"role" xorm:"role"`
 	// example: 0

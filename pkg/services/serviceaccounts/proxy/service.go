@@ -175,7 +175,7 @@ func (s *ServiceAccountsProxy) SearchOrgServiceAccounts(ctx context.Context, que
 
 	if s.isProxyEnabled {
 		for i := range sa.ServiceAccounts {
-			sa.ServiceAccounts[i].IsExternal = isExternalServiceAccount(sa.ServiceAccounts[i].Login)
+			sa.ServiceAccounts[i].IsManaged = isExternalServiceAccount(sa.ServiceAccounts[i].Login)
 		}
 	}
 	return sa, nil

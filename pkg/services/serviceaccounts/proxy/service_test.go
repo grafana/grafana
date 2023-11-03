@@ -164,8 +164,8 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		res, err := svc.SearchOrgServiceAccounts(context.Background(), &serviceaccounts.SearchOrgServiceAccountsQuery{OrgID: 1})
 		require.Len(t, res.ServiceAccounts, 2)
 		require.NoError(t, err)
-		require.False(t, res.ServiceAccounts[0].IsExternal)
-		require.True(t, res.ServiceAccounts[1].IsExternal)
+		require.False(t, res.ServiceAccounts[0].IsManaged)
+		require.True(t, res.ServiceAccounts[1].IsManaged)
 	})
 
 	t.Run("should update service account", func(t *testing.T) {
