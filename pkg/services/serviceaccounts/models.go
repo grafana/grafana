@@ -157,7 +157,7 @@ type ServiceAccountProfileDTO struct {
 	// example: []
 	Teams []string `json:"teams" xorm:"-"`
 	// example: false
-	IsManaged bool `json:"isManaged" xorm:"-"`
+	IsManaged bool `json:"isManaged,omitempty" xorm:"-"`
 
 	Tokens        int64           `json:"tokens,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
