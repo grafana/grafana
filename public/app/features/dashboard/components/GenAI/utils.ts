@@ -86,11 +86,9 @@ export const getFeedbackMessage = (previousResponse: string, feedback: string | 
  * @returns String for inclusion in prompts stating what the dashboard's panels are
  */
 export function getDashboardPanelPrompt(dashboard: DashboardModel): string {
-  const getPanelString = (panel: PanelModel, idx: number) => `
-  - Panel ${idx}\n
-  - Title: ${panel.title}\n
-  ${panel.description ? `- Description: ${panel.description}` : ''}
-  `;
+  const getPanelString = (panel: PanelModel, idx: number) =>
+    `- Panel ${idx}
+- Title: ${panel.title}${panel.description ? `\n- Description: ${panel.description}` : ''}`;
 
   const panelStrings: string[] = dashboard.panels.map(getPanelString);
   let panelPrompt: string;
