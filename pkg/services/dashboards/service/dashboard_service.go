@@ -558,7 +558,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				URI:         "db/" + item.Slug,
 				URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
 				Type:        getHitType(item),
-				FolderID:    item.FolderID,
+				FolderID:    item.FolderID, // nolint:staticcheck
 				FolderUID:   item.FolderUID,
 				FolderTitle: item.FolderTitle,
 				Tags:        []string{},
