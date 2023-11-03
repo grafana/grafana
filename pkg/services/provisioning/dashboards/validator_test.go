@@ -42,6 +42,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
 
 		cfg1 := &config{
@@ -95,6 +96,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
 
 		cfg1 := &config{
@@ -197,6 +199,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg1.Folder)
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
 
 		require.Equal(t, uint8(2), duplicates[1].UIDs["Z-phNqGmz"].Sum)
@@ -214,6 +217,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		folderID, err = r.getOrCreateFolderID(context.Background(), cfg3, fakeService, cfg3.Folder)
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		identity = dashboardIdentity{folderID: folderID, title: "Grafana"}
 
 		require.Equal(t, uint8(2), duplicates[2].UIDs["Z-phNqGmz"].Sum)
