@@ -3,7 +3,7 @@ import { compact, fill } from 'lodash';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SupportedTransformationType } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import {
   Button,
@@ -18,6 +18,8 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+
+import { getSupportedTransTypeDetails, getTransformOptions } from './types';
 
 type Props = { readOnly: boolean };
 
@@ -95,7 +97,7 @@ export const TransformationsEditor = (props: Props) => {
 
                                       const newValueDetails = getSupportedTransTypeDetails(value.value);
 
-                                      if (newValueDetails.showExpression) {
+                                      if (newValueDetails.expressionDetails.show) {
                                         setValue(
                                           `config.transformations.${index}.expression`,
                                           keptVals[index]?.expression || ''
@@ -104,7 +106,7 @@ export const TransformationsEditor = (props: Props) => {
                                         setValue(`config.transformations.${index}.expression`, '');
                                       }
 
-                                      if (newValueDetails.showMapValue) {
+                                      if (newValueDetails.mapValueDetails.show) {
                                         setValue(
                                           `config.transformations.${index}.mapValue`,
                                           keptVals[index]?.mapValue || ''
@@ -160,7 +162,7 @@ export const TransformationsEditor = (props: Props) => {
                               <Label htmlFor={`config.transformations.${fieldVal.id}.expression`}>
                                 Expression
                                 {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                                  .requireExpression
+                                  .expressionDetails.required
                                   ? ' *'
                                   : ''}
                               </Label>
@@ -184,7 +186,7 @@ export const TransformationsEditor = (props: Props) => {
                           <Input
                             {...register(`config.transformations.${index}.expression`, {
                               required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                                .requireExpression
+                                .expressionDetails.required
                                 ? 'Please define an expression'
                                 : undefined,
                             })}
@@ -192,7 +194,7 @@ export const TransformationsEditor = (props: Props) => {
                             readOnly={readOnly}
                             disabled={
                               !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
-                                .showExpression
+                                .expressionDetails.show
                             }
                             id={`config.transformations.${fieldVal.id}.expression`}
                           />
@@ -221,7 +223,8 @@ export const TransformationsEditor = (props: Props) => {
                             defaultValue={fieldVal.mapValue}
                             readOnly={readOnly}
                             disabled={
-                              !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showMapValue
+                              !getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
+                                .mapValueDetails.show
                             }
                             id={`config.transformations.${fieldVal.id}.mapValue`}
                           />
@@ -265,49 +268,4 @@ export const TransformationsEditor = (props: Props) => {
       </FieldArray>
     </>
   );
-};
-
-interface SupportedTransformationTypeDetails {
-  label: string;
-  value: string;
-  description?: string;
-  showExpression: boolean;
-  showMapValue: boolean;
-  requireExpression?: boolean;
-}
-
-function getSupportedTransTypeDetails(transType: SupportedTransformationType): SupportedTransformationTypeDetails {
-  switch (transType) {
-    case SupportedTransformationType.Logfmt:
-      return {
-        label: 'Logfmt',
-        value: SupportedTransformationType.Logfmt,
-        description: 'Parse provided field with logfmt to get variables',
-        showExpression: false,
-        showMapValue: false,
-      };
-    case SupportedTransformationType.Regex:
-      return {
-        label: 'Regular expression',
-        value: SupportedTransformationType.Regex,
-        description:
-          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.',
-        showExpression: true,
-        showMapValue: true,
-        requireExpression: true,
-      };
-    default:
-      return { label: transType, value: transType, showExpression: false, showMapValue: false };
-  }
-}
-
-const getTransformOptions = () => {
-  return Object.values(SupportedTransformationType).map((transformationType) => {
-    const transType = getSupportedTransTypeDetails(transformationType);
-    return {
-      label: transType.label,
-      value: transType.value,
-      description: transType.description,
-    };
-  });
 };

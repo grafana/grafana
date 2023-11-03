@@ -229,6 +229,17 @@ The Grafana Assume Role authentication provider lets Grafana Cloud users of the 
 
 To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
 
+## Create alerts from panels
+
+<!-- Brenda Muir -->
+<!-- OSS, Enterprise from 10.3-->
+
+October 23, 2023
+
+_Generally available in Grafana Cloud_
+
+Create alerts from dashboard panels. You can reuse the panel queries and create alerts based on them.
+
 ## No basic role
 
 <!-- Eric Leijonmarck -->
