@@ -3926,36 +3926,6 @@
         }
       }
     },
-    "/dashboards/trim": {
-      "post": {
-        "tags": [
-          "dashboards"
-        ],
-        "summary": "Trim defaults from dashboard.",
-        "operationId": "trimDashboard",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/TrimDashboardCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/trimDashboardResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/dashboards/uid/{dashboardUid}/public-dashboards": {
       "get": {
         "description": "Get public dashboard by dashboardUid",

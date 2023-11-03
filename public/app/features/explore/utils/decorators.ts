@@ -128,7 +128,7 @@ export const decorateWithCorrelations = ({
               datasourceName: defaultTargetDatasource.name,
               query: { datasource: { uid: defaultTargetDatasource.uid } },
               meta: {
-                correlationData: { resultField: field.name, vars: availableVars },
+                correlationData: { resultField: field.name, vars: availableVars, origVars: availableVars },
               },
             },
           });

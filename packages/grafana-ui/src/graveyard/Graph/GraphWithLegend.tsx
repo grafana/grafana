@@ -6,10 +6,10 @@ import React from 'react';
 import { GraphSeriesValue } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 
+import { CustomScrollbar } from '../../components/CustomScrollbar/CustomScrollbar';
+import { VizLegend } from '../../components/VizLegend/VizLegend';
+import { VizLegendItem } from '../../components/VizLegend/types';
 import { stylesFactory } from '../../themes';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { VizLegend } from '../VizLegend/VizLegend';
-import { VizLegendItem } from '../VizLegend/types';
 
 import { Graph, GraphProps } from './Graph';
 
