@@ -151,13 +151,6 @@ type SearchParams struct {
 	// in:query
 	// required: false
 	DashboardUIDs []string `json:"dashboardUIDs"`
-	// List of folder id’s to search in for dashboards
-	// If it's `0` then it will query for the top level folders
-	// This is deprecated: users should use the `folderUIDs` query parameter instead
-	// in:query
-	// required: false
-	// deprecated: true
-	FolderIds []int64 `json:"folderIds"`
 	// List of folder UID’s to search in for dashboards
 	// If it's an empty string then it will query for the top level folders
 	// in:query
