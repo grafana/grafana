@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -104,15 +103,11 @@ func TestRenderErrorImage(t *testing.T) {
 	})
 }
 
-type unavailableRendererManager struct{}
-
-func (m unavailableRendererManager) Renderer(_ context.Context) *plugins.Plugin { return nil }
-
 func TestRenderUnavailableError(t *testing.T) {
 	rs := RenderingService{
 		Cfg:                   &setting.Cfg{},
 		log:                   log.New("test"),
-		RendererPluginManager: unavailableRendererManager{},
+		RendererPluginManager: &dummyPluginManager{},
 	}
 	opts := Opts{ErrorOpts: ErrorOpts{ErrorRenderUnavailable: true}}
 	result, err := rs.Render(context.Background(), opts, nil)
