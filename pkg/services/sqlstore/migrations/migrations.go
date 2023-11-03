@@ -113,6 +113,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ssosettings.AddMigration(mg)
 
 	ualert.CreateOrgMigratedKVStoreEntries(mg)
+	addPanelMigrations(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
