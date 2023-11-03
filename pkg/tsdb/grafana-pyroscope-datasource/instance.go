@@ -31,6 +31,7 @@ type ProfilingClient interface {
 	LabelValues(ctx context.Context, label string) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
+	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 }
 
 // PyroscopeDatasource is a datasource for querying application performance profiles.

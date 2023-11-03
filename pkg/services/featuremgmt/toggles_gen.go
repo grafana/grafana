@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagTrimDefaults
-	// Use cue schema to remove values that will be applied automatically
-	FlagTrimDefaults = "trimDefaults"
-
 	// FlagDisableEnvelopeEncryption
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
@@ -383,6 +379,10 @@ const (
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 
+	// FlagTraceToProfiles
+	// Enables linking between traces and profiles
+	FlagTraceToProfiles = "traceToProfiles"
+
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
@@ -554,4 +554,12 @@ const (
 	// FlagAnnotationPermissionUpdate
 	// Separate annotation permissions from dashboard permissions to allow for more granular control.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
+
+	// FlagExtractFieldsNameDeduplication
+	// Make sure extracted field names are unique in the dataframe
+	FlagExtractFieldsNameDeduplication = "extractFieldsNameDeduplication"
+
+	// FlagDashboardSceneForViewers
+	// Enables dashboard rendering using Scenes for viewer roles
+	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
 )
