@@ -234,41 +234,41 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
         <form onSubmit={(e) => e.preventDefault()} key={JSON.stringify(defaultValues)}>
           <>
             {!props.hideFolder && (
-              <Field
-                label={
-                  <Label
-                    htmlFor="namespaceName"
-                    description={
-                      !isGrafanaManagedGroup &&
-                      'Change the current namespace name. Moving groups between namespaces is not supported'
-                    }
-                  >
-                    {nameSpaceLabel}
-                  </Label>
-                }
-                invalid={!!errors.namespaceName}
-                error={errors.namespaceName?.message}
-              >
-                <Stack gap={1} direction="row">
+              <Stack gap={1} alignItems={'center'}>
+                <Field
+                  className={styles.formInput}
+                  label={
+                    <Label
+                      htmlFor="namespaceName"
+                      description={
+                        !isGrafanaManagedGroup &&
+                        'Change the current namespace name. Moving groups between namespaces is not supported'
+                      }
+                    >
+                      {nameSpaceLabel}
+                    </Label>
+                  }
+                  invalid={!!errors.namespaceName}
+                  error={errors.namespaceName?.message}
+                >
                   <Input
                     id="namespaceName"
                     readOnly={intervalEditOnly || isGrafanaManagedGroup}
                     {...register('namespaceName', {
                       required: 'Namespace name is required.',
                     })}
-                    className={styles.formInput}
                   />
-                  {isGrafanaManagedGroup && props.folderUrl && (
-                    <LinkButton
-                      href={props.folderUrl}
-                      title="Go to folder"
-                      variant="secondary"
-                      icon="folder-open"
-                      target="_blank"
-                    />
-                  )}
-                </Stack>
-              </Field>
+                </Field>
+                {isGrafanaManagedGroup && props.folderUrl && (
+                  <LinkButton
+                    href={props.folderUrl}
+                    title="Go to folder"
+                    variant="secondary"
+                    icon="folder-open"
+                    target="_blank"
+                  />
+                )}
+              </Stack>
             )}
             <Field
               label={<Label htmlFor="groupName">Evaluation group name</Label>}
