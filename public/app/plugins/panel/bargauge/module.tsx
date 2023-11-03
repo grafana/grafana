@@ -82,7 +82,9 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
           max: 300,
           step: 1,
         },
-        showIf: (options) => options.sizing === BarGaugeSizing.Manual,
+        showIf: (options) =>
+          options.sizing === BarGaugeSizing.Manual &&
+          (options.orientation === VizOrientation.Auto || options.orientation === VizOrientation.Vertical),
       })
       .addSliderInput({
         path: 'minVizHeight',
@@ -94,7 +96,9 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
           max: 300,
           step: 1,
         },
-        showIf: (options) => options.sizing === BarGaugeSizing.Manual,
+        showIf: (options) =>
+          options.sizing === BarGaugeSizing.Manual &&
+          (options.orientation === VizOrientation.Auto || options.orientation === VizOrientation.Horizontal),
       })
       .addSliderInput({
         path: 'maxVizHeight',
@@ -106,7 +110,9 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
           max: 300,
           step: 1,
         },
-        showIf: (options) => options.sizing === BarGaugeSizing.Manual,
+        showIf: (options) =>
+          options.sizing === BarGaugeSizing.Manual &&
+          (options.orientation === VizOrientation.Auto || options.orientation === VizOrientation.Horizontal),
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)
