@@ -509,13 +509,6 @@ type UpdateFolderParams struct {
 	Body folder.UpdateFolderCommand `json:"body"`
 }
 
-// swagger:parameters getFolderByID
-type GetFolderByIDParams struct {
-	// in:path
-	// required:true
-	FolderID int64 `json:"folder_id"`
-}
-
 // swagger:parameters createFolder
 type CreateFolderParams struct {
 	// in:body

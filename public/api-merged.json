@@ -5785,15 +5785,6 @@
         "summary": "Get folder by id.",
         "operationId": "getFolderByID",
         "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "folder_id",
-            "in": "path",
-            "required": true
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/responses/folderResponse"
