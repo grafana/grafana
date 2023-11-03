@@ -51,8 +51,16 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 	// #TODO figure out if there's a better way overall to update the query
 	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) {
 		b.sql.WriteString("\n" + `LEFT OUTER JOIN panel ON dashboard.id = panel.dashid`)
-		// this where clause should come after all joins
-		b.sql.WriteString("\n" + `WHERE panel.title LIKE ?`)
+		b.sql.WriteString("\n")
+
+		// // this where clause should come after all joins
+		if b.Dialect.DriverName() == migrator.MySQL {
+			b.sql.WriteString(`WHERE MATCH(panel.title) AGAINST (? IN NATURAL LANGUAGE MODE)`)
+		} else if b.Dialect.DriverName() == migrator.Postgres {
+			b.sql.WriteString(`WHERE panel.title @@ to_tsquery('english', ?)`)
+		} else {
+			b.sql.WriteString(`WHERE panel.title LIKE ?`)
+		}
 	}
 	b.sql.WriteString("\n")
 	b.sql.WriteString(orderQuery)
