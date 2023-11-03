@@ -1,6 +1,6 @@
 import React, { FormEvent, useCallback, useEffect, useState, useRef } from 'react';
 
-import { ClickOutsideWrapper, HorizontalGroup, Spinner } from '@grafana/ui';
+import { ClickOutsideWrapper, useTheme2 } from '@grafana/ui';
 import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
@@ -24,6 +24,7 @@ export interface Props {
    */
   apply?: boolean;
   maxWidth?: string | number;
+  width?: string | number;
 }
 
 export const RolePicker = ({
@@ -40,6 +41,7 @@ export const RolePicker = ({
   canUpdateRoles = true,
   apply = false,
   maxWidth = ROLE_PICKER_WIDTH,
+  width,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
@@ -47,6 +49,8 @@ export const RolePicker = ({
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
   const ref = useRef<HTMLDivElement>(null);
+  const theme = useTheme2();
+  const widthPx = typeof width === 'number' ? theme.spacing(width) : width;
 
   useEffect(() => {
     setSelectedBuiltInRole(basicRole);
@@ -146,21 +150,13 @@ export const RolePicker = ({
     return options;
   };
 
-  if (isLoading) {
-    return (
-      <HorizontalGroup justify="center">
-        <span>Loading...</span>
-        <Spinner size={16} />
-      </HorizontalGroup>
-    );
-  }
-
   return (
     <div
       data-testid="role-picker"
       style={{
         position: 'relative',
-        maxWidth,
+        maxWidth: widthPx || maxWidth,
+        width: widthPx,
       }}
       ref={ref}
     >
@@ -175,6 +171,8 @@ export const RolePicker = ({
           isFocused={isOpen}
           disabled={disabled}
           showBasicRole={showBasicRole}
+          width={widthPx}
+          isLoading={isLoading}
         />
         {isOpen && (
           <RolePickerMenu

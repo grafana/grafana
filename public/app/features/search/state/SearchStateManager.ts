@@ -57,7 +57,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
 
-    if (doInitialSearch) {
+    if (doInitialSearch && this.hasSearchFilters()) {
       this.doSearch();
     }
   }
@@ -81,8 +81,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       sort: this.state.sort,
     });
 
-    // issue new search query
-    this.doSearchWithDebounce();
+    // Prevent searching when user is only clearing the input.
+    // We don't show these results anyway
+    if (this.hasSearchFilters()) {
+      this.doSearchWithDebounce();
+    }
   }
 
   onCloseSearch = () => {

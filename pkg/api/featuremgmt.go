@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -36,6 +37,9 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 		}
 
 		dtos = append(dtos, dto)
+		sort.Slice(dtos, func(i, j int) bool {
+			return dtos[i].Name < dtos[j].Name
+		})
 	}
 
 	return response.JSON(http.StatusOK, dtos)

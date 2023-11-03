@@ -66,9 +66,19 @@ export const ManualEditor = ({
       <div className={style.marginBot}>
         {value.map((series, index) => {
           return (
-            // TODO: fix keyboard a11y
-            // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-            <div key={`series/${index}`} className={getRowStyle(index)} onMouseDown={() => setSelected(index)}>
+            <div
+              key={`series/${index}`}
+              className={getRowStyle(index)}
+              onClick={() => setSelected(index)}
+              role="button"
+              aria-label={`Select series ${index + 1}`}
+              tabIndex={0}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  setSelected(index);
+                }
+              }}
+            >
               <LayerName
                 name={series.name ?? `Series ${index + 1}`}
                 onChange={(v) => onFieldChange(v, index, 'name')}

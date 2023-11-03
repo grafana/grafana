@@ -94,7 +94,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with library panels inside and outside of rows, it should connect all",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.CreateLibraryElementCommand{
-				FolderID: sc.initialResult.Result.FolderID,
+				FolderID: sc.initialResult.Result.FolderID, // nolint:staticcheck
 				Name:     "Outside row",
 				Model: []byte(`
 			{
@@ -233,7 +233,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with unused/removed library panels, it should disconnect unused/removed library panels",
 		func(t *testing.T, sc scenarioContext) {
 			unused, err := sc.elementService.CreateElement(sc.ctx, sc.user, model.CreateLibraryElementCommand{
-				FolderID: sc.folder.ID,
+				FolderID: sc.folder.ID, // nolint:staticcheck
 				Name:     "Unused Libray Panel",
 				Model: []byte(`
 			{
@@ -762,7 +762,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := model.CreateLibraryElementCommand{
-			FolderID: sc.folder.ID,
+			FolderID: sc.folder.ID, // nolint:staticcheck
 			Name:     "Text - Library Panel",
 			Model: []byte(`
 			{
