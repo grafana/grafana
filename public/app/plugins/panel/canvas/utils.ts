@@ -197,8 +197,8 @@ export const calculateCoordinates = (
   const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
 
   // Convert from connection coords to DOM coords
-  const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2 / transformScale;
-  const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2 / transformScale;
+  const x1 = (sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2) / transformScale;
+  const y1 = (sourceVerticalCenter - (info.source.y * sourceRect.height) / 2) / transformScale;
 
   let x2: number;
   let y2: number;
