@@ -10,12 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "trimDefaults",
-			Description: "Use cue schema to remove values that will be applied automatically",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAsCodeSquad,
-		},
-		{
 			Name:        "disableEnvelopeEncryption",
 			Description: "Disable envelope encryption (emergency only)",
 			Stage:       FeatureStageGeneralAvailability,
@@ -234,7 +228,7 @@ var (
 			Name:        "accessControlOnCall",
 			Description: "Access control primitives for OnCall",
 			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:        "nestedFolders",
@@ -254,7 +248,7 @@ var (
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:         "emptyDashboardPage",
@@ -323,7 +317,7 @@ var (
 			Name:        "gcomOnlyExternalOrgRoleSync",
 			Description: "Prohibits a user from changing organization roles synced with Grafana Cloud auth provider",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
@@ -345,7 +339,7 @@ var (
 			Name:        "clientTokenRotation",
 			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAuthnzSquad,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:        "prometheusDataplane",
@@ -424,7 +418,7 @@ var (
 			Description:     "Starts an OAuth2 authentication provider for external services",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAccessTeam,
 		},
 		{
 			Name:        "refactorVariablesTimeRange",
@@ -643,7 +637,7 @@ var (
 			Description:     "Support faster dashboard and folder search by splitting permission scopes into parts",
 			Stage:           FeatureStagePublicPreview,
 			FrontendOnly:    false,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAccessTeam,
 			RequiresRestart: true,
 		},
 		{
@@ -652,6 +646,13 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // on by default
+		},
+		{
+			Name:         "traceToProfiles",
+			Description:  "Enables linking between traces and profiles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:        "permissionsFilterRemoveSubquery",
@@ -690,6 +691,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Enabled:         true,
 		},
 		{
 			Name:         "angularDeprecationUI",
@@ -797,7 +799,7 @@ var (
 			Name:            "idForwarding",
 			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAccessTeam,
 			RequiresDevMode: true,
 		},
 		{
@@ -812,7 +814,7 @@ var (
 			Description:     "Automatic service account and token setup for plugins",
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: true,
-			Owner:           grafanaAuthnzSquad,
+			Owner:           identityAccessTeam,
 		},
 		{
 			Name:         "panelMonitoring",
@@ -850,6 +852,13 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:            "kubernetesPlaylistsAPI",
+			Description:     "Route /api/playlist API to k8s handlers",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -875,7 +884,7 @@ var (
 			Description:  "Enables datasources to apply team headers to the client requests",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
-			Owner:        grafanaAuthnzSquad,
+			Owner:        identityAccessTeam,
 		},
 		{
 			Name:         "awsDatasourcesNewFormStyling",
@@ -925,6 +934,60 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "addFieldFromCalculationStatFunctions",
+			Description:  "Add cumulative and window functions to the add field from calculation transformation",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteSecondary",
+			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemotePrimary",
+			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertmanagerRemoteOnly",
+			Description: "Disable the internal Alertmanager and only use the external one defined.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:            "annotationPermissionUpdate",
+			Description:     "Separate annotation permissions from dashboard permissions to allow for more granular control.",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: false,
+			Owner:           identityAccessTeam,
+		},
+		{
+			Name:         "extractFieldsNameDeduplication",
+			Description:  "Make sure extracted field names are unique in the dataframe",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "dashboardSceneForViewers",
+			Description:  "Enables dashboard rendering using Scenes for viewer roles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "panelFilterVariable",
+			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
 		},
 	}
 )

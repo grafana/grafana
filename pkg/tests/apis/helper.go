@@ -127,7 +127,16 @@ func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
 func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	c.t.Helper()
 
-	copy := v.DeepCopy().Object
+	deep := v.DeepCopy()
+	anno := deep.GetAnnotations()
+	if anno["grafana.app/originKey"] != "" {
+		anno["grafana.app/originKey"] = "${originKey}"
+	}
+	if anno["grafana.app/updatedTimestamp"] != "" {
+		anno["grafana.app/updatedTimestamp"] = "${updatedTimestamp}"
+	}
+	deep.SetAnnotations(anno)
+	copy := deep.Object
 	meta, ok := copy["metadata"].(map[string]any)
 	require.True(c.t, ok)
 
@@ -140,6 +149,7 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	}
 
 	out, err := json.MarshalIndent(copy, "", "  ")
+	//fmt.Printf("%s", out)
 	require.NoError(c.t, err)
 	return string(out)
 }

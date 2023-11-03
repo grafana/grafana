@@ -14,7 +14,7 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/example/v0alpha1.DummyResource":     schema_pkg_apis_example_v0alpha1_DummyResource(ref),
 		"github.com/grafana/grafana/pkg/apis/example/v0alpha1.DummyResourceList": schema_pkg_apis_example_v0alpha1_DummyResourceList(ref),
