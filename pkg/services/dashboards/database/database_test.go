@@ -897,7 +897,8 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc           string
+		desc string
+		// Deprecated: use FolderUID instead
 		folderIDs      []int64
 		folderUIDs     []string
 		query          string
@@ -906,7 +907,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	}{
 		{
 			desc:      "find dashboard under general using folder id",
-			folderIDs: []int64{0},
+			folderIDs: []int64{0}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"":                            {{title: "dashboard under general"}},
@@ -915,7 +916,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under general using folder id",
-			folderIDs: []int64{0},
+			folderIDs: []int64{0}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"":                            {{title: "dashboard under general"}},
@@ -924,7 +925,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under f0 using folder id",
-			folderIDs: []int64{f0.ID},
+			folderIDs: []int64{f0.ID}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title}},
@@ -932,7 +933,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under f0 or f1 using folder id",
-			folderIDs: []int64{f0.ID, f1.ID},
+			folderIDs: []int64{f0.ID, f1.ID}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
@@ -981,7 +982,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under general or f0 using folder id",
-			folderIDs: []int64{0, f0.ID},
+			folderIDs: []int64{0, f0.ID}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
@@ -992,7 +993,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under general or f0 or f1 using folder id",
-			folderIDs: []int64{0, f0.ID, f1.ID},
+			folderIDs: []int64{0, f0.ID, f1.ID}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
@@ -1046,7 +1047,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 				res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
 					SignedInUser: user,
 					Type:         tc.typ,
-					FolderIds:    tc.folderIDs,
+					FolderIds:    tc.folderIDs, // nolint:staticcheck
 					FolderUIDs:   tc.folderUIDs,
 				})
 				require.NoError(t, err)
