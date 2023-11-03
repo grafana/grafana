@@ -1906,13 +1906,13 @@ describe('DashboardModel', () => {
               },
             ],
           },
+          // @ts-expect-error
           {
             type: 'row',
             id: 5,
             panels: [
               {
                 id: 6,
-                // @ts-expect-error
                 datasource: 'prom',
               },
             ],
