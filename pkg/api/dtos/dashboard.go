@@ -51,11 +51,6 @@ type DashboardFullWithMeta struct {
 	Dashboard *simplejson.Json `json:"dashboard"`
 }
 
-type TrimDashboardFullWithMeta struct {
-	Meta      *simplejson.Json `json:"meta"`
-	Dashboard *simplejson.Json `json:"dashboard"`
-}
-
 type DashboardRedirect struct {
 	RedirectUri string `json:"redirectUri"`
 }

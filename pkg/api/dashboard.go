@@ -68,32 +68,6 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(http.StatusForbidden, "Access denied to this dashboard", nil)
 }
 
-// swagger:route POST /dashboards/trim dashboards trimDashboard
-//
-// Trim defaults from dashboard.
-//
-// Responses:
-// 200: trimDashboardResponse
-// 401: unauthorisedError
-// 500: internalServerError
-func (hs *HTTPServer) TrimDashboard(c *contextmodel.ReqContext) response.Response {
-	cmd := dashboards.TrimDashboardCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	dash := cmd.Dashboard
-	meta := cmd.Meta
-
-	// TODO temporarily just return the input as a no-op while we convert to thema calls
-	dto := dtos.TrimDashboardFullWithMeta{
-		Dashboard: dash,
-		Meta:      meta,
-	}
-
-	c.TimeRequest(metrics.MApiDashboardGet)
-	return response.JSON(http.StatusOK, dto)
-}
-
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
 //
 // Get dashboard by uid.
@@ -521,12 +495,13 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"status":  "success",
-		"slug":    dashboard.Slug,
-		"version": dashboard.Version,
-		"id":      dashboard.ID,
-		"uid":     dashboard.UID,
-		"url":     dashboard.GetURL(),
+		"status":    "success",
+		"slug":      dashboard.Slug,
+		"version":   dashboard.Version,
+		"id":        dashboard.ID,
+		"uid":       dashboard.UID,
+		"url":       dashboard.GetURL(),
+		"folderUid": dashboard.FolderUID,
 	})
 }
 
@@ -1232,13 +1207,6 @@ type CalcDashboardDiffParams struct {
 	}
 }
 
-// swagger:parameters trimDashboard
-type TrimDashboardParams struct {
-	// in:body
-	// required:true
-	Body dashboards.TrimDashboardCommand
-}
-
 // swagger:response dashboardResponse
 type DashboardResponse struct {
 	// The response message
@@ -1301,6 +1269,10 @@ type PostDashboardResponse struct {
 		// required: true
 		// example: /d/nHz3SXiiz/my-dashboard
 		URL string `json:"url"`
+
+		// FolderUID The unique identifier (uid) of the folder the dashboard belongs to.
+		// required: false
+		FolderUID string `json:"folderUid"`
 	} `json:"body"`
 }
 
@@ -1308,12 +1280,6 @@ type PostDashboardResponse struct {
 type CalculateDashboardDiffResponse struct {
 	// in: body
 	Body []byte `json:"body"`
-}
-
-// swagger:response trimDashboardResponse
-type TrimDashboardResponse struct {
-	// in: body
-	Body dtos.TrimDashboardFullWithMeta `json:"body"`
 }
 
 // swagger:response getHomeDashboardResponse

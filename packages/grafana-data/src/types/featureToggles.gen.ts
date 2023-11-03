@@ -18,7 +18,6 @@
  * @public
  */
 export interface FeatureToggles {
-  trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
@@ -112,6 +111,7 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   azureMonitorDataplane?: boolean;
+  traceToProfiles?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -155,4 +155,6 @@ export interface FeatureToggles {
   alertmanagerRemotePrimary?: boolean;
   alertmanagerRemoteOnly?: boolean;
   annotationPermissionUpdate?: boolean;
+  extractFieldsNameDeduplication?: boolean;
+  dashboardSceneForViewers?: boolean;
 }

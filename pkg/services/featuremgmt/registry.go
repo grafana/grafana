@@ -10,12 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "trimDefaults",
-			Description: "Use cue schema to remove values that will be applied automatically",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAsCodeSquad,
-		},
-		{
 			Name:        "disableEnvelopeEncryption",
 			Description: "Disable envelope encryption (emergency only)",
 			Stage:       FeatureStageGeneralAvailability,
@@ -654,6 +648,13 @@ var (
 			Expression:  "true", // on by default
 		},
 		{
+			Name:         "traceToProfiles",
+			Description:  "Enables linking between traces and profiles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
@@ -958,6 +959,20 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresDevMode: false,
 			Owner:           grafanaAuthnzSquad,
+		},
+		{
+			Name:         "extractFieldsNameDeduplication",
+			Description:  "Make sure extracted field names are unique in the dataframe",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "dashboardSceneForViewers",
+			Description:  "Enables dashboard rendering using Scenes for viewer roles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )
