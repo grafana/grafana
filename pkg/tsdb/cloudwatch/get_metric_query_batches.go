@@ -52,15 +52,13 @@ func findQueriesReferencedByMathQueries(mathQueries []string, queryLookupById ma
 	isReferenced := make(map[string]bool)
 	for _, mathQuery := range mathQueries {
 		substrings := nonWordRegex.Split(queryLookupById[mathQuery].Expression, -1) // i think here we could have instead stored the query in mathQueries?
-		references := []string{}
 		for _, id := range substrings {
 			_, found := queryLookupById[id]
 			if found {
-				references = append(references, id)
+				groupOfReferencedQueries[mathQuery] = append(groupOfReferencedQueries[mathQuery], id)
 				isReferenced[id] = true
 			}
 		}
-		groupOfReferencedQueries[mathQuery] = references
 	}
 	return groupOfReferencedQueries, isReferenced
 }
