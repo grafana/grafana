@@ -39,7 +39,10 @@ export class AppChromeService {
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     megaMenu:
-      config.featureToggles.dockedMegaMenu && store.getBool(DOCKED_LOCAL_STORAGE_KEY, false) ? 'docked' : 'closed',
+      config.featureToggles.dockedMegaMenu &&
+      store.getBool(DOCKED_LOCAL_STORAGE_KEY, window.innerWidth >= config.theme2.breakpoints.values.xxl)
+        ? 'docked'
+        : 'closed',
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     history: [],
