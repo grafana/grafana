@@ -20,14 +20,14 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 
 	logger.Debug("Separating queries into batches")
 
-	queryLookupById, mathQueries := getQueryLookupAndMathQueries(queries)
+	queryLookupById, mathQueries := initializeQueryLookupAndMathQueries(queries)
 
-	groupOfReferencedQueries, isReferenced := findQueriesReferencedByMathQueries(mathQueries, queryLookupById)
+	queriesReferencedByMathQueries, queriesWhichAreReferenced := getQueriesReferencedByMathQueries(mathQueries, queryLookupById)
 
-	return createGroupForEveryQueryNotReferencedInAnotherQuery(queryLookupById, isReferenced, groupOfReferencedQueries)
+	return createGroupsByQueriesNotReferencedInAnotherQuery(queryLookupById, queriesWhichAreReferenced, queriesReferencedByMathQueries)
 }
 
-func getQueryLookupAndMathQueries(queries []*models.CloudWatchQuery) (map[string]*models.CloudWatchQuery, []string) {
+func initializeQueryLookupAndMathQueries(queries []*models.CloudWatchQuery) (map[string]*models.CloudWatchQuery, []string) {
 	queryLookupById := make(map[string]*models.CloudWatchQuery)
 	for _, q := range queries {
 		queryLookupById[q.Id] = q
@@ -42,31 +42,31 @@ func getQueryLookupAndMathQueries(queries []*models.CloudWatchQuery) (map[string
 	return queryLookupById, mathQueries
 }
 
-func createGroupForEveryQueryNotReferencedInAnotherQuery(queries map[string]*models.CloudWatchQuery,
-	isReferenced map[string]bool, groupOfReferencedQueries map[string][]string) [][]*models.CloudWatchQuery {
+func createGroupsByQueriesNotReferencedInAnotherQuery(queries map[string]*models.CloudWatchQuery,
+	queriesWhichAreReferenced map[string]bool, groupOfReferencedQueries map[string][]string) [][]*models.CloudWatchQuery {
 	batches := [][]*models.CloudWatchQuery{}
 	for _, query := range queries {
-		if _, ok := isReferenced[query.Id]; !ok {
+		if _, ok := queriesWhichAreReferenced[query.Id]; !ok {
 			batches = append(batches, getReferencedQueries(queries, groupOfReferencedQueries, query.Id))
 		}
 	}
 	return batches
 }
 
-func findQueriesReferencedByMathQueries(mathQueries []string, queryLookupById map[string]*models.CloudWatchQuery) (map[string][]string, map[string]bool) {
-	groupOfReferencedQueries := make(map[string][]string)
+func getQueriesReferencedByMathQueries(mathQueries []string, queryLookupById map[string]*models.CloudWatchQuery) (map[string][]string, map[string]bool) {
+	queriesReferencedByMathQueries := make(map[string][]string)
 	isReferenced := make(map[string]bool)
 	for _, mathQuery := range mathQueries {
 		substrings := nonWordRegex.Split(queryLookupById[mathQuery].Expression, -1) // i think here we could have instead stored the query in mathQueries?
 		for _, id := range substrings {
 			_, found := queryLookupById[id]
 			if found {
-				groupOfReferencedQueries[mathQuery] = append(groupOfReferencedQueries[mathQuery], id)
+				queriesReferencedByMathQueries[mathQuery] = append(queriesReferencedByMathQueries[mathQuery], id)
 				isReferenced[id] = true
 			}
 		}
 	}
-	return groupOfReferencedQueries, isReferenced
+	return queriesReferencedByMathQueries, isReferenced
 }
 
 // getReferencedQueries gets all the queries referenced by rootQuery and its referenced queries
