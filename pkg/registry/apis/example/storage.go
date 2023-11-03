@@ -1,4 +1,4 @@
-package v0alpha1
+package example
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,12 +21,12 @@ var (
 )
 
 type staticStorage struct {
-	info RuntimeInfo
+	info example.RuntimeInfo
 }
 
 func newDeploymentInfoStorage() *staticStorage {
 	return &staticStorage{
-		info: RuntimeInfo{
+		info: example.RuntimeInfo{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: APIVersion,
 				Kind:       "DeploymentInfo",
@@ -43,7 +44,7 @@ func newDeploymentInfoStorage() *staticStorage {
 }
 
 func (s *staticStorage) New() runtime.Object {
-	return &RuntimeInfo{}
+	return &example.RuntimeInfo{}
 }
 
 func (s *staticStorage) Destroy() {}
@@ -57,7 +58,7 @@ func (s *staticStorage) GetSingularName() string {
 }
 
 func (s *staticStorage) NewList() runtime.Object {
-	return &RuntimeInfo{}
+	return &example.RuntimeInfo{}
 }
 
 func (s *staticStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {

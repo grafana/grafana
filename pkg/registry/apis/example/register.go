@@ -1,11 +1,9 @@
-package v0alpha1
+package example
 
 import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,6 +17,10 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
 // GroupName is the group name for this API.
@@ -68,7 +70,7 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 }
 
 func (b *TestingAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return getOpenAPIDefinitions
+	return example.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
@@ -188,7 +190,7 @@ var (
 // Adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&RuntimeInfo{},
+		&example.RuntimeInfo{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
