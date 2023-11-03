@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
+import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
+import { useCanSilence } from '../components/rules/RuleDetailsActionButtons';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions } from '../utils/access-control';
 
@@ -49,6 +51,11 @@ export enum AlertmanagerAction {
   DeleteMuteTiming = 'delete-mute-timing',
 }
 
+/**
+ * The difference between "AlertSourceAction" and "AlertRuleAction" comes down to
+ * checking if we have either permissions to update "any" rules (use AlertSourceAction)
+ * or permissions to update a _single_ rule (use AlertRuleAction).
+ */
 export enum AlertSourceAction {
   // internal (Grafana managed)
   CreateAlertRule = 'create-alert-rule',
@@ -62,15 +69,22 @@ export enum AlertSourceAction {
   DeleteExternalAlertRule = 'delete-external-alert-rule',
 }
 
+export enum AlertRuleAction {
+  // internal (Grafana managed)
+  ViewAlertRule = 'view-alert-rule',
+  UpdateAlertRule = 'update-alert-rule',
+  DeleteAlertRule = 'delete-alert-rule',
+  SilenceAlertRule = 'silence-alert-rule',
+  ExploreRule = 'explore-alert-rule',
+}
+
 const AlwaysSupported = true; // this just makes it easier to understand the code
-export type Action = AlertmanagerAction | AlertSourceAction;
+export type Action = AlertmanagerAction | AlertSourceAction | AlertRuleAction;
 
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
 export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
-  // TODO add the "supported" booleans here, we currently only do authorization
-
   const abilities: Abilities<AlertSourceAction> = {
     // -- Grafana managed alert rules --
     [AlertSourceAction.CreateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleCreate)],
@@ -95,6 +109,34 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
       AlwaysSupported,
       ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
+  };
+
+  return abilities;
+}
+
+/**
+ * This hook will check if we have sufficient permissions for actions on a single alert rule
+ */
+export function useAlertRuleAbility(rulesSource: RulesSource, rule: CombinedRule, action: AlertRuleAction): Ability {
+  const abilities = useAllAlertRuleAbilities(rulesSource, rule);
+
+  return useMemo(() => {
+    return abilities[action];
+  }, [abilities, action]);
+}
+
+export function useAllAlertRuleAbilities(rulesSource: RulesSource, rule: CombinedRule): Abilities<AlertRuleAction> {
+  // we have to check for both alert source abilities and specific alert rule abilities
+  const alertSourceAbilities = useAlertSourceAbilities();
+
+  const [silenceSupported, silenceAllowed] = useCanSilence(rulesSource);
+
+  const abilities: Abilities<AlertRuleAction> = {
+    [AlertRuleAction.ViewAlertRule]: [false, false],
+    [AlertRuleAction.UpdateAlertRule]: [false, false],
+    [AlertRuleAction.DeleteAlertRule]: [false, false],
+    [AlertRuleAction.SilenceAlertRule]: [silenceSupported, silenceAllowed],
+    [AlertRuleAction.ExploreRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.DataSourcesExplore)],
   };
 
   return abilities;

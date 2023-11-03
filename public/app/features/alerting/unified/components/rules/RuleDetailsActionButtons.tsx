@@ -24,13 +24,19 @@ import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-ale
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { deleteRuleAction } from '../../state/actions';
 import { getRulesPermissions } from '../../utils/access-control';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
-import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
+import {
+  getRulesSourceName,
+  GRAFANA_RULES_SOURCE_NAME,
+  isCloudRulesSource,
+  isGrafanaRulesSource,
+} from '../../utils/datasource';
 import {
   createExploreLink,
   createShareLink,
@@ -68,7 +74,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
     ? rulesSource
     : getAlertmanagerByUid(rulesSource.jsonData.alertmanagerUid)?.name;
 
-  const hasExplorePermission = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const [exploreSupported, exploreAllowed] = useAlertRuleAbility(rulesSource, rule, AlertRuleAction.ExploreRule);
 
   const buttons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
@@ -97,14 +103,17 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const rulesPermissions = getRulesPermissions(rulesSourceName);
   const hasCreateRulePermission = contextSrv.hasPermission(rulesPermissions.create);
   const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
-  const canSilence = useCanSilence(rule);
+
+  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rulesSource, rule, AlertRuleAction.SilenceAlertRule);
+  const [editSupported, editAllowed] = useAlertRuleAbility(rulesSource, rule, AlertRuleAction.UpdateAlertRule);
+  const canSilence = silenceSupported && silenceAllowed;
 
   const buildShareUrl = () => createShareLink(rulesSource, rule);
 
   const returnTo = location.pathname + location.search;
   // explore does not support grafana rule queries atm
   // neither do "federated rules"
-  if (isCloudRulesSource(rulesSource) && hasExplorePermission && !isFederated) {
+  if (isCloudRulesSource(rulesSource) && exploreSupported && exploreAllowed && !isFederated) {
     buttons.push(
       <LinkButton
         size="sm"
@@ -327,25 +336,30 @@ function shouldShowDeclareIncidentButton() {
  * We don't want to show the silence button if either
  * 1. the user has no permissions to create silences
  * 2. the admin has configured to only send instances to external AMs
+ *
+ * TODO move this function to some utils
  */
-function useCanSilence(rule: CombinedRule) {
-  const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
+export function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
+  const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
 
   const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
   const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
     skip: !isGrafanaManagedRule,
   });
 
+  // we don't support silencing when the rule is not a Grafana managed rule
+  // we simply don't know what Alertmanager the ruler is sending alerts to
   if (!isGrafanaManagedRule || isLoading) {
-    return false;
+    return [false, false];
   }
 
   const hasPermissions = contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate);
 
   const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
+  const silenceSupported = !interactsOnlyWithExternalAMs || interactsWithAll;
 
-  return hasPermissions && (!interactsOnlyWithExternalAMs || interactsWithAll);
+  return [silenceSupported, hasPermissions];
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
