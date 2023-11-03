@@ -3,8 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { useStyles2, Stack } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
 import { LOGS_METRIC, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
@@ -28,20 +27,20 @@ export function DataTrailCard({ trail, onSelect }: Props) {
   return (
     <button className={styles.container} onClick={() => onSelect(trail)}>
       <div className={styles.heading}>{getMetricName(trail.state.metric)}</div>
-      <Flex gap={1.5}>
+      <Stack gap={1.5}>
         {dsValue && (
-          <Flex direction="column" gap={0.5}>
+          <Stack direction="column" gap={0.5}>
             <div className={styles.label}>Datasource</div>
             <div className={styles.value}>{getDataSource(trail)}</div>
-          </Flex>
+          </Stack>
         )}
         {filters.map((filter, index) => (
-          <Flex key={index} direction="column" gap={0.5}>
+          <Stack key={index} direction="column" gap={0.5}>
             <div className={styles.label}>{filter.key}</div>
             <div className={styles.value}>{filter.value}</div>
-          </Flex>
+          </Stack>
         ))}
-      </Flex>
+      </Stack>
     </button>
   );
 }

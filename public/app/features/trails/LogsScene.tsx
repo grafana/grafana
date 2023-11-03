@@ -13,8 +13,7 @@ import {
   PanelBuilders,
 } from '@grafana/scenes';
 import { GraphDrawStyle, StackingMode } from '@grafana/schema';
-import { Icon, Input, ToolbarButton } from '@grafana/ui';
-import { Box, Flex } from '@grafana/ui/src/unstable';
+import { Icon, Input, ToolbarButton, Stack, Box } from '@grafana/ui';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import {
@@ -99,7 +98,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
 
     return (
       <Box paddingY={1}>
-        <Flex gap={2}>
+        <Stack gap={2}>
           {actionViewsDefinitions.map((viewDef) => (
             <ToolbarButton
               key={viewDef.value}
@@ -113,14 +112,14 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
           <ToolbarButton variant={'canvas'}>Related metrics</ToolbarButton>
           <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
           <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore" />
-          <ToolbarButton variant={'canvas'} icon="star" />
+          <ToolbarButton variant={'canvas'} icon="star" tooltip="Bookmark" />
           <ToolbarButton variant={'canvas'} icon="share-alt" />
           {trail.state.embedded && (
             <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
               Open
             </ToolbarButton>
           )}
-        </Flex>
+        </Stack>
       </Box>
     );
   };

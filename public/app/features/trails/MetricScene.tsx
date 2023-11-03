@@ -11,8 +11,7 @@ import {
   SceneObjectUrlValues,
   PanelBuilders,
 } from '@grafana/scenes';
-import { ToolbarButton } from '@grafana/ui';
-import { Box, Flex } from '@grafana/ui/src/unstable';
+import { ToolbarButton, Box, Stack } from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
@@ -108,7 +107,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
 
     return (
       <Box paddingY={1}>
-        <Flex gap={2}>
+        <Stack gap={2}>
           {actionViewsDefinitions.map((viewDef) => (
             <ToolbarButton
               key={viewDef.value}
@@ -127,7 +126,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
               Open
             </ToolbarButton>
           )}
-        </Flex>
+        </Stack>
       </Box>
     );
   };

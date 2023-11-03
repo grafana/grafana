@@ -26,6 +26,9 @@ import {
 } from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
+// Omitting 1m, 1h, 1d for now, as these cover the main use cases for calendar_interval
+export const calendarIntervals: string[] = ['1w', '1M', '1q', '1y'];
+
 export class ElasticQueryBuilder {
   timeField: string;
 
@@ -100,7 +103,6 @@ export class ElasticQueryBuilder {
   getDateHistogramAgg(aggDef: DateHistogram) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
-    const calendarIntervals: string[] = ['1w', '1M', '1q', '1y'];
 
     esAgg.field = aggDef.field || this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;

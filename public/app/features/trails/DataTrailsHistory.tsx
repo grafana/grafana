@@ -11,8 +11,7 @@ import {
   SceneObjectStateChangedEvent,
   SceneTimeRange,
 } from '@grafana/scenes';
-import { useStyles2, Tooltip } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
 import { DataTrail, DataTrailState } from './DataTrail';
 import { VAR_FILTERS } from './shared';
@@ -85,10 +84,10 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
   renderStepTooltip(step: DataTrailHistoryStep) {
     return (
-      <Flex direction="column">
+      <Stack direction="column">
         <div>{step.type}</div>
         {step.type === 'metric' && <div>{step.trailState.metric}</div>}
-      </Flex>
+      </Stack>
     );
   }
 

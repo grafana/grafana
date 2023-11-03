@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneTimeRange } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneTimeRangeLike } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import { PromVisualQuery } from 'app/plugins/datasource/prometheus/querybuilder/types';
@@ -13,7 +13,7 @@ import { getDataTrailsApp } from './DataTrailsApp';
 import { OpenEmbeddedTrailEvent } from './shared';
 
 interface DataTrailDrawerState extends SceneObjectState {
-  timeRange: SceneTimeRange;
+  timeRange: SceneTimeRangeLike;
   query: PromVisualQuery;
   dsRef: DataSourceRef;
 }

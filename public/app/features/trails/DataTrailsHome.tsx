@@ -3,9 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2, Stack } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
-import { Flex } from '@grafana/ui/src/unstable';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
@@ -58,19 +57,19 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
     return (
       <div className={styles.container}>
-        <Flex direction="column" gap={1}>
+        <Stack direction="column" gap={1}>
           <Text variant="h2">Data trails</Text>
           <Text color="secondary">Automatically query, explore and navigate your observability data</Text>
-        </Flex>
-        <Flex gap={2}>
+        </Stack>
+        <Stack gap={2}>
           <Button icon="plus" size="lg" variant="secondary" onClick={model.onNewMetricsTrail}>
             New metric trail
           </Button>
           <Button icon="plus" size="lg" variant="secondary" onClick={model.onNewLogsTrail}>
             New logs trail
           </Button>
-        </Flex>
-        <Flex gap={4}>
+        </Stack>
+        <Stack gap={4}>
           <div className={styles.column}>
             <Text variant="h4">Recent trails</Text>
             <div className={styles.trailList}>
@@ -88,7 +87,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               ))}
             </div>
           </div>
-        </Flex>
+        </Stack>
       </div>
     );
   };

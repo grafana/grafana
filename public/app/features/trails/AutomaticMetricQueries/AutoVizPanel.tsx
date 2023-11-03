@@ -3,8 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, VizPanel } from '@grafana/scenes';
-import { Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { Flex } from '@grafana/ui/src/unstable';
+import { Field, RadioButtonGroup, useStyles2, Stack } from '@grafana/ui';
 
 import { getTrailSettings } from '../utils';
 
@@ -68,11 +67,11 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
 
     return (
       <div className={styles.wrapper}>
-        <Flex gap={2}>
+        <Stack gap={2}>
           <Field label="Query">
             <div>{queryDef && queryDef.queries.map((query, index) => <div key={index}>{query.expr}</div>)}</div>
           </Field>
-        </Flex>
+        </Stack>
         <div className={styles.panel}>
           <panel.Component model={panel} />
         </div>

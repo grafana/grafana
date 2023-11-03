@@ -1,8 +1,10 @@
-import { PanelMenuItem } from '@grafana/data';
+import { InterpolateFunction, PanelMenuItem } from '@grafana/data';
 import { getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
-import { VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
+import { PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
+import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { DataTrailDrawer } from 'app/features/trails/DataTrailDrawer';
 import { buildVisualQueryFromString } from 'app/plugins/datasource/prometheus/querybuilder/parsing';
 
@@ -11,6 +13,7 @@ import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPan
 import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
+import { VizPanelLinks } from './PanelLinks';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -34,19 +37,22 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         href: getViewPanelUrl(panel),
       });
 
-      // We could check isEditing here but I kind of think this should always be in the menu,
-      // and going into panel edit should make the dashboard go into edit mode is it's not already
-      items.push({
-        text: t('panel.header-menu.edit', `Edit`),
-        iconClassName: 'eye',
-        shortcut: 'e',
-        onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'edit' }),
-        href: getDashboardUrl({
-          uid: dashboard.state.uid,
-          subPath: `/panel-edit/${panelId}`,
-          currentQueryParams: location.search,
-        }),
-      });
+      if (dashboard.canEditDashboard()) {
+        // We could check isEditing here but I kind of think this should always be in the menu,
+        // and going into panel edit should make the dashboard go into edit mode is it's not already
+        items.push({
+          text: t('panel.header-menu.edit', `Edit`),
+          iconClassName: 'eye',
+          shortcut: 'e',
+          onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'edit' }),
+          href: getDashboardUrl({
+            uid: dashboard.state.uid,
+            subPath: `/panel-edit/${panelId}`,
+            currentQueryParams: location.search,
+            useExperimentalURL: true,
+          }),
+        });
+      }
 
       items.push({
         text: t('panel.header-menu.share', `Share`),
@@ -107,8 +113,38 @@ function addDataTrailAction(dashboard: DashboardScene, vizPanel: VizPanel, items
     text: 'Data trail',
     iconClassName: 'code-branch',
     onClick: () => {
-      dashboard.showModal(new DataTrailDrawer({ query: parsedResult.query, dsRef: ds }));
+      dashboard.showModal(
+        new DataTrailDrawer({ query: parsedResult.query, dsRef: ds, timeRange: dashboard.state.$timeRange!.clone() })
+      );
     },
     shortcut: 'p s',
   });
+}
+
+/**
+ * Behavior is called when VizPanelLinksMenu is activated (when it's opened).
+ */
+export function getPanelLinksBehavior(panel: PanelModel) {
+  return (panelLinksMenu: VizPanelLinks) => {
+    const interpolate: InterpolateFunction = (v, scopedVars) => {
+      return sceneGraph.interpolate(panelLinksMenu, v, scopedVars);
+    };
+
+    const linkSupplier = getPanelLinksSupplier(panel, interpolate);
+
+    if (!linkSupplier) {
+      return;
+    }
+
+    const panelLinks = linkSupplier && linkSupplier.getLinks(interpolate);
+
+    const links = panelLinks.map((panelLink) => ({
+      ...panelLink,
+      onClick: (e: any, origin: any) => {
+        reportInteraction('dashboards_panelheader_datalink_clicked', { has_multiple_links: panelLinks.length > 1 });
+        panelLink.onClick?.(e, origin);
+      },
+    }));
+    panelLinksMenu.setState({ links });
+  };
 }

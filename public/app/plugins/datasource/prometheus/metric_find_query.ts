@@ -2,8 +2,7 @@ import { chain, map as _map, uniq } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { MetricFindValue, TimeRange } from '@grafana/data';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getDefaultTimeRange, MetricFindValue, TimeRange } from '@grafana/data';
 
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
@@ -25,10 +24,11 @@ export default class PrometheusMetricFindQuery {
   ) {
     this.datasource = datasource;
     this.query = query;
-    this.range = getTimeSrv().timeRange();
+    this.range = getDefaultTimeRange();
   }
 
-  process(): Promise<MetricFindValue[]> {
+  process(timeRange: TimeRange): Promise<MetricFindValue[]> {
+    this.range = timeRange;
     const labelNamesRegex = PrometheusLabelNamesRegex;
     const labelNamesRegexWithMatch = PrometheusLabelNamesRegexWithMatch;
     const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
@@ -47,7 +47,7 @@ export default class PrometheusMetricFindQuery {
     }
 
     if (labelNamesQuery) {
-      return this.datasource.getTagKeys({ filters: [] });
+      return this.datasource.getTagKeys({ filters: [], timeRange });
     }
 
     const labelValuesQuery = this.query.match(labelValuesRegex);

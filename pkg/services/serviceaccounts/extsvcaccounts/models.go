@@ -36,6 +36,7 @@ type SaveCredentialsCmd struct {
 }
 
 type saveCmd struct {
+	Enabled     bool
 	ExtSvcSlug  string
 	OrgID       int64
 	Permissions []ac.Permission
