@@ -422,10 +422,11 @@ type DashboardACL struct {
 func (p DashboardACL) TableName() string { return "dashboard_acl" }
 
 type DashboardACLInfoDTO struct {
-	OrgID       int64  `json:"-" xorm:"org_id"`
-	DashboardID int64  `json:"dashboardId,omitempty" xorm:"dashboard_id"`
-	FolderID    int64  `json:"folderId,omitempty" xorm:"folder_id"`
-	FolderUID   string `json:"folderUid,omitempty" xorm:"folder_uid"`
+	OrgID       int64 `json:"-" xorm:"org_id"`
+	DashboardID int64 `json:"dashboardId,omitempty" xorm:"dashboard_id"`
+	// Deprecated: use FolderUID instead
+	FolderID  int64  `json:"folderId,omitempty" xorm:"folder_id"`
+	FolderUID string `json:"folderUid,omitempty" xorm:"folder_uid"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
