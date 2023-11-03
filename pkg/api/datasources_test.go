@@ -481,8 +481,7 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 	}
 }
 
-// TeamHTTPHeaderValueRegexMatch returns a regex that can be used to check
-func TestTeamHTTPHeaderValueRegexMatch(t *testing.T) {
+func TestValidateLBACHeader(t *testing.T) {
 	testcases := []struct {
 		desc            string
 		teamHeaderValue string
@@ -501,7 +500,7 @@ func TestTeamHTTPHeaderValueRegexMatch(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
-			assert.Equal(t, tc.want, teamHTTPHeaderValueRegexMatch(tc.teamHeaderValue))
+			assert.Equal(t, tc.want, validateLBACHeader(tc.teamHeaderValue))
 		})
 	}
 }
