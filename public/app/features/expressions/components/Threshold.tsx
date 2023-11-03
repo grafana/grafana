@@ -298,7 +298,7 @@ function updateUnloadEvaluatorConditions(
   }>,
   hysteresisChecked: boolean
 ): ClassicCondition[] {
-  const defaultUnloaEvaluator = {
+  const defaultUnloadEvaluator = {
     type: defaultUnloadThresholdFunction,
     params: conditions[0].evaluator?.params ?? [0, 0],
   };
@@ -310,7 +310,7 @@ function updateUnloadEvaluatorConditions(
       },
     ];
   } else {
-    const prevUnloadEvaluator = conditions[0].unloadEvaluator ?? defaultUnloaEvaluator;
+    const prevUnloadEvaluator = conditions[0].unloadEvaluator ?? defaultUnloadEvaluator;
 
     return [
       {
