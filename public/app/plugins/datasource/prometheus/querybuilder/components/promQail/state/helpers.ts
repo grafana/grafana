@@ -193,12 +193,33 @@ export async function promQailSuggest(
     if (interaction?.suggestionType === SuggestionType.AI) {
       feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
 
-      // TODO: filter by metric type
+      let metricType = '';
+      if (datasource.languageProvider.metricsMetadata) {
+        metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata) ?? '';
+      }
+
       // @ts-ignore llms types issue
       results = await llms.vector.search<TemplateSearchResult>({
         query: interaction.prompt,
         collection: promQLTemplatesCollection,
         topK: 5,
+        filter:
+          metricType === ''
+            ? undefined
+            : {
+                $or: [
+                  {
+                    metric_type: {
+                      $eq: metricType,
+                    },
+                  },
+                  {
+                    metric_type: {
+                      $eq: '*',
+                    },
+                  },
+                ],
+              },
       });
       // TODO: handle errors from vector search
     }
