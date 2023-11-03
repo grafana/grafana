@@ -121,13 +121,13 @@ func TestResourceConversion(t *testing.T) {
 		  "resourceVersion": "10",
 		  "creationTimestamp": "2000-01-01T08:00:00Z",
 		  "annotations": {
-			"grafana.com/createdBy": "user:10",
-			"grafana.com/folder": "folder:1234",
-			"grafana.com/originKey": "plugin-xyz",
-			"grafana.com/originName": "plugin",
-			"grafana.com/slug": "test-dash",
-			"grafana.com/updatedBy": "user:11",
-			"grafana.com/updatedTimestamp": "2010-01-01T08:00:00Z"
+			"grafana.app/createdBy": "user:10",
+			"grafana.app/folder": "folder:1234",
+			"grafana.app/originKey": "plugin-xyz",
+			"grafana.app/originName": "plugin",
+			"grafana.app/slug": "test-dash",
+			"grafana.app/updatedBy": "user:11",
+			"grafana.app/updatedTimestamp": "2010-01-01T08:00:00Z"
 		  }
 		},
 		"spec": {

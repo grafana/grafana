@@ -784,10 +784,19 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 
         for (let i = 0; i < dataX.length; i++) {
           let yVal = dataY[i]!;
-          yVal -= 0.5; // center vertically in bucket (when tiles are le)
-          // y-randomize vertically to distribute exemplars in same bucket at same time
-          let randSign = Math.round(Math.random()) * 2 - 1;
-          yVal += randSign * 0.5 * Math.random();
+
+          // this is a hacky by-proxy check
+          // works okay since we have no exemplars in calculated heatmaps and...
+          //  - heatmap-rows has ordinal y
+          //  - heatmap-cells has log2 y
+          let isSparseHeatmap = scaleY.distr === 3 && scaleY.log === 2;
+
+          if (!isSparseHeatmap) {
+            yVal -= 0.5; // center vertically in bucket (when tiles are le)
+            // y-randomize vertically to distribute exemplars in same bucket at same time
+            let randSign = Math.round(Math.random()) * 2 - 1;
+            yVal += randSign * 0.5 * Math.random();
+          }
 
           let x = valToPosX(dataX[i], scaleX, xDim, xOff);
           let y = valToPosY(yVal, scaleY, yDim, yOff);
