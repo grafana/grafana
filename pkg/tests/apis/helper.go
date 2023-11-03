@@ -327,6 +327,11 @@ func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
 	c.t.Helper()
 
 	store := c.env.SQLStore
+	defer func() {
+		store.Cfg.AutoAssignOrg = true
+		store.Cfg.AutoAssignOrgId = 1 // the default
+	}()
+
 	store.Cfg.AutoAssignOrg = true
 	store.Cfg.AutoAssignOrgId = int(orgId)
 	quotaService := quotaimpl.ProvideService(store, store.Cfg)

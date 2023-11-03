@@ -50,9 +50,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
 
-	fmt.Printf("StartGrafanaEnv:\n")
-	fmt.Printf("> Home: %s\n", grafDir)
-	fmt.Printf("> Address: %s\n", listener.Addr())
 	env, err := server.InitializeForTest(cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 	require.NoError(t, env.SQLStore.Sync())
