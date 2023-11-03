@@ -114,3 +114,15 @@ That makes it much easier for the developers to replicate and solve your issue.
 [panels-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
 [panels-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
 {{% /docs/reference %}}
+
+## Use a custom version of TestData
+
+If you want to use a version of TestData different from the one shipped with Grafana. Note that this procedure is still experimental (requires Grafana 10.3.0). You can do so by following these steps:
+
+1. Enable the [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) `externalCorePlugins`.
+1. Set the configuration field `plugin.grafana-testdata-datasource.as_external` to `true`.
+1. Restart Grafana.
+
+These settings, if enabled, allows you to to install TestData as an external plugin and manage its lifecycle independently of Grafana.
+
+With the feature toggle disabled (default) TestData can still be installed as an external plugin, but it has no effect as the bundled, Core version of TestData is already installed and takes precedence.
