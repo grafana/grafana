@@ -1,6 +1,7 @@
 import { isEmpty, truncate } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
+import { UrlQueryValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import {
   Alert,
@@ -16,6 +17,7 @@ import {
   Text,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 import { Annotations, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -55,12 +57,12 @@ type RuleViewerProps = GrafanaRouteComponentProps<{
   sourceName: string;
 }>;
 
-enum Tabs {
-  Query,
-  Instances,
-  History,
-  Routing,
-  Details,
+enum ActiveTab {
+  Query = 'query',
+  Instances = 'instances',
+  History = 'history',
+  Routing = 'routing',
+  Details = 'details',
 }
 
 // @TODO
@@ -68,7 +70,7 @@ enum Tabs {
 // figure out why we needed <AlertingPageWrapper>
 // add provisioning and federation stuff back in
 const RuleViewer = ({ match }: RuleViewerProps) => {
-  const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Query);
+  const [activeTab, setActiveTab] = useActiveTab();
 
   const id = ruleId.getRuleIdFromPathname(match.params);
   const identifier = useMemo(() => {
@@ -194,28 +196,39 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
             )}
             {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
             {/* tabs and tab content */}
+            {/* TODO persist tab to query params */}
             <TabsBar>
               <Tab
                 label="Query and conditions"
-                onChangeTab={() => setActiveTab(Tabs.Query)}
-                active={activeTab === Tabs.Query}
+                onChangeTab={() => setActiveTab(ActiveTab.Query)}
+                active={activeTab === ActiveTab.Query}
               />
               <Tab
                 label="Instances"
                 counter={numberOfInstance}
-                onChangeTab={() => setActiveTab(Tabs.Instances)}
-                active={activeTab === Tabs.Instances}
+                onChangeTab={() => setActiveTab(ActiveTab.Instances)}
+                active={activeTab === ActiveTab.Instances}
               />
-              <Tab label="History" onChangeTab={() => setActiveTab(Tabs.History)} active={activeTab === Tabs.History} />
+              <Tab
+                label="History"
+                onChangeTab={() => setActiveTab(ActiveTab.History)}
+                active={activeTab === ActiveTab.History}
+              />
               {/* <Tab label="Routing" onChangeTab={() => setActiveTab(Tabs.Routing)} active={activeTab === Tabs.Routing} /> */}
-              <Tab label="Details" onChangeTab={() => setActiveTab(Tabs.Details)} active={activeTab === Tabs.Details} />
+              <Tab
+                label="Details"
+                onChangeTab={() => setActiveTab(ActiveTab.Details)}
+                active={activeTab === ActiveTab.Details}
+              />
             </TabsBar>
             <TabContent>
-              {activeTab === Tabs.Query && <QueryResults rule={rule} />}
-              {activeTab === Tabs.Instances && <InstancesList rule={rule} />}
-              {activeTab === Tabs.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
-              {activeTab === Tabs.Routing && <Routing />}
-              {activeTab === Tabs.Details && <Details />}
+              {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
+              {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
+              {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && (
+                <History rule={rule.rulerRule} />
+              )}
+              {activeTab === ActiveTab.Routing && <Routing />}
+              {activeTab === ActiveTab.Details && <Details />}
             </TabContent>
           </Stack>
         </Stack>
@@ -393,3 +406,22 @@ const Summary = ({ text }: SummaryProps) => (
 );
 
 export default RuleViewer;
+
+function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
+  const [queryParams, setQueryParams] = useQueryParams();
+  const tabFromQuery = queryParams['tab'];
+
+  const activeTab = isValidTab(tabFromQuery) ? tabFromQuery : ActiveTab.Query;
+
+  const setActiveTab = (tab: ActiveTab) => {
+    setQueryParams({ tab });
+  };
+
+  return [activeTab, setActiveTab];
+}
+
+function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
+  const isString = typeof tab === 'string';
+  // @ts-ignore
+  return isString && Object.values(ActiveTab).includes(tab);
+}
