@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
@@ -213,18 +213,9 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const noAlertsMessage = rules.length === 0 ? 'No alerts matching filters' : undefined;
 
-  const isFirstLoading = useRef<undefined | boolean>(undefined);
-
   const renderLoading = grafanaRulesLoading || (dispatched && loading && !haveResults);
 
-  useEffect(() => {
-    if (isFirstLoading.current === undefined && renderLoading) {
-      isFirstLoading.current = true;
-    }
-    if (!renderLoading && isFirstLoading.current) {
-      isFirstLoading.current = false;
-    }
-  }, [renderLoading]);
+  const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
   if (
     !contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
@@ -238,8 +229,8 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
-        {!isFirstLoading.current && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
-        {!isFirstLoading.current && (
+        {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
+        {havePreviousResults && (
           <section>
             {props.options.viewMode === ViewMode.Stat && (
               <BigValue
