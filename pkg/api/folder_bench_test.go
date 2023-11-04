@@ -77,7 +77,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 	sc := setupDB(b)
 	b.Log("setup time:", time.Since(start))
 
-	//all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
+	all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
 
 	// the maximum number of dashboards that can be returned by the search API
 	// otherwise the handler fails with 422 status code
@@ -95,68 +95,36 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		expectedLen int
 		features    *featuremgmt.FeatureManager
 	}{
-		/*
-			{
-				desc:        "get root folders with nested folders feature enabled",
-				url:         "/api/folders",
-				expectedLen: LEVEL0_FOLDER_NUM,
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-			},
-			{
-				desc:        "get subfolders with nested folders feature enabled",
-				url:         "/api/folders?parentUid=folder0",
-				expectedLen: LEVEL1_FOLDER_NUM,
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-			},
-			{
-				desc:        "list all inherited dashboards with nested folders feature enabled",
-				url:         "/api/search?type=dash-db&limit=5000",
-				expectedLen: withLimit(all),
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-			},
-			{
-				desc:        "search for pattern with nested folders feature enabled",
-				url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
-				expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-			},
-			{
-				desc:        "search for specific dashboard nested folders feature enabled",
-				url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-				expectedLen: 1,
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-			},
-			{
-				desc:        "get root folders with nested folders feature enabled and remove subquery",
-				url:         "/api/folders",
-				expectedLen: LEVEL0_FOLDER_NUM,
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-			},
-			{
-				desc:        "get subfolders with nested folders feature enabled and remove subquery",
-				url:         "/api/folders?parentUid=folder0",
-				expectedLen: LEVEL1_FOLDER_NUM,
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-			},
-			{
-				desc:        "list all inherited dashboards with nested folders feature enabled and remove subquery",
-				url:         "/api/search?type=dash-db&limit=5000",
-				expectedLen: withLimit(all),
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-			},
-			{
-				desc:        "search for pattern with nested folders feature enabled and remove subquery",
-				url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
-				expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-			},
-			{
-				desc:        "search for specific dashboard nested folders feature enabled and remove subquery",
-				url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-				expectedLen: 1,
-				features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-			},
-		*/
+		{
+			desc:        "get root folders with nested folders feature enabled",
+			url:         "/api/folders",
+			expectedLen: LEVEL0_FOLDER_NUM,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
+		{
+			desc:        "get subfolders with nested folders feature enabled",
+			url:         "/api/folders?parentUid=folder0",
+			expectedLen: LEVEL1_FOLDER_NUM,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
+		{
+			desc:        "list all inherited dashboards with nested folders feature enabled",
+			url:         "/api/search?type=dash-db&limit=5000",
+			expectedLen: withLimit(all),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
+		{
+			desc:        "search for pattern with nested folders feature enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
+			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
+		{
+			desc:        "search for specific dashboard nested folders feature enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
 		{
 			desc:        "get root folders with nested folders feature disabled",
 			url:         "/api/folders?limit=5000",
