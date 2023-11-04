@@ -244,14 +244,15 @@ type WebhookIntegration struct {
 
 	URL string `json:"url" yaml:"url" hcl:"url"`
 
-	HTTPMethod               *string `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
-	MaxAlerts                *int64  `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
-	AuthorizationScheme      *string `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
-	AuthorizationCredentials *Secret `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
-	User                     *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
-	Password                 *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
-	Title                    *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	Message                  *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	HTTPMethod               *string            `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
+	MaxAlerts                *int64             `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
+	AuthorizationScheme      *string            `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
+	AuthorizationCredentials *Secret            `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
+	ExtraHeaders             *map[string]string `json:"extra_headers,omitempty" yaml:"extra_headers,omitempty" hcl:"extra_headers"`
+	User                     *string            `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
+	Password                 *Secret            `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
+	Title                    *string            `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	Message                  *string            `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 }
 
 type WecomIntegration struct {

@@ -922,6 +922,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "authorization_credentials",
 					Secure:       true,
 				},
+				{
+					Label:        "Extra Headers",
+					Description:  "Additional headers to be added to the Request.",
+					Element:      ElementTypeKeyValueMap,
+					InputType:    InputTypeText,
+					PropertyName: "extra_headers",
+				},
 				{ // New in 8.0. TODO: How to enforce only numbers?
 					Label:        "Max Alerts",
 					Description:  "Max alerts to include in a notification. Remaining alerts in the same batch will be ignored above this number. 0 means no limit.",
