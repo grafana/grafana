@@ -32,8 +32,8 @@ type DashboardSnapshotDTO struct {
 	ID          int64  `json:"-" xorm:"id"`
 	Name        string `json:"name"`
 	Key         string `json:"key"`
-	OrgID       int64  `json:"orgId" xorm:"org_id"`
-	UserID      int64  `json:"userId" xorm:"user_id"`
+	OrgID       int64  `json:"-" xorm:"org_id"`
+	UserID      int64  `json:"-" xorm:"user_id"`
 	External    bool   `json:"external"`
 	ExternalURL string `json:"externalUrl" xorm:"external_url"`
 
