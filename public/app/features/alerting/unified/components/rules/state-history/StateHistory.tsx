@@ -68,7 +68,9 @@ const StateHistory = ({ alertId }: Props) => {
       return (
         <div key={groupKey}>
           <header className={styles.tableGroupKey}>
-            <code>{groupKey}</code>
+            <code className={styles.goupKeyText} aria-label={groupKey}>
+              {groupKey}
+            </code>
           </header>
           <DynamicTable cols={columns} items={tableItems} pagination={{ itemsPerPage: 25 }} />
         </div>
@@ -199,6 +201,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: ${theme.spacing(2)};
     margin-bottom: ${theme.spacing(2)};
   `,
+  goupKeyText: css({
+    overflowX: 'auto',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    display: 'block',
+  }),
 });
 
 export default StateHistory;

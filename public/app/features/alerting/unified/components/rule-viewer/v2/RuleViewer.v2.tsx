@@ -112,7 +112,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
     const isAlertType = isAlertingRule(promRule);
     const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
-    const numberOfInstance = isAlertType ? promRule.alerts?.length : undefined;
+    const numberOfInstance = isAlertType ? (promRule.alerts ?? []).length : undefined;
 
     const isFederatedRule = isFederatedRuleGroup(rule.group);
     const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
@@ -207,13 +207,13 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                 active={activeTab === Tabs.Instances}
               />
               <Tab label="History" onChangeTab={() => setActiveTab(Tabs.History)} active={activeTab === Tabs.History} />
-              <Tab label="Routing" onChangeTab={() => setActiveTab(Tabs.Routing)} active={activeTab === Tabs.Routing} />
+              {/* <Tab label="Routing" onChangeTab={() => setActiveTab(Tabs.Routing)} active={activeTab === Tabs.Routing} /> */}
               <Tab label="Details" onChangeTab={() => setActiveTab(Tabs.Details)} active={activeTab === Tabs.Details} />
             </TabsBar>
             <TabContent>
               {activeTab === Tabs.Query && <QueryResults rule={rule} />}
               {activeTab === Tabs.Instances && <InstancesList rule={rule} />}
-              {activeTab === Tabs.History && <History />}
+              {activeTab === Tabs.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
               {activeTab === Tabs.Routing && <Routing />}
               {activeTab === Tabs.Details && <Details />}
             </TabContent>
