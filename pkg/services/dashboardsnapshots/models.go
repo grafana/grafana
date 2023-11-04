@@ -29,7 +29,7 @@ type DashboardSnapshot struct {
 
 // DashboardSnapshotDTO without dashboard map
 type DashboardSnapshotDTO struct {
-	ID          int64  `json:"id" xorm:"id"`
+	ID          int64  `json:"-" xorm:"id"`
 	Name        string `json:"name"`
 	Key         string `json:"key"`
 	OrgID       int64  `json:"orgId" xorm:"org_id"`
