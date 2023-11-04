@@ -1,4 +1,4 @@
-package playlist
+package snapshots
 
 import (
 	"fmt"
@@ -13,33 +13,38 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	snapshots "github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GroupName is the group name for this API.
-const GroupName = "playlist.grafana.app"
+const GroupName = "snapshots.grafana.app"
 const VersionID = "v0alpha1"
 
-var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
+var _ grafanaapiserver.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
-type PlaylistAPIBuilder struct {
-	service    playlistsvc.Service
+type SnapshotsAPIBuilder struct {
+	service    dashboardsnapshots.Service
 	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
 }
 
-func RegisterAPIService(p playlistsvc.Service,
-	apiregistration grafanaapiserver.APIRegistrar,
+func RegisterAPIService(
 	cfg *setting.Cfg,
-) *PlaylistAPIBuilder {
-	builder := &PlaylistAPIBuilder{
+	features featuremgmt.FeatureToggles,
+	p dashboardsnapshots.Service,
+	apiregistration grafanaapiserver.APIRegistrar,
+) *SnapshotsAPIBuilder {
+	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		return nil // skip registration unless opting into experimental apis
+	}
+	builder := &SnapshotsAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
@@ -48,14 +53,14 @@ func RegisterAPIService(p playlistsvc.Service,
 	return builder
 }
 
-func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
+func (b *SnapshotsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
 }
 
-func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(b.gv,
-		&playlist.Playlist{},
-		&playlist.PlaylistList{},
+		&snapshots.DashboardSnapshot{},
+		&snapshots.DashboardSnapshotList{},
 	)
 
 	// Link this version to the internal representation.
@@ -65,8 +70,8 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		Group:   b.gv.Group,
 		Version: runtime.APIVersionInternal,
 	},
-		&playlist.Playlist{},
-		&playlist.PlaylistList{},
+		&snapshots.DashboardSnapshot{},
+		&snapshots.DashboardSnapshotList{},
 	)
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
@@ -77,7 +82,7 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(b.gv)
 }
 
-func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
+func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
@@ -88,49 +93,46 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	legacyStore := &legacyStorage{
 		service:                   b.service,
 		namespacer:                b.namespacer,
-		DefaultQualifiedResource:  b.gv.WithResource("playlists").GroupResource(),
-		SingularQualifiedResource: b.gv.WithResource("playlist").GroupResource(),
+		DefaultQualifiedResource:  b.gv.WithResource("dashboards").GroupResource(),
+		SingularQualifiedResource: b.gv.WithResource("dashboard").GroupResource(),
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
 		legacyStore.DefaultQualifiedResource,
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
-			{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
+			{Name: "Title", Type: "string", Format: "string", Description: "The snapshot name"},
 			{Name: "Created At", Type: "date"},
 		},
 		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*playlist.Playlist)
-			if !ok {
-				return nil, fmt.Errorf("expected playlist")
+			m, ok := obj.(*snapshots.DashboardSnapshot)
+			if ok {
+				return []interface{}{
+					m.Name,
+					m.Info.Title,
+					m.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
 			}
-			return []interface{}{
-				m.Name,
-				m.Spec.Title,
-				m.Spec.Interval,
-				m.CreationTimestamp.UTC().Format(time.RFC3339),
-			}, nil
+			c, ok := obj.(*snapshots.SnapshotSummary)
+			if ok {
+				return []interface{}{
+					c.Name,
+					c.Title,
+					c.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			}
+			return nil, fmt.Errorf("expected snapshot")
 		},
 	)
-	storage["playlists"] = legacyStore
-
-	// enable dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil {
-		store, err := newStorage(scheme, optsGetter, legacyStore)
-		if err != nil {
-			return nil, err
-		}
-		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
-	}
+	storage["dashboards"] = legacyStore
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
 }
 
-func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return playlist.GetOpenAPIDefinitions
+func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+	return snapshots.GetOpenAPIDefinitions
 }
 
-func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil // no custom API routes
 }

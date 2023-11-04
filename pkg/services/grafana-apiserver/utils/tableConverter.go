@@ -17,10 +17,10 @@ import (
 type customTableConvertor struct {
 	gr      schema.GroupResource
 	columns []metav1.TableColumnDefinition
-	reader  func(obj runtime.Object) ([]interface{}, error)
+	reader  func(obj any) ([]interface{}, error)
 }
 
-func NewTableConverter(gr schema.GroupResource, columns []metav1.TableColumnDefinition, reader func(obj runtime.Object) ([]interface{}, error)) rest.TableConvertor {
+func NewTableConverter(gr schema.GroupResource, columns []metav1.TableColumnDefinition, reader func(obj any) ([]interface{}, error)) rest.TableConvertor {
 	converter := customTableConvertor{
 		gr:      gr,
 		columns: columns,

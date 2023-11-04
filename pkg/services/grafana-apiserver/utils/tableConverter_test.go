@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 func TestTableConverter(t *testing.T) {
@@ -23,7 +23,7 @@ func TestTableConverter(t *testing.T) {
 			{Name: "Dummy", Type: "string", Format: "string", Description: "Something here"},
 			{Name: "Created At", Type: "date"},
 		},
-		func(obj runtime.Object) ([]interface{}, error) {
+		func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*metav1.APIGroup)
 			if !ok {
 				return nil, fmt.Errorf("expected status")
