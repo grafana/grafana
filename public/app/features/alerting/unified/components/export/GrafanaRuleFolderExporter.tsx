@@ -37,13 +37,10 @@ interface GrafanaRuleFolderExportPreviewProps {
 }
 
 function GrafanaRuleFolderExportPreview({ folder, exportFormat, onClose }: GrafanaRuleFolderExportPreviewProps) {
-  const { currentData: exportFolderDefinition = '', isFetching } = alertRuleApi.endpoints.exportRules.useQuery(
-    {
-      folderUid: folder.uid,
-      format: exportFormat,
-    },
-    { refetchOnMountOrArgChange: true }
-  );
+  const { currentData: exportFolderDefinition = '', isFetching } = alertRuleApi.endpoints.exportRules.useQuery({
+    folderUid: folder.uid,
+    format: exportFormat,
+  });
 
   if (isFetching) {
     return <LoadingPlaceholder text="Loading...." />;

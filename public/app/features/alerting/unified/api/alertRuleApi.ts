@@ -201,6 +201,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         params: { format: format, folderUid: folderUid, group: group, ruleUid: ruleUid },
         responseType: 'text',
       }),
+      keepUnusedDataFor: 0,
     }),
     exportReceiver: build.query<string, { receiverName: string; decrypt: boolean; format: ExportFormats }>({
       query: ({ receiverName, decrypt, format }) => ({
