@@ -178,7 +178,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 		t.Run("Given user has permission to save", func(t *testing.T) {
 			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 			service.features = featuremgmt.WithFeatures()
 
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
@@ -188,6 +188,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dash, nil).Once()
+				dashStore.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("*dashboards.DeleteDashboardCommand")).Return(nil).Once()
 				folderStore.On("GetFolderByID", mock.Anything, orgID, dash.ID).Return(f, nil)
 
 				actualFolder, err := service.Create(context.Background(), &folder.CreateFolderCommand{
@@ -241,6 +242,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				f.ID = rand.Int63()
 				f.UID = util.GenerateShortUID()
 				folderStore.On("GetFolders", mock.Anything, orgID, []string{f.UID}).Return(map[string]*folder.Folder{f.UID: f}, nil)
+				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 
 				var actualCmd *dashboards.DeleteDashboardCommand
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -582,6 +584,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				depth:             1,
 				forceDelete:       true,
 				dashboardErr:      dashboards.ErrFolderNotFound,
+				folderErr:         folder.ErrFolderNotFound,
 				libPanelParentErr: model.ErrLibraryElementNotFound,
 				desc:              "With nested folder feature flag off and force deletion of rules",
 			},
@@ -723,7 +726,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 
 func TestNestedFolderService(t *testing.T) {
 	t.Run("with feature flag unset", func(t *testing.T) {
-		t.Run("When create folder, no create in folder table done", func(t *testing.T) {
+		t.Run("Should create a folder in both dashboard and folders tables", func(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 			t.Cleanup(func() {
@@ -748,8 +751,7 @@ func TestNestedFolderService(t *testing.T) {
 				SignedInUser: usr,
 			})
 			require.NoError(t, err)
-			// CreateFolder should not call the folder store create if the feature toggle is not enabled.
-			require.False(t, nestedFolderStore.CreateCalled)
+			require.True(t, nestedFolderStore.CreateCalled)
 		})
 	})
 
