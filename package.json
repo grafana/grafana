@@ -208,7 +208,7 @@
     "postcss-loader": "7.3.3",
     "postcss-reporter": "7.0.5",
     "postcss-scss": "4.0.6",
-    "prettier": "3.0.0",
+    "prettier": "^3.0.3",
     "react-refresh": "0.14.0",
     "react-select-event": "5.5.1",
     "react-simple-compat": "1.2.3",
