@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Button, LoadingPlaceholder, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
+import { Trans, t } from 'app/core/internationalization';
 import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,
@@ -18,15 +19,26 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
   const { data: dashboards, isLoading } = useGetActiveUserDashboardsQuery(email);
 
   return (
-    <Modal className={styles.modal} isOpen title="Public dashboards" onDismiss={onDismiss}>
+    <Modal
+      className={styles.modal}
+      isOpen
+      title={t('dashboard-list-modal-button.mode.public-dashboard.modal-title', 'Public dashboards')}
+      onDismiss={onDismiss}
+    >
       {isLoading ? (
         <div className={styles.loading}>
-          <LoadingPlaceholder text="Loading..." />
+          <LoadingPlaceholder
+            text={t('dashboard-list-modal-button.mode.public-dashboard.loading-text', 'Loading...')}
+          />
         </div>
       ) : (
         dashboards?.map((dash) => (
           <div key={dash.dashboardUid} className={styles.listItem} data-testid={selectors.listItem(dash.dashboardUid)}>
-            <p className={styles.dashboardTitle}>{dash.dashboardTitle}</p>
+            <p className={styles.dashboardTitle}>
+              <Trans i18nKey="dashboard-list-modal-button.mode.public-dashboard.dashboard-title">
+                {{ dashboardTitle: dash.dashboardTitle }}
+              </Trans>
+            </p>
             <div className={styles.urlsContainer}>
               <a
                 rel="noreferrer"
@@ -35,7 +47,9 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                 href={generatePublicDashboardUrl(dash.publicDashboardAccessToken)}
                 onClick={onDismiss}
               >
-                Public dashboard URL
+                <Trans i18nKey="dashboard-list-modal-button.mode.public-dashboard.public-dashboard-link">
+                  Public dashboard URL
+                </Trans>
               </a>
               <span className={styles.urlsDivider}>•</span>
               <a
@@ -43,7 +57,9 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                 href={generatePublicDashboardConfigUrl(dash.dashboardUid)}
                 onClick={onDismiss}
               >
-                Public dashboard settings
+                <Trans i18nKey="dashboard-list-modal-button.mode.public-dashboard.public-dashboard-setting">
+                  Public dashboard settings
+                </Trans>
               </a>
             </div>
             <hr className={styles.divider} />
@@ -54,20 +70,26 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
   );
 };
 
-export const DashboardsListModalButton = ({ email }: { email: string }) => (
-  <ModalsController>
-    {({ showModal, hideModal }) => (
-      <Button
-        variant="secondary"
-        size="sm"
-        icon="question-circle"
-        title="Open dashboards list"
-        aria-label="Open dashboards list"
-        onClick={() => showModal(DashboardsListModal, { email, onDismiss: hideModal })}
-      />
-    )}
-  </ModalsController>
-);
+export const DashboardsListModalButton = ({ email }: { email: string }) => {
+  const translatedDashboardListModalButtonText = t(
+    'dashboard-list-modal-button.mode.public-dashboard.open-dashboard-list',
+    'Open dashboards list'
+  );
+  return (
+    <ModalsController>
+      {({ showModal, hideModal }) => (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="question-circle"
+          title={translatedDashboardListModalButtonText}
+          aria-label={translatedDashboardListModalButtonText}
+          onClick={() => showModal(DashboardsListModal, { email, onDismiss: hideModal })}
+        />
+      )}
+    </ModalsController>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`

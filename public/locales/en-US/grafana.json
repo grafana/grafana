@@ -265,6 +265,18 @@
       "validation-required": "Need a dashboard JSON model"
     }
   },
+  "dashboard-list-modal-button": {
+    "mode": {
+      "public-dashboard": {
+        "dashboard-title": "{{dashboardTitle}}",
+        "loading-text": "Loading...",
+        "modal-title": "Public dashboards",
+        "open-dashboard-list": "Open dashboards list",
+        "public-dashboard-link": "Public dashboard URL",
+        "public-dashboard-setting": "Public dashboard settings"
+      }
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotations"
@@ -335,6 +347,13 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
+    }
+  },
+  "delete-user-modal-button": {
+    "public-dashboard": {
+      "delete-user-close-button": "Close",
+      "delete-user-desc": "The user {{email}} is currently present in {{totalDashboards}} public dashboard(s). If you wish to remove this user, please navigate to the settings of the corresponding public dashboard.",
+      "delete-user-text": "Delete user"
     }
   },
   "explore": {
@@ -974,6 +993,16 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
+  "public-dashboard-list-table": {
+    "public-dashboard": {
+      "config-tooltip": "Configure public dashboard",
+      "not-orphaned-title": "<0>{{title}}</0>",
+      "orphaned-title": "<0>Orphaned public dashboard</0>",
+      "pause-sharing-label": "Pause sharing",
+      "revoke-tooltip": "Revoke public dashboard URL",
+      "view-tooltip": "View public dashboard"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -1078,6 +1107,25 @@
     },
     "panel": {
       "title": "Share Panel"
+    },
+    "public-dashboard": {
+      "ack-title": "Before you make the dashboard public, acknowledge the following:",
+      "data-src-ack-desc": "Publishing currently only works with a subset of data sources*",
+      "data-src-ack-tooltip": "Learn more about public datasources",
+      "description": "Currently, we don’t support template variables or frontend data sources",
+      "generate-public-url-button": "  Generate public URL",
+      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} create public dashboards",
+      "no-upsert-perm-alert-title": "You don’t have permission to {{ mode }} a public dashboard",
+      "public-ack-desc": "Your entire dashboard will be public*",
+      "public-ack-tooltip": "Learn more about public dashboards",
+      "unsupport-data-source-alert-readmore": "Read more about supported data sources",
+      "unsupported-data-source-alert-description": "There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}.",
+      "unsupported-data-source-alert-title": "Unsupported data sources",
+      "unsupported-template-variable-alert": "This public dashboard may not work since it uses template variables",
+      "unsupported-template-variable-alert-title": "Template variables are not supported",
+      "usage-ack-desc": "Making a dashboard public will cause queries to run each time is viewed, which may increase costs*",
+      "usage-ack-tooltip": "Learn more about query caching",
+      "welcome-title": "Welcome to public dashboards!"
     },
     "snapshot": {
       "cancel-button": "Cancel",
@@ -1213,6 +1261,23 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
+    }
+  },
+  "user-list-page": {
+    "public-dashboard": {
+      "all-user": "All users",
+      "org-user": "Organization users",
+      "tab-title": "Public dashboard users",
+      "user": "Users"
+    }
+  },
+  "user-list-public-dashboard-page": {
+    "public-dashboard": {
+      "activated": "Activated",
+      "earliest-active-user-time-desc": "Earliest time user has been an active user to a dashboard",
+      "email": "Email",
+      "origin": "Origin",
+      "role": "Role"
     }
   },
   "user-orgs": {

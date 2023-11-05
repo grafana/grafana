@@ -3,6 +3,7 @@ import React from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { HorizontalGroup, Icon, Tag, Tooltip } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans, t } from 'app/core/internationalization';
 
 import { useGetActiveUsersQuery } from '../../dashboard/api/publicDashboardApi';
 
@@ -19,16 +20,32 @@ export const UserListPublicDashboardPage = () => {
       <table className="filter-table form-inline" data-testid={selectors.container}>
         <thead>
           <tr>
-            <th>Email</th>
             <th>
-              <span>Activated </span>
-              <Tooltip placement="top" content={'Earliest time user has been an active user to a dashboard'}>
+              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.email">Email</Trans>
+            </th>
+            <th>
+              <span>
+                <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.activated">Activated</Trans>
+              </span>
+              <Tooltip
+                placement="top"
+                content={t(
+                  'user-list-public-dashboard-page.public-dashboard.earliest-active-user-time-desc',
+                  'Earliest time user has been an active user to a dashboard'
+                )}
+              >
                 <Icon name="question-circle" />
               </Tooltip>
             </th>
-            <th>Last active</th>
-            <th>Origin</th>
-            <th>Role</th>
+            <th>
+              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.last-active">Last active</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.origin">Origin</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="user-list-public-dashboard-page.public-dashboard.role">Role</Trans>
+            </th>
             <th></th>
           </tr>
         </thead>

@@ -18,6 +18,7 @@ import {
   HorizontalGroup,
 } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   useListPublicDashboardsQuery,
@@ -57,16 +58,24 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
   };
 
   const CardActions = useMemo(() => (isMobile ? Card.Actions : Card.SecondaryActions), [isMobile]);
+  const translatedPauseSharingLabel = t(
+    'public-dashboard-list-table.public-dashboard.pause-sharing-label',
+    'Pause sharing'
+  );
 
   return (
     <Card className={styles.card} href={!isOrphaned ? `/d/${pd.dashboardUid}` : undefined}>
       <Card.Heading className={styles.heading}>
         {!isOrphaned ? (
-          <span>{pd.title}</span>
+          <Trans i18nKey="public-dashboard-list-table.public-dashboard.not-orphaned-title">
+            <span>{{ title: pd.title }}</span>
+          </Trans>
         ) : (
           <Tooltip content="The linked dashboard has already been deleted" placement="top">
             <div className={styles.orphanedTitle}>
-              <span>Orphaned public dashboard</span>
+              <Trans i18nKey="public-dashboard-list-table.public-dashboard.orphaned-title">
+                <span>Orphaned public dashboard</span>
+              </Trans>
               <Icon name="info-circle" />
             </div>
           </Tooltip>
@@ -76,7 +85,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
         <div className={styles.pauseSwitch}>
           <Switch
             value={!pd.isEnabled}
-            label="Pause sharing"
+            label={translatedPauseSharingLabel}
             disabled={isUpdateLoading}
             onChange={(e) => {
               reportInteraction('grafana_dashboards_public_enable_clicked', {
@@ -86,7 +95,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
             }}
             data-testid={selectors.ListItem.pauseSwitch}
           />
-          <span>Pause sharing</span>
+          <span>{translatedPauseSharingLabel}</span>
         </div>
         <LinkButton
           disabled={isOrphaned}
@@ -97,7 +106,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
           color={theme.colors.warning.text}
           href={generatePublicDashboardUrl(pd.accessToken)}
           key="public-dashboard-url"
-          tooltip="View public dashboard"
+          tooltip={t('public-dashboard-list-table.public-dashboard.view-tooltip', 'View public dashboard')}
           data-testid={selectors.ListItem.linkButton}
         />
         <LinkButton
@@ -108,7 +117,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
           color={theme.colors.warning.text}
           href={generatePublicDashboardConfigUrl(pd.dashboardUid)}
           key="public-dashboard-config-url"
-          tooltip="Configure public dashboard"
+          tooltip={t('public-dashboard-list-table.public-dashboard.config-tooltip', 'Configure public dashboard')}
           data-testid={selectors.ListItem.configButton}
         />
         {hasWritePermissions && (
@@ -117,7 +126,7 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
             icon="trash-alt"
             variant="secondary"
             publicDashboard={pd}
-            tooltip="Revoke public dashboard url"
+            tooltip={t('public-dashboard-list-table.public-dashboard.revoke-tooltip', 'Revoke public dashboard URL')}
             loader={<Spinner />}
             data-testid={selectors.ListItem.trashcanButton}
           />

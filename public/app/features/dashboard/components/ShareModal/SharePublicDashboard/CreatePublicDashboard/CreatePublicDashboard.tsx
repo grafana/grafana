@@ -5,6 +5,7 @@ import { FormState, UseFormRegister } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Button, Form, Spinner, useStyles2 } from '@grafana/ui/src';
+import { Trans } from 'app/core/internationalization';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
@@ -46,8 +47,14 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   return (
     <div className={styles.container}>
       <div>
-        <p className={styles.title}>Welcome to public dashboards!</p>
-        <p className={styles.description}>Currently, we don’t support template variables or frontend data sources</p>
+        <p className={styles.title}>
+          <Trans i18nKey="share-modal.public-dashboard.welcome-title">Welcome to public dashboards!</Trans>
+        </p>
+        <p className={styles.description}>
+          <Trans i18nKey="share-modal.public-dashboard.description">
+            Currently, we don’t support template variables or frontend data sources
+          </Trans>
+        </p>
       </div>
 
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
@@ -72,7 +79,8 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
             </div>
             <div className={styles.buttonContainer}>
               <Button type="submit" disabled={disableInputs || !isValid} data-testid={selectors.CreateButton}>
-                Generate public URL {isSaveLoading && <Spinner className={styles.loadingSpinner} />}
+                <Trans i18nKey="share-modal.public-dashboard.generate-public-url-button">Generate public URL</Trans>
+                {isSaveLoading && <Spinner className={styles.loadingSpinner} />}
               </Button>
             </div>
           </>

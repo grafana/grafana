@@ -260,6 +260,18 @@
       "validation-required": ""
     }
   },
+  "dashboard-list-modal-button": {
+    "mode": {
+      "public-dashboard": {
+        "dashboard-title": "",
+        "loading-text": "",
+        "modal-title": "",
+        "open-dashboard-list": "",
+        "public-dashboard-link": "",
+        "public-dashboard-setting": ""
+      }
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": ""
@@ -330,6 +342,13 @@
   "data-sources": {
     "datasource-add-button": {
       "label": ""
+    }
+  },
+  "delete-user-modal-button": {
+    "public-dashboard": {
+      "delete-user-close-button": "",
+      "delete-user-desc": "",
+      "delete-user-text": ""
     }
   },
   "explore": {
@@ -968,6 +987,16 @@
     },
     "query-editor-not-exported": ""
   },
+  "public-dashboard-list-table": {
+    "public-dashboard": {
+      "config-tooltip": "",
+      "not-orphaned-title": "",
+      "orphaned-title": "",
+      "pause-sharing-label": "",
+      "revoke-tooltip": "",
+      "view-tooltip": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
@@ -1072,6 +1101,25 @@
     },
     "panel": {
       "title": "分享面板"
+    },
+    "public-dashboard": {
+      "ack-title": "",
+      "data-src-ack-desc": "",
+      "data-src-ack-tooltip": "",
+      "description": "",
+      "generate-public-url-button": "",
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
+      "public-ack-desc": "",
+      "public-ack-tooltip": "",
+      "unsupport-data-source-alert-readmore": "",
+      "unsupported-data-source-alert-description": "",
+      "unsupported-data-source-alert-title": "",
+      "unsupported-template-variable-alert": "",
+      "unsupported-template-variable-alert-title": "",
+      "usage-ack-desc": "",
+      "usage-ack-tooltip": "",
+      "welcome-title": ""
     },
     "snapshot": {
       "cancel-button": "取消",
@@ -1207,6 +1255,23 @@
     "zone": {
       "select-aria-label": "时区选择器",
       "select-search-input": "输入以搜索(国家、城市、缩写)"
+    }
+  },
+  "user-list-page": {
+    "public-dashboard": {
+      "all-user": "",
+      "org-user": "",
+      "tab-title": "",
+      "user": ""
+    }
+  },
+  "user-list-public-dashboard-page": {
+    "public-dashboard": {
+      "activated": "",
+      "earliest-active-user-time-desc": "",
+      "email": "",
+      "origin": "",
+      "role": ""
     }
   },
   "user-orgs": {

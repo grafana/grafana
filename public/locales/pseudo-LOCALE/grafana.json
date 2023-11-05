@@ -265,6 +265,18 @@
       "validation-required": "Ńęęđ ä đäşĥþőäřđ ĴŜØŃ mőđęľ"
     }
   },
+  "dashboard-list-modal-button": {
+    "mode": {
+      "public-dashboard": {
+        "dashboard-title": "{{dashboardTitle}}",
+        "loading-text": "Ŀőäđįŉģ...",
+        "modal-title": "Pūþľįč đäşĥþőäřđş",
+        "open-dashboard-list": "Øpęŉ đäşĥþőäřđş ľįşŧ",
+        "public-dashboard-link": "Pūþľįč đäşĥþőäřđ ŮŖĿ",
+        "public-dashboard-setting": "Pūþľįč đäşĥþőäřđ şęŧŧįŉģş"
+      }
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Åŉŉőŧäŧįőŉş"
@@ -335,6 +347,13 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
+    }
+  },
+  "delete-user-modal-button": {
+    "public-dashboard": {
+      "delete-user-close-button": "Cľőşę",
+      "delete-user-desc": "Ŧĥę ūşęř {{email}} įş čūřřęŉŧľy přęşęŉŧ įŉ {{totalDashboards}} pūþľįč đäşĥþőäřđ(ş). Ĩƒ yőū ŵįşĥ ŧő řęmővę ŧĥįş ūşęř, pľęäşę ŉävįģäŧę ŧő ŧĥę şęŧŧįŉģş őƒ ŧĥę čőřřęşpőŉđįŉģ pūþľįč đäşĥþőäřđ.",
+      "delete-user-text": "Đęľęŧę ūşęř"
     }
   },
   "explore": {
@@ -974,6 +993,16 @@
     },
     "query-editor-not-exported": "Đäŧä şőūřčę pľūģįŉ đőęş ŉőŧ ęχpőřŧ äŉy Qūęřy Ēđįŧőř čőmpőŉęŉŧ"
   },
+  "public-dashboard-list-table": {
+    "public-dashboard": {
+      "config-tooltip": "Cőŉƒįģūřę pūþľįč đäşĥþőäřđ",
+      "not-orphaned-title": "<0>{{title}}</0>",
+      "orphaned-title": "<0>Øřpĥäŉęđ pūþľįč đäşĥþőäřđ</0>",
+      "pause-sharing-label": "Päūşę şĥäřįŉģ",
+      "revoke-tooltip": "Ŗęvőĸę pūþľįč đäşĥþőäřđ ŮŖĿ",
+      "view-tooltip": "Vįęŵ pūþľįč đäşĥþőäřđ"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
@@ -1078,6 +1107,25 @@
     },
     "panel": {
       "title": "Ŝĥäřę Päŉęľ"
+    },
+    "public-dashboard": {
+      "ack-title": "ßęƒőřę yőū mäĸę ŧĥę đäşĥþőäřđ pūþľįč, äčĸŉőŵľęđģę ŧĥę ƒőľľőŵįŉģ:",
+      "data-src-ack-desc": "Pūþľįşĥįŉģ čūřřęŉŧľy őŉľy ŵőřĸş ŵįŧĥ ä şūþşęŧ őƒ đäŧä şőūřčęş*",
+      "data-src-ack-tooltip": "Ŀęäřŉ mőřę äþőūŧ pūþľįč đäŧäşőūřčęş",
+      "description": "Cūřřęŉŧľy, ŵę đőŉ’ŧ şūppőřŧ ŧęmpľäŧę väřįäþľęş őř ƒřőŉŧęŉđ đäŧä şőūřčęş",
+      "generate-public-url-button": "  Ğęŉęřäŧę pūþľįč ŮŖĿ",
+      "no-upsert-perm-alert-desc": "Cőŉŧäčŧ yőūř äđmįŉ ŧő ģęŧ pęřmįşşįőŉ ŧő {{mode}} čřęäŧę pūþľįč đäşĥþőäřđş",
+      "no-upsert-perm-alert-title": "Ÿőū đőŉ’ŧ ĥävę pęřmįşşįőŉ ŧő {{ mode }} ä pūþľįč đäşĥþőäřđ",
+      "public-ack-desc": "Ÿőūř ęŉŧįřę đäşĥþőäřđ ŵįľľ þę pūþľįč*",
+      "public-ack-tooltip": "Ŀęäřŉ mőřę äþőūŧ pūþľįč đäşĥþőäřđş",
+      "unsupport-data-source-alert-readmore": "Ŗęäđ mőřę äþőūŧ şūppőřŧęđ đäŧä şőūřčęş",
+      "unsupported-data-source-alert-description": "Ŧĥęřę äřę đäŧä şőūřčęş įŉ ŧĥįş đäşĥþőäřđ ŧĥäŧ äřę ūŉşūppőřŧęđ ƒőř pūþľįč đäşĥþőäřđş. Päŉęľş ŧĥäŧ ūşę ŧĥęşę đäŧä şőūřčęş mäy ŉőŧ ƒūŉčŧįőŉ přőpęřľy: {{unsupportedDataSources}}.",
+      "unsupported-data-source-alert-title": "Ůŉşūppőřŧęđ đäŧä şőūřčęş",
+      "unsupported-template-variable-alert": "Ŧĥįş pūþľįč đäşĥþőäřđ mäy ŉőŧ ŵőřĸ şįŉčę įŧ ūşęş ŧęmpľäŧę väřįäþľęş",
+      "unsupported-template-variable-alert-title": "Ŧęmpľäŧę väřįäþľęş äřę ŉőŧ şūppőřŧęđ",
+      "usage-ack-desc": "Mäĸįŉģ ä đäşĥþőäřđ pūþľįč ŵįľľ čäūşę qūęřįęş ŧő řūŉ ęäčĥ ŧįmę įş vįęŵęđ, ŵĥįčĥ mäy įŉčřęäşę čőşŧş*",
+      "usage-ack-tooltip": "Ŀęäřŉ mőřę äþőūŧ qūęřy čäčĥįŉģ",
+      "welcome-title": "Ŵęľčőmę ŧő pūþľįč đäşĥþőäřđş!"
     },
     "snapshot": {
       "cancel-button": "Cäŉčęľ",
@@ -1213,6 +1261,23 @@
     "zone": {
       "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
+    }
+  },
+  "user-list-page": {
+    "public-dashboard": {
+      "all-user": "Åľľ ūşęřş",
+      "org-user": "Øřģäŉįžäŧįőŉ ūşęřş",
+      "tab-title": "Pūþľįč đäşĥþőäřđ ūşęřş",
+      "user": "Ůşęřş"
+    }
+  },
+  "user-list-public-dashboard-page": {
+    "public-dashboard": {
+      "activated": "Åčŧįväŧęđ",
+      "earliest-active-user-time-desc": "Ēäřľįęşŧ ŧįmę ūşęř ĥäş þęęŉ äŉ äčŧįvę ūşęř ŧő ä đäşĥþőäřđ",
+      "email": "Ēmäįľ",
+      "origin": "Øřįģįŉ",
+      "role": "Ŗőľę"
     }
   },
   "user-orgs": {
