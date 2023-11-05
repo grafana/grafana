@@ -3,13 +3,11 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardDTO } from 'app/types';
 
-import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
-  panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
 }
@@ -38,6 +36,8 @@ export class DashboardSnapshotStateManager extends StateManagerBase<DashboardSce
   public async loadSnapshot(uid: string) {
     try {
       const dashboard = await this.loadScene(uid);
+      dashboard.startUrlSync();
+
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
@@ -62,6 +62,10 @@ export class DashboardSnapshotStateManager extends StateManagerBase<DashboardSce
     }
 
     throw new Error('Snapshot not found');
+  }
+
+  public clearState() {
+    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
   }
 }
 

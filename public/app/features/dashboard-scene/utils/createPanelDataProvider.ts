@@ -1,5 +1,6 @@
+import { getDefaultTimeRange, getProcessedDataFrames, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { SceneDataNode, SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
@@ -14,6 +15,18 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
   // Skip setting query runner for panel plugins with skipDataQuery
   if (config.panels[panel.type]?.skipDataQuery) {
     return undefined;
+  }
+
+  if (panel.snapshotData) {
+    return new SceneDataNode({
+      data: {
+        series: getProcessedDataFrames(panel.snapshotData),
+        timeRange: getDefaultTimeRange(),
+        state: LoadingState.Done,
+        structureRev: 1,
+        annotations: [],
+      },
+    });
   }
 
   let dataProvider: SceneDataProvider | undefined = undefined;

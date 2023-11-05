@@ -5,24 +5,17 @@ import { PageLayoutType } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
-import { DashboardRoutes } from 'app/types';
 
-import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
+import { getDashboardSnapshotStateManager } from './DashboardSnapshotStateManager';
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams> {}
+export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
-export function DashboardScenePage({ match, route }: Props) {
-  const stateManager = getDashboardScenePageStateManager();
+export function DashboardSnapshotPage({ match, route }: Props) {
+  const stateManager = getDashboardSnapshotStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
-    if (route.routeName === DashboardRoutes.Home) {
-      stateManager.loadDashboard(route.routeName);
-    } else {
-      stateManager.loadDashboard(match.params.uid!);
-    }
-
+    stateManager.loadSnapshot(match.params.uid);
     return () => {
       stateManager.clearState();
     };
@@ -40,4 +33,4 @@ export function DashboardScenePage({ match, route }: Props) {
   return <dashboard.Component model={dashboard} />;
 }
 
-export default DashboardScenePage;
+export default DashboardSnapshotPage;
