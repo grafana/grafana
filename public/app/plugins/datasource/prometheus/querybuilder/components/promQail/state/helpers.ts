@@ -159,7 +159,7 @@ function isContainedIn(sublist: string[], superlist: string[]): boolean {
  * @param allMetrics - list of all available metrics
  * @returns          - the guess of the type (string): counter,gauge,summary,histogram,'histogram,summary'
  */
-export function guessMetricType(metric: string, allMetrics: string[]) {
+export function guessMetricType(metric: string, allMetrics: string[]): string {
   const synthetic_metrics = new Set<string>([
     'up',
     'scrape_duration_seconds',
@@ -196,10 +196,11 @@ export function guessMetricType(metric: string, allMetrics: string[]) {
 
   // See if the suffix is histogram-y or summary-y
   const [root, suffix] = [metric.slice(0, underscoreIndex), metric.slice(underscoreIndex + 1)];
-
+  console.log('GER', root, suffix);
   if (['bucket', 'count', 'sum'].includes(suffix)) {
     // Might be histogram + summary
     let familyMetrics = [`${root}_bucket`, `${root}_count`, `${root}_sum`, root];
+    console.log(familyMetrics, allMetrics, isContainedIn(familyMetrics, allMetrics));
     if (isContainedIn(familyMetrics, allMetrics)) {
       return 'histogram,summary';
     }
@@ -234,6 +235,14 @@ export function guessMetricType(metric: string, allMetrics: string[]) {
   return 'gauge';
 }
 
+function generateMetricTypeFilters(types: string[]) {
+  return types.map((type) => ({
+    metric_type: {
+      $eq: type,
+    },
+  }));
+}
+
 /**
  * Calls the API and adds suggestions to the interaction
  *
@@ -263,7 +272,7 @@ export async function promQailSuggest(
   if (datasource.languageProvider.metricsMetadata) {
     metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata) ?? '';
   }
-  if (metricType == '') {
+  if (metricType === '') {
     // fallback to heuristic guess
     metricType = guessMetricType(query.metric, datasource.languageProvider.metrics);
   }
@@ -308,18 +317,7 @@ export async function promQailSuggest(
         collection: promQLTemplatesCollection,
         topK: 5,
         filter: {
-          $or: [
-            {
-              metric_type: {
-                $eq: metricType,
-              },
-            },
-            {
-              metric_type: {
-                $eq: '*',
-              },
-            },
-          ],
+          $or: generateMetricTypeFilters(metricType.split(',').concat(['*'])),
         },
       });
       // TODO: handle errors from vector search

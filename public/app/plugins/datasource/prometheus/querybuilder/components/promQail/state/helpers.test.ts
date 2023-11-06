@@ -25,7 +25,7 @@ const metricListWithType = [
 const metricList = metricListWithType.map((item) => item[0]);
 
 describe('guessMetricType', () => {
-  it.each(metricListWithType)("where input is '%s'", (metric: string, metricType: string[]) => {
+  it.each(metricListWithType)("where input is '%s'", (metric: string, metricType: string) => {
     expect(guessMetricType(metric, metricList)).toBe(metricType);
   });
 });
