@@ -863,12 +863,12 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "dock": "Dock menu",
-      "undock": "Undock menu"
+      "dock": "Dock menu"
     },
     "toolbar": {
+      "close-menu": "Close menu",
       "enable-kiosk": "Enable kiosk mode",
-      "toggle-menu": "Toggle menu",
+      "open-menu": "Open menu",
       "toggle-search-bar": "Toggle top search bar"
     }
   },

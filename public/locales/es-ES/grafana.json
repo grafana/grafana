@@ -869,12 +869,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "Activar el modo de quiosco",
-      "toggle-menu": "Activar o desactivar menú",
+      "open-menu": "",
       "toggle-search-bar": "Activar o desactivar la barra de búsqueda superior"
     }
   },

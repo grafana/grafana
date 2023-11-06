@@ -12,8 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/playlist"
+	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
 
 var (
@@ -28,7 +29,7 @@ var (
 )
 
 type legacyStorage struct {
-	service        playlist.Service
+	service        playlistsvc.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 
@@ -37,7 +38,7 @@ type legacyStorage struct {
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return &Playlist{}
+	return &playlist.Playlist{}
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -51,7 +52,7 @@ func (s *legacyStorage) GetSingularName() string {
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return &PlaylistList{}
+	return &playlist.PlaylistList{}
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -70,7 +71,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if options.Limit > 0 {
 		limit = int(options.Limit)
 	}
-	res, err := s.service.Search(ctx, &playlist.GetPlaylistsQuery{
+	res, err := s.service.Search(ctx, &playlistsvc.GetPlaylistsQuery{
 		OrgId: info.OrgID,
 		Limit: limit,
 	})
@@ -78,9 +79,9 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &PlaylistList{}
+	list := &playlist.PlaylistList{}
 	for _, v := range res {
-		p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+		p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
 			UID:   v.UID,
 			OrgId: info.OrgID,
 		})
@@ -101,12 +102,12 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	dto, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+	dto, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
 		UID:   name,
 		OrgId: info.OrgID,
 	})
 	if err != nil || dto == nil {
-		if errors.Is(err, playlist.ErrPlaylistNotFound) || err == nil {
+		if errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
 			err = k8serrors.NewNotFound(s.SingularQualifiedResource, name)
 		}
 		return nil, err
@@ -125,7 +126,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	p, ok := obj.(*Playlist)
+	p, ok := obj.(*playlist.Playlist)
 	if !ok {
 		return nil, fmt.Errorf("expected playlist?")
 	}
@@ -133,7 +134,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	out, err := s.service.Create(ctx, &playlist.CreatePlaylistCommand{
+	out, err := s.service.Create(ctx, &playlistsvc.CreatePlaylistCommand{
 		UID:      p.Name,
 		Name:     cmd.Name,
 		Interval: cmd.Interval,
@@ -169,7 +170,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return old, created, err
 	}
-	p, ok := obj.(*Playlist)
+	p, ok := obj.(*playlist.Playlist)
 	if !ok {
 		return nil, created, fmt.Errorf("expected playlist after update")
 	}
@@ -197,11 +198,11 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, err
 	}
-	p, ok := v.(*Playlist)
+	p, ok := v.(*playlist.Playlist)
 	if !ok {
 		return v, false, fmt.Errorf("expected a playlist response from Get")
 	}
-	err = s.service.Delete(ctx, &playlist.DeletePlaylistCommand{
+	err = s.service.Delete(ctx, &playlistsvc.DeletePlaylistCommand{
 		UID:   name,
 		OrgId: info.OrgID,
 	})

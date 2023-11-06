@@ -77,7 +77,7 @@ func TestImportDashboardService(t *testing.T) {
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
 			User:     &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
-			FolderId: 5,
+			FolderId: 5, // nolint:staticcheck
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
 		require.NoError(t, err)
@@ -144,7 +144,7 @@ func TestImportDashboardService(t *testing.T) {
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
 			User:     &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
-			FolderId: 5,
+			FolderId: 5, // nolint:staticcheck
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
 		require.NoError(t, err)
