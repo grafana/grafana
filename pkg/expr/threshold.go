@@ -21,18 +21,29 @@ type ThresholdCommand struct {
 const (
 	ThresholdIsAbove                = "gt"
 	ThresholdIsBelow                = "lt"
-	ThresholdIsWithinRange          = "within_range"
-	ThresholdIsOutsideRange         = "outside_range"
 	ThresholdIsEqual                = "eq"
 	ThresholdIsNotEqual             = "ne"
 	ThresholdIsGe                   = "ge"
 	ThresholdIsLe                   = "le"
+	ThresholdIsWithinRange          = "within_range"
+	ThresholdIsOutsideRange         = "outside_range"
 	ThresholdIsWithinRangeIncluded  = "within_range_included"
 	ThresholdIsOutsideRangeIncluded = "outside_range_included"
 )
 
 var (
-	supportedThresholdFuncs = []string{ThresholdIsAbove, ThresholdIsBelow, ThresholdIsWithinRange, ThresholdIsOutsideRange, ThresholdIsEqual, ThresholdIsNotEqual, ThresholdIsGe, ThresholdIsLe, ThresholdIsWithinRangeIncluded, ThresholdIsOutsideRangeIncluded}
+	supportedThresholdFuncs = []string{
+		ThresholdIsAbove,
+		ThresholdIsBelow,
+		ThresholdIsEqual,
+		ThresholdIsNotEqual,
+		ThresholdIsGe,
+		ThresholdIsLe,
+		ThresholdIsWithinRange,
+		ThresholdIsOutsideRange,
+		ThresholdIsWithinRangeIncluded,
+		ThresholdIsOutsideRangeIncluded,
+	}
 )
 
 func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {

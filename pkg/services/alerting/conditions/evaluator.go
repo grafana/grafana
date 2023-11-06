@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	defaultTypes = []string{"gt", "lt", "eq", "ne", "ge", "le"}
-	rangedTypes  = []string{"within_range", "outside_range", "within_range_included", "outside_range_included"}
+	defaultTypes = []string{"gt", "lt"}
+	rangedTypes  = []string{"within_range", "outside_range"}
 )
 
 // AlertEvaluator evaluates the reduced value of a timeseries.
@@ -58,14 +58,6 @@ func (e *thresholdEvaluator) Eval(reducedValue null.Float) bool {
 		return reducedValue.Float64 > e.Threshold
 	case "lt":
 		return reducedValue.Float64 < e.Threshold
-	case "eq":
-		return reducedValue.Float64 == e.Threshold
-	case "ne":
-		return reducedValue.Float64 != e.Threshold
-	case "ge":
-		return reducedValue.Float64 >= e.Threshold
-	case "le":
-		return reducedValue.Float64 <= e.Threshold
 	}
 
 	return false
@@ -111,10 +103,6 @@ func (e *rangedEvaluator) Eval(reducedValue null.Float) bool {
 		return (e.Lower < floatValue && e.Upper > floatValue) || (e.Upper < floatValue && e.Lower > floatValue)
 	case "outside_range":
 		return (e.Upper < floatValue && e.Lower < floatValue) || (e.Upper > floatValue && e.Lower > floatValue)
-	case "within_range_included":
-		return (e.Lower <= floatValue && e.Upper >= floatValue) || (e.Upper <= floatValue && e.Lower >= floatValue)
-	case "outside_range_included":
-		return (e.Upper <= floatValue && e.Lower <= floatValue) || (e.Upper >= floatValue && e.Lower >= floatValue)
 	}
 
 	return false
@@ -160,22 +148,10 @@ func HumanThresholdType(typ string) string {
 		return "IS ABOVE"
 	case "lt":
 		return "IS BELOW"
-	case "eq":
-		return "IS EQUAL TO"
-	case "ne":
-		return "IS NOT EQUAL TO"
-	case "ge":
-		return "IS ABOVE OR EQUAL TO"
-	case "le":
-		return "IS BELOW OR EQUAL TO"
 	case "within_range":
 		return "IS WITHIN RANGE"
 	case "outside_range":
 		return "IS OUTSIDE RANGE"
-	case "within_range_included":
-		return "IS WITHIN RANGE INCLUDED"
-	case "outside_range_included":
-		return "IS OUTSIDE RANGE INCLUDED"
 	}
 	return ""
 }
