@@ -11,10 +11,10 @@ import TransformationsEditorRow from './TransformationEditorRow';
 type Props = { readOnly: boolean };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  heading: css`
-    font-size: ${theme.typography.h5.fontSize};
-    font-weight: ${theme.typography.fontWeightRegular};
-  `,
+  heading: css({
+    fontSize: theme.typography.h5.fontSize,
+    fontWeight: theme.typography.fontWeightRegular,
+  }),
 });
 
 export const TransformationsEditor = (props: Props) => {
