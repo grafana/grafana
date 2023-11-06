@@ -135,6 +135,14 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:           "newVizTooltips",
+			Description:    "New visualizations tooltips UX",
+			Stage:          FeatureStageGeneralAvailability,
+			FrontendOnly:   true,
+			Owner:          grafanaDatavizSquad,
+			AllowSelfServe: falsePtr,
+		},
+		{
 			Name:         "scenes",
 			Description:  "Experimental framework to build interactive dashboards",
 			Stage:        FeatureStageExperimental,

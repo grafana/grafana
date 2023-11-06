@@ -79,6 +79,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagNewVizTooltips
+	// New visualizations tooltips UX
+	FlagNewVizTooltips = "newVizTooltips"
+
 	// FlagScenes
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"

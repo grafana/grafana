@@ -17,6 +17,7 @@ newDBLibrary,preview,@grafana/backend-platform,false,false,false,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,false,true
+newVizTooltips,GA,@grafana/dataviz-squad,false,false,false,true
 scenes,experimental,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false,false
