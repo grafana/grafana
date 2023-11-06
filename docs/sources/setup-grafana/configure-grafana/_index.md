@@ -1516,7 +1516,7 @@ The redis server address that should be connected to.
 
 ### ha_redis_username
 
-The username that should be used to authenticate with the redis server.
+The username that should be used to authenticate with the Redis server.
 
 ### ha_redis_password
 
