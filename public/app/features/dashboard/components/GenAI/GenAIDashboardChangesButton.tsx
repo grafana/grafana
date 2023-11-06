@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Spinner, useStyles2, Tooltip } from '@grafana/ui';
+import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/ui';
 
 import { DashboardModel } from '../../state';
 
+import { GenAIHistory } from './GenAIHistory';
 import { StreamStatus, DiffSummaryMessages, useDiffSummaryHook } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
 import { getDashboardChanges, OAI_MODEL, sanitizeReply, Role } from './utils';
@@ -75,6 +76,7 @@ export const GenAIDashboardChangesButton = ({
   const { setMessages, reply, value, error, streamStatus } = useDiffSummaryHook(model, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(true);
 
   const hasHistory = history.length > 0;
   const isFirstHistoryEntry = streamStatus === StreamStatus.GENERATING && !hasHistory;
@@ -118,6 +120,12 @@ export const GenAIDashboardChangesButton = ({
   if (!value?.enabled) {
     return null;
   }
+
+  const onApplySuggestion = (suggestion: string) => {
+    reportInteraction(AutoGenerateItem.applySuggestion);
+    onGenerate(suggestion);
+    setShowHistory(false);
+  };
 
   const getIcon = () => {
     if (isFirstHistoryEntry) {
@@ -212,6 +220,34 @@ export const GenAIDashboardChangesButton = ({
     return { userMessages, migrationMessages };
   }
 
+  const renderButtonWithToggletip = () => {
+    if (hasHistory) {
+      const title = <Text element="p">{'Improve the dashboard summary'}</Text>;
+
+      return (
+        <Toggletip
+          title={title}
+          content={
+            <GenAIHistory
+              history={history}
+              messages={[...messages.userMessages, ...messages.migrationMessages]}
+              onApplySuggestion={onApplySuggestion}
+              updateHistory={pushHistoryEntry}
+              eventTrackingSrc={eventTrackingSrc}
+            />
+          }
+          placement="bottom-start"
+          fitContent={true}
+          show={showHistory ? undefined : false}
+        >
+          {button}
+        </Toggletip>
+      );
+    }
+
+    return button;
+  };
+
   return (
     <div className={styles.wrapper}>
       {isFirstHistoryEntry && <Spinner size="sm" />}
@@ -226,6 +262,7 @@ export const GenAIDashboardChangesButton = ({
           {button}
         </Tooltip>
       )}
+      {hasHistory && renderButtonWithToggletip()}
     </div>
   );
 };
