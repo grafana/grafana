@@ -154,7 +154,16 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                           <Menu.Item label="Duplicate" icon="copy" />
                         )}
                         <Menu.Divider />
-                        <Menu.Item label="Copy link" icon="clipboard-alt" />
+                        <Menu.Item
+                          label="Copy link"
+                          icon="clipboard-alt"
+                          onClick={() => {
+                            if (navigator.clipboard) {
+                              const url = buildShareUrl();
+                              navigator.clipboard.writeText(url);
+                            }
+                          }}
+                        />
                         {/* TODO - RBAC check for these actions! */}
                         <Menu.Item
                           label="Export"

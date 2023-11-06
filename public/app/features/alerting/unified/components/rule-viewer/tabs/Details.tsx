@@ -3,7 +3,7 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Text, Stack, useStyles2 } from '@grafana/ui';
+import { Text, Stack, useStyles2, ClipboardButton } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotations } from 'app/types/unified-alerting-dto';
 
@@ -38,8 +38,10 @@ const Details = ({ rule }: DetailsProps) => {
   const evaluationTimestamp = rule.promRule?.lastEvaluation;
 
   const copyRuleUID = useCallback(() => {
-    if (navigator.clipboard && isGrafanaRulerRule(rule.rulerRule)) {
-      navigator.clipboard.writeText(rule.rulerRule.grafana_alert.uid);
+    if (isGrafanaRulerRule(rule.rulerRule)) {
+      return rule.rulerRule.grafana_alert.uid;
+    } else {
+      return '';
     }
   }, [rule.rulerRule]);
 
@@ -62,15 +64,7 @@ const Details = ({ rule }: DetailsProps) => {
               <Stack direction="row" alignItems="center" gap={0.5}>
                 <Text color="primary">
                   {rule.rulerRule.grafana_alert.uid}{' '}
-                  <Button
-                    fill="text"
-                    variant="secondary"
-                    icon="copy"
-                    size="sm"
-                    onClick={() => copyRuleUID()}
-                    tooltip="Copy to clipboard"
-                    tooltipPlacement="top"
-                  />
+                  <ClipboardButton fill="text" variant="secondary" icon="copy" size="sm" getText={copyRuleUID} />
                 </Text>
               </Stack>
             </>
