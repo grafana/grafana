@@ -84,8 +84,8 @@ const Details = ({ rule }: DetailsProps) => {
               Last evaluation
               {evaluationTimestamp && evaluationDuration && (
                 <span>
-                  <Text color="primary">{formatDistanceToNowStrict(new Date(evaluationTimestamp))}</Text> ago, took{' '}
-                  <Text color="primary">{evaluationDuration}</Text> ms
+                  <Text color="primary">{formatDistanceToNowStrict(new Date(evaluationTimestamp))} ago</Text>, took{' '}
+                  <Text color="primary">{evaluationDuration}ms</Text>
                 </span>
               )}
             </>
@@ -101,22 +101,18 @@ const Details = ({ rule }: DetailsProps) => {
         </MetaText>
 
         {/* nodata and execution error state mapping */}
-        <MetaText direction="column">
-          {isGrafanaRulerRule(rule.rulerRule) && (
-            <>
+        {isGrafanaRulerRule(rule.rulerRule) && (
+          <>
+            <MetaText direction="column">
               Alert state if no data or all values are null
               <Text color="primary">{rule.rulerRule.grafana_alert.no_data_state}</Text>
-            </>
-          )}
-        </MetaText>
-        <MetaText direction="column">
-          {isGrafanaRulerRule(rule.rulerRule) && (
-            <>
+            </MetaText>
+            <MetaText direction="column">
               Alert state if execution error or timeout
               <Text color="primary">{rule.rulerRule.grafana_alert.exec_err_state}</Text>
-            </>
-          )}
-        </MetaText>
+            </MetaText>
+          </>
+        )}
       </div>
 
       {/* annotations go here */}
@@ -124,7 +120,7 @@ const Details = ({ rule }: DetailsProps) => {
         <>
           <Text variant="h4">Annotations</Text>
           {Object.keys(annotations).length === 0 ? (
-            <Text variant="bodySmall" color="secondary">
+            <Text variant="bodySmall" color="secondary" italic>
               No annotations
             </Text>
           ) : (

@@ -99,6 +99,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
     return <LoadingPlaceholder text={'Loading...'} />;
   }
 
+  // TODO improve error handling here
   if (error) {
     if (typeof error === 'string') {
       return error;
@@ -176,7 +177,15 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                   </Dropdown>
                 </Stack>
               </Stack>
-              {summary && <Summary text={summary} />}
+              {summary ? (
+                <Summary text={summary} />
+              ) : (
+                <Button size="sm" fill="text" variant="secondary" style={{ alignSelf: 'start' }}>
+                  <Text variant="bodySmall" color="secondary" italic>
+                    Click to add a summary <Icon name="pen" />
+                  </Text>
+                </Button>
+              )}
             </Stack>
 
             <Metadata labels={rule.labels} annotations={rule.annotations} interval={rule.group.interval} />
@@ -326,6 +335,7 @@ interface BreadcrumbProps {
 
 const BreadCrumbs = ({ folder, evaluationGroup }: BreadcrumbProps) => (
   // TODO fix vertical alignment here
+  // TODO make folder and group clickable -> use list filter(s)
   <Stack alignItems="center" gap={0.5}>
     <Text color="secondary">
       <Icon name="folder" />
