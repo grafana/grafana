@@ -88,7 +88,7 @@ export function ShortLinkButtonMenu() {
   const buttonMode = (() => {
     const defaultMode: ShortLinkMenuItemData = {
       key: 'copy-link',
-      label: '',
+      label: t('explore.toolbar.copy-shortened-link', 'Copy shortened link'),
       icon: 'share-alt',
       getUrl: () => undefined,
     };
@@ -106,7 +106,7 @@ export function ShortLinkButtonMenu() {
     <ToolbarButtonRow>
       <Stack gap={0} direction="row" alignItems="center" wrap="nowrap">
         <ToolbarButton
-          tooltip={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
+          tooltip={buttonMode.label}
           icon={buttonMode.icon}
           iconOnly={true}
           narrow={true}

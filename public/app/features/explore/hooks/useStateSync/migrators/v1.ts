@@ -16,16 +16,33 @@ export interface ExploreURLV1 extends BaseExploreURL {
 
 export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
   parse: (params) => {
+    let panesFmt = params.panes?.toString();
     if (!params || !params.panes || typeof params.panes !== 'string') {
-      return {
+      const defaultObj: ExploreURLV1 = {
         schemaVersion: 1,
         panes: {
           [generateExploreId()]: DEFAULT_STATE,
         },
       };
+      // some URL builders will want to put multiple panes in multiple params. If that's the case here, combine them into one object
+      if (params && params.panes && Array.isArray(params.panes)) {
+        try {
+          let paneObj = {};
+          params.panes.forEach((pane) => {
+            if (typeof pane === 'string') {
+              paneObj = { ...paneObj, ...JSON.parse(pane) };
+            }
+          });
+          panesFmt = JSON.stringify(paneObj);
+        } catch {
+          return defaultObj;
+        }
+      } else {
+        return defaultObj;
+      }
     }
 
-    const rawPanes: Record<string, unknown> = safeParseJson(params.panes) || {};
+    const rawPanes: Record<string, unknown> = safeParseJson(panesFmt) || {};
 
     const panes = Object.entries(rawPanes)
       .map(([key, value]) => [key, applyDefaults(value)] as const)
