@@ -18,7 +18,6 @@
  * @public
  */
 export interface FeatureToggles {
-  trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
@@ -152,9 +151,13 @@ export interface FeatureToggles {
   costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
+  addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
   alertmanagerRemotePrimary?: boolean;
   alertmanagerRemoteOnly?: boolean;
   annotationPermissionUpdate?: boolean;
+  extractFieldsNameDeduplication?: boolean;
+  dashboardSceneForViewers?: boolean;
+  panelFilterVariable?: boolean;
   pdfTables?: boolean;
 }

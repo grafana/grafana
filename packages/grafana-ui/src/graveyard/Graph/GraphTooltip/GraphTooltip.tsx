@@ -2,7 +2,7 @@ import React from 'react';
 
 import { TooltipDisplayMode } from '@grafana/schema';
 
-import { VizTooltipContentProps } from '../../VizTooltip';
+import { VizTooltipContentProps } from '../../../components/VizTooltip';
 
 import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
 import { SingleModeGraphTooltip } from './SingleModeGraphTooltip';
