@@ -147,5 +147,4 @@ func TestNonElasticError(t *testing.T) {
 	// at least something like "unknown response, http status code 403"
 	require.NoError(t, err)
 	require.Contains(t, res.response.Responses["A"].Error.Error(), "invalid character")
-
 }
