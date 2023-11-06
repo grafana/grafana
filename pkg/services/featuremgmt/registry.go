@@ -1025,6 +1025,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "pdfTables",
+			Description:  "Enables generating table data as PDF in reporting",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaSharingSquad,
+		},
+		{
 			Name:            "enableSSOSettingsAPI",
 			Description:     "Enables the SSO settings API",
 			RequiresDevMode: true,

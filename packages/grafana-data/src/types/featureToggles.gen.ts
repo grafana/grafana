@@ -159,5 +159,6 @@ export interface FeatureToggles {
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
   panelFilterVariable?: boolean;
+  pdfTables?: boolean;
   enableSSOSettingsAPI?: boolean;
 }
