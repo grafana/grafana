@@ -5,7 +5,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { Stack } from '@grafana/experimental';
 import { Field, Icon, IconButton, Input, Label, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
-import {getSupportedTransTypeDetails, getTransformOptions} from './types';
+import { getSupportedTransTypeDetails, getTransformOptions } from './types';
 
 type Props = {
   index: number;
@@ -28,8 +28,9 @@ const TransformationEditorRow = (props: Props) => {
 
   const [keptVals, setKeptVals] = useState<{ expression?: string; mapValue?: string }>({});
 
-  // const { onChange, onBlur, name, ref } = register(`config.transformations.${index}.type`);
-  register(`config.transformations.${index}.type`);
+  register(`config.transformations.${index}.type`, {
+    required: { value: true, message: 'Please select a transformation type' },
+  });
   const typeValue = useWatch({ name: `config.transformations.${index}.type`, control });
 
   const styles = useStyles2(getStyles);
@@ -144,7 +145,8 @@ const TransformationEditorRow = (props: Props) => {
       >
         <Input
           {...register(`config.transformations.${index}.expression`, {
-            required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.required
+            required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails
+              .required
               ? 'Please define an expression'
               : undefined,
           })}
@@ -198,4 +200,4 @@ const TransformationEditorRow = (props: Props) => {
   );
 };
 
-export default TransformationEditorRow
+export default TransformationEditorRow;
