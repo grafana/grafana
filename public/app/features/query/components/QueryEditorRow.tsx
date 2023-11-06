@@ -33,7 +33,7 @@ import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -302,7 +302,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       }
     }
 
-    return <div>Data source plugin does not export any Query Editor component</div>;
+    return (
+      <div>
+        <Trans i18nKey="query-operation.query-editor-not-exported">
+          Data source plugin does not export any Query Editor component
+        </Trans>
+      </div>
+    );
   };
 
   onToggleEditMode = (e: React.MouseEvent, props: QueryOperationRowRenderProps) => {
