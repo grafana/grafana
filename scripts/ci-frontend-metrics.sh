@@ -46,6 +46,13 @@ do
   BETTERER_STATS+="\"grafana.ci-code.betterer.${name}\": \"${value}\","
 done <<< "$(yarn betterer:stats)"
 
+I18N_STATS=""
+while read -r name value
+do
+  I18N_STATS+=$'\n  '
+  I18N_STATS+="\"grafana.ci-code.i18n.${name}\": \"${value}\","
+done <<< "$(yarn i18n:stats)"
+
 THEME_TOKEN_USAGE=""
 while read -r name value
 do
@@ -56,6 +63,7 @@ done <<< "$(yarn themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $
 echo "Metrics: {
   $THEME_TOKEN_USAGE
   $BETTERER_STATS
+  $I18N_STATS
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
   \"grafana.ci-code.accessibilityErrors\": \"${ACCESSIBILITY_ERRORS}\",
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",

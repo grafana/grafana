@@ -302,7 +302,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     tabsWrapper: css({
       label: 'drawer-tabs',
       paddingLeft: theme.spacing(2),
-      margin: theme.spacing(0, -1, -3, -3),
+      margin: theme.spacing(1, -1, -3, -3),
     }),
   };
 };

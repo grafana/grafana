@@ -2,7 +2,9 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
 import { Action } from 'redux';
 
-type GrafanaReducer<S = any, A extends Action = AnyAction> = (state: S, action: A) => S;
+import { StoreState } from 'app/types';
+
+type GrafanaReducer<S = StoreState, A extends Action = AnyAction> = (state: S, action: A) => S;
 
 export interface Given<State> {
   givenReducer: (
@@ -23,10 +25,6 @@ export interface Then<State> {
   whenActionIsDispatched: (action: AnyAction) => Then<State>;
 }
 
-interface ObjectType extends Object {
-  [key: string]: any;
-}
-
 export const deepFreeze = <T>(obj: T): T => {
   Object.freeze(obj);
 
@@ -37,7 +35,7 @@ export const deepFreeze = <T>(obj: T): T => {
   const hasOwnProp = Object.prototype.hasOwnProperty;
 
   if (obj && obj instanceof Object) {
-    const object: ObjectType = obj;
+    const object: Record<string, unknown> = obj;
     Object.getOwnPropertyNames(object).forEach((propertyName) => {
       const objectProperty = object[propertyName];
       if (

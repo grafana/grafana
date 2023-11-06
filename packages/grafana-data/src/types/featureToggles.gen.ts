@@ -18,7 +18,6 @@
  * @public
  */
 export interface FeatureToggles {
-  trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
@@ -30,6 +29,7 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
+  exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
@@ -65,8 +65,6 @@ export interface FeatureToggles {
   individualCookiePreferences?: boolean;
   gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
-  timeSeriesTable?: boolean;
-  prometheusResourceBrowserCache?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
@@ -104,7 +102,6 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
-  toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
@@ -114,11 +111,11 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   azureMonitorDataplane?: boolean;
+  traceToProfiles?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
   influxdbSqlSupport?: boolean;
-  noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
@@ -126,18 +123,40 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
+  alertingContactPointsV2?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
   idForwarding?: boolean;
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
-  alertingModifiedExport?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
+  formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  kubernetesPlaylistsAPI?: boolean;
+  cloudWatchBatchQueries?: boolean;
+  navAdminSubsections?: boolean;
+  recoveryThreshold?: boolean;
+  teamHttpHeaders?: boolean;
+  awsDatasourcesNewFormStyling?: boolean;
+  cachingOptimizeSerializationMemoryUsage?: boolean;
+  panelTitleSearchInV1?: boolean;
+  pluginsInstrumentationStatusSource?: boolean;
+  costManagementUi?: boolean;
+  managedPluginsInstall?: boolean;
+  prometheusPromQAIL?: boolean;
+  addFieldFromCalculationStatFunctions?: boolean;
+  alertmanagerRemoteSecondary?: boolean;
+  alertmanagerRemotePrimary?: boolean;
+  alertmanagerRemoteOnly?: boolean;
+  annotationPermissionUpdate?: boolean;
+  extractFieldsNameDeduplication?: boolean;
+  dashboardSceneForViewers?: boolean;
+  panelFilterVariable?: boolean;
 }

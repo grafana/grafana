@@ -110,8 +110,26 @@ export const Table = memo((props: Props) => {
     [data, width, columnMinWidth, footerItems, hasNestedData, isCountRowsSet]
   );
 
+  // we need a ref to later store the `toggleAllRowsExpanded` function, returned by `useTable`.
+  // We cannot simply use a variable because we need to use such function in the initialization of
+  // `useTableStateReducer`, which is needed to construct options for `useTable` (the hook that returns
+  // `toggleAllRowsExpanded`), and if we used a variable, that variable would be undefined at the time
+  // we initialize `useTableStateReducer`.
+  const toggleAllRowsExpandedRef = useRef<(value?: boolean) => void>();
+
   // Internal react table state reducer
-  const stateReducer = useTableStateReducer(props);
+  const stateReducer = useTableStateReducer({
+    ...props,
+    onSortByChange: (state) => {
+      // Collapse all rows. This prevents a known bug that causes the size of the rows to be incorrect due to
+      // using `VariableSizeList` and `useExpanded` together.
+      toggleAllRowsExpandedRef.current!(false);
+
+      if (props.onSortByChange) {
+        props.onSortByChange(state);
+      }
+    },
+  });
 
   const options: any = useMemo(
     () => ({
@@ -142,9 +160,17 @@ export const Table = memo((props: Props) => {
     gotoPage,
     setPageSize,
     pageOptions,
+    toggleAllRowsExpanded,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
   const extendedState = state as GrafanaTableState;
+  toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
+
+  const expandedRowsRepr = JSON.stringify(Object.keys(state.expanded));
+  useEffect(() => {
+    // Reset the list size cache when the expanded rows change
+    listRef.current?.resetAfterIndex(0);
+  }, [expandedRowsRepr]);
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
@@ -213,11 +239,9 @@ export const Table = memo((props: Props) => {
   );
 
   const RenderRow = useCallback(
-    ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
-      let row = rows[rowIndex];
-      if (enablePagination) {
-        row = page[rowIndex];
-      }
+    ({ index, style }: { index: number; style: CSSProperties }) => {
+      const indexForPagination = rowIndexForPagination(index);
+      const row = rows[indexForPagination];
 
       prepareRow(row);
 
@@ -230,7 +254,7 @@ export const Table = memo((props: Props) => {
             <ExpandedRow
               nestedData={nestedDataField}
               tableStyles={tableStyles}
-              rowIndex={row.index}
+              rowIndex={index}
               width={width}
               cellHeight={cellHeight}
             />
@@ -251,18 +275,17 @@ export const Table = memo((props: Props) => {
       );
     },
     [
+      rowIndexForPagination,
       rows,
-      enablePagination,
       prepareRow,
+      state.expanded,
       tableStyles,
       nestedDataField,
-      page,
+      width,
+      cellHeight,
       onCellFilterAdded,
       timeRange,
       data,
-      width,
-      cellHeight,
-      state.expanded,
     ]
   );
 
@@ -301,8 +324,9 @@ export const Table = memo((props: Props) => {
 
   const getItemSize = (index: number): number => {
     const indexForPagination = rowIndexForPagination(index);
-    if (state.expanded[indexForPagination] && nestedDataField) {
-      return getExpandedRowHeight(nestedDataField, indexForPagination, tableStyles);
+    const row = rows[indexForPagination];
+    if (state.expanded[row.index] && nestedDataField) {
+      return getExpandedRowHeight(nestedDataField, index, tableStyles);
     }
 
     return tableStyles.rowHeight;

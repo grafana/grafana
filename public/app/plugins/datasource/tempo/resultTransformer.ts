@@ -16,14 +16,23 @@ import {
   createDataFrame,
   getDisplayProcessor,
   createTheme,
+  DataFrameDTO,
+  toDataFrame,
+  DataLink,
+  DataSourceJsonData,
+  Field,
+  DataLinkConfigOrigin,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
-import { Span, SpanAttributes, Spanset, TraceSearchMetadata } from './types';
+import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
 
 export function createTableFrame(
-  logsFrame: DataFrame,
+  logsFrame: DataFrame | DataFrameDTO,
   datasourceUid: string,
   datasourceName: string,
   traceRegexs: string[]
@@ -38,6 +47,7 @@ export function createTableFrame(
             width: 200,
           },
         },
+        values: [],
       },
       {
         name: 'traceID',
@@ -59,10 +69,12 @@ export function createTableFrame(
             },
           ],
         },
+        values: [],
       },
       {
         name: 'Message',
         type: FieldType.string,
+        values: [],
       },
     ],
     meta: {
@@ -80,7 +92,7 @@ export function createTableFrame(
   for (let field of logsFrame.fields) {
     let hasMatch = false;
     if (field.type === FieldType.string) {
-      const values = field.values;
+      const values = field.values!;
       for (let i = 0; i < values.length; i++) {
         const line = values[i];
         if (line) {
@@ -88,7 +100,7 @@ export function createTableFrame(
             const match = line.match(traceRegex);
             if (match) {
               const traceId = match[1];
-              const time = timeField ? timeField.values[i] : null;
+              const time = timeField ? timeField.values![i] : null;
               tableFrame.fields[0].values.push(time);
               tableFrame.fields[1].values.push(traceId);
               tableFrame.fields[2].values.push(line);
@@ -226,23 +238,23 @@ export function transformFromOTLP(
 ): DataQueryResponse {
   const frame = new MutableDataFrame({
     fields: [
-      { name: 'traceID', type: FieldType.string },
-      { name: 'spanID', type: FieldType.string },
-      { name: 'parentSpanID', type: FieldType.string },
-      { name: 'operationName', type: FieldType.string },
-      { name: 'serviceName', type: FieldType.string },
-      { name: 'kind', type: FieldType.string },
-      { name: 'statusCode', type: FieldType.number },
-      { name: 'statusMessage', type: FieldType.string },
-      { name: 'instrumentationLibraryName', type: FieldType.string },
-      { name: 'instrumentationLibraryVersion', type: FieldType.string },
-      { name: 'traceState', type: FieldType.string },
-      { name: 'serviceTags', type: FieldType.other },
-      { name: 'startTime', type: FieldType.number },
-      { name: 'duration', type: FieldType.number },
-      { name: 'logs', type: FieldType.other },
-      { name: 'references', type: FieldType.other },
-      { name: 'tags', type: FieldType.other },
+      { name: 'traceID', type: FieldType.string, values: [] },
+      { name: 'spanID', type: FieldType.string, values: [] },
+      { name: 'parentSpanID', type: FieldType.string, values: [] },
+      { name: 'operationName', type: FieldType.string, values: [] },
+      { name: 'serviceName', type: FieldType.string, values: [] },
+      { name: 'kind', type: FieldType.string, values: [] },
+      { name: 'statusCode', type: FieldType.number, values: [] },
+      { name: 'statusMessage', type: FieldType.string, values: [] },
+      { name: 'instrumentationLibraryName', type: FieldType.string, values: [] },
+      { name: 'instrumentationLibraryVersion', type: FieldType.string, values: [] },
+      { name: 'traceState', type: FieldType.string, values: [] },
+      { name: 'serviceTags', type: FieldType.other, values: [] },
+      { name: 'startTime', type: FieldType.number, values: [] },
+      { name: 'duration', type: FieldType.number, values: [] },
+      { name: 'logs', type: FieldType.other, values: [] },
+      { name: 'references', type: FieldType.other, values: [] },
+      { name: 'tags', type: FieldType.other, values: [] },
     ],
     meta: {
       preferredVisualisationType: 'trace',
@@ -486,16 +498,59 @@ function getOTLPReferences(
   return links;
 }
 
-export function transformTrace(response: DataQueryResponse, nodeGraph = false): DataQueryResponse {
-  const frame: DataFrame = response.data[0];
+export const RelatedProfilesTitle = 'Related profiles';
+
+export function transformTrace(
+  response: DataQueryResponse,
+  instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
+  nodeGraph = false
+): DataQueryResponse {
+  const frame = response.data[0];
 
   if (!frame) {
     return emptyDataQueryResponse;
   }
 
+  // Get profiles links
+  if (config.featureToggles.traceToProfiles) {
+    const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
+    const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
+    let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
+    if (traceToProfilesOptions?.datasourceUid) {
+      profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
+    }
+
+    if (traceToProfilesOptions && profilesDataSourceSettings) {
+      const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
+      const dataLink: DataLink = {
+        title: RelatedProfilesTitle,
+        url: '',
+        internal: {
+          datasourceUid: profilesDataSourceSettings.uid,
+          datasourceName: profilesDataSourceSettings.name,
+          query: {
+            labelSelector: customQuery ? customQuery : '{${__tags}}',
+            groupBy: [],
+            profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
+            queryType: 'profile',
+            spanSelector: ['${__span.spanId}'],
+            refId: 'profile',
+          },
+        },
+        origin: DataLinkConfigOrigin.Datasource,
+      };
+
+      frame.fields.forEach((field: Field) => {
+        if (field.name === 'tags') {
+          field.config.links = [dataLink];
+        }
+      });
+    }
+  }
+
   let data = [...response.data];
   if (nodeGraph) {
-    data.push(...createGraphFrames(frame));
+    data.push(...createGraphFrames(toDataFrame(frame)));
   }
 
   return {
@@ -512,6 +567,7 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
       {
         name: 'traceID',
         type: FieldType.string,
+        values: [],
         config: {
           unit: 'string',
           displayNameFromDS: 'Trace ID',
@@ -531,10 +587,15 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
           ],
         },
       },
-      { name: 'traceService', type: FieldType.string, config: { displayNameFromDS: 'Trace service' } },
-      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
-      { name: 'startTime', type: FieldType.time, config: { displayNameFromDS: 'Start time' } },
-      { name: 'traceDuration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+      { name: 'traceService', type: FieldType.string, config: { displayNameFromDS: 'Trace service' }, values: [] },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' }, values: [] },
+      { name: 'startTime', type: FieldType.time, config: { displayNameFromDS: 'Start time' }, values: [] },
+      {
+        name: 'traceDuration',
+        type: FieldType.number,
+        config: { displayNameFromDS: 'Duration', unit: 'ms' },
+        values: [],
+      },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -679,7 +740,7 @@ export function createTableFrameFromTraceQlQueryAsSpans(
   const spanDynamicAttrs: Record<string, FieldDTO> = {};
   let hasNameAttribute = false;
 
-  data.forEach(
+  data?.forEach(
     (t) =>
       t.spanSets?.forEach((ss) => {
         ss.attributes?.forEach((attr) => {
@@ -826,6 +887,7 @@ const traceSubFrame = (
       name: attr.key,
       type: FieldType.string,
       config: { displayNameFromDS: attr.key },
+      values: [],
     };
   });
   spanSet.spans.forEach((span) => {
@@ -837,6 +899,7 @@ const traceSubFrame = (
         name: attr.key,
         type: FieldType.string,
         config: { displayNameFromDS: attr.key },
+        values: [],
       };
     });
   });
@@ -849,10 +912,12 @@ const traceSubFrame = (
         config: {
           custom: { hidden: true },
         },
+        values: [],
       },
       {
         name: 'spanID',
         type: FieldType.string,
+        values: [],
         config: {
           unit: 'string',
           displayNameFromDS: 'Span ID',
@@ -893,12 +958,14 @@ const traceSubFrame = (
       {
         name: 'name',
         type: FieldType.string,
+        values: [],
         config: { displayNameFromDS: 'Name', custom: { hidden: !hasNameAttribute } },
       },
       ...Object.values(spanDynamicAttrs).sort((a, b) => a.name.localeCompare(b.name)),
       {
         name: 'duration',
         type: FieldType.number,
+        values: [],
         config: {
           displayNameFromDS: 'Duration',
           unit: 'ns',

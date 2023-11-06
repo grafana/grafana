@@ -128,7 +128,7 @@ func TestCallResource(t *testing.T) {
 		_, err = io.Copy(body, resp.Body)
 		require.NoError(t, err)
 
-		expectedBody := `{ "error": "something went wrong", "message": "Failed to call resource", "traceID": "" }`
+		expectedBody := `{ "message": "Failed to call resource", "traceID": "" }`
 		require.JSONEq(t, expectedBody, body.String())
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 500, resp.StatusCode)

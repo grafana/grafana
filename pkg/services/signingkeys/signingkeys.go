@@ -10,6 +10,7 @@ package signingkeys
 import (
 	"context"
 	"crypto"
+	"time"
 
 	"github.com/go-jose/go-jose/v3"
 )
@@ -25,4 +26,12 @@ type Service interface {
 	// GetJWKS returns the JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
 	GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error)
 	GetOrCreatePrivateKey(ctx context.Context, keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error)
+}
+
+type SigningKey struct {
+	KeyID      string                  `xorm:"key_id"`
+	PrivateKey []byte                  `xorm:"private_key"`
+	AddedAt    time.Time               `xorm:"added_at"`
+	ExpiresAt  *time.Time              `xorm:"expires_at"`
+	Alg        jose.SignatureAlgorithm `xorm:"alg"`
 }

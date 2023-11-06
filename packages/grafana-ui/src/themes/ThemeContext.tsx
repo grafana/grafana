@@ -2,7 +2,7 @@ import hoistNonReactStatics from 'hoist-non-react-statics';
 import memoize from 'micro-memoize';
 import React, { useContext } from 'react';
 
-import { createTheme, GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2, ThemeContext } from '@grafana/data';
 
 import { Themeable, Themeable2 } from '../types/theme';
 
@@ -18,12 +18,6 @@ let ThemeContextMock: React.Context<GrafanaTheme2> | null = null;
 
 // Used by useStyles()
 export const memoizedStyleCreators = new WeakMap();
-
-// Use Grafana Dark theme by default
-/** @public */
-export const ThemeContext = React.createContext(createTheme());
-
-ThemeContext.displayName = 'ThemeContext';
 
 /** @deprecated use withTheme2 */
 /** @public */

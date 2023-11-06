@@ -30,6 +30,7 @@ func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, asset
 func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
+		TemplateDecorateFunc,
 		AppChildDecorateFunc(cfg),
 	}
 }
@@ -83,6 +84,22 @@ func AppDefaultNavURLDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugin
 	if p.IsApp() {
 		setDefaultNavURL(p)
 	}
+	return p, nil
+}
+
+// TemplateDecorateFunc is a DecorateFunc that removes the placeholder for the version and last_update fields.
+func TemplateDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	// %VERSION% and %TODAY% are valid values, according to the plugin schema
+	// but it's meant to be replaced by the build system with the actual version and date.
+	// If not, it's the same than not having a version or a date.
+	if p.Info.Version == "%VERSION%" {
+		p.Info.Version = ""
+	}
+
+	if p.Info.Updated == "%TODAY%" {
+		p.Info.Updated = ""
+	}
+
 	return p, nil
 }
 

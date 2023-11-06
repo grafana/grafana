@@ -23,6 +23,7 @@ import {
   PanelData,
   LoadingState,
   GraphSeriesValue,
+  DataFrameWithValue,
 } from '../types/index';
 
 import { arrayToDataFrame } from './ArrayDataFrame';
@@ -302,6 +303,9 @@ export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFr
 export const isTableData = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('columns'));
 
 export const isDataFrame = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('fields'));
+
+export const isDataFrameWithValue = (data: unknown): data is DataFrameWithValue =>
+  Boolean(isDataFrame(data) && data.hasOwnProperty('value'));
 
 /**
  * Inspect any object and return the results as a DataFrame

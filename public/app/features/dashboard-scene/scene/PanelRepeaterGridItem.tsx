@@ -20,6 +20,8 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { DashboardRepeatsProcessedEvent } from './types';
+
 interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
   source: VizPanel;
   repeatedPanels?: VizPanel[];
@@ -146,9 +148,12 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
         layout.forceRender();
       }
     }
+
+    // Used from dashboard url sync
+    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
-  private getMaxPerRow(): number {
+  public getMaxPerRow(): number {
     return this.state.maxPerRow ?? 4;
   }
 

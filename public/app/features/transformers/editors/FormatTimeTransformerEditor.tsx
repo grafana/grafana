@@ -10,7 +10,9 @@ import {
   PluginState,
 } from '@grafana/data';
 import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
-import { Select, InlineFieldRow, InlineField, Input, InlineSwitch } from '@grafana/ui';
+import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
+
+import { getTimezoneOptions } from '../utils';
 
 export function FormatTimeTransfomerEditor({
   input,
@@ -18,6 +20,7 @@ export function FormatTimeTransfomerEditor({
   onChange,
 }: TransformerUIProps<FormatTimeTransformerOptions>) {
   const timeFields: Array<SelectableValue<string>> = [];
+  const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
 
   // Get time fields
   for (const frame of input) {
@@ -51,12 +54,16 @@ export function FormatTimeTransfomerEditor({
     [onChange, options]
   );
 
-  const onUseTzChange = useCallback(() => {
-    onChange({
-      ...options,
-      useTimezone: !options.useTimezone,
-    });
-  }, [onChange, options]);
+  const onTzChange = useCallback(
+    (value: SelectableValue<string>) => {
+      const val = value?.value !== undefined ? value.value : '';
+      onChange({
+        ...options,
+        timezone: val,
+      });
+    },
+    [onChange, options]
+  );
 
   return (
     <>
@@ -87,12 +94,8 @@ export function FormatTimeTransfomerEditor({
         >
           <Input onChange={onFormatChange} value={options.outputFormat} />
         </InlineField>
-        <InlineField
-          label="Use Timezone"
-          tooltip="Use the user's configured timezone when formatting time."
-          labelWidth={20}
-        >
-          <InlineSwitch value={options.useTimezone} transparent={true} onChange={onUseTzChange} />
+        <InlineField label="Set Timezone" tooltip="Set the timezone of the date manually" labelWidth={20}>
+          <Select options={timeZoneOptions} value={options.timezone} onChange={onTzChange} isClearable />
         </InlineField>
       </InlineFieldRow>
     </>

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/lib/pq"
@@ -14,8 +15,16 @@ import (
 
 func TestPostgresProxyDriver(t *testing.T) {
 	dialect := "postgres"
-	opts := proxyutil.GetSQLProxyOptions(sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
 	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
+	proxySettings := setting.SecureSocksDSProxySettings{
+		Enabled:      true,
+		ClientCert:   settings.ClientCert,
+		ClientKey:    settings.ClientKey,
+		RootCA:       settings.RootCA,
+		ProxyAddress: settings.ProxyAddress,
+		ServerName:   settings.ServerName,
+	}
+	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
 	dbURL := "localhost:5432"
 	cnnstr := fmt.Sprintf("postgres://auser:password@%s/db?sslmode=disable", dbURL)
 	driverName, err := createPostgresProxyDriver(cnnstr, opts)

@@ -23,7 +23,7 @@ export function getRulesPerGroupScene(datasource: DataSourceRef, panelTitle: str
     ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The current and historical number of alert rules in the rule group')
       .setData(query)
       .setUnit('none')
       .setOption('graphMode', BigValueGraphMode.Area)

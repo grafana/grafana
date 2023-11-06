@@ -381,6 +381,11 @@ export const processVariable = (
       }
     }
 
+    if (variable.type === 'custom') {
+      await dispatch(updateOptions(toKeyedVariableIdentifier(variable)));
+      return;
+    }
+
     // for variables that aren't updated via URL or refresh, let's simulate the same state changes
     dispatch(completeVariableLoading(identifier));
   };
@@ -618,6 +623,7 @@ export const variableUpdated = (
       : {
           refreshAll: false,
           panelIds: Array.from(getAllAffectedPanelIdsForVariableChange([variableInState.id], g, panelVars)),
+          variable: getVariable(identifier, state),
         };
 
     const node = g.getNode(variableInState.name);

@@ -23,7 +23,7 @@ export function getAlertsByStateScene(datasource: DataSourceRef, panelTitle: str
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('A breakdown of all of your firing alert rule instances based on state')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
