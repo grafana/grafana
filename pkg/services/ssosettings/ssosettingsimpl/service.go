@@ -14,9 +14,8 @@ import (
 )
 
 var (
-	// TODO: make sure that grafana com only available to server admins and org admins should not be able to update the settings of it
-	grafanaCom = "grafana_com"
-	allOauthes = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
+	// TODO: make sure that grafana_com only available to server admins and org admins should not be able to update the settings of it
+	allOauthes = []string{"github", "gitlab", "google", "generic_oauth", "grafana_com", "azuread", "okta"}
 )
 
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
