@@ -1618,7 +1618,7 @@
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": ">=10.3.0",
+      "grafanaDependency": ">=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
