@@ -15,7 +15,7 @@ describe('Docked Navigation', () => {
 
   it('should remain docked when reloading the page', () => {
     // Expand, then dock the mega menu
-    cy.get('[aria-label="Toggle menu"]').click();
+    cy.get('[aria-label="Open menu"]').click();
     cy.get('[aria-label="Dock menu"]').click();
 
     e2e.components.NavMenu.Menu().should('be.visible');
@@ -26,7 +26,7 @@ describe('Docked Navigation', () => {
 
   it('should remain docked when navigating to another page', () => {
     // Expand, then dock the mega menu
-    cy.get('[aria-label="Toggle menu"]').click();
+    cy.get('[aria-label="Open menu"]').click();
     cy.get('[aria-label="Dock menu"]').click();
 
     cy.contains('a', 'Administration').click();
