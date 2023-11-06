@@ -6913,7 +6913,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 9f0957019bfc56e96a499c3eb85f889cafbac3a17eb4e22ae16653f27d7dc3791472bae92f9e0bd8bf35efaf63b107f7a1beddd153a485bd00bddfb1c13dc360
+  checksum: a00c56fb6e854e53548931180ecca4d687fd4ff0775bae5cf1035de1ba0dd359268bfa9816aa7caf511c5bd03117f114428bc86602e631f724158e67502bcb3d
   languageName: node
   linkType: hard
 
@@ -21287,6 +21287,17 @@ __metadata:
   version: 4.2.0
   resolution: "loader-runner@npm:4.2.0"
   checksum: 89a648e0418f23edf2f310bf74a8adb0710548e8d8d47040def081e1b822bdc27b664b796ce43ceb7921fa56485e1f5046417e425714730dc6ea4242e7a176fa
+  languageName: node
+  linkType: hard
+
+"loader-utils@npm:^1.0.2":
+  version: 1.4.2
+  resolution: "loader-utils@npm:1.4.2"
+  dependencies:
+    big.js: "npm:^5.2.2"
+    emojis-list: "npm:^3.0.0"
+    json5: "npm:^1.0.1"
+  checksum: 2ae94cc88ad9cf2991e322b9ddf547cff80cf6fc0f9c77546b258c5ed9f77b0827f64c2625cb0baa06432f1f441bb4744c9ab1e1412ee6f8e97d31f8e9c730d6
   languageName: node
   linkType: hard
 

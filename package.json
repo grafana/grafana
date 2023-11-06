@@ -422,7 +422,6 @@
   "resolutions": {
     "underscore": "1.13.6",
     "@types/slate": "0.47.11",
-    "ngtemplate-loader/loader-utils": "^2.0.0",
     "semver@~7.0.0": "7.5.4",
     "semver@7.3.4": "7.5.4",
     "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
