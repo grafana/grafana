@@ -5,12 +5,19 @@ import { FormState, UseFormRegister } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Button, Form, Spinner, useStyles2 } from '@grafana/ui/src';
+import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
-import { AccessControlAction } from '../../../../../../types';
+import { AccessControlAction, useSelector } from '../../../../../../types';
+import { trackDashboardSharingActionPerType } from '../../analytics';
+import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
+import { dashboardHasTemplateVariables } from '../SharePublicDashboardUtils';
+import { useGetUnsupportedDataSources } from '../useGetUnsupportedDataSources';
 
 import { AcknowledgeCheckboxes } from './AcknowledgeCheckboxes';
 
@@ -22,22 +29,23 @@ export type SharePublicDashboardAcknowledgmentInputs = {
   usageAcknowledgment: boolean;
 };
 
-interface CreatePublicDashboardProps {
-  isError?: boolean;
-  onCreate: () => void;
+interface CreatePublicDashboarBaseProps {
   unsupportedDatasources?: string[];
   unsupportedTemplateVariables?: boolean;
-  isLoading?: boolean;
+  dashboard: DashboardModel | DashboardScene;
 }
-export const CreatePublicDashboard = ({
+export const CreatePublicDashboardBase = ({
   unsupportedDatasources = [],
-  isLoading = false,
-  isError = false,
   unsupportedTemplateVariables = false,
-  onCreate,
-}: CreatePublicDashboardProps) => {
+  dashboard,
+}: CreatePublicDashboarBaseProps) => {
   const styles = useStyles2(getStyles);
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+  const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
+  const onCreate = () => {
+    createPublicDashboard({ dashboard, payload: { isEnabled: true } });
+    trackDashboardSharingActionPerType('generate_public_url', shareDashboardType.publicDashboard);
+  };
 
   const disableInputs = !hasWritePermissions || isLoading || isError;
 
@@ -80,6 +88,21 @@ export const CreatePublicDashboard = ({
   );
 };
 
+export function CreatePublicDashboard() {
+  const dashboardState = useSelector((store) => store.dashboard);
+  const dashboard = dashboardState.getModel()!;
+  const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
+  const hasTemplateVariables = dashboardHasTemplateVariables(dashboard.getVariables());
+
+  return (
+    <CreatePublicDashboardBase
+      dashboard={dashboard}
+      unsupportedDatasources={unsupportedDataSources}
+      unsupportedTemplateVariables={hasTemplateVariables}
+    />
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     display: flex;
@@ -105,5 +128,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-left: ${theme.spacing(1)};
   `,
 });
-
-export default CreatePublicDashboard;

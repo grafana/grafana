@@ -72,13 +72,14 @@ export const publicDashboardApi = createApi({
       PublicDashboard,
       { dashboard: DashboardModel | DashboardScene; payload: Partial<PublicDashboardSettings> }
     >({
-      query: (params) => ({
-        url: `/dashboards/uid/${
-          params.dashboard instanceof DashboardScene ? params.dashboard.state.uid : params.dashboard.uid
-        }/public-dashboards`,
-        method: 'POST',
-        data: params.payload,
-      }),
+      query: (params) => {
+        const dashUid = params.dashboard instanceof DashboardScene ? params.dashboard.state.uid : params.dashboard.uid;
+        return {
+          url: `/dashboards/uid/${dashUid}/public-dashboards`,
+          method: 'POST',
+          data: params.payload,
+        };
+      },
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Dashboard is public!')));
@@ -106,13 +107,14 @@ export const publicDashboardApi = createApi({
         payload: Partial<PublicDashboard>;
       }
     >({
-      query: ({ payload, dashboard }) => ({
-        url: `/dashboards/uid/${
-          dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid
-        }/public-dashboards/${payload.uid}`,
-        method: 'PATCH',
-        data: payload,
-      }),
+      query: ({ payload, dashboard }) => {
+        const dashUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
+        return {
+          url: `/dashboards/uid/${dashUid}/public-dashboards/${payload.uid}`,
+          method: 'PATCH',
+          data: payload,
+        };
+      },
       async onQueryStarted({ dashboard }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
