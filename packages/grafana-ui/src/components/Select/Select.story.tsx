@@ -244,7 +244,7 @@ MultiSelectBasic.args = {
   isClearable: false,
   closeMenuOnSelect: false,
   maxVisibleValues: 5,
-  noWrap: false,
+  noMultiValueWrap: false,
 };
 
 export const MultiSelectAsync: Story = (args) => {
