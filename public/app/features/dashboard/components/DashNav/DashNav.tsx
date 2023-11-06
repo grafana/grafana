@@ -249,7 +249,8 @@ export const DashNav = React.memo<Props>((props) => {
       <DashNavTimeControls
         dashboard={dashboard}
         onChangeTimeZone={updateTimeZoneForSession}
-        onToolbarClick={(toolbarAction) => trackDashboardsToolbarActionsClicked(toolbarAction)}
+        onRefreshClick={() => trackDashboardsToolbarActionsClicked('refresh')}
+        onZoomClick={() => trackDashboardsToolbarActionsClicked('zoom_out_time_range')}
         key="time-controls"
       />
     );
