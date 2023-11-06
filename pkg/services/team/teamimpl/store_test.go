@@ -284,8 +284,8 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, len(queryResult.Teams), 2)
 				require.EqualValues(t, queryResult.TotalCount, 2)
-				require.Equal(t, queryResult.Teams[0].Name, team2.Name)
-				require.Equal(t, queryResult.Teams[1].Name, team1.Name)
+				require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
+				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
