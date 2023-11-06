@@ -135,7 +135,7 @@ const formatDefaultKeys = (keys: string[]) => {
 };
 const defaultKeys = formatDefaultKeys(['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace']);
 const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
-export const pyroscopeProfileTag = 'pyroscope.profiling.enabled';
+export const pyroscopeProfileTag = 'pyroscope.profile.id';
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
