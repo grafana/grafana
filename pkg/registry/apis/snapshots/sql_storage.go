@@ -3,6 +3,7 @@ package snapshots
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -111,25 +113,27 @@ func (s *legacyStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	// p, ok := obj.(*playlist.Playlist)
-	// if !ok {
-	// 	return nil, fmt.Errorf("expected playlist?")
-	// }
-	// cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// out, err := s.service.Create(ctx, &playlistsvc.CreatePlaylistCommand{
-	// 	UID:      p.Name,
-	// 	Name:     cmd.Name,
-	// 	Interval: cmd.Interval,
-	// 	Items:    cmd.Items,
-	// 	OrgId:    cmd.OrgId,
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-	return nil, fmt.Errorf("unsupported")
+	snap, ok := obj.(*snapshots.DashboardSnapshot)
+	if !ok {
+		return nil, fmt.Errorf("expected playlist?")
+	}
+	if snap.Name == "" {
+		snap.Name = util.GenerateShortUID()
+	}
+	if snap.DeleteKey == "" {
+		snap.DeleteKey = util.GenerateShortUID()
+	}
+	snap.Info.Timestamp = time.Now().UTC().Format(time.RFC3339)
+	out, err := s.service.CreateDashboardSnapshot(ctx, &dashboardsnapshots.CreateDashboardSnapshotCommand{
+		// TODO
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO, copy more?
+	snap.DeleteKey = out.DeleteKey
+	return snap, err
 }
 
 // GracefulDeleter
