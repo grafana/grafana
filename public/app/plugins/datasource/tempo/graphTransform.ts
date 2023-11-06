@@ -249,7 +249,7 @@ function createServiceMapDataFrames() {
  * @param responses
  */
 function getMetricFrames(responses: DataQueryResponse[]): Record<string, DataFrameView> {
-  return responses[0].data.reduce<Record<string, DataFrameView>>((acc, frameDTO) => {
+  return (responses[0]?.data || []).reduce<Record<string, DataFrameView>>((acc, frameDTO) => {
     const frame = toDataFrame(frameDTO);
     acc[frame.refId ?? 'A'] = new DataFrameView(frame);
     return acc;

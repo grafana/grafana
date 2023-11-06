@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagTrimDefaults
-	// Use cue schema to remove values that will be applied automatically
-	FlagTrimDefaults = "trimDefaults"
-
 	// FlagDisableEnvelopeEncryption
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
@@ -82,6 +78,10 @@ const (
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
+
+	// FlagNewVizTooltips
+	// New visualizations tooltips UX
+	FlagNewVizTooltips = "newVizTooltips"
 
 	// FlagScenes
 	// Experimental framework to build interactive dashboards
@@ -383,6 +383,10 @@ const (
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 
+	// FlagTraceToProfiles
+	// Enables linking between traces and profiles
+	FlagTraceToProfiles = "traceToProfiles"
+
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
@@ -539,6 +543,10 @@ const (
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 
+	// FlagAddFieldFromCalculationStatFunctions
+	// Add cumulative and window functions to the add field from calculation transformation
+	FlagAddFieldFromCalculationStatFunctions = "addFieldFromCalculationStatFunctions"
+
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
 	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
@@ -554,4 +562,20 @@ const (
 	// FlagAnnotationPermissionUpdate
 	// Separate annotation permissions from dashboard permissions to allow for more granular control.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
+
+	// FlagExtractFieldsNameDeduplication
+	// Make sure extracted field names are unique in the dataframe
+	FlagExtractFieldsNameDeduplication = "extractFieldsNameDeduplication"
+
+	// FlagDashboardSceneForViewers
+	// Enables dashboard rendering using Scenes for viewer roles
+	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
+
+	// FlagPanelFilterVariable
+	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
+	FlagPanelFilterVariable = "panelFilterVariable"
+
+	// FlagPdfTables
+	// Enables generating table data as PDF in reporting
+	FlagPdfTables = "pdfTables"
 )

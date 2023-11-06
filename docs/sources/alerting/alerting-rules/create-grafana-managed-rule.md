@@ -202,7 +202,7 @@ Create alerts from any panel type. This means you can reuse the queries in the p
 
 1. Navigate to a dashboard in the **Dashboards** section.
 2. In the top right corner of the panel, click on the three dots (ellipses).
-3. From the dropdown menu, select **More...** and then choose **Create alert**.
+3. From the dropdown menu, select **More...** and then choose **New alert rule**.
 
 This will open the alert rule form, allowing you to configure and create your alert based on the current panel's query.
 

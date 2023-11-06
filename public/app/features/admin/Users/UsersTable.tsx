@@ -1,18 +1,18 @@
 import React, { useMemo } from 'react';
 
 import {
-  InteractiveTable,
+  Avatar,
   CellProps,
-  Tooltip,
-  Icon,
-  Tag,
-  Pagination,
   Column,
   FetchDataFunc,
+  Icon,
+  InteractiveTable,
+  Pagination,
+  Stack,
+  Tag,
   Text,
-  Avatar,
+  Tooltip,
 } from '@grafana/ui';
-import { Flex, Stack } from '@grafana/ui/src/unstable';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
@@ -68,14 +68,14 @@ export const UsersTable = ({
         header: 'Belongs to',
         cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
           return (
-            <Flex alignItems={'center'}>
+            <Stack alignItems={'center'}>
               <OrgUnits units={value} icon={'building'} />
               {row.original.isAdmin && (
                 <Tooltip placement="top" content="Grafana Admin">
                   <Icon name="shield" />
                 </Tooltip>
               )}
-            </Flex>
+            </Stack>
           );
         },
         sortType: (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
@@ -146,9 +146,9 @@ export const UsersTable = ({
     <Stack gap={2}>
       <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
       {showPaging && (
-        <Flex justifyContent={'flex-end'}>
+        <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />
-        </Flex>
+        </Stack>
       )}
     </Stack>
   );
