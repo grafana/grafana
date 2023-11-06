@@ -1528,7 +1528,7 @@ The Redis database. The default value is `0`.
 
 ### ha_redis_prefix
 
-A prefix that is used for every key or channel that is created on the redis server as part of HA for alerting.
+A prefix that is used for every key or channel that is created on the Redis server as part of HA for alerting.
 
 ### ha_redis_peer_name
 
