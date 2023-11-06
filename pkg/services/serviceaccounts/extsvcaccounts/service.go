@@ -153,6 +153,7 @@ func (esa *ExtSvcAccountsService) RemoveExternalService(ctx context.Context, nam
 		return err
 	}
 	esa.metrics.deletedCount.Inc()
+	esa.logger.Info("Deleted external service account", "service", slug)
 	return nil
 }
 
