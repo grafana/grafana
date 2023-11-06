@@ -15761,6 +15761,7 @@
           "type": "string"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },

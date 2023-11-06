@@ -81,6 +81,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
+	// nolint:staticcheck
 	if element.FolderID != 0 {
 		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
@@ -223,6 +224,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 		return toLibraryElementError(err, "Failed to update library element")
 	}
 
+	// nolint:staticcheck
 	if element.FolderID != 0 {
 		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
