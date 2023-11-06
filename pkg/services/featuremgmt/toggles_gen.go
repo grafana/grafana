@@ -539,6 +539,10 @@ const (
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 
+	// FlagAddFieldFromCalculationStatFunctions
+	// Add cumulative and window functions to the add field from calculation transformation
+	FlagAddFieldFromCalculationStatFunctions = "addFieldFromCalculationStatFunctions"
+
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
 	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
@@ -562,4 +566,12 @@ const (
 	// FlagDashboardSceneForViewers
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
+
+	// FlagPanelFilterVariable
+	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
+	FlagPanelFilterVariable = "panelFilterVariable"
+
+	// FlagPdfTables
+	// Enables generating table data as PDF in reporting
+	FlagPdfTables = "pdfTables"
 )

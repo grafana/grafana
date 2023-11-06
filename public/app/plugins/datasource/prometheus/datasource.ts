@@ -227,7 +227,7 @@ export class PrometheusDatasource
    * request. Any processing done here needs to be also copied on the backend as this goes through data source proxy
    * but not through the same code as alerting.
    */
-  _request<T = any>(
+  _request<T = unknown>(
     url: string,
     data: Record<string, string> | null,
     overrides: Partial<BackendSrvRequest> = {}
@@ -369,7 +369,7 @@ export class PrometheusDatasource
         delete instantTarget.maxDataPoints;
 
         // Create range target
-        const rangeTarget: any = cloneDeep(target);
+        const rangeTarget = cloneDeep(target);
         rangeTarget.format = 'time_series';
         rangeTarget.instant = false;
         instantTarget.range = true;
@@ -398,7 +398,7 @@ export class PrometheusDatasource
         );
         // If running only instant query in Explore, format as table
       } else if (target.instant && options.app === CoreApp.Explore) {
-        const instantTarget: any = cloneDeep(target);
+        const instantTarget = cloneDeep(target);
         instantTarget.format = 'table';
         queries.push(this.createQuery(instantTarget, options, start, end));
         activeTargets.push(instantTarget);
@@ -536,18 +536,19 @@ export class PrometheusDatasource
         // (should hold until there is some streaming requests involved).
         tap(() => runningQueriesCount--),
         filter((response: any) => (response.cancelled ? false : true)),
-        map((response: any) => {
+        map((response) => {
           const data = transform(response, {
             query,
             target,
             responseListLength: queries.length,
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
-          return {
+          const result: DataQueryResponse = {
             data,
             key: query.requestId,
             state: runningQueriesCount === 0 ? LoadingState.Done : LoadingState.Loading,
-          } as DataQueryResponse;
+          };
+          return result;
         })
       );
 
@@ -569,7 +570,7 @@ export class PrometheusDatasource
 
       const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
-        map((response: any) => {
+        map((response) => {
           const data = transform(response, {
             query,
             target,
@@ -1174,11 +1175,7 @@ export class PrometheusDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(
-    target: PromQuery,
-    scopedVars: ScopedVars,
-    filters?: AdHocVariableFilter[]
-  ): Record<string, any> {
+  applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
     const variables = cloneDeep(scopedVars);
 
     // We want to interpolate these variables on backend
@@ -1302,10 +1299,10 @@ export function extractRuleMappingFromGroups(groups: any[]) {
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
-export function prometheusRegularEscape(value: any) {
+export function prometheusRegularEscape(value: unknown) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
 }
 
-export function prometheusSpecialRegexEscape(value: any) {
+export function prometheusSpecialRegexEscape(value: unknown) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }

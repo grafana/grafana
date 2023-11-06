@@ -863,12 +863,12 @@
     },
     "megamenu": {
       "close": "Cľőşę męŉū",
-      "dock": "Đőčĸ męŉū",
-      "undock": "Ůŉđőčĸ męŉū"
+      "dock": "Đőčĸ męŉū"
     },
     "toolbar": {
+      "close-menu": "Cľőşę męŉū",
       "enable-kiosk": "Ēŉäþľę ĸįőşĸ mőđę",
-      "toggle-menu": "Ŧőģģľę męŉū",
+      "open-menu": "Øpęŉ męŉū",
       "toggle-search-bar": "Ŧőģģľę ŧőp şęäřčĥ þäř"
     }
   },
