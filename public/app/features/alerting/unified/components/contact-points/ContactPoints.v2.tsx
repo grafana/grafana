@@ -234,13 +234,19 @@ const ContactPointsList = ({
   );
 };
 
+const fuzzyFinder = new uFuzzy({
+  intraMode: 1,
+  intraIns: 1,
+  intraSub: 1,
+  intraDel: 1,
+  intraTrn: 1,
+});
+
 // let's search in two different haystacks, the name of the contact point and the type of the receiver(s)
 function useContactPointsSearch(
   contactPoints: ContactPointWithMetadata[],
   search?: string
 ): ContactPointWithMetadata[] {
-  const finder = new uFuzzy();
-
   const nameHaystack = useMemo(() => {
     return contactPoints.map((contactPoint) => contactPoint.name);
   }, [contactPoints]);
@@ -256,8 +262,8 @@ function useContactPointsSearch(
     return contactPoints;
   }
 
-  const nameHits = finder.filter(nameHaystack, search) ?? [];
-  const typeHits = finder.filter(typeHaystack, search) ?? [];
+  const nameHits = fuzzyFinder.filter(nameHaystack, search) ?? [];
+  const typeHits = fuzzyFinder.filter(typeHaystack, search) ?? [];
 
   const hits = [...nameHits, ...typeHits];
 
