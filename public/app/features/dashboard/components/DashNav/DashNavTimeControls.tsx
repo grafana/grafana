@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
-import { TimeRangeUpdatedEvent, reportInteraction } from '@grafana/runtime';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, RefreshPicker } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { appEvents } from 'app/core/core';
@@ -17,6 +17,7 @@ export interface Props {
   dashboard: DashboardModel;
   onChangeTimeZone: (timeZone: TimeZone) => void;
   isOnCanvas?: boolean;
+  onToolbarClick?: (toolbarAction: string) => void;
 }
 
 export class DashNavTimeControls extends Component<Props> {
@@ -36,7 +37,6 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onRefresh = () => {
-    reportInteraction('dashboards_toolbar_actions_clicked', { item: 'refresh' });
     getTimeSrv().refreshTimeModel();
     return Promise.resolve();
   };
@@ -76,8 +76,17 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onZoom = () => {
-    reportInteraction('dashboards_toolbar_actions_clicked', { item: 'zoom_out_time_range' });
+    if (this.props.onToolbarClick) {
+      this.props.onToolbarClick('zoom_out_time_range');
+    }
     appEvents.publish(new ZoomOutEvent({ scale: 2 }));
+  };
+
+  onRefreshClick = () => {
+    if (this.props.onToolbarClick) {
+      this.props.onToolbarClick('refresh');
+    }
+    this.onRefresh();
   };
 
   render() {
@@ -111,7 +120,7 @@ export class DashNavTimeControls extends Component<Props> {
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
-          onRefresh={this.onRefresh}
+          onRefresh={this.onRefreshClick}
           value={dashboard.refresh}
           intervals={intervals}
           isOnCanvas={isOnCanvas}
