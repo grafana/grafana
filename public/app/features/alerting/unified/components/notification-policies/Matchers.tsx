@@ -3,8 +3,7 @@ import { take, takeRight, uniqueId } from 'lodash';
 import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { getTagColorsFromName, useStyles2, Stack } from '@grafana/ui';
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { HoverCard } from '../HoverCard';
@@ -23,7 +22,7 @@ const Matchers: FC<MatchersProps> = ({ matchers }) => {
 
   return (
     <span data-testid="label-matchers">
-      <Stack direction="row" gap={1} alignItems="center">
+      <Stack direction="row" gap={1} alignItems="center" wrap={'wrap'}>
         {firstFew.map((matcher) => (
           <MatcherBadge key={uniqueId()} matcher={matcher} />
         ))}
