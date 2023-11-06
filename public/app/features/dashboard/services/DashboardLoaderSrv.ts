@@ -9,7 +9,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
 
@@ -27,9 +27,10 @@ export class DashboardLoaderSrv {
         canDelete: false,
         canSave: false,
         canEdit: false,
+        canShare: false,
         dashboardNotFound: true,
       },
-      dashboard: { title } as DashboardDataDTO,
+      dashboard: { title, uid: title, schemaVersion: 0 },
     };
   }
 
