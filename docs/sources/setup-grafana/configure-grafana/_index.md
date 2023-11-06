@@ -1536,7 +1536,7 @@ The name of the cluster peer that will be used as an identifier. If none is prov
 
 ### ha_redis_max_conns
 
-The maximum number of simultaneous redis connections.
+The maximum number of simultaneous Redis connections.
 
 ### ha_listen_address
 
