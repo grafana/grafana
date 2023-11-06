@@ -4542,27 +4542,15 @@
           "externalUrl": {
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "key": {
             "type": "string"
           },
           "name": {
             "type": "string"
           },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
           "updated": {
             "format": "date-time",
             "type": "string"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"

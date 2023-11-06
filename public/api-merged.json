@@ -13629,27 +13629,15 @@
         "externalUrl": {
           "type": "string"
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "key": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
         "updated": {
           "type": "string",
           "format": "date-time"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
