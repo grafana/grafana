@@ -1524,7 +1524,7 @@ The password that should be used to authenticate with the Redis server.
 
 ### ha_redis_db
 
-The redis database, by default it's 0.
+The Redis database. The default value is `0`.
 
 ### ha_redis_prefix
 
