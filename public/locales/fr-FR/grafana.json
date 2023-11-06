@@ -872,12 +872,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "Activer le mode kiosque",
-      "toggle-menu": "Afficher/Masquer le menu",
+      "open-menu": "",
       "toggle-search-bar": "Afficher/Masquer la barre de recherche"
     }
   },
