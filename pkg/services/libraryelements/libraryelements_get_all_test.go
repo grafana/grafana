@@ -64,6 +64,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -131,6 +132,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "query0",
 							Kind:        int64(model.VariableElement),
@@ -193,6 +195,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -228,6 +231,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -294,6 +298,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -329,6 +334,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -417,6 +423,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          3,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "BarGauge - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -452,6 +459,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Gauge - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -559,6 +567,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    newFolder.ID, // nolint:staticcheck
+							FolderUID:   "NewFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -658,6 +667,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -693,6 +703,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -759,6 +770,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -825,6 +837,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -892,6 +905,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -968,6 +982,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -1042,6 +1057,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Some Other",
 							Kind:        int64(model.PanelElement),
@@ -1077,6 +1093,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          1,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel",
 							Kind:        int64(model.PanelElement),
@@ -1145,6 +1162,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							ID:          2,
 							OrgID:       1,
 							FolderID:    1, // nolint:staticcheck
+							FolderUID:   "ScenarioFolder",
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
 							Kind:        int64(model.PanelElement),
@@ -1259,6 +1277,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 			require.Equal(t, 1, len(result.Result.Elements))
 			// nolint:staticcheck
 			require.Equal(t, int64(1), result.Result.Elements[0].FolderID)
+			require.Equal(t, "ScenarioFolder", result.Result.Elements[0].FolderUID)
 			require.Equal(t, "Text - Library Panel", result.Result.Elements[0].Name)
 
 			sc.reqContext.SignedInUser.OrgID = 2
