@@ -147,7 +147,7 @@ export const navigateToExplore = (
  */
 const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
-  syncedTimes: false,
+  syncedTimes: true,
   panes: {},
   correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
   richHistoryStorageFull: false,
@@ -171,7 +171,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       largerExploreId: undefined,
       maxedExploreId: undefined,
       evenSplitPanes: true,
-      syncedTimes: false,
+      syncedTimes: true,
     };
   }
 
