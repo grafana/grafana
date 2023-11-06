@@ -63,7 +63,6 @@ interface Props {
 export function AddToDashboardForm(props: Props): ReactElement {
   const { exploreId, onClose } = props;
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
-  console.log('exploreItem', exploreItem);
   const [submissionError, setSubmissionError] = useState<SubmissionError | undefined>();
   const {
     handleSubmit,
