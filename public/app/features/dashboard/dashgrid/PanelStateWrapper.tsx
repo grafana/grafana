@@ -353,6 +353,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         return;
       }
 
+      panel.refreshWhenInView = false;
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),

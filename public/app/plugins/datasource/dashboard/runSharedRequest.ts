@@ -82,6 +82,8 @@ export function runSharedRequest(options: QueryRunnerOptions, query: DashboardQu
         panelId: listenToPanelId,
         queries: targets,
       };
+
+      listenToPanel.refreshWhenInView = false;
       listenToRunner.run(modified);
     }
 

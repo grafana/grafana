@@ -365,6 +365,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (this.type === 'row') {
       return;
     }
+
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
