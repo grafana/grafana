@@ -971,7 +971,8 @@
       "expand-row": "",
       "remove-query": "",
       "toggle-edit-mode": ""
-    }
+    },
+    "query-editor-not-exported": ""
   },
   "refresh-picker": {
     "aria-label": {
