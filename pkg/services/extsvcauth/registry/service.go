@@ -51,3 +51,8 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 		return nil, extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", cmd.AuthProvider)
 	}
 }
+
+// RemoveExternalService removes an external service and it's associated resources from the database (ex: service account, token).
+func (r *Registry) RemoveExternalService(ctx context.Context, name string) error {
+	return r.saSvc.RemoveExternalService(ctx, name) // TODO (gamab) do something to handle OAuthProvider, maybe keep a mapping between extsvcnames and providers
+}

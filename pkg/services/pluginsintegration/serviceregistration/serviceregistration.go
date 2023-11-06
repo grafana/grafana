@@ -25,12 +25,12 @@ func ProvideService(reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginse
 }
 
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *Service) RegisterExternalService(ctx context.Context, svcName string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
 	// Datasource plugins can only be enabled
 	enabled := true
 	// App plugins can be disabled
 	if pType == plugindef.TypeApp {
-		settings, err := s.settingsSvc.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{PluginID: svcName})
+		settings, err := s.settingsSvc.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{PluginID: pluginID})
 		if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, p
 	}
 
 	registration := &extsvcauth.ExternalServiceRegistration{
-		Name:          svcName,
+		Name:          pluginID,
 		Impersonation: impersonation,
 		Self:          self,
 	}
@@ -97,4 +97,9 @@ func toAccessControlPermissions(ps []plugindef.Permission) []accesscontrol.Permi
 		})
 	}
 	return res
+}
+
+// RemoveExternalService removes the external service account associated to a plugin
+func (s *Service) RemoveExternalService(ctx context.Context, pluginID string) error {
+	return s.reg.RemoveExternalService(ctx, pluginID)
 }

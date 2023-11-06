@@ -437,8 +437,12 @@ type FakeAuthService struct {
 	Result *auth.ExternalService
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, name string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
 	return f.Result, nil
+}
+
+func (f *FakeAuthService) RemoveExternalService(ctx context.Context, pluginID string) error {
+	return nil
 }
 
 type FakeDiscoverer struct {

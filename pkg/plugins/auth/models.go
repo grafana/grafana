@@ -13,5 +13,6 @@ type ExternalService struct {
 }
 
 type ExternalServiceRegistry interface {
-	RegisterExternalService(ctx context.Context, name string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*ExternalService, error)
+	RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*ExternalService, error)
+	RemoveExternalService(ctx context.Context, pluginID string) error
 }

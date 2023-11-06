@@ -21,6 +21,9 @@ type ExternalServiceRegistry interface {
 	// it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
 	// associated service account has the correct permissions.
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ExternalService, error)
+
+	// RemoveExternalService removes an external service and it's associated resources from the database (ex: service account, token).
+	RemoveExternalService(ctx context.Context, name string) error
 }
 
 type SelfCfg struct {

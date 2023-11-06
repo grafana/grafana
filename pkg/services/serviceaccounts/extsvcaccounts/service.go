@@ -126,6 +126,34 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 	return &extsvcauth.ExternalService{Name: cmd.Name, ID: slug, Secret: token}, nil
 }
 
+func (esa *ExtSvcAccountsService) RemoveExternalService(ctx context.Context, name string) error {
+	// This is double proofing, we should never reach here anyway the flags have already been checked.
+	if !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) && !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
+		return nil
+	}
+
+	slug := slugify.Slugify(name)
+
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, extsvcauth.TmpOrgID, sa.ExtSvcPrefix+slug)
+	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
+		return errRetrieve
+	}
+
+	if saID > 0 {
+		if err := esa.deleteExtSvcAccount(ctx, extsvcauth.TmpOrgID, slug, saID); err != nil {
+			esa.logger.Error("Error occurred while deleting service account",
+				"service", slug,
+				"saID", saID,
+				"error", err.Error())
+			return err
+		}
+		esa.metrics.deletedCount.Inc()
+	}
+	esa.logger.Debug("No external service account associated with this name", "service", slug)
+	return nil
+}
+
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
 func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *sa.ManageExtSvcAccountCmd) (int64, error) {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
