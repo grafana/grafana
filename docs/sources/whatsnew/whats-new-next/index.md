@@ -48,7 +48,7 @@ October 24, 2023
 
 _Generally available in Grafana Cloud_
 
-In addition to `Query` and `Edit` access, you can now grant users, teams or basic roles `Admin` access to data sources. Users with `Admin` access to a data source will be able to grant and revoke permissions to this data source, as well as to manage query caching settings for the data source. Users are automatically granted `Admin` access to data sources that they create. 
+In addition to `Query` and `Edit` access, you can now grant users, teams or basic roles `Admin` access to data sources. Users with `Admin` access to a data source will be able to grant and revoke permissions to this data source, as well as to manage query caching settings for the data source. Users are automatically granted `Admin` access to data sources that they create.
 
 ## Configure refresh token handling separately for OAuth providers
 
