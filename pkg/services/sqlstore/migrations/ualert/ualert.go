@@ -391,6 +391,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
+	logGraphiteMigrationStats(m.mg.Logger)
+
 	for orgID := range rulesPerOrg {
 		if err := m.writeSilencesFile(orgID); err != nil {
 			m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
