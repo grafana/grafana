@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { parser } from '@grafana/lezer-logql';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
@@ -187,7 +188,8 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
               validateQuery(
                 query,
                 datasource.interpolateString(query, placeHolderScopedVars),
-                model.getLinesContent()
+                model.getLinesContent(),
+                parser
               ) || [];
 
             const markers = errors.map(({ error, ...boundary }) => ({

@@ -4,7 +4,7 @@ import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -15,7 +15,7 @@ export interface QueryOperationRowHeaderProps {
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;
-  reportDragMousePosition: MouseEventHandler<HTMLButtonElement>;
+  reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
   title?: string;
   id: string;
   expanderMessages?: ExpanderMessages;
@@ -76,16 +76,9 @@ export const QueryOperationRowHeader = ({
       <Stack gap={1} alignItems="center" wrap={false}>
         {actionsElement}
         {draggable && (
-          <IconButton
-            title="Drag and drop to reorder"
-            name="draggabledots"
-            tooltip="Drag and drop to reorder"
-            tooltipPlacement="bottom"
-            size="lg"
-            className={styles.dragIcon}
-            onMouseMove={reportDragMousePosition}
-            {...dragHandleProps}
-          />
+          <div onMouseMove={reportDragMousePosition} {...dragHandleProps}>
+            <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+          </div>
         )}
       </Stack>
     </div>
