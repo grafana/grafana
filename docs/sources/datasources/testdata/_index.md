@@ -117,7 +117,11 @@ That makes it much easier for the developers to replicate and solve your issue.
 
 ## Use a custom version of TestData
 
-If you want to use a version of TestData different from the one shipped with Grafana. Note that this procedure is still experimental (requires Grafana 10.3.0). You can do so by following these steps:
+{{% admonition type="note" %}}
+This feature is experimental and requires Grafana version 10.3.0 as a minimum.
+{{% /admonition %}}
+
+If you want to use a version of TestData different from the one shipped with Grafana, you can do so by following these steps:
 
 1. Enable the [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) `externalCorePlugins`.
 1. Set the configuration field `plugin.grafana-testdata-datasource.as_external` to `true`.
