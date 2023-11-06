@@ -6913,40 +6913,6 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: a00c56fb6e854e53548931180ecca4d687fd4ff0775bae5cf1035de1ba0dd359268bfa9816aa7caf511c5bd03117f114428bc86602e631f724158e67502bcb3d
-  languageName: node
-  linkType: hard
-
-"@storybook/blocks@patch:@storybook/blocks@npm%3A7.4.5#./.yarn/patches/@storybook-blocks-npm-7.4.5-5a2374564a.patch::locator=grafana%40workspace%3A.":
-  version: 7.4.5
-  resolution: "@storybook/blocks@patch:@storybook/blocks@npm%3A7.4.5#./.yarn/patches/@storybook-blocks-npm-7.4.5-5a2374564a.patch::version=7.4.5&hash=c93e7b&locator=grafana%40workspace%3A."
-  dependencies:
-    "@storybook/channels": 7.4.5
-    "@storybook/client-logger": 7.4.5
-    "@storybook/components": 7.4.5
-    "@storybook/core-events": 7.4.5
-    "@storybook/csf": ^0.1.0
-    "@storybook/docs-tools": 7.4.5
-    "@storybook/global": ^5.0.0
-    "@storybook/manager-api": 7.4.5
-    "@storybook/preview-api": 7.4.5
-    "@storybook/theming": 7.4.5
-    "@storybook/types": 7.4.5
-    "@types/lodash": ^4.14.167
-    color-convert: ^2.0.1
-    dequal: ^2.0.2
-    lodash: ^4.17.21
-    markdown-to-jsx: ^7.1.8
-    memoizerific: ^1.11.3
-    polished: ^4.2.2
-    react-colorful: ^5.1.2
-    telejson: ^7.2.0
-    tocbot: ^4.20.1
-    ts-dedent: ^2.0.0
-    util-deprecate: ^1.0.2
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: 9f0957019bfc56e96a499c3eb85f889cafbac3a17eb4e22ae16653f27d7dc3791472bae92f9e0bd8bf35efaf63b107f7a1beddd153a485bd00bddfb1c13dc360
   languageName: node
   linkType: hard
