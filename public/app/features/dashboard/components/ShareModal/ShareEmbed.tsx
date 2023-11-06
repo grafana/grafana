@@ -14,9 +14,10 @@ interface Props extends Omit<ShareModalTabProps, 'panel' | 'dashboard'> {
   panel?: { timeFrom?: string; id: number };
   dashboard: { uid: string; time: RawTimeRange };
   range?: TimeRange;
+  buildIframe?: typeof buildIframeHtml;
 }
 
-export function ShareEmbed({ panel, dashboard, range }: Props) {
+export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeHtml }: Props) {
   const [useCurrentTimeRange, setUseCurrentTimeRange] = useState(true);
   const [selectedTheme, setSelectedTheme] = useState('current');
   const [iframeHtml, setIframeHtml] = useState('');
@@ -26,9 +27,9 @@ export function ShareEmbed({ panel, dashboard, range }: Props) {
   });
 
   useEffect(() => {
-    const newIframeHtml = buildIframeHtml(useCurrentTimeRange, dashboard.uid, selectedTheme, panel, range);
+    const newIframeHtml = buildIframe(useCurrentTimeRange, dashboard.uid, selectedTheme, panel, range);
     setIframeHtml(newIframeHtml);
-  }, [selectedTheme, useCurrentTimeRange, dashboard, panel, range]);
+  }, [selectedTheme, useCurrentTimeRange, dashboard, panel, range, buildIframe]);
 
   const onIframeHtmlChange = (event: FormEvent<HTMLTextAreaElement>) => {
     setIframeHtml(event.currentTarget.value);

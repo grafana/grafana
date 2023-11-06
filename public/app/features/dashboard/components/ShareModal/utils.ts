@@ -126,7 +126,7 @@ export function buildIframeHtml(
   range?: TimeRange
 ) {
   let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel, range);
-  return '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+  return `<iframe src="${soloUrl}" width="450" height="200" frameborder="0"></iframe>`;
 }
 
 export function getLocalTimeZone() {
