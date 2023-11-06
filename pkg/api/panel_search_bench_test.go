@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -26,6 +27,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const dashNum = 10
+const panelNum = 2
+const panelQuery = "apple"
 
 func BenchmarkPanelTitleSearch(b *testing.B) {
 	start := time.Now()
@@ -41,13 +46,13 @@ func BenchmarkPanelTitleSearch(b *testing.B) {
 	}{
 		{
 			desc:        "search specific dashboard",
-			url:         "/api/search?type=dash-db&query=dashboard_9",
+			url:         "/api/search?type=dash-db&query=dashboard_" + fmt.Sprint(dashNum-1),
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "search specific panel with panel title feature enabled",
-			url:         "/api/search?type=dash-db&panelTitle=apple",
+			url:         "/api/search?type=dash-db&panelTitle=" + panelQuery,
 			expectedLen: 1,
 			features: featuremgmt.WithFeatures(
 				featuremgmt.FlagPanelTitleSearchInV1,
@@ -114,7 +119,6 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 	now := time.Now()
 
 	// #TODO: add more dashboards and choose a later panel/dash to search for
-	dashNum := 22
 	dashs := make([]*dashboards.Dashboard, 0, dashNum)
 	panels := make([]*dashboards.Panel, 0, dashNum)
 	for j := 0; j < dashNum; j++ {
@@ -133,11 +137,12 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 			Updated:  now,
 		})
 
-		// #TODO: create multiple panel titles per dashboard
-		for k := 0; k < dashNum; k++ {
+		for k := 0; k < panelNum; k++ {
 			panelTitle := fmt.Sprintf("panel_%d_%d ", j, k)
-			if j == 9 && k == 9 {
-				panelTitle += "apple "
+			// #TODO: refactor
+			if j == dashNum-1 && k == panelNum-1 &&
+				db.GetDialect().DriverName() != migrator.Postgres {
+				panelTitle += fmt.Sprintf("%s ", panelQuery)
 			}
 
 			panels = append(panels, &dashboards.Panel{
@@ -154,6 +159,17 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 		_, err = sess.BulkInsert("panel", panels, opts)
 		require.NoError(b, err)
 
+		// #TODO refactor
+		if db.GetDialect().DriverName() == migrator.Postgres {
+			queriedPanel := fmt.Sprintf("panel_%d_%d ", dashNum-1, panelNum-1)
+
+			_, err = sess.Exec(fmt.Sprintf(`UPDATE panel SET title = to_tsvector('%s') WHERE title != '%s';`,
+				`Lorem Ipsum is simply dummy text `, queriedPanel))
+			require.NoError(b, err)
+
+			_, err = sess.Exec(fmt.Sprintf(`UPDATE panel SET title = to_tsvector('%s ') WHERE title = '%s';`, panelQuery, queriedPanel))
+			require.NoError(b, err)
+		}
 		return err
 	})
 	require.NoError(b, err)
