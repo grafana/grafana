@@ -1520,7 +1520,7 @@ The username that should be used to authenticate with the Redis server.
 
 ### ha_redis_password
 
-The password that should be used to authenticate with the redis server.
+The password that should be used to authenticate with the Redis server.
 
 ### ha_redis_db
 
