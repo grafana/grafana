@@ -4,12 +4,16 @@ import (
 	"context"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // ServiceAccountsProxy is a proxy for the serviceaccounts.Service interface
@@ -23,14 +27,23 @@ type ServiceAccountsProxy struct {
 }
 
 func ProvideServiceAccountsProxy(
+	cfg *setting.Cfg,
+	ac accesscontrol.AccessControl,
+	accesscontrolService accesscontrol.Service,
 	features *featuremgmt.FeatureManager,
+	permissionService accesscontrol.ServiceAccountPermissionsService,
 	proxiedService *manager.ServiceAccountsService,
+	routeRegister routing.RouteRegister,
 ) (*ServiceAccountsProxy, error) {
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
 		isProxyEnabled: features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabled(featuremgmt.FlagExternalServiceAuth),
 	}
+
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService)
+	serviceaccountsAPI.RegisterAPIEndpoints()
+
 	return s, nil
 }
 
@@ -92,6 +105,20 @@ func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, or
 	return s.proxiedService.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
 }
 
+func (s *ServiceAccountsProxy) EnableServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64, enable bool) error {
+	if s.isProxyEnabled {
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		if err != nil {
+			return err
+		}
+		if isExternalServiceAccount(sa.Login) {
+			s.log.Error("unable to enable/disable external service accounts", "serviceAccountID", serviceAccountID)
+			return extsvcaccounts.ErrCannotBeUpdated
+		}
+	}
+	return s.proxiedService.EnableServiceAccount(ctx, orgID, serviceAccountID, enable)
+}
+
 func (s *ServiceAccountsProxy) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	return s.proxiedService.ListTokens(ctx, query)
 }
@@ -111,7 +138,7 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID
 	}
 
 	if s.isProxyEnabled {
-		sa.IsExternal = isExternalServiceAccount(sa.Login)
+		sa.IsManaged = isExternalServiceAccount(sa.Login)
 	}
 
 	return sa, nil
@@ -148,7 +175,7 @@ func (s *ServiceAccountsProxy) SearchOrgServiceAccounts(ctx context.Context, que
 
 	if s.isProxyEnabled {
 		for i := range sa.ServiceAccounts {
-			sa.ServiceAccounts[i].IsExternal = isExternalServiceAccount(sa.ServiceAccounts[i].Login)
+			sa.ServiceAccounts[i].IsManaged = isExternalServiceAccount(sa.ServiceAccounts[i].Login)
 		}
 	}
 	return sa, nil

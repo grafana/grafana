@@ -252,7 +252,7 @@ func getCreateVariableCommand(folderID int64, name string) model.CreateLibraryEl
 
 func getCreateCommandWithModel(folderID int64, name string, kind model.LibraryElementKind, byteModel []byte) model.CreateLibraryElementCommand {
 	command := model.CreateLibraryElementCommand{
-		FolderID: folderID,
+		FolderID: folderID, // nolint:staticcheck
 		Name:     name,
 		Model:    byteModel,
 		Kind:     int64(kind),
