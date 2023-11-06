@@ -118,7 +118,7 @@ func unwrapFromDashboard(l log.Logger, queryData map[string]json.RawMessage, pan
 }
 
 var (
-	panelNotFound = errors.New("panel not found")
+	errPanelNotFound = errors.New("panel not found")
 )
 
 func unwrapFromPanel(l log.Logger, panels []panel, panelID int64, refID string, parent int64) (string, error) {
@@ -131,12 +131,12 @@ func unwrapFromPanel(l log.Logger, panels []panel, panelID int64, refID string, 
 			if err == nil {
 				return unwrappedTarget, nil
 			}
-			if !errors.Is(err, panelNotFound) {
+			if !errors.Is(err, errPanelNotFound) {
 				return "", err
 			}
 		}
 	}
-	return "", panelNotFound
+	return "", errPanelNotFound
 }
 
 func unwrapTarget(refID string, targets []target) (string, error) {
