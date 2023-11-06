@@ -133,7 +133,7 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 }
 
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
-func createMathExpression(referenceVar string, thresholdFunc string, args []float64, invert bool) (string, error) {
+func createMathExpression(referenceVar string, thresholdFunc string, args []float64) (string, error) {
 	var exp string
 	switch thresholdFunc {
 	case ThresholdIsAbove:
@@ -160,9 +160,6 @@ func createMathExpression(referenceVar string, thresholdFunc string, args []floa
 		return "", fmt.Errorf("failed to evaluate threshold expression: no such threshold function %s", thresholdFunc)
 	}
 
-	if invert {
-		return fmt.Sprintf("!(%s)", exp), nil
-	}
 	return exp, nil
 }
 
