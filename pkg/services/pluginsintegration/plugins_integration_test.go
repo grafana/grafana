@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -39,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 func TestIntegrationPluginManager(t *testing.T) {
@@ -79,7 +79,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	features := featuremgmt.WithFeatures()
 
 	hcp := httpclient.NewProvider()
-	am := azuremonitor.ProvideService(cfg, hcp, features, tracer)
+	am := azuremonitor.ProvideService(cfg, hcp, features)
 	cw := cloudwatch.ProvideService(cfg, hcp, features)
 	cm := cloudmonitoring.ProvideService(hcp, tracer)
 	es := elasticsearch.ProvideService(hcp, tracer)
@@ -87,7 +87,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, features, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp, cfg, features, tracer)
+	pr := prometheus.ProvideService(hcp, cfg, features)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService(cfg)
@@ -97,7 +97,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	graf := grafanads.ProvideService(sv2, nil)
 	pyroscope := pyroscope.ProvideService(hcp, acimpl.ProvideAccessControl(cfg))
 	parca := parca.ProvideService(hcp)
-	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca)
 
 	testCtx := CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -113,7 +113,7 @@ func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
 	now := time.Unix(1661420870, 0)
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			PluginID: "testdata",
+			PluginID: "grafana-testdata-datasource",
 		},
 		Queries: []backend.DataQuery{
 			{
@@ -184,7 +184,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"opentsdb":                         {},
 		"prometheus":                       {},
 		"tempo":                            {},
-		"testdata":                         {},
+		"grafana-testdata-datasource":      {},
 		"postgres":                         {},
 		"mysql":                            {},
 		"mssql":                            {},

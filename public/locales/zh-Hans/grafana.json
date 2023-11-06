@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "",
+      "serviceaccount-label": "",
       "team-label": "",
       "title": "",
       "user-label": ""
@@ -18,6 +19,7 @@
       "no-permissions": "",
       "permissions-change-warning": "",
       "role": "",
+      "serviceaccount": "",
       "team": "",
       "title": "",
       "user": ""
@@ -43,14 +45,18 @@
       "new-folder-name-required-phrase": ""
     },
     "counts": {
-      "alertRule__other": "",
-      "dashboard__other": "",
-      "folder__other": "",
-      "libraryPanel__other": "",
-      "total__other": ""
+      "alertRule_other": "",
+      "dashboard_other": "",
+      "folder_other": "",
+      "libraryPanel_other": "",
+      "total_other": ""
     },
     "dashboards-tree": {
+      "collapse-folder-button": "",
+      "expand-folder-button": "",
       "name-column": "",
+      "select-all-header-checkbox": "",
+      "select-checkbox": "",
       "tags-column": ""
     },
     "folder-actions-button": {
@@ -120,6 +126,24 @@
     "search": {
       "placeholder": ""
     }
+  },
+  "correlations": {
+    "add-new": "",
+    "alert": {
+      "error-message": "",
+      "title": ""
+    },
+    "list": {
+      "delete": "",
+      "label": "",
+      "loading": "",
+      "read-only": "",
+      "source": "",
+      "target": ""
+    },
+    "page-content": "",
+    "page-heading": "",
+    "sub-title": ""
   },
   "dashboard": {
     "add-menu": {
@@ -208,11 +232,233 @@
       "settings": "仪表板设置",
       "share": "分享仪表板或面板",
       "unmark-favorite": "取消标记为收藏"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
     }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "cancel": "",
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": ""
+    },
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "",
+      "description-label": "",
+      "editable-description": "",
+      "editable-label": "",
+      "folder-label": "",
+      "panel-options-graph-tooltip-description": "",
+      "panel-options-graph-tooltip-label": "",
+      "panel-options-label": "",
+      "tags-label": "",
+      "title": "",
+      "title-label": ""
+    },
+    "json-editor": {
+      "save-button": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "links": {
+      "title": ""
+    },
+    "permissions": {
+      "title": ""
+    },
+    "settings": {
+      "title": ""
+    },
+    "time-picker": {
+      "hide-time-picker": "",
+      "now-delay-description": "",
+      "now-delay-label": "",
+      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-label": "",
+      "time-options-label": "",
+      "time-zone-label": "",
+      "week-start-label": ""
+    },
+    "variables": {
+      "title": ""
+    },
+    "versions": {
+      "title": ""
+    }
+  },
+  "data-source-picker": {
+    "add-new-data-source": "",
+    "built-in-list": {
+      "description-dashboard": "",
+      "description-grafana": "",
+      "description-mixed": ""
+    },
+    "list": {
+      "no-data-source-message": ""
+    },
+    "modal": {
+      "configure-new-data-source": "",
+      "input-placeholder": "",
+      "title": ""
+    },
+    "open-advanced-button": ""
   },
   "data-sources": {
     "datasource-add-button": {
       "label": ""
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "",
+    "rich-history": {
+      "close-tooltip": "",
+      "datasource-a-z": "",
+      "datasource-z-a": "",
+      "newest-first": "",
+      "oldest-first": "",
+      "query-history": "",
+      "settings": "",
+      "starred": ""
+    },
+    "rich-history-card": {
+      "add-comment-form": "",
+      "add-comment-tooltip": "",
+      "cancel": "",
+      "confirm-delete": "",
+      "copy-query-tooltip": "",
+      "copy-shortened-link-tooltip": "",
+      "datasource-icon-label": "",
+      "datasource-name-label": "",
+      "datasource-not-exist": "",
+      "delete-query-confirmation-title": "",
+      "delete-query-title": "",
+      "delete-query-tooltip": "",
+      "delete-starred-query-confirmation-text": "",
+      "edit-comment-tooltip": "",
+      "loading-text": "",
+      "optional-description": "",
+      "query-comment-label": "",
+      "query-text-label": "",
+      "run-query-button": "",
+      "save-comment": "",
+      "star-query-tooltip": "",
+      "switch-datasource-button": "",
+      "unstar-query-tooltip": "",
+      "update-comment-form": ""
+    },
+    "rich-history-container": {
+      "loading": ""
+    },
+    "rich-history-notification": {
+      "query-copied": "",
+      "query-deleted": ""
+    },
+    "rich-history-queries-tab": {
+      "displaying-partial-queries": "",
+      "displaying-queries": "",
+      "filter-aria-label": "",
+      "filter-history": "",
+      "filter-placeholder": "",
+      "history-local": "",
+      "loading": "",
+      "loading-results": "",
+      "search-placeholder": "",
+      "showing-queries": "",
+      "sort-aria-label": "",
+      "sort-placeholder": ""
+    },
+    "rich-history-settings-tab": {
+      "alert-info": "",
+      "change-default-tab": "",
+      "clear-history-info": "",
+      "clear-query-history": "",
+      "clear-query-history-button": "",
+      "delete-confirm": "",
+      "delete-confirm-text": "",
+      "delete-title": "",
+      "history-time-span": "",
+      "history-time-span-description": "",
+      "only-show-active-datasource": "",
+      "query-history-deleted": "",
+      "retention-period": {
+        "1-week": "",
+        "2-days": "",
+        "2-weeks": "",
+        "5-days": ""
+      }
+    },
+    "rich-history-starred-tab": {
+      "filter-queries-aria-label": "",
+      "filter-queries-placeholder": "",
+      "loading": "",
+      "loading-results": "",
+      "local-history-message": "",
+      "search-queries-placeholder": "",
+      "showing-queries": "",
+      "sort-queries-aria-label": "",
+      "sort-queries-placeholder": ""
+    },
+    "rich-history-utils": {
+      "a-week-ago": "",
+      "days-ago": "",
+      "default-from": "",
+      "default-to": "",
+      "today": "",
+      "two-weeks-ago": "",
+      "yesterday": ""
+    },
+    "rich-history-utils-notification": {
+      "saving-failed": "",
+      "update-failed": ""
+    },
+    "secondary-actions": {
+      "query-add-button": "",
+      "query-add-button-aria-label": "",
+      "query-history-button": "",
+      "query-history-button-aria-label": "",
+      "query-inspector-button": "",
+      "query-inspector-button-aria-label": ""
+    },
+    "table": {
+      "no-data": "",
+      "title": "",
+      "title-with-name": ""
+    },
+    "toolbar": {
+      "aria-label": "",
+      "copy-shortened-link": "",
+      "refresh-picker-cancel": "",
+      "refresh-picker-run": "",
+      "split-close": "",
+      "split-close-tooltip": "",
+      "split-narrow": "",
+      "split-title": "",
+      "split-tooltip": "",
+      "split-widen": ""
     }
   },
   "folder-picker": {
@@ -230,6 +476,14 @@
     "select": {
       "no-options-label": "",
       "placeholder": ""
+    }
+  },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
     }
   },
   "help-modal": {
@@ -272,6 +526,16 @@
     },
     "title": ""
   },
+  "inspector": {
+    "query": {
+      "collapse-all": "",
+      "copy-to-clipboard": "",
+      "description": "",
+      "expand-all": "",
+      "no-data": "",
+      "refresh": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "取消",
@@ -286,6 +550,16 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body_other": "",
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "panel-not-linked": "",
+      "select-no-options-message": "",
+      "select-placeholder": "",
+      "title": ""
+    },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
       "success": "库面板已保存"
@@ -363,6 +637,18 @@
     },
     "config": {
       "title": "管理"
+    },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
     },
     "connect-data": {
       "title": ""
@@ -569,9 +855,14 @@
     "kiosk": {
       "tv-alert": "按 ESC 退出 kiosk 模式"
     },
+    "megamenu": {
+      "close": "",
+      "dock": ""
+    },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "启用 kiosk 模式",
-      "toggle-menu": "切换菜单",
+      "open-menu": "",
       "toggle-search-bar": "切换顶部搜索栏"
     }
   },
@@ -595,6 +886,7 @@
       "inspect-data": "数据",
       "inspect-json": "面板 JSON",
       "more": "更多...",
+      "new-alert-rule": "",
       "query": "查询",
       "remove": "删除",
       "share": "分享",
@@ -645,6 +937,22 @@
       "pro-tip": "",
       "pro-tip-link-title": "",
       "title": ""
+    }
+  },
+  "profile": {
+    "change-password": {
+      "cancel-button": "",
+      "cannot-change-password-message": "",
+      "change-password-button": "",
+      "confirm-password-label": "",
+      "confirm-password-required": "",
+      "ldap-auth-proxy-message": "",
+      "new-password-label": "",
+      "new-password-required": "",
+      "new-password-same-as-old": "",
+      "old-password-label": "",
+      "old-password-required": "",
+      "passwords-must-match": ""
     }
   },
   "refresh-picker": {
@@ -726,10 +1034,10 @@
       "time-range-description": "将当前相对时间范围转换为绝对时间范围"
     },
     "export": {
+      "back-button": "",
       "cancel-button": "取消",
       "info-text": "导出此仪表板。",
       "save-button": "保存至文件",
-      "share-default-label": "导出时清除默认值",
       "share-externally-label": "导出以供外部分享",
       "view-button": "查看 JSON"
     },
@@ -827,6 +1135,12 @@
     },
     "title": "首选项"
   },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
+  },
   "tag-filter": {
     "loading": "加载中...",
     "no-tags": "未找到标签",
@@ -843,7 +1157,8 @@
       "select-time": "选择时间范围"
     },
     "content": {
-      "empty-recent-list": "<0><0>看起来您之前没有使用过这个时间选择器。一旦您输入了某些时间间隔，最近使用的间隔就会出现在此处。</0></0><1><0>阅读文档</0><1>，了解如何输入自定义时间范围的更多信息。",
+      "empty-recent-list-docs": "<0><0>阅读文档</0><1>，了解如何输入自定义时间范围的更多信息。</1></0>",
+      "empty-recent-list-info": "看起来您之前没有使用过这个时间选择器。一旦您输入了某些时间间隔，最近使用的间隔就会出现在此处。",
       "filter-placeholder": "搜索快速范围"
     },
     "footer": {

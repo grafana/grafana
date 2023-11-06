@@ -1,5 +1,6 @@
 import * as H from 'history';
 
+import { NavIndex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -15,7 +16,7 @@ import {
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { getDashboardUrl } from '../utils/utils';
+import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
@@ -54,10 +55,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     getUrlSyncManager().initSync(this);
   }
 
-  public getPageNav(location: H.Location) {
+  public getPageNav(location: H.Location, navIndex: NavIndex) {
     return {
       text: 'Edit panel',
-      parentItem: this.state.dashboardRef.resolve().getPageNav(location),
+      parentItem: this.state.dashboardRef.resolve().getPageNav(location, navIndex),
     };
   }
 
@@ -113,9 +114,9 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
-    dashboardRef: new SceneObjectRef(dashboard),
-    sourcePanelRef: new SceneObjectRef(panel),
-    panelRef: new SceneObjectRef(panelClone),
+    dashboardRef: dashboard.getRef(),
+    sourcePanelRef: panel.getRef(),
+    panelRef: panelClone.getRef(),
     controls: dashboardStateCloned.controls,
     $variables: dashboardStateCloned.$variables,
     $timeRange: dashboardStateCloned.$timeRange,

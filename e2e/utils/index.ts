@@ -7,10 +7,6 @@ import { getScenarioContext, setScenarioContext } from './support/scenarioContex
 import * as typings from './typings';
 
 export const e2e = {
-  env: (args: string) => Cypress.env(args),
-  config: () => Cypress.config(),
-  blobToBase64String: (blob: Blob) => Cypress.Blob.blobToBase64String(blob),
-  imgSrcToBlob: (url: string) => Cypress.Blob.imgSrcToBlob(url),
   benchmark,
   pages: e2eFactory({ selectors: selectors.pages }),
   typings,

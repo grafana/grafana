@@ -4,7 +4,7 @@ const PAGE_UNDER_TEST = 'AejrN1AMz';
 
 describe('TextBox - load options scenarios', function () {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('default options should be correct', function () {
@@ -24,7 +24,7 @@ describe('TextBox - load options scenarios', function () {
 
 describe.skip('TextBox - change query scenarios', function () {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('when changing the query value and not saving current as default should revert query value', function () {
@@ -78,7 +78,7 @@ describe.skip('TextBox - change query scenarios', function () {
 
 describe.skip('TextBox - change picker value scenarios', function () {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('when changing the input value and not saving current as default should revert query value', function () {

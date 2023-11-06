@@ -126,7 +126,13 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
-      <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0} ref={tooltip ? undefined : ref}>
+      <a
+        className={linkButtonStyles}
+        {...otherProps}
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled}
+        ref={tooltip ? undefined : ref}
+      >
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>

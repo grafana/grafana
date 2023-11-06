@@ -22,8 +22,10 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
     dataProvider = new ShareQueryDataProvider({ query: panel.targets[0] });
   } else {
     dataProvider = new SceneQueryRunner({
+      datasource: panel.datasource ?? undefined,
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints ?? undefined,
+      maxDataPointsFromWidth: true,
       dataLayerFilter: {
         panelId: panel.id,
       },

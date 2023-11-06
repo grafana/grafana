@@ -34,7 +34,7 @@ describe('getPanelEditorTabs selector', () => {
           "active": true,
           "icon": "process",
           "id": "transform",
-          "text": "Transform",
+          "text": "Transform data",
         },
       ]
     `);

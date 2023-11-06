@@ -11,6 +11,7 @@ on:
 jobs:
   config:
     runs-on: "ubuntu-latest"
+    if: github.repository == 'grafana/grafana'
     outputs:
       has-secrets: ${{ steps.check.outputs.has-secrets }}
     steps:
@@ -24,7 +25,7 @@ jobs:
 
   main:
     needs: config
-    if: needs.config.outputs.has-secrets
+    if: github.repository == 'grafana/grafana' && needs.config.outputs.has-secrets
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"
@@ -35,7 +36,7 @@ jobs:
       - name: "Setup Go"
         uses: "actions/setup-go@v4"
         with:
-          go-version: '1.20.8'
+          go-version: '1.21.3'
 
       - name: "Verify kinds"
         run: go run .github/workflows/scripts/kinds/verify-kinds.go

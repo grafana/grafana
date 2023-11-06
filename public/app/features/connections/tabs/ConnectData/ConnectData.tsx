@@ -39,7 +39,7 @@ export function AddNewConnection() {
     setSearchTerm(e.currentTarget.value.toLowerCase());
   };
 
-  const { isLoading, error, plugins } = useGetAll({
+  const { error, plugins, isLoading } = useGetAll({
     keyword: searchTerm,
     type: PluginType.datasource,
   });

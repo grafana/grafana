@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -236,12 +237,18 @@ func (hs *HTTPServer) SearchOrgUsers(c *contextmodel.ReqContext) response.Respon
 		page = 1
 	}
 
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
+	if err != nil {
+		return response.Err(err)
+	}
+
 	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
-		OrgID: orgID,
-		Query: c.Query("query"),
-		Page:  page,
-		Limit: perPage,
-		User:  c.SignedInUser,
+		OrgID:    orgID,
+		Query:    c.Query("query"),
+		Page:     page,
+		Limit:    perPage,
+		User:     c.SignedInUser,
+		SortOpts: sortOpts,
 	})
 
 	if err != nil {
@@ -264,12 +271,18 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 		page = 1
 	}
 
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
+	if err != nil {
+		return response.Err(err)
+	}
+
 	query := &org.SearchOrgUsersQuery{
-		OrgID: c.SignedInUser.GetOrgID(),
-		Query: c.Query("query"),
-		Page:  page,
-		Limit: perPage,
-		User:  c.SignedInUser,
+		OrgID:    c.SignedInUser.GetOrgID(),
+		Query:    c.Query("query"),
+		Page:     page,
+		Limit:    perPage,
+		User:     c.SignedInUser,
+		SortOpts: sortOpts,
 	}
 
 	result, err := hs.searchOrgUsersHelper(c, query)
@@ -312,7 +325,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	// Get accesscontrol metadata and IPD labels for users in the target org
 	accessControlMetadata := map[string]accesscontrol.Metadata{}
 	if c.QueryBool("accesscontrol") && c.SignedInUser.Permissions != nil {
-		// TODO https://github.com/grafana/grafana-authnz-team/issues/268 - user access control service for fetching permissions from another organization
+		// TODO https://github.com/grafana/identity-access-team/issues/268 - user access control service for fetching permissions from another organization
 		permissions, ok := c.SignedInUser.Permissions[query.OrgID]
 		if ok {
 			accessControlMetadata = accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "users:id:", userIDs)

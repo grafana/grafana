@@ -9,7 +9,14 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
 
-import { useInstallStatus, useUninstallStatus, useInstall, useUninstall, useUnsetInstall } from '../../state/hooks';
+import {
+  useInstallStatus,
+  useUninstallStatus,
+  useInstall,
+  useUninstall,
+  useUnsetInstall,
+  useFetchDetailsLazy,
+} from '../../state/hooks';
 import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
 
@@ -36,6 +43,7 @@ export function InstallControlsButton({
   const install = useInstall();
   const uninstall = useUninstall();
   const unsetInstall = useUnsetInstall();
+  const fetchDetails = useFetchDetailsLazy();
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
   const showConfirmModal = () => setIsConfirmModalVisible(true);
   const hideConfirmModal = () => setIsConfirmModalVisible(false);
@@ -57,6 +65,8 @@ export function InstallControlsButton({
   const onInstall = async () => {
     trackPluginInstalled(trackingProps);
     const result = await install(plugin.id, latestCompatibleVersion?.version);
+    // refresh the store to have the new installed plugin
+    await fetchDetails(plugin.id);
     if (!errorInstalling && !('error' in result)) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
       if (plugin.type === 'app') {

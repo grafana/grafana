@@ -5,7 +5,8 @@ import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, Stacki
 
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
-import { buildScaleKey } from '../GraphNG/utils';
+
+import { buildScaleKey } from './internal';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
@@ -118,11 +119,11 @@ export function getStackingGroups(frame: DataFrame) {
     let stackDir = getStackDirection(transform, values);
 
     let drawStyle: GraphDrawStyle = custom.drawStyle;
-    let drawStyle2 =
+    let drawStyle2: BarAlignment | LineInterpolation | null =
       drawStyle === GraphDrawStyle.Bars
-        ? (custom.barAlignment as BarAlignment)
+        ? custom.barAlignment
         : drawStyle === GraphDrawStyle.Line
-        ? (custom.lineInterpolation as LineInterpolation)
+        ? custom.lineInterpolation
         : null;
 
     let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(

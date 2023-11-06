@@ -7,7 +7,7 @@ export type { CommonDataSourceRef as DataSourceRef };
 
 export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>>
   extends Omit<raw.Panel, 'fieldConfig'> {
-  fieldConfig: FieldConfigSource<TCustomFieldConfig>;
+  fieldConfig?: FieldConfigSource<TCustomFieldConfig>;
 }
 
 export interface RowPanel extends Omit<raw.RowPanel, 'panels'> {
@@ -20,10 +20,8 @@ export enum VariableHide {
   hideVariable,
 }
 
-export interface VariableModel extends Omit<raw.VariableModel, 'hide' | 'description' | 'datasource'> {
-  hide: VariableHide;
-  description?: string | null;
-  datasource: DataSourceRef | null;
+export interface VariableModel extends Omit<raw.VariableModel, 'datasource'> {
+  datasource?: DataSourceRef | null;
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating' | 'annotations' | 'panels'> {
@@ -38,6 +36,9 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery>
   extends Omit<raw.AnnotationQuery, 'target' | 'datasource'> {
   datasource?: DataSourceRef | null;
   target?: TQuery;
+  // TODO: When migrating to snapshot queries, remove this property.
+  // With snapshot queries annotations become a part of the panel snapshot data.
+  snapshotData?: unknown;
 }
 
 export interface AnnotationContainer extends Omit<raw.AnnotationContainer, 'list'> {
@@ -63,9 +64,6 @@ export interface DataTransformerConfig<TOptions = any> extends raw.DataTransform
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
-  description: null,
-  hide: VariableHide.dontHide,
-  datasource: null,
 } as VariableModel;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultRowPanel: Partial<Panel> = raw.defaultRowPanel;

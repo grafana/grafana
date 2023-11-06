@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "",
+      "serviceaccount-label": "",
       "team-label": "",
       "title": "",
       "user-label": ""
@@ -18,6 +19,7 @@
       "no-permissions": "",
       "permissions-change-warning": "",
       "role": "",
+      "serviceaccount": "",
       "team": "",
       "title": "",
       "user": ""
@@ -43,24 +45,28 @@
       "new-folder-name-required-phrase": ""
     },
     "counts": {
-      "alertRule__one": "",
-      "alertRule__many": "",
-      "alertRule__other": "",
-      "dashboard__one": "",
-      "dashboard__many": "",
-      "dashboard__other": "",
-      "folder__one": "",
-      "folder__many": "",
-      "folder__other": "",
-      "libraryPanel__one": "",
-      "libraryPanel__many": "",
-      "libraryPanel__other": "",
-      "total__one": "",
-      "total__many": "",
-      "total__other": ""
+      "alertRule_one": "",
+      "alertRule_many": "",
+      "alertRule_other": "",
+      "dashboard_one": "",
+      "dashboard_many": "",
+      "dashboard_other": "",
+      "folder_one": "",
+      "folder_many": "",
+      "folder_other": "",
+      "libraryPanel_one": "",
+      "libraryPanel_many": "",
+      "libraryPanel_other": "",
+      "total_one": "",
+      "total_many": "",
+      "total_other": ""
     },
     "dashboards-tree": {
+      "collapse-folder-button": "",
+      "expand-folder-button": "",
       "name-column": "",
+      "select-all-header-checkbox": "",
+      "select-checkbox": "",
       "tags-column": ""
     },
     "folder-actions-button": {
@@ -130,6 +136,24 @@
     "search": {
       "placeholder": ""
     }
+  },
+  "correlations": {
+    "add-new": "",
+    "alert": {
+      "error-message": "",
+      "title": ""
+    },
+    "list": {
+      "delete": "",
+      "label": "",
+      "loading": "",
+      "read-only": "",
+      "source": "",
+      "target": ""
+    },
+    "page-content": "",
+    "page-heading": "",
+    "sub-title": ""
   },
   "dashboard": {
     "add-menu": {
@@ -218,11 +242,233 @@
       "settings": "Paramètres du tableau de bord",
       "share": "Partager le tableau de bord ou le panneau",
       "unmark-favorite": "Supprimer des favoris"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
     }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "cancel": "",
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": ""
+    },
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "",
+      "description-label": "",
+      "editable-description": "",
+      "editable-label": "",
+      "folder-label": "",
+      "panel-options-graph-tooltip-description": "",
+      "panel-options-graph-tooltip-label": "",
+      "panel-options-label": "",
+      "tags-label": "",
+      "title": "",
+      "title-label": ""
+    },
+    "json-editor": {
+      "save-button": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "links": {
+      "title": ""
+    },
+    "permissions": {
+      "title": ""
+    },
+    "settings": {
+      "title": ""
+    },
+    "time-picker": {
+      "hide-time-picker": "",
+      "now-delay-description": "",
+      "now-delay-label": "",
+      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-label": "",
+      "time-options-label": "",
+      "time-zone-label": "",
+      "week-start-label": ""
+    },
+    "variables": {
+      "title": ""
+    },
+    "versions": {
+      "title": ""
+    }
+  },
+  "data-source-picker": {
+    "add-new-data-source": "",
+    "built-in-list": {
+      "description-dashboard": "",
+      "description-grafana": "",
+      "description-mixed": ""
+    },
+    "list": {
+      "no-data-source-message": ""
+    },
+    "modal": {
+      "configure-new-data-source": "",
+      "input-placeholder": "",
+      "title": ""
+    },
+    "open-advanced-button": ""
   },
   "data-sources": {
     "datasource-add-button": {
       "label": ""
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "",
+    "rich-history": {
+      "close-tooltip": "",
+      "datasource-a-z": "",
+      "datasource-z-a": "",
+      "newest-first": "",
+      "oldest-first": "",
+      "query-history": "",
+      "settings": "",
+      "starred": ""
+    },
+    "rich-history-card": {
+      "add-comment-form": "",
+      "add-comment-tooltip": "",
+      "cancel": "",
+      "confirm-delete": "",
+      "copy-query-tooltip": "",
+      "copy-shortened-link-tooltip": "",
+      "datasource-icon-label": "",
+      "datasource-name-label": "",
+      "datasource-not-exist": "",
+      "delete-query-confirmation-title": "",
+      "delete-query-title": "",
+      "delete-query-tooltip": "",
+      "delete-starred-query-confirmation-text": "",
+      "edit-comment-tooltip": "",
+      "loading-text": "",
+      "optional-description": "",
+      "query-comment-label": "",
+      "query-text-label": "",
+      "run-query-button": "",
+      "save-comment": "",
+      "star-query-tooltip": "",
+      "switch-datasource-button": "",
+      "unstar-query-tooltip": "",
+      "update-comment-form": ""
+    },
+    "rich-history-container": {
+      "loading": ""
+    },
+    "rich-history-notification": {
+      "query-copied": "",
+      "query-deleted": ""
+    },
+    "rich-history-queries-tab": {
+      "displaying-partial-queries": "",
+      "displaying-queries": "",
+      "filter-aria-label": "",
+      "filter-history": "",
+      "filter-placeholder": "",
+      "history-local": "",
+      "loading": "",
+      "loading-results": "",
+      "search-placeholder": "",
+      "showing-queries": "",
+      "sort-aria-label": "",
+      "sort-placeholder": ""
+    },
+    "rich-history-settings-tab": {
+      "alert-info": "",
+      "change-default-tab": "",
+      "clear-history-info": "",
+      "clear-query-history": "",
+      "clear-query-history-button": "",
+      "delete-confirm": "",
+      "delete-confirm-text": "",
+      "delete-title": "",
+      "history-time-span": "",
+      "history-time-span-description": "",
+      "only-show-active-datasource": "",
+      "query-history-deleted": "",
+      "retention-period": {
+        "1-week": "",
+        "2-days": "",
+        "2-weeks": "",
+        "5-days": ""
+      }
+    },
+    "rich-history-starred-tab": {
+      "filter-queries-aria-label": "",
+      "filter-queries-placeholder": "",
+      "loading": "",
+      "loading-results": "",
+      "local-history-message": "",
+      "search-queries-placeholder": "",
+      "showing-queries": "",
+      "sort-queries-aria-label": "",
+      "sort-queries-placeholder": ""
+    },
+    "rich-history-utils": {
+      "a-week-ago": "",
+      "days-ago": "",
+      "default-from": "",
+      "default-to": "",
+      "today": "",
+      "two-weeks-ago": "",
+      "yesterday": ""
+    },
+    "rich-history-utils-notification": {
+      "saving-failed": "",
+      "update-failed": ""
+    },
+    "secondary-actions": {
+      "query-add-button": "",
+      "query-add-button-aria-label": "",
+      "query-history-button": "",
+      "query-history-button-aria-label": "",
+      "query-inspector-button": "",
+      "query-inspector-button-aria-label": ""
+    },
+    "table": {
+      "no-data": "",
+      "title": "",
+      "title-with-name": ""
+    },
+    "toolbar": {
+      "aria-label": "",
+      "copy-shortened-link": "",
+      "refresh-picker-cancel": "",
+      "refresh-picker-run": "",
+      "split-close": "",
+      "split-close-tooltip": "",
+      "split-narrow": "",
+      "split-title": "",
+      "split-tooltip": "",
+      "split-widen": ""
     }
   },
   "folder-picker": {
@@ -240,6 +486,14 @@
     "select": {
       "no-options-label": "",
       "placeholder": ""
+    }
+  },
+  "graph": {
+    "container": {
+      "content": "",
+      "show-all-series": "",
+      "show-only-series": "",
+      "title": ""
     }
   },
   "help-modal": {
@@ -282,6 +536,16 @@
     },
     "title": ""
   },
+  "inspector": {
+    "query": {
+      "collapse-all": "",
+      "copy-to-clipboard": "",
+      "description": "",
+      "expand-all": "",
+      "no-data": "",
+      "refresh": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Annuler",
@@ -296,6 +560,18 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body_one": "",
+      "body_many": "",
+      "body_other": "",
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "panel-not-linked": "",
+      "select-no-options-message": "",
+      "select-placeholder": "",
+      "title": ""
+    },
     "save": {
       "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
@@ -373,6 +649,18 @@
     },
     "config": {
       "title": "Administration"
+    },
+    "config-access": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-general": {
+      "subtitle": "",
+      "title": ""
+    },
+    "config-plugins": {
+      "subtitle": "",
+      "title": ""
     },
     "connect-data": {
       "title": ""
@@ -579,9 +867,14 @@
     "kiosk": {
       "tv-alert": "Appuyez sur ESC pour quitter le mode kiosque"
     },
+    "megamenu": {
+      "close": "",
+      "dock": ""
+    },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "Activer le mode kiosque",
-      "toggle-menu": "Afficher/Masquer le menu",
+      "open-menu": "",
       "toggle-search-bar": "Afficher/Masquer la barre de recherche"
     }
   },
@@ -605,6 +898,7 @@
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
+      "new-alert-rule": "",
       "query": "Requête",
       "remove": "Supprimer",
       "share": "Partager",
@@ -655,6 +949,22 @@
       "pro-tip": "",
       "pro-tip-link-title": "",
       "title": ""
+    }
+  },
+  "profile": {
+    "change-password": {
+      "cancel-button": "",
+      "cannot-change-password-message": "",
+      "change-password-button": "",
+      "confirm-password-label": "",
+      "confirm-password-required": "",
+      "ldap-auth-proxy-message": "",
+      "new-password-label": "",
+      "new-password-required": "",
+      "new-password-same-as-old": "",
+      "old-password-label": "",
+      "old-password-required": "",
+      "passwords-must-match": ""
     }
   },
   "refresh-picker": {
@@ -736,10 +1046,10 @@
       "time-range-description": "Transforme la période temporelle relative actuelle en une période temporelle absolue"
     },
     "export": {
+      "back-button": "",
       "cancel-button": "Annuler",
       "info-text": "Exporter ce tableau de bord.",
       "save-button": "Enregistrer dans un fichier",
-      "share-default-label": "Exporter avec les valeurs par défaut supprimées",
       "share-externally-label": "Exporter pour un partage externe",
       "view-button": "Afficher au format JSON"
     },
@@ -837,6 +1147,12 @@
     },
     "title": "Préférences"
   },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
+  },
   "tag-filter": {
     "loading": "Chargement en cours...",
     "no-tags": "Aucune étiquette trouvée",
@@ -853,7 +1169,8 @@
       "select-time": "Sélectionner une plage de temps"
     },
     "content": {
-      "empty-recent-list": "<0><0>Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici. /0></0><1><0>Lisez la documentation</0><1> pour savoir comment entrer des plages de temps personnalisées.</1></1>",
+      "empty-recent-list-docs": "<0><0>Lisez la documentation</0><1> pour savoir comment entrer des plages de temps personnalisées.</1></0>",
+      "empty-recent-list-info": "Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici.",
       "filter-placeholder": "Rechercher dans les plages rapides"
     },
     "footer": {

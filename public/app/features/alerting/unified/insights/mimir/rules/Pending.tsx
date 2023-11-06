@@ -1,27 +1,29 @@
+import React from 'react';
+
 import { ThresholdsMode } from '@grafana/data';
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-const QUERY = 'sum by (alertstate) (ALERTS{alertstate="pending"})';
+import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
-export function getPendingCloudAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getPendingCloudAlertsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
         instant: true,
-        expr: QUERY,
+        expr: 'sum by (alertstate) (ALERTS{alertstate="pending"})',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
-    width: 'calc(25% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
+      .setDescription('The number of currently pending alert rule instances')
       .setData(query)
       .setThresholds({
         mode: ThresholdsMode.Absolute,
@@ -36,6 +38,8 @@ export function getPendingCloudAlertsScene(timeRange: SceneTimeRange, datasource
           },
         ],
       })
+      .setNoValue('0')
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

@@ -14,6 +14,9 @@ azure_tenant = "azure_tenant"
 
 rgm_gcp_key_base64 = "gcp_key_base64"
 rgm_destination = "destination"
+rgm_storybook_destination = "rgm_storybook_destination"
+rgm_cdn_destination = "rgm_cdn_destination"
+rgm_downloads_destination = "rgm_downloads_destination"
 rgm_github_token = "github_token"
 rgm_dagger_token = "dagger_token"
 
@@ -121,6 +124,21 @@ def secrets():
             rgm_destination,
             "infra/data/ci/grafana-release-eng/rgm",
             "destination_prod",
+        ),
+        vault_secret(
+            rgm_storybook_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "storybook_destination",
+        ),
+        vault_secret(
+            rgm_cdn_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "cdn_destination",
+        ),
+        vault_secret(
+            rgm_downloads_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "downloads_destination",
         ),
         vault_secret(
             rgm_dagger_token,

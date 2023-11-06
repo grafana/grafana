@@ -13,21 +13,20 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -66,7 +65,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
 
-	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
+	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get list of plugins", err)
 	}
@@ -207,7 +206,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
 		PluginID: pluginID,
-		OrgID:    c.OrgID,
+		OrgID:    c.SignedInUser.GetOrgID(),
 	})
 	if err != nil {
 		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
@@ -245,7 +244,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 		return response.Error(404, "Plugin not installed", nil)
 	}
 
-	cmd.OrgId = c.OrgID
+	cmd.OrgId = c.SignedInUser.GetOrgID()
 	cmd.PluginId = pluginID
 	if err := hs.PluginSettings.UpdatePluginSetting(c.Req.Context(), &pluginsettings.UpdateArgs{
 		Enabled:                 cmd.Enabled,
@@ -393,12 +392,9 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin 
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.OrgID)
+	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.SignedInUser.GetOrgID())
 	if err != nil {
-		if errors.Is(err, plugincontext.ErrPluginNotFound) {
-			return response.Error(http.StatusNotFound, "Plugin not found", nil)
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get plugin settings", err)
 	}
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
 		PluginContext: pCtx,
@@ -492,18 +488,6 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 }
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {
-	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return response.Error(http.StatusNotFound, "Plugin not found", err)
-	}
-
-	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		return response.Error(http.StatusNotFound, "Not found", err)
-	}
-
-	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		return response.Error(http.StatusServiceUnavailable, "Plugin unavailable", err)
-	}
-
 	return response.ErrOrFallback(http.StatusInternalServerError, "Plugin request failed", err)
 }
 

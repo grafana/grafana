@@ -17,14 +17,14 @@ import { AccessControlAction, ContactPointsState, NotifierDTO, NotifierType } fr
 import { backendSrv } from '../../../../../core/services/backend_srv';
 import * as receiversApi from '../../api/receiversApi';
 import { mockProvisioningApi, setupMswServer } from '../../mockApi';
-import { enableRBAC, grantUserPermissions } from '../../mocks';
+import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { ReceiversTable } from './ReceiversTable';
 import * as receiversMeta from './grafanaAppReceivers/useReceiversMetadata';
-import { ReceiverMetadata } from './grafanaAppReceivers/useReceiversMetadata';
+import { ReceiverPluginMetadata } from './grafanaAppReceivers/useReceiversMetadata';
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: AutoSizerProps) => children({ height: 600, width: 1 });
@@ -101,7 +101,7 @@ describe('ReceiversTable', () => {
     jest.resetAllMocks();
     const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
     useGetContactPointsStateMock.mockReturnValue(emptyContactPointsState);
-    useReceiversMetadata.mockReturnValue(new Map<Receiver, ReceiverMetadata>());
+    useReceiversMetadata.mockReturnValue(new Map<Receiver, ReceiverPluginMetadata>());
   });
 
   it('render receivers with grafana notifiers', async () => {
@@ -183,32 +183,13 @@ describe('ReceiversTable', () => {
 
       const notifiers: NotifierDTO[] = [mockNotifier('googlechat', 'Google Chat'), mockNotifier('sensugo', 'Sensu Go')];
 
-      it('should be visible when user has permissions to read provisioning', async () => {
-        enableRBAC();
-        grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
-
-        await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);
-
-        const buttons = within(screen.getByTestId('dynamic-table')).getAllByTestId('export');
-        expect(buttons).toHaveLength(2);
-      });
-      it('should be visible when user has permissions to read provisioning with secrets', async () => {
-        enableRBAC();
-        grantUserPermissions([AccessControlAction.AlertingProvisioningReadSecrets]);
-
-        await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);
-
-        const buttons = within(screen.getByTestId('dynamic-table')).getAllByTestId('export');
-        expect(buttons).toHaveLength(2);
-      });
-      it('should not be visible when user has no provisioning permissions', async () => {
-        enableRBAC();
+      it('should be visible when user has permissions to read notifications', async () => {
         grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
 
-        await renderReceieversTable(receivers, [], GRAFANA_RULES_SOURCE_NAME);
+        await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);
 
-        const buttons = within(screen.getByTestId('dynamic-table')).queryAllByTestId('export');
-        expect(buttons).toHaveLength(0);
+        const buttons = within(screen.getByTestId('dynamic-table')).getAllByTestId('export');
+        expect(buttons).toHaveLength(2);
       });
     });
   });
@@ -235,8 +216,7 @@ describe('ReceiversTable', () => {
 
       const notifiers: NotifierDTO[] = [mockNotifier('googlechat', 'Google Chat'), mockNotifier('sensugo', 'Sensu Go')];
 
-      enableRBAC();
-      grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
+      grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
 
       // Act
       await renderReceieversTable(receivers, notifiers, GRAFANA_RULES_SOURCE_NAME);

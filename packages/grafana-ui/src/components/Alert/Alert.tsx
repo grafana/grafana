@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
-import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,6 +8,8 @@ import { useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
+import { Box } from '../Layout/Box/Box';
+import { Text } from '../Text/Text';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -55,42 +56,55 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     return (
       <div
         ref={ref}
-        className={cx(styles.alert, className)}
+        className={cx(styles.wrapper, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
         role={role}
         aria-label={ariaLabel}
         {...restProps}
       >
-        <div className={styles.icon}>
-          <Icon size="xl" name={getIconFromSeverity(severity)} />
-        </div>
+        <Box
+          display="flex"
+          backgroundColor={severity}
+          borderRadius="default"
+          paddingY={1}
+          paddingX={2}
+          borderStyle="solid"
+          borderColor={severity}
+          alignItems="stretch"
+          boxShadow={elevated ? 'z3' : undefined}
+        >
+          <Box paddingTop={1} paddingRight={2}>
+            <div className={styles.icon}>
+              <Icon size="xl" name={getIconFromSeverity(severity)} />
+            </div>
+          </Box>
 
-        <div className={styles.body}>
-          <div className={styles.title}>{title}</div>
-          {children && <div className={styles.content}>{children}</div>}
-        </div>
+          <Box paddingY={1} grow={1}>
+            <Text weight="medium">{title}</Text>
+            {children && <div className={styles.content}>{children}</div>}
+          </Box>
+          {/* If onRemove is specified, giving preference to onRemove */}
+          {onRemove && !buttonContent && (
+            <div className={styles.close}>
+              <Button
+                aria-label="Close alert"
+                icon="times"
+                onClick={onRemove}
+                type="button"
+                fill="text"
+                variant="secondary"
+              />
+            </div>
+          )}
 
-        {/* If onRemove is specified, giving preference to onRemove */}
-        {onRemove && !buttonContent && (
-          <div className={styles.close}>
-            <Button
-              aria-label="Close alert"
-              icon="times"
-              onClick={onRemove}
-              type="button"
-              fill="text"
-              variant="secondary"
-            />
-          </div>
-        )}
-
-        {onRemove && buttonContent && (
-          <div className={styles.buttonWrapper}>
-            <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
-              {buttonContent}
-            </Button>
-          </div>
-        )}
+          {onRemove && buttonContent && (
+            <Box marginLeft={1} display="flex" alignItems="center">
+              <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
+                {buttonContent}
+              </Button>
+            </Box>
+          )}
+        </Box>
       </div>
     );
   }
@@ -120,24 +134,13 @@ const getStyles = (
   topSpacing?: number
 ) => {
   const color = theme.colors[severity];
-  const borderRadius = theme.shape.radius.default;
-  const borderColor = tinycolor2(color.border).setAlpha(0.2).toString();
 
   return {
-    alert: css({
-      label: 'alert',
+    wrapper: css({
       flexGrow: 1,
-      position: 'relative',
-      borderRadius,
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'stretch',
-      background: color.transparent,
-      boxShadow: elevated ? theme.shadows.z3 : 'none',
-      padding: theme.spacing(1, 2),
-      border: `1px solid ${borderColor}`,
       marginBottom: theme.spacing(bottomSpacing ?? 2),
       marginTop: theme.spacing(topSpacing ?? 0),
+      position: 'relative',
 
       '&:before': {
         content: '""',
@@ -151,32 +154,12 @@ const getStyles = (
       },
     }),
     icon: css({
-      padding: theme.spacing(1, 2, 0, 0),
       color: color.text,
-      display: 'flex',
-    }),
-    title: css({
-      fontWeight: theme.typography.fontWeightMedium,
-    }),
-    body: css({
-      padding: theme.spacing(1, 0),
-      flexGrow: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      overflowWrap: 'break-word',
-      wordBreak: 'break-word',
     }),
     content: css({
       paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',
-    }),
-    buttonWrapper: css({
-      marginLeft: theme.spacing(1),
-      display: 'flex',
-      alignItems: 'center',
-      alignSelf: 'center',
     }),
     close: css({
       position: 'relative',

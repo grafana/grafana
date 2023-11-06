@@ -30,11 +30,8 @@ import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAler
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
-import {
-  dashboardHasTemplateVariables,
-  generatePublicDashboardUrl,
-  getUnsupportedDashboardDatasources,
-} from '../SharePublicDashboardUtils';
+import { dashboardHasTemplateVariables, generatePublicDashboardUrl } from '../SharePublicDashboardUtils';
+import { useGetUnsupportedDataSources } from '../useGetUnsupportedDataSources';
 
 import { Configuration } from './Configuration';
 import { EmailSharingConfiguration } from './EmailSharingConfiguration';
@@ -60,7 +57,8 @@ const ConfigPublicDashboard = () => {
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
-  const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
+
+  const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
 
   const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();

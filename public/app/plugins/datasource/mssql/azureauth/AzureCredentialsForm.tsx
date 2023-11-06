@@ -1,9 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { InlineFormLabel, Button } from '@grafana/ui/src/components';
-import { Input } from '@grafana/ui/src/components/Forms/Legacy/Input/Input';
-import { Select } from '@grafana/ui/src/components/Forms/Legacy/Select/Select';
+import { Button, Field, Select, Input } from '@grafana/ui/src/components';
 
 import { AzureCredentialsType, AzureAuthType } from '../types';
 
@@ -52,117 +50,121 @@ export const AzureCredentialsForm = (props: Props) => {
   return (
     <div>
       {managedIdentityEnabled && (
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel tooltip="Choose the type of authentication to Azure services">
-              Authentication
-            </InlineFormLabel>
-            <Select
-              value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
-              options={authTypeOptions}
-              onChange={onAuthTypeChange}
-              isDisabled={disabled}
-            />
-          </div>
-        </div>
+        <Field
+          label="Authentication"
+          description="Choose the type of authentication to Azure services"
+          htmlFor="authentication-type"
+        >
+          <Select
+            width={20}
+            value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
+            options={authTypeOptions}
+            onChange={onAuthTypeChange}
+            disabled={disabled}
+          />
+        </Field>
       )}
       {credentials.authType === 'clientsecret' && (
         <>
           {azureCloudOptions && (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <InlineFormLabel className="width-12" tooltip="Choose an Azure Cloud">
-                  Azure Cloud
-                </InlineFormLabel>
-                <Select
-                  value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
-                  options={azureCloudOptions}
-                  onChange={(selected: SelectableValue<AzureAuthType>) => {
-                    const value = selected.value || '';
-                    onInputChange({ property: 'azureCloud', value });
-                  }}
-                  isDisabled={disabled}
-                />
-              </div>
-            </div>
+            <Field label="Azure Cloud" htmlFor="azure-cloud-type" disabled={disabled}>
+              <Select
+                value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
+                options={azureCloudOptions}
+                onChange={(selected: SelectableValue<AzureAuthType>) => {
+                  const value = selected.value || '';
+                  onInputChange({ property: 'azureCloud', value });
+                }}
+                isDisabled={disabled}
+                inputId="azure-cloud-type"
+                aria-label="Azure Cloud"
+                width={20}
+              />
+            </Field>
           )}
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-12">Directory (tenant) ID</InlineFormLabel>
-              <div className="width-15">
-                <Input
-                  className="width-30"
-                  placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                  value={credentials.tenantId || ''}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                    const value = event.target.value;
-                    onInputChange({ property: 'tenantId', value });
-                  }}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-12">Application (client) ID</InlineFormLabel>
-              <div className="width-15">
-                <Input
-                  className="width-30"
-                  placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                  value={credentials.clientId || ''}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                    const value = event.target.value;
-                    onInputChange({ property: 'clientId', value });
-                  }}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
-          </div>
-          {typeof credentials.clientSecret === 'symbol' ? (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <InlineFormLabel htmlFor="azure-client-secret" className="width-12">
-                  Client Secret
-                </InlineFormLabel>
-                <Input id="azure-client-secret" className="width-25" placeholder="configured" disabled />
-              </div>
-              {!disabled && (
-                <div className="gf-form">
-                  <div className="max-width-30 gf-form-inline">
-                    <Button
-                      variant="secondary"
-                      type="button"
-                      onClick={() => {
-                        onInputChange({ property: 'clientSecret', value: '' });
-                      }}
-                    >
-                      reset
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
-                <div className="width-15">
+          <Field
+            label="Directory (tenant) ID"
+            required
+            htmlFor="tenant-id"
+            invalid={!credentials.tenantId}
+            error={'Tenant ID is required'}
+          >
+            <Input
+              width={45}
+              placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+              value={credentials.tenantId || ''}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                const value = event.target.value;
+                onInputChange({ property: 'tenantId', value });
+              }}
+              disabled={disabled}
+              aria-label="Tenant ID"
+            />
+          </Field>
+          <Field
+            label="Application (client) ID"
+            required
+            htmlFor="client-id"
+            invalid={!credentials.clientId}
+            error={'Client ID is required'}
+          >
+            <Input
+              width={45}
+              placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+              value={credentials.clientId || ''}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                const value = event.target.value;
+                onInputChange({ property: 'clientId', value });
+              }}
+              disabled={disabled}
+              aria-label="Client ID"
+            />
+          </Field>
+          {!disabled &&
+            (typeof credentials.clientSecret === 'symbol' ? (
+              <Field label="Client Secret" htmlFor="client-secret" required>
+                <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
                   <Input
-                    className="width-30"
-                    placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                    value={credentials.clientSecret || ''}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                      const value = event.target.value;
-                      onInputChange({ property: 'clientSecret', value });
+                    aria-label="Client Secret"
+                    placeholder="configured"
+                    disabled={true}
+                    data-testid={'client-secret'}
+                    width={45}
+                  />
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={() => {
+                      onInputChange({ property: 'clientSecret', value: '' });
                     }}
                     disabled={disabled}
-                  />
+                  >
+                    Reset
+                  </Button>
                 </div>
-              </div>
-            </div>
-          )}
+              </Field>
+            ) : (
+              <Field
+                label="Client Secret"
+                required
+                htmlFor="client-secret"
+                invalid={!credentials.clientSecret}
+                error={'Client secret is required'}
+              >
+                <Input
+                  width={45}
+                  aria-label="Client Secret"
+                  placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                  value={credentials.clientSecret || ''}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    const value = event.target.value;
+                    onInputChange({ property: 'clientSecret', value });
+                  }}
+                  id="client-secret"
+                  disabled={disabled}
+                />
+              </Field>
+            ))}
         </>
       )}
     </div>

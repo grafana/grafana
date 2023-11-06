@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 import { setupMockedResourcesAPI } from '../__mocks__/ResourcesAPI';
 
 describe('ResourcesAPI', () => {
@@ -116,6 +118,111 @@ describe('ResourcesAPI', () => {
         { label: 'CPUUtilization', value: 'CPUUtilization' },
         { label: 'CPUPercentage', value: 'CPUPercentage' },
       ]);
+    });
+  });
+
+  const originalFeatureToggleValue = config.featureToggles.cloudwatchNewRegionsHandler;
+
+  describe('getRegions', () => {
+    afterEach(() => {
+      config.featureToggles.cloudwatchNewRegionsHandler = originalFeatureToggleValue;
+    });
+    it('should return regions as an array of options when using legacy regions route', async () => {
+      config.featureToggles.cloudwatchNewRegionsHandler = false;
+      const response = Promise.resolve([
+        {
+          text: 'US East (Ohio)',
+          value: 'us-east-2',
+          label: 'US East (Ohio)',
+        },
+        {
+          text: 'US East (N. Virginia)',
+          value: 'us-east-1',
+          label: 'US East (N. Virginia)',
+        },
+        {
+          text: 'US West (N. California)',
+          value: 'us-west-1',
+          label: 'US West (N. California)',
+        },
+      ]);
+
+      const { api } = setupMockedResourcesAPI({ response });
+      const expectedRegions = [
+        {
+          text: 'default',
+          value: 'default',
+          label: 'default',
+        },
+        {
+          text: 'US East (Ohio)',
+          value: 'us-east-2',
+          label: 'US East (Ohio)',
+        },
+        {
+          text: 'US East (N. Virginia)',
+          value: 'us-east-1',
+          label: 'US East (N. Virginia)',
+        },
+        {
+          text: 'US West (N. California)',
+          value: 'us-west-1',
+          label: 'US West (N. California)',
+        },
+      ];
+
+      const regions = await api.getRegions();
+
+      expect(regions).toEqual(expectedRegions);
+    });
+
+    it('should return regions as an array of options when using new regions route', async () => {
+      config.featureToggles.cloudwatchNewRegionsHandler = true;
+      const response = Promise.resolve([
+        {
+          value: {
+            name: 'us-east-2',
+          },
+        },
+        {
+          value: {
+            name: 'us-east-1',
+          },
+        },
+        {
+          value: {
+            name: 'us-west-1',
+          },
+        },
+      ]);
+
+      const { api } = setupMockedResourcesAPI({ response });
+      const expectedRegions = [
+        {
+          text: 'default',
+          value: 'default',
+          label: 'default',
+        },
+        {
+          text: 'us-east-2',
+          value: 'us-east-2',
+          label: 'us-east-2',
+        },
+        {
+          text: 'us-east-1',
+          value: 'us-east-1',
+          label: 'us-east-1',
+        },
+        {
+          text: 'us-west-1',
+          value: 'us-west-1',
+          label: 'us-west-1',
+        },
+      ];
+
+      const regions = await api.getRegions();
+
+      expect(regions).toEqual(expectedRegions);
     });
   });
 });

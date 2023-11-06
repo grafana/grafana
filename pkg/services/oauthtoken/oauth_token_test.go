@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/oauth2"
@@ -231,10 +232,11 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 	authInfoStore := &FakeAuthInfoStore{}
 	authInfoService := authinfoservice.ProvideAuthInfoService(nil, authInfoStore, &usagestats.UsageStatsMock{})
 	return &Service{
-		Cfg:               setting.NewCfg(),
-		SocialService:     socialService,
-		AuthInfoService:   authInfoService,
-		singleFlightGroup: &singleflight.Group{},
+		Cfg:                  setting.NewCfg(),
+		SocialService:        socialService,
+		AuthInfoService:      authInfoService,
+		singleFlightGroup:    &singleflight.Group{},
+		tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
 	}, authInfoStore, socialConnector
 }
 

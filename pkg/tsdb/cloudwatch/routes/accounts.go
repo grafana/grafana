@@ -24,7 +24,7 @@ func AccountsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCt
 		return nil, models.NewHttpError("error in AccountsHandler", http.StatusInternalServerError, err)
 	}
 
-	accounts, err := service.GetAccountsForCurrentUserOrRole()
+	accounts, err := service.GetAccountsForCurrentUserOrRole(ctx)
 	if err != nil {
 		msg := "error getting accounts for current user or role"
 		switch {

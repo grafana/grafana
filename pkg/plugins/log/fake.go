@@ -1,5 +1,7 @@
 package log
 
+import "context"
+
 var _ Logger = (*TestLogger)(nil)
 
 type TestLogger struct {
@@ -39,6 +41,10 @@ func (f *TestLogger) Error(msg string, ctx ...any) {
 	f.ErrorLogs.Calls++
 	f.ErrorLogs.Message = msg
 	f.ErrorLogs.Ctx = ctx
+}
+
+func (f *TestLogger) FromContext(_ context.Context) Logger {
+	return NewTestLogger()
 }
 
 type Logs struct {

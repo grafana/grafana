@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
@@ -26,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy, Features: features},
@@ -40,7 +39,6 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, f
 	s := &Service{
 		im:        im,
 		executors: executors,
-		tracer:    tracer,
 	}
 
 	s.queryMux = s.newQueryMux()
@@ -63,12 +61,11 @@ type Service struct {
 
 	queryMux        *datasource.QueryTypeMux
 	resourceHandler backend.CallResourceHandler
-	tracer          tracing.Tracer
 }
 
-func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
+func getDatasourceService(ctx context.Context, settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
 	route := dsInfo.Routes[routeName]
-	client, err := newHTTPClient(route, dsInfo, settings, cfg, clientProvider)
+	client, err := newHTTPClient(ctx, route, dsInfo, settings, cfg, clientProvider)
 	if err != nil {
 		return types.DatasourceService{}, err
 	}
@@ -79,7 +76,7 @@ func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *set
 }
 
 func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonDataObj := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
@@ -119,7 +116,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		}
 
 		for routeName := range executors {
-			service, err := getDatasourceService(&settings, cfg, clientProvider, model, routeName)
+			service, err := getDatasourceService(ctx, &settings, cfg, clientProvider, model, routeName)
 			if err != nil {
 				return nil, err
 			}
@@ -156,7 +153,7 @@ func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.Az
 }
 
 type azDatasourceExecutor interface {
-	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error)
+	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error)
 	ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error)
 }
 
@@ -191,7 +188,7 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, s.tracer)
+			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL)
 		})
 	}
 	return mux

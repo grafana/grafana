@@ -1,14 +1,19 @@
+import { Unsubscribable } from 'rxjs';
+
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneObjectRef, SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
+import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
+import { DashboardRepeatsProcessedEvent } from './types';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
+  private _eventSub?: Unsubscribable;
+
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
@@ -34,7 +39,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.inspectPanelKey = values.inspect;
-      update.overlay = new PanelInspectDrawer({ panelRef: new SceneObjectRef(panel) });
+      update.overlay = new PanelInspectDrawer({ panelRef: panel.getRef() });
     } else if (inspectPanelId) {
       update.inspectPanelKey = undefined;
       update.overlay = undefined;
@@ -44,6 +49,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (typeof values.viewPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
       if (!panel) {
+        // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
+        if (values.viewPanel.indexOf('clone')) {
+          this._handleViewRepeatClone(values.viewPanel);
+          return;
+        }
+
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ viewPanel: null });
         return;
@@ -56,6 +67,18 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
+    }
+  }
+
+  private _handleViewRepeatClone(viewPanel: string) {
+    if (!this._eventSub) {
+      this._eventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
+        const panel = findVizPanelByKey(this._scene, viewPanel);
+        if (panel) {
+          this._eventSub?.unsubscribe();
+          this._scene.setState({ viewPanelKey: viewPanel });
+        }
+      });
     }
   }
 }

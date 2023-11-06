@@ -149,6 +149,12 @@ export const Components = {
     toggleTableView: 'toggle-table-view',
 
     // [Geomap] Map controls
+    showZoomField: 'Map controls Show zoom control field property editor',
+    showAttributionField: 'Map controls Show attribution field property editor',
+    showScaleField: 'Map controls Show scale field property editor',
+    showMeasureField: 'Map controls Show measure tools field property editor',
+    showDebugField: 'Map controls Show debug field property editor',
+
     measureButton: 'show measure tools',
   },
   PanelInspector: {
@@ -224,7 +230,7 @@ export const Components = {
     },
     SpatialOperations: {
       actionLabel: 'root Action field property editor',
-      locationLabel: 'root Location field property editor',
+      locationLabel: 'root Location Mode field property editor',
       location: {
         autoOption: 'Auto location option',
         coords: {
@@ -251,13 +257,14 @@ export const Components = {
       button: 'Configuration',
     },
     Toggle: {
-      button: 'Toggle menu',
+      button: 'data-testid Toggle menu',
     },
     Reporting: {
       button: 'Reporting',
     },
   },
   NavMenu: {
+    Menu: 'data-testid navigation mega-menu',
     item: 'data-testid Nav menu item',
   },
   NavToolbar: {
@@ -380,7 +387,7 @@ export const Components = {
     singleLink: 'Data link',
   },
   CodeEditor: {
-    container: 'Code editor container',
+    container: 'data-testid Code editor container',
   },
   DashboardImportPage: {
     textarea: 'data-testid-import-dashboard-textarea',

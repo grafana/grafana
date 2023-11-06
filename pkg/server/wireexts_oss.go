@@ -8,6 +8,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
+	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -91,6 +93,10 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
+	idimpl.ProvideLocalSigner,
+	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
+	manager.ProvideInstaller,
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 )
 
 var wireExtsSet = wire.NewSet(

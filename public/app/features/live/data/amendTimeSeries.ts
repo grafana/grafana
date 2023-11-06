@@ -1,4 +1,4 @@
-import { closestIdx } from '@grafana/data/src/dataframe/StreamingDataFrame';
+import { closestIdx } from '@grafana/data';
 
 export type Table = [times: number[], ...values: any[][]];
 

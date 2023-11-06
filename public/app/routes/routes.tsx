@@ -22,7 +22,7 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
-import { getEmbeddedDashboardRoutes, getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -36,7 +36,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+        () => import(/* webpackChunkName: "DashboardPageProxy" */ '../features/dashboard/containers/DashboardPageProxy')
       ),
     },
     {
@@ -44,7 +44,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+        () => import(/* webpackChunkName: "DashboardPageProxy" */ '../features/dashboard/containers/DashboardPageProxy')
       ),
     },
     {
@@ -53,7 +53,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
       ),
     },
     {
@@ -68,7 +68,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPageProxy')
       ),
     },
     {
@@ -197,15 +197,15 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/general',
-      component: () => <NavLandingPage navId="admin/general" />,
+      component: () => <NavLandingPage navId="cfg/general" />,
     },
     {
       path: '/admin/plugins',
-      component: () => <NavLandingPage navId="admin/plugins" />,
+      component: () => <NavLandingPage navId="cfg/plugins" />,
     },
     {
       path: '/admin/access',
-      component: () => <NavLandingPage navId="admin/access" />,
+      component: () => <NavLandingPage navId="cfg/access" />,
     },
     {
       path: '/org',
@@ -294,14 +294,6 @@ export function getAppRoutes(): RouteDescriptor[] {
               () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
             )
           : () => <Redirect to="/admin" />,
-    },
-    {
-      path: '/admin/access',
-      component: () => <NavLandingPage navId="admin/access" />,
-    },
-    {
-      path: '/admin/config',
-      component: () => <NavLandingPage navId="admin/config" />,
     },
     {
       path: '/admin/settings',
@@ -501,7 +493,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
-    ...getEmbeddedDashboardRoutes(),
     {
       path: '/*',
       component: PageNotFound,

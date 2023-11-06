@@ -131,7 +131,7 @@ const initialUserListAdminState: UserListAdminState = {
   totalPages: 1,
   showPaging: false,
   filters: [{ name: 'activeLast30Days', value: false }],
-  isLoading: false,
+  isLoading: true,
 };
 
 interface UsersFetched {
@@ -173,6 +173,11 @@ export const userListAdminSlice = createSlice({
       ...state,
       page: action.payload,
     }),
+    sortChanged: (state, action: PayloadAction<UserListAdminState['sort']>) => ({
+      ...state,
+      page: 0,
+      sort: action.payload,
+    }),
     filterChanged: (state, action: PayloadAction<UserFilter>) => {
       const { name, value } = action.payload;
 
@@ -192,7 +197,7 @@ export const userListAdminSlice = createSlice({
   },
 });
 
-export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged } =
+export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged, sortChanged } =
   userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
 

@@ -315,9 +315,7 @@ export class LiveDataStream<T = unknown> {
           ? lastMessage.values
           : reduceNewValuesSameSchemaMessages(messages).values;
 
-      const filteredValues = matchingFieldIndexes
-        ? values.filter((v, i) => (matchingFieldIndexes as number[]).includes(i))
-        : values;
+      const filteredValues = matchingFieldIndexes ? values.filter((v, i) => matchingFieldIndexes?.includes(i)) : values;
 
       return {
         key: subKey,

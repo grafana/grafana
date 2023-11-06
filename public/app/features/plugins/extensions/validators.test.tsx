@@ -272,6 +272,18 @@ describe('Plugin Extension Validators', () => {
       expect(isReactComponent(() => <div>Some text</div>)).toBe(true);
     });
 
+    it('should return TRUE if we pass in a component wrapped with React.memo()', () => {
+      const Component = () => <div>Some text</div>;
+      const wrapped = React.memo(() => (
+        <div>
+          <Component />
+        </div>
+      ));
+      wrapped.displayName = 'MyComponent';
+
+      expect(isReactComponent(wrapped)).toBe(true);
+    });
+
     it('should return FALSE if we pass in a valid React component', () => {
       expect(isReactComponent('Foo bar')).toBe(false);
       expect(isReactComponent(123)).toBe(false);

@@ -5,7 +5,6 @@ export type ClickedItemData = {
   posY: number;
   label: string;
   item: LevelItem;
-  level: number;
 };
 
 export enum SampleUnit {

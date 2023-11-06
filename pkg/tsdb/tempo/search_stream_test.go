@@ -18,10 +18,13 @@ import (
 )
 
 func TestProcessStream_ValidInput_ReturnsNoError(t *testing.T) {
-	service := &Service{}
+	logger := log.New("tsdb.tempo.test")
+	service := &Service{
+		logger: logger,
+	}
 	searchClient := &mockStreamer{}
 	streamSender := &mockSender{}
-	err := service.processStream(searchClient, streamSender)
+	err := service.processStream(context.Background(), searchClient, streamSender)
 	if err != nil {
 		t.Errorf("Expected no error, but got %s", err)
 	}
@@ -33,7 +36,7 @@ func TestProcessStream_InvalidInput_ReturnsError(t *testing.T) {
 	}
 	searchClient := &mockStreamer{err: errors.New("invalid input")}
 	streamSender := &mockSender{}
-	err := service.processStream(searchClient, streamSender)
+	err := service.processStream(context.Background(), searchClient, streamSender)
 	if err != nil {
 		if !strings.Contains(err.Error(), "invalid input") {
 			t.Errorf("Expected error message to contain 'invalid input', but got %s", err)
@@ -109,7 +112,7 @@ func TestProcessStream_ValidInput_ReturnsExpectedOutput(t *testing.T) {
 		},
 	}
 	streamSender := &mockSender{}
-	err := service.processStream(searchClient, streamSender)
+	err := service.processStream(context.Background(), searchClient, streamSender)
 	if err != nil {
 		t.Errorf("Expected no error, but got %s", err)
 		return

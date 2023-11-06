@@ -8,7 +8,15 @@ import {
   SelectableValue,
   TransformerCategory,
 } from '@grafana/data';
-import { InlineField, InlineFieldRow, ValuePicker, Button, HorizontalGroup, FieldValidationMessage } from '@grafana/ui';
+import {
+  InlineField,
+  InlineFieldRow,
+  ValuePicker,
+  Button,
+  HorizontalGroup,
+  FieldValidationMessage,
+  RadioButtonGroup,
+} from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
 import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
@@ -46,6 +54,16 @@ export function PartitionByValuesEditor({
     },
     [onChange, options]
   );
+
+  enum namingModes {
+    asLabels,
+    frameName,
+  }
+
+  const namingModesOptions = [
+    { label: 'As label', value: namingModes.asLabels },
+    { label: 'As frame name', value: namingModes.frameName },
+  ];
 
   const removeField = useCallback(
     (v: string) => {
@@ -92,6 +110,27 @@ export function PartitionByValuesEditor({
               />
             )}
           </HorizontalGroup>
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField
+          tooltip={
+            'Sets how the names of the selected fields are displayed. As frame name is usually better for tabular data'
+          }
+          label={'Naming'}
+          labelWidth={10}
+        >
+          <RadioButtonGroup
+            options={namingModesOptions}
+            value={
+              options.naming?.asLabels === undefined || options.naming.asLabels
+                ? namingModes.asLabels
+                : namingModes.frameName
+            }
+            onChange={(v) =>
+              onChange({ ...options, naming: { ...options.naming, asLabels: v === namingModes.asLabels } })
+            }
+          />
         </InlineField>
       </InlineFieldRow>
     </div>

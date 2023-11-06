@@ -12,7 +12,7 @@ import { useDispatch } from 'app/types';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction, updateAlertManagerConfigAction } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -32,6 +32,7 @@ interface Props {
   alertManagerSourceName: string;
   config: AlertManagerCortexConfig;
   existing?: GrafanaManagedContactPoint;
+  readOnly?: boolean;
 }
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
@@ -43,7 +44,7 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   type: 'email',
 });
 
-export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }: Props) => {
+export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config, readOnly = false }: Props) => {
   const dispatch = useDispatch();
 
   const {
@@ -86,7 +87,9 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
         successMessage: existing ? 'Contact point updated.' : 'Contact point created',
         redirectPath: '/alerting/notifications',
       })
-    );
+    ).then(() => {
+      dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
+    });
   };
 
   const onTestChannel = (values: GrafanaChannelValues) => {
@@ -123,12 +126,8 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
     ? (existing.grafana_managed_receiver_configs ?? []).some((item) => Boolean(item.provenance))
     : false;
 
-  // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one
-  // or a Mimir-based AlertManager
-  const isManageableAlertManagerDataSource = !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
-
-  const isEditable = isManageableAlertManagerDataSource && !hasProvisionedItems;
-  const isTestable = isManageableAlertManagerDataSource || hasProvisionedItems;
+  const isEditable = !readOnly && !hasProvisionedItems;
+  const isTestable = !readOnly;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
     return <LoadingPlaceholder text="Loading notifiers..." />;

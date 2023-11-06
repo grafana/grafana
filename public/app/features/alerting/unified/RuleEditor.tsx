@@ -11,7 +11,7 @@ import { AlertWarning } from './AlertWarning';
 import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
+import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchRulesSourceBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
@@ -47,7 +47,8 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
   const dispatch = useDispatch();
   const [searchParams] = useURLSearchParams();
 
-  const { id, type } = match.params;
+  const { type } = match.params;
+  const id = ruleId.getRuleIdFromPathname(match.params);
   const identifier = ruleId.tryParse(id, true);
 
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
@@ -56,6 +57,9 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
   const { loading = true } = useAsync(async () => {
     if (identifier) {
       await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
+    }
+    if (copyFromIdentifier) {
+      await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: copyFromIdentifier.ruleSourceName }));
     }
   }, [dispatch]);
 

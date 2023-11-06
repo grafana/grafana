@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -327,7 +328,7 @@ func (a apiClient) UpdateAlertRuleOrgQuota(t *testing.T, orgID int64, limit int6
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (int, string) {
+func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (apimodels.UpdateRuleGroupResponse, int, string) {
 	t.Helper()
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
@@ -337,6 +338,46 @@ func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.
 	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s", a.url, folder)
 	// nolint:gosec
 	resp, err := http.Post(u, "application/json", &buf)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	var m apimodels.UpdateRuleGroupResponse
+	if resp.StatusCode == http.StatusAccepted {
+		require.NoError(t, json.Unmarshal(b, &m))
+	}
+	return m, resp.StatusCode, string(b)
+}
+
+func (a apiClient) PostRulesExportWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig, params *apimodels.ExportQueryParams) (int, string) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(group)
+	require.NoError(t, err)
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s/export", a.url, folder))
+	require.NoError(t, err)
+
+	if params != nil {
+		q := url.Values{}
+		if params.Format != "" {
+			q.Set("format", params.Format)
+		}
+		if params.Download {
+			q.Set("download", "true")
+		}
+		u.RawQuery = q.Encode()
+	}
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), &buf)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	require.NoError(t, err)
 	defer func() {
 		_ = resp.Body.Close()
@@ -365,6 +406,12 @@ func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string) (
 }
 
 func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {
+	result, status, _ := a.GetRulesGroupWithStatus(t, folder, group)
+	require.Equal(t, http.StatusAccepted, status)
+	return result
+}
+
+func (a apiClient) GetRulesGroupWithStatus(t *testing.T, folder string, group string) (apimodels.RuleGroupConfigResponse, int, []byte) {
 	t.Helper()
 	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s/%s", a.url, folder, group)
 	// nolint:gosec
@@ -375,14 +422,16 @@ func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apim
 	}()
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
-	require.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 	result := apimodels.RuleGroupConfigResponse{}
-	require.NoError(t, json.Unmarshal(b, &result))
-	return result
+
+	if http.StatusAccepted == resp.StatusCode {
+		require.NoError(t, json.Unmarshal(b, &result))
+	}
+	return result, resp.StatusCode, b
 }
 
-func (a apiClient) GetAllRulesGroupInFolder(t *testing.T, folder string) apimodels.NamespaceConfigResponse {
+func (a apiClient) GetAllRulesGroupInFolderWithStatus(t *testing.T, folder string) (apimodels.NamespaceConfigResponse, int, []byte) {
 	t.Helper()
 	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s", a.url, folder)
 	// nolint:gosec
@@ -393,11 +442,73 @@ func (a apiClient) GetAllRulesGroupInFolder(t *testing.T, folder string) apimode
 	}()
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 	result := apimodels.NamespaceConfigResponse{}
-	require.NoError(t, json.Unmarshal(b, &result))
-	return result
+	if http.StatusAccepted == resp.StatusCode {
+		require.NoError(t, json.Unmarshal(b, &result))
+	}
+	return result, resp.StatusCode, b
+}
+
+func (a apiClient) GetAllRulesWithStatus(t *testing.T) (apimodels.NamespaceConfigResponse, int, []byte) {
+	t.Helper()
+	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules", a.url)
+	// nolint:gosec
+	resp, err := http.Get(u)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	result := apimodels.NamespaceConfigResponse{}
+	if http.StatusOK == resp.StatusCode {
+		require.NoError(t, json.Unmarshal(b, &result))
+	}
+	return result, resp.StatusCode, b
+}
+
+func (a apiClient) ExportRulesWithStatus(t *testing.T, params *apimodels.AlertRulesExportParameters) (int, string) {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/ruler/grafana/api/v1/export/rules", a.url))
+	require.NoError(t, err)
+	if params != nil {
+		q := url.Values{}
+		if params.Format != "" {
+			q.Set("format", params.Format)
+		}
+		if params.Download {
+			q.Set("download", "true")
+		}
+		if len(params.FolderUID) > 0 {
+			for _, s := range params.FolderUID {
+				q.Add("folderUid", s)
+			}
+		}
+		if params.GroupName != "" {
+			q.Set("group", params.GroupName)
+		}
+		if params.RuleUID != "" {
+			q.Set("ruleUid", params.RuleUID)
+		}
+		u.RawQuery = q.Encode()
+	}
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
 }
 
 func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.BacktestConfig) (int, string) {

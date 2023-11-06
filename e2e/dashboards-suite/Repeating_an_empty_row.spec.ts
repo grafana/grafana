@@ -3,7 +3,7 @@ const PAGE_UNDER_TEST = 'dtpl2Ctnk/repeating-an-empty-row';
 
 describe('Repeating empty rows', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('should be able to repeat empty rows vertically', () => {

@@ -12,12 +12,13 @@ import (
 type RuleStore interface {
 	GetUserVisibleNamespaces(context.Context, int64, *user.SignedInUser) (map[string]*folder.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *user.SignedInUser) (*folder.Folder, error)
+	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser) (*folder.Folder, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
 
 	// InsertAlertRules will insert all alert rules passed into the function
 	// and return the map of uuid to id.
-	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) (map[string]int64, error)
+	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error)
 	UpdateAlertRules(ctx context.Context, rule []ngmodels.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 

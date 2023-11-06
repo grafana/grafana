@@ -143,6 +143,17 @@ const (
 	VariableRefreshN2 VariableRefresh = 2
 )
 
+// Defines values for VariableSort.
+const (
+	VariableSortN0 VariableSort = 0
+	VariableSortN1 VariableSort = 1
+	VariableSortN2 VariableSort = 2
+	VariableSortN3 VariableSort = 3
+	VariableSortN4 VariableSort = 4
+	VariableSortN5 VariableSort = 5
+	VariableSortN6 VariableSort = 6
+)
+
 // Defines values for VariableType.
 const (
 	VariableTypeAdhoc      VariableType = "adhoc"
@@ -176,6 +187,9 @@ type AnnotationPanelFilter struct {
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 type AnnotationQuery struct {
+	// Set to 1 for the standard annotation query all dashboards have by default.
+	BuiltIn *float32 `json:"builtIn,omitempty"`
+
 	// Ref to a DataSource instance
 	Datasource DataSourceRef `json:"datasource"`
 
@@ -518,7 +532,7 @@ type Panel struct {
 	// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
 	// Each column within this structure is called a field. A field can represent a single time series or table column.
 	// Field options allow you to change how the data is displayed in your visualizations.
-	FieldConfig FieldConfigSource `json:"fieldConfig"`
+	FieldConfig *FieldConfigSource `json:"fieldConfig,omitempty"`
 
 	// Position and dimensions of a panel in the grid
 	GridPos *GridPos `json:"gridPos,omitempty"`
@@ -551,7 +565,7 @@ type Panel struct {
 	MaxPerRow *float32 `json:"maxPerRow,omitempty"`
 
 	// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
-	Options map[string]any `json:"options"`
+	Options map[string]any `json:"options,omitempty"`
 
 	// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
 	PluginVersion *string `json:"pluginVersion,omitempty"`
@@ -591,10 +605,10 @@ type Panel struct {
 	// List of transformations that are applied to the panel data before rendering.
 	// When there are multiple transformations, Grafana applies them in the order they are listed.
 	// Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
-	Transformations []DataTransformerConfig `json:"transformations"`
+	Transformations []DataTransformerConfig `json:"transformations,omitempty"`
 
 	// Whether to display the panel without a background.
-	Transparent bool `json:"transparent"`
+	Transparent *bool `json:"transparent,omitempty"`
 
 	// The panel plugin type id. This is used to find the plugin to display the panel.
 	Type string `json:"type"`
@@ -723,7 +737,7 @@ type Spec struct {
 	Description *string `json:"description,omitempty"`
 
 	// Whether a dashboard is editable or not.
-	Editable bool `json:"editable"`
+	Editable *bool `json:"editable,omitempty"`
 
 	// The month that the fiscal year starts on.  0 = January, 11 = December
 	FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`
@@ -734,7 +748,7 @@ type Spec struct {
 	// 0 for no shared crosshair or tooltip (default).
 	// 1 for shared crosshair.
 	// 2 for shared crosshair AND shared tooltip.
-	GraphTooltip CursorSync `json:"graphTooltip"`
+	GraphTooltip *CursorSync `json:"graphTooltip,omitempty"`
 
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
@@ -900,9 +914,6 @@ type VariableHide int
 
 // A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 type VariableModel struct {
-	// Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
-	AllFormat *string `json:"allFormat,omitempty"`
-
 	// Option to be selected in a variable.
 	Current *VariableOption `json:"current,omitempty"`
 
@@ -914,10 +925,7 @@ type VariableModel struct {
 
 	// Determine if the variable shows on dashboard
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
-	Hide VariableHide `json:"hide"`
-
-	// Unique numeric identifier for the variable.
-	Id string `json:"id"`
+	Hide *VariableHide `json:"hide,omitempty"`
 
 	// Optional display name
 	Label *string `json:"label,omitempty"`
@@ -941,7 +949,18 @@ type VariableModel struct {
 	Refresh *VariableRefresh `json:"refresh,omitempty"`
 
 	// Whether the variable value should be managed by URL query params or not
-	SkipUrlSync bool `json:"skipUrlSync"`
+	SkipUrlSync *bool `json:"skipUrlSync,omitempty"`
+
+	// Sort variable options
+	// Accepted values are:
+	// `0`: No sorting
+	// `1`: Alphabetical ASC
+	// `2`: Alphabetical DESC
+	// `3`: Numerical ASC
+	// `4`: Numerical DESC
+	// `5`: Alphabetical Case Insensitive ASC
+	// `6`: Alphabetical Case Insensitive DESC
+	Sort *VariableSort `json:"sort,omitempty"`
 
 	// Dashboard variable type
 	// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
@@ -972,6 +991,17 @@ type VariableOption struct {
 // `1`: Queries the data source every time the dashboard loads.
 // `2`: Queries the data source when the dashboard time range changes.
 type VariableRefresh int
+
+// Sort variable options
+// Accepted values are:
+// `0`: No sorting
+// `1`: Alphabetical ASC
+// `2`: Alphabetical DESC
+// `3`: Numerical ASC
+// `4`: Numerical DESC
+// `5`: Alphabetical Case Insensitive ASC
+// `6`: Alphabetical Case Insensitive DESC
+type VariableSort int
 
 // Dashboard variable type
 // `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
