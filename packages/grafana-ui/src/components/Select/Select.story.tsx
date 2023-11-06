@@ -45,7 +45,6 @@ const meta: Meta = {
         'renderControl',
         'options',
         'isOptionDisabled',
-        'maxVisibleValues',
         'aria-label',
         'noOptionsMessage',
         'menuPosition',
