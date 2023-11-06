@@ -574,4 +574,8 @@ const (
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
+
+	// FlagPdfTables
+	// Enables generating table data as PDF in reporting
+	FlagPdfTables = "pdfTables"
 )
