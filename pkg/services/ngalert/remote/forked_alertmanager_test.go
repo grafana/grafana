@@ -21,6 +21,14 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	ctx := context.Background()
 	testErr := errors.New("test error")
 
+	t.Run("GetStatus", func(tt *testing.T) {
+		// We care about the status of the internal Alertmanager.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		status := apimodels.GettableStatus{}
+		internal.EXPECT().GetStatus().Return(status).Once()
+		require.Equal(tt, status, forked.GetStatus())
+	})
+
 	t.Run("CreateSilence", func(tt *testing.T) {
 		// We should create the silence in the internal Alertmanager.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
@@ -207,11 +215,54 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		_, err = forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.ErrorIs(tt, testErr, err)
 	})
+
+	t.Run("CleanUp", func(tt *testing.T) {
+		// CleanUp() should be called only in the internal Alertmanager,
+		// there's no cleanup to do in the remote one.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().CleanUp().Once()
+		forked.CleanUp()
+	})
+
+	t.Run("StopAndWait", func(tt *testing.T) {
+		// StopAndWait should be called in both Alertmanagers.
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().StopAndWait().Once()
+		remote.EXPECT().StopAndWait().Once()
+		forked.StopAndWait()
+	})
+
+	t.Run("Ready", func(tt *testing.T) {
+		// Ready should be called on both Alertmanagers
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().Ready().Return(true).Once()
+		require.True(tt, forked.Ready())
+
+		// If one of the two Alertmanagers is not ready, it returns false.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().Ready().Return(false).Maybe()
+		remote.EXPECT().Ready().Return(true).Maybe()
+		require.False(tt, forked.Ready())
+
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemoteSecondary)
+		internal.EXPECT().Ready().Return(true).Maybe()
+		remote.EXPECT().Ready().Return(false).Maybe()
+		require.False(tt, forked.Ready())
+	})
 }
 
 func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	ctx := context.Background()
 	testErr := errors.New("test error")
+
+	t.Run("GetStatus", func(tt *testing.T) {
+		// We care about the status of the remote Alertmanager.
+		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		status := apimodels.GettableStatus{}
+		remote.EXPECT().GetStatus().Return(status).Once()
+		require.Equal(tt, status, forked.GetStatus())
+	})
 
 	t.Run("CreateSilence", func(tt *testing.T) {
 		// We should create the silence in both Alertmanagers.
@@ -412,6 +463,41 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, testErr).Once()
 		_, err = forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.ErrorIs(tt, testErr, err)
+	})
+
+	t.Run("CleanUp", func(tt *testing.T) {
+		// CleanUp() should be called only in the internal Alertmanager,
+		// there's no cleanup to do in the remote one.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().CleanUp().Once()
+		forked.CleanUp()
+	})
+
+	t.Run("StopAndWait", func(tt *testing.T) {
+		// StopAndWait should be called in both Alertmanagers.
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().StopAndWait().Once()
+		remote.EXPECT().StopAndWait().Once()
+		forked.StopAndWait()
+	})
+
+	t.Run("Ready", func(tt *testing.T) {
+		// Ready should be called on both Alertmanagers
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().Ready().Return(true).Once()
+		remote.EXPECT().Ready().Return(true).Once()
+		require.True(tt, forked.Ready())
+
+		// If one of the two Alertmanagers is not ready, it returns false.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().Ready().Return(false).Maybe()
+		remote.EXPECT().Ready().Return(true).Maybe()
+		require.False(tt, forked.Ready())
+
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().Ready().Return(true).Maybe()
+		remote.EXPECT().Ready().Return(false).Maybe()
+		require.False(tt, forked.Ready())
 	})
 }
 func genTestAlertmanagers(t *testing.T, mode int) (*alertmanager_mock.AlertmanagerMock, *alertmanager_mock.AlertmanagerMock, notifier.Alertmanager) {
