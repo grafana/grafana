@@ -196,11 +196,10 @@ export function guessMetricType(metric: string, allMetrics: string[]): string {
 
   // See if the suffix is histogram-y or summary-y
   const [root, suffix] = [metric.slice(0, underscoreIndex), metric.slice(underscoreIndex + 1)];
-  console.log('GER', root, suffix);
+
   if (['bucket', 'count', 'sum'].includes(suffix)) {
     // Might be histogram + summary
     let familyMetrics = [`${root}_bucket`, `${root}_count`, `${root}_sum`, root];
-    console.log(familyMetrics, allMetrics, isContainedIn(familyMetrics, allMetrics));
     if (isContainedIn(familyMetrics, allMetrics)) {
       return 'histogram,summary';
     }
@@ -235,12 +234,29 @@ export function guessMetricType(metric: string, allMetrics: string[]): string {
   return 'gauge';
 }
 
+/**
+ * Generate a suitable filter structure for the VectorDB call
+ * @param types: list of metric types to include in the result
+ * @returns the structure to pass to the vectorDB call.
+ */
 function generateMetricTypeFilters(types: string[]) {
   return types.map((type) => ({
     metric_type: {
       $eq: type,
     },
   }));
+}
+
+/**
+ * Taking in a metric name, try to guess its corresponding metric _family_ name
+ * @param metric name
+ * @returns metric family name
+ */
+function guessMetricFamily(metric: string): string {
+  if (metric.endsWith('_bucket') || metric.endsWith('_count') || metric.endsWith('_sum')) {
+    return metric.slice(0, metric.lastIndexOf('_'));
+  }
+  return metric;
 }
 
 /**
@@ -267,10 +283,15 @@ export async function promQailSuggest(
 
   // Decide metric type
   await datasource.languageProvider.start(); //why do I need to do this to prepropulate the list??
-
   let metricType = '';
   if (datasource.languageProvider.metricsMetadata) {
-    metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata) ?? '';
+    // `datasource.languageProvider.metricsMetadata` is a list of metric family names (with desired type)
+    // from the datasource metadata endoint, but unfortunately the expanded _sum, _count, _bucket raw
+    // metric names are also generated and populating this list (all of type counter). We want the metric
+    // family type, so need to guess the metric family name from the chosen metric name, and test if that
+    // metric family has a type specified.
+    const metricFamilyGuess = guessMetricFamily(query.metric);
+    metricType = getMetadataType(metricFamilyGuess, datasource.languageProvider.metricsMetadata) ?? '';
   }
   if (metricType === '') {
     // fallback to heuristic guess
