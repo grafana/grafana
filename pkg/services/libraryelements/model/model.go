@@ -20,8 +20,9 @@ const (
 
 // LibraryElement is the model for library element definitions.
 type LibraryElement struct {
-	ID          int64  `xorm:"pk autoincr 'id'"`
-	OrgID       int64  `xorm:"org_id"`
+	ID    int64 `xorm:"pk autoincr 'id'"`
+	OrgID int64 `xorm:"org_id"`
+	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	UID         string `xorm:"uid"`
 	Name        string
@@ -40,8 +41,9 @@ type LibraryElement struct {
 
 // LibraryElementWithMeta is the model used to retrieve entities with additional meta information.
 type LibraryElementWithMeta struct {
-	ID          int64  `xorm:"pk autoincr 'id'"`
-	OrgID       int64  `xorm:"org_id"`
+	ID    int64 `xorm:"pk autoincr 'id'"`
+	OrgID int64 `xorm:"org_id"`
+	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	UID         string `xorm:"uid"`
 	Name        string
@@ -190,6 +192,8 @@ var (
 // swagger:model
 type CreateLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
+	//
+	// Deprecated: use FolderUID instead
 	FolderID int64 `json:"folderId"`
 	// UID of the folder where the library element is stored.
 	FolderUID *string `json:"folderUid"`
@@ -233,8 +237,9 @@ type PatchLibraryElementCommand struct {
 // GetLibraryElementCommand is the command for getting a library element.
 type GetLibraryElementCommand struct {
 	FolderName string
-	FolderID   int64
-	UID        string
+	// Deprecated: use FolderUID instead
+	FolderID int64
+	UID      string
 }
 
 // SearchLibraryElementsQuery is the query used for searching for Elements

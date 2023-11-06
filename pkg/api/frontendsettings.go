@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -136,6 +135,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackDataPlaneUrl:             hs.Cfg.RudderstackDataPlaneURL,
 		RudderstackSdkUrl:                   hs.Cfg.RudderstackSDKURL,
 		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
+		RudderstackIntegrationsUrl:          hs.Cfg.RudderstackIntegrationsURL,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,

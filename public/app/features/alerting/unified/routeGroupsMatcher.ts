@@ -32,17 +32,13 @@ export const routeGroupsMatcher = {
 
     instancesToMatch.forEach((instance) => {
       const matchingRoutes = findMatchingRoutes(normalizedRootRoute, Object.entries(instance));
-      matchingRoutes.forEach(({ route, details, labelsMatch }) => {
-        // Only to convert Label[] to Labels[] - needs better approach
-        const matchDetails = new Map(
-          Array.from(details.entries()).map(([matcher, labels]) => [matcher, Object.fromEntries(labels)])
-        );
-
+      matchingRoutes.forEach(({ route, labelsMatch }) => {
         const currentRoute = result.get(route.id);
+
         if (currentRoute) {
-          currentRoute.push({ instance, matchDetails, labelsMatch });
+          currentRoute.push({ instance, labelsMatch });
         } else {
-          result.set(route.id, [{ instance, matchDetails, labelsMatch }]);
+          result.set(route.id, [{ instance, labelsMatch }]);
         }
       });
     });

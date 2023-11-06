@@ -51,31 +51,31 @@ export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProp
     }
 
     config.addHook('setSelect', (u) => {
-      if (!maybeZoomAction(u.cursor!.event)) {
-        return;
-      }
+      if (maybeZoomAction(u.cursor!.event)) {
+        if (withZoomY && yDrag) {
+          if (u.select.height >= MIN_ZOOM_DIST) {
+            for (let key in u.scales!) {
+              if (key !== 'x') {
+                const maxY = u.posToVal(u.select.top, key);
+                const minY = u.posToVal(u.select.top + u.select.height, key);
 
-      if (withZoomY && yDrag) {
-        if (u.select.height >= MIN_ZOOM_DIST) {
-          for (let key in u.scales!) {
-            if (key !== 'x') {
-              const maxY = u.posToVal(u.select.top, key);
-              const minY = u.posToVal(u.select.top + u.select.height, key);
-
-              u.setScale(key, { min: minY, max: maxY });
+                u.setScale(key, { min: minY, max: maxY });
+              }
             }
+
+            yZoomed = true;
           }
 
-          yZoomed = true;
-        }
+          yDrag = false;
+        } else {
+          if (u.select.width >= MIN_ZOOM_DIST) {
+            const minX = u.posToVal(u.select.left, 'x');
+            const maxX = u.posToVal(u.select.left + u.select.width, 'x');
 
-        yDrag = false;
-      } else {
-        if (u.select.width >= MIN_ZOOM_DIST) {
-          const minX = u.posToVal(u.select.left, 'x');
-          const maxX = u.posToVal(u.select.left + u.select.width, 'x');
+            onZoom({ from: minX, to: maxX });
 
-          onZoom({ from: minX, to: maxX });
+            yZoomed = false;
+          }
         }
       }
 

@@ -5,14 +5,14 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DataSourceSrv, locationService, logInfo, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
-import { LogMessages } from './Analytics';
+import * as analytics from './Analytics';
 import RuleList from './RuleList';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
@@ -46,14 +46,8 @@ jest.mock('app/core/core', () => ({
     emit: () => {},
   },
 }));
-jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-  return {
-    ...original,
-    logInfo: jest.fn(),
-  };
-});
 
+jest.spyOn(analytics, 'logInfo');
 jest.spyOn(config, 'getAllDataSources');
 jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 
@@ -684,44 +678,33 @@ describe('RuleList', () => {
 
   describe('RBAC Enabled', () => {
     describe('Export button', () => {
-      it('Export button should be visible when the user has alert provisioning read permissions', async () => {
-        grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
+      it('Export button should be visible when the user has alert read permissions', async () => {
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.FoldersRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
         setDataSourceSrv(new MockDataSourceSrv({}));
-        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRules.mockResolvedValue([
+          mockPromRuleNamespace({
+            name: 'foofolder',
+            dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+            groups: [
+              mockPromRuleGroup({
+                name: 'grafana-group',
+                rules: [
+                  mockPromAlertingRule({
+                    query: '[]',
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ]);
         mocks.api.fetchRulerRules.mockResolvedValue({});
 
         renderRuleList();
 
         await userEvent.click(ui.moreButton.get());
         expect(ui.exportButton.get()).toBeInTheDocument();
-      });
-      it('Export button should be visible when the user has alert provisioning read secrets permissions', async () => {
-        grantUserPermissions([AccessControlAction.AlertingProvisioningReadSecrets]);
-
-        mocks.getAllDataSourcesMock.mockReturnValue([]);
-        setDataSourceSrv(new MockDataSourceSrv({}));
-        mocks.api.fetchRules.mockResolvedValue([]);
-        mocks.api.fetchRulerRules.mockResolvedValue({});
-
-        renderRuleList();
-
-        await userEvent.click(ui.moreButton.get());
-        expect(ui.exportButton.get()).toBeInTheDocument();
-      });
-      it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
-        grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.FoldersRead]);
-
-        mocks.getAllDataSourcesMock.mockReturnValue([]);
-        setDataSourceSrv(new MockDataSourceSrv({}));
-        mocks.api.fetchRules.mockResolvedValue([]);
-        mocks.api.fetchRulerRules.mockResolvedValue({});
-
-        renderRuleList();
-
-        await userEvent.click(ui.moreButton.get());
-        expect(ui.exportButton.query()).not.toBeInTheDocument();
       });
     });
     describe('Grafana Managed Alerts', () => {
@@ -841,7 +824,7 @@ describe('RuleList', () => {
 
       await userEvent.click(button);
 
-      expect(logInfo).toHaveBeenCalledWith(LogMessages.alertRuleFromScratch);
+      expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.alertRuleFromScratch);
     });
   });
 });

@@ -72,7 +72,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (featureEnabled('dspermissions.enforcement')) {
-    if (contextSrv.hasPermission(AccessControlAction.DataSourcesPermissionsRead)) {
+    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesPermissionsRead, dataSource)) {
       navModel.children!.push(dsPermissions);
     }
   } else if (highlightsEnabled && !isLoadingNav) {

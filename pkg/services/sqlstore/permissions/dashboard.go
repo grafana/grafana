@@ -3,6 +3,7 @@ package permissions
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -229,6 +230,11 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				}
 			}
 			builder.WriteString(") AND NOT dashboard.is_folder)")
+
+			// Include all the dashboards under the root if the user has the required permissions on the root (used to be the General folder)
+			if hasAccessToRoot(toCheck, f.user) {
+				builder.WriteString(" OR (dashboard.folder_id = 0 AND NOT dashboard.is_folder)")
+			}
 		} else {
 			builder.WriteString("NOT dashboard.is_folder")
 		}
@@ -422,4 +428,15 @@ func getAllowedUIDs(actions []string, user identity.Requester, scopePrefix strin
 		}
 	}
 	return args
+}
+
+// Checks if the user has the required permissions on the root (used to be the General folder)
+func hasAccessToRoot(actionsToCheck []any, user identity.Requester) bool {
+	generalFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)
+	for _, action := range actionsToCheck {
+		if !slices.Contains(user.GetPermissions()[action.(string)], generalFolderScope) {
+			return false
+		}
+	}
+	return true
 }

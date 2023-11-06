@@ -42,7 +42,7 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 			Kind: entity.StandardKindGeoJSON,
 			Name: store.GuessNameFromUID(uid),
 			UID:  uid,
-			Fields: map[string]any{
+			Fields: map[string]string{
 				"type": ftype,
 			},
 		}
@@ -50,7 +50,7 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 		if ftype == "FeatureCollection" {
 			features, ok := geojson["features"].([]any)
 			if ok {
-				summary.Fields["count"] = len(features)
+				summary.Fields["count"] = fmt.Sprint(len(features))
 			}
 		}
 

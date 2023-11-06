@@ -130,7 +130,7 @@ describe('DashboardModel', () => {
       const saveModel = model.getSaveModelClone();
       const panels = saveModel.panels;
 
-      expect(panels.length).toBe(1);
+      expect(panels!.length).toBe(1);
     });
 
     it('should save model in edit mode', () => {
@@ -140,7 +140,7 @@ describe('DashboardModel', () => {
       const panel = model.initEditPanel(model.panels[0]);
       panel.title = 'updated';
 
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       const savedPanel = saveModel.panels[0];
 
       expect(savedPanel.title).toBe('updated');
@@ -204,7 +204,7 @@ describe('DashboardModel', () => {
     });
 
     it('getSaveModelClone should remove meta', () => {
-      const clone = model.getSaveModelClone();
+      const clone = model.getSaveModelCloneOld();
       expect(clone.meta).toBe(undefined);
     });
   });
@@ -608,37 +608,32 @@ describe('DashboardModel', () => {
       const options = { saveTimerange: false };
       const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-6h');
-      expect(saveModel.time.to).toBe('now');
+      expect(saveModel.time!.from).toBe('now-6h');
+      expect(saveModel.time!.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
       const options = { saveTimerange: true };
       const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-3h');
-      expect(saveModel.time.to).toBe('now-1h');
-    });
-
-    it('hasTimeChanged should be false when reset original time', () => {
-      model.resetOriginalTime();
-      expect(model.hasTimeChanged()).toBeFalsy();
+      expect(saveModel.time!.from).toBe('now-3h');
+      expect(saveModel.time!.to).toBe('now-1h');
     });
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
       const options = { saveTimerange: false };
       const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-6h');
-      expect(saveModel.time.to).toBe('now');
+      expect(saveModel.time!.from).toBe('now-6h');
+      expect(saveModel.time!.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
       const options = { saveTimerange: true };
       const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-3h');
-      expect(saveModel.time.to).toBe('now-1h');
+      expect(saveModel.time!.from).toBe('now-3h');
+      expect(saveModel.time!.to).toBe('now-1h');
     });
 
     it('getSaveModelClone should remove repeated panels and scopedVars', () => {
@@ -684,13 +679,13 @@ describe('DashboardModel', () => {
       expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
       expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       expect(saveModel.panels.length).toBe(2);
       expect(saveModel.panels[0].scopedVars).toBe(undefined);
       expect(saveModel.panels[1].scopedVars).toBe(undefined);
 
       model.collapseRows();
-      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      const savedModelWithCollapsedRows = model.getSaveModelCloneOld();
       expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(1);
     });
 
@@ -738,14 +733,14 @@ describe('DashboardModel', () => {
       expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.snapshot = { timestamp: new Date() };
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
       expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
       expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.collapseRows();
-      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      const savedModelWithCollapsedRows = model.getSaveModelCloneOld();
       expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(2);
     });
   });
@@ -760,6 +755,8 @@ describe('DashboardModel', () => {
             {
               name: 'Server',
               type: 'query',
+              refresh: 1,
+              options: [],
               current: {
                 selected: true,
                 text: 'server_001',
@@ -770,10 +767,10 @@ describe('DashboardModel', () => {
         },
       };
       model = getDashboardModel(json);
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when adding a template variable', () => {
+    it('hasVariablesChanged should be false when adding a template variable', () => {
       model.templating.list.push({
         name: 'Server2',
         type: 'query',
@@ -783,24 +780,24 @@ describe('DashboardModel', () => {
           value: 'server_002',
         },
       });
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when removing existing template variable', () => {
+    it('hasVariablesChanged should be false when removing existing template variable', () => {
       model.templating.list = [];
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be true when changing value of template variable', () => {
+    it('hasVariablesChanged should be true when changing value of template variable', () => {
       model.templating.list[0].current.text = 'server_002';
-      expect(model.hasVariableValuesChanged()).toBeTruthy();
+      expect(model.hasVariablesChanged()).toBeTruthy();
     });
 
     it('getSaveModelClone should return original variable when saveVariables=false', () => {
       model.templating.list[0].current.text = 'server_002';
 
       const options = { saveVariables: false };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_001');
     });
@@ -809,7 +806,7 @@ describe('DashboardModel', () => {
       model.templating.list[0].current.text = 'server_002';
 
       const options = { saveVariables: true };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_002');
     });
@@ -825,6 +822,7 @@ describe('DashboardModel', () => {
             {
               name: 'Filter',
               type: 'adhoc',
+              refresh: 0,
               filters: [
                 {
                   key: '@hostname',
@@ -837,10 +835,10 @@ describe('DashboardModel', () => {
         },
       };
       model = getDashboardModel(json);
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when adding a template variable', () => {
+    it('hasVariablesChanged should be false when adding a template variable', () => {
       model.templating.list.push({
         name: 'Filter',
         type: 'adhoc',
@@ -852,34 +850,34 @@ describe('DashboardModel', () => {
           },
         ],
       });
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when removing existing template variable', () => {
+    it('hasVariablesChanged should be false when removing existing template variable', () => {
       model.templating.list = [];
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be true when changing value of filter', () => {
+    it('hasVariablesChanged should be true when changing value of filter', () => {
       model.templating.list[0].filters[0].value = 'server 1';
-      expect(model.hasVariableValuesChanged()).toBeTruthy();
+      expect(model.hasVariablesChanged()).toBeTruthy();
     });
 
-    it('hasVariableValuesChanged should be true when adding an additional condition', () => {
+    it('hasVariablesChanged should be true when adding an additional condition', () => {
       model.templating.list[0].filters[0].condition = 'AND';
       model.templating.list[0].filters[1] = {
         key: '@metric',
         operator: '=',
         value: 'logins.count',
       };
-      expect(model.hasVariableValuesChanged()).toBeTruthy();
+      expect(model.hasVariablesChanged()).toBeTruthy();
     });
 
     it('getSaveModelClone should return original variable when saveVariables=false', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
       const options = { saveVariables: false };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 20');
     });
@@ -888,7 +886,7 @@ describe('DashboardModel', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
       const options = { saveVariables: true };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 1');
     });
