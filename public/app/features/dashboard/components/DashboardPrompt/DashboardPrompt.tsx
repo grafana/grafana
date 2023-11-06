@@ -146,6 +146,11 @@ export function ignoreChanges(current: DashboardModel | null, original: object |
     return true;
   }
 
+  // Ignore changes if original is unsaved
+  if ((original as DashboardModel).version === 0) {
+    return true;
+  }
+
   // Ignore changes if the user has been signed out
   if (!contextSrv.isSignedIn) {
     return true;
