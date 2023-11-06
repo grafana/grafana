@@ -140,3 +140,4 @@ annotationPermissionUpdate,experimental,@grafana/identity-access-team,false,fals
 extractFieldsNameDeduplication,experimental,@grafana/grafana-bi-squad,false,false,false,true
 dashboardSceneForViewers,experimental,@grafana/dashboards-squad,false,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,false,true
+pdfTables,privatePreview,@grafana/sharing-squad,false,false,false,false
