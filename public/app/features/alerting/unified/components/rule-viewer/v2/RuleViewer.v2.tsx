@@ -228,7 +228,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                 <History rule={rule.rulerRule} />
               )}
               {activeTab === ActiveTab.Routing && <Routing />}
-              {activeTab === ActiveTab.Details && <Details />}
+              {activeTab === ActiveTab.Details && <Details rule={rule} />}
             </TabContent>
           </Stack>
         </Stack>
