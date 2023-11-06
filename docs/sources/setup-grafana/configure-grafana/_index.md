@@ -1532,7 +1532,7 @@ A prefix that is used for every key or channel that is created on the Redis serv
 
 ### ha_redis_peer_name
 
-The name of the cluster peer that will be used as identifier. If none is provided, a random one will be generated.
+The name of the cluster peer that will be used as an identifier. If none is provided, a random one will be generated.
 
 ### ha_redis_max_conns
 
