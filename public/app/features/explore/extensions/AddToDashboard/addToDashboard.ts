@@ -1,5 +1,6 @@
-import { DataFrame } from '@grafana/data';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { DataFrame, ExplorePanelsState } from '@grafana/data';
+import { DataQuery, DataSourceRef, Panel } from '@grafana/schema';
+import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   getNewDashboardModelData,
@@ -17,6 +18,7 @@ interface AddPanelToDashboardOptions {
   queryResponse: ExplorePanelData;
   datasource?: DataSourceRef;
   dashboardUid?: string;
+  panelState: ExplorePanelsState;
 }
 
 function createDashboard(): DashboardDTO {
@@ -29,13 +31,31 @@ function createDashboard(): DashboardDTO {
 }
 
 export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
-  const panelType = getPanelType(options.queries, options.queryResponse);
+  const panelType = getPanelType(options.queries, options.queryResponse, options.panelState);
+  let transformations: DataTransformerConfig[] = [];
+  if (panelType === 'table' && options.panelState.logs?.columns) {
+    transformations.push({
+      id: 'organize',
+      options: {
+        includeByName: Object.values(options.panelState.logs.columns).reduce(
+          (a: Record<string, boolean>, v) => ({
+            ...a,
+            [v]: true,
+          }),
+          {}
+        ),
+      },
+    });
+  }
+
   const panel = {
     targets: options.queries,
     type: panelType,
     title: 'New Panel',
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
     datasource: options.datasource,
+    fieldConfig: { defaults: {}, overrides: [] },
+    transformations: transformations,
   };
 
   let dto: DashboardDTO;
@@ -62,7 +82,7 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
 
-function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
+function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData, panelState: ExplorePanelsState) {
   for (const { refId } of queries.filter(isVisible)) {
     const hasQueryRefId = hasRefId(refId);
     if (queryResponse.flameGraphFrames.some(hasQueryRefId)) {
@@ -72,6 +92,9 @@ function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
       return 'timeseries';
     }
     if (queryResponse.logsFrames.some(hasQueryRefId)) {
+      if (panelState.logs?.visualisationType) {
+        return panelState.logs.visualisationType;
+      }
       return 'logs';
     }
     if (queryResponse.nodeGraphFrames.some(hasQueryRefId)) {

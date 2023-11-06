@@ -63,6 +63,7 @@ interface Props {
 export function AddToDashboardForm(props: Props): ReactElement {
   const { exploreId, onClose } = props;
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
+  console.log('exploreItem', exploreItem);
   const [submissionError, setSubmissionError] = useState<SubmissionError | undefined>();
   const {
     handleSubmit,
@@ -108,6 +109,7 @@ export function AddToDashboardForm(props: Props): ReactElement {
         datasource: exploreItem.datasourceInstance?.getRef(),
         queries: exploreItem.queries,
         queryResponse: exploreItem.queryResponse,
+        panelState: exploreItem?.panelsState,
       });
     } catch (error) {
       switch (error) {
