@@ -36,6 +36,7 @@ export interface FeatureToggles {
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
+  newVizTooltips?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -159,4 +160,5 @@ export interface FeatureToggles {
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
   panelFilterVariable?: boolean;
+  pdfTables?: boolean;
 }
