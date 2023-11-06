@@ -203,17 +203,22 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  const controls: SceneObject[] = [
+  let controls: SceneObject[] = [
     new VariableValueSelectors({}),
     ...filtersSets,
     new SceneDataLayerControls(),
     new SceneControlsSpacer(),
-    new SceneTimePicker({}),
-    new SceneRefreshPicker({
-      refresh: oldModel.refresh,
-      intervals: oldModel.timepicker.refresh_intervals,
-    }),
   ];
+
+  if (!Boolean(oldModel.timepicker.hidden)) {
+    controls = controls.concat([
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({
+        refresh: oldModel.refresh,
+        intervals: oldModel.timepicker.refresh_intervals,
+      }),
+    ]);
+  }
 
   return new DashboardScene({
     title: oldModel.title,

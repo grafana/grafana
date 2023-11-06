@@ -3926,36 +3926,6 @@
         }
       }
     },
-    "/dashboards/trim": {
-      "post": {
-        "tags": [
-          "dashboards"
-        ],
-        "summary": "Trim defaults from dashboard.",
-        "operationId": "trimDashboard",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/TrimDashboardCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/trimDashboardResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/dashboards/uid/{dashboardUid}/public-dashboards": {
       "get": {
         "description": "Get public dashboard by dashboardUid",
@@ -12057,6 +12027,80 @@
         }
       }
     },
+    "Annotation": {
+      "type": "object",
+      "properties": {
+        "alertId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "alertName": {
+          "type": "string"
+        },
+        "avatarUrl": {
+          "type": "string"
+        },
+        "created": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
+        "email": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "login": {
+          "type": "string"
+        },
+        "newState": {
+          "type": "string"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "prevState": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeEnd": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AnnotationActions": {
       "type": "object",
       "properties": {
@@ -13585,27 +13629,15 @@
         "externalUrl": {
           "type": "string"
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "key": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
         "updated": {
           "type": "string",
           "format": "date-time"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -15505,80 +15537,6 @@
           "items": {
             "$ref": "#/definitions/LinkTransformationConfig"
           }
-        }
-      }
-    },
-    "ItemDTO": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "alertName": {
-          "type": "string"
-        },
-        "avatarUrl": {
-          "type": "string"
-        },
-        "created": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUID": {
-          "type": "string"
-        },
-        "data": {
-          "$ref": "#/definitions/Json"
-        },
-        "email": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "login": {
-          "type": "string"
-        },
-        "newState": {
-          "type": "string"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "prevState": {
-          "type": "string"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "text": {
-          "type": "string"
-        },
-        "time": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "timeEnd": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updated": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -18740,7 +18698,7 @@
           "type": "boolean",
           "example": false
         },
-        "isExternal": {
+        "isManaged": {
           "type": "boolean",
           "example": false
         },
@@ -18795,7 +18753,7 @@
           "type": "boolean",
           "example": false
         },
-        "isExternal": {
+        "isManaged": {
           "type": "boolean",
           "example": false
         },
@@ -19871,28 +19829,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/Transformation"
-      }
-    },
-    "TrimDashboardCommand": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        }
-      }
-    },
-    "TrimDashboardFullWithMeta": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        }
       }
     },
     "Type": {
@@ -21826,7 +21762,7 @@
     "getAnnotationByIDResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/ItemDTO"
+        "$ref": "#/definitions/Annotation"
       }
     },
     "getAnnotationTagsResponse": {
@@ -21840,7 +21776,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/ItemDTO"
+          "$ref": "#/definitions/Annotation"
         }
       }
     },
@@ -22634,12 +22570,6 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/AlertTestResult"
-      }
-    },
-    "trimDashboardResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/TrimDashboardFullWithMeta"
       }
     },
     "unauthorisedError": {

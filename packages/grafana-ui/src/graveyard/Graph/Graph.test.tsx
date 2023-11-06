@@ -5,7 +5,7 @@ import React from 'react';
 import { GraphSeriesXY, FieldType, dateTime, FieldColorModeId, DisplayProcessor } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 
-import { VizTooltip } from '../VizTooltip';
+import { VizTooltip } from '../../components/VizTooltip';
 
 import Graph from './Graph';
 

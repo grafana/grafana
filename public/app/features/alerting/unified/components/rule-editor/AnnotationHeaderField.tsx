@@ -1,8 +1,7 @@
 import React from 'react';
 import { FieldArrayWithId, useFormContext } from 'react-hook-form';
 
-import { Stack } from '@grafana/experimental';
-import { InputControl, Text } from '@grafana/ui';
+import { InputControl, Text, Stack } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';

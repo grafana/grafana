@@ -100,7 +100,6 @@ func (s *XormLogger) SetLevel(l core.LogLevel) {
 
 // ShowSQL implement core.ILogger
 func (s *XormLogger) ShowSQL(show ...bool) {
-	s.grafanaLog.Error("ShowSQL", "show", "show")
 	if len(show) == 0 {
 		s.showSQL = true
 		return
