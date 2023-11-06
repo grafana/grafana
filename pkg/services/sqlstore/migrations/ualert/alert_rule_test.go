@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 func TestMigrateAlertRuleQueries(t *testing.T) {
@@ -38,7 +40,7 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			model, err := tt.input.Encode()
 			require.NoError(t, err)
-			queries, err := migrateAlertRuleQueries([]alertQuery{{Model: model}})
+			queries, err := migrateAlertRuleQueries(log.NewNopLogger(), 0, []alertQuery{{Model: model}}, 0, &dashboards.Dashboard{}, make(map[string]string))
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.err.Error())
