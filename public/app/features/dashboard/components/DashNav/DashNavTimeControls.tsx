@@ -17,7 +17,8 @@ export interface Props {
   dashboard: DashboardModel;
   onChangeTimeZone: (timeZone: TimeZone) => void;
   isOnCanvas?: boolean;
-  onToolbarClick?: (toolbarAction: string) => void;
+  onRefreshClick?: () => void;
+  onZoomClick?: () => void;
 }
 
 export class DashNavTimeControls extends Component<Props> {
@@ -76,15 +77,15 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onZoom = () => {
-    if (this.props.onToolbarClick) {
-      this.props.onToolbarClick('zoom_out_time_range');
+    if (this.props.onZoomClick) {
+      this.props.onZoomClick();
     }
     appEvents.publish(new ZoomOutEvent({ scale: 2 }));
   };
 
   onRefreshClick = () => {
-    if (this.props.onToolbarClick) {
-      this.props.onToolbarClick('refresh');
+    if (this.props.onRefreshClick) {
+      this.props.onRefreshClick();
     }
     this.onRefresh();
   };
