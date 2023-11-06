@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Field, FieldSet, Icon, Input, useStyles2 } from '@grafana/ui';
+import { Button, Field, FieldSet, Icon, Input, useStyles2, Stack } from '@grafana/ui';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } from '../../utils/mute-timings';
