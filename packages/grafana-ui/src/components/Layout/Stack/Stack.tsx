@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
@@ -40,11 +40,12 @@ interface StackProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className'
   direction?: ResponsiveProp<Direction>;
   wrap?: ResponsiveProp<Wrap>;
   children?: React.ReactNode;
+  flexGrow?: ResponsiveProp<CSSProperties['flexGrow']>;
 }
 
 export const Stack = React.forwardRef<HTMLDivElement, StackProps>(
-  ({ gap = 1, alignItems, justifyContent, direction, wrap, children, ...rest }, ref) => {
-    const styles = useStyles2(getStyles, gap, alignItems, justifyContent, direction, wrap);
+  ({ gap = 1, alignItems, justifyContent, direction, wrap, children, flexGrow, ...rest }, ref) => {
+    const styles = useStyles2(getStyles, gap, alignItems, justifyContent, direction, wrap, flexGrow);
 
     return (
       <div ref={ref} className={styles.flex} {...rest}>
@@ -62,27 +63,31 @@ const getStyles = (
   alignItems: StackProps['alignItems'],
   justifyContent: StackProps['justifyContent'],
   direction: StackProps['direction'],
-  wrap: StackProps['wrap']
+  wrap: StackProps['wrap'],
+  flexGrow: StackProps['flexGrow']
 ) => {
   return {
     flex: css([
       {
         display: 'flex',
       },
-      getResponsiveStyle<Direction>(theme, direction, (val) => ({
+      getResponsiveStyle(theme, direction, (val) => ({
         flexDirection: val,
       })),
-      getResponsiveStyle<Wrap>(theme, wrap, (val) => ({
+      getResponsiveStyle(theme, wrap, (val) => ({
         flexWrap: val,
       })),
-      getResponsiveStyle<AlignItems>(theme, alignItems, (val) => ({
+      getResponsiveStyle(theme, alignItems, (val) => ({
         alignItems: val,
       })),
-      getResponsiveStyle<JustifyContent>(theme, justifyContent, (val) => ({
+      getResponsiveStyle(theme, justifyContent, (val) => ({
         justifyContent: val,
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, gap, (val) => ({
+      getResponsiveStyle(theme, gap, (val) => ({
         gap: theme.spacing(val),
+      })),
+      getResponsiveStyle(theme, flexGrow, (val) => ({
+        flexGrow: val,
       })),
     ]),
   };

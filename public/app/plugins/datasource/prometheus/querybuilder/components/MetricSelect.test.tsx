@@ -17,7 +17,6 @@ import {
 const instanceSettings = {
   url: 'proxied',
   id: 1,
-  directUrl: 'direct',
   user: 'test',
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },

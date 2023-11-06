@@ -4443,6 +4443,7 @@
             "type": "string"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -4542,27 +4543,15 @@
           "externalUrl": {
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "key": {
             "type": "string"
           },
           "name": {
             "type": "string"
           },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
           "updated": {
             "format": "date-time",
             "type": "string"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -6321,6 +6310,7 @@
             "$ref": "#/components/schemas/Json"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -6356,6 +6346,7 @@
             "type": "string"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -6685,6 +6676,7 @@
             "type": "string"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -7516,7 +7508,7 @@
         "description": "PatchLibraryElementCommand is the command for patching a LibraryElement",
         "properties": {
           "folderId": {
-            "description": "ID of the folder where the library element is stored.",
+            "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },

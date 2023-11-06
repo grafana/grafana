@@ -8,22 +8,22 @@ import { Link } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import {
-  Alert,
-  Button,
-  Dropdown,
-  Icon,
-  LinkButton,
-  LoadingPlaceholder,
-  Menu,
-  Pagination,
-  Tab,
-  TabContent,
-  TabsBar,
   Text,
-  Tooltip,
+  LinkButton,
+  TabsBar,
+  TabContent,
+  Tab,
+  Pagination,
+  Button,
+  Stack,
+  Alert,
+  LoadingPlaceholder,
   useStyles2,
+  Menu,
+  Dropdown,
+  Tooltip,
+  Icon,
 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
