@@ -223,3 +223,18 @@ func (s *store) UpdateExternalServiceGrantTypes(ctx context.Context, clientID, g
 		return err
 	})
 }
+
+func (s *store) DeleteExternalService(ctx context.Context, id string) error {
+	if id == "" {
+		return oauthserver.ErrClientRequiredID
+	}
+
+	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if _, err := sess.Exec(`DELETE FROM oauth_client WHERE client_id = ?`, id); err != nil {
+			return err
+		}
+
+		_, err := sess.Exec(`DELETE FROM oauth_impersonate_permission WHERE client_id = ?`, id)
+		return err
+	})
+}

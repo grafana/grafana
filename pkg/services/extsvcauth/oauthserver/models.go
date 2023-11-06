@@ -47,6 +47,7 @@ type OAuth2Server interface {
 //go:generate mockery --name Store --structname MockStore --outpkg oastest --filename store_mock.go --output ./oastest/
 
 type Store interface {
+	DeleteExternalService(ctx context.Context, id string) error
 	GetExternalService(ctx context.Context, id string) (*OAuthExternalService, error)
 	GetExternalServiceByName(ctx context.Context, name string) (*OAuthExternalService, error)
 	GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error)

@@ -132,28 +132,29 @@ func (esa *ExtSvcAccountsService) RemoveExternalService(ctx context.Context, nam
 		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return nil
 	}
+	return esa.RemoveExtSvcAccount(ctx, extsvcauth.TmpOrgID, slugify.Slugify(name))
+}
 
-	slug := slugify.Slugify(name)
-
-	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, extsvcauth.TmpOrgID, sa.ExtSvcPrefix+slug)
+func (esa *ExtSvcAccountsService) RemoveExtSvcAccount(ctx context.Context, orgID int64, extSvcSlug string) error {
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, orgID, sa.ExtSvcPrefix+extSvcSlug)
 	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
 		return errRetrieve
 	}
 
 	if saID <= 0 {
-		esa.logger.Debug("No external service account associated with this name", "service", slug)
+		esa.logger.Debug("No external service account associated with this name", "service", extSvcSlug)
 		return nil
 	}
 
-	if err := esa.deleteExtSvcAccount(ctx, extsvcauth.TmpOrgID, slug, saID); err != nil {
+	if err := esa.deleteExtSvcAccount(ctx, orgID, extSvcSlug, saID); err != nil {
 		esa.logger.Error("Error occurred while deleting service account",
-			"service", slug,
+			"service", extSvcSlug,
 			"saID", saID,
 			"error", err.Error())
 		return err
 	}
 	esa.metrics.deletedCount.Inc()
-	esa.logger.Info("Deleted external service account", "service", slug)
+	esa.logger.Info("Deleted external service account", "service", extSvcSlug)
 	return nil
 }
 
