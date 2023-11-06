@@ -7,9 +7,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/tsdb/graphite"
 )
 
 const (
@@ -111,7 +113,17 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	annotations["message"] = da.Message
 	var err error
 
-	data, err := migrateAlertRuleQueries(cond.Data)
+	d, err := m.fetchDashboard(da.OrgId, da.DashboardUID)
+	// Getting the dashboard is important, as we might want to extract some data out of it. Especially for Graphite queries.Ï
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate alert rule queries: related dashboard could not be loaded: %w", err)
+	}
+	dsTypeMap, err := m.fetchDsTypes(cond.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate alert rule queries: datasources could not be loaded: %w", err)
+	}
+	l := log.New("ngalert.migration.queries")
+	data, err := migrateAlertRuleQueries(l, da.Id, cond.Data, da.PanelId, d, dsTypeMap)
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
 	}
@@ -173,13 +185,78 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	return ar, nil
 }
 
+func (m *migration) fetchDashboard(orgID int64, dashboardUID string) (*dashboards.Dashboard, error) {
+	// This is a hack for unit tests in 9.4.
+	if m.sess == nil {
+		return &dashboards.Dashboard{}, nil
+	}
+
+	var queryResult *dashboards.Dashboard
+
+	dashboard := dashboards.Dashboard{OrgID: orgID, UID: dashboardUID}
+
+	has, err := m.sess.Get(&dashboard)
+
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, dashboards.ErrDashboardNotFound
+	}
+
+	dashboard.SetID(dashboard.ID)
+	dashboard.SetUID(dashboard.UID)
+	queryResult = &dashboard
+
+	return queryResult, err
+}
+
+type dsType struct {
+	UID  string `xorm:"uid"`
+	Type string `xorm:"type"`
+}
+
+func (dsType) TableName() string {
+	return "data_source"
+}
+
+func (m *migration) fetchDsTypes(data []alertQuery) (map[string]string, error) {
+	// This is a hack for unit tests in 9.4.
+	if m.sess == nil {
+		return map[string]string{}, nil
+	}
+
+	result := make(map[string]string)
+	for _, q := range data {
+		result[q.DatasourceUID] = ""
+	}
+	var dsTypes []*dsType
+	for _, uid := range result {
+		dsTypes = append(dsTypes, &dsType{UID: uid})
+	}
+
+	err := m.sess.Find(&dsTypes)
+
+	for _, ds := range dsTypes {
+		result[ds.UID] = ds.Type
+	}
+	return result, err
+}
+
 // migrateAlertRuleQueries attempts to fix alert rule queries so they can work in unified alerting. Queries of some data sources are not compatible with unified alerting.
-func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
+func migrateAlertRuleQueries(l log.Logger, ruleID int64, data []alertQuery, panelID int64, dashboard *dashboards.Dashboard, dsTypes map[string]string) ([]alertQuery, error) {
 	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
 		// queries that are expression are not relevant, skip them.
 		if d.DatasourceUID == expr.DatasourceType {
 			result = append(result, d)
+			continue
+		}
+		dsType, ok := dsTypes[d.DatasourceUID]
+		if !ok {
+			l.Error("datasource not found", "uid", d.DatasourceUID)
+			return nil, fmt.Errorf("datasource not found")
+		}
+		if dsType != datasources.DS_GRAPHITE {
 			continue
 		}
 		var fixedData map[string]json.RawMessage
@@ -189,7 +266,7 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 		}
 		// remove hidden tag from the query (if exists)
 		delete(fixedData, "hide")
-		fixedData = fixGraphiteReferencedSubQueries(fixedData)
+		fixedData = fixGraphiteReferencedSubQueries(l, fixedData, ruleID, panelID, dashboard)
 		updatedModel, err := json.Marshal(fixedData)
 		if err != nil {
 			return nil, err
@@ -198,18 +275,6 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 		result = append(result, d)
 	}
 	return result, nil
-}
-
-// fixGraphiteReferencedSubQueries attempts to fix graphite referenced sub queries, given unified alerting does not support this.
-// targetFull of Graphite data source contains the expanded version of field 'target', so let's copy that.
-func fixGraphiteReferencedSubQueries(queryData map[string]json.RawMessage) map[string]json.RawMessage {
-	fullQuery, ok := queryData[graphite.TargetFullModelField]
-	if ok {
-		delete(queryData, graphite.TargetFullModelField)
-		queryData[graphite.TargetModelField] = fullQuery
-	}
-
-	return queryData
 }
 
 type alertQuery struct {
@@ -305,7 +370,10 @@ func normalizeRuleName(daName string, uid string) string {
 		trunc := DefaultFieldMaxLength - 1 - len(uid)
 		daName = daName[:trunc] + "_" + uid
 	}
-
+	// The name can be empty, as this validation did not always exist.
+	if daName == "" {
+		return uid
+	}
 	return daName
 }
 
