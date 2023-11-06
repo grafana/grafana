@@ -1512,7 +1512,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### ha_redis_address
 
-The redis server address that should be connected to.
+The Redis server address that should be connected to.
 
 ### ha_redis_username
 
