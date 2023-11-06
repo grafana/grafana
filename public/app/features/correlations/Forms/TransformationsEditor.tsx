@@ -8,6 +8,8 @@ import { Button, FieldArray, useStyles2 } from '@grafana/ui';
 
 import TransformationsEditorRow from './TransformationEditorRow';
 
+import { getSupportedTransTypeDetails, getTransformOptions } from './types';
+
 type Props = { readOnly: boolean };
 
 const getStyles = (theme: GrafanaTheme2) => ({
