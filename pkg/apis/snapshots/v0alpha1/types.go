@@ -13,7 +13,7 @@ type DashboardSnapshot struct {
 	Info SnapshotInfo `json:"info"`
 
 	// The raw dashboard (??? openapi ???)
-	Dashbaord any `json:"dashboard"`
+	Dashboard any `json:"dashboard"`
 
 	// ??? not sure this should be exposed
 	DeleteKey string `json:"deleteKey,omitempty"`
