@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { HorizontalGroup, Tooltip } from '..';
 import { useStyles2 } from '../../themes';
 
 import { LabelValue } from './types';
@@ -19,20 +18,16 @@ export const HeaderLabel = ({ headerLabel }: Props) => {
   const { label, value, color, colorIndicator } = headerLabel;
 
   return (
-    <HorizontalGroup justify-content="space-between" spacing="lg" wrap>
-      <div className={styles.wrapper}>
-        <span className={styles.label}>{label}</span>
-        {color && (
-          <span
-            style={{ backgroundColor: color }}
-            className={cx(styles.colorIndicator, getColorIndicatorClass(colorIndicator!, styles))}
-          />
-        )}
-        <Tooltip content={value ? value.toString() : ''}>
-          <span className={styles.labelValue}>{value}</span>
-        </Tooltip>
-      </div>
-    </HorizontalGroup>
+    <div className={styles.wrapper}>
+      {color && (
+        <span
+          style={{ backgroundColor: color }}
+          className={cx(styles.colorIndicator, getColorIndicatorClass(colorIndicator!, styles))}
+        />
+      )}
+      <span className={styles.label}>{label}</span>
+      <span className={styles.labelValue}>{value}</span>
+    </div>
   );
 };
 
@@ -47,6 +42,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     paddingRight: theme.spacing(0.5),
     fontWeight: 400,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   }),
   value: css({
     width: '12px',
@@ -71,7 +69,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     width: '250px',
-    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
   }),
   hexagon: css({}),
   pie_1_4: css({}),
@@ -81,15 +78,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '4px',
     height: '4px',
     borderRadius: theme.shape.radius.circle,
+    minWidth: '4px',
   }),
   marker_md: css({
     width: '8px',
     height: '8px',
     borderRadius: theme.shape.radius.circle,
+    minWidth: '8px',
   }),
   marker_lg: css({
     width: '12px',
     height: '12px',
     borderRadius: theme.shape.radius.circle,
+    minWidth: '12px',
   }),
 });

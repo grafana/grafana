@@ -3,7 +3,6 @@ import React, { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { HorizontalGroup } from '..';
 import { useStyles2 } from '../../themes';
 
 import { LabelValue } from './types';
@@ -20,10 +19,10 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
       <div>
         {contentLabelValue?.map((labelValue, i) => {
           return (
-            <HorizontalGroup justify="space-between" spacing="lg" key={i}>
+            <div className={styles.contentWrapper} key={i}>
               <div className={styles.label}>{labelValue.label}</div>
               <div className={styles.value}>{labelValue.value}</div>
-            </HorizontalGroup>
+            </div>
           );
         })}
       </div>
@@ -41,12 +40,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
   }),
+  contentWrapper: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
   customContentPadding: css({
     padding: `${theme.spacing(1)} 0`,
   }),
   label: css({
     color: theme.colors.text.secondary,
     fontWeight: 400,
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
   }),
   value: css({
     fontWeight: 500,

@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { HorizontalGroup } from '..';
 import { useStyles2 } from '../../themes';
 
 import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
@@ -18,19 +17,17 @@ export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: Props) => {
 
   return (
     <>
-      {keyValuePairs?.map((keyValuePair, i) => {
-        return (
-          <HorizontalGroup justify="space-between" spacing="md" className={styles.hgContainer} key={i}>
-            <div className={styles.label}>{keyValuePair.label}</div>
-            <>
-              {keyValuePair.color && (
-                <VizTooltipColorIndicator color={keyValuePair.color} colorIndicator={keyValuePair.colorIndicator!} />
-              )}
-              {keyValuePair.value}
-            </>
-          </HorizontalGroup>
-        );
-      })}
+      {keyValuePairs?.map((keyValuePair, i) => (
+        <div className={styles.contentWrapper} key={i}>
+          <div className={styles.label}>{keyValuePair.label}</div>
+          <div className={styles.value}>
+            {keyValuePair.color && (
+              <VizTooltipColorIndicator color={keyValuePair.color} colorIndicator={keyValuePair.colorIndicator!} />
+            )}
+            {keyValuePair.value}
+          </div>
+        </div>
+      ))}
     </>
   );
 };
@@ -42,5 +39,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     color: theme.colors.text.secondary,
     fontWeight: 400,
+    marginRight: theme.spacing(0.5),
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  }),
+  value: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  contentWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   }),
 });
