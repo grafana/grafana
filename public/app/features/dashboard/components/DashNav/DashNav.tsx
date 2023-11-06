@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   ButtonGroup,
   ModalsController,
@@ -35,6 +35,7 @@ import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { ShareButton } from './ShareButton';
+import { trackDashboardsToolbarActionsClicked } from './analytics';
 
 const mapDispatchToProps = {
   setStarred,
@@ -122,7 +123,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const onStarDashboard = () => {
-    reportInteraction('dashboards_toolbar_actions_clicked', { item: 'favorites' });
+    trackDashboardsToolbarActionsClicked('favorites');
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
 
@@ -134,7 +135,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const onOpenSettings = () => {
-    reportInteraction('dashboards_toolbar_actions_clicked', { item: 'settings' });
+    trackDashboardsToolbarActionsClicked('settings');
     locationService.partial({ editview: 'settings' });
   };
 
@@ -245,7 +246,12 @@ export const DashNav = React.memo<Props>((props) => {
       return null;
     }
     return (
-      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
+      <DashNavTimeControls
+        dashboard={dashboard}
+        onChangeTimeZone={updateTimeZoneForSession}
+        onToolbarClick={(toolbarAction) => trackDashboardsToolbarActionsClicked(toolbarAction)}
+        key="time-controls"
+      />
     );
   };
 
