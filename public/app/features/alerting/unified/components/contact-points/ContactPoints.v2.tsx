@@ -129,9 +129,6 @@ const ContactPoints = () => {
                     <>
                       {/* TODO we can add some additional info here with a ToggleTip */}
                       <Stack direction="row" alignItems="end">
-                        {/* <Text variant="body" color="secondary">
-                          Define where notifications are sent, a contact point can contain multiple integrations.
-                        </Text> */}
                         <ContactPointsFilter />
                         <Spacer />
                         <Stack direction="row" gap={1}>
@@ -242,7 +239,7 @@ function useContactPointsSearch(
   contactPoints: ContactPointWithMetadata[],
   search?: string
 ): ContactPointWithMetadata[] {
-  const finder = useMemo(() => new uFuzzy({ unicode: true }), []);
+  const finder = new uFuzzy();
 
   const nameHaystack = useMemo(() => {
     return contactPoints.map((contactPoint) => contactPoint.name);

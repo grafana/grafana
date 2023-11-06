@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
@@ -15,20 +15,18 @@ const ContactPointsFilter = () => {
   const defaultValue = searchParams.get('search') ?? '';
   const [searchValue, setSearchValue] = useState(defaultValue);
 
-  // update search params, cancel debounce when component is unmounted
-  const [, cancel] = useDebounce(
+  const [_, cancel] = useDebounce(
     () => {
       setSearchParams({ search: searchValue }, true);
     },
     300,
     [setSearchParams, searchValue]
   );
-  useEffect(() => cancel, [cancel]);
 
-  // clear search input, skip debounce
-  const clearFilters = useCallback(() => {
-    setSearchParams({ search: '' }, true);
+  const clear = useCallback(() => {
     cancel();
+    setSearchValue('');
+    setSearchParams({ search: '' }, true);
   }, [cancel, setSearchParams]);
 
   const hasInput = Boolean(defaultValue);
@@ -47,7 +45,7 @@ const ContactPointsFilter = () => {
           value={searchValue}
         />
       </Field>
-      <Button variant="secondary" icon="times" onClick={clearFilters} disabled={!hasInput} aria-label="clear">
+      <Button variant="secondary" icon="times" onClick={() => clear()} disabled={!hasInput} aria-label="clear">
         Clear
       </Button>
     </Stack>

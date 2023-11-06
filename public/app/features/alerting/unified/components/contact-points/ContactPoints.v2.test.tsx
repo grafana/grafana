@@ -142,6 +142,7 @@ describe('contact points', () => {
 
       const searchInput = screen.getByRole('textbox', { name: 'search contact points' });
       await userEvent.type(searchInput, 'slack');
+      expect(searchInput).toHaveValue('slack');
 
       await waitFor(() => {
         expect(screen.getByText('Slack with multiple channels')).toBeInTheDocument();
@@ -151,6 +152,7 @@ describe('contact points', () => {
       // ⚠️ for some reason, the query params are preserved for all tests so don't forget to clear the input
       const clearButton = screen.getByRole('button', { name: 'clear' });
       await userEvent.click(clearButton);
+      expect(searchInput).toHaveValue('');
     });
   });
 
