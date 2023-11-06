@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
