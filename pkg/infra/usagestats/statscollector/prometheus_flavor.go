@@ -48,6 +48,7 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
 	flavors := sync.Map{}
 
 	for _, ds := range dataSources {
