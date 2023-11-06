@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { SupportedTransformationType } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Field, Icon, IconButton, Input, Label, Select, Tooltip, useStyles2 } from '@grafana/ui';
+
+import {getSupportedTransTypeDetails, getTransformOptions} from './types';
 
 type Props = {
   index: number;
@@ -68,13 +69,13 @@ const TransformationEditorRow = (props: Props) => {
 
               const newValueDetails = getSupportedTransTypeDetails(value.value);
 
-              if (newValueDetails.showExpression) {
+              if (newValueDetails.expressionDetails.show) {
                 setValue(`config.transformations.${index}.expression`, keptVals?.expression || '');
               } else {
                 setValue(`config.transformations.${index}.expression`, '');
               }
 
-              if (newValueDetails.showMapValue) {
+              if (newValueDetails.mapValueDetails.show) {
                 setValue(`config.transformations.${index}.mapValue`, keptVals?.mapValue || '');
               } else {
                 setValue(`config.transformations.${index}.mapValue`, '');
@@ -120,7 +121,7 @@ const TransformationEditorRow = (props: Props) => {
           <Stack gap={0.5}>
             <Label htmlFor={`config.transformations.${defaultValue.id}.expression`}>
               Expression
-              {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).requireExpression
+              {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.required
                 ? ' *'
                 : ''}
             </Label>
@@ -143,13 +144,13 @@ const TransformationEditorRow = (props: Props) => {
       >
         <Input
           {...register(`config.transformations.${index}.expression`, {
-            required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).requireExpression
+            required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.required
               ? 'Please define an expression'
               : undefined,
           })}
           defaultValue={defaultValue.expression}
           readOnly={readOnly}
-          disabled={!getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showExpression}
+          disabled={!getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.show}
           id={`config.transformations.${defaultValue.id}.expression`}
         />
       </Field>
@@ -176,7 +177,7 @@ const TransformationEditorRow = (props: Props) => {
           {...register(`config.transformations.${index}.mapValue`)}
           defaultValue={defaultValue.mapValue}
           readOnly={readOnly}
-          disabled={!getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).showMapValue}
+          disabled={!getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).mapValueDetails.show}
           id={`config.transformations.${defaultValue.id}.mapValue`}
         />
       </Field>
@@ -197,49 +198,4 @@ const TransformationEditorRow = (props: Props) => {
   );
 };
 
-const getTransformOptions = () => {
-  return Object.values(SupportedTransformationType).map((transformationType) => {
-    const transType = getSupportedTransTypeDetails(transformationType);
-    return {
-      label: transType.label,
-      value: transType.value,
-      description: transType.description,
-    };
-  });
-};
-
-function getSupportedTransTypeDetails(transType: SupportedTransformationType): SupportedTransformationTypeDetails {
-  switch (transType) {
-    case SupportedTransformationType.Logfmt:
-      return {
-        label: 'Logfmt',
-        value: SupportedTransformationType.Logfmt,
-        description: 'Parse provided field with logfmt to get variables',
-        showExpression: false,
-        showMapValue: false,
-      };
-    case SupportedTransformationType.Regex:
-      return {
-        label: 'Regular expression',
-        value: SupportedTransformationType.Regex,
-        description:
-          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.',
-        showExpression: true,
-        showMapValue: true,
-        requireExpression: true,
-      };
-    default:
-      return { label: transType, value: transType, showExpression: false, showMapValue: false };
-  }
-}
-
-interface SupportedTransformationTypeDetails {
-  label: string;
-  value: string;
-  description?: string;
-  showExpression: boolean;
-  showMapValue: boolean;
-  requireExpression?: boolean;
-}
-
-export default TransformationEditorRow;
+export default TransformationEditorRow
