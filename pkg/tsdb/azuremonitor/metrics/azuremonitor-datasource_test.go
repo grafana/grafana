@@ -365,14 +365,6 @@ func TestCustomNamespace(t *testing.T) {
 	})
 }
 
-type fakeFeatureToggles struct {
-	flags map[string]bool
-}
-
-func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
-	return f.flags[feature]
-}
-
 func TestAzureMonitorParseResponse(t *testing.T) {
 	resources := map[string]dataquery.AzureMonitorResource{}
 	resources["/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"] =
@@ -553,18 +545,6 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			responseFile: "azuremonitor/10-azure-monitor-response-multi-with-dimensions.json",
 			mockQuery: &types.AzureMonitorQuery{
 				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
-				Params: url.Values{
-					"aggregation": {"Average"},
-				},
-				Resources:    resources,
-				Subscription: subscription,
-			},
-		},
-		{
-			name:         "non-dataplane compliant response",
-			responseFile: "azuremonitor/11-azure-monitor-non-dataplane-response.json",
-			mockQuery: &types.AzureMonitorQuery{
-				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
