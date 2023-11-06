@@ -542,7 +542,7 @@ scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/graf
 /public/app/plugins/datasource/mssql/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/mysql/ @grafana/oss-big-tent
 /public/app/plugins/datasource/opentsdb/ @grafana/observability-metrics
-/public/app/plugins/datasource/postgres/ @grafana/oss-big-tent
+/public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
 /public/app/plugins/datasource/zipkin/ @grafana/observability-traces-and-profiling
