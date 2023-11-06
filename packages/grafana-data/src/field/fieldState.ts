@@ -159,7 +159,7 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
   return displayName;
 }
 
-function getUniqueFieldName(field: Field, frame?: DataFrame) {
+export function getUniqueFieldName(field: Field, frame?: DataFrame) {
   let dupeCount = 0;
   let foundSelf = false;
 

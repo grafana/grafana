@@ -13,9 +13,9 @@ type Service interface {
 	Create(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
 
 	// GetFolder takes a GetFolderCommand and returns a folder matching the
-	// request. One of ID, UID, or Title must be included. If multiple values
+	// request. One of UID, ID or Title must be included. If multiple values
 	// are included in the request, Grafana will select one in order of
-	// specificity (ID, UID, Title).
+	// specificity (UID, ID, Title).
 	Get(ctx context.Context, cmd *GetFolderQuery) (*Folder, error)
 
 	// Update is used to update a folder's UID, Title and Description. To change
