@@ -500,7 +500,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                   height={Math.min(450, metricCount * LIST_ITEM_SIZE)}
                   itemCount={metricCount}
                   itemSize={LIST_ITEM_SIZE}
-                  itemKey={(i) => (metrics!.values as FacettableValue[])[i].name}
+                  itemKey={(i) => metrics!.values![i].name}
                   width={300}
                   className={styles.valueList}
                 >
@@ -589,7 +589,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                       height={Math.min(200, LIST_ITEM_SIZE * (label.values?.length || 0))}
                       itemCount={label.values?.length || 0}
                       itemSize={28}
-                      itemKey={(i) => (label.values as FacettableValue[])[i].name}
+                      itemKey={(i) => label.values![i].name}
                       width={200}
                       className={styles.valueList}
                     >
