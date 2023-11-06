@@ -3,7 +3,6 @@ package snapshots
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -123,7 +122,6 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if snap.DeleteKey == "" {
 		snap.DeleteKey = util.GenerateShortUID()
 	}
-	snap.Info.Timestamp = time.Now().UTC().Format(time.RFC3339)
 	out, err := s.service.CreateDashboardSnapshot(ctx, &dashboardsnapshots.CreateDashboardSnapshotCommand{
 		// TODO
 	})

@@ -2,6 +2,7 @@ package snapshots
 
 import (
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -16,11 +17,9 @@ func convertDTOToSummary(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer 
 	if v.Updated != v.Created {
 		meta.SetUpdatedTimestamp(&v.Updated)
 	}
-	if v.ID > 0 {
-		meta.SetOriginInfo(&kinds.ResourceOriginInfo{
-			Name: "SQL",
-			Key:  fmt.Sprintf("%d", v.ID),
-		})
+	expires := v.Expires.UnixMilli()
+	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
+		expires = 0 // ignore things expiring long into the future
 	}
 	return &snapshots.SnapshotSummary{
 		ObjectMeta: metav1.ObjectMeta{
@@ -33,30 +32,31 @@ func convertDTOToSummary(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer 
 		SnapshotInfo: snapshots.SnapshotInfo{
 			Title:       v.Name,
 			ExternalURL: v.ExternalURL,
+			Expires:     expires,
 		},
 	}
 }
 
 func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) *snapshots.DashboardSnapshot {
 	meta := kinds.GrafanaResourceMetadata{}
-	meta.SetUpdatedTimestamp(&v.Updated)
-	if v.ID > 0 {
-		meta.SetOriginInfo(&kinds.ResourceOriginInfo{
-			Name: "SQL",
-			Key:  fmt.Sprintf("%d", v.ID),
-		})
+	if v.Updated != v.Created {
+		meta.SetUpdatedTimestamp(&v.Updated)
+	}
+	expires := v.Expires.UnixMilli()
+	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
+		expires = 0 // ignore things expiring long into the future
 	}
 
 	info := snapshots.SnapshotInfo{
 		Title:       v.Name,
 		ExternalURL: v.ExternalURL,
+		Expires:     expires,
 	}
 	s := v.Dashboard.Get("snapshot")
 	if s != nil {
 		info.OriginalUrl, _ = s.Get("originalUrl").String()
 		info.Timestamp, _ = s.Get("timestamp").String()
 	}
-
 	return &snapshots.DashboardSnapshot{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Key,

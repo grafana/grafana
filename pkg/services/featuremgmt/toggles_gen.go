@@ -491,6 +491,10 @@ const (
 	// Use the kubernetes API in the frontend for playlists
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
+	// FlagKubernetesSnapshots
+	// Use the kubernetes API in the frontend for snapshots
+	FlagKubernetesSnapshots = "kubernetesSnapshots"
+
 	// FlagKubernetesPlaylistsAPI
 	// Route /api/playlist API to k8s handlers
 	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"

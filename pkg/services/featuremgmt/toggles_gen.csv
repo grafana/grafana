@@ -120,6 +120,7 @@ enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,
 formatString,experimental,@grafana/grafana-bi-squad,false,false,false,true
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
+kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
 kubernetesPlaylistsAPI,experimental,@grafana/grafana-app-platform-squad,false,false,true,false
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false,false
 navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false

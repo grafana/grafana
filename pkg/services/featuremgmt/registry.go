@@ -888,6 +888,13 @@ var (
 			Owner:        grafanaAppPlatformSquad,
 		},
 		{
+			Name:         "kubernetesSnapshots",
+			Description:  "Use the kubernetes API in the frontend for snapshots",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
+		},
+		{
 			Name:            "kubernetesPlaylistsAPI",
 			Description:     "Route /api/playlist API to k8s handlers",
 			Stage:           FeatureStageExperimental,
