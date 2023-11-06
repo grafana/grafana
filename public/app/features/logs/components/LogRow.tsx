@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
+import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
 import { Field, LinkModel, LogRowModel, LogsSortOrder, dateTimeFormat, CoreApp, DataFrame } from '@grafana/data';
@@ -157,6 +158,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
   };
 
+  processRow = memoizeOne((row: LogRowModel, forceEscape: boolean | undefined) => {
+    return row.hasUnescapedContent && forceEscape
+      ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
+      : row
+  });
+
   render() {
     const {
       getRows,
@@ -191,10 +198,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       [styles.highlightBackground]: permalinked && !this.state.showDetails,
     });
 
-    const processedRow =
-      row.hasUnescapedContent && forceEscape
-        ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
-        : row;
+    const processedRow = this.processRow(row, forceEscape);
 
     return (
       <>
