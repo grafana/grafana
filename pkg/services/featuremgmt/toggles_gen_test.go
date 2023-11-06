@@ -45,6 +45,12 @@ func TestFeatureToggleFiles(t *testing.T) {
 			if flag.Name != strings.TrimSpace(flag.Name) {
 				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
 			}
+			if flag.Stage == FeatureStageGeneralAvailability && flag.AllowSelfServe == nil {
+				t.Errorf("feature stage FeatureStageGeneralAvailability should have the AllowSelfServe field defined")
+			}
+			if flag.AllowSelfServe != nil && flag.Stage != FeatureStageGeneralAvailability {
+				t.Errorf("only allow self-serving GA toggles")
+			}
 		}
 	})
 
