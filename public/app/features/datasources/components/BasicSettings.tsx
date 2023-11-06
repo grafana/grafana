@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Badge, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -25,8 +24,6 @@ export function BasicSettings({
 }: Props) {
   return (
     <>
-      {!config.featureToggles.dataSourcePageHeader && <AlertingEnabled enabled={alertingSupported} />}
-
       <div className="gf-form-group" aria-label="Datasource settings page basic settings">
         <div className="gf-form-inline">
           {/* Name */}
