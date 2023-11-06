@@ -13,9 +13,10 @@ type DashboardSnapshot struct {
 	Info SnapshotInfo `json:"info"`
 
 	// The raw dashboard (??? openapi ???)
+	// TODO: openapi annotations for codegen?
 	Dashboard any `json:"dashboard"`
 
-	// ??? not sure this should be exposed
+	// The delete key is only returned when the item is created.  It is not returned from a get request
 	DeleteKey string `json:"deleteKey,omitempty"`
 }
 

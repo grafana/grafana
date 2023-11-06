@@ -65,7 +65,7 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 			Namespace:         namespacer(v.OrgID),
 			Annotations:       meta.Annotations,
 		},
-		Dashbaord: v.Dashboard,
+		Dashboard: v.Dashboard,
 		Info:      info,
 	}
 }

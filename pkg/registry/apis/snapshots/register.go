@@ -125,6 +125,12 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	)
 	storage["dashboards"] = legacyStore
 
+	// Dummy service that only supports delete
+	storage["dashboard-delete-key"] = &deleteKeyStorage{
+		service:        b.service,
+		tableConverter: legacyStore.tableConverter,
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
 }
