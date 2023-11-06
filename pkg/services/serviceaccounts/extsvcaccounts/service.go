@@ -140,17 +140,19 @@ func (esa *ExtSvcAccountsService) RemoveExternalService(ctx context.Context, nam
 		return errRetrieve
 	}
 
-	if saID > 0 {
-		if err := esa.deleteExtSvcAccount(ctx, extsvcauth.TmpOrgID, slug, saID); err != nil {
-			esa.logger.Error("Error occurred while deleting service account",
-				"service", slug,
-				"saID", saID,
-				"error", err.Error())
-			return err
-		}
-		esa.metrics.deletedCount.Inc()
+	if saID <= 0 {
+		esa.logger.Debug("No external service account associated with this name", "service", slug)
+		return nil
 	}
-	esa.logger.Debug("No external service account associated with this name", "service", slug)
+
+	if err := esa.deleteExtSvcAccount(ctx, extsvcauth.TmpOrgID, slug, saID); err != nil {
+		esa.logger.Error("Error occurred while deleting service account",
+			"service", slug,
+			"saID", saID,
+			"error", err.Error())
+		return err
+	}
+	esa.metrics.deletedCount.Inc()
 	return nil
 }
 
