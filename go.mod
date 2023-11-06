@@ -19,6 +19,8 @@ replace (
 	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.19.0 // @grafana/backend-platform
 )
 
+replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
+
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
 // import that instead of v0.X even though v0.X is newer.
@@ -68,7 +70,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.189.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
-	github.com/hashicorp/go-plugin v1.4.9 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-plugin v1.5.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/backend-platform
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-squad-backend
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3 // @grafana/observability-metrics
