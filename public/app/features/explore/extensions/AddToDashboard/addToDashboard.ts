@@ -35,6 +35,13 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
   let transformations: DataTransformerConfig[] = [];
   if (panelType === 'table' && options.panelState.logs?.columns) {
     transformations.push({
+      id: 'extractFields',
+      options: {
+        // @todo we need to add the name for the labels/attributes field to the explore url state
+        source: 'labels',
+      },
+    });
+    transformations.push({
       id: 'organize',
       options: {
         includeByName: Object.values(options.panelState.logs.columns).reduce(

@@ -6,23 +6,24 @@ import {
   DataTransformerID,
   GrafanaTheme2,
   standardTransformers,
+  TransformerCategory,
   TransformerRegistryItem,
   TransformerUIProps,
-  TransformerCategory,
 } from '@grafana/data';
 import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
 import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
-import { Input, IconButton, Icon, FieldValidationMessage, useStyles2 } from '@grafana/ui';
+import { FieldValidationMessage, Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
 const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
-  const { indexByName, excludeByName, renameByName } = options;
+  const { indexByName, excludeByName, renameByName, includeByName } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
+  const filterType = includeByName ? 'include' : 'exclude';
 
   const onToggleVisibility = useCallback(
     (field: string, shouldExclude: boolean) => {
@@ -35,6 +36,21 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
       });
     },
     [onChange, options, excludeByName]
+  );
+
+  const onToggleVisibilityInclude = useCallback(
+    (field: string, shouldInclude: boolean) => {
+      const pendingState = {
+        ...options,
+        includeByName: {
+          ...includeByName,
+          [field]: !shouldInclude,
+        },
+      };
+      console.log('pendingState', pendingState);
+      onChange(pendingState);
+    },
+    [onChange, options, includeByName]
   );
 
   const onDragEnd = useCallback(
@@ -87,14 +103,17 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
         {(provided) => (
           <div ref={provided.innerRef} {...provided.droppableProps}>
             {orderedFieldNames.map((fieldName, index) => {
+              const isIncludeFilter = includeByName && fieldName in includeByName ? includeByName[fieldName] : false;
+              const isVisible = filterType === 'include' ? isIncludeFilter : !excludeByName[fieldName];
+              const onToggleFunction = filterType === 'include' ? onToggleVisibilityInclude : onToggleVisibility;
               return (
                 <DraggableFieldName
                   fieldName={fieldName}
                   renamedFieldName={renameByName[fieldName]}
                   index={index}
-                  onToggleVisibility={onToggleVisibility}
+                  onToggleVisibility={onToggleFunction}
                   onRenameField={onRenameField}
-                  visible={!excludeByName[fieldName]}
+                  visible={isVisible}
                   key={fieldName}
                 />
               );
@@ -170,6 +189,7 @@ const getFieldNameStyles = (theme: GrafanaTheme2) => ({
   `,
   draggable: css`
     opacity: 0.4;
+
     &:hover {
       color: ${theme.colors.text.maxContrast};
     }
