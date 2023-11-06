@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin2 } from '@grafana/ui';
+import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin, TooltipPlugin2 } from '@grafana/ui';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
@@ -107,7 +107,7 @@ export const TrendPanel = ({
       options={options}
       preparePlotFrame={preparePlotFrameTimeless}
     >
-      {(config, alignedDataFrame) => {
+      {(uPlotConfig, alignedDataFrame) => {
         if (alignedDataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
           alignedDataFrame = regenerateLinksSupplier(
             alignedDataFrame,
@@ -120,26 +120,40 @@ export const TrendPanel = ({
 
         return (
           <>
-            <KeyboardPlugin config={config} />
+            <KeyboardPlugin config={uPlotConfig} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
-              <TooltipPlugin2
-                config={config}
-                render={(u, dataIdxs, seriesIdx, isPinned = false) => {
-                  return (
-                    <TrendTooltip
-                      frames={info.frames!}
-                      data={alignedDataFrame}
-                      mode={options.tooltip.mode}
-                      sortOrder={options.tooltip.sort}
-                      sync={sync}
-                      timeZone={timeZone}
-                      dataIdxs={dataIdxs}
-                      seriesIdx={seriesIdx}
-                      isPinned={isPinned}
-                    />
-                  );
-                }}
-              />
+              <>
+                {config.featureToggles.newVizTooltips ? (
+                  <TooltipPlugin2
+                    config={uPlotConfig}
+                    render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                      return (
+                        <TrendTooltip
+                          frames={info.frames!}
+                          data={alignedDataFrame}
+                          mode={options.tooltip.mode}
+                          sortOrder={options.tooltip.sort}
+                          sync={sync}
+                          timeZone={timeZone}
+                          dataIdxs={dataIdxs}
+                          seriesIdx={seriesIdx}
+                          isPinned={isPinned}
+                        />
+                      );
+                    }}
+                  />
+                ) : (
+                  <TooltipPlugin
+                    frames={info.frames!}
+                    data={alignedDataFrame}
+                    config={uPlotConfig}
+                    mode={options.tooltip.mode}
+                    sortOrder={options.tooltip.sort}
+                    sync={sync}
+                    timeZone={timeZone}
+                  />
+                )}
+              </>
             )}
           </>
         );
