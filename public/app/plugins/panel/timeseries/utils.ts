@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldType,
@@ -13,16 +12,16 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
-import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
-import { buildScaleKey } from '@grafana/ui/src/components/GraphNG/utils';
+import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
 
 type ScaleKey = string;
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
 // e.g. ['a','b'][0,1,0] + ['c','d'][1,0,1] -> ['a','b'][0,1,0] + ['c','d'][3,2,3]
-function reEnumFields(frames: DataFrame[]) {
+function reEnumFields(frames: DataFrame[]): DataFrame[] {
   let allTextsByKey: Map<ScaleKey, string[]> = new Map();
 
   let frames2: DataFrame[] = frames.map((frame) => {
@@ -55,7 +54,7 @@ function reEnumFields(frames: DataFrame[]) {
 
           return {
             ...field,
-            values: new ArrayVector(idxs),
+            values: idxs,
           };
 
           // TODO: update displayProcessor?

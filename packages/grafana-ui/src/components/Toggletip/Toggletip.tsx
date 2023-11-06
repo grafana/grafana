@@ -149,8 +149,8 @@ Toggletip.displayName = 'Toggletip';
 export const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
-    theme.components.tooltip.background,
-    theme.components.tooltip.background,
+    theme.colors.background.primary,
+    theme.colors.border.weak,
     theme.components.tooltip.text,
     { topBottom: 2, rightLeft: 2 }
   );

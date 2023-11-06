@@ -66,6 +66,21 @@ export async function isLLMPluginEnabled() {
 }
 
 /**
+ * Get the message to be sent to OpenAI to generate a new response.
+ * @param previousResponse
+ * @param feedback
+ * @returns Message[] to be sent to OpenAI to generate a new response
+ */
+export const getFeedbackMessage = (previousResponse: string, feedback: string | QuickFeedbackType): Message[] => {
+  return [
+    {
+      role: Role.system,
+      content: `Your previous response was: ${previousResponse}. The user has provided the following feedback: ${feedback}. Re-generate your response according to the provided feedback.`,
+    },
+  ];
+};
+
+/**
  *
  * @param dashboard Dashboard to generate a title or description for
  * @returns String for inclusion in prompts stating what the dashboard's panels are
