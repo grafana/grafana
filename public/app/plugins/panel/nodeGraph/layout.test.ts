@@ -74,6 +74,7 @@ function makeNode(index: number, incoming: number): NodeDatum {
     dataFrameRowIndex: 0,
     incoming,
     arcSections: [],
+    highlighted: false,
   };
 }
 
@@ -85,5 +86,9 @@ function makeEdge(source: number, target: number): EdgeDatum {
     mainStat: '',
     secondaryStat: '',
     dataFrameRowIndex: 0,
+    sourceNodeRadius: 40,
+    targetNodeRadius: 40,
+    highlighted: false,
+    thickness: 1,
   };
 }

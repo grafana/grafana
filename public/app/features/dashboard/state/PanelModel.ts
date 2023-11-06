@@ -360,6 +360,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width }: RunPanelQueryOptions) {
+    if (this.type === 'row') {
+      return;
+    }
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
@@ -391,7 +394,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
   }
 
-  private getOptionsToRemember() {
+  public getOptionsToRemember(): any {
     return Object.keys(this).reduce((acc, property) => {
       if (notPersistedProperties[property] || mustKeepProps[property]) {
         return acc;

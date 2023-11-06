@@ -14,7 +14,6 @@ jest.mock('app/core/services/context_srv', () => {
     contextSrv: {
       ...originMock.context_srv,
       user: {},
-      hasAccess: jest.fn(() => false),
       hasPermission: jest.fn(() => false),
     },
   };
@@ -32,19 +31,16 @@ jest.spyOn(console, 'error').mockImplementation();
 
 describe('ManageDashboards', () => {
   beforeEach(() => {
-    (contextSrv.hasAccess as jest.Mock).mockClear();
     (contextSrv.hasPermission as jest.Mock).mockClear();
   });
 
   it("should hide and show dashboard actions based on user's permissions", async () => {
-    (contextSrv.hasAccess as jest.Mock).mockReturnValue(false);
     (contextSrv.hasPermission as jest.Mock).mockReturnValue(false);
 
     const { rerender } = await setup();
 
     expect(screen.queryByRole('button', { name: /new/i })).not.toBeInTheDocument();
 
-    (contextSrv.hasAccess as jest.Mock).mockReturnValue(true);
     (contextSrv.hasPermission as jest.Mock).mockReturnValue(true);
     await waitFor(() => rerender(<ManageDashboardsNew folder={{ canEdit: true } as FolderDTO} />));
 

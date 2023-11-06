@@ -100,16 +100,6 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 auto_login = true
 ```
 
-## Skip organization role sync
-
-We do not currently sync roles from Google and instead set the AutoAssigned role to the user at first login. The default setting for `skip_org_role_sync` is `true`, which means that role modifications can still be made through the user interface.
-
-```ini
-[auth.google]
-# ..
-skip_org_role_sync = true
-```
-
 ### Configure team sync for Google OAuth
 
 > Available in Grafana v10.1.0 and later versions.
@@ -132,3 +122,68 @@ With team sync, you can easily add users to teams by utilizing their Google grou
    The external group ID for a Google group is the group's email address, such as `dev@grafana.com`.
 
 To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../configure-team-sync" >}}).
+
+### Configure allowed groups
+
+> Available in Grafana v10.2.0 and later versions.
+
+To limit access to authenticated users that are members of one or more groups, set `allowed_groups`
+to a comma or space separated list of groups.
+
+Google groups are referenced by the group email key. For example, `developers@google.com`.
+
+> Note: Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups
+
+## Configure role mapping
+
+> Available in Grafana v10.2.0 and later versions.
+
+Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role mapped from Google upon user login. If no mapping is set the default instance role is used.
+
+The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option.
+To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
+
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+This setting denies user access if no role or an invalid role is returned.
+
+To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
+
+> By default skip_org_role_sync is enabled. skip_org_role_sync will default to false in Grafana v10.3.0 and later versions.
+
+### Role mapping examples
+
+This section includes examples of JMESPath expressions used for role mapping.
+
+#### Map roles using user information from OAuth token
+
+In this example, the user with email `admin@company.com` has been granted the `Admin` role.
+All other users are granted the `Viewer` role.
+
+```ini
+role_attribute_path = email=='admin@company.com' && 'Admin' || 'Viewer'
+skip_org_role_sync = false
+```
+
+#### Map roles using groups
+
+In this example, the user from Google group 'example-group@google.com' have been granted the `Editor` role.
+All other users are granted the `Viewer` role.
+
+```ini
+role_attribute_path = contains(groups[*], 'example-group@google.com') && 'Editor' || 'Viewer'
+skip_org_role_sync = false
+```
+
+> Note: Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups
+
+#### Map server administrator role
+
+In this example, the user with email `admin@company.com` has been granted the `Admin` organization role as well as the Grafana server admin role.
+All other users are granted the `Viewer` role.
+
+```ini
+allow_assign_grafana_admin = true
+skip_org_role_sync = false
+role_attribute_path = email=='admin@company.com' && 'GrafanaAdmin' || 'Viewer'
+```

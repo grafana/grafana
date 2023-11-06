@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -47,7 +48,10 @@ func GrafanaRevision(ctx context.Context, grafanaDir string) (Revision, error) {
 	if err != nil {
 		enterpriseCommit, err = executil.OutputAt(ctx, grafanaDir, "git", "-C", "..", "rev-parse", "--short", "HEAD")
 		if err != nil {
-			return Revision{}, err
+			enterpriseCommit, err = executil.OutputAt(ctx, grafanaDir, "git", "-C", "/tmp/grafana-enterprise", "rev-parse", "--short", "HEAD")
+			if err != nil {
+				log.Println("Could not get enterprise commit. Error:", err)
+			}
 		}
 	}
 

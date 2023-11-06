@@ -4,7 +4,7 @@ const DASHBOARD_NAME = 'Panel Tests - Graph Time Regions';
 
 describe('Auto-migrate graph panel', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Annotation markers exist for time regions', () => {
@@ -13,8 +13,6 @@ describe('Auto-migrate graph panel', () => {
     cy.contains('uplot-main-div').should('not.exist');
 
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateOldPanels': true } });
-
-    cy.wait(1000);
 
     e2e.components.Panels.Panel.title('Business Hours')
       .should('exist')

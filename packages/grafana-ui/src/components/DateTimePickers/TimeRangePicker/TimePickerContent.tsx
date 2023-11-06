@@ -4,11 +4,11 @@ import React, { memo, useMemo, useState } from 'react';
 import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { FilterInput } from '../..';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { getFocusStyles } from '../../../themes/mixins';
 import { t, Trans } from '../../../utils/i18n';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
+import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 
 import { TimePickerFooter } from './TimePickerFooter';
@@ -216,16 +216,17 @@ const FullScreenForm = (props: FormProps) => {
 const EmptyRecentList = memo(() => {
   const theme = useTheme2();
   const styles = getEmptyListStyles(theme);
+  const emptyRecentListText = t(
+    'time-picker.content.empty-recent-list-info',
+    "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here."
+  );
 
   return (
     <div className={styles.container}>
-      <Trans i18nKey="time-picker.content.empty-recent-list">
-        <div>
-          <span>
-            It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
-            recently used intervals will appear here.
-          </span>
-        </div>
+      <div>
+        <span>{emptyRecentListText}</span>
+      </div>
+      <Trans i18nKey="time-picker.content.empty-recent-list-docs">
         <div>
           <a
             className={styles.link}

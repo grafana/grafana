@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -33,7 +34,7 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
-	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.OrgID)
+	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +73,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		panels[panel.ID] = plugins.PanelDTO{
 			ID:              panel.ID,
 			Name:            panel.Name,
-			Alias:           panel.Alias,
+			AliasIDs:        panel.AliasIDs,
 			Info:            panel.Info,
 			Module:          panel.Module,
 			BaseURL:         panel.BaseURL,
@@ -134,6 +135,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackDataPlaneUrl:             hs.Cfg.RudderstackDataPlaneURL,
 		RudderstackSdkUrl:                   hs.Cfg.RudderstackSDKURL,
 		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
+		RudderstackIntegrationsUrl:          hs.Cfg.RudderstackIntegrationsURL,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
@@ -206,9 +208,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SupportBundlesEnabled:            isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
-			Cloud:                  hs.Cfg.Azure.Cloud,
-			ManagedIdentityEnabled: hs.Cfg.Azure.ManagedIdentityEnabled,
-			UserIdentityEnabled:    hs.Cfg.Azure.UserIdentityEnabled,
+			Cloud:                   hs.Cfg.Azure.Cloud,
+			ManagedIdentityEnabled:  hs.Cfg.Azure.ManagedIdentityEnabled,
+			WorkloadIdentityEnabled: hs.Cfg.Azure.WorkloadIdentityEnabled,
+			UserIdentityEnabled:     hs.Cfg.Azure.UserIdentityEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{
@@ -277,8 +280,8 @@ func isSupportBundlesEnabled(hs *HTTPServer) bool {
 
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
-	if c.OrgID != 0 {
-		query := datasources.GetDataSourcesQuery{OrgID: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
+	if c.SignedInUser.GetOrgID() != 0 {
+		query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
 		dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err
@@ -499,7 +502,7 @@ func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*avail
 		return p, true
 	}
 	for _, p = range ap[pluginType] {
-		if p.Plugin.ID == pluginID || p.Plugin.Alias == pluginID {
+		if p.Plugin.ID == pluginID || slices.Contains(p.Plugin.AliasIDs, pluginID) {
 			return p, true
 		}
 	}

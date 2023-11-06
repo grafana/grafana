@@ -7,12 +7,20 @@ import { Button, Dropdown, Icon, LinkButton, Menu, MenuItem } from '@grafana/ui'
 
 import { logInfo, LogMessages } from './Analytics';
 import { GrafanaRulesExporter } from './components/export/GrafanaRulesExporter';
-import { useRulesAccess } from './utils/accessControlHooks';
+import { AlertSourceAction, useAlertSourceAbility } from './hooks/useAbilities';
 
 interface Props {}
 
 export function MoreActionsRuleButtons({}: Props) {
-  const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
+  const [_, viewRuleAllowed] = useAlertSourceAbility(AlertSourceAction.ViewAlertRule);
+  const [createRuleSupported, createRuleAllowed] = useAlertSourceAbility(AlertSourceAction.CreateAlertRule);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertSourceAbility(
+    AlertSourceAction.CreateExternalAlertRule
+  );
+
+  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+
   const location = useLocation();
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const newMenu = (
@@ -25,7 +33,7 @@ export function MoreActionsRuleButtons({}: Props) {
           label="New recording rule"
         />
       )}
-      {canReadProvisioning && <MenuItem onClick={toggleShowExportDrawer} label="Export all Grafana-managed rules" />}
+      {viewRuleAllowed && <MenuItem onClick={toggleShowExportDrawer} label="Export all Grafana-managed rules" />}
     </Menu>
   );
 

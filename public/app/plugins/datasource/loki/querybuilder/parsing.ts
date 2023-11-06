@@ -259,7 +259,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   const labelNode = node.getChild(Identifier);
   const label = getString(expr, labelNode);
-  const op = getString(expr, labelNode!.nextSibling);
+  const op = getString(expr, labelNode?.nextSibling);
   let value = getString(expr, node.getChild(String));
   // `value` is wrapped in double quotes, so we need to remove them. As a value can contain double quotes, we can't use RegEx here.
   value = value.substring(1, value.length - 1);
@@ -541,6 +541,15 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const op: QueryBuilderOperation = { id: funcName, params };
 
   if (metricExpr) {
+    // A vector aggregation expression with a child of metric expression with a child of binary expression is ambiguous after being parsed into a visual query
+    if (metricExpr.firstChild?.type.id === BinOpExpr) {
+      context.errors.push({
+        text: 'Query parsing is ambiguous.',
+        from: metricExpr.firstChild.from,
+        to: metricExpr.firstChild?.to,
+      });
+    }
+
     handleExpression(expr, metricExpr, context);
   }
 

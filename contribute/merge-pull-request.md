@@ -48,7 +48,7 @@ Instead, when it is merged & closed then a bot will look for the most appropriat
 
 That milestone should always reflect the branch that the pull request is merged into.
 For every major and minor release there is a milestone ending with `.x` (e.g. `10.0.x` for the 10.0.x releases).
-Pull requests targetting `main` should use the `.x` milestone of the next minor (or major) version (you can find that version number inside the `package.json` file).
+Pull requests targeting `main` should use the `.x` milestone of the next minor (or major) version (you can find that version number inside the `package.json` file).
 Backport pull requests should use the version of the target branch (e.g. `9.4.x` for the `v9.4.x` branch).
 
 ### Include in changelog and release notes?

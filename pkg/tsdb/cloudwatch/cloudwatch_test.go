@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -94,6 +95,7 @@ func Test_CheckHealth(t *testing.T) {
 	origNewMetricsAPI := NewMetricsAPI
 	origNewCWLogsClient := NewCWLogsClient
 	origNewLogsAPI := NewLogsAPI
+
 	t.Cleanup(func() {
 		NewMetricsAPI = origNewMetricsAPI
 		NewCWLogsClient = origNewCWLogsClient
@@ -107,12 +109,16 @@ func Test_CheckHealth(t *testing.T) {
 	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return client
 	}
+	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: models.CloudWatchSettings{
+			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+				Region: "us-east-1",
+			},
+		}}, nil
+	})
 
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
@@ -131,9 +137,7 @@ func Test_CheckHealth(t *testing.T) {
 			describeLogGroups: func(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 				return nil, fmt.Errorf("some logs query error")
 			}}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
+
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
@@ -152,9 +156,7 @@ func Test_CheckHealth(t *testing.T) {
 			listMetricsPages: func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
 				return fmt.Errorf("some list metrics error")
 			}}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
+
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
@@ -170,9 +172,7 @@ func Test_CheckHealth(t *testing.T) {
 
 	t.Run("fail to get clients", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
+
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
 			return nil, fmt.Errorf("some sessions error")
 		}}, featuremgmt.WithFeatures())
@@ -194,12 +194,15 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 	origNewMetricsAPI := NewMetricsAPI
 	origNewOAMAPI := NewOAMAPI
 	origNewLogsAPI := NewLogsAPI
+	origNewEC2Client := NewEC2Client
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider { return nil }
 	NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider { return nil }
+	NewEC2Client = func(provider awsclient.ConfigProvider) models.EC2APIProvider { return nil }
 	t.Cleanup(func() {
 		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI
 		NewLogsAPI = origNewLogsAPI
+		NewEC2Client = origNewEC2Client
 	})
 
 	var logsApi mocks.LogsAPI
@@ -208,12 +211,16 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 	}
 
 	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{
+			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+				Region: "us-east-1",
+			},
+		}}, nil
 	})
 
 	t.Run("maps log group api response to resource response of log-groups", func(t *testing.T) {
 		logsApi = mocks.LogsAPI{}
-		logsApi.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+		logsApi.On("DescribeLogGroupsWithContext", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
 			LogGroups: []*cloudwatchlogs.LogGroup{
 				{Arn: aws.String("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: aws.String("group_a")},
 			},
@@ -241,7 +248,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		   }
 		]`, string(sender.Response.Body))
 
-		logsApi.AssertCalled(t, "DescribeLogGroups",
+		logsApi.AssertCalled(t, "DescribeLogGroupsWithContext",
 			&cloudwatchlogs.DescribeLogGroupsInput{
 				AccountIdentifiers:    []*string{utils.Pointer("some-account-id")},
 				IncludeLinkedAccounts: utils.Pointer(true),

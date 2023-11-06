@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -124,8 +125,9 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// will be connected over Redis PUB/SUB. Presence will work
 		// globally since kept inside Redis.
 		redisAddress := g.Cfg.LiveHAEngineAddress
+		redisPassword := g.Cfg.LiveHAEnginePassword
 		redisShardConfigs := []centrifuge.RedisShardConfig{
-			{Address: redisAddress},
+			{Address: redisAddress, Password: redisPassword},
 		}
 		var redisShards []*centrifuge.RedisShard
 		for _, redisConf := range redisShardConfigs {
@@ -160,7 +162,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	var managedStreamRunner *managedstream.Runner
 	if g.IsHA() {
 		redisClient := redis.NewClient(&redis.Options{
-			Addr: g.Cfg.LiveHAEngineAddress,
+			Addr:     g.Cfg.LiveHAEngineAddress,
+			Password: g.Cfg.LiveHAEnginePassword,
 		})
 		cmd := redisClient.Ping(context.Background())
 		if _, err := cmd.Result(); err != nil {
@@ -331,12 +334,12 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/ws", g.websocketHandler)
-	}, middleware.ReqSignedIn)
+	}, middleware.ReqSignedIn, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/push/:streamId", g.pushWebsocketHandler)
 		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
-	}, middleware.ReqOrgAdmin)
+	}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
 	g.registerUsageMetrics()
 

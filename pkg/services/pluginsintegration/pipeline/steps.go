@@ -6,12 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
@@ -19,16 +20,16 @@ import (
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
 type ExternalServiceRegistration struct {
 	cfg                     *config.Cfg
-	externalServiceRegistry oauth.ExternalServiceRegistry
+	externalServiceRegistry auth.ExternalServiceRegistry
 	log                     log.Logger
 }
 
 // ExternalServiceRegistrationStep returns an InitializeFunc for registering external services.
-func ExternalServiceRegistrationStep(cfg *config.Cfg, externalServiceRegistry oauth.ExternalServiceRegistry) initialization.InitializeFunc {
+func ExternalServiceRegistrationStep(cfg *config.Cfg, externalServiceRegistry auth.ExternalServiceRegistry) initialization.InitializeFunc {
 	return newExternalServiceRegistration(cfg, externalServiceRegistry).Register
 }
 
-func newExternalServiceRegistration(cfg *config.Cfg, serviceRegistry oauth.ExternalServiceRegistry) *ExternalServiceRegistration {
+func newExternalServiceRegistration(cfg *config.Cfg, serviceRegistry auth.ExternalServiceRegistry) *ExternalServiceRegistration {
 	return &ExternalServiceRegistration{
 		cfg:                     cfg,
 		externalServiceRegistry: serviceRegistry,
@@ -38,8 +39,9 @@ func newExternalServiceRegistration(cfg *config.Cfg, serviceRegistry oauth.Exter
 
 // Register registers the external service with the external service registry, if the feature is enabled.
 func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if p.ExternalServiceRegistration != nil && r.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, p.ExternalServiceRegistration)
+	if p.ExternalServiceRegistration != nil &&
+		(r.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || r.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAccounts)) {
+		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, plugindef.Type(p.Type), p.ExternalServiceRegistration)
 		if err != nil {
 			r.log.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
 			return nil, err

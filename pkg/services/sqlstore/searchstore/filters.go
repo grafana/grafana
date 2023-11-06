@@ -5,44 +5,9 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
-
-// FilterWhere limits the set of dashboard IDs to the dashboards for
-// which the filter is applicable. Results where the first value is
-// an empty string are discarded.
-type FilterWhere interface {
-	Where() (string, []any)
-}
-
-// FilterWith returns any recursive CTE queries (if supported)
-// and their parameters
-type FilterWith interface {
-	With() (string, []any)
-}
-
-// FilterGroupBy should be used after performing an outer join on the
-// search result to ensure there is only one of each ID in the results.
-// The id column must be present in the result.
-type FilterGroupBy interface {
-	GroupBy() (string, []any)
-}
-
-// FilterOrderBy provides an ordering for the search result.
-type FilterOrderBy interface {
-	OrderBy() string
-}
-
-// FilterLeftJoin adds the returned string as a "LEFT OUTER JOIN" to
-// allow for fetching extra columns from a table outside of the
-// dashboard column.
-type FilterLeftJoin interface {
-	LeftJoin() string
-}
-
-type FilterSelect interface {
-	Select() string
-}
 
 const (
 	TypeFolder      = "dash-folder"
@@ -93,9 +58,10 @@ func (f FolderFilter) Where() (string, []any) {
 }
 
 type FolderUIDFilter struct {
-	Dialect migrator.Dialect
-	OrgID   int64
-	UIDs    []string
+	Dialect              migrator.Dialect
+	OrgID                int64
+	UIDs                 []string
+	NestedFoldersEnabled bool
 }
 
 func (f FolderUIDFilter) Where() (string, []any) {
@@ -119,10 +85,16 @@ func (f FolderUIDFilter) Where() (string, []any) {
 		// do nothing
 	case len(params) == 1:
 		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid = ?)"
+		if f.NestedFoldersEnabled {
+			q = "dashboard.org_id = ? AND dashboard.folder_uid = ?"
+		}
 		params = append([]any{f.OrgID}, params...)
 	default:
 		sqlArray := "(?" + strings.Repeat(",?", len(params)-1) + ")"
 		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN " + sqlArray + ")"
+		if f.NestedFoldersEnabled {
+			q = "dashboard.org_id = ? AND dashboard.folder_uid IN " + sqlArray
+		}
 		params = append([]any{f.OrgID}, params...)
 	}
 
@@ -220,7 +192,7 @@ func sqlUIDin(column string, uids []string) (string, []any) {
 type FolderWithAlertsFilter struct {
 }
 
-var _ FilterWhere = &FolderWithAlertsFilter{}
+var _ model.FilterWhere = &FolderWithAlertsFilter{}
 
 func (f FolderWithAlertsFilter) Where() (string, []any) {
 	return "EXISTS (SELECT 1 FROM alert_rule WHERE alert_rule.namespace_uid = dashboard.uid)", nil

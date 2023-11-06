@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -306,14 +306,14 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 	}
 }
 
-func TestInitializer_oauthEnvVars(t *testing.T) {
-	t.Run("backend datasource with oauth registration", func(t *testing.T) {
+func TestInitializer_authEnvVars(t *testing.T) {
+	t.Run("backend datasource with auth registration", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:                          "test",
 				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{},
 			},
-			ExternalService: &oauth.ExternalService{
+			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",
 				ClientSecret: "clientSecret",
 				PrivateKey:   "privatePem",
@@ -322,7 +322,6 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 
 		envVarsProvider := NewProvider(&config.Cfg{
 			GrafanaAppURL: "https://myorg.com/",
-			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
@@ -499,5 +498,16 @@ func TestService_GetConfigMap_featureToggles(t *testing.T) {
 			}
 			require.Equal(t, tc.expectedConfig, s.GetConfigMap(context.Background(), "", nil))
 		}
+	})
+}
+
+func TestService_GetConfigMap_appURL(t *testing.T) {
+	t.Run("Uses the configured app URL", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				GrafanaAppURL: "https://myorg.com/",
+			},
+		}
+		require.Equal(t, map[string]string{"GF_APP_URL": "https://myorg.com/"}, s.GetConfigMap(context.Background(), "", nil))
 	})
 }

@@ -25,6 +25,11 @@ describe('situation', () => {
     {
       query: '{.foo}',
       cursorPos: 5,
+      expected: { type: 'SPANSET_IN_NAME_SCOPE', scope: '' },
+    },
+    {
+      query: '{.foo }',
+      cursorPos: 6,
       expected: { type: 'SPANSET_EXPRESSION_OPERATORS' },
     },
     {
@@ -49,7 +54,7 @@ describe('situation', () => {
     },
     {
       query: '{span.foo = 200 }',
-      cursorPos: 15,
+      cursorPos: 16,
       expected: { type: 'SPANFIELD_COMBINING_OPERATORS' },
     },
     {

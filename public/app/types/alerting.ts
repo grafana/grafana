@@ -71,7 +71,8 @@ export type CloudNotifierType =
   | 'webex'
   | 'telegram'
   | 'sns'
-  | 'discord';
+  | 'discord'
+  | 'msteams';
 
 export type NotifierType = GrafanaNotifierType | CloudNotifierType;
 export interface NotifierDTO<T = NotifierType> {

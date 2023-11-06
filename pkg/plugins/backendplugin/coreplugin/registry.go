@@ -5,7 +5,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdklog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	sdktracing "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -81,10 +83,13 @@ func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
 	}
 }
 
-func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchService, cm *cloudmonitoring.Service,
+func ProvideCoreRegistry(tracer tracing.Tracer, am *azuremonitor.Service, cw *cloudwatch.CloudWatchService, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service) *Registry {
+	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
+	sdktracing.InitDefaultTracer(tracer)
+
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
 		CloudWatch:      asBackendPlugin(cw.Executor),
 		CloudMonitoring: asBackendPlugin(cm),
@@ -170,4 +175,10 @@ func (l *logWrapper) Level() sdklog.Level {
 func (l *logWrapper) With(args ...any) sdklog.Logger {
 	l.logger = l.logger.New(args...)
 	return l
+}
+
+func (l *logWrapper) FromContext(ctx context.Context) sdklog.Logger {
+	return &logWrapper{
+		logger: l.logger.FromContext(ctx),
+	}
 }

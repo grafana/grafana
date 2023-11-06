@@ -2,9 +2,43 @@ package model
 
 import (
 	"strings"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
+
+// FilterWhere limits the set of dashboard IDs to the dashboards for
+// which the filter is applicable. Results where the first value is
+// an empty string are discarded.
+type FilterWhere interface {
+	Where() (string, []any)
+}
+
+// FilterWith returns any recursive CTE queries (if supported)
+// and their parameters
+type FilterWith interface {
+	With() (string, []any)
+}
+
+// FilterGroupBy should be used after performing an outer join on the
+// search result to ensure there is only one of each ID in the results.
+// The id column must be present in the result.
+type FilterGroupBy interface {
+	GroupBy() (string, []any)
+}
+
+// FilterOrderBy provides an ordering for the search result.
+type FilterOrderBy interface {
+	OrderBy() string
+}
+
+// FilterLeftJoin adds the returned string as a "LEFT OUTER JOIN" to
+// allow for fetching extra columns from a table outside of the
+// dashboard column.
+type FilterLeftJoin interface {
+	LeftJoin() string
+}
+
+type FilterSelect interface {
+	Select() string
+}
 
 type SortOption struct {
 	Name        string
@@ -16,7 +50,7 @@ type SortOption struct {
 }
 
 type SortOptionFilter interface {
-	searchstore.FilterOrderBy
+	FilterOrderBy
 }
 
 type HitType string

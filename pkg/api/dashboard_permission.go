@@ -52,7 +52,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -133,7 +133,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -141,7 +141,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
-			OrgID:       c.OrgID,
+			OrgID:       c.SignedInUser.GetOrgID(),
 			DashboardID: dashID,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,

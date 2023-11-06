@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -124,13 +125,14 @@ func doRequestWithPagination(ctx context.Context, logger log.Logger, r *http.Req
 	return d, nil
 }
 
-func traceReq(ctx context.Context, tracer tracing.Tracer, req *backend.QueryDataRequest, dsInfo datasourceInfo, r *http.Request, target string) tracing.Span {
-	ctx, span := tracer.Start(ctx, "cloudMonitoring query")
-	span.SetAttributes("target", target, attribute.Key("target").String(target))
-	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
-	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-	span.SetAttributes("datasource_id", dsInfo.id, attribute.Key("datasource_id").Int64(dsInfo.id))
-	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
+func traceReq(ctx context.Context, tracer tracing.Tracer, req *backend.QueryDataRequest, dsInfo datasourceInfo, r *http.Request, target string) trace.Span {
+	ctx, span := tracer.Start(ctx, "cloudMonitoring query", trace.WithAttributes(
+		attribute.String("target", target),
+		attribute.String("from", req.Queries[0].TimeRange.From.String()),
+		attribute.String("until", req.Queries[0].TimeRange.To.String()),
+		attribute.Int64("datasource_id", dsInfo.id),
+		attribute.Int64("org_id", req.PluginContext.OrgID),
+	))
 	tracer.Inject(ctx, r.Header, span)
 	return span
 }

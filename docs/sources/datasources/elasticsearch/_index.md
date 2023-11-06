@@ -27,8 +27,8 @@ The following will help you get started working with Elasticsearch and Grafana:
 
 - [What is Elasticsearch?](https://www.elastic.co/guide/en/elasticsearch/reference/current/elasticsearch-intro.html)
 - [Configure the Elasticsearch data source](/docs/grafana/latest/datasources/elasticsearch/configure-elasticsearch-data-source/)
-- [Elasticsearch query editor]({{< relref "./query-editor/" >}})
-- [Elasticsearch template variables]({{< relref "./template-variables/" >}})
+- [Elasticsearch query editor]({{< relref "./query-editor" >}})
+- [Elasticsearch template variables]({{< relref "./template-variables" >}})
 
 ## Supported Elasticsearch versions
 
@@ -42,7 +42,7 @@ Our maintenance policy for Elasticsearch data source is aligned with the [Elasti
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][].
 
 {{% admonition type="note" %}}
 The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
@@ -104,10 +104,10 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 Available in Grafana v7.3 and higher.
 {{% /admonition %}}
 
-To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
+To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration][].
 
 Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
-For more information about AWS authentication options, refer to [AWS authentication]({{< relref "../aws-cloudwatch/aws-authentication/" >}}).
+For more information about AWS authentication options, refer to [AWS authentication]({{< relref "../aws-cloudwatch/aws-authentication" >}}).
 
 {{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
 
@@ -129,18 +129,12 @@ For details, see the [template variables documentation]({{< relref "./template-v
 [build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
 [build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
 
-[configure-grafana-sigv4-auth-enabled]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled"
-[configure-grafana-sigv4-auth-enabled]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled"
-
-[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[configuration]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#sigv4_auth_enabled"
+[configuration]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#sigv4_auth_enabled"
 
 [explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
 [explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
 
-[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
-[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[Provisioning Grafana]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[Provisioning Grafana]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
 {{% /docs/reference %}}

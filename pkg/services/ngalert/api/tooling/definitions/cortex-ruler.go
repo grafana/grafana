@@ -19,6 +19,18 @@ import (
 //       202: NamespaceConfigResponse
 //
 
+// swagger:route Get /api/ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
+//
+// List rules in provisioning format
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
+//       404: description: Not found.
+
 // swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
 //
 // List rule groups
@@ -39,8 +51,20 @@ import (
 //     - application/yaml
 //
 //     Responses:
-//       202: Ack
+//       202: UpdateRuleGroupResponse
 //
+
+// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
+//
+// Converts submitted rule group to provisioning format
+//
+//     Consumes:
+//     - application/json
+//     - application/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
+//       404: description: Not found.
 
 // swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
@@ -126,7 +150,7 @@ import (
 //       202: Ack
 //       404: NotFound
 
-// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
+// swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
 type NamespaceConfig struct {
 	// in:path
 	Namespace string
@@ -461,4 +485,12 @@ func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
 	default:
 		return fmt.Errorf("invalid duration %v", v)
 	}
+}
+
+// swagger:model
+type UpdateRuleGroupResponse struct {
+	Message string   `json:"message"`
+	Created []string `json:"created,omitempty"`
+	Updated []string `json:"updated,omitempty"`
+	Deleted []string `json:"deleted,omitempty"`
 }

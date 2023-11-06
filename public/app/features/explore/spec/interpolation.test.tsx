@@ -17,7 +17,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
-    hasAccess: () => true,
+    hasPermission: () => true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));

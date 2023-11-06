@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -48,11 +49,16 @@ func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
 		return response.Error(422, "User with same email address already exists", nil)
 	}
 
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if errID != nil {
+		hs.log.Error("Failed to parse user id", "err", errID)
+	}
+
 	cmd := tempuser.CreateTempUserCommand{}
 	cmd.OrgID = -1
 	cmd.Email = form.Email
 	cmd.Status = tempuser.TmpUserSignUpStarted
-	cmd.InvitedByUserID = c.UserID
+	cmd.InvitedByUserID = userID
 	cmd.Code, err = util.GetRandomString(20)
 	if err != nil {
 		return response.Error(500, "Failed to generate random string", err)

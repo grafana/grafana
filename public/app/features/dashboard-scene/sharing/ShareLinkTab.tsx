@@ -3,14 +3,7 @@ import React from 'react';
 import { dateTime, UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import {
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneObjectRef,
-  VizPanel,
-  sceneGraph,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -20,9 +13,10 @@ import { trackDashboardSharingActionPerType } from 'app/features/dashboard/compo
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { getDashboardUrl } from '../utils/utils';
+import { getDashboardUrl } from '../utils/urlBuilders';
 
-export interface ShareLinkTabState extends SceneObjectState, ShareOptions {
+import { SceneShareTabState } from './types';
+export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
   dashboardRef: SceneObjectRef<DashboardScene>;
 }
@@ -80,6 +74,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       currentQueryParams: location.search,
       updateQuery: urlParamsUpdate,
       absolute: true,
+      useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && dashboard.state.meta.canEdit),
     });
 
     if (useShortUrl) {

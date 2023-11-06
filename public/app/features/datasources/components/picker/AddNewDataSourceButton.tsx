@@ -2,6 +2,7 @@ import React from 'react';
 
 import { LinkButton, ButtonVariant } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { AccessControlAction } from 'app/types';
 
@@ -23,7 +24,7 @@ export function AddNewDataSourceButton({ variant, onClick }: AddNewDataSourceBut
       onClick={onClick}
       target="_blank"
     >
-      Configure a new data source
+      <Trans i18nKey="data-source-picker.add-new-data-source">Configure a new data source</Trans>
     </LinkButton>
   );
 }

@@ -8,19 +8,22 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
+import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
-  Alert,
-  InlineSwitch,
-  FieldSet,
-  InlineField,
-  InlineFieldRow,
   Input,
   Select,
   SecretInput,
-  Link,
+  Field,
+  Tooltip,
+  Label,
+  Icon,
+  Switch,
+  SecureSocksProxySettings,
+  Collapse,
 } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
+import { Divider } from 'app/features/plugins/sql/components/configuration/Divider';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
@@ -46,9 +49,9 @@ export const postgresVersions: Array<SelectableValue<number>> = [
 
 export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<PostgresOptions, SecureJsonData>) => {
   const [versionOptions, setVersionOptions] = useState(postgresVersions);
+  const [isOpen, setIsOpen] = useState(true);
 
   useAutoDetectFeatures({ props, setVersionOptions });
-
   useMigrateDatabaseFields(props);
 
   const { options, onOptionsChange } = props;
@@ -86,229 +89,323 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
     };
   };
 
-  const labelWidthSSLDetails = 25;
-  const labelWidthConnection = 20;
-  const labelWidthShort = 20;
+  const WIDTH_LONG = 40;
 
   return (
     <>
-      <FieldSet label="PostgreSQL Connection" width={400}>
-        <InlineField labelWidth={labelWidthConnection} label="Host">
+      <DataSourceDescription
+        dataSourceName="Postgres"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/postgres/"
+        hasRequiredFields={true}
+      />
+
+      <Divider />
+
+      <Collapse collapsible label="User Permissions" isOpen={isOpen} onToggle={() => setIsOpen((x) => !x)}>
+        The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
+        query. <br />
+        Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
+        statements like <code>DELETE FROM user;</code> and <code>DROP TABLE user;</code> would be executed. <br />
+        To protect against this we <strong>Highly</strong> recommend you create a specific PostgreSQL user with
+        restricted permissions. Check out the docs for more information.
+      </Collapse>
+
+      <Divider />
+
+      <ConfigSection title="Connection">
+        <Field label="Host URL" required>
           <Input
-            width={40}
+            width={WIDTH_LONG}
             name="host"
             type="text"
             value={options.url || ''}
             placeholder="localhost:5432"
             onChange={onDSOptionChanged('url')}
-          ></Input>
-        </InlineField>
-        <InlineField labelWidth={labelWidthConnection} label="Database">
+          />
+        </Field>
+
+        <Field label="Database name" required>
           <Input
-            width={40}
+            width={WIDTH_LONG}
             name="database"
             value={jsonData.database || ''}
-            placeholder="database name"
+            placeholder="Database"
             onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
-          ></Input>
-        </InlineField>
-        <InlineFieldRow>
-          <InlineField labelWidth={labelWidthConnection} label="User">
-            <Input value={options.user || ''} placeholder="user" onChange={onDSOptionChanged('user')}></Input>
-          </InlineField>
-          <InlineField label="Password">
-            <SecretInput
-              placeholder="Password"
-              isConfigured={options.secureJsonFields?.password}
-              onReset={onResetPassword}
-              onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
-            ></SecretInput>
-          </InlineField>
-        </InlineFieldRow>
-        <InlineField
-          labelWidth={labelWidthConnection}
-          label="TLS/SSL Mode"
-          htmlFor="tlsMode"
-          tooltip="This option determines whether or with what priority a secure TLS/SSL TCP/IP connection will be negotiated with the server."
+          />
+        </Field>
+      </ConfigSection>
+
+      <Divider />
+
+      <ConfigSection title="Authentication">
+        <Field label="Username" required>
+          <Input
+            width={WIDTH_LONG}
+            value={options.user || ''}
+            placeholder="Username"
+            onChange={onDSOptionChanged('user')}
+          />
+        </Field>
+
+        <Field label="Password" required>
+          <SecretInput
+            width={WIDTH_LONG}
+            placeholder="Password"
+            isConfigured={options.secureJsonFields && options.secureJsonFields.password}
+            onReset={onResetPassword}
+            onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
+          />
+        </Field>
+
+        <Field
+          label={
+            <Label>
+              <Stack gap={0.5}>
+                <span>TLS/SSL Mode</span>
+                <Tooltip
+                  content={
+                    <span>
+                      This option determines whether or with what priority a secure TLS/SSL TCP/IP connection will be
+                      negotiated with the server
+                    </span>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
+            </Label>
+          }
         >
           <Select
             options={tlsModes}
-            inputId="tlsMode"
             value={jsonData.sslmode || PostgresTLSModes.verifyFull}
             onChange={onJSONDataOptionSelected('sslmode')}
-          ></Select>
-        </InlineField>
+            width={WIDTH_LONG}
+          />
+        </Field>
+
         {options.jsonData.sslmode !== PostgresTLSModes.disable ? (
-          <InlineField
-            labelWidth={labelWidthConnection}
-            label="TLS/SSL Method"
-            htmlFor="tlsMethod"
-            tooltip={
-              <span>
-                This option determines how TLS/SSL certifications are configured. Selecting <i>File system path</i> will
-                allow you to configure certificates by specifying paths to existing certificates on the local file
-                system where Grafana is running. Be sure that the file is readable by the user executing the Grafana
-                process.
-                <br />
-                <br />
-                Selecting <i>Certificate content</i> will allow you to configure certificates by specifying its content.
-                The content will be stored encrypted in Grafana&apos;s database. When connecting to the database the
-                certificates will be written as files to Grafana&apos;s configured data path on the local file system.
-              </span>
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>TLS/SSL Method</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        This option determines how TLS/SSL certifications are configured. Selecting{' '}
+                        <i>File system path</i> will allow you to configure certificates by specifying paths to existing
+                        certificates on the local file system where Grafana is running. Be sure that the file is
+                        readable by the user executing the Grafana process.
+                        <br />
+                        <br />
+                        Selecting <i>Certificate content</i> will allow you to configure certificates by specifying its
+                        content. The content will be stored encrypted in Grafana&apos;s database. When connecting to the
+                        database the certificates will be written as files to Grafana&apos;s configured data path on the
+                        local file system.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
             }
           >
             <Select
               options={tlsMethods}
-              inputId="tlsMethod"
               value={jsonData.tlsConfigurationMethod || PostgresTLSMethods.filePath}
               onChange={onJSONDataOptionSelected('tlsConfigurationMethod')}
-            ></Select>
-          </InlineField>
-        ) : null}
-      </FieldSet>
-
-      {config.secureSocksDSProxyEnabled && (
-        <FieldSet label="Secure Socks Proxy">
-          <InlineField labelWidth={26} label="Enabled" tooltip="Connect to this datasource via the secure socks proxy.">
-            <InlineSwitch
-              value={options.jsonData.enableSecureSocksProxy ?? false}
-              onChange={(event) =>
-                onOptionsChange({
-                  ...options,
-                  jsonData: { ...options.jsonData, enableSecureSocksProxy: event!.currentTarget.checked },
-                })
-              }
+              width={WIDTH_LONG}
             />
-          </InlineField>
-        </FieldSet>
-      )}
+          </Field>
+        ) : null}
+      </ConfigSection>
+
       {jsonData.sslmode !== PostgresTLSModes.disable ? (
-        <FieldSet label="TLS/SSL Auth Details">
-          {jsonData.tlsConfigurationMethod === PostgresTLSMethods.fileContent ? (
-            <TLSSecretsConfig
-              showCACert={
-                jsonData.sslmode === PostgresTLSModes.verifyCA || jsonData.sslmode === PostgresTLSModes.verifyFull
-              }
-              editorProps={props}
-              labelWidth={labelWidthSSLDetails}
-            ></TLSSecretsConfig>
-          ) : (
-            <>
-              <InlineField
-                tooltip={
-                  <span>
-                    If the selected TLS/SSL mode requires a server root certificate, provide the path to the file here.
-                  </span>
+        <>
+          <Divider />
+          <ConfigSection title="TLS/SSL Auth Details">
+            {jsonData.tlsConfigurationMethod === PostgresTLSMethods.fileContent ? (
+              <TLSSecretsConfig
+                showCACert={
+                  jsonData.sslmode === PostgresTLSModes.verifyCA || jsonData.sslmode === PostgresTLSModes.verifyFull
                 }
-                labelWidth={labelWidthSSLDetails}
-                label="TLS/SSL Root Certificate"
-              >
-                <Input
-                  value={jsonData.sslRootCertFile || ''}
-                  onChange={onUpdateDatasourceJsonDataOption(props, 'sslRootCertFile')}
-                  placeholder="TLS/SSL root cert file"
-                ></Input>
-              </InlineField>
-              <InlineField
-                tooltip={
-                  <span>
-                    To authenticate with an TLS/SSL client certificate, provide the path to the file here. Be sure that
-                    the file is readable by the user executing the grafana process.
-                  </span>
-                }
-                labelWidth={labelWidthSSLDetails}
-                label="TLS/SSL Client Certificate"
-              >
-                <Input
-                  value={jsonData.sslCertFile || ''}
-                  onChange={onUpdateDatasourceJsonDataOption(props, 'sslCertFile')}
-                  placeholder="TLS/SSL client cert file"
-                ></Input>
-              </InlineField>
-              <InlineField
-                tooltip={
-                  <span>
-                    To authenticate with a client TLS/SSL certificate, provide the path to the corresponding key file
-                    here. Be sure that the file is <i>only</i> readable by the user executing the grafana process.
-                  </span>
-                }
-                labelWidth={labelWidthSSLDetails}
-                label="TLS/SSL Client Key"
-              >
-                <Input
-                  value={jsonData.sslKeyFile || ''}
-                  onChange={onUpdateDatasourceJsonDataOption(props, 'sslKeyFile')}
-                  placeholder="TLS/SSL client key file"
-                ></Input>
-              </InlineField>
-            </>
-          )}
-        </FieldSet>
+                editorProps={props}
+                labelWidth={WIDTH_LONG}
+              />
+            ) : (
+              <>
+                <Field
+                  label={
+                    <Label>
+                      <Stack gap={0.5}>
+                        <span>TLS/SSL Root Certificate</span>
+                        <Tooltip
+                          content={
+                            <span>
+                              If the selected TLS/SSL mode requires a server root certificate, provide the path to the
+                              file here.
+                            </span>
+                          }
+                        >
+                          <Icon name="info-circle" size="sm" />
+                        </Tooltip>
+                      </Stack>
+                    </Label>
+                  }
+                >
+                  <Input
+                    value={jsonData.sslRootCertFile || ''}
+                    onChange={onUpdateDatasourceJsonDataOption(props, 'sslRootCertFile')}
+                    placeholder="TLS/SSL root cert file"
+                    width={WIDTH_LONG}
+                  />
+                </Field>
+                <Field
+                  label={
+                    <Label>
+                      <Stack gap={0.5}>
+                        <span>TLS/SSL Client Certificate</span>
+                        <Tooltip
+                          content={
+                            <span>
+                              To authenticate with an TLS/SSL client certificate, provide the path to the file here. Be
+                              sure that the file is readable by the user executing the grafana process.
+                            </span>
+                          }
+                        >
+                          <Icon name="info-circle" size="sm" />
+                        </Tooltip>
+                      </Stack>
+                    </Label>
+                  }
+                >
+                  <Input
+                    value={jsonData.sslCertFile || ''}
+                    onChange={onUpdateDatasourceJsonDataOption(props, 'sslCertFile')}
+                    placeholder="TLS/SSL client cert file"
+                    width={WIDTH_LONG}
+                  />
+                </Field>
+                <Field
+                  label={
+                    <Label>
+                      <Stack gap={0.5}>
+                        <span>TLS/SSL Client Key</span>
+                        <Tooltip
+                          content={
+                            <span>
+                              To authenticate with a client TLS/SSL certificate, provide the path to the corresponding
+                              key file here. Be sure that the file is <i>only</i> readable by the user executing the
+                              grafana process.
+                            </span>
+                          }
+                        >
+                          <Icon name="info-circle" size="sm" />
+                        </Tooltip>
+                      </Stack>
+                    </Label>
+                  }
+                >
+                  <Input
+                    value={jsonData.sslKeyFile || ''}
+                    onChange={onUpdateDatasourceJsonDataOption(props, 'sslKeyFile')}
+                    placeholder="TLS/SSL client key file"
+                    width={WIDTH_LONG}
+                  />
+                </Field>
+              </>
+            )}
+          </ConfigSection>
+        </>
       ) : null}
 
-      <ConnectionLimits labelWidth={labelWidthShort} options={options} onOptionsChange={onOptionsChange} />
+      <Divider />
 
-      <FieldSet label="PostgreSQL details">
-        <InlineField
-          tooltip="This option controls what functions are available in the PostgreSQL query builder"
-          labelWidth={labelWidthShort}
-          htmlFor="postgresVersion"
-          label="Version"
-        >
-          <Select
-            value={jsonData.postgresVersion || 903}
-            inputId="postgresVersion"
-            onChange={onJSONDataOptionSelected('postgresVersion')}
-            options={versionOptions}
-          ></Select>
-        </InlineField>
-        <InlineField
-          tooltip={
-            <span>
-              TimescaleDB is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use
-              <code>time_bucket</code> in the <code>$__timeGroup</code> macro and display TimescaleDB specific aggregate
-              functions in the query builder.
-            </span>
-          }
-          labelWidth={labelWidthShort}
-          label="TimescaleDB"
-          htmlFor="timescaledb"
-        >
-          <InlineSwitch
-            id="timescaledb"
-            value={jsonData.timescaledb || false}
-            onChange={onTimeScaleDBChanged}
-          ></InlineSwitch>
-        </InlineField>
-        <InlineField
-          tooltip={
-            <span>
-              A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example
-              <code>1m</code> if your data is written every minute.
-            </span>
-          }
-          labelWidth={labelWidthShort}
-          label="Min time interval"
-        >
-          <Input
-            placeholder="1m"
-            value={jsonData.timeInterval || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
-          ></Input>
-        </InlineField>
-      </FieldSet>
+      <ConfigSection title="Additional settings" isCollapsible>
+        <ConfigSubSection title="PostgreSQL Options">
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>Version</span>
+                  <Tooltip
+                    content={
+                      <span>This option controls what functions are available in the PostgreSQL query builder</span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <Select
+              value={jsonData.postgresVersion || 903}
+              onChange={onJSONDataOptionSelected('postgresVersion')}
+              options={versionOptions}
+              width={WIDTH_LONG}
+            />
+          </Field>
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>Min time interval</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
+                        example
+                        <code>1m</code> if your data is written every minute.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <Input
+              placeholder="1m"
+              value={jsonData.timeInterval || ''}
+              onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
+              width={WIDTH_LONG}
+            />
+          </Field>
+          <Field
+            label={
+              <Label>
+                <Stack gap={0.5}>
+                  <span>TimescaleDB</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        TimescaleDB is a time-series database built as a PostgreSQL extension. If enabled, Grafana will
+                        use
+                        <code>time_bucket</code> in the <code>$__timeGroup</code> macro and display TimescaleDB specific
+                        aggregate functions in the query builder.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+          >
+            <Switch value={jsonData.timescaledb || false} onChange={onTimeScaleDBChanged} width={WIDTH_LONG} />
+          </Field>
+        </ConfigSubSection>
 
-      <Alert title="User Permission" severity="info">
-        The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
-        query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
-        statements like <code>DELETE FROM user;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-        against this we <strong>Highly</strong> recommend you create a specific PostgreSQL user with restricted
-        permissions. Check out the{' '}
-        <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/postgres/">
-          PostgreSQL Data Source Docs
-        </Link>{' '}
-        for more information.
-      </Alert>
+        <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
+
+        {config.secureSocksDSProxyEnabled && (
+          <SecureSocksProxySettings options={options} onOptionsChange={() => onOptionsChange(options)} />
+        )}
+      </ConfigSection>
     </>
   );
 };

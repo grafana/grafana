@@ -10,6 +10,7 @@ export * from './object';
 export * from './namedColorsPalette';
 export * from './series';
 export * from './binaryOperators';
+export * from './unaryOperators';
 export * from './nodeGraph';
 export * from './selectUtils';
 export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './OptionsUIBuilders';

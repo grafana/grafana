@@ -40,27 +40,7 @@ import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
 import { calculateNewPanelGridPos } from '../utils/panel';
 
-export interface DashboardPageRouteParams {
-  uid?: string;
-  type?: string;
-  slug?: string;
-  accessToken?: string;
-}
-
-export type DashboardPageRouteSearchParams = {
-  tab?: string;
-  folderUid?: string;
-  editPanel?: string;
-  viewPanel?: string;
-  editview?: string;
-  addWidget?: boolean;
-  panelType?: string;
-  inspect?: string;
-  from?: string;
-  to?: string;
-  refresh?: string;
-  kiosk?: string | true;
-};
+import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
 export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
@@ -449,10 +429,14 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   if (folderUid && pageNav) {
     if (newBrowseDashboardsEnabled()) {
       const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
-      pageNav = {
-        ...pageNav,
-        parentItem: folderNavModel,
-      };
+      // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+      // don't show the "page not found" breadcrumb
+      if (folderNavModel.id !== 'not-found') {
+        pageNav = {
+          ...pageNav,
+          parentItem: folderNavModel,
+        };
+      }
     } else {
       // Check if folder changed
       if (folderTitle && pageNav.parentItem?.text !== folderTitle) {

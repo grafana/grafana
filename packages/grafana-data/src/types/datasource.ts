@@ -282,7 +282,7 @@ abstract class DataSourceApi<
   /**
    * Variable query action.
    */
-  metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
+  metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
 
   /**
    * Get tag keys for adhoc filters
@@ -333,7 +333,7 @@ abstract class DataSourceApi<
 
   getVersion?(optionalOptions?: any): Promise<string>;
 
-  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars): TQuery[];
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[];
 
   /**
    * An annotation processor allows explicit control for how annotations are managed.
@@ -552,6 +552,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelId?: number;
   dashboardUID?: string;
 
+  /** Filters to dynamically apply to all queries */
+  filters?: AdHocVariableFilter[];
+
   // Request Timing
   startTime: number;
   endTime?: number;
@@ -710,7 +713,7 @@ abstract class LanguageProvider {
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.
    */
-  abstract start: () => Promise<Array<Promise<any>>>;
+  abstract start: (timeRange?: TimeRange) => Promise<Array<Promise<any>>>;
   startTask?: Promise<any[]>;
 }
 

@@ -5,6 +5,7 @@ import React from 'react';
 import { dateMath, dateTime, EventBus, LoadingState, TimeRange, toDataFrame, VizOrientation } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { BarGaugeDisplayMode, BarGaugeValueMode } from '@grafana/schema';
+import { BarGaugeNamePlacement } from '@grafana/schema/dist/esm/common/common.gen';
 
 import { BarGaugePanel, BarGaugePanelProps } from './BarGaugePanel';
 
@@ -102,6 +103,7 @@ function buildPanelData(overrideValues?: Partial<BarGaugePanelProps>): BarGaugeP
       minVizHeight: 10,
       minVizWidth: 0,
       valueMode: BarGaugeValueMode.Color,
+      namePlacement: BarGaugeNamePlacement.Auto,
     },
     transparent: false,
     timeRange,

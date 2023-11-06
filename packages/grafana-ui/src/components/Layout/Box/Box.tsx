@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { ElementType } from 'react';
+import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { AlignItems, JustifyContent } from '../Flex/Flex';
+import { AlignItems, JustifyContent } from '../Stack/Stack';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 
 type Display = 'flex' | 'block' | 'inline' | 'none';
@@ -14,7 +14,7 @@ export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 's
 export type BorderRadius = keyof ThemeShape['radius'];
 export type BoxShadow = keyof ThemeShadows;
 
-interface BoxProps {
+interface BoxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   // Margin props
   /** Sets the property `margin` */
   margin?: ResponsiveProp<ThemeSpacingTokens>;
@@ -59,6 +59,7 @@ interface BoxProps {
   shrink?: ResponsiveProp<number>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
+  gap?: ResponsiveProp<ThemeSpacingTokens>;
 
   // Other props
   backgroundColor?: ResponsiveProp<BackgroundColor>;
@@ -68,34 +69,37 @@ interface BoxProps {
   element?: ElementType;
 }
 
-export const Box = ({
-  children,
-  margin,
-  marginX,
-  marginY,
-  marginTop,
-  marginBottom,
-  marginLeft,
-  marginRight,
-  padding,
-  paddingX,
-  paddingY,
-  paddingTop,
-  paddingBottom,
-  paddingLeft,
-  paddingRight,
-  display,
-  backgroundColor,
-  grow,
-  shrink,
-  borderColor,
-  borderStyle,
-  borderRadius,
-  justifyContent,
-  alignItems,
-  boxShadow,
-  element,
-}: React.PropsWithChildren<BoxProps>) => {
+export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, ref) => {
+  const {
+    children,
+    margin,
+    marginX,
+    marginY,
+    marginTop,
+    marginBottom,
+    marginLeft,
+    marginRight,
+    padding,
+    paddingX,
+    paddingY,
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    display,
+    backgroundColor,
+    grow,
+    shrink,
+    borderColor,
+    borderStyle,
+    borderRadius,
+    justifyContent,
+    alignItems,
+    boxShadow,
+    element,
+    gap,
+    ...rest
+  } = props;
   const styles = useStyles2(
     getStyles,
     margin,
@@ -121,12 +125,17 @@ export const Box = ({
     borderRadius,
     justifyContent,
     alignItems,
-    boxShadow
+    boxShadow,
+    gap
   );
   const Element = element ?? 'div';
 
-  return <Element className={styles.root}>{children}</Element>;
-};
+  return (
+    <Element ref={ref} className={styles.root} {...rest}>
+      {children}
+    </Element>
+  );
+});
 
 Box.displayName = 'Box';
 
@@ -136,7 +145,7 @@ const customBorderColor = (color: BorderColor, theme: GrafanaTheme2) => {
     case 'success':
     case 'info':
     case 'warning':
-      return theme.colors[color].border;
+      return theme.colors[color].borderTransparent;
     default:
       return color ? theme.colors.border[color] : undefined;
   }
@@ -179,7 +188,8 @@ const getStyles = (
   borderRadius: BoxProps['borderRadius'],
   justifyContent: BoxProps['justifyContent'],
   alignItems: BoxProps['alignItems'],
-  boxShadow: BoxProps['boxShadow']
+  boxShadow: BoxProps['boxShadow'],
+  gap: BoxProps['gap']
 ) => {
   return {
     root: css([
@@ -261,6 +271,9 @@ const getStyles = (
       })),
       getResponsiveStyle(theme, boxShadow, (val) => ({
         boxShadow: theme.shadows[val],
+      })),
+      getResponsiveStyle(theme, gap, (val) => ({
+        gap: theme.spacing(val),
       })),
     ]),
   };

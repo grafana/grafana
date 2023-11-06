@@ -138,7 +138,7 @@ By default, you cannot edit resources provisioned via Terraform from the UI. Thi
 
 **Note:**
 
-You can re-use the same templates across many contact points. In the example above, a shared template ie embedded using the statement `{{ template “Alert Instance Template” . }}`
+You can reuse the same templates across many contact points. In the example above, a shared template ie embedded using the statement `{{ template “Alert Instance Template” . }}`
 
 This fragment can then be managed separately in Terraform:
 

@@ -5,7 +5,7 @@ import React from 'react';
 import { of } from 'rxjs';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { ArrayVector, CoreApp } from '@grafana/data';
+import { CoreApp } from '@grafana/data';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
@@ -15,6 +15,19 @@ import { AzureMonitorQuery } from '../../types';
 
 import Filters from './Filters';
 import { setFilters } from './setQueryValue';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    __esModule: true,
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => ({
+      replace: jest.fn(),
+      getVariables: jest.fn(),
+      updateTimeRange: jest.fn(),
+      containsTemplate: jest.fn(),
+    }),
+  };
+});
 
 const variableOptionGroup = {
   label: 'Template variables',
@@ -38,9 +51,6 @@ const addFilter = async (
   rerender: (ui: React.ReactElement) => void
 ) => {
   const { property, operation, index } = filter;
-  const resultVector = new ArrayVector([
-    `{"${property}":[${filter.filters.map(({ count, value }) => `{"${property}":"${value}", "count":${count}}`)}]}`,
-  ]);
   mockDatasource.azureLogAnalyticsDatasource.query = jest.fn().mockReturnValue(
     of({
       data: [
@@ -69,7 +79,11 @@ const addFilter = async (
                   },
                 ],
               },
-              values: resultVector,
+              values: [
+                `{"${property}":[${filter.filters.map(
+                  ({ count, value }) => `{"${property}":"${value}", "count":${count}}`
+                )}]}`,
+              ],
               entities: {},
             },
           ],
@@ -389,10 +403,8 @@ describe(`Traces Filters`, () => {
         ],
       },
     };
-    const removeLabel = screen.getAllByLabelText(`Remove`);
-    await act(async () => {
-      await userEvent.click(removeLabel[1]);
-    });
+    const removeLabel = screen.getAllByLabelText(/Remove/);
+    await userEvent.click(removeLabel[1]);
 
     rerender(
       <Filters

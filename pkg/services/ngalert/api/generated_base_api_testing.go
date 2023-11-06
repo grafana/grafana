@@ -66,6 +66,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 		group.Post(
 			toMacaronPath("/api/v1/rule/backtest"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/rule/backtest"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -77,6 +78,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 		group.Post(
 			toMacaronPath("/api/v1/eval"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/eval"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -88,6 +90,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 		group.Post(
 			toMacaronPath("/api/v1/rule/test/{DatasourceUID}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/rule/test/{DatasourceUID}"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -99,6 +102,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 		group.Post(
 			toMacaronPath("/api/v1/rule/test/grafana"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/rule/test/grafana"),
 			metrics.Instrument(
 				http.MethodPost,

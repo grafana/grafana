@@ -30,6 +30,10 @@ export enum ReducerID {
   uniqueValues = 'uniqueValues',
 }
 
+export function isReducerID(id: string): id is ReducerID {
+  return Object.keys(ReducerID).includes(id);
+}
+
 // Internal function
 type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 
@@ -133,7 +137,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.lastNotNull,
     name: 'Last *',
-    description: 'Last non-null value',
+    description: 'Last non-null value (also excludes NaNs)',
     standard: true,
     aliasIds: ['current'],
     reduce: calculateLastNotNull,
@@ -148,7 +152,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.firstNotNull,
     name: 'First *',
-    description: 'First non-null value',
+    description: 'First non-null value (also excludes NaNs)',
     standard: true,
     reduce: calculateFirstNotNull,
   },
@@ -254,7 +258,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'All values',
     description: 'Returns an array with all values',
     standard: false,
-    reduce: (field: Field) => ({ allValues: field.values }),
+    reduce: (field: Field) => ({ allValues: [...field.values] }),
   },
   {
     id: ReducerID.uniqueValues,
@@ -316,8 +320,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
     calcs.count++;
 
-    if (currentValue != null) {
-      // null || undefined
+    if (currentValue != null && !Number.isNaN(currentValue)) {
+      // null || undefined || NaN
       const isFirst = calcs.firstNotNull === null;
       if (isFirst) {
         calcs.firstNotNull = currentValue;
@@ -414,7 +418,7 @@ function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: b
   const data = field.values;
   for (let idx = 0; idx < data.length; idx++) {
     const v = data[idx];
-    if (v != null && v !== undefined) {
+    if (v != null && !Number.isNaN(v)) {
       return { firstNotNull: v };
     }
   }
@@ -431,7 +435,7 @@ function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: bo
   let idx = data.length - 1;
   while (idx >= 0) {
     const v = data[idx--];
-    if (v != null && v !== undefined) {
+    if (v != null && !Number.isNaN(v)) {
       return { lastNotNull: v };
     }
   }

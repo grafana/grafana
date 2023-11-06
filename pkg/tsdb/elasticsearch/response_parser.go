@@ -13,13 +13,16 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/instrumentation"
 )
 
 const (
@@ -51,13 +54,15 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 	if responses == nil {
 		return &result, nil
 	}
-	ctx, span := tracer.Start(ctx, "datasource.elastic.parseResponse")
-	span.SetAttributes("responseLength", len(responses), attribute.Key("responseLength").Int(len(responses)))
+	ctx, span := tracer.Start(ctx, "datasource.elastic.parseResponse", trace.WithAttributes(
+		attribute.Int("responseLength", len(responses)),
+	))
 	defer span.End()
 
 	for i, res := range responses {
-		_, resSpan := tracer.Start(ctx, "datasource.elastic.parseResponse.response")
-		resSpan.SetAttributes("queryMetricType", targets[i].Metrics[0].Type, attribute.Key("queryMetricType").String(targets[i].Metrics[0].Type))
+		_, resSpan := tracer.Start(ctx, "datasource.elastic.parseResponse.response", trace.WithAttributes(
+			attribute.String("queryMetricType", targets[i].Metrics[0].Type),
+		))
 		start := time.Now()
 		target := targets[i]
 
@@ -69,9 +74,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			resSpan.End()
 			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
-			result.Responses[target.RefID] = backend.DataResponse{
-				Error: errors.New(errResult),
-			}
+			result.Responses[target.RefID] = errorsource.Response(errorsource.PluginError(errors.New(errResult), false))
 			continue
 		}
 
@@ -109,8 +112,9 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 				span.SetStatus(codes.Error, err.Error())
 				resSpan.RecordError(err)
 				resSpan.SetStatus(codes.Error, err.Error())
+				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations), "stage", es.StageParseResponse)
+				instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
 				resSpan.End()
-				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations))
 				return &backend.QueryDataResponse{}, err
 			}
 			nameFields(queryRes, target)
@@ -118,8 +122,9 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 
 			result.Responses[target.RefID] = queryRes
 		}
-		resSpan.End()
+		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
 		logger.Info("Finished processing of response", "duration", time.Since(start), "stage", es.StageParseResponse)
+		resSpan.End()
 	}
 	return &result, nil
 }

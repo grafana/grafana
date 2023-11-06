@@ -162,7 +162,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		var resObj secretsErrorResponseBody
 		err = json.Unmarshal(buf.Bytes(), &resObj)
 		require.NoError(t, err)
-		require.Equal(t, "unknown error", resObj.Error)
+		require.Equal(t, "", resObj.Error)
 		require.Contains(t, resObj.Message, "Secrets Plugin error:")
 	})
 }
@@ -235,15 +235,15 @@ func TestDataSourceQueryError(t *testing.T) {
 	}{
 		{
 			request:        reqValid,
-			clientErr:      backendplugin.ErrPluginUnavailable,
+			clientErr:      plugins.ErrPluginUnavailable,
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   `{"message":"Internal server error","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
+			expectedBody:   `{"message":"Plugin unavailable","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
 		},
 		{
 			request:        reqValid,
-			clientErr:      backendplugin.ErrMethodNotImplemented,
-			expectedStatus: http.StatusNotImplemented,
-			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
+			clientErr:      plugins.ErrMethodNotImplemented,
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"message":"Method not implemented","messageId":"plugin.notImplemented","statusCode":404,"traceID":""}`,
 		},
 		{
 			request:        reqValid,
@@ -264,12 +264,12 @@ func TestDataSourceQueryError(t *testing.T) {
 		{
 			request:        reqDatasourceByUidNotFound,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
+			expectedBody:   `{"message":"Data source not found","traceID":""}`,
 		},
 		{
 			request:        reqDatasourceByIdNotFound,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
+			expectedBody:   `{"message":"Data source not found","traceID":""}`,
 		},
 	}
 

@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byText } from 'testing-library-selector';
@@ -57,14 +58,18 @@ const mocks = {
 const ui = {
   actionButtons: {
     edit: byRole('link', { name: /edit/i }),
-    clone: byRole('button', { name: /^copy$/i }),
-    delete: byRole('button', { name: /delete/i }),
     silence: byRole('link', { name: 'Silence' }),
+  },
+  moreButton: byRole('button', { name: /More/i }),
+  moreButtons: {
+    duplicate: byRole('menuitem', { name: /^Duplicate$/i }),
+    delete: byRole('menuitem', { name: /delete/i }),
   },
   loadingIndicator: byText(/Loading rule/i),
 };
 
-const renderRuleViewer = async (ruleId?: string) => {
+const renderRuleViewer = async (ruleId: string) => {
+  locationService.push(`/alerting/grafana/${ruleId}/view`);
   render(
     <TestProvider>
       <RuleViewer {...mockRoute(ruleId)} />
@@ -149,7 +154,7 @@ describe('RuleViewer', () => {
 
   it('should render page with grafana alert', async () => {
     mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
-    await renderRuleViewer();
+    await renderRuleViewer('test1');
 
     expect(screen.getByText(/test alert/i)).toBeInTheDocument();
   });
@@ -191,7 +196,7 @@ describe('RuleDetails RBAC', () => {
       });
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
@@ -208,11 +213,14 @@ describe('RuleDetails RBAC', () => {
       });
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
+      const user = userEvent.setup();
+
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
+      await user.click(ui.moreButton.get());
 
       // Assert
-      expect(ui.actionButtons.delete.get()).toBeInTheDocument();
+      expect(ui.moreButtons.delete.get()).toBeInTheDocument();
     });
 
     it('Should not render Silence button for users wihout the instance create permission', async () => {
@@ -227,7 +235,7 @@ describe('RuleDetails RBAC', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       await waitFor(() => {
@@ -249,7 +257,7 @@ describe('RuleDetails RBAC', () => {
         .mockImplementation((action) => action === AccessControlAction.AlertingInstanceCreate);
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       await waitFor(() => {
@@ -266,9 +274,12 @@ describe('RuleDetails RBAC', () => {
       });
       grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
 
-      await renderRuleViewer();
+      const user = userEvent.setup();
 
-      expect(ui.actionButtons.clone.get()).toBeInTheDocument();
+      await renderRuleViewer('test1');
+      await user.click(ui.moreButton.get());
+
+      expect(ui.moreButtons.duplicate.get()).toBeInTheDocument();
     });
 
     it('Should NOT render clone button for users without create rule permission', async () => {
@@ -281,10 +292,12 @@ describe('RuleDetails RBAC', () => {
 
       const { AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete } = AccessControlAction;
       grantUserPermissions([AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete]);
+      const user = userEvent.setup();
 
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
+      await user.click(ui.moreButton.get());
 
-      expect(ui.actionButtons.clone.query()).not.toBeInTheDocument();
+      expect(ui.moreButtons.duplicate.query()).not.toBeInTheDocument();
     });
   });
   describe('Cloud rules action buttons', () => {
@@ -309,7 +322,7 @@ describe('RuleDetails RBAC', () => {
       });
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       expect(ui.actionButtons.edit.query()).toBeInTheDocument();
@@ -326,11 +339,14 @@ describe('RuleDetails RBAC', () => {
       });
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
+      const user = userEvent.setup();
+
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
+      await user.click(ui.moreButton.get());
 
       // Assert
-      expect(ui.actionButtons.delete.query()).toBeInTheDocument();
+      expect(ui.moreButtons.delete.query()).toBeInTheDocument();
     });
   });
 });

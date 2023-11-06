@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
@@ -59,7 +59,7 @@ func ProvideValidationStage(cfg *config.Cfg, sv signature.Validator, ai angulari
 }
 
 func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
-	bp plugins.BackendFactoryProvider, pm process.Manager, externalServiceRegistry oauth.ExternalServiceRegistry,
+	bp plugins.BackendFactoryProvider, pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
 	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{

@@ -3,13 +3,14 @@ import classNames from 'classnames';
 import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { useStyles2, LinkButton } from '@grafana/ui';
+import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
-import { DockedMegaMenu } from './DockedMegaMenu/DockedMegaMenu';
+import { AppChromeMenu } from './AppChromeMenu';
+import { MegaMenu as DockedMegaMenu } from './DockedMegaMenu/MegaMenu';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { SectionNav } from './SectionNav/SectionNav';
@@ -19,11 +20,11 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
-  const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const state = chrome.useState();
-
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   const contentClass = cx({
     [styles.content]: true,
@@ -31,10 +32,26 @@ export function AppChrome({ children }: Props) {
     [styles.contentChromeless]: state.chromeless,
   });
 
+  const handleMegaMenu = () => {
+    switch (state.megaMenu) {
+      case 'closed':
+        chrome.setMegaMenu('open');
+        break;
+      case 'open':
+        chrome.setMegaMenu('closed');
+        break;
+      case 'docked':
+        // on large screens, clicking the button when the menu is docked should close the menu
+        // on smaller screens, the docked menu is hidden, so clicking the button should open the menu
+        const isLargeScreen = window.innerWidth >= theme.breakpoints.values.xl;
+        isLargeScreen ? chrome.setMegaMenu('closed') : chrome.setMegaMenu('open');
+        break;
+    }
+  };
+
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
-
   return (
     <div
       className={classNames('main-view', {
@@ -55,26 +72,31 @@ export function AppChrome({ children }: Props) {
               pageNav={state.pageNav}
               actions={state.actions}
               onToggleSearchBar={chrome.onToggleSearchBar}
-              onToggleMegaMenu={chrome.onToggleMegaMenu}
+              onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
             />
           </div>
         </>
       )}
-      <main className={contentClass} id="pageContent">
+      <main className={contentClass}>
         <div className={styles.panes}>
           {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
             <SectionNav model={state.sectionNav} />
           )}
-          <div className={styles.pageContainer}>{children}</div>
+          {config.featureToggles.dockedMegaMenu && !state.chromeless && state.megaMenu === 'docked' && (
+            <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenu('closed')} />
+          )}
+          <div className={styles.pageContainer} id="pageContent">
+            {children}
+          </div>
         </div>
       </main>
       {!state.chromeless && (
         <>
           {config.featureToggles.dockedMegaMenu ? (
-            <DockedMegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+            <AppChromeMenu />
           ) : (
-            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu('closed')} />
           )}
           <CommandPalette />
         </>
@@ -102,13 +124,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     contentChromeless: css({
       paddingTop: 0,
     }),
+    dockedMegaMenu: css({
+      background: theme.colors.background.primary,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      display: 'none',
+      zIndex: theme.zIndex.navbarFixed,
+
+      [theme.breakpoints.up('xl')]: {
+        display: 'block',
+      },
+    }),
     topNav: css({
       display: 'flex',
       position: 'fixed',
       zIndex: theme.zIndex.navbarFixed,
       left: 0,
       right: 0,
-      boxShadow: shadow,
+      boxShadow: config.featureToggles.dockedMegaMenu ? undefined : shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -130,6 +163,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       minHeight: 0,
       minWidth: 0,
+      overflow: 'auto',
     }),
     skipLink: css({
       position: 'absolute',

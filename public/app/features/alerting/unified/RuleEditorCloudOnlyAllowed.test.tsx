@@ -6,6 +6,7 @@ import { byRole, byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
@@ -13,7 +14,7 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { DataSourceType } from './utils/datasource';
@@ -139,9 +140,9 @@ describe('RuleEditor cloud: checking editable data sources', () => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
+    // grant all permissions in AccessControlActionEnum
+    grantUserPermissions(Object.values(AccessControlAction));
   });
-
-  disableRBAC();
 
   it('for cloud alerts, should only allow to select editable rules sources', async () => {
     mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {

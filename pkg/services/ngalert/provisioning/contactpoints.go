@@ -12,7 +12,6 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -77,42 +76,21 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	if err != nil {
 		return nil, err
 	}
-	contactPoints := []apimodels.EmbeddedContactPoint{}
+	var contactPoints []apimodels.EmbeddedContactPoint
+
 	for _, contactPoint := range revision.cfg.GetGrafanaReceiverMap() {
 		if q.Name != "" && contactPoint.Name != q.Name {
 			continue
 		}
 
-		simpleJson, err := simplejson.NewJson(contactPoint.Settings)
+		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
+			contactPoint,
+			provenances[contactPoint.UID],
+			ecp.decryptValueOrRedacted(q.Decrypt, contactPoint.UID),
+		)
 		if err != nil {
 			return nil, err
 		}
-		embeddedContactPoint := apimodels.EmbeddedContactPoint{
-			UID:                   contactPoint.UID,
-			Type:                  contactPoint.Type,
-			Name:                  contactPoint.Name,
-			DisableResolveMessage: contactPoint.DisableResolveMessage,
-			Settings:              simpleJson,
-		}
-		if val, exists := provenances[embeddedContactPoint.UID]; exists && val != "" {
-			embeddedContactPoint.Provenance = string(val)
-		}
-		for k, v := range contactPoint.SecureSettings {
-			decryptedValue, err := ecp.decryptValue(v)
-			if err != nil {
-				ecp.log.Warn("Decrypting value failed", "error", err.Error())
-				continue
-			}
-			if decryptedValue == "" {
-				continue
-			}
-			if q.Decrypt {
-				embeddedContactPoint.Settings.Set(k, decryptedValue)
-			} else {
-				embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
-			}
-		}
-
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
 	sort.SliceStable(contactPoints, func(i, j int) bool {
@@ -138,27 +116,13 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		if receiver.UID != uid {
 			continue
 		}
-		simpleJson, err := simplejson.NewJson(receiver.Settings)
+		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
+			receiver,
+			models.ProvenanceNone,
+			ecp.decryptValueOrRedacted(true, receiver.UID),
+		)
 		if err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
-		}
-		embeddedContactPoint := apimodels.EmbeddedContactPoint{
-			UID:                   receiver.UID,
-			Type:                  receiver.Type,
-			Name:                  receiver.Name,
-			DisableResolveMessage: receiver.DisableResolveMessage,
-			Settings:              simpleJson,
-		}
-		for k, v := range receiver.SecureSettings {
-			decryptedValue, err := ecp.decryptValue(v)
-			if err != nil {
-				ecp.log.Warn("Decrypting value failed", "error", err.Error())
-				continue
-			}
-			if decryptedValue == "" {
-				continue
-			}
-			embeddedContactPoint.Settings.Set(k, decryptedValue)
 		}
 		return embeddedContactPoint, nil
 	}
@@ -278,7 +242,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	secretKeys, err := GetSecretKeysForContactPointType(contactPoint.Type)
+	secretKeys, err := channels_config.GetSecretKeysForContactPointType(contactPoint.Type)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
@@ -428,18 +392,27 @@ func isContactPointInUse(name string, routes []*apimodels.Route) bool {
 	return false
 }
 
-func (ecp *ContactPointService) decryptValue(value string) (string, error) {
-	decodeValue, err := base64.StdEncoding.DecodeString(value)
-	if err != nil {
-		return "", err
+// decryptValueOrRedacted returns a function that decodes a string from Base64 and then decrypts using secrets.Service.
+// If argument 'decrypt' is false, then returns definitions.RedactedValue regardless of the decrypted value.
+// Otherwise, it returns the decoded and decrypted value. The function returns empty string in the case of errors, which are logged
+func (ecp *ContactPointService) decryptValueOrRedacted(decrypt bool, integrationUID string) func(v string) string {
+	return func(value string) string {
+		decodeValue, err := base64.StdEncoding.DecodeString(value)
+		if err != nil {
+			ecp.log.Warn("Failed to decode secret value from Base64", "error", err.Error(), "integrationUid", integrationUID)
+			return ""
+		}
+		decryptedValue, err := ecp.encryptionService.Decrypt(context.Background(), decodeValue)
+		if err != nil {
+			ecp.log.Warn("Failed to decrypt secret value", "error", err.Error(), "integrationUid", integrationUID)
+			return ""
+		}
+		if decrypt {
+			return string(decryptedValue)
+		} else {
+			return apimodels.RedactedValue
+		}
 	}
-
-	decryptedValue, err := ecp.encryptionService.Decrypt(context.Background(), decodeValue)
-	if err != nil {
-		return "", err
-	}
-
-	return string(decryptedValue), nil
 }
 
 func (ecp *ContactPointService) encryptValue(value string) (string, error) {
@@ -558,27 +531,10 @@ func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint,
 	return nil
 }
 
-// GetSecretKeysForContactPointType returns settings keys of contact point of the given type that are expected to be secrets. Returns error is contact point type is not known.
-func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
-	notifiers := channels_config.GetAvailableNotifiers()
-	for _, n := range notifiers {
-		if n.Type == contactPointType {
-			var secureFields []string
-			for _, field := range n.Options {
-				if field.Secure {
-					secureFields = append(secureFields, field.PropertyName)
-				}
-			}
-			return secureFields, nil
-		}
-	}
-	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
-}
-
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.
 func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string]string, error) {
 	s := map[string]string{}
-	secretKeys, err := GetSecretKeysForContactPointType(e.Type)
+	secretKeys, err := channels_config.GetSecretKeysForContactPointType(e.Type)
 	if err != nil {
 		return nil, err
 	}

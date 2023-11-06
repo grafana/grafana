@@ -575,6 +575,12 @@ URL to load the Rudderstack SDK.
 Optional. If tracking with Rudderstack is enabled, you can provide a custom
 URL to load the Rudderstack config.
 
+### rudderstack_integrations_url
+
+Optional. If tracking with Rudderstack is enabled, you can provide a custom
+URL to load the SDK for destinations running in device mode. This setting is only valid for
+Rudderstack version 1.1 and higher.
+
 ### application_insights_connection_string
 
 If you want to track Grafana usage via Azure Application Insights, then specify _your_ Application Insights connection string. Since the connection string contains semicolons, you need to wrap it in backticks (`). By default, tracking usage is disabled.
@@ -812,9 +818,9 @@ that this organization already exists. Default is 1.
 
 ### auto_assign_org_role
 
-The role new users will be assigned for the main organization (if the
-`auto_assign_org` setting is set to true). Defaults to `Viewer`, other valid
-options are `Admin`, `Editor` and `None`. e.g.:
+The `auto_assign_org_role` setting determines the default role assigned to new users
+in the main organization (if `auto_assign_org` setting is set to true).
+The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For example:
 
 `auto_assign_org_role = Viewer`
 
@@ -1157,6 +1163,32 @@ Specifies whether Grafana hosted in Azure service with Managed Identity configur
 The client ID to use for user-assigned managed identity.
 
 Should be set for user-assigned identity and should be empty for system-assigned identity.
+
+### workload_identity_enabled
+
+Specifies whether Azure AD Workload Identity authentication should be enabled in datasources that support it.
+
+For more documentation on Azure AD Workload Identity, review [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
+
+Disabled by default, needs to be explicitly enabled.
+
+### workload_identity_tenant_id
+
+Tenant ID of the Azure AD Workload Identity.
+
+Allows to override default tenant ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_client_id
+
+Client ID of the Azure AD Workload Identity.
+
+Allows to override default client ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_token_file
+
+Custom path to token file for the Azure AD Workload Identity.
+
+Allows to set a custom path to the projected service account token file.
 
 ### user_identity_enabled
 
@@ -1983,7 +2015,7 @@ Basic auth password.
 
 ### public_url
 
-Optional URL to send to users in notifications. If the string contains the sequence `${file}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+Optional URL to send to users in notifications. If the string contains the sequence `{{file}}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
 
 <hr>
 
@@ -2325,7 +2357,7 @@ Please see [Configure feature toggles]({{< relref "./feature-toggles" >}}) for m
 
 Lets you switch the feature toggle state in the feature management page. The default is `false`.
 
-### update_controller_url
+### update_webhook
 
 Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
 

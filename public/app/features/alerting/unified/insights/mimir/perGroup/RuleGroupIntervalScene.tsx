@@ -1,9 +1,12 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import React from 'react';
+
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
+import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
-export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getRuleGroupIntervalScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -14,16 +17,17 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
         legendFormat: 'interval',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
-    body: PanelBuilders.timeseries()
+    body: PanelBuilders.stat()
       .setTitle(panelTitle)
+      .setDescription('The current and historical rule group evaluation interval')
       .setData(query)
-      .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('s')
+      .setOption('graphMode', BigValueGraphMode.Area)
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

@@ -2,14 +2,15 @@ package pluginsintegration
 
 import (
 	"github.com/google/wire"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/caching"
@@ -59,8 +59,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.RendererManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
-	ProvideClientDecorator,
-	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
@@ -91,8 +89,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(pluginerrs.SignatureErrorTracker), new(*pluginerrs.SignatureErrorRegistry)),
 	pluginerrs.ProvideStore,
 	wire.Bind(new(plugins.ErrorResolver), new(*pluginerrs.Store)),
-	manager.ProvideInstaller,
-	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,
@@ -114,7 +110,7 @@ var WireSet = wire.NewSet(
 	keyretriever.ProvideService,
 	dynamic.ProvideService,
 	serviceregistration.ProvideService,
-	wire.Bind(new(oauth.ExternalServiceRegistry), new(*serviceregistration.Service)),
+	wire.Bind(new(auth.ExternalServiceRegistry), new(*serviceregistration.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -126,6 +122,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	wire.Bind(new(finder.Finder), new(*finder.Local)),
 	finder.ProvideLocalFinder,
+	ProvideClientDecorator,
+	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 )
 
 func ProvideClientDecorator(
@@ -135,36 +133,51 @@ func ProvideClientDecorator(
 	tracer tracing.Tracer,
 	cachingService caching.CachingService,
 	features *featuremgmt.FeatureManager,
+	promRegisterer prometheus.Registerer,
 ) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features)
+	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features, promRegisterer, pluginRegistry)
 }
 
 func NewClientDecorator(
 	cfg *setting.Cfg, pCfg *pCfg.Cfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
+	promRegisterer prometheus.Registerer, registry registry.Service,
 ) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
-	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features)
-
+	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features, promRegisterer, registry)
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager) []plugins.ClientMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
+	var middlewares []plugins.ClientMiddleware
+
+	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+		middlewares = []plugins.ClientMiddleware{
+			clientmiddleware.NewPluginRequestMetaMiddleware(),
+		}
+	}
+
 	skipCookiesNames := []string{cfg.LoginCookieName}
-	middlewares := []plugins.ClientMiddleware{
+	middlewares = append(middlewares,
 		clientmiddleware.NewTracingMiddleware(tracer),
-		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation")),
+		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry, features),
+		clientmiddleware.NewContextualLoggerMiddleware(),
+		clientmiddleware.NewLoggerMiddleware(cfg, log.New("plugin.instrumentation"), features),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewResourceResponseMiddleware(),
-	}
+	)
 
 	// Placing the new service implementation behind a feature flag until it is known to be stable
 	if features.IsEnabled(featuremgmt.FlagUseCachingService) {
 		middlewares = append(middlewares, clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features))
+	}
+
+	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
+		middlewares = append(middlewares, clientmiddleware.NewForwardIDMiddleware())
 	}
 
 	if cfg.SendUserHeader {
@@ -172,6 +185,12 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	}
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
+
+	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+		// StatusSourceMiddleware should be at the very bottom, or any middlewares below it won't see the
+		// correct status source in their context.Context
+		middlewares = append(middlewares, clientmiddleware.NewStatusSourceMiddleware())
+	}
 
 	return middlewares
 }

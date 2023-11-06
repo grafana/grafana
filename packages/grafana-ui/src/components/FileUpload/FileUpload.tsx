@@ -10,7 +10,7 @@ import { getFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 import { trimFileName } from '../../utils/file';
 import { getButtonStyles } from '../Button';
-import { Icon } from '../index';
+import { Icon } from '../Icon/Icon';
 
 export interface Props {
   /** Callback function to handle uploaded file  */
