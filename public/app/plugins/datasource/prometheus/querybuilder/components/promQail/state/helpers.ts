@@ -137,6 +137,104 @@ export async function promQailExplain(
 }
 
 /**
+ * Check if sublist is fully contained in the superlist
+ *
+ * @param sublist
+ * @param superlist
+ * @returns true if fully contained, else false
+ */
+function isContainedIn(sublist: string[], superlist: string[]): boolean {
+  for (const item of sublist) {
+    if (!superlist.includes(item)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Guess the type of a metric, based on its name and its relation to other metrics available
+ *
+ * @param metric     - name of metric whose type to guess
+ * @param allMetrics - list of all available metrics
+ * @returns          - the guess of the type (string): counter,gauge,summary,histogram,'histogram,summary'
+ */
+export function guessMetricType(metric: string, allMetrics: string[]) {
+  const synthetic_metrics = new Set<string>([
+    'up',
+    'scrape_duration_seconds',
+    'scrape_samples_post_metric_relabeling',
+    'scrape_series_added',
+    'scrape_samples_scraped',
+    'ALERTS',
+    'ALERTS_FOR_STATE',
+  ]);
+
+  if (synthetic_metrics.has(metric)) {
+    // these are all known to be counters
+    return 'counter';
+  }
+  if (metric.startsWith(':')) {
+    // probably recording rule
+    return 'gauge';
+  }
+  if (metric.endsWith('_info')) {
+    // typically series of 1s only, the labels are the useful part. TODO: add 'info' type
+    return 'counter';
+  }
+
+  if (metric.endsWith('_created') || metric.endsWith('_total')) {
+    // prometheus naming style recommends counters to have these suffixes.
+    return 'counter';
+  }
+
+  const underscoreIndex = metric.lastIndexOf('_');
+  if (underscoreIndex < 0) {
+    // No underscores in the name at all, very little info to go on. Guess
+    return 'gauge';
+  }
+
+  // See if the suffix is histogram-y or summary-y
+  const [root, suffix] = [metric.slice(0, underscoreIndex), metric.slice(underscoreIndex + 1)];
+
+  if (['bucket', 'count', 'sum'].includes(suffix)) {
+    // Might be histogram + summary
+    let familyMetrics = [`${root}_bucket`, `${root}_count`, `${root}_sum`, root];
+    if (isContainedIn(familyMetrics, allMetrics)) {
+      return 'histogram,summary';
+    }
+
+    // Might be a histogram, if so all these metrics should exist too:
+    familyMetrics = [`${root}_bucket`, `${root}_count`, `${root}_sum`];
+    if (isContainedIn(familyMetrics, allMetrics)) {
+      return 'histogram';
+    }
+
+    // Or might be a summary
+    familyMetrics = [`${root}_sum`, `${root}_count`, root];
+    if (isContainedIn(familyMetrics, allMetrics)) {
+      return 'summary';
+    }
+
+    // Otherwise it's probably just a counter!
+    return 'counter';
+  }
+
+  // One case above doesn't catch: summary or histogram,summary where the non-suffixed metric is chosen
+  const familyMetrics = [`${metric}_sum`, `${metric}_count`, metric];
+  if (isContainedIn(familyMetrics, allMetrics)) {
+    if (allMetrics.includes(`${metric}_bucket`)) {
+      return 'histogram,summary';
+    } else {
+      return 'summary';
+    }
+  }
+
+  // All else fails, guess gauge
+  return 'gauge';
+}
+
+/**
  * Calls the API and adds suggestions to the interaction
  *
  * @param dispatch
@@ -158,10 +256,21 @@ export async function promQailSuggest(
 
   const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
+  // Decide metric type
+  await datasource.languageProvider.start(); //why do I need to do this to prepropulate the list??
+
+  let metricType = '';
+  if (datasource.languageProvider.metricsMetadata) {
+    metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata) ?? '';
+  }
+  if (metricType == '') {
+    // fallback to heuristic guess
+    metricType = guessMetricType(query.metric, datasource.languageProvider.metrics);
+  }
+
   if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
-        let metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata!) ?? '';
         const suggestions = getTemplateSuggestions(
           query.metric,
           metricType,
@@ -193,33 +302,25 @@ export async function promQailSuggest(
     if (interaction?.suggestionType === SuggestionType.AI) {
       feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
 
-      let metricType = '';
-      if (datasource.languageProvider.metricsMetadata) {
-        metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata) ?? '';
-      }
-
       // @ts-ignore llms types issue
       results = await llms.vector.search<TemplateSearchResult>({
         query: interaction.prompt,
         collection: promQLTemplatesCollection,
         topK: 5,
-        filter:
-          metricType === ''
-            ? undefined
-            : {
-                $or: [
-                  {
-                    metric_type: {
-                      $eq: metricType,
-                    },
-                  },
-                  {
-                    metric_type: {
-                      $eq: '*',
-                    },
-                  },
-                ],
+        filter: {
+          $or: [
+            {
+              metric_type: {
+                $eq: metricType,
               },
+            },
+            {
+              metric_type: {
+                $eq: '*',
+              },
+            },
+          ],
+        },
       });
       // TODO: handle errors from vector search
     }
