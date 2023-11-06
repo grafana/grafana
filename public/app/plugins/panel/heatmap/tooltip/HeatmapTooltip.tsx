@@ -43,10 +43,15 @@ interface Props {
 
 export const HeatmapTooltip = (props: Props) => {
   const seriesIdx = props.dataIdxs.findIndex((idx) => idx != null);
+  const styles = useStyles2(getStyles);
 
   // exemplars
   if (seriesIdx === 2) {
-    return <DataHoverView data={props.dataRef.current!.exemplars} rowIndex={props.dataIdxs[2]} header={'Exemplar'} />;
+    return (
+      <div className={styles.exemplarsWrapper}>
+        <DataHoverView data={props.dataRef.current!.exemplars} rowIndex={props.dataIdxs[2]} header={'Exemplar'} />
+      </div>
+    );
   }
 
   return <HeatmapTooltipHover {...props} />;
@@ -366,6 +371,9 @@ const HeatmapTooltipHover = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  exemplarsWrapper: css({
+    padding: '8px',
+  }),
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
