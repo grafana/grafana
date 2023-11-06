@@ -161,7 +161,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   escapeRow = memoizeOne((row: LogRowModel, forceEscape: boolean | undefined) => {
     return row.hasUnescapedContent && forceEscape
       ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
-      : row
+      : row;
   });
 
   render() {
