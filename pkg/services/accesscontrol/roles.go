@@ -201,14 +201,6 @@ var (
 		Group:       "Settings",
 		Permissions: []Permission{
 			{
-				Action: ActionSettingsRead,
-				Scope:  ScopeSettingsSAML,
-			},
-			{
-				Action: ActionSettingsWrite,
-				Scope:  ScopeSettingsSAML,
-			},
-			{
 				Action: ActionSettingsWrite,
 				Scope:  ScopeSettingsAuth,
 			},

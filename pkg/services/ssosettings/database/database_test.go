@@ -113,6 +113,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		require.NoError(t, err)
 
 		list, err := ssoSettingsStore.List(context.Background())
+		require.NoError(t, err)
 
 		require.Equal(t, 1, len(list))
 		require.Equal(t, false, actual.Settings["enabled"])

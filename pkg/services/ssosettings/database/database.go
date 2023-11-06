@@ -9,13 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type SSOSettingsStore struct {
 	sqlStore db.DB
 	log      log.Logger
-	cfg      *setting.Cfg
 }
 
 func ProvideStore(sqlStore db.DB) *SSOSettingsStore {
