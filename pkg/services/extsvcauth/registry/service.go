@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
@@ -17,6 +18,9 @@ type Registry struct {
 	logger      log.Logger
 	oauthServer oauthserver.OAuth2Server
 	saSvc       *extsvcaccounts.ExtSvcAccountsService
+
+	extSvcProvider map[string]extsvcauth.AuthProvider
+	lock           sync.Mutex
 }
 
 func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, saSvc *extsvcaccounts.ExtSvcAccountsService, features featuremgmt.FeatureToggles) *Registry {
@@ -32,6 +36,11 @@ func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, saSvc *extsvcac
 // it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
 // associated service account has the correct permissions.
 func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
+	// Record provider in case of removal
+	r.lock.Lock()
+	r.extSvcProvider[cmd.Name] = cmd.AuthProvider
+	r.lock.Unlock()
+
 	switch cmd.AuthProvider {
 	case extsvcauth.ServiceAccounts:
 		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
@@ -54,5 +63,28 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 
 // RemoveExternalService removes an external service and it's associated resources from the database (ex: service account, token).
 func (r *Registry) RemoveExternalService(ctx context.Context, name string) error {
-	return r.saSvc.RemoveExternalService(ctx, name) // TODO (gamab) do something to handle OAuthProvider, maybe keep a mapping between extsvcnames and providers
+	provider, ok := r.extSvcProvider[name]
+	if !ok {
+		r.logger.Debug("external service not found", "service", name)
+		return nil
+	}
+
+	switch provider {
+	case extsvcauth.ServiceAccounts:
+		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+			r.logger.Debug("Skipping external service removal, flag disabled", "service", name, "flag", featuremgmt.FlagExternalServiceAccounts)
+			return nil
+		}
+		r.logger.Debug("Routing External Service removal to the External Service Account service", "service", name)
+		return r.saSvc.RemoveExternalService(ctx, name)
+	case extsvcauth.OAuth2Server:
+		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+			r.logger.Debug("Skipping external service removal, flag disabled", "service", name, "flag", featuremgmt.FlagExternalServiceAccounts)
+			return nil
+		}
+		r.logger.Debug("Routing External Service removal to the OAuth2Server", "service", name)
+		return r.oauthServer.RemoveExternalService(ctx, name)
+	default:
+		return extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", provider)
+	}
 }
