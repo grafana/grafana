@@ -26,7 +26,7 @@ const onCallReceiverMeta: ReceiverPluginMetadata = {
 };
 
 export const useReceiversMetadata = (receivers: Receiver[]): Map<Receiver, ReceiverPluginMetadata> => {
-  const { installed: isOnCallEnabled, loading } = usePluginBridge(SupportedPlugin.OnCall);
+  const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
   const { data: onCallIntegrations = [] } = onCallApi.useGrafanaOnCallIntegrationsQuery(undefined, {
     skip: !isOnCallEnabled,
   });
@@ -38,10 +38,6 @@ export const useReceiversMetadata = (receivers: Receiver[]): Map<Receiver, Recei
       const onCallReceiver = receiver.grafana_managed_receiver_configs?.find((c) => c.type === ReceiverTypes.OnCall);
 
       if (onCallReceiver) {
-        if (loading) {
-          return;
-        }
-
         if (!isOnCallEnabled) {
           result.set(receiver, getOnCallMetadata(null, onCallReceiver));
           return;
@@ -52,7 +48,7 @@ export const useReceiversMetadata = (receivers: Receiver[]): Map<Receiver, Recei
     });
 
     return result;
-  }, [receivers, loading, isOnCallEnabled, onCallIntegrations]);
+  }, [receivers, isOnCallEnabled, onCallIntegrations]);
 };
 
 export function getOnCallMetadata(
