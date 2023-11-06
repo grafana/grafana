@@ -14,14 +14,13 @@ import {
   FieldType,
   formatLabels,
   getDisplayProcessor,
+  getFieldDisplayName,
   Labels,
-  PreferredVisualisationType,
+  renderLegendFormat,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
-  renderLegendFormat,
 } from '@grafana/data';
-import { calculateFieldDisplayName } from '@grafana/data/src/field/fieldState';
 import { config, FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
 import {
@@ -59,7 +58,11 @@ const isTableResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery
   return target?.format === 'table';
 };
 
-const isHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
+const isCumulativeHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQuery>): boolean => {
+  if (dataFrame.meta?.type === DataFrameType.HeatmapCells) {
+    return false;
+  }
+
   const target = options.targets.find((target) => target.refId === dataFrame.refId);
   return target?.format === 'heatmap';
 };
@@ -80,7 +83,7 @@ export function transformV2(
         f.fields.forEach((field) => {
           if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
             const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
-            field.config.displayNameFromDS = calculateFieldDisplayName(fieldCopy, f, response.data);
+            field.config.displayNameFromDS = getFieldDisplayName(fieldCopy, f, response.data);
           }
         });
       }
@@ -115,7 +118,7 @@ export function transformV2(
 
   const [heatmapResults, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
     framesWithoutTableAndExemplars,
-    (df) => isHeatmapResult(df, request)
+    (df) => isCumulativeHeatmapResult(df, request)
   );
 
   // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
@@ -249,7 +252,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
       // Prometheus specific UI for instant queries
       meta: {
         ...dataFramesByRefId[refId][0].meta,
-        preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType,
+        preferredVisualisationType: 'rawPrometheus' as const,
       },
       length: timeField.values.length,
     };

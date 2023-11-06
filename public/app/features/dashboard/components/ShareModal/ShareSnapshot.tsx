@@ -97,7 +97,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
   saveSnapshot = async (dashboard: DashboardModel, external?: boolean) => {
     const { snapshotExpires } = this.state;
-    const dash = this.dashboard.getSaveModelClone();
+    const dash = this.dashboard.getSaveModelCloneOld();
+
     this.scrubDashboard(dash);
 
     const cmdData = {
@@ -141,6 +142,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
     // remove annotation queries
     const annotations = dash.annotations.list.filter((annotation) => annotation.enable);
+
     dash.annotations.list = annotations.map((annotation) => {
       return {
         name: annotation.name,

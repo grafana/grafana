@@ -1,7 +1,5 @@
-import { List } from 'immutable';
-import { isString } from 'lodash';
-import React from 'react';
 import {
+  AnyObject,
   BasicConfig,
   Config,
   JsonItem,
@@ -9,10 +7,14 @@ import {
   Operator,
   Settings,
   SimpleField,
+  SqlFormatOperator,
   Utils,
   ValueSource,
   Widgets,
-} from 'react-awesome-query-builder';
+} from '@react-awesome-query-builder/ui';
+import { List } from 'immutable';
+import { isString } from 'lodash';
+import React from 'react';
 
 import { dateTime, toOption } from '@grafana/data';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
@@ -202,11 +204,24 @@ export const raqbConfig: Config = {
 
 export type { Config };
 
+const noop = () => '';
+
+const isSqlFormatOp = (func: unknown): func is SqlFormatOperator => {
+  return typeof func === 'function';
+};
+
 function getCustomOperators(config: BasicConfig) {
   const { ...supportedOperators } = config.operators;
-  const noop = () => '';
+
   // IN operator expects array, override IN formatter for multi-value variables
-  const sqlFormatInOp = supportedOperators[Op.IN].sqlFormatOp || noop;
+  const sqlFormatInOpOrNoop = () => {
+    const sqlFormatOp = supportedOperators[Op.IN].sqlFormatOp;
+    if (isSqlFormatOp(sqlFormatOp)) {
+      return sqlFormatOp;
+    }
+    return noop;
+  };
+
   const customSqlInFormatter = (
     field: string,
     op: string,
@@ -214,13 +229,29 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: object,
+    operatorOptions: AnyObject,
     fieldDef: SimpleField
   ) => {
-    return sqlFormatInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
+    return sqlFormatInOpOrNoop()(
+      field,
+      op,
+      splitIfString(value),
+      valueSrc,
+      valueType,
+      opDef,
+      operatorOptions,
+      fieldDef
+    );
   };
   // NOT IN operator expects array, override NOT IN formatter for multi-value variables
-  const sqlFormatNotInOp = supportedOperators[Op.NOT_IN].sqlFormatOp || noop;
+  const sqlFormatNotInOpOrNoop = () => {
+    const sqlFormatOp = supportedOperators[Op.NOT_IN].sqlFormatOp;
+    if (isSqlFormatOp(sqlFormatOp)) {
+      return sqlFormatOp;
+    }
+    return noop;
+  };
+
   const customSqlNotInFormatter = (
     field: string,
     op: string,
@@ -228,10 +259,19 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: object,
+    operatorOptions: AnyObject,
     fieldDef: SimpleField
   ) => {
-    return sqlFormatNotInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
+    return sqlFormatNotInOpOrNoop()(
+      field,
+      op,
+      splitIfString(value),
+      valueSrc,
+      valueType,
+      opDef,
+      operatorOptions,
+      fieldDef
+    );
   };
 
   const customOperators = {

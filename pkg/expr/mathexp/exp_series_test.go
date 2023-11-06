@@ -159,7 +159,7 @@ func TestSeriesExpr(t *testing.T) {
 			e, err := New(tt.expr)
 			tt.newErrIs(t, err)
 			if e != nil {
-				res, err := e.Execute("", tt.vars, tracing.NewFakeTracer())
+				res, err := e.Execute("", tt.vars, tracing.InitializeTracerForTest())
 				tt.execErrIs(t, err)
 				if diff := cmp.Diff(tt.results, res, data.FrameTestCompareOptions()...); diff != "" {
 					t.Errorf("Result mismatch (-want +got):\n%s", diff)

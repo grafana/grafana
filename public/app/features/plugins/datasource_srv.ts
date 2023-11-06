@@ -1,3 +1,5 @@
+import { some } from 'lodash';
+
 import {
   AppEvents,
   DataSourceApi,
@@ -222,7 +224,10 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.alerting && !x.meta.alerting) {
         return false;
       }
-      if (filters.pluginId && x.meta.id !== filters.pluginId) {
+      if (
+        filters.pluginId &&
+        !(x.meta.id === filters.pluginId || some(x.meta.aliasIDs, (id) => id === filters.pluginId))
+      ) {
         return false;
       }
       if (filters.filter && !filters.filter(x)) {
@@ -352,7 +357,7 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
   }
 
   const isString = typeof ref === 'string';
-  return isString ? (ref as string) : ((ref as any)?.uid as string | undefined);
+  return isString ? ref : ref?.uid;
 }
 
 export function variableInterpolation(value: any[]) {

@@ -4,7 +4,7 @@ import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2 } from '@grafana/ui';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -15,9 +15,15 @@ export interface QueryOperationRowHeaderProps {
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;
-  reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
+  reportDragMousePosition: MouseEventHandler<HTMLButtonElement>;
   title?: string;
   id: string;
+  expanderMessages?: ExpanderMessages;
+}
+
+export interface ExpanderMessages {
+  open: string;
+  close: string;
 }
 
 export const QueryOperationRowHeader = ({
@@ -32,8 +38,16 @@ export const QueryOperationRowHeader = ({
   reportDragMousePosition,
   title,
   id,
+  expanderMessages,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
+
+  let tooltipMessage = isContentVisible ? 'Collapse query row' : 'Expand query row';
+  if (expanderMessages !== undefined && isContentVisible) {
+    tooltipMessage = expanderMessages.close;
+  } else if (expanderMessages !== undefined) {
+    tooltipMessage = expanderMessages?.open;
+  }
 
   return (
     <div className={styles.header}>
@@ -41,7 +55,7 @@ export const QueryOperationRowHeader = ({
         {collapsable && (
           <IconButton
             name={isContentVisible ? 'angle-down' : 'angle-right'}
-            tooltip={isContentVisible ? 'Collapse query row' : 'Expand query row'}
+            tooltip={tooltipMessage}
             className={styles.collapseIcon}
             onClick={onRowToggle}
             aria-expanded={isContentVisible}
@@ -62,9 +76,11 @@ export const QueryOperationRowHeader = ({
       <Stack gap={1} alignItems="center" wrap={false}>
         {actionsElement}
         {draggable && (
-          <Icon
+          <IconButton
             title="Drag and drop to reorder"
             name="draggabledots"
+            tooltip="Drag and drop to reorder"
+            tooltipPlacement="bottom"
             size="lg"
             className={styles.dragIcon}
             onMouseMove={reportDragMousePosition}

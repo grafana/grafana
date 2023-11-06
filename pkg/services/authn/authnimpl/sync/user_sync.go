@@ -91,7 +91,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		usr, errCreate = s.createUser(ctx, id)
 		if errCreate != nil {
 			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
-			return errSyncUserInternal.Errorf("unable to create user")
+			return errSyncUserInternal.Errorf("unable to create user: %w", errCreate)
 		}
 	} else {
 		// update user
@@ -163,12 +163,8 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 	return nil
 }
 
-func (s *UserSync) EnableDisabledUserHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	if !identity.ClientParams.EnableDisabledUsers {
-		return nil
-	}
-
-	if !identity.IsDisabled {
+func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	if !identity.ClientParams.EnableUser {
 		return nil
 	}
 

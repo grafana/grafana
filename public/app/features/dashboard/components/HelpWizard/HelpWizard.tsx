@@ -73,7 +73,6 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
       title={`Get help with this panel`}
       size="lg"
       onClose={onClose}
-      scrollableContent
       subtitle={
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>

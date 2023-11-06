@@ -7,7 +7,6 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors/src';
-import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 interface Props {
@@ -64,11 +63,11 @@ export class DebugOverlay extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  infoWrap: css`
-    color: ${theme.colors.text.primary};
-    background: ${tinycolor(theme.components.panel.background).setAlpha(0.7).toString()};
-    border-radius: 2px;
-    padding: 8px;
-  `,
-}));
+const getStyles = (theme: GrafanaTheme2) => ({
+  infoWrap: css({
+    color: theme.colors.text.primary,
+    background: tinycolor(theme.components.panel.background).setAlpha(0.7).toString(),
+    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(1),
+  }),
+});

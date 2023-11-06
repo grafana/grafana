@@ -59,6 +59,10 @@ export interface MetricResponse {
   namespace: string;
 }
 
+export interface RegionResponse {
+  name: string;
+}
+
 export interface SelectableResourceValue extends SelectableValue<string> {
   text: string;
 }

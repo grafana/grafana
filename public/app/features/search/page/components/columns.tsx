@@ -43,7 +43,7 @@ export const generateColumns = (
   const uidField = access.uid;
   const kindField = access.kind;
   let sortFieldWith = 0;
-  const sortField = (access as any)[response.view.dataFrame.meta?.custom?.sortBy] as Field;
+  const sortField: Field = access[response.view.dataFrame.meta?.custom?.sortBy];
   if (sortField) {
     sortFieldWith = 175;
     if (sortField.type === FieldType.time) {

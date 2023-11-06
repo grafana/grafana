@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 
 import { Field, SelectableValue, valueMatchers } from '@grafana/data';
 import { FilterByValueFilter } from '@grafana/data/src/transformations/transformers/filterByValue';
-import { Button, Select } from '@grafana/ui';
+import { Button, Select, InlineField, InlineFieldRow, Box } from '@grafana/ui';
 
 import { valueMatchersUI } from './ValueMatchers/valueMatchersUI';
 
@@ -75,9 +75,8 @@ export const FilterByValueFilterEditor = (props: Props) => {
   }
 
   return (
-    <div className="gf-form-inline">
-      <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-7">Field</div>
+    <InlineFieldRow>
+      <InlineField label="Field" labelWidth={14}>
         <Select
           className="min-width-15 max-width-24"
           placeholder="Field Name"
@@ -85,9 +84,8 @@ export const FilterByValueFilterEditor = (props: Props) => {
           value={filter.fieldName}
           onChange={onChangeField}
         />
-      </div>
-      <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label">Match</div>
+      </InlineField>
+      <InlineField label="Match">
         <Select
           className="width-12"
           placeholder="Select test"
@@ -95,15 +93,14 @@ export const FilterByValueFilterEditor = (props: Props) => {
           value={matcherId}
           onChange={onChangeMatcher}
         />
-      </div>
-      <div className="gf-form gf-form--grow gf-form-spacing">
-        <div className="gf-form-label">Value</div>
+      </InlineField>
+      <InlineField label="Value" grow>
         <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
-      </div>
-      <div className="gf-form">
+      </InlineField>
+      <Box marginBottom={0.5}>
         <Button icon="times" onClick={onDelete} variant="secondary" />
-      </div>
-    </div>
+      </Box>
+    </InlineFieldRow>
   );
 };
 

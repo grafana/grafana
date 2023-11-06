@@ -530,7 +530,6 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
 				SocialBase:           tt.fields.SocialBase,
-				allowedGroups:        tt.fields.allowedGroups,
 				allowedOrganizations: tt.fields.allowedOrganizations,
 				forceUseGraphAPI:     tt.fields.forceUseGraphAPI,
 				cache:                cache,
@@ -538,6 +537,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 
 			if tt.fields.SocialBase == nil {
 				s.SocialBase = newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
+			}
+
+			if tt.fields.allowedGroups != nil {
+				s.allowedGroups = tt.fields.allowedGroups
 			}
 
 			if tt.fields.usGovURL {
@@ -710,14 +713,15 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
 				SocialBase:       tt.fields.SocialBase,
-				allowedGroups:    tt.fields.allowedGroups,
 				forceUseGraphAPI: tt.fields.forceUseGraphAPI,
 				skipOrgRoleSync:  tt.fields.skipOrgRoleSync,
 				cache:            cache,
 			}
 
 			if tt.fields.SocialBase == nil {
-				s.SocialBase = newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
+				s.SocialBase = newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{
+					AllowedGroups: tt.fields.allowedGroups,
+				}, "", false, *featuremgmt.WithFeatures())
 			}
 
 			s.SocialBase.Endpoint.AuthURL = authURL

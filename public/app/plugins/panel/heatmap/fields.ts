@@ -7,11 +7,13 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   GrafanaTheme2,
+  InterpolateFunction,
   LinkModel,
   outerJoinDataFrames,
   ValueFormatter,
   ValueLinkConfig,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { HeatmapCellLayout } from '@grafana/schema';
 import {
   calculateHeatmapFromData,
@@ -68,7 +70,8 @@ export function prepareHeatmapData(
   options: Options,
   palette: string[],
   theme: GrafanaTheme2,
-  getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
+  getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>,
+  replaceVariables?: InterpolateFunction
 ): HeatmapData {
   if (!frames?.length) {
     return {};
@@ -85,6 +88,32 @@ export function prepareHeatmapData(
   }
 
   if (options.calculate) {
+    if (config.featureToggles.transformationsVariableSupport) {
+      const optionsCopy = {
+        ...options,
+        calculation: {
+          xBuckets: { ...options.calculation?.xBuckets } ?? undefined,
+          yBuckets: { ...options.calculation?.yBuckets } ?? undefined,
+        },
+      };
+
+      if (optionsCopy.calculation?.xBuckets?.value && replaceVariables !== undefined) {
+        optionsCopy.calculation.xBuckets.value = replaceVariables(optionsCopy.calculation.xBuckets.value);
+      }
+
+      if (optionsCopy.calculation?.yBuckets?.value && replaceVariables !== undefined) {
+        optionsCopy.calculation.yBuckets.value = replaceVariables(optionsCopy.calculation.yBuckets.value);
+      }
+
+      return getDenseHeatmapData(
+        calculateHeatmapFromData(frames, optionsCopy.calculation ?? {}),
+        exemplars,
+        optionsCopy,
+        palette,
+        theme
+      );
+    }
+
     return getDenseHeatmapData(
       calculateHeatmapFromData(frames, options.calculation ?? {}),
       exemplars,

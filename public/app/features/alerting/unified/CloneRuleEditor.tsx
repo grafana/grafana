@@ -9,7 +9,7 @@ import { useDispatch } from '../../../types';
 import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alerting';
 import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
 
-import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
+import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
 import { fetchEditableRuleAction } from './state/actions';
 import { generateCopiedName } from './utils/duplicate';
 import { rulerRuleToFormValues } from './utils/rule-form';

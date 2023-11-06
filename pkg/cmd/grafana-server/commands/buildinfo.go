@@ -16,6 +16,7 @@ func setBuildInfo(opts ServerOptions) {
 	}
 	setting.BuildVersion = opts.Version
 	setting.BuildCommit = opts.Commit
+	setting.EnterpriseBuildCommit = opts.EnterpriseCommit
 	setting.BuildStamp = buildstampInt64
 	setting.BuildBranch = opts.BuildBranch
 	setting.IsEnterprise = extensions.IsEnterprise

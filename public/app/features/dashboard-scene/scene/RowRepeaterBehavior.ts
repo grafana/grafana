@@ -15,6 +15,8 @@ import {
 
 import { getMultiVariableValues } from '../utils/utils';
 
+import { DashboardRepeatsProcessedEvent } from './types';
+
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
   sources: SceneGridItemLike[];
@@ -85,7 +87,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       return;
     }
 
-    const rowToRepeat = this.parent as SceneGridRow;
+    const rowToRepeat = this.parent;
     const { values, texts } = getMultiVariableValues(variable);
     const rows: SceneGridRow[] = [];
     const rowContentHeight = getRowContentHeight(this.state.sources);
@@ -120,6 +122,9 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     }
 
     updateLayout(layout, rows, maxYOfRows, rowToRepeat);
+
+    // Used from dashboard url sync
+    this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
   }
 
   getRowClone(

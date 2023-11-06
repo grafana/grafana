@@ -9,6 +9,9 @@ import {
   DataSourceJsonData,
   DataSourceRef,
   createDataFrame,
+  AdHocVariableFilter,
+  ScopedVars,
+  getDefaultTimeRange,
 } from '@grafana/data';
 
 import { config } from '../config';
@@ -21,9 +24,18 @@ import {
 } from './DataSourceWithBackend';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 
-class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
+interface MyQuery extends DataQuery {
+  filters?: AdHocVariableFilter[];
+  applyTemplateVariablesCalled?: boolean;
+}
+
+class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
     super(instanceSettings);
+  }
+
+  applyTemplateVariables(query: MyQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[] | undefined): MyQuery {
+    return { ...query, applyTemplateVariablesCalled: true, filters };
   }
 }
 
@@ -50,6 +62,15 @@ jest.mock('../services', () => ({
 jest.mock('./publicDashboardQueryHandler');
 
 describe('DataSourceWithBackend', () => {
+  beforeEach(async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2023-10-13'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   test('check the executed queries', () => {
     const { mock, ds } = createMockDatasource();
     ds.query({
@@ -58,6 +79,8 @@ describe('DataSourceWithBackend', () => {
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       dashboardUID: 'dashA',
       panelId: 123,
+      filters: [{ key: 'key1', operator: '=', value: 'val1' }],
+      range: getDefaultTimeRange(),
       queryGroupId: 'abc',
     } as DataQueryRequest);
 
@@ -67,13 +90,22 @@ describe('DataSourceWithBackend', () => {
     expect(args).toMatchInlineSnapshot(`
       {
         "data": {
+          "from": "1697133600000",
           "queries": [
             {
+              "applyTemplateVariablesCalled": true,
               "datasource": {
                 "type": "dummy",
                 "uid": "abc",
               },
               "datasourceId": 1234,
+              "filters": [
+                {
+                  "key": "key1",
+                  "operator": "=",
+                  "value": "val1",
+                },
+              ],
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "queryCachingTTL": undefined,
@@ -91,6 +123,7 @@ describe('DataSourceWithBackend', () => {
               "refId": "B",
             },
           ],
+          "to": "1697155200000",
         },
         "headers": {
           "X-Dashboard-Uid": "dashA",
@@ -115,6 +148,7 @@ describe('DataSourceWithBackend', () => {
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: '__expr__' } }],
       dashboardUID: 'dashA',
       panelId: 123,
+      range: getDefaultTimeRange(),
       queryGroupId: 'abc',
     } as DataQueryRequest);
 
@@ -124,13 +158,16 @@ describe('DataSourceWithBackend', () => {
     expect(args).toMatchInlineSnapshot(`
       {
         "data": {
+          "from": "1697133600000",
           "queries": [
             {
+              "applyTemplateVariablesCalled": true,
               "datasource": {
                 "type": "dummy",
                 "uid": "abc",
               },
               "datasourceId": 1234,
+              "filters": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "queryCachingTTL": undefined,
@@ -145,6 +182,7 @@ describe('DataSourceWithBackend', () => {
               "refId": "B",
             },
           ],
+          "to": "1697155200000",
         },
         "headers": {
           "X-Dashboard-Uid": "dashA",
@@ -168,6 +206,7 @@ describe('DataSourceWithBackend', () => {
     ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
+      range: getDefaultTimeRange(),
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
     } as DataQueryRequest);
 
@@ -183,6 +222,7 @@ describe('DataSourceWithBackend', () => {
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       hideFromInspector: true,
       dashboardUID: 'dashA',
+      range: getDefaultTimeRange(),
       panelId: 123,
     } as DataQueryRequest);
 
@@ -192,13 +232,16 @@ describe('DataSourceWithBackend', () => {
     expect(args).toMatchInlineSnapshot(`
       {
         "data": {
+          "from": "1697133600000",
           "queries": [
             {
+              "applyTemplateVariablesCalled": true,
               "datasource": {
                 "type": "dummy",
                 "uid": "abc",
               },
               "datasourceId": 1234,
+              "filters": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
               "queryCachingTTL": undefined,
@@ -216,6 +259,7 @@ describe('DataSourceWithBackend', () => {
               "refId": "B",
             },
           ],
+          "to": "1697155200000",
         },
         "headers": {
           "X-Dashboard-Uid": "dashA",
@@ -329,6 +373,7 @@ describe('DataSourceWithBackend', () => {
         dashboardUID: 'dashA',
         panelId: 123,
         queryGroupId: 'abc',
+        range: getDefaultTimeRange(),
       } as DataQueryRequest;
 
       ds.query(request);
@@ -347,6 +392,7 @@ describe('DataSourceWithBackend', () => {
         dashboardUID: 'dashA',
         panelId: 123,
         queryGroupId: 'abc',
+        range: getDefaultTimeRange(),
       } as DataQueryRequest;
 
       ds.query(request);

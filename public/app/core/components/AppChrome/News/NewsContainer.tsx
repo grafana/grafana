@@ -46,7 +46,6 @@ export function NewsContainer({ className }: NewsContainerProps) {
               </div>
             </div>
           }
-          scrollableContent
           onClose={onToggleShowNewsDrawer}
           size="md"
         >

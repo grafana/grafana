@@ -138,7 +138,9 @@ describe('VisualMetricQueryEditor', () => {
     expect(screen.getByText('metric.test_label')).toBeInTheDocument();
     const service = await screen.findByLabelText('Service');
     openMenu(service);
-    await select(service, 'Srv 2', { container: document.body });
+    await act(async () => {
+      await select(service, 'Srv 2', { container: document.body });
+    });
     expect(onChange).toBeCalledWith(expect.objectContaining({ filters: ['metric.type', '=', 'type2'] }));
     expect(query).toEqual(defaultQuery);
     expect(screen.queryByText('metric.test_label')).not.toBeInTheDocument();

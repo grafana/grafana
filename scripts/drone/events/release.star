@@ -18,6 +18,7 @@ load(
     "publish_grafanacom_step",
     "publish_linux_packages_step",
     "redis_integration_tests_steps",
+    "remote_alertmanager_integration_tests_steps",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
@@ -61,7 +62,7 @@ def retrieve_npm_packages_step():
 def release_npm_packages_step():
     return {
         "name": "release-npm-packages",
-        "image": images["go"],
+        "image": images["node"],
         "depends_on": [
             "compile-build-cmd",
             "retrieve-npm-packages",
@@ -221,7 +222,8 @@ def integration_test_pipelines():
                              mysql_integration_tests_steps("mysql57", "5.7") + \
                              mysql_integration_tests_steps("mysql80", "8.0") + \
                              redis_integration_tests_steps() + \
-                             memcached_integration_tests_steps()
+                             memcached_integration_tests_steps() + \
+                             remote_alertmanager_integration_tests_steps()
 
     pipelines.append(pipeline(
         name = "integration-tests",

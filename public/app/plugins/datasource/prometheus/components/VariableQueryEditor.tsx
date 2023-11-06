@@ -50,7 +50,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   // seriesQuery is only a whole
   const [seriesQuery, setSeriesQuery] = useState('');
 
-  // the original variable query implementation
+  // the original variable query implementation, e.g. label_value(metric, label_name)
   const [classicQuery, setClassicQuery] = useState('');
 
   // list of label names for label_values(), /api/v1/labels, contains the same results as label_names() function

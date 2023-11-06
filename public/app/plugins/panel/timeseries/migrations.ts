@@ -649,8 +649,7 @@ function fillY2DynamicValues(
   props: DynamicConfigValue[]
 ) {
   // The standard properties
-  for (const key of Object.keys(y2)) {
-    const value = (y2 as any)[key];
+  for (const [key, value] of Object.entries(y2)) {
     if (key !== 'custom' && value !== (y1 as any)[key]) {
       props.push({
         id: key,
@@ -662,8 +661,7 @@ function fillY2DynamicValues(
   // Add any custom property
   const y1G = y1.custom ?? {};
   const y2G = y2.custom ?? {};
-  for (const key of Object.keys(y2G)) {
-    const value = (y2G as any)[key];
+  for (const [key, value] of Object.entries(y2G)) {
     if (value !== (y1G as any)[key]) {
       props.push({
         id: `custom.${key}`,

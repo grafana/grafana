@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"slices"
+	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
@@ -92,6 +95,7 @@ func WithNotEmptyLabels(count int, prefix string) AlertRuleMutator {
 		rule.Labels = GenerateAlertLabels(count, prefix)
 	}
 }
+
 func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
@@ -152,6 +156,18 @@ func WithUniqueOrgID() AlertRuleMutator {
 		}
 		orgs[orgID] = struct{}{}
 		rule.OrgID = orgID
+	}
+}
+
+// WithNamespaceUIDNotIn generates a random namespace UID if it is among excluded
+func WithNamespaceUIDNotIn(exclude ...string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		for {
+			if !slices.Contains(exclude, rule.NamespaceUID) {
+				return
+			}
+			rule.NamespaceUID = uuid.NewString()
+		}
 	}
 }
 
@@ -224,6 +240,29 @@ func WithLabel(key, value string) AlertRuleMutator {
 			rule.Labels = data.Labels{}
 		}
 		rule.Labels[key] = value
+	}
+}
+
+func WithUniqueUID(knownUids *sync.Map) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		uid := rule.UID
+		for {
+			_, ok := knownUids.LoadOrStore(uid, struct{}{})
+			if !ok {
+				rule.UID = uid
+				return
+			}
+			uid = uuid.NewString()
+		}
+	}
+}
+
+func WithQuery(query ...AlertQuery) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Data = query
+		if len(query) > 1 {
+			rule.Condition = query[0].RefID
+		}
 	}
 }
 

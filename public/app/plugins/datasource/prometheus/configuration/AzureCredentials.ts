@@ -13,7 +13,7 @@ export const KnownAzureClouds: Array<SelectableValue<AzureCloud>> = [
   { value: AzureCloud.USGovernment, label: 'Azure US Government' },
 ];
 
-export type AzureAuthType = 'msi' | 'clientsecret';
+export type AzureAuthType = 'msi' | 'clientsecret' | 'workloadidentity';
 
 export type ConcealedSecret = symbol;
 
@@ -26,6 +26,10 @@ export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
   authType: 'msi';
 }
 
+export interface AzureWorkloadIdentityCredentials extends AzureCredentialsBase {
+  authType: 'workloadidentity';
+}
+
 export interface AzureClientSecretCredentials extends AzureCredentialsBase {
   authType: 'clientsecret';
   azureCloud?: string;
@@ -34,11 +38,15 @@ export interface AzureClientSecretCredentials extends AzureCredentialsBase {
   clientSecret?: string | ConcealedSecret;
 }
 
-export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
+export type AzureCredentials =
+  | AzureManagedIdentityCredentials
+  | AzureClientSecretCredentials
+  | AzureWorkloadIdentityCredentials;
 
 export function isCredentialsComplete(credentials: AzureCredentials): boolean {
   switch (credentials.authType) {
     case 'msi':
+    case 'workloadidentity':
       return true;
     case 'clientsecret':
       return !!(credentials.azureCloud && credentials.tenantId && credentials.clientId && credentials.clientSecret);

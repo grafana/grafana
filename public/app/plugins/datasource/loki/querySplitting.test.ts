@@ -1,8 +1,7 @@
 import { of } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
-import { dateTime } from '@grafana/data';
-import { LoadingState } from '@grafana/schema';
+import { dateTime, LoadingState } from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
 import * as logsTimeSplit from './logsTimeSplitting';

@@ -34,8 +34,6 @@ const ui = {
   },
 };
 
-jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
-
 const server = setupServer();
 
 const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {

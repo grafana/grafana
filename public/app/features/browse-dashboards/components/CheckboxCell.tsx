@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Checkbox, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { DashboardsTreeCellProps, SelectionState } from '../types';
 
@@ -32,6 +33,7 @@ export default function CheckboxCell({
   return (
     <Checkbox
       data-testid={selectors.pages.BrowseDashboards.table.checkbox(item.uid)}
+      aria-label={t('browse-dashboards.dashboards-tree.select-checkbox', 'Select')}
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}

@@ -85,7 +85,7 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...getTemplateSrv()
     .getVariables()
     .map((variable) => ({
-      value: variable.name as string,
+      value: variable.name,
       label: variable.name,
       origin: VariableOrigin.Template,
     })),

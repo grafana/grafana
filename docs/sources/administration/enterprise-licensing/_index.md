@@ -52,7 +52,7 @@ There is more than one way to add the license to a Grafana instance:
 This is the preferred option for single instance installations of Grafana Enterprise.
 
 1. Sign in as a Grafana server administrator.
-1. Click **Administration > Stats and license** in the side navigation menu.
+1. Click **Administration > General > Stats and license** in the side navigation menu.
 1. Click **Upload a new token**.
 1. Select your license file, and upload it.
 
@@ -206,6 +206,8 @@ To determine the number of active users:
 1. Sign in to Grafana Enterprise as a System Administrator.
 
 1. Click **Administration** in the side navigation menu.
+
+1. Click **General**.
 
 1. Click **Stats and license**.
 

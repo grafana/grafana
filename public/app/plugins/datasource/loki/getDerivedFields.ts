@@ -42,6 +42,16 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
       const dsSettings = dataSourceSrv.getInstanceSettings(derivedFieldConfig.datasourceUid);
+      const queryType = (type: string | undefined): string | undefined => {
+        switch (type) {
+          case 'tempo':
+            return 'traceql';
+          case 'grafana-x-ray-datasource':
+            return 'getTrace';
+          default:
+            return undefined;
+        }
+      };
 
       acc.push({
         // Will be filled out later
@@ -49,7 +59,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         url: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         internal: {
-          query: { query: derivedFieldConfig.url, queryType: dsSettings?.type === 'tempo' ? 'traceql' : undefined },
+          query: { query: derivedFieldConfig.url, queryType: queryType(dsSettings?.type) },
           datasourceUid: derivedFieldConfig.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },

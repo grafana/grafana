@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -597,8 +599,10 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		QuotaService:    nil,
 		provenanceStore: provisioning.NewFakeProvisioningStore(),
 		log:             log.New("test"),
-		cfg:             nil,
-		ac:              acimpl.ProvideAccessControl(setting.NewCfg()),
+		cfg: &setting.UnifiedAlertingSettings{
+			BaseInterval: 10 * time.Second,
+		},
+		ac: acimpl.ProvideAccessControl(setting.NewCfg()),
 	}
 }
 
@@ -609,9 +613,14 @@ func createRequestContext(orgID int64, params map[string]string) *contextmodel.R
 
 func createRequestContextWithPerms(orgID int64, permissions map[int64]map[string][]string, params map[string]string) *contextmodel.ReqContext {
 	uri, _ := url.Parse("http://localhost")
-	ctx := web.Context{Req: &http.Request{
-		URL: uri,
-	}}
+	ctx := web.Context{
+		Req: &http.Request{
+			URL:    uri,
+			Header: make(http.Header),
+			Form:   make(url.Values),
+		},
+		Resp: web.NewResponseWriter("GET", httptest.NewRecorder()),
+	}
 	if params != nil {
 		ctx.Req = web.SetURLParams(ctx.Req, params)
 	}
