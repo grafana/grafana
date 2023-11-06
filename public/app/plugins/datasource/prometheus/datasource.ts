@@ -222,7 +222,7 @@ export class PrometheusDatasource
    * request. Any processing done here needs to be also copied on the backend as this goes through data source proxy
    * but not through the same code as alerting.
    */
-  _request<T = any>(
+  _request<T = unknown>(
     url: string,
     data: Record<string, string> | null,
     overrides: Partial<BackendSrvRequest> = {}
@@ -880,11 +880,7 @@ export class PrometheusDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(
-    target: PromQuery,
-    scopedVars: ScopedVars,
-    filters?: AdHocVariableFilter[]
-  ): Record<string, any> {
+  applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
     const variables = cloneDeep(scopedVars);
 
     // We want to interpolate these variables on backend
@@ -909,8 +905,8 @@ export class PrometheusDatasource
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 
-  interpolateString(string: string) {
-    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  interpolateString(string: string, scopedVars?: ScopedVars) {
+    return this.templateSrv.replace(string, scopedVars, this.interpolateQueryExpr);
   }
 
   getDebounceTimeInMilliseconds(): number {
@@ -1008,10 +1004,10 @@ export function extractRuleMappingFromGroups(groups: any[]) {
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
-export function prometheusRegularEscape(value: any) {
+export function prometheusRegularEscape(value: unknown) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
 }
 
-export function prometheusSpecialRegexEscape(value: any) {
+export function prometheusSpecialRegexEscape(value: unknown) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }
