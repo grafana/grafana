@@ -158,7 +158,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
   };
 
-  processRow = memoizeOne((row: LogRowModel, forceEscape: boolean | undefined) => {
+  escapeRow = memoizeOne((row: LogRowModel, forceEscape: boolean | undefined) => {
     return row.hasUnescapedContent && forceEscape
       ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
       : row
@@ -198,7 +198,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       [styles.highlightBackground]: permalinked && !this.state.showDetails,
     });
 
-    const processedRow = this.processRow(row, forceEscape);
+    const processedRow = this.escapeRow(row, forceEscape);
 
     return (
       <>
