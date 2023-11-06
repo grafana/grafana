@@ -71,6 +71,10 @@ func fixGraphiteReferencedSubQueries(l log.Logger, queryData map[string]json.Raw
 }
 
 func isFixable(l log.Logger, queryData map[string]json.RawMessage) bool {
+	_, ok := queryData[graphite.TargetFullModelField]
+	if ok {
+		return true
+	}
 	// Check if the target field has any placeholders.
 	targetRaw, ok := queryData[graphite.TargetModelField]
 	if !ok {

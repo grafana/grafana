@@ -20,18 +20,25 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 		err      error
 	}{
 		{
-			name:     "when a query has a sub query - it is extracted",
-			input:    simplejson.NewFromAny(map[string]interface{}{"targetFull": "thisisafullquery", "target": "ahalfquery"}),
+			name: "when a query has a sub query - it is extracted",
+			input: simplejson.NewFromAny(map[string]interface{}{
+				"targetFull": "thisisafullquery",
+				"target":     "ahalfquery",
+			}),
 			expected: `{"target":"thisisafullquery"}`,
 		},
 		{
-			name:     "when a query does not have a sub query - it no-ops",
-			input:    simplejson.NewFromAny(map[string]interface{}{"target": "ahalfquery"}),
+			name: "when a query does not have a sub query - it no-ops",
+			input: simplejson.NewFromAny(map[string]interface{}{
+				"target": "ahalfquery",
+			}),
 			expected: `{"target":"ahalfquery"}`,
 		},
 		{
-			name:     "when query was hidden, it removes the flag",
-			input:    simplejson.NewFromAny(map[string]interface{}{"hide": true}),
+			name: "when query was hidden, it removes the flag",
+			input: simplejson.NewFromAny(map[string]interface{}{
+				"hide": true,
+			}),
 			expected: `{}`,
 		},
 	}
@@ -40,7 +47,7 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			model, err := tt.input.Encode()
 			require.NoError(t, err)
-			queries, err := migrateAlertRuleQueries(log.NewNopLogger(), 0, []alertQuery{{Model: model}}, 0, &dashboards.Dashboard{}, make(map[string]string))
+			queries, err := migrateAlertRuleQueries(log.NewNopLogger(), 0, []alertQuery{{Model: model, DatasourceUID: "a"}}, 0, &dashboards.Dashboard{}, map[string]string{"a": "graphite"})
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.err.Error())
