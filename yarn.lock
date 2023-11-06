@@ -12,7 +12,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@adobe/css-tools@npm:^4.0.1, @adobe/css-tools@npm:^4.3.0":
+"@adobe/css-tools@npm:^4.3.1":
   version: 4.3.1
   resolution: "@adobe/css-tools@npm:4.3.1"
   checksum: 039a42ffdd41ecf3abcaf09c9fef0ffd634ccbe81c04002fc989e74564eba99bb19169a8f48dadf6442aa2c5c9f0925a7b27ec5c36a1ed1a3515fe77d6930996
@@ -2866,7 +2866,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.1"
     "@types/jest": "npm:29.5.4"
     "@types/lodash": "npm:4.14.195"
-    "@types/node": "npm:18.18.5"
+    "@types/node": "npm:20.8.10"
     "@types/react": "npm:18.2.15"
     "@types/testing-library__jest-dom": "npm:5.14.8"
     lodash: "npm:4.17.21"
@@ -2934,7 +2934,7 @@ __metadata:
     "@rollup/plugin-json": "npm:6.0.0"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     "@testing-library/dom": "npm:9.3.3"
-    "@testing-library/jest-dom": "npm:5.16.5"
+    "@testing-library/jest-dom": "npm:6.1.4"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.1"
     "@types/d3-interpolate": "npm:^3.0.0"
@@ -2944,7 +2944,7 @@ __metadata:
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.195"
     "@types/marked": "npm:5.0.1"
-    "@types/node": "npm:18.18.4"
+    "@types/node": "npm:20.8.10"
     "@types/papaparse": "npm:5.3.7"
     "@types/react": "npm:18.2.15"
     "@types/react-dom": "npm:18.2.7"
@@ -3006,7 +3006,7 @@ __metadata:
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
     "@rollup/plugin-commonjs": "npm:25.0.2"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
-    "@types/node": "npm:18.18.4"
+    "@types/node": "npm:20.8.10"
     esbuild: "npm:0.18.12"
     rimraf: "npm:5.0.1"
     rollup: "npm:2.79.1"
@@ -3242,12 +3242,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.8":
-  version: 0.0.8
-  resolution: "@grafana/lezer-traceql@npm:0.0.8"
+"@grafana/lezer-traceql@npm:0.0.9":
+  version: 0.0.9
+  resolution: "@grafana/lezer-traceql@npm:0.0.9"
   peerDependencies:
     "@lezer/lr": ^1.3.0
-  checksum: 9a85e4e6a3d77c2075643d179727855f3b7d49e76e93053048b56c86bcfaec040e654012f7ab5f8cf00cd0464220b9afbb1166a1f927b0ce9d2bb724af8f5133
+  checksum: 1511e34d47466a9bd4880cd04f817d263dc01c0d4cd4dea0ad1bd7829d59e3d6b15c723e9ba4b240d812fc5d288ec0c4726928a2da031ee3d60573a8861d21a3
   languageName: node
   linkType: hard
 
@@ -3411,7 +3411,7 @@ __metadata:
     "@storybook/react-webpack5": "npm:7.4.5"
     "@storybook/theming": "npm:7.4.5"
     "@testing-library/dom": "npm:9.3.3"
-    "@testing-library/jest-dom": "npm:5.16.5"
+    "@testing-library/jest-dom": "npm:6.1.4"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/user-event": "npm:14.5.1"
     "@types/common-tags": "npm:^1.8.0"
@@ -3422,7 +3422,7 @@ __metadata:
     "@types/jquery": "npm:3.5.16"
     "@types/lodash": "npm:4.14.195"
     "@types/mock-raf": "npm:1.0.3"
-    "@types/node": "npm:18.18.4"
+    "@types/node": "npm:20.8.10"
     "@types/prismjs": "npm:1.26.0"
     "@types/react": "npm:18.2.15"
     "@types/react-beautiful-dnd": "npm:13.1.4"
@@ -7677,28 +7677,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/jest-dom@npm:5.16.5":
-  version: 5.16.5
-  resolution: "@testing-library/jest-dom@npm:5.16.5"
+"@testing-library/jest-dom@npm:6.1.4, @testing-library/jest-dom@npm:^6.1.2":
+  version: 6.1.4
+  resolution: "@testing-library/jest-dom@npm:6.1.4"
   dependencies:
-    "@adobe/css-tools": "npm:^4.0.1"
-    "@babel/runtime": "npm:^7.9.2"
-    "@types/testing-library__jest-dom": "npm:^5.9.1"
-    aria-query: "npm:^5.0.0"
-    chalk: "npm:^3.0.0"
-    css.escape: "npm:^1.5.1"
-    dom-accessibility-api: "npm:^0.5.6"
-    lodash: "npm:^4.17.15"
-    redent: "npm:^3.0.0"
-  checksum: 472a14b6295a18af28b5133ecaf4d22a7bb9c50bf05e1f04a076b2e2d7c596e76cdd56a95387ad6d2a4dda0c46bc93d95cbca5b314fabe0fd13362f29118749e
-  languageName: node
-  linkType: hard
-
-"@testing-library/jest-dom@npm:^6.1.2":
-  version: 6.1.2
-  resolution: "@testing-library/jest-dom@npm:6.1.2"
-  dependencies:
-    "@adobe/css-tools": "npm:^4.3.0"
+    "@adobe/css-tools": "npm:^4.3.1"
     "@babel/runtime": "npm:^7.9.2"
     aria-query: "npm:^5.0.0"
     chalk: "npm:^3.0.0"
@@ -7720,7 +7703,7 @@ __metadata:
       optional: true
     vitest:
       optional: true
-  checksum: 36e27f9011dd60de8936d3edb2a81753ef7a370480019e571c6e85b935b5fa2aba47244104badf6d6b636fd170fdee5c0fdd92fb3630957d4a6f11d302b57398
+  checksum: e5a0cdb96eec509c0c85f2b7a0d08fc1c9f6c10aa49bba0d738bf4bb114c3472b92ace5067aedfaaf848ae13b38ba9296047c219aa24b66c87aa16de33341fdb
   languageName: node
   linkType: hard
 
@@ -8762,10 +8745,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:18.18.5, @types/node@npm:>=13.7.0":
-  version: 18.18.5
-  resolution: "@types/node@npm:18.18.5"
-  checksum: a7363aab9f402290799d3e2696fbc70c76a8a65e2354f72b8f399c38edc346f600066f8ac59dde985cfc64160cfeb63ed7fc917aecdfe7ec469345d3ce029bda
+"@types/node@npm:*, @types/node@npm:20.8.10, @types/node@npm:>=13.7.0":
+  version: 20.8.10
+  resolution: "@types/node@npm:20.8.10"
+  dependencies:
+    undici-types: "npm:~5.26.4"
+  checksum: 8930039077c8ad74de74c724909412bea8110c3f8892bcef8dda3e9629073bed65632ee755f94b252bcdae8ca71cf83e89a4a440a105e2b1b7c9797b43483049
   languageName: node
   linkType: hard
 
@@ -9206,15 +9191,6 @@ __metadata:
   dependencies:
     "@types/jest": "npm:*"
   checksum: 26d768b3de5c71ecef683aa0e968ec2bb7f4626d78718132fa5a9c2064f9237836135e2551aa048c728407760d51d985a9d58a14528f2679a35d18d5ca200f08
-  languageName: node
-  linkType: hard
-
-"@types/testing-library__jest-dom@npm:^5.9.1":
-  version: 5.14.9
-  resolution: "@types/testing-library__jest-dom@npm:5.14.9"
-  dependencies:
-    "@types/jest": "npm:*"
-  checksum: e257de95a4a9385cc09ae4ca3396d23ad4b5cfb8e021a1ca3454c424c34636075f6fe151b2f881f79bf9d497aa04fbfae62449b135f293e8d2d614fa899898a8
   languageName: node
   linkType: hard
 
@@ -17123,7 +17099,7 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.1"
     "@grafana/lezer-logql": "npm:0.2.1"
-    "@grafana/lezer-traceql": "npm:0.0.8"
+    "@grafana/lezer-traceql": "npm:0.0.9"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^1.20.1"
@@ -17166,7 +17142,7 @@ __metadata:
     "@swc/core": "npm:1.3.38"
     "@swc/helpers": "npm:0.4.14"
     "@testing-library/dom": "npm:9.3.3"
-    "@testing-library/jest-dom": "npm:5.16.5"
+    "@testing-library/jest-dom": "npm:6.1.4"
     "@testing-library/react": "npm:14.0.0"
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:14.5.1"
@@ -17195,7 +17171,7 @@ __metadata:
     "@types/lucene": "npm:^2"
     "@types/marked": "npm:5.0.1"
     "@types/mousetrap": "npm:1.6.11"
-    "@types/node": "npm:18.18.4"
+    "@types/node": "npm:20.8.10"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0"
     "@types/papaparse": "npm:5.3.7"
@@ -28976,6 +28952,13 @@ __metadata:
   version: 1.13.6
   resolution: "underscore@npm:1.13.6"
   checksum: 58cf5dc42cb0ac99c146ae4064792c0a2cc84f3a3c4ad88f5082e79057dfdff3371d896d1ec20379e9ece2450d94fa78f2ef5bfefc199ba320653e32c009bd66
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~5.26.4":
+  version: 5.26.5
+  resolution: "undici-types@npm:5.26.5"
+  checksum: 0097779d94bc0fd26f0418b3a05472410408877279141ded2bd449167be1aed7ea5b76f756562cb3586a07f251b90799bab22d9019ceba49c037c76445f7cddd
   languageName: node
   linkType: hard
 

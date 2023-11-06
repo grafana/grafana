@@ -638,7 +638,7 @@ func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement 
 	return libraryElement{
 		ID:          res.ID,
 		OrgID:       res.OrgID,
-		FolderID:    res.FolderID,
+		FolderID:    res.FolderID, // nolint:staticcheck
 		UID:         res.UID,
 		Name:        res.Name,
 		Type:        res.Type,
@@ -785,7 +785,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			Result: libraryPanel{
 				ID:          resp.ID,
 				OrgID:       resp.OrgID,
-				FolderID:    resp.FolderID,
+				FolderID:    resp.FolderID, // nolint:staticcheck
 				UID:         resp.UID,
 				Name:        resp.Name,
 				Type:        resp.Type,

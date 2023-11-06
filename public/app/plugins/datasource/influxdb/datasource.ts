@@ -590,7 +590,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
     return this._seriesQuery(allQueries, options).pipe(
-      map((data: any) => {
+      map((data) => {
         if (!data || !data.results) {
           return { data: [] };
         }
@@ -690,7 +690,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     let query = annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, undefined, this.interpolateQueryExpr);
 
-    return lastValueFrom(this._seriesQuery(query, options)).then((data: any) => {
+    return lastValueFrom(this._seriesQuery(query, options)).then((data) => {
       if (!data || !data.results || !data.results[0]) {
         throw { message: 'No results in response from InfluxDB' };
       }

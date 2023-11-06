@@ -863,12 +863,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "Kiosk-Modus aktivieren",
-      "toggle-menu": "Menü umschalten",
+      "open-menu": "",
       "toggle-search-bar": "Obere Suchleiste umschalten"
     }
   },
@@ -882,7 +882,6 @@
   "panel": {
     "header-menu": {
       "copy": "Kopieren",
-      "create-alert": "",
       "create-library-panel": "Bibliotheksleiste erstellen",
       "duplicate": "Duplikat",
       "edit": "Bearbeiten",
@@ -893,6 +892,7 @@
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
+      "new-alert-rule": "",
       "query": "Abfrage",
       "remove": "Entfernen",
       "share": "Teilen",
@@ -1044,7 +1044,6 @@
       "cancel-button": "Abbrechen",
       "info-text": "Dieses Dashboard exportieren.",
       "save-button": "In Datei speichern …",
-      "share-default-label": "Export mit entfernten Standardwerten",
       "share-externally-label": "Export für externe Freigabe",
       "view-button": "JSON anzeigen"
     },
