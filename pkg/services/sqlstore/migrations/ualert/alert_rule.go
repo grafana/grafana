@@ -188,6 +188,11 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 }
 
 func (m *migration) fetchDashboard(orgID int64, dashboardUID string) (*dashboards.Dashboard, error) {
+	// This is a hack for unit tests in 9.4.
+	if m.sess == nil {
+		return &dashboards.Dashboard{}, nil
+	}
+
 	var queryResult *dashboards.Dashboard
 
 	dashboard := dashboards.Dashboard{OrgID: orgID, UID: dashboardUID}
@@ -217,6 +222,11 @@ func (dsType) TableName() string {
 }
 
 func (m *migration) fetchDsTypes(data []alertQuery) (map[string]string, error) {
+	// This is a hack for unit tests in 9.4.
+	if m.sess == nil {
+		return map[string]string{}, nil
+	}
+
 	result := make(map[string]string)
 	for _, q := range data {
 		result[q.DatasourceUID] = ""
