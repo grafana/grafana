@@ -131,7 +131,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
-	ssoSettingsApi "github.com/grafana/grafana/pkg/services/ssosettings/api"
 	ssosettingsStore "github.com/grafana/grafana/pkg/services/ssosettings/database"
 	ssoSettingsImpl "github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
@@ -385,7 +384,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.SSOSettingsService)),
 	ssosettingsStore.ProvideStore,
 	wire.Bind(new(ssosettings.Store), new(*ssosettingsStore.SSOSettingsStore)),
-	ssoSettingsApi.ProvideApi,
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	grafanaapiserver.WireSet,

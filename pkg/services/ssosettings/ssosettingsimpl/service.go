@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/api"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,18 +31,25 @@ type SSOSettingsService struct {
 	fbStrategies []ssosettings.FallbackStrategy
 }
 
-func ProvideService(cfg *setting.Cfg, store ssosettings.Store, ac ac.AccessControl) *SSOSettingsService {
+func ProvideService(cfg *setting.Cfg, store ssosettings.Store, ac ac.AccessControl,
+	routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager) *SSOSettingsService {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		// register other strategies here, for example SAML
 	}
-	return &SSOSettingsService{
+
+	svc := &SSOSettingsService{
 		log:          log.New("ssosettings.service"),
 		cfg:          cfg,
 		store:        store,
 		ac:           ac,
 		fbStrategies: strategies,
 	}
+
+	ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac, features)
+	ssoSettingsApi.RegisterAPIEndpoints()
+
+	return svc
 }
 
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
