@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -410,6 +412,18 @@ func teamHTTPHeaderValueRegexMatch(headervalue string) bool {
 	return reg.Match([]byte(strings.TrimSpace(headervalue)))
 }
 
+func evaluateTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, jsonData *simplejson.Json) (bool, error) {
+	ev := ac.EvalPermission(datasources.ActionPermissionsWrite, ac.Scope(datasources.ScopeAll))
+	hasAccess, errAccess := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ev)
+	if errAccess != nil {
+		datasourcesLogger.Warn("Failed to evaluate permissions", "warning", errAccess)
+	}
+	if !hasAccess {
+		return false, errAccess
+	}
+	return true, nil
+}
+
 // swagger:route POST /datasources datasources addDataSource
 //
 // Create a data source.
@@ -447,8 +461,23 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 			return resp
 		}
 	}
+
 	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
+	}
+
+	// check if user has given LBAC rules and have permissions
+	if hs.Features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+		teamHTTPHeaders, err := datasources.GetTeamHTTPHeaders(cmd.JsonData)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to add datasource", err)
+		}
+		if len(teamHTTPHeaders) > 0 {
+			hasAccess, errAccess := evaluateTeamHTTPHeaderPermissions(hs, c, cmd.JsonData)
+			if !hasAccess || errAccess != nil {
+				return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), err)
+			}
+		}
 	}
 
 	dataSource, err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd)
@@ -515,7 +544,6 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
-
 	ds, err := hs.getRawDataSourceById(c.Req.Context(), cmd.ID, cmd.OrgID)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
@@ -523,6 +551,26 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 		}
 		return response.Error(500, "Failed to update datasource", err)
 	}
+
+	// check if user has given LBAC rules and have permissions
+	if hs.Features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+		// check if LBAC rules have been modified
+		teamHTTPheaders, err := datasources.GetTeamHTTPHeaders(ds.JsonData)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
+		}
+		NewTeamHTTPHeaders, err := datasources.GetTeamHTTPHeaders(cmd.JsonData)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
+		}
+		if reflect.DeepEqual(teamHTTPheaders, NewTeamHTTPHeaders) {
+			hasAccess, errAccess := evaluateTeamHTTPHeaderPermissions(hs, c, cmd.JsonData)
+			if !hasAccess || errAccess != nil {
+				return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), err)
+			}
+		}
+	}
+
 	return hs.updateDataSourceByID(c, ds, cmd)
 }
 
