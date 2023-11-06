@@ -154,10 +154,20 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 		return response.Err(err)
 	}
 
+	stringTeamIDs := c.QueryStrings("teamId")
+	queryTeamIDs := make([]int64, 0)
+	for _, id := range stringTeamIDs {
+		teamID, err := strconv.ParseInt(id, 10, 64)
+		if err == nil {
+			queryTeamIDs = append(queryTeamIDs, teamID)
+		}
+	}
+
 	query := team.SearchTeamsQuery{
 		OrgID:        c.SignedInUser.GetOrgID(),
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
+		TeamIds:      queryTeamIDs,
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,

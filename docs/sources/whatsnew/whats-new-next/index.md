@@ -18,7 +18,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Export alert rules and notification resources to Terraform
+## Export alerting resources to Terraform
 
 <!-- Yuri Tseretyan -->
 <!-- OSS, Enterprise -->
@@ -27,7 +27,7 @@ October 30, 2023
 
 _Generally available in Grafana Cloud_
 
-This feature provides a way to export Alerting resources such as rules, contact points, and notification policies as Terraform resources. A new "Modify export" mode for alert rules provides a convenient way of editing provisioned alert rules and exporting the modified version.
+Export your alerting resources, such as alert rules, contact points, and notification policies as Terraform resources. A new “Modify export” mode for alert rules enables you to edit provisioned alert rules and export a modified version.
 
 ## Alerting insights
 
@@ -38,6 +38,27 @@ October 30, 2023
 _Generally available in Grafana Cloud_
 
 Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
+
+## Configure refresh token handling separately for OAuth providers
+
+<!-- Mihaly Gyongyosi -->
+<!-- already in on-prem -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+With Grafana v9.3, we introduced a feature toggle called `accessTokenExpirationCheck`. It improves the security of Grafana by checking the expiration of the access token and automatically refreshing the expired access token when a user is logged in using one of the OAuth providers.
+
+With the current release, we've introduced a new configuration option for each OAuth provider called `use_refresh_token` that allows you to configure whether the particular OAuth integration should use refresh tokens to automatically refresh access tokens when they expire. In addition, to further improve security and provide secure defaults, `use_refresh_token` is enabled by default for providers that support either refreshing tokens automatically or client-controlled fetching of refresh tokens. It's enabled by default for the following OAuth providers: `AzureAD`, `GitLab`, `Google`.
+
+For more information on how to set up refresh token handling, please refer to [the documentation of the particular OAuth provider.](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/).
+
+{{% admonition type="note" %}}
+The `use_refresh_token` configuration must be used in conjunction with the `accessTokenExpirationCheck` feature toggle. If you disable the `accessTokenExpirationCheck` feature toggle, Grafana won't check the expiration of the access token and won't automatically refresh the expired access token, even if the `use_refresh_token` configuration is set to `true`.
+
+The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.
+{{% /admonition %}}
 
 ## Use AI to generate dashboard titles, descriptions, and change summaries
 
@@ -207,6 +228,17 @@ _Available in private preview in Grafana Cloud_
 The Grafana Assume Role authentication provider lets Grafana Cloud users of the CloudWatch data source authenticate with AWS without having to create and maintain long term AWS Users. Using the new assume role authentication method, you no longer have to rotate access and secret keys in your CloudWatch data source. Instead, Grafana Cloud users can create an identity access and management (IAM) role that has a trust relationship with Grafana's AWS account; Grafana's AWS account will then use AWS Secure Token Service (STS) to create temporary credentials to access the user's AWS data.
 
 To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
+
+## Create alerts from panels
+
+<!-- Brenda Muir -->
+<!-- OSS, Enterprise from 10.3-->
+
+October 23, 2023
+
+_Generally available in Grafana Cloud_
+
+Create alerts from dashboard panels. You can reuse the panel queries and create alerts based on them.
 
 ## No basic role
 

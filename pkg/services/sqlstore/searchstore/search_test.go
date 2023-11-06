@@ -3,7 +3,6 @@ package searchstore_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -120,12 +119,12 @@ func TestBuilder_RBAC(t *testing.T) {
 	testsCases := []struct {
 		desc            string
 		userPermissions []accesscontrol.Permission
-		features        []any
+		features        featuremgmt.FeatureToggles
 		expectedParams  []any
 	}{
 		{
 			desc:     "no user permissions",
-			features: []any{},
+			features: featuremgmt.WithFeatures(),
 			expectedParams: []any{
 				int64(1),
 			},
@@ -135,7 +134,83 @@ func TestBuilder_RBAC(t *testing.T) {
 			userPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			},
-			features: []any{},
+			features: featuremgmt.WithFeatures(),
+			expectedParams: []any{
+				int64(1),
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:read",
+				"dashboards:write",
+				2,
+				int64(1),
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:read",
+				"dashboards:write",
+				2,
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"folders:read",
+				"dashboards:create",
+				2,
+			},
+		},
+		{
+			desc: "user with view permission with nesting",
+			userPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
+			},
+			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedParams: []any{
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:read",
+				"dashboards:write",
+				2,
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"folders:read",
+				"dashboards:create",
+				2,
+				int64(1),
+				int64(1),
+				int64(1),
+				0,
+				"Viewer",
+				int64(1),
+				0,
+				"dashboards:read",
+				"dashboards:write",
+				2,
+				int64(1),
+			},
+		},
+		{
+			desc: "user with view permission with remove subquery",
+			userPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
+			},
+			features: featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 			expectedParams: []any{
 				int64(1),
 				int64(1),
@@ -168,11 +243,11 @@ func TestBuilder_RBAC(t *testing.T) {
 			},
 		},
 		{
-			desc: "user with view permission with nesting",
+			desc: "user with view permission with nesting and remove subquery",
 			userPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			},
-			features: []any{featuremgmt.FlagNestedFolders},
+			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 			expectedParams: []any{
 				int64(1),
 				int64(1),
@@ -219,48 +294,39 @@ func TestBuilder_RBAC(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, tc := range testsCases {
-		for _, features := range []*featuremgmt.FeatureManager{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
-			m := features.GetEnabled(context.Background())
-			keys := make([]string, 0, len(m))
-			for k := range m {
-				keys = append(keys, k)
+		t.Run(tc.desc, func(t *testing.T) {
+			if len(tc.userPermissions) > 0 {
+				user.Permissions = map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.userPermissions)}
 			}
 
-			t.Run(tc.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
-				if len(tc.userPermissions) > 0 {
-					user.Permissions = map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.userPermissions)}
-				}
+			level := dashboards.PERMISSION_EDIT
 
-				level := dashboards.PERMISSION_EDIT
+			builder := &searchstore.Builder{
+				Filters: []any{
+					searchstore.OrgFilter{OrgId: user.OrgID},
+					searchstore.TitleSorter{},
+					permissions.NewAccessControlDashboardPermissionFilter(
+						user,
+						level,
+						"",
+						tc.features,
+						recursiveQueriesAreSupported,
+					),
+				},
+				Dialect:  store.GetDialect(),
+				Features: tc.features,
+			}
 
-				builder := &searchstore.Builder{
-					Filters: []any{
-						searchstore.OrgFilter{OrgId: user.OrgID},
-						searchstore.TitleSorter{},
-						permissions.NewAccessControlDashboardPermissionFilter(
-							user,
-							level,
-							"",
-							features,
-							recursiveQueriesAreSupported,
-						),
-					},
-					Dialect:  store.GetDialect(),
-					Features: features,
-				}
-
-				res := []dashboards.DashboardSearchProjection{}
-				err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
-					sql, params := builder.ToSQL(limit, page)
-					// TODO: replace with a proper test
-					assert.Equal(t, tc.expectedParams, params)
-					return sess.SQL(sql, params...).Find(&res)
-				})
-				require.NoError(t, err)
-
-				assert.Len(t, res, 0)
+			res := []dashboards.DashboardSearchProjection{}
+			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+				sql, params := builder.ToSQL(limit, page)
+				assert.Equal(t, tc.expectedParams, params)
+				return sess.SQL(sql, params...).Find(&res)
 			})
-		}
+			require.NoError(t, err)
+
+			assert.Len(t, res, 0)
+		})
 	}
 }
 

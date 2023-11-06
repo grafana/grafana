@@ -84,6 +84,8 @@ type ServiceAccountDTO struct {
 	OrgId int64 `json:"orgId" xorm:"org_id"`
 	// example: false
 	IsDisabled bool `json:"isDisabled" xorm:"is_disabled"`
+	// example: false
+	IsManaged bool `json:"isManaged,omitempty" xorm:"-"`
 	// example: Viewer
 	Role string `json:"role" xorm:"role"`
 	// example: 0
@@ -112,6 +114,7 @@ type SearchOrgServiceAccountsQuery struct {
 	Filter       ServiceAccountFilter
 	Page         int
 	Limit        int
+	CountOnly    bool
 	SignedInUser identity.Requester
 }
 
@@ -154,7 +157,7 @@ type ServiceAccountProfileDTO struct {
 	// example: []
 	Teams []string `json:"teams" xorm:"-"`
 	// example: false
-	IsExternal bool `json:"isExternal,omitempty" xorm:"-"`
+	IsManaged bool `json:"isManaged,omitempty" xorm:"-"`
 
 	Tokens        int64           `json:"tokens,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
@@ -166,6 +169,7 @@ const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
 	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
 	FilterIncludeAll        ServiceAccountFilter = "all"
+	FilterOnlyExternal      ServiceAccountFilter = "external"
 )
 
 type Stats struct {
@@ -187,9 +191,15 @@ type ExtSvcAccount struct {
 
 type ManageExtSvcAccountCmd struct {
 	ExtSvcSlug  string
-	Enabled     bool // disabled: the service account and its permissions will be deleted
+	Enabled     bool
 	OrgID       int64
 	Permissions []accesscontrol.Permission
+}
+
+type EnableExtSvcAccountCmd struct {
+	ExtSvcSlug string
+	Enabled    bool
+	OrgID      int64
 }
 
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access

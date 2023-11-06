@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -11,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -19,19 +24,44 @@ import (
 
 type ExtSvcAccountsService struct {
 	acSvc    ac.Service
+	features *featuremgmt.FeatureManager
 	logger   log.Logger
+	metrics  *metrics
 	saSvc    sa.Service
 	skvStore kvstore.SecretsKVStore
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, saSvc *manager.ServiceAccountsService, db db.DB, secretsSvc secrets.Service) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, features *featuremgmt.FeatureManager, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")
-	return &ExtSvcAccountsService{
+	esa := &ExtSvcAccountsService{
 		acSvc:    acSvc,
 		logger:   logger,
 		saSvc:    saSvc,
+		features: features,
 		skvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 	}
+
+	if features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		// Register the metrics
+		esa.metrics = newMetrics(reg, saSvc, logger)
+
+		// Register a listener to enable/disable service accounts
+		bus.AddEventListener(esa.handlePluginStateChanged)
+	}
+
+	return esa
+}
+
+// EnableExtSvcAccount enables or disables the service account associated to an external service
+func (esa *ExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *sa.EnableExtSvcAccountCmd) error {
+	saName := sa.ExtSvcPrefix + slugify.Slugify(cmd.ExtSvcSlug)
+
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, saName)
+	if errRetrieve != nil {
+		return errRetrieve
+	}
+
+	return esa.saSvc.EnableServiceAccount(ctx, cmd.OrgID, saID, cmd.Enabled)
 }
 
 // RetrieveExtSvcAccount fetches an external service account by ID
@@ -52,6 +82,12 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 
 // SaveExternalService creates, updates or delete a service account (and its token) with the requested permissions.
 func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
+	// This is double proofing, we should never reach here anyway the flags have already been checked.
+	if !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) && !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
+		return nil, nil
+	}
+
 	if cmd == nil {
 		esa.logger.Warn("Received no input")
 		return nil, nil
@@ -92,6 +128,12 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
 func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *sa.ManageExtSvcAccountCmd) (int64, error) {
+	// This is double proofing, we should never reach here anyway the flags have already been checked.
+	if !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) && !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
+		return 0, nil
+	}
+
 	if cmd == nil {
 		esa.logger.Warn("Received no input")
 		return 0, nil
@@ -102,7 +144,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		return 0, errRetrieve
 	}
 
-	if !cmd.Enabled || len(cmd.Permissions) == 0 {
+	if len(cmd.Permissions) == 0 {
 		if saID > 0 {
 			if err := esa.deleteExtSvcAccount(ctx, cmd.OrgID, cmd.ExtSvcSlug, saID); err != nil {
 				esa.logger.Error("Error occurred while deleting service account",
@@ -111,16 +153,17 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 					"error", err.Error())
 				return 0, err
 			}
+			esa.metrics.deletedCount.Inc()
 		}
-		esa.logger.Info("Skipping service account creation",
+		esa.logger.Info("Skipping service account creation, no permission",
 			"service", cmd.ExtSvcSlug,
-			"enabled", cmd.Enabled,
 			"permission count", len(cmd.Permissions),
 			"saID", saID)
 		return 0, nil
 	}
 
 	saID, errSave := esa.saveExtSvcAccount(ctx, &saveCmd{
+		Enabled:     cmd.Enabled,
 		ExtSvcSlug:  cmd.ExtSvcSlug,
 		OrgID:       cmd.OrgID,
 		Permissions: cmd.Permissions,
@@ -130,6 +173,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		esa.logger.Error("Could not save service account", "service", cmd.ExtSvcSlug, "error", errSave.Error())
 		return 0, errSave
 	}
+	esa.metrics.savedCount.Inc()
 
 	return saID, nil
 }
@@ -148,6 +192,12 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 			return 0, err
 		}
 		cmd.SaID = sa.Id
+	}
+
+	// Enable or disable the service account
+	esa.logger.Debug("Set service account state", "service", cmd.ExtSvcSlug, "saID", cmd.SaID, "enabled", cmd.Enabled)
+	if err := esa.saSvc.EnableServiceAccount(ctx, cmd.OrgID, cmd.SaID, cmd.Enabled); err != nil {
+		return 0, err
 	}
 
 	// update the service account's permissions
@@ -238,4 +288,21 @@ func (esa *ExtSvcAccountsService) SaveExtSvcCredentials(ctx context.Context, cmd
 func (esa *ExtSvcAccountsService) DeleteExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) error {
 	esa.logger.Debug("Delete service account token from skv", "service", extSvcSlug, "orgID", orgID)
 	return esa.skvStore.Del(ctx, orgID, extSvcSlug, kvStoreType)
+}
+
+func (esa *ExtSvcAccountsService) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
+	esa.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+
+	errEnable := esa.EnableExtSvcAccount(ctx, &sa.EnableExtSvcAccountCmd{
+		ExtSvcSlug: event.PluginId,
+		Enabled:    event.Enabled,
+		OrgID:      extsvcauth.TmpOrgID,
+	})
+
+	// Ignore service account not found error
+	if errors.Is(errEnable, sa.ErrServiceAccountNotFound) {
+		esa.logger.Debug("No ext svc account with this plugin", "pluginId", event.PluginId)
+		return nil
+	}
+	return errEnable
 }

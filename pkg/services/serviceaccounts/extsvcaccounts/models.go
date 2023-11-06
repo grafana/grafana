@@ -7,18 +7,21 @@ import (
 )
 
 const (
+	metricsNamespace = "grafana"
+
 	kvStoreType = "extsvc-token"
 	// #nosec G101 - this is not a hardcoded secret
 	tokenNamePrefix = "extsvc-token"
 )
 
 var (
-	ErrCannotBeDeleted   = errutil.BadRequest("extsvcaccounts.ErrCannotBeDeleted", errutil.WithPublicMessage("external service account cannot be deleted"))
-	ErrInvalidName       = errutil.BadRequest("extsvcaccounts.ErrInvalidName", errutil.WithPublicMessage("only external service account names can be prefixed with 'extsvc-'"))
-	ErrCannotBeUpdated   = errutil.BadRequest("extsvcaccounts.ErrCannotBeUpdated", errutil.WithPublicMessage("external service account cannot be updated"))
-	ErrCannotCreateToken = errutil.BadRequest("extsvcaccounts.ErrCannotCreateToken", errutil.WithPublicMessage("cannot add external service account token"))
-
+	ErrCannotBeDeleted     = errutil.BadRequest("extsvcaccounts.ErrCannotBeDeleted", errutil.WithPublicMessage("external service account cannot be deleted"))
+	ErrCannotBeUpdated     = errutil.BadRequest("extsvcaccounts.ErrCannotBeUpdated", errutil.WithPublicMessage("external service account cannot be updated"))
+	ErrCannotCreateToken   = errutil.BadRequest("extsvcaccounts.ErrCannotCreateToken", errutil.WithPublicMessage("cannot add external service account token"))
+	ErrCannotDeleteToken   = errutil.BadRequest("extsvcaccounts.ErrCannotDeleteToken", errutil.WithPublicMessage("cannot delete external service account token"))
+	ErrCannotListTokens    = errutil.BadRequest("extsvcaccounts.ErrCannotListTokens", errutil.WithPublicMessage("cannot list external service account tokens"))
 	ErrCredentialsNotFound = errutil.NotFound("extsvcaccounts.credentials-not-found")
+	ErrInvalidName         = errutil.BadRequest("extsvcaccounts.ErrInvalidName", errutil.WithPublicMessage("only external service account names can be prefixed with 'extsvc-'"))
 )
 
 // Credentials represents the credentials associated to an external service
@@ -33,6 +36,7 @@ type SaveCredentialsCmd struct {
 }
 
 type saveCmd struct {
+	Enabled     bool
 	ExtSvcSlug  string
 	OrgID       int64
 	Permissions []ac.Permission

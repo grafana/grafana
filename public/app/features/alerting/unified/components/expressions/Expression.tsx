@@ -3,8 +3,7 @@ import { uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -60,14 +59,10 @@ export const Expression: FC<ExpressionProps> = ({
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
-  const seriesCount = series.length;
 
   const alertCondition = isAlertCondition ?? false;
 
-  const groupedByState = {
-    [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) !== 0),
-    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
-  };
+  const { seriesCount, groupedByState } = getGroupedByStateAndSeriesCount(series);
 
   const renderExpressionType = useCallback(
     (query: ExpressionQuery) => {
@@ -236,6 +231,21 @@ export const PreviewSummary: FC<{ firing: number; normal: number; isCondition: b
   return <span className={mutedText}>{`${seriesCount} series`}</span>;
 };
 
+export function getGroupedByStateAndSeriesCount(series: DataFrame[]) {
+  const noDataSeries = series.filter((serie) => getSeriesValue(serie) === undefined).length;
+  const groupedByState = {
+    // we need to filter out series with no data (undefined) or zero value
+    [PromAlertingRuleState.Firing]: series.filter(
+      (serie) => getSeriesValue(serie) !== undefined && getSeriesValue(serie) !== 0
+    ),
+    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
+  };
+
+  const seriesCount = series.length - noDataSeries;
+
+  return { groupedByState, seriesCount };
+}
+
 interface HeaderProps {
   refId: string;
   queryType: ExpressionQueryType;
@@ -277,7 +287,7 @@ const Header: FC<HeaderProps> = ({
   return (
     <header className={styles.header.wrapper}>
       <Stack direction="row" gap={0.5} alignItems="center">
-        <Stack direction="row" gap={1} alignItems="center" wrap={false}>
+        <Stack direction="row" gap={1} alignItems="center">
           {!editingRefId && (
             <button type="button" className={cx(clearButton, styles.editable)} onClick={() => setEditMode('refId')}>
               <div className={styles.expression.refId}>{refId}</div>
