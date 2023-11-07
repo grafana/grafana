@@ -11,13 +11,15 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
+export type MegaMenuState = 'open' | 'closed' | 'docked';
+
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
   searchBarHidden?: boolean;
-  megaMenu: 'open' | 'closed' | 'docked';
+  megaMenu: MegaMenuState;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
 }
