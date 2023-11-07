@@ -55,9 +55,9 @@ export type Props = {
   vertical?: boolean;
 
   /**
-   * If true similar items in the same stack will be collapsed into single item.
+   * Disable behaviour where similar items in the same stack will be collapsed into single item.
    */
-  collapsing?: boolean;
+  disableCollapsing?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -70,7 +70,7 @@ const FlameGraphContainer = ({
   stickyHeader,
   extraHeaderElements,
   vertical,
-  collapsing,
+  disableCollapsing,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -89,8 +89,8 @@ const FlameGraphContainer = ({
     if (!data) {
       return;
     }
-    return new FlameGraphDataContainer(data, { collapsing: Boolean(collapsing) }, theme);
-  }, [data, theme, collapsing]);
+    return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
+  }, [data, theme, disableCollapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme, vertical);
 
@@ -204,7 +204,7 @@ const FlameGraphContainer = ({
               onFocusPillClick={resetFocus}
               onSandwichPillClick={resetSandwich}
               colorScheme={colorScheme}
-              collapsing={collapsing}
+              collapsing={!disableCollapsing}
             />
           )}
         </div>
