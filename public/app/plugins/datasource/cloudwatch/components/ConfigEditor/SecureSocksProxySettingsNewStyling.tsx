@@ -5,8 +5,7 @@ import { ConfigSection } from '@grafana/experimental';
 import { Field, Switch } from '@grafana/ui';
 
 export interface Props<T extends DataSourceJsonData>
-  extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {
-}
+  extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}
 
 export interface SecureSocksProxyConfig extends DataSourceJsonData {
   enableSecureSocksProxy?: boolean;
@@ -16,7 +15,8 @@ export function SecureSocksProxySettingsNewStyling<T extends SecureSocksProxyCon
   options,
   onOptionsChange,
 }: Props<T>): JSX.Element {
-  return  <ConfigSection title="Secure Socks Proxy">
+  return (
+    <ConfigSection title="Secure Socks Proxy">
       <Field label="Enabled" description="Connect to this datasource via the secure socks proxy.">
         <Switch
           value={options.jsonData.enableSecureSocksProxy ?? false}
@@ -29,5 +29,5 @@ export function SecureSocksProxySettingsNewStyling<T extends SecureSocksProxyCon
         />
       </Field>
     </ConfigSection>
-  
+  );
 }
