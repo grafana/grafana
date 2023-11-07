@@ -55,6 +55,8 @@ import { InstancesList } from '../tabs/Instances';
 import { QueryResults } from '../tabs/Query';
 import { Routing } from '../tabs/Routing';
 
+import { useDeleteModal } from './DeleteModal';
+
 type RuleViewerProps = GrafanaRouteComponentProps<{
   id: string;
   sourceName: string;
@@ -69,11 +71,10 @@ enum ActiveTab {
 }
 
 // @TODO
-// hook up tabs to query params or path segment
 // figure out why we needed <AlertingPageWrapper>
-// add provisioning and federation stuff back in
 const RuleViewer = ({ match }: RuleViewerProps) => {
   const [activeTab, setActiveTab] = useActiveTab();
+  const [deleteModal, showDeleteModal] = useDeleteModal();
 
   const id = ruleId.getRuleIdFromPathname(match.params);
   const identifier = useMemo(() => {
@@ -183,7 +184,12 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                         {isRemovable && !isFederatedRule && !isProvisioned && (
                           <>
                             <Menu.Divider />
-                            <Menu.Item label="Delete" icon="trash-alt" destructive />
+                            <Menu.Item
+                              label="Delete"
+                              icon="trash-alt"
+                              destructive
+                              onClick={() => showDeleteModal(rule)}
+                            />
                           </>
                         )}
                       </Menu>
@@ -193,9 +199,8 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                   </Dropdown>
                 </Stack>
               </Stack>
-              {summary ? (
-                <Summary text={summary} />
-              ) : (
+              {summary && <Summary text={summary} />}
+              {isEditable && !isProvisioned && !isFederatedRule && (
                 <Button size="sm" fill="text" variant="secondary" style={{ alignSelf: 'start' }}>
                   <Text variant="bodySmall" color="secondary" italic>
                     Click to add a summary <Icon name="pen" />
@@ -257,6 +262,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
             </TabContent>
           </Stack>
         </Stack>
+        {deleteModal}
       </>
     );
   }
