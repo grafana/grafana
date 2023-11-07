@@ -231,7 +231,7 @@ ENABLE_METRICS=true
 
 #### Enable detailed timing metrics
 
-With the Prometheus metrics enabled (see previous paragraph), you can also enable detailed metrics to get the duration of every rendering step.
+With the [Prometheus metrics enabled](#enable-prometheus-metrics), you can also enable detailed metrics to get the duration of every rendering step.
 
 Default is `false`.
 
