@@ -98,17 +98,6 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
 
     const { minVizHeight, minVizWidth } = this.calculateGaugeSize();
 
-    // calculate if there is overflow
-    const numberOfGauges = this.getValues().length;
-
-    const remainderWidth = width - numberOfGauges * minVizWidth!;
-    const isHorizontalOverflow = options.orientation === VizOrientation.Horizontal && remainderWidth < 0;
-
-    const remainderHeight = height - numberOfGauges * minVizHeight!;
-    const isVerticalOverflow = options.orientation === VizOrientation.Vertical && remainderHeight < 0;
-
-    const isOverflow = isHorizontalOverflow || isVerticalOverflow;
-
     return (
       <VizRepeater
         getValues={this.getValues}
@@ -121,7 +110,6 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
         orientation={options.orientation}
         minVizHeight={minVizHeight}
         minVizWidth={minVizWidth}
-        isOverflow={isOverflow}
       />
     );
   }

@@ -31,7 +31,6 @@ interface Props<V, D> {
   autoGrid?: boolean;
   minVizWidth?: number;
   minVizHeight?: number;
-  isOverflow?: boolean;
   maxVizHeight?: number;
 }
 
@@ -214,9 +213,20 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
 
+    // calculate if there is overflow
+    const numberOfGauges = values.length;
+
+    const remainderWidth = width - numberOfGauges * minVizWidth!;
+    const isHorizontalOverflow = orientation === VizOrientation.Horizontal && remainderWidth < 0;
+
+    const remainderHeight = height - numberOfGauges * minVizHeight!;
+    const isVerticalOverflow = orientation === VizOrientation.Vertical && remainderHeight < 0;
+
+    const isOverflow = isHorizontalOverflow || isVerticalOverflow;
+
     return (
       <>
-        {this.props.isOverflow && (
+        {isOverflow && (
           <Tooltip content="Some content may be hidden in overflow and requires scrolling">
             <div style={overflowStyle}>
               <Icon name="info-circle" size="sm" />
