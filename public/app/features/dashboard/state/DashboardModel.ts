@@ -1294,8 +1294,8 @@ export class DashboardModel implements TimeModel {
 
   hasAngularPlugins(): boolean {
     return this.panels.some((panel) => {
-      // Return false for plugins that are angular but have hideAngularDeprecation = false
-      const isAngularPanel = panel.isAngularPlugin() && !panel.plugin?.meta.hideAngularDeprecation;
+      // Return false for plugins that are angular but have angular.hideDeprecation = false
+      const isAngularPanel = panel.isAngularPlugin() && !panel.plugin?.meta.angular?.hideDeprecation;
       let isAngularDs = false;
       if (panel.datasource?.uid) {
         isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);

@@ -25,7 +25,7 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
     const { plugin } = await pluginLoader.importPluginModule({
       path,
       version,
-      isAngular: config.angularDetected,
+      isAngular: config.angularMeta.detected,
       pluginId,
     });
     const { extensionConfigs = [] } = plugin;

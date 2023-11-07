@@ -52,6 +52,11 @@ export interface PluginError {
   pluginType?: PluginType;
 }
 
+export interface AngularMeta {
+  detected: boolean;
+  hideDeprecation: boolean;
+}
+
 export interface PluginMeta<T extends KeyValue = {}> {
   id: string;
   name: string;
@@ -82,8 +87,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   signatureType?: PluginSignatureType;
   signatureOrg?: string;
   live?: boolean;
-  angularDetected?: boolean;
-  hideAngularDeprecation?: boolean;
+  angular?: AngularMeta;
 }
 
 interface PluginDependencyInfo {

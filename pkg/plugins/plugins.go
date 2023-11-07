@@ -55,8 +55,7 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
-	AngularDetected        bool
-	HideAngularDeprecation bool
+	Angular AngularMeta
 
 	ExternalService *auth.ExternalService
 
@@ -66,6 +65,11 @@ type Plugin struct {
 	log            log.Logger
 
 	mu sync.Mutex
+}
+
+type AngularMeta struct {
+	Detected        bool `json:"detected"`
+	HideDeprecation bool `json:"hideDeprecation"`
 }
 
 // JSONData represents the plugin's plugin.json

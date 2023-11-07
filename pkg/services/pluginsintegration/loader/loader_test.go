@@ -1221,9 +1221,9 @@ func TestLoader_AngularClass(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, p, 1, "should load 1 plugin")
 			if tc.expAngularDetectionRun {
-				require.True(t, p[0].AngularDetected, "angular detection should run")
+				require.True(t, p[0].Angular.Detected, "angular detection should run")
 			} else {
-				require.False(t, p[0].AngularDetected, "angular detection should not run")
+				require.False(t, p[0].Angular.Detected, "angular detection should not run")
 			}
 		})
 	}
@@ -1317,7 +1317,7 @@ func TestLoader_HideAngularDeprecation(t *testing.T) {
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
 			require.Len(t, p, 1, "should load 1 plugin")
-			require.Equal(t, tc.expHideAngularDeprecation, p[0].HideAngularDeprecation)
+			require.Equal(t, tc.expHideAngularDeprecation, p[0].Angular.HideDeprecation)
 		})
 	}
 }

@@ -87,7 +87,7 @@ export function getPanelChromeProps(props: CommonProps) {
   const isAngularDatasource = props.panel.datasource?.uid
     ? isAngularDatasourcePluginAndNotHidden(props.panel.datasource?.uid)
     : false;
-  const isAngularPanel = props.panel.isAngularPlugin() && !props.plugin.meta.hideAngularDeprecation;
+  const isAngularPanel = props.panel.isAngularPlugin() && !props.plugin.meta.angular?.hideDeprecation;
   const showAngularNotice =
     (config.featureToggles.angularDeprecationUI ?? false) && (isAngularDatasource || isAngularPanel);
 

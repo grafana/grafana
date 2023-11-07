@@ -7,10 +7,10 @@ function getDsInstanceSettingsByUid(dsUid: string): DataSourceInstanceSettings<D
 }
 
 export function isAngularDatasourcePlugin(dsUid: string): boolean {
-  return getDsInstanceSettingsByUid(dsUid)?.meta.angularDetected ?? false;
+  return getDsInstanceSettingsByUid(dsUid)?.meta.angular?.detected ?? false;
 }
 
 export function isAngularDatasourcePluginAndNotHidden(dsUid: string): boolean {
   const settings = getDsInstanceSettingsByUid(dsUid);
-  return (settings?.meta.angularDetected && !settings?.meta.hideAngularDeprecation) ?? false;
+  return (settings?.meta.angular?.detected && !settings?.meta.angular.hideDeprecation) ?? false;
 }

@@ -30,8 +30,7 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
-	AngularDetected        bool
-	HideAngularDeprecation bool
+	Angular plugins.AngularMeta
 
 	ExternalService *auth.ExternalService
 }
@@ -75,7 +74,6 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		BaseURL:           p.BaseURL,
 		ExternalService:   p.ExternalService,
 
-		AngularDetected:        p.AngularDetected,
-		HideAngularDeprecation: p.HideAngularDeprecation,
+		Angular: p.Angular,
 	}
 }

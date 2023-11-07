@@ -209,8 +209,7 @@ type PluginMetaDTO struct {
 	Module  string `json:"module"`
 	BaseURL string `json:"baseUrl"`
 
-	AngularDetected        bool `json:"angularDetected"`
-	HideAngularDeprecation bool `json:"hideAngularDeprecation"`
+	Angular AngularMeta `json:"angular"`
 }
 
 type DataSourceDTO struct {
@@ -257,8 +256,7 @@ type PanelDTO struct {
 	Signature     string   `json:"signature"`
 	Module        string   `json:"module"`
 
-	AngularDetected        bool `json:"angularDetected"`
-	HideAngularDeprecation bool `json:"hideAngularDeprecation"`
+	Angular AngularMeta `json:"angular"`
 }
 
 type AppDTO struct {
@@ -267,8 +265,7 @@ type AppDTO struct {
 	Version string `json:"version"`
 	Preload bool   `json:"preload"`
 
-	AngularDetected        bool `json:"angularDetected"`
-	HideAngularDeprecation bool `json:"hideAngularDeprecation"`
+	Angular AngularMeta `json:"angular"`
 }
 
 const (
