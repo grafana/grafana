@@ -1,7 +1,16 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrame, Field, getLinksSupplier, GrafanaTheme2, PanelProps, ScopedVars, TimeRange } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameType,
+  Field,
+  getLinksSupplier,
+  GrafanaTheme2,
+  PanelProps,
+  ScopedVars,
+  TimeRange,
+} from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
@@ -17,7 +26,7 @@ import {
   VizTooltipContainer,
 } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
@@ -173,11 +182,22 @@ export const HeatmapPanel = ({
       return null;
     }
 
+    let heatmapType = dataRef.current?.heatmap?.meta?.type;
+    let isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
+    let countFieldIdx = !isSparseHeatmap ? 2 : 3;
+    const countField = info.heatmap.fields[countFieldIdx];
+
+    let hoverValue: number | undefined = undefined;
+    // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
+    if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
+      hoverValue = countField.values[hover.dataIdx];
+    }
+
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
           <ColorScale
-            // hoverValue={hoverValue}
+            hoverValue={hoverValue}
             colorPalette={palette}
             min={dataRef.current.heatmapColors?.minValue!}
             max={dataRef.current.heatmapColors?.maxValue!}
