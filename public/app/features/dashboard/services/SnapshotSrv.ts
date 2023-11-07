@@ -19,7 +19,11 @@ export interface DashboardSnapshotSrv {
 const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   getSnapshots: () => backendSrv.get<Snapshot[]>('/api/dashboard/snapshots'),
   deleteSnapshot: (key: string) => backendSrv.delete('/api/snapshots/' + key),
-  getSnapshot: (key: string) => backendSrv.get<DashboardDTO>('/api/snapshots/' + key),
+  getSnapshot: async (key: string) => {
+    const dto = await backendSrv.get<DashboardDTO>('/api/snapshots/' + key);
+    dto.meta.canShare = false;
+    return dto;
+  },
 };
 
 export function getDashboardSnapshotSrv(): DashboardSnapshotSrv {
