@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, Drawer } from '@grafana/ui';
+import { Button, Drawer, Tooltip } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -98,17 +98,18 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
               padding: '0 0 0 6px',
             })}
           >
-            <Button
-              variant={'secondary'}
-              onClick={() => {
-                setShowDrawer(true);
-              }}
-              title={'Get query suggestions.'}
-              disabled={!query.metric}
-            >
-              <img height={16} src={AI_Logo_color} alt="AI logo black and white" />
-              {'\u00A0'}Get query suggestions
-            </Button>
+            <Tooltip content={'To use this feature, first select a metric'}>
+              <Button
+                variant={'secondary'}
+                onClick={() => {
+                  setShowDrawer(true);
+                }}
+                disabled={!query.metric}
+              >
+                <img height={16} src={AI_Logo_color} alt="AI logo black and white" />
+                {'\u00A0'}Get query suggestions
+              </Button>
+            </Tooltip>
           </div>
         )}
         <QueryBuilderHints<PromVisualQuery>
