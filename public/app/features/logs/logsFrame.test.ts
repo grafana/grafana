@@ -96,7 +96,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result?.extraFields).toStrictEqual([]);
   });
 
-  it('should parse a Loki-style frame (single-frame, labels-in-json)', () => {
+  it('should parse frames with labels field of type other', () => {
     const time = makeTime('Time', [1687185711795, 1687185711995]);
     const line = makeString('Line', ['line1', 'line2']);
     const id = makeString('id', ['id1', 'id2']);
@@ -107,11 +107,6 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     ]);
 
     const result = parseLogsFrame({
-      meta: {
-        custom: {
-          frameType: 'LabeledTimeValues',
-        },
-      },
       fields: [labels, time, line, ns, id],
       length: 2,
     });
@@ -145,11 +140,6 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     const level = makeString('level', ['info', 'error']);
 
     const result = parseLogsFrame({
-      meta: {
-        custom: {
-          frameType: 'LabeledTimeValues',
-        },
-      },
       fields: [time, line, source, level, host],
       length: 2,
     });
