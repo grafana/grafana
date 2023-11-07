@@ -282,8 +282,12 @@ export async function promQailSuggest(
   const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
   // Decide metric type
-  await datasource.languageProvider.start(); //why do I need to do this to prepropulate the list??
   let metricType = '';
+  // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the
+  // provider but we only need the metadata here.
+  if (!datasource.languageProvider.metricsMetadata) {
+    await datasource.languageProvider.loadMetricsMetadata();
+  }
   if (datasource.languageProvider.metricsMetadata) {
     // `datasource.languageProvider.metricsMetadata` is a list of metric family names (with desired type)
     // from the datasource metadata endoint, but unfortunately the expanded _sum, _count, _bucket raw
