@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -43,24 +42,16 @@ type K8sTestHelper struct {
 	env        server.TestEnv
 	namespacer request.NamespaceMapper
 
-	Org1 OrgUsers
-	Org2 OrgUsers
+	Org1 OrgUsers // default
+	OrgB OrgUsers // some other id
 
 	// // Registered groups
 	groups []metav1.APIGroup
 }
 
-func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
+func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	t.Helper()
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // do not start extra port 6443
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServer,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		},
-	})
-
+	dir, path := testinfra.CreateGrafDir(t, opts)
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
 	c := &K8sTestHelper{
 		env:        *env,
@@ -68,8 +59,8 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 		namespacer: request.GetNamespaceMapper(nil),
 	}
 
-	c.Org1 = c.createTestUsers(int64(1))
-	c.Org2 = c.createTestUsers(int64(2))
+	c.Org1 = c.createTestUsers("Org1")
+	c.OrgB = c.createTestUsers("OrgB")
 
 	// Read the API groups
 	rsp := DoRequest(c, RequestParams{
@@ -79,6 +70,12 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 	}, &metav1.APIGroupList{})
 	c.groups = rsp.Result.Groups
 	return c
+}
+
+func (c *K8sTestHelper) Shutdown() {
+	fmt.Printf("calling shutdown on: %s\n", c.env.Server.HTTPServer.Listener.Addr())
+	err := c.env.Server.Shutdown(context.Background(), "done")
+	require.NoError(c.t, err)
 }
 
 type ResourceClientArgs struct {
@@ -327,20 +324,27 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: unstructuredMap}
 }
 
-func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
+func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 
 	store := c.env.SQLStore
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = int(orgId)
+	defer func() {
+		store.Cfg.AutoAssignOrg = false
+		store.Cfg.AutoAssignOrgId = 1 // the default
+	}()
+
 	quotaService := quotaimpl.ProvideService(store, store.Cfg)
 
 	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(c.t, err)
 
-	gotID, err := orgService.GetOrCreate(context.Background(), fmt.Sprintf("Org%d", orgId))
-	require.NoError(c.t, err)
-	require.Equal(c.t, orgId, gotID)
+	orgId := int64(1)
+	if orgName != "Org1" {
+		orgId, err = orgService.GetOrCreate(context.Background(), orgName)
+		require.NoError(c.t, err)
+	}
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = int(orgId)
 
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
 	cache := localcache.ProvideService()
@@ -354,7 +358,7 @@ func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			DefaultOrgRole: string(role),
 			Password:       key,
-			Login:          fmt.Sprintf("%s%d", key, orgId),
+			Login:          fmt.Sprintf("%s-%d", key, orgId),
 			OrgID:          orgId,
 		})
 		require.NoError(c.t, err)
