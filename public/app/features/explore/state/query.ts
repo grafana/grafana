@@ -706,7 +706,6 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
 interface RunLoadMoreQueriesOptions {
   exploreId: string;
-  refIds: string[];
   absoluteRange: AbsoluteTimeRange;
 }
 /**
@@ -715,14 +714,13 @@ interface RunLoadMoreQueriesOptions {
  */
 export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptions>(
   'explore/runQueries',
-  async ({ exploreId, absoluteRange, refIds }, { dispatch, getState }) => {
+  async ({ exploreId, absoluteRange }, { dispatch, getState }) => {
     const correlations$ = getCorrelations(exploreId);
     const {
       datasourceInstance,
       containerWidth,
       queryResponse,
       correlationEditorHelperData,
-      queries: exploreQueries,
     } = getState().explore.panes[exploreId]!;
 
     const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
@@ -734,10 +732,11 @@ export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptio
     let newQuerySource: Observable<ExplorePanelData>;
 
     // Filter queries by those explicitly requested by refId
-    const queries = exploreQueries.map((query) => ({
+    const logQueries = queryResponse.logsResult?.queries || [];
+    const queries = logQueries.map((query) => ({
       ...query,
       datasource: query.datasource || datasourceInstance?.getRef(),
-    })).filter((query) => refIds.includes(query.refId));
+    }));
 
     if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
       return;
