@@ -7,8 +7,8 @@ import React, { PureComponent } from 'react';
 import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 
-import { VizTooltipProps, VizTooltipContentProps, ActiveDimensions, VizTooltip } from '../VizTooltip';
-import { FlotPosition } from '../VizTooltip/VizTooltip';
+import { VizTooltipProps, VizTooltipContentProps, ActiveDimensions, VizTooltip } from '../../components/VizTooltip';
+import { FlotPosition } from '../../components/VizTooltip/VizTooltip';
 
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';

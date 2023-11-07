@@ -23,16 +23,18 @@
         "x": 0,
         "y": 4
       },
-      "headings": true,
       "id": 3,
-      "limit": 30,
       "links": [],
-      "options": {},
-      "query": "",
-      "recent": true,
-      "search": false,
-      "starred": true,
-      "tags": [],
+      "options": {
+        "showStarred": true,
+        "showRecentlyViewed": true,
+        "showSearch": false,
+        "showHeadings": true,
+        "folderId": 0,
+        "maxItems": 30,
+        "tags": [],
+        "query": ""
+      },
       "title": "Dashboards",
       "type": "dashlist"
     },

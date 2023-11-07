@@ -342,9 +342,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField
-            label="Span Duration"
+            label="Duration"
             labelWidth={16}
-            tooltip="Filter by span duration. Accepted units are ns, us, ms, s, m, h"
+            tooltip="Filter by duration. Accepted units are ns, us, ms, s, m, h"
           >
             <HorizontalGroup spacing="xs" align="flex-start">
               <Select

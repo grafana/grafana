@@ -11,13 +11,13 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 
+import { ContextMenu, ContextMenuProps } from '../../components/ContextMenu/ContextMenu';
+import { FormattedValueDisplay } from '../../components/FormattedValueDisplay/FormattedValueDisplay';
+import { HorizontalGroup } from '../../components/Layout/Layout';
+import { MenuGroup, MenuGroupProps } from '../../components/Menu/MenuGroup';
+import { MenuItem } from '../../components/Menu/MenuItem';
+import { SeriesIcon } from '../../components/VizLegend/SeriesIcon';
 import { useStyles2 } from '../../themes';
-import { ContextMenu, ContextMenuProps } from '../ContextMenu/ContextMenu';
-import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { HorizontalGroup } from '../Layout/Layout';
-import { MenuGroup, MenuGroupProps } from '../Menu/MenuGroup';
-import { MenuItem } from '../Menu/MenuItem';
-import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 import { GraphDimensions } from './GraphTooltip/types';
 
