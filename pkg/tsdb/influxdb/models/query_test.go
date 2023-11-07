@@ -234,6 +234,22 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 'value'`)
 		})
 
+		t.Run("can render boolean equality tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "false", Key: "key"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = false`)
+		})
+
+		t.Run("can render boolean inequality tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is Not", Value: "true", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" != true`)
+		})
+
+		t.Run("can correct case of boolean tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "False", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = false`)
+		})
+
 		t.Run("can escape backslashes when rendering string tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "=", Value: `C:\test\`, Key: "key"}}}
 
