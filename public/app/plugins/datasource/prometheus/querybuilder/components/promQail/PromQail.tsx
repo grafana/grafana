@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
+import { Alert, Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { PrometheusDatasource } from '../../../datasource';
@@ -82,6 +82,22 @@ export const PromQail = (props: PromQailProps) => {
         </div>
         {state.showStartingMessage ? (
           <>
+            <Alert
+              title={''}
+              severity={'info'}
+              key={'promqail-llm-app'}
+              className={cx(styles.textPadding, styles.noMargin)}
+            >
+              Ensure the LLM plugin has been set up for your instance before you use the Query Advisor.{' '}
+              <a
+                href={'https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/'}
+                className={styles.doc}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                Learn more
+              </a>
+            </Alert>
             <div className={styles.textPadding}>
               This assistant can suggest queries based on your use case and the metric you want to query
             </div>
@@ -520,6 +536,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     submitFeedback: css({
       padding: '16px 0',
+    }),
+    noMargin: css({
+      margin: 0,
     }),
   };
 };
