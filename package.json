@@ -243,7 +243,7 @@
     "@fingerprintjs/fingerprintjs": "^3.4.2",
     "@glideapps/glide-data-grid": "^5.2.1",
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*",
-    "@grafana/aws-sdk": "0.2.0",
+    "@grafana/aws-sdk": "0.3.1",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "1.7.4",

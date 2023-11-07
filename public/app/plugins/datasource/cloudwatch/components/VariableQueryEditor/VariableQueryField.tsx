@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { EditorField } from '@grafana/experimental';
 import { InlineField, Select } from '@grafana/ui';
 
 import { VariableQueryType } from '../../types';
@@ -15,6 +17,7 @@ interface VariableQueryFieldProps<T> {
   inputId?: string;
   allowCustomValue?: boolean;
   isLoading?: boolean;
+  newFormStylingEnabled?: boolean;
 }
 
 export const VariableQueryField = <T extends string | VariableQueryType>({
@@ -25,8 +28,22 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
   allowCustomValue = false,
   isLoading = false,
   inputId = label,
+  newFormStylingEnabled,
 }: VariableQueryFieldProps<T>) => {
-  return (
+  return newFormStylingEnabled ? (
+    <EditorField label={label} htmlFor={inputId} className={css({ marginBottom: 8 })}>
+      <Select
+        aria-label={label}
+        width={25}
+        allowCustomValue={allowCustomValue}
+        value={value}
+        onChange={({ value }) => onChange(value!)}
+        options={options}
+        isLoading={isLoading}
+        inputId={inputId}
+      />
+    </EditorField>
+  ) : (
     <InlineField label={label} labelWidth={LABEL_WIDTH} htmlFor={inputId}>
       <Select
         aria-label={label}
