@@ -91,7 +91,7 @@ const ServiceAccountListItem = memo(
             <OrgRolePicker
               aria-label="Role"
               value={serviceAccount.role}
-              disabled={!canUpdateRole || serviceAccount.isDisabled}
+              disabled={serviceAccount.isManaged || !canUpdateRole || serviceAccount.isDisabled}
               onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
             />
           </td>
