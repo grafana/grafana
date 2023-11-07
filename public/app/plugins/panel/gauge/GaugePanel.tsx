@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 
 import { FieldDisplay, getDisplayProcessor, getFieldDisplayValues, PanelProps } from '@grafana/data';
-import { VizOrientation } from '@grafana/schema';
+import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { DataLinksContextMenu, Gauge, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
 import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
-import { Options } from './panelcfg.gen';
+import { defaultOptions, Options } from './panelcfg.gen';
 
 export class GaugePanel extends PureComponent<PanelProps<Options>> {
   renderComponent = (
@@ -79,20 +79,32 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
     });
   };
 
+  calculateGaugeSize = () => {
+    const { options } = this.props;
+
+    const orientation = options.orientation;
+    const isManualSizing = options.sizing === BarGaugeSizing.Manual;
+    const isVerticalOrientation = orientation === VizOrientation.Vertical;
+    const isHorizontalOrientation = orientation === VizOrientation.Horizontal;
+
+    const minVizWidth = isManualSizing && isVerticalOrientation ? options.minVizWidth : defaultOptions.minVizWidth;
+    const minVizHeight = isManualSizing && isHorizontalOrientation ? options.minVizHeight : defaultOptions.minVizHeight;
+
+    return { minVizWidth, minVizHeight };
+  };
+
   render() {
     const { height, width, data, renderCounter, options } = this.props;
 
-    // We could make this not hard coded but instead dependent on panel dimensions / number of gauges
-    const GAUGE_MIN_HEIGHT = 200;
-    const GAUGE_MIN_WIDTH = 200;
+    const { minVizHeight, minVizWidth } = this.calculateGaugeSize();
 
     // calculate if there is overflow
     const numberOfGauges = this.getValues().length;
 
-    const remainderWidth = width - numberOfGauges * GAUGE_MIN_WIDTH;
+    const remainderWidth = width - numberOfGauges * minVizWidth!;
     const isHorizontalOverflow = options.orientation === VizOrientation.Horizontal && remainderWidth < 0;
 
-    const remainderHeight = height - numberOfGauges * GAUGE_MIN_HEIGHT;
+    const remainderHeight = height - numberOfGauges * minVizHeight!;
     const isVerticalOverflow = options.orientation === VizOrientation.Vertical && remainderHeight < 0;
 
     const isOverflow = isHorizontalOverflow || isVerticalOverflow;
@@ -107,8 +119,8 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
         autoGrid={true}
         renderCounter={renderCounter}
         orientation={options.orientation}
-        minVizHeight={GAUGE_MIN_HEIGHT}
-        minVizWidth={GAUGE_MIN_WIDTH}
+        minVizHeight={minVizHeight}
+        minVizWidth={minVizWidth}
         isOverflow={isOverflow}
       />
     );
