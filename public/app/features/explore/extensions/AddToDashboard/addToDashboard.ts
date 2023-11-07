@@ -34,13 +34,17 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
   const panelType = getPanelType(options.queries, options.queryResponse, options?.panelState);
   let transformations: DataTransformerConfig[] = [];
   if (panelType === 'table' && options.panelState?.logs?.columns) {
-    transformations.push({
-      id: 'extractFields',
-      options: {
-        // @todo we need to add the name for the labels/attributes field to the explore url state
-        source: 'labels',
-      },
-    });
+    // If we have a labels column, we need to extract the fields from it
+    if (options.panelState.logs?.labelName) {
+      transformations.push({
+        id: 'extractFields',
+        options: {
+          source: options.panelState.logs.labelName,
+        },
+      });
+    }
+
+    // If we have columns defined, set them to show in the table via the organize/includeByName transformation
     transformations.push({
       id: 'organize',
       options: {

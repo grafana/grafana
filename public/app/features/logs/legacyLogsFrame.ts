@@ -70,6 +70,7 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
     idField,
     getLogFrameLabels: getL,
     getLogFrameLabelsAsLabels: getL,
+    getLabelFieldName: () => labelsField?.name ?? null,
     extraFields,
   };
 }

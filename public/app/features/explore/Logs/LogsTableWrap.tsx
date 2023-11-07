@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   DataFrame,
   ExploreLogsPanelState,
+  FieldType,
   GrafanaTheme2,
   Labels,
   LogsSortOrder,
@@ -249,6 +250,9 @@ export function LogsTableWrap(props: Props) {
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
     }
 
+    const logsFrame = parseLogsFrame(dataFrame);
+    debugger;
+
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
       // URL format requires our array of values be an object, so we convert it using object.assign
@@ -260,6 +264,7 @@ export function LogsTableWrap(props: Props) {
           .filter((key) => pendingLabelState[key]?.active)
       ),
       visualisationType: 'table',
+      labelName: logsFrame?.getLabelFieldName() ?? undefined,
     };
 
     // Update url state

@@ -16,6 +16,7 @@ export type LogsFrame = {
   idField: FieldWithIndex | null;
   getLogFrameLabels: () => LogFrameLabels[] | null; // may be slow, so we only do it when asked for it explicitly
   getLogFrameLabelsAsLabels: () => Labels[] | null; // temporarily exists to make the labels=>attributes migration simpler
+  getLabelFieldName: () => string | null;
   extraFields: FieldWithIndex[];
 };
 
@@ -78,6 +79,7 @@ function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
     getLogFrameLabels: () => labels,
     timeNanosecondField: null,
     getLogFrameLabelsAsLabels: () => (labels !== null ? labels.map(logFrameLabelsToLabels) : null),
+    getLabelFieldName: () => (labelsField !== null ? labelsField.name : null),
     extraFields,
   };
 }
