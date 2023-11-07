@@ -68,6 +68,13 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
             value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
             disabled={serviceAccount.isDisabled}
           />
+          {serviceAccount.isExternal && (
+            <ServiceAccountProfileRow
+              label="Managed by"
+              value={'serviceAccount.managedBy'}
+              disabled={serviceAccount.isDisabled}
+            />
+          )}
         </tbody>
       </table>
     </div>
