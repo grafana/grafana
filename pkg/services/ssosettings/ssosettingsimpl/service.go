@@ -5,20 +5,17 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/api"
+	"github.com/grafana/grafana/pkg/services/ssosettings/database"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-var (
-	// TODO: make sure that grafana_com only available to server admins and org admins should not be able to update the settings of it
-	allOauthes = []string{"github", "gitlab", "google", "generic_oauth", "grafana_com", "azuread", "okta"}
 )
 
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
@@ -31,12 +28,14 @@ type SSOSettingsService struct {
 	fbStrategies []ssosettings.FallbackStrategy
 }
 
-func ProvideService(cfg *setting.Cfg, store ssosettings.Store, ac ac.AccessControl,
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager) *SSOSettingsService {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		// register other strategies here, for example SAML
 	}
+
+	store := database.ProvideStore(sqlStore)
 
 	svc := &SSOSettingsService{
 		log:          log.New("ssosettings.service"),
@@ -46,7 +45,7 @@ func ProvideService(cfg *setting.Cfg, store ssosettings.Store, ac ac.AccessContr
 		fbStrategies: strategies,
 	}
 
-	if features.IsEnabled(featuremgmt.FlagEnableSSOSettingsAPI) {
+	if features.IsEnabled(featuremgmt.FlagSsoSettingsApi) {
 		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
 		ssoSettingsApi.RegisterAPIEndpoints()
 	}
@@ -78,14 +77,14 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 }
 
 func (s *SSOSettingsService) List(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error) {
-	result := make([]*models.SSOSetting, 0, len(allOauthes))
+	result := make([]*models.SSOSetting, 0, len(ssosettings.ConfigurableOAuthProviders))
 	storedSettings, err := s.store.List(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, provider := range allOauthes {
+	for _, provider := range ssosettings.ConfigurableOAuthProviders {
 		ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", "auth."+provider, "*"))
 		hasAccess, err := s.ac.Evaluate(ctx, requester, ev)
 		if err != nil {

@@ -10,14 +10,14 @@ import (
 var (
 	// ConfigurableOAuthProviders is a list of OAuth providers that can be configured from the API
 	// TODO: make it configurable
-	ConfigurableOAuthProviders = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", "grafana_com", "azuread", "okta"}
+	ConfigurableOAuthProviders = []string{"github", "gitlab", "google", "generic_oauth", "azuread", "okta"}
 )
 
 // Service is a SSO settings service
 type Service interface {
 	// List returns all SSO settings from DB and config files
 	List(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error)
-	// GetForProvider returns the SSO settings for a given provider
+	// GetForProvider returns the SSO settings for a given provider (DB or config file)
 	GetForProvider(ctx context.Context, provider string) (*models.SSOSetting, error)
 	// Upsert creates or updates the SSO settings for a given provider
 	Upsert(ctx context.Context, provider string, data map[string]interface{}) error
@@ -38,7 +38,7 @@ type Reloadable interface {
 
 // FallbackStrategy is an interface that can be implemented to allow a provider to load settings from a different source
 // than the database. This is useful for providers that are not configured in the database, but instead are configured
-// using the config file and/or environment variables.
+// using the config file and/or environment variables. Used mostly for backwards compatibility.
 type FallbackStrategy interface {
 	IsMatch(provider string) bool
 	ParseConfigFromSystem(ctx context.Context) (map[string]interface{}, error)

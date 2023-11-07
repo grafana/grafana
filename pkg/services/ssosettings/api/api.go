@@ -37,7 +37,7 @@ func ProvideApi(
 
 // RegisterAPIEndpoints Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
-	api.RouteRegister.Group("/api/admin/sso-settings", func(router routing.RouteRegister) {
+	api.RouteRegister.Group("/api/v1/sso-settings", func(router routing.RouteRegister) {
 		auth := ac.Middleware(api.AccessControl)
 
 		scopeKey := ac.Parameter(":key")
@@ -47,14 +47,14 @@ func (api *Api) RegisterAPIEndpoints() {
 			ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAuth),
 			ac.EvalPermission(ac.ActionSettingsWrite, settingsScope)))
 
-		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth)), routing.Wrap(api.ListAllProvidersSettings))
-		router.Get("/:key", auth(ac.EvalPermission(ac.ActionSettingsRead, settingsScope)), routing.Wrap(api.GetSettingsForProvider))
-		router.Put("/:key", reqWriteAccess, routing.Wrap(api.UpdateProviderSettings))
-		router.Delete("/:key", reqWriteAccess, routing.Wrap(api.RemoveProviderSettings))
+		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth)), routing.Wrap(api.listAllProvidersSettings))
+		router.Get("/:key", auth(ac.EvalPermission(ac.ActionSettingsRead, settingsScope)), routing.Wrap(api.getSettingsForProvider))
+		router.Put("/:key", reqWriteAccess, routing.Wrap(api.updateProviderSettings))
+		router.Delete("/:key", reqWriteAccess, routing.Wrap(api.removeProviderSettings))
 	})
 }
 
-func (api *Api) ListAllProvidersSettings(c *contextmodel.ReqContext) response.Response {
+func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Response {
 	providers, err := api.SSOSettingsService.List(c.Req.Context(), c.SignedInUser)
 	if err != nil {
 		return response.Error(500, "Failed to get providers", err)
@@ -63,7 +63,7 @@ func (api *Api) ListAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 	return response.JSON(200, providers)
 }
 
-func (api *Api) GetSettingsForProvider(c *contextmodel.ReqContext) response.Response {
+func (api *Api) getSettingsForProvider(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
 		return response.Error(400, "Missing key", nil)
@@ -77,7 +77,7 @@ func (api *Api) GetSettingsForProvider(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(200, settings)
 }
 
-func (api *Api) UpdateProviderSettings(c *contextmodel.ReqContext) response.Response {
+func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
 		return response.Error(400, "Missing key", nil)
@@ -99,7 +99,7 @@ func (api *Api) UpdateProviderSettings(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(204, nil)
 }
 
-func (api *Api) RemoveProviderSettings(c *contextmodel.ReqContext) response.Response {
+func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
 		return response.Error(400, "Missing key", nil)

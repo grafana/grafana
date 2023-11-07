@@ -1032,7 +1032,7 @@ var (
 			Owner:        grafanaSharingSquad,
 		},
 		{
-			Name:            "enableSSOSettingsAPI",
+			Name:            "ssoSettingsApi",
 			Description:     "Enables the SSO settings API",
 			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
