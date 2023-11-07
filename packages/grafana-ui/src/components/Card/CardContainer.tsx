@@ -75,7 +75,7 @@ export const getCardContainerStyles = stylesFactory(
         display: 'grid',
         position: 'relative',
         gridTemplateColumns: 'auto 1fr auto',
-        gridTemplateRows: '1fr auto auto auto',
+        gridTemplateRows: 'auto auto 1fr auto',
         gridAutoColumns: '1fr',
         gridAutoFlow: 'row',
         gridTemplateAreas: `
