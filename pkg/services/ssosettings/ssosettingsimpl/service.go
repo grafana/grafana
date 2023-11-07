@@ -46,8 +46,10 @@ func ProvideService(cfg *setting.Cfg, store ssosettings.Store, ac ac.AccessContr
 		fbStrategies: strategies,
 	}
 
-	ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac, features)
-	ssoSettingsApi.RegisterAPIEndpoints()
+	if features.IsEnabled(featuremgmt.FlagEnableSSOSettingsAPI) {
+		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
+		ssoSettingsApi.RegisterAPIEndpoints()
+	}
 
 	return svc
 }

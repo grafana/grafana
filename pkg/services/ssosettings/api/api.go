@@ -24,18 +24,12 @@ func ProvideApi(
 	ssoSettingsSvc ssosettings.Service,
 	routeRegister routing.RouteRegister,
 	ac ac.AccessControl,
-	features *featuremgmt.FeatureManager,
 ) *Api {
 	api := &Api{
 		SSOSettingsService: ssoSettingsSvc,
 		RouteRegister:      routeRegister,
 		AccessControl:      ac,
-		Features:           features,
 		Log:                log.New("ssosettings.api"),
-	}
-
-	if features.IsEnabled(featuremgmt.FlagEnableSSOSettingsAPI) {
-		api.RegisterAPIEndpoints()
 	}
 
 	return api
