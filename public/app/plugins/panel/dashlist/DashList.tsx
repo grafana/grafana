@@ -98,6 +98,10 @@ export function DashList(props: PanelProps<Options>) {
     });
   }, [props.options, props.replaceVariables, props.renderCounter]);
 
+  useEffect(() => {
+    console.log(props);
+  }, [props]);
+
   const toggleDashboardStar = async (e: React.SyntheticEvent, dash: Dashboard) => {
     const { uid, title, url } = dash;
     e.preventDefault();
