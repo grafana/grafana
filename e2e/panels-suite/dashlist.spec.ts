@@ -6,6 +6,7 @@ describe('DashList panel', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
+  // this is to prevent the fix for https://github.com/grafana/grafana/issues/76800 from regressing
   it('should pass current variable values correctly when `Include current template variable values` is set', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
 
