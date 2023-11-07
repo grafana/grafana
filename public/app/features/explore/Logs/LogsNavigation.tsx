@@ -21,7 +21,7 @@ type Props = {
   scrollToTopLogs: () => void;
   addResultsToCache: () => void;
   clearCache: () => void;
-  loadMore?: (range: AbsoluteTimeRange) => void;
+  loadMoreLogs?: (range: AbsoluteTimeRange) => void;
 };
 
 export type LogsPage = {
@@ -40,7 +40,7 @@ function LogsNavigation({
   queries,
   clearCache,
   addResultsToCache,
-  loadMore,
+  loadMoreLogs,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
 
@@ -93,7 +93,7 @@ function LogsNavigation({
     }
     const delta = 1;
     function handleScroll(e: Event) {
-      if (!e.target || !loadMore) {
+      if (!e.target || !loadMoreLogs) {
         return;
       }
       const target: HTMLDivElement = e.target as HTMLDivElement;
@@ -103,12 +103,12 @@ function LogsNavigation({
       }
       if (!onLastPage) {
         const indexChange = oldestLogsFirst ? -1 : 1;
-          loadMore({
+          loadMoreLogs({
             from: pages[currentPageIndex + indexChange].queryRange.from,
             to: pages[currentPageIndex + indexChange].queryRange.to,
           });
       } else {
-        loadMore({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
+        loadMoreLogs({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
       }
       scrollView?.removeEventListener('scroll', handleScroll);
     }
@@ -117,7 +117,7 @@ function LogsNavigation({
     return () => {
       scrollView.removeEventListener('scroll', handleScroll);
     }
-  }, [currentPageIndex, loadMore, oldestLogsFirst, onLastPage, pages, visibleRange.from]);
+  }, [currentPageIndex, loadMoreLogs, oldestLogsFirst, onLastPage, pages, visibleRange.from]);
 
   const changeTime = useCallback(
     ({ from, to }: AbsoluteTimeRange) => {
@@ -135,15 +135,15 @@ function LogsNavigation({
     return a.queryRange.to > b.queryRange.to ? -1 : 1;
   };
 
-  const handleLoadMore = () => {
+  const handleloadMoreLogs = () => {
     //If we are not on the last page, use next page's range
     reportInteraction('grafana_explore_logs_pagination_clicked', {
       pageType: 'olderLogsButton',
     });
     if (!onLastPage) {
       const indexChange = oldestLogsFirst ? -1 : 1;
-      if (loadMore) {
-        loadMore({
+      if (loadMoreLogs) {
+        loadMoreLogs({
           from: pages[currentPageIndex + indexChange].queryRange.from,
           to: pages[currentPageIndex + indexChange].queryRange.to,
         });
@@ -155,8 +155,8 @@ function LogsNavigation({
       }
     } else {
       //If we are on the last page, create new range
-      if (loadMore) {
-        loadMore({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
+      if (loadMoreLogs) {
+        loadMoreLogs({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
       } else {
         changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
       }
@@ -168,7 +168,7 @@ function LogsNavigation({
       data-testid="olderLogsButton"
       className={styles.navButton}
       variant="secondary"
-      onClick={handleLoadMore}
+      onClick={handleloadMoreLogs}
       disabled={loading}
     >
       <div className={styles.navButtonContent}>

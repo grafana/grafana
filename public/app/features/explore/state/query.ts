@@ -704,7 +704,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   }
 );
 
-interface RunLoadMoreQueriesOptions {
+interface RunLoadMoreLogsQueriesOptions {
   exploreId: string;
   absoluteRange: AbsoluteTimeRange;
 }
@@ -712,7 +712,7 @@ interface RunLoadMoreQueriesOptions {
  * Supplementary action to run queries that request more results, and dispatches sub-actions based 
  * on which result viewers are active
  */
-export const runLoadMoreQueries = createAsyncThunk<void, RunLoadMoreQueriesOptions>(
+export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQueriesOptions>(
   'explore/runQueries',
   async ({ exploreId, absoluteRange }, { dispatch, getState }) => {
     const correlations$ = getCorrelations(exploreId);
