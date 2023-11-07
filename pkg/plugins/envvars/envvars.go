@@ -183,7 +183,7 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 	if s.cfg.Tracing.OpenTelemetry.Sampler != "" || s.cfg.Tracing.OpenTelemetry.SamplerParam != 0 {
 		vars = append(vars,
 			fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_TYPE=%s", s.cfg.Tracing.OpenTelemetry.Sampler),
-			fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%f", s.cfg.Tracing.OpenTelemetry.SamplerParam),
+			fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%.6f", s.cfg.Tracing.OpenTelemetry.SamplerParam),
 			fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=%s", s.cfg.Tracing.OpenTelemetry.SamplerRemoteURL),
 		)
 	}

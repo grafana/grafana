@@ -297,6 +297,114 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			plugin: pluginWithoutVersion,
 			exp:    expGfPluginVersionNotPresent,
 		},
+		{
+			name: "no sampling",
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: config.OpenTelemetryCfg{
+						Address:     "127.0.0.1:4317",
+						Propagation: "jaeger",
+					},
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
+			},
+			plugin: defaultPlugin,
+			exp: func(t *testing.T, envVars []string) {
+				var ok bool
+				for _, v := range []string{
+					"GF_INSTANCE_OTLP_SAMPLER_TYPE",
+					"GF_INSTANCE_OTLP_SAMPLER_PARAM",
+					"GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL",
+				} {
+					_, ok = getEnvVarWithExists(envVars, v)
+					require.False(t, ok)
+				}
+			},
+		},
+		{
+			name: "empty sampler with param",
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: config.OpenTelemetryCfg{
+						Address:          "127.0.0.1:4317",
+						Propagation:      "jaeger",
+						Sampler:          "",
+						SamplerParam:     0.5,
+						SamplerRemoteURL: "",
+					},
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
+			},
+			plugin: defaultPlugin,
+			exp: func(t *testing.T, envVars []string) {
+				require.Equal(t, "", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_TYPE"))
+				require.Equal(t, "0.500000", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_PARAM"))
+				require.Equal(t, "", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL"))
+			},
+		},
+		{
+			name: "const sampler with param",
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: config.OpenTelemetryCfg{
+						Address:          "127.0.0.1:4317",
+						Propagation:      "jaeger",
+						Sampler:          "const",
+						SamplerParam:     0.5,
+						SamplerRemoteURL: "",
+					},
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
+			},
+			plugin: defaultPlugin,
+			exp: func(t *testing.T, envVars []string) {
+				require.Equal(t, "const", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_TYPE"))
+				require.Equal(t, "0.500000", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_PARAM"))
+				require.Equal(t, "", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL"))
+			},
+		},
+		{
+			name: "rateLimiting sampler",
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: config.OpenTelemetryCfg{
+						Address:          "127.0.0.1:4317",
+						Propagation:      "jaeger",
+						Sampler:          "rateLimiting",
+						SamplerParam:     0.5,
+						SamplerRemoteURL: "",
+					},
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
+			},
+			plugin: defaultPlugin,
+			exp: func(t *testing.T, envVars []string) {
+				require.Equal(t, "rateLimiting", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_TYPE"))
+				require.Equal(t, "0.500000", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_PARAM"))
+				require.Equal(t, "", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL"))
+			},
+		},
+		{
+			name: "remote sampler",
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: config.OpenTelemetryCfg{
+						Address:          "127.0.0.1:4317",
+						Propagation:      "jaeger",
+						Sampler:          "remote",
+						SamplerParam:     0.5,
+						SamplerRemoteURL: "127.0.0.1:10001",
+					},
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
+			},
+			plugin: defaultPlugin,
+			exp: func(t *testing.T, envVars []string) {
+				require.Equal(t, "remote", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_TYPE"))
+				require.Equal(t, "0.500000", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_PARAM"))
+				require.Equal(t, "127.0.0.1:10001", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL"))
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			envVarsProvider := NewProvider(tc.cfg, nil)
@@ -304,6 +412,32 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			tc.exp(t, envVars)
 		})
 	}
+}
+
+// getEnvVarWithExists takes a slice of strings in this format: "K=V" (env vars), and returns the "V" where K = wanted.
+// If there's no such key, it returns false as the second argument.
+func getEnvVarWithExists(vars []string, wanted string) (string, bool) {
+	for _, v := range vars {
+		parts := strings.SplitN(v, "=", 2)
+		if parts[0] != wanted {
+			continue
+		}
+		var r string
+		if len(parts) < 2 {
+			r = ""
+		} else {
+			r = parts[1]
+		}
+		return r, true
+	}
+	return "", false
+}
+
+// getEnvVar is like getEnvVarWithExists, but it returns just one string, without the boolean "ok" value.
+// If the wanted environment variable does not exist, it returns an empty string.
+func getEnvVar(vars []string, wanted string) string {
+	v, _ := getEnvVarWithExists(vars, wanted)
+	return v
 }
 
 func TestInitializer_authEnvVars(t *testing.T) {
