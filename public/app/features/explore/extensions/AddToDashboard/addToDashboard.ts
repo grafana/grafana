@@ -65,7 +65,6 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
     title: 'New Panel',
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
     datasource: options.datasource,
-    fieldConfig: { defaults: {}, overrides: [] },
     transformations: transformations,
   };
 
