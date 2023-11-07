@@ -9,7 +9,7 @@ export interface AutoQueryDef {
   title: string;
   unit: string;
   queries: PromQuery[];
-  vizBuilder: (def: AutoQueryDef) => VizPanelBuilder;
+  vizBuilder: (def: AutoQueryDef) => VizPanelBuilder<{}, {}>;
 }
 
 export interface AutoQueryInfo {

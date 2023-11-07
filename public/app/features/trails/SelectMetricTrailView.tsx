@@ -14,7 +14,7 @@ import {
 import { VariableHide } from '@grafana/schema';
 import { Input, Card, Stack } from '@grafana/ui';
 
-import { trailsDS } from './shared';
+import { trailDS } from './shared';
 
 export interface SelectMetricTrailViewState extends SceneObjectState {
   metricNames: VariableValueOption[];
@@ -27,7 +27,7 @@ export class SelectMetricTrailView extends SceneObjectBase<SelectMetricTrailView
         variables: [
           new QueryVariable({
             name: 'metricNames',
-            datasource: trailsDS,
+            datasource: trailDS,
             hide: VariableHide.hideVariable,
             includeAll: true,
             defaultToAll: true,
