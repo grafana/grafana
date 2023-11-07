@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
+  Portal,
   TooltipDisplayMode,
   TooltipPlugin2,
   UPlotChart,
@@ -20,28 +21,59 @@ import {
   VizLayout,
   VizLegend,
   VizLegendItem,
+  VizTooltipContainer,
 } from '@grafana/ui';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
+import { TooltipView } from './TooltipView';
 import { XYChartTooltip } from './XYChartTooltip';
 import { Options, SeriesMapping } from './panelcfg.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
-import { ScatterSeries } from './types';
+import { ScatterHoverEvent, ScatterSeries } from './types';
 
 type Props = PanelProps<Options>;
+const TOOLTIP_OFFSET = 10;
 
 export const XYChartPanel2 = (props: Props) => {
   const [error, setError] = useState<string | undefined>();
   const [series, setSeries] = useState<ScatterSeries[]>([]);
   const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
   const [facets, setFacets] = useState<FacetedData | undefined>();
+  const [hover, setHover] = useState<ScatterHoverEvent | undefined>();
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
 
+  const isToolTipOpen = useRef<boolean>(false);
   const oldOptions = usePrevious(props.options);
   const oldData = usePrevious(props.data);
 
+  const onCloseToolTip = () => {
+    isToolTipOpen.current = false;
+    setShouldDisplayCloseButton(false);
+    scatterHoverCallback(undefined);
+  };
+
+  const onUPlotClick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+
+    // Linking into useState required to re-render tooltip
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  };
+
+  const scatterHoverCallback = (hover?: ScatterHoverEvent) => {
+    setHover(hover);
+  };
+
   const initSeries = useCallback(() => {
     const getData = () => props.data.series;
-    const info: ScatterPanelInfo = prepScatter(props.options, getData, config.theme2);
+    const info: ScatterPanelInfo = prepScatter(
+      props.options,
+      getData,
+      config.theme2,
+      scatterHoverCallback,
+      onUPlotClick,
+      isToolTipOpen
+    );
 
     if (info.error) {
       setError(info.error);
@@ -186,7 +218,7 @@ export const XYChartPanel2 = (props: Props) => {
       <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight}>
-            {props.options.tooltip.mode !== TooltipDisplayMode.None && (
+            {config.featureToggles.newVizTooltips && props.options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={builder}
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
@@ -207,6 +239,46 @@ export const XYChartPanel2 = (props: Props) => {
           </UPlotChart>
         )}
       </VizLayout>
+      {!config.featureToggles.newVizTooltips && (
+        <Portal>
+          {hover && props.options.tooltip.mode !== TooltipDisplayMode.None && (
+            <VizTooltipContainer
+              position={{ x: hover.pageX, y: hover.pageY }}
+              offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+              allowPointerEvents={isToolTipOpen.current}
+            >
+              {shouldDisplayCloseButton && (
+                <div
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  <CloseButton
+                    onClick={onCloseToolTip}
+                    style={{
+                      position: 'relative',
+                      top: 'auto',
+                      right: 'auto',
+                      marginRight: 0,
+                    }}
+                  />
+                </div>
+              )}
+              <TooltipView
+                options={props.options.tooltip}
+                allSeries={series}
+                manualSeriesConfigs={props.options.series}
+                seriesMapping={props.options.seriesMapping!}
+                rowIndex={hover.xIndex}
+                hoveredPointIndex={hover.scatterIndex}
+                data={props.data.series}
+              />
+            </VizTooltipContainer>
+          )}
+        </Portal>
+      )}
     </>
   );
 };

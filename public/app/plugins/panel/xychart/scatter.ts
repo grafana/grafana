@@ -1,3 +1,4 @@
+import { MutableRefObject } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -30,7 +31,7 @@ import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 import { DEFAULT_POINT_SIZE } from './config';
 import { isGraphable } from './dims';
 import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
-import { DimensionValues, ScatterSeries } from './types';
+import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
   error?: string;
@@ -41,13 +42,20 @@ export interface ScatterPanelInfo {
 /**
  * This is called when options or structure rev changes
  */
-export function prepScatter(options: Options, getData: () => DataFrame[], theme: GrafanaTheme2): ScatterPanelInfo {
+export function prepScatter(
+  options: Options,
+  getData: () => DataFrame[],
+  theme: GrafanaTheme2,
+  ttip: ScatterHoverCallback,
+  onUPlotClick: null | ((evt?: Object) => void),
+  isToolTipOpen: MutableRefObject<boolean>
+): ScatterPanelInfo {
   let series: ScatterSeries[];
   let builder: UPlotConfigBuilder;
 
   try {
     series = prepSeries(options, getData());
-    builder = prepConfig(getData, series, theme);
+    builder = prepConfig(getData, series, theme, ttip, onUPlotClick, isToolTipOpen);
   } catch (e) {
     let errorMsg = 'Unknown error in prepScatter';
     if (typeof e === 'string') {
@@ -286,7 +294,14 @@ interface DrawBubblesOpts {
   };
 }
 
-const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], theme: GrafanaTheme2) => {
+const prepConfig = (
+  getData: () => DataFrame[],
+  scatterSeries: ScatterSeries[],
+  theme: GrafanaTheme2,
+  ttip: ScatterHoverCallback,
+  onUPlotClick: null | ((evt?: Object) => void),
+  isToolTipOpen: MutableRefObject<boolean>
+) => {
   let qt: Quadtree;
   let hRect: Rect | null;
 
@@ -502,7 +517,67 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
     },
   });
 
+  const clearPopupIfOpened = () => {
+    if (isToolTipOpen.current) {
+      ttip(undefined);
+      if (onUPlotClick) {
+        onUPlotClick();
+      }
+    }
+  };
+
+  let ref_parent: HTMLElement | null = null;
+
+  // clip hover points/bubbles to plotting area
+  builder.addHook('init', (u, r) => {
+    if (!config.featureToggles.newVizTooltips) {
+      u.over.style.overflow = 'hidden';
+    }
+    ref_parent = u.root.parentElement;
+
+    if (onUPlotClick) {
+      ref_parent?.addEventListener('click', onUPlotClick);
+    }
+  });
+
+  builder.addHook('destroy', (u) => {
+    if (onUPlotClick) {
+      ref_parent?.removeEventListener('click', onUPlotClick);
+      clearPopupIfOpened();
+    }
+  });
+
+  let rect: DOMRect;
+
+  // rect of .u-over (grid area)
+  builder.addHook('syncRect', (u, r) => {
+    rect = r;
+  });
+
+  builder.addHook('setLegend', (u) => {
+    if (u.cursor.idxs != null) {
+      for (let i = 0; i < u.cursor.idxs.length; i++) {
+        const sel = u.cursor.idxs[i];
+        if (sel != null && !isToolTipOpen.current) {
+          ttip({
+            scatterIndex: i - 1,
+            xIndex: sel,
+            pageX: rect.left + u.cursor.left!,
+            pageY: rect.top + u.cursor.top!,
+          });
+          return; // only show the first one
+        }
+      }
+    }
+
+    if (!isToolTipOpen.current) {
+      ttip(undefined);
+    }
+  });
+
   builder.addHook('drawClear', (u) => {
+    clearPopupIfOpened();
+
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
     qt.clear();
@@ -521,8 +596,8 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
   const frames = getData();
   let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
 
-  let config = xField.config;
-  let customConfig = config.custom;
+  let fieldConfig = xField.config;
+  let customConfig = fieldConfig.custom;
   let scaleDistr = customConfig?.scaleDistribution;
 
   builder.addScale({
@@ -533,12 +608,12 @@ const prepConfig = (getData: () => DataFrame[], scatterSeries: ScatterSeries[], 
     distribution: scaleDistr?.type,
     log: scaleDistr?.log,
     linearThreshold: scaleDistr?.linearThreshold,
-    min: config.min,
-    max: config.max,
+    min: fieldConfig.min,
+    max: fieldConfig.max,
     softMin: customConfig?.axisSoftMin,
     softMax: customConfig?.axisSoftMax,
     centeredZero: customConfig?.axisCenteredZero,
-    decimals: config.decimals,
+    decimals: fieldConfig.decimals,
   });
 
   // why does this fall back to '' instead of null or undef?
