@@ -200,7 +200,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                 </Stack>
               </Stack>
               {summary && <Summary text={summary} />}
-              {isEditable && !isProvisioned && !isFederatedRule && (
+              {!summary && isEditable && !isProvisioned && !isFederatedRule && (
                 <Button size="sm" fill="text" variant="secondary" style={{ alignSelf: 'start' }}>
                   <Text variant="bodySmall" color="secondary" italic>
                     Click to add a summary <Icon name="pen" />
