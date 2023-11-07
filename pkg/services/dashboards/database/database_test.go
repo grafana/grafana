@@ -452,6 +452,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		hit := hits[0]
 		require.Equal(t, hit.ID, savedDash.ID)
 		require.Equal(t, hit.URL, fmt.Sprintf("/d/%s/%s", savedDash.UID, savedDash.Slug))
+		// nolint:staticcheck
 		require.Equal(t, hit.FolderID, savedFolder.ID)
 		require.Equal(t, hit.FolderUID, savedFolder.UID)
 		require.Equal(t, hit.FolderTitle, savedFolder.Title)
@@ -479,6 +480,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		hit := hits[0]
 		require.Equal(t, hit.ID, savedDash.ID)
 		require.Equal(t, hit.URL, fmt.Sprintf("/d/%s/%s", savedDash.UID, savedDash.Slug))
+		// nolint:staticcheck
 		require.Equal(t, hit.FolderID, savedFolder.ID)
 		require.Equal(t, hit.FolderUID, savedFolder.UID)
 		require.Equal(t, hit.FolderTitle, savedFolder.Title)
@@ -1231,7 +1233,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				URI:         "db/" + item.Slug,
 				URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
 				Type:        hitType,
-				FolderID:    item.FolderID,
+				FolderID:    item.FolderID, // nolint:staticcheck
 				FolderUID:   item.FolderUID,
 				FolderTitle: item.FolderTitle,
 				Tags:        []string{},
