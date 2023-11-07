@@ -64,13 +64,13 @@ describe('SearchStateManager', () => {
         sort: 'alpha-asc',
       }));
       const stm = getSearchStateManager();
-      stm.initStateFromUrl();
       // Set list layout since folders layout implies sort to be undefined
       stm.onLayoutChange(SearchLayout.List);
+      stm.initStateFromUrl();
 
       // Verify that they have been set
       expect(stm.state.query).toBe('hello');
-      expect(stm.state.sort).toBeUndefined();
+      expect(stm.state.sort).toBe('alpha-asc');
       expect(stm.state.folderUid).toBe(undefined);
 
       // Changed to a view with no URL state.
