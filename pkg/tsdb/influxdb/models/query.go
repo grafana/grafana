@@ -76,10 +76,10 @@ func (query *Query) renderTags() []string {
 			textValue = tag.Value
 		case "Is":
 			tag.Operator = "="
-			textValue = tag.Value
+			textValue = strings.ToLower(tag.Value)
 		case "is Not":
 			tag.Operator = "!="
-			textValue = tag.Value
+			textValue = strings.ToLower(tag.Value)
 		default:
 			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 		}
