@@ -11,12 +11,12 @@ export const parseURL = (params: ExploreQueryParams) => {
 
 const migrators = [v0Migrator, v1Migrator] as const;
 
-const migrate = (params: ExploreQueryParams): ExploreURL => {
+const migrate = (params: ExploreQueryParams): [ExploreURL, boolean] => {
   const schemaVersion = getSchemaVersion(params);
 
   const [parser, ...migratorsToRun] = migrators.slice(schemaVersion);
 
-  const parsedUrl = parser.parse(params);
+  const [parsedUrl, error] = parser.parse(params);
 
   // @ts-expect-error
   const final: ExploreURL = migratorsToRun.reduce((acc, migrator) => {
@@ -24,7 +24,7 @@ const migrate = (params: ExploreQueryParams): ExploreURL => {
     return migrator.migrate ? migrator.migrate(acc) : acc;
   }, parsedUrl);
 
-  return final;
+  return [final, error];
 };
 
 function getSchemaVersion(params: ExploreQueryParams): number {

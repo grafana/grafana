@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange, EventBusSrv } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -31,6 +32,7 @@ export function useStateSync(params: ExploreQueryParams) {
   const orgId = useSelector((state) => state.user.orgId);
   const prevParams = useRef(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
+  const { warning } = useAppNotification();
 
   useEffect(() => {
     // This happens when the user navigates to an explore "empty page" while within Explore.
@@ -96,7 +98,13 @@ export function useStateSync(params: ExploreQueryParams) {
   useEffect(() => {
     const isURLOutOfSync = prevParams.current?.panes !== params.panes;
 
-    const urlState = parseURL(params);
+    const [urlState, error] = parseURL(params);
+    if (error) {
+      warning(
+        'Could not parse Explore state from URL',
+        'The requested URL contains invalid parameters. Falling back to default state.'
+      );
+    }
 
     async function sync() {
       // if navigating the history causes one of the time range to not being equal to all the other ones,
@@ -260,7 +268,7 @@ export function useStateSync(params: ExploreQueryParams) {
     prevParams.current = params;
 
     isURLOutOfSync && initState.current === 'done' && sync();
-  }, [dispatch, panesState, orgId, location, params]);
+  }, [dispatch, panesState, orgId, location, params, warning]);
 }
 
 function getDefaultQuery(ds: DataSourceApi) {
