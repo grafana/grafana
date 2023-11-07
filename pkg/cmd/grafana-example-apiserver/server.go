@@ -35,6 +35,12 @@ var (
 	}
 )
 
+func init() {
+	// we need to add the options to empty v1
+	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
+	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
+}
+
 // ExampleServerOptions contains state for master/api server
 type ExampleServerOptions struct {
 	RecommendedOptions *options.RecommendedOptions
@@ -107,17 +113,13 @@ func (o ExampleServerOptions) RunExampleServer(config *genericapiserver.Recommen
 		if err != nil {
 			return err
 		}
-		fmt.Println("before prioritized versions check")
 		if g == nil || len(g.PrioritizedVersions) < 1 {
-			fmt.Println("In PV check")
 			continue
 		}
-		fmt.Println("Before install")
 		err = server.InstallAPIGroup(g)
 		if err != nil {
 			return err
 		}
-		fmt.Println("After install")
 	}
 
 	return server.PrepareRun().Run(stopCh)
