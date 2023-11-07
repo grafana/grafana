@@ -7,18 +7,25 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/yaml"
+	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
+
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -35,27 +42,16 @@ type K8sTestHelper struct {
 	env        server.TestEnv
 	namespacer request.NamespaceMapper
 
-	Org1 OrgUsers
-	Org2 OrgUsers
+	Org1 OrgUsers // default
+	OrgB OrgUsers // some other id
 
 	// // Registered groups
 	groups []metav1.APIGroup
-
-	// Used to build the URL paths
-	selectedGVR schema.GroupVersionResource
 }
 
-func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
+func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	t.Helper()
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // do not start extra port 6443
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServer,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		},
-	})
-
+	dir, path := testinfra.CreateGrafDir(t, opts)
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
 	c := &K8sTestHelper{
 		env:        *env,
@@ -63,17 +59,95 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 		namespacer: request.GetNamespaceMapper(nil),
 	}
 
-	c.Org1 = c.createTestUsers(int64(1))
-	c.Org2 = c.createTestUsers(int64(2))
+	c.Org1 = c.createTestUsers("Org1")
+	c.OrgB = c.createTestUsers("OrgB")
 
 	// Read the API groups
-	rsp := doRequest(c, RequestParams{
+	rsp := DoRequest(c, RequestParams{
 		User: c.Org1.Viewer,
 		Path: "/apis",
 		// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
 	}, &metav1.APIGroupList{})
 	c.groups = rsp.Result.Groups
 	return c
+}
+
+func (c *K8sTestHelper) Shutdown() {
+	fmt.Printf("calling shutdown on: %s\n", c.env.Server.HTTPServer.Listener.Addr())
+	err := c.env.Server.Shutdown(context.Background(), "done")
+	require.NoError(c.t, err)
+}
+
+type ResourceClientArgs struct {
+	User      User
+	Namespace string
+	GVR       schema.GroupVersionResource
+}
+
+type K8sResourceClient struct {
+	t        *testing.T
+	Args     ResourceClientArgs
+	Resource dynamic.ResourceInterface
+}
+
+// This will set the expected Group/Version/Resource and return the discovery info if found
+func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceClient {
+	c.t.Helper()
+
+	if args.Namespace == "" {
+		args.Namespace = c.namespacer(args.User.Identity.GetOrgID())
+	}
+
+	return &K8sResourceClient{
+		t:        c.t,
+		Args:     args,
+		Resource: args.User.Client.Resource(args.GVR).Namespace(args.Namespace),
+	}
+}
+
+// Cast the error to status error
+func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
+	c.t.Helper()
+
+	if err == nil {
+		return nil
+	}
+
+	//nolint:errorlint
+	statusError, ok := err.(*errors.StatusError)
+	require.True(c.t, ok)
+	return statusError
+}
+
+// remove the meta keys that are expected to change each time
+func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
+	c.t.Helper()
+
+	deep := v.DeepCopy()
+	anno := deep.GetAnnotations()
+	if anno["grafana.app/originKey"] != "" {
+		anno["grafana.app/originKey"] = "${originKey}"
+	}
+	if anno["grafana.app/updatedTimestamp"] != "" {
+		anno["grafana.app/updatedTimestamp"] = "${updatedTimestamp}"
+	}
+	deep.SetAnnotations(anno)
+	copy := deep.Object
+	meta, ok := copy["metadata"].(map[string]any)
+	require.True(c.t, ok)
+
+	replaceMeta := []string{"creationTimestamp", "resourceVersion", "uid"}
+	for _, key := range replaceMeta {
+		old, ok := meta[key]
+		require.True(c.t, ok)
+		require.NotEmpty(c.t, old)
+		meta[key] = fmt.Sprintf("${%s}", key)
+	}
+
+	out, err := json.MarshalIndent(copy, "", "  ")
+	//fmt.Printf("%s", out)
+	require.NoError(c.t, err)
+	return string(out)
 }
 
 type OrgUsers struct {
@@ -84,6 +158,7 @@ type OrgUsers struct {
 
 type User struct {
 	Identity identity.Requester
+	Client   *dynamic.DynamicClient
 	password string
 }
 
@@ -106,13 +181,6 @@ type K8sResponse[T any] struct {
 type AnyResourceResponse = K8sResponse[AnyResource]
 type AnyResourceListResponse = K8sResponse[AnyResourceList]
 
-// This will set the expected Group/Version/Resource and return the discovery info if found
-func (c *K8sTestHelper) SetGroupVersionResource(gvr schema.GroupVersionResource) {
-	c.t.Helper()
-
-	c.selectedGVR = gvr
-}
-
 func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyResource) AnyResourceResponse {
 	c.t.Helper()
 
@@ -130,7 +198,7 @@ func (c *K8sTestHelper) PostResource(user User, resource string, payload AnyReso
 	body, err := json.Marshal(payload)
 	require.NoError(c.t, err)
 
-	return doRequest(c, RequestParams{
+	return DoRequest(c, RequestParams{
 		Method: http.MethodPost,
 		Path:   path,
 		User:   user,
@@ -147,7 +215,7 @@ func (c *K8sTestHelper) PutResource(user User, resource string, payload AnyResou
 	body, err := json.Marshal(payload)
 	require.NoError(c.t, err)
 
-	return doRequest(c, RequestParams{
+	return DoRequest(c, RequestParams{
 		Method: http.MethodPut,
 		Path:   path,
 		User:   user,
@@ -155,20 +223,20 @@ func (c *K8sTestHelper) PutResource(user User, resource string, payload AnyResou
 	}, &AnyResource{})
 }
 
-func (c *K8sTestHelper) List(user User, namespace string) AnyResourceListResponse {
+func (c *K8sTestHelper) List(user User, namespace string, gvr schema.GroupVersionResource) AnyResourceListResponse {
 	c.t.Helper()
 
-	return doRequest(c, RequestParams{
+	return DoRequest(c, RequestParams{
 		User: user,
 		Path: fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s",
-			c.selectedGVR.Group,
-			c.selectedGVR.Version,
+			gvr.Group,
+			gvr.Version,
 			namespace,
-			c.selectedGVR.Resource),
+			gvr.Resource),
 	}, &AnyResourceList{})
 }
 
-func doRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResponse[T] {
+func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResponse[T] {
 	c.t.Helper()
 
 	if params.Method == "" {
@@ -224,26 +292,59 @@ func doRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 			r.Status = s
 			r.Result = nil
 		}
-	} else {
-		_ = yaml.Unmarshal(r.Body, r.Result)
 	}
 	return r
 }
 
-func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
+// Read local JSON or YAML file into a resource
+func (c *K8sTestHelper) LoadYAMLOrJSONFile(fpath string) *unstructured.Unstructured {
+	c.t.Helper()
+
+	//nolint:gosec
+	raw, err := os.ReadFile(fpath)
+	require.NoError(c.t, err)
+	require.NotEmpty(c.t, raw)
+	return c.LoadYAMLOrJSON(string(raw))
+}
+
+// Read local JSON or YAML file into a resource
+func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
+	c.t.Helper()
+
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(body)), 100)
+	var rawObj runtime.RawExtension
+	err := decoder.Decode(&rawObj)
+	require.NoError(c.t, err)
+
+	obj, _, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
+	require.NoError(c.t, err)
+	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	require.NoError(c.t, err)
+
+	return &unstructured.Unstructured{Object: unstructuredMap}
+}
+
+func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 
 	store := c.env.SQLStore
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = int(orgId)
+	defer func() {
+		store.Cfg.AutoAssignOrg = false
+		store.Cfg.AutoAssignOrgId = 1 // the default
+	}()
+
 	quotaService := quotaimpl.ProvideService(store, store.Cfg)
 
 	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(c.t, err)
 
-	gotID, err := orgService.GetOrCreate(context.Background(), fmt.Sprintf("Org%d", orgId))
-	require.NoError(c.t, err)
-	require.Equal(c.t, orgId, gotID)
+	orgId := int64(1)
+	if orgName != "Org1" {
+		orgId, err = orgService.GetOrCreate(context.Background(), orgName)
+		require.NoError(c.t, err)
+	}
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = int(orgId)
 
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
 	cache := localcache.ProvideService()
@@ -252,11 +353,12 @@ func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
 		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 
+	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
 	createUser := func(key string, role org.RoleType) User {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			DefaultOrgRole: string(role),
 			Password:       key,
-			Login:          fmt.Sprintf("%s%d", key, orgId),
+			Login:          fmt.Sprintf("%s-%d", key, orgId),
 			OrgID:          orgId,
 		})
 		require.NoError(c.t, err)
@@ -272,8 +374,19 @@ func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
 		require.NoError(c.t, err)
 		require.Equal(c.t, orgId, s.OrgID)
 		require.Equal(c.t, role, s.OrgRole) // make sure the role was set properly
+
+		config := &rest.Config{
+			Host:     baseUrl,
+			Username: s.Login,
+			Password: key,
+		}
+
+		client, err := dynamic.NewForConfig(config)
+		require.NoError(c.t, err)
+
 		return User{
 			Identity: s,
+			Client:   client,
 			password: key,
 		}
 	}

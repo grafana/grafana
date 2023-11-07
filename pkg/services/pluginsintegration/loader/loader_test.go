@@ -530,8 +530,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 				},
 				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
 					Impersonation: &plugindef.Impersonation{
-						Enabled: boolPtr(true),
-						Groups:  boolPtr(true),
+						Groups: boolPtr(true),
 						Permissions: []plugindef.Permission{
 							{
 								Action: "read",

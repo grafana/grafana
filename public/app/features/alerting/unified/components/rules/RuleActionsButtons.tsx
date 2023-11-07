@@ -4,8 +4,6 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { locationService } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -16,6 +14,7 @@ import {
   Menu,
   Tooltip,
   useStyles2,
+  Stack,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';
@@ -148,13 +147,9 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
         <Menu.Item
           label="Modify export"
           icon="edit"
-          onClick={() =>
-            locationService.push(
-              createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`, {
-                returnTo: location.pathname + location.search,
-              })
-            )
-          }
+          url={createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`, {
+            returnTo: location.pathname + location.search,
+          })}
         />
       );
     }
