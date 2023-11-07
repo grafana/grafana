@@ -30,8 +30,7 @@ function createDashboard(): DashboardDTO {
   return dto;
 }
 
-export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
-  const panelType = getPanelType(options.queries, options.queryResponse, options?.panelState);
+function getLogsTableTransformations(panelType: string, options: AddPanelToDashboardOptions): DataTransformerConfig[] {
   let transformations: DataTransformerConfig[] = [];
   if (panelType === 'table' && options.panelState?.logs?.columns) {
     // If we have a labels column, we need to extract the fields from it
@@ -58,6 +57,19 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
       },
     });
   }
+  return transformations;
+}
+
+function getExploreToPanelTransformations(panelType: string, options: AddPanelToDashboardOptions) {
+  let transformations: DataTransformerConfig[] = [];
+  transformations.push(...getLogsTableTransformations(panelType, options));
+
+  return transformations;
+}
+
+export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
+  const panelType = getPanelType(options.queries, options.queryResponse, options?.panelState);
+  let transformations = getExploreToPanelTransformations(panelType, options);
 
   const panel = {
     targets: options.queries,
