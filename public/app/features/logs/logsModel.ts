@@ -366,7 +366,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       const logsFrame = parseLogsFrame(series);
       if (logsFrame != null) {
         // for now we ignore the nested-ness of attributes, and just stringify-them
-        const frameLabels = logsFrame.getAttributesAsLabels() ?? undefined;
+        const frameLabels = logsFrame.getLogFrameLabelsAsLabels() ?? undefined;
         const info = {
           rawFrame: series,
           logsFrame: logsFrame,
