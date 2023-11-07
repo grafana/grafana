@@ -5,7 +5,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   DataFrame,
   ExploreLogsPanelState,
-  FieldType,
   GrafanaTheme2,
   Labels,
   LogsSortOrder,
@@ -251,7 +250,6 @@ export function LogsTableWrap(props: Props) {
     }
 
     const logsFrame = parseLogsFrame(dataFrame);
-    debugger;
 
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
