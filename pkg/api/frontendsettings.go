@@ -330,13 +330,13 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
-			JSONData:  plugin.JSONData,
-			Signature: plugin.Signature,
-			Module:    plugin.Module,
-			BaseURL:   plugin.BaseURL,
+			JSONData:               plugin.JSONData,
+			Signature:              plugin.Signature,
+			Module:                 plugin.Module,
+			BaseURL:                plugin.BaseURL,
+			AngularDetected:        plugin.AngularDetected,
+			HideAngularDeprecation: plugin.HideAngularDeprecation,
 		}
-		dsDTO.AngularDetected = plugin.AngularDetected
-		dsDTO.HideAngularDeprecation = plugin.HideAngularDeprecation
 
 		if ds.JsonData == nil {
 			dsDTO.JSONData = make(map[string]any)
@@ -414,13 +414,13 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 				Name:     ds.Name,
 				JSONData: make(map[string]any),
 				PluginMeta: &plugins.PluginMetaDTO{
-					JSONData:  ds.JSONData,
-					Signature: ds.Signature,
-					Module:    ds.Module,
-					BaseURL:   ds.BaseURL,
+					JSONData:               ds.JSONData,
+					Signature:              ds.Signature,
+					Module:                 ds.Module,
+					BaseURL:                ds.BaseURL,
+					AngularDetected:        ds.AngularDetected,
+					HideAngularDeprecation: ds.HideAngularDeprecation,
 				},
-				AngularDetected:        ds.AngularDetected,
-				HideAngularDeprecation: ds.HideAngularDeprecation,
 			}
 			if ds.Name == grafanads.DatasourceName {
 				dto.ID = grafanads.DatasourceID

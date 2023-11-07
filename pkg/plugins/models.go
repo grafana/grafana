@@ -208,6 +208,9 @@ type PluginMetaDTO struct {
 
 	Module  string `json:"module"`
 	BaseURL string `json:"baseUrl"`
+
+	AngularDetected        bool `json:"angularDetected"`
+	HideAngularDeprecation bool `json:"hideAngularDeprecation"`
 }
 
 type DataSourceDTO struct {
@@ -223,9 +226,6 @@ type DataSourceDTO struct {
 	Module     string         `json:"module,omitempty"`
 	JSONData   map[string]any `json:"jsonData"`
 	ReadOnly   bool           `json:"readOnly"`
-
-	AngularDetected        bool `json:"angularDetected"`
-	HideAngularDeprecation bool `json:"hideAngularDeprecation"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
