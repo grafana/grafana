@@ -1,0 +1,124 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"net"
+
+	exampleAPI "github.com/grafana/grafana/pkg/registry/apis/example"
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/options"
+	netutils "k8s.io/utils/net"
+)
+
+const defaultEtcdPathPrefix = "/registry/example.grafana.app"
+
+var (
+	Scheme = runtime.NewScheme()
+	Codecs = serializer.NewCodecFactory(Scheme)
+
+	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
+	unversionedTypes   = []runtime.Object{
+		&metav1.Status{},
+		&metav1.WatchEvent{},
+		&metav1.APIVersions{},
+		&metav1.APIGroupList{},
+		&metav1.APIGroup{},
+		&metav1.APIResourceList{},
+	}
+)
+
+// ExampleServerOptions contains state for master/api server
+type ExampleServerOptions struct {
+	RecommendedOptions *options.RecommendedOptions
+	Builders           []grafanaAPIServer.APIGroupBuilder
+	AlternateDNS       []string
+
+	StdOut io.Writer
+	StdErr io.Writer
+}
+
+func NewExampleServerOptions(out, errOut io.Writer) (*ExampleServerOptions, error) {
+	builder := &exampleAPI.TestingAPIBuilder{}
+
+	// Install schema
+	if err := builder.InstallSchema(Scheme); err != nil {
+		return nil, err
+	}
+
+	return &ExampleServerOptions{
+		Builders: []grafanaAPIServer.APIGroupBuilder{builder},
+		RecommendedOptions: options.NewRecommendedOptions(
+			defaultEtcdPathPrefix,
+			Codecs.LegacyCodec(builder.GetGroupVersion()),
+		),
+		StdOut: out,
+		StdErr: errOut,
+	}, nil
+}
+
+func (o ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, error) {
+	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("localhost", o.AlternateDNS, []net.IP{netutils.ParseIPSloppy("127.0.0.1")}); err != nil {
+		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
+	}
+
+	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
+	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
+
+	o.RecommendedOptions.Admission = nil
+	o.RecommendedOptions.CoreAPI = nil
+
+	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
+	o.RecommendedOptions.ApplyTo(serverConfig)
+
+	return serverConfig, nil
+}
+
+// Validate validates ExampleServerOptions
+func (o ExampleServerOptions) Validate(args []string) error {
+	errors := []error{}
+	errors = append(errors, o.RecommendedOptions.Validate()...)
+	return utilerrors.NewAggregate(errors)
+}
+
+// Complete fills in fields required to have valid data
+func (o ExampleServerOptions) Complete() error {
+	return nil
+}
+
+func (o ExampleServerOptions) RunExampleServer(config *genericapiserver.RecommendedConfig, stopCh <-chan struct{}) error {
+	delegationTarget := genericapiserver.NewEmptyDelegate()
+	completedConfig := config.Complete()
+	server, err := completedConfig.New("example-apiserver", delegationTarget)
+	if err != nil {
+		return err
+	}
+
+	// Install the API Group+version
+	for _, b := range o.Builders {
+		g, err := b.GetAPIGroupInfo(Scheme, Codecs, completedConfig.RESTOptionsGetter)
+		if err != nil {
+			return err
+		}
+		fmt.Println("before prioritized versions check")
+		if g == nil || len(g.PrioritizedVersions) < 1 {
+			fmt.Println("In PV check")
+			continue
+		}
+		fmt.Println("Before install")
+		err = server.InstallAPIGroup(g)
+		if err != nil {
+			return err
+		}
+		fmt.Println("After install")
+	}
+
+	return server.PrepareRun().Run(stopCh)
+}

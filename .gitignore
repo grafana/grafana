@@ -78,6 +78,8 @@ public/css/*.min.css
 /data/*
 /bin/*
 
+apiserver.local.config/
+
 # devenv
 /devenv/docker-compose.yaml
 /devenv/docker-compose.override.yaml
