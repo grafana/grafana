@@ -48,13 +48,18 @@ export const useReceiversMetadata = (receivers: Receiver[]): Map<Receiver, Recei
     });
 
     return result;
-  }, [isOnCallEnabled, receivers, onCallIntegrations]);
+  }, [receivers, isOnCallEnabled, onCallIntegrations]);
 };
 
 export function getOnCallMetadata(
-  onCallIntegrations: OnCallIntegrationDTO[] | null,
+  onCallIntegrations: OnCallIntegrationDTO[] | undefined | null,
   receiver: GrafanaManagedReceiverConfig
 ): ReceiverPluginMetadata {
+  // oncall status is still loading
+  if (onCallIntegrations === undefined) {
+    return onCallReceiverMeta;
+  }
+
   // indication that onCall is not enabled
   if (onCallIntegrations == null) {
     return {
