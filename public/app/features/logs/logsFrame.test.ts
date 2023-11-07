@@ -1,6 +1,6 @@
 import { FieldType, DataFrameType, Field, Labels } from '@grafana/data';
 
-import { parseLogsFrame, attributesToLabels } from './logsFrame';
+import { parseLogsFrame, logFrameLabelsToLabels } from './logsFrame';
 
 function makeString(name: string, values: string[], labels?: Labels): Field {
   return {
@@ -36,7 +36,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     const body = makeString('body', ['line1', 'line2']);
     const severity = makeString('severity', ['info', 'debug']);
     const id = makeString('id', ['id1', 'id2']);
-    const attributes = makeObject('attributes', [
+    const labels = makeObject('labels', [
       { counter: '38141', label: 'val2', level: 'warning', nested: { a: '1', b: ['2', '3'] } },
       { counter: '38143', label: 'val2', level: 'info', nested: { a: '11', b: ['12', '13'] } },
     ]);
@@ -45,7 +45,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
       meta: {
         type: DataFrameType.LogLines,
       },
-      fields: [id, body, attributes, severity, time],
+      fields: [id, body, labels, severity, time],
       length: 2,
     });
 
@@ -56,11 +56,11 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.idField?.values[0]).toBe(id.values[0]);
     expect(result!.timeNanosecondField).toBeNull();
     expect(result!.severityField?.values[0]).toBe(severity.values[0]);
-    expect(result!.getAttributes()).toStrictEqual([
+    expect(result!.getLogFrameLabels()).toStrictEqual([
       { counter: '38141', label: 'val2', level: 'warning', nested: { a: '1', b: ['2', '3'] } },
       { counter: '38143', label: 'val2', level: 'info', nested: { a: '11', b: ['12', '13'] } },
     ]);
-    expect(result!.getAttributesAsLabels()).toStrictEqual([
+    expect(result!.getLogFrameLabelsAsLabels()).toStrictEqual([
       { counter: '38141', label: 'val2', level: 'warning', nested: `{"a":"1","b":["2","3"]}` },
       { counter: '38143', label: 'val2', level: 'info', nested: `{"a":"11","b":["12","13"]}` },
     ]);
@@ -85,11 +85,11 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.idField?.values[0]).toBe(id.values[0]);
     expect(result!.timeNanosecondField?.values[0]).toBe(ns.values[0]);
     expect(result!.severityField).toBeNull();
-    expect(result!.getAttributes()).toStrictEqual([
+    expect(result!.getLogFrameLabels()).toStrictEqual([
       { counter: '34543', lable: 'val3', level: 'info' },
       { counter: '34543', lable: 'val3', level: 'info' },
     ]);
-    expect(result!.getAttributesAsLabels()).toStrictEqual([
+    expect(result!.getLogFrameLabelsAsLabels()).toStrictEqual([
       { counter: '34543', lable: 'val3', level: 'info' },
       { counter: '34543', lable: 'val3', level: 'info' },
     ]);
@@ -123,11 +123,11 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.idField?.values[0]).toBe(id.values[0]);
     expect(result!.timeNanosecondField?.values[0]).toBe(ns.values[0]);
     expect(result!.severityField).toBeNull();
-    expect(result!.getAttributes()).toStrictEqual([
+    expect(result!.getLogFrameLabels()).toStrictEqual([
       { counter: '38141', label: 'val2', level: 'warning' },
       { counter: '38143', label: 'val2', level: 'info' },
     ]);
-    expect(result!.getAttributesAsLabels()).toStrictEqual([
+    expect(result!.getLogFrameLabelsAsLabels()).toStrictEqual([
       { counter: '38141', label: 'val2', level: 'warning' },
       { counter: '38143', label: 'val2', level: 'info' },
     ]);
@@ -161,8 +161,8 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.severityField?.values[0]).toBe(level.values[0]);
     expect(result!.idField).toBeNull();
     expect(result!.timeNanosecondField).toBeNull();
-    expect(result!.getAttributesAsLabels()).toBeNull();
-    expect(result!.getAttributes()).toBeNull();
+    expect(result!.getLogFrameLabelsAsLabels()).toBeNull();
+    expect(result!.getLogFrameLabels()).toBeNull();
     expect(result?.extraFields.map((f) => f.name)).toStrictEqual(['_source', 'hostname']);
   });
 
@@ -182,8 +182,8 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.severityField).toBeNull();
     expect(result!.idField).toBeNull();
     expect(result!.timeNanosecondField).toBeNull();
-    expect(result!.getAttributesAsLabels()).toBeNull();
-    expect(result!.getAttributes()).toBeNull();
+    expect(result!.getLogFrameLabelsAsLabels()).toBeNull();
+    expect(result!.getLogFrameLabels()).toBeNull();
     expect(result?.extraFields).toStrictEqual([]);
   });
 
@@ -208,15 +208,15 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.severityField).toBeNull();
     expect(result!.idField).toBeNull();
     expect(result!.timeNanosecondField).toBeNull();
-    expect(result!.getAttributesAsLabels()).toBeNull();
-    expect(result!.getAttributes()).toBeNull();
+    expect(result!.getLogFrameLabelsAsLabels()).toBeNull();
+    expect(result!.getLogFrameLabels()).toBeNull();
   });
 });
 
-describe('attributesToLabels', () => {
+describe('logFrameLabelsToLabels', () => {
   it('should convert nested structures correctly', () => {
     expect(
-      attributesToLabels({
+      logFrameLabelsToLabels({
         key1: 'val1',
         key2: ['k2v1', 'k2v2', 'k2v3'],
         key3: {
@@ -240,7 +240,7 @@ describe('attributesToLabels', () => {
 
   it('should convert not-nested structures correctly', () => {
     expect(
-      attributesToLabels({
+      logFrameLabelsToLabels({
         key1: 'val1',
         key2: 'val2',
       })
