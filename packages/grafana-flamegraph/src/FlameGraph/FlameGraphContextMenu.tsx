@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { MenuItem, ContextMenu } from '@grafana/ui';
+import { MenuItem, MenuGroup, ContextMenu } from '@grafana/ui';
 
 import { ClickedItemData } from '../types';
 
@@ -17,6 +17,8 @@ type Props = {
   onCollapseAllGroups: () => void;
   collapseConfig?: CollapseConfig;
   collapsing?: boolean;
+  allGroupsCollapsed?: boolean;
+  allGroupsExpanded?: boolean;
 };
 
 const FlameGraphContextMenu = ({
@@ -30,6 +32,8 @@ const FlameGraphContextMenu = ({
   onExpandAllGroups,
   onCollapseAllGroups,
   collapsing,
+  allGroupsExpanded,
+  allGroupsCollapsed,
 }: Props) => {
   function renderItems() {
     return (
@@ -59,46 +63,51 @@ const FlameGraphContextMenu = ({
             onMenuItemClick();
           }}
         />
-        {collapseConfig ? (
-          collapseConfig.collapsed ? (
-            <MenuItem
-              label="Expand group"
-              icon={'angle-double-down'}
-              onClick={() => {
-                onExpandGroup();
-                onMenuItemClick();
-              }}
-            />
-          ) : (
-            <MenuItem
-              label="Collapse group"
-              icon={'angle-double-up'}
-              onClick={() => {
-                onCollapseGroup();
-                onMenuItemClick();
-              }}
-            />
-          )
-        ) : null}
+
         {collapsing && (
-          <>
-            <MenuItem
-              label="Expand all groups"
-              icon={'angle-double-down'}
-              onClick={() => {
-                onExpandAllGroups();
-                onMenuItemClick();
-              }}
-            />
-            <MenuItem
-              label="Collapse all groups"
-              icon={'angle-double-up'}
-              onClick={() => {
-                onCollapseAllGroups();
-                onMenuItemClick();
-              }}
-            />
-          </>
+          <MenuGroup label={'Grouping'}>
+            {collapseConfig ? (
+              collapseConfig.collapsed ? (
+                <MenuItem
+                  label="Expand group"
+                  icon={'angle-double-down'}
+                  onClick={() => {
+                    onExpandGroup();
+                    onMenuItemClick();
+                  }}
+                />
+              ) : (
+                <MenuItem
+                  label="Collapse group"
+                  icon={'angle-double-up'}
+                  onClick={() => {
+                    onCollapseGroup();
+                    onMenuItemClick();
+                  }}
+                />
+              )
+            ) : null}
+            {!allGroupsExpanded && (
+              <MenuItem
+                label="Expand all groups"
+                icon={'angle-double-down'}
+                onClick={() => {
+                  onExpandAllGroups();
+                  onMenuItemClick();
+                }}
+              />
+            )}
+            {!allGroupsCollapsed && (
+              <MenuItem
+                label="Collapse all groups"
+                icon={'angle-double-up'}
+                onClick={() => {
+                  onCollapseAllGroups();
+                  onMenuItemClick();
+                }}
+              />
+            )}
+          </MenuGroup>
         )}
       </>
     );

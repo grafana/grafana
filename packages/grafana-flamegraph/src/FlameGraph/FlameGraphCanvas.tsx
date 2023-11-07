@@ -210,6 +210,8 @@ const FlameGraphCanvas = ({
           onCollapseAllGroups={() => {
             setCollapsedMap(setAllCollapsedStatus(collapsedMap, true));
           }}
+          allGroupsCollapsed={Array.from(collapsedMap.values()).every((i) => i.collapsed)}
+          allGroupsExpanded={Array.from(collapsedMap.values()).every((i) => !i.collapsed)}
         />
       )}
     </div>
