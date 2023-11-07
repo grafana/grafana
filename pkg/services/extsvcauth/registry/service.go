@@ -44,14 +44,14 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 	switch cmd.AuthProvider {
 	case extsvcauth.ServiceAccounts:
 		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
-			r.logger.Warn("Skipping external service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
+			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
 			return nil, nil
 		}
 		r.logger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
 		return r.saSvc.SaveExternalService(ctx, cmd)
 	case extsvcauth.OAuth2Server:
 		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-			r.logger.Warn("Skipping external service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAuth)
+			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAuth)
 			return nil, nil
 		}
 		r.logger.Debug("Routing the External Service registration to the OAuth2Server", "service", cmd.Name)
@@ -72,14 +72,14 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 	switch provider {
 	case extsvcauth.ServiceAccounts:
 		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
-			r.logger.Debug("Skipping external service removal, flag disabled", "service", name, "flag", featuremgmt.FlagExternalServiceAccounts)
+			r.logger.Debug("Skipping External Service removal, flag disabled", "service", name, "flag", featuremgmt.FlagExternalServiceAccounts)
 			return nil
 		}
 		r.logger.Debug("Routing External Service removal to the External Service Account service", "service", name)
 		return r.saSvc.RemoveExternalService(ctx, name)
 	case extsvcauth.OAuth2Server:
 		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-			r.logger.Debug("Skipping external service removal, flag disabled", "service", name, "flag", featuremgmt.FlagExternalServiceAccounts)
+			r.logger.Debug("Skipping External Service removal, flag disabled", "service", name, "flag", featuremgmt.FlagExternalServiceAccounts)
 			return nil
 		}
 		r.logger.Debug("Routing External Service removal to the OAuth2Server", "service", name)
