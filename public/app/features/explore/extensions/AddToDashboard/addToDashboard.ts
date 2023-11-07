@@ -33,7 +33,7 @@ function createDashboard(): DashboardDTO {
 export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
   const panelType = getPanelType(options.queries, options.queryResponse, options.panelState);
   let transformations: DataTransformerConfig[] = [];
-  if (panelType === 'table' && options.panelState.logs?.columns) {
+  if (panelType === 'table' && options.panelState?.logs?.columns) {
     transformations.push({
       id: 'extractFields',
       options: {
@@ -99,7 +99,7 @@ function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData, pan
       return 'timeseries';
     }
     if (queryResponse.logsFrames.some(hasQueryRefId)) {
-      if (panelState.logs?.visualisationType) {
+      if (panelState?.logs?.visualisationType) {
         return panelState.logs.visualisationType;
       }
       return 'logs';
