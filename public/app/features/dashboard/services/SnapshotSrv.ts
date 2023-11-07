@@ -1,4 +1,4 @@
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { DashboardDTO } from 'app/types';
 
 // Used in the snapshot list
@@ -17,10 +17,10 @@ export interface DashboardSnapshotSrv {
 }
 
 const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
-  getSnapshots: () => backendSrv.get<Snapshot[]>('/api/dashboard/snapshots'),
-  deleteSnapshot: (key: string) => backendSrv.delete('/api/snapshots/' + key),
+  getSnapshots: () => getBackendSrv().get<Snapshot[]>('/api/dashboard/snapshots'),
+  deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
   getSnapshot: async (key: string) => {
-    const dto = await backendSrv.get<DashboardDTO>('/api/snapshots/' + key);
+    const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
     dto.meta.canShare = false;
     return dto;
   },
