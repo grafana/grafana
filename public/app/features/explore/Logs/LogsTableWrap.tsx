@@ -98,7 +98,7 @@ export function LogsTableWrap(props: Props) {
   useEffect(() => {
     const numberOfLogLines = dataFrame ? dataFrame.length : 0;
     const logsFrame = parseLogsFrame(dataFrame);
-    const labels = logsFrame?.getAttributesAsLabels();
+    const labels = logsFrame?.getLogFrameLabelsAsLabels();
 
     const otherFields = logsFrame ? logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden) : [];
     if (logsFrame?.severityField) {

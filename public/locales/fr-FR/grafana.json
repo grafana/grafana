@@ -201,25 +201,21 @@
       "title": ""
     },
     "transform": {
-      "add-btn": "",
+      "add-button": "",
+      "heading": "",
+      "no-transform": ""
+    },
+    "transform-row": {
       "expression-label": "",
       "expression-required": "",
       "expression-tooltip": "",
       "field-input": "",
       "field-label": "",
       "field-tooltip": "",
-      "heading": "",
-      "logfmt-description": "",
-      "logfmt-label": "",
-      "map-label": "",
-      "map-tooltip": "",
-      "no-tranform": "",
-      "regex-description": "",
-      "regex-label": "",
-      "remove": "",
-      "remove-tooltip": "",
+      "map-value-label": "",
+      "map-value-tooltip": "",
+      "remove-button": "",
       "type-label": "",
-      "type-rules": "",
       "type-tooltip": ""
     }
   },
@@ -937,12 +933,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "Activer le mode kiosque",
-      "toggle-menu": "Afficher/Masquer le menu",
+      "open-menu": "",
       "toggle-search-bar": "Afficher/Masquer la barre de recherche"
     }
   },
@@ -956,7 +952,6 @@
   "panel": {
     "header-menu": {
       "copy": "Copier",
-      "create-alert": "",
       "create-library-panel": "Créer un panneau Bibliothèque",
       "duplicate": "Dupliquer",
       "edit": "Modifier",
@@ -967,6 +962,7 @@
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
+      "new-alert-rule": "",
       "query": "Requête",
       "remove": "Supprimer",
       "share": "Partager",
@@ -1118,7 +1114,6 @@
       "cancel-button": "Annuler",
       "info-text": "Exporter ce tableau de bord.",
       "save-button": "Enregistrer dans un fichier",
-      "share-default-label": "Exporter avec les valeurs par défaut supprimées",
       "share-externally-label": "Exporter pour un partage externe",
       "view-button": "Afficher au format JSON"
     },
@@ -1165,6 +1160,7 @@
       "export": "Exporter",
       "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
+      "panel-embed": "",
       "snapshot": "Instantané"
     },
     "theme-picker": {

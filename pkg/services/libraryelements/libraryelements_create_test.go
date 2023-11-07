@@ -26,7 +26,7 @@ func TestCreateLibraryElement(t *testing.T) {
 				Result: libraryElement{
 					ID:          1,
 					OrgID:       1,
-					FolderID:    1,
+					FolderID:    1, // nolint:staticcheck
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Text - Library Panel",
 					Kind:        int64(model.PanelElement),
@@ -75,7 +75,7 @@ func TestCreateLibraryElement(t *testing.T) {
 				Result: libraryElement{
 					ID:          1,
 					OrgID:       1,
-					FolderID:    1,
+					FolderID:    1, // nolint:staticcheck
 					UID:         command.UID,
 					Name:        "Nonexistent UID",
 					Kind:        int64(model.PanelElement),
@@ -150,7 +150,7 @@ func TestCreateLibraryElement(t *testing.T) {
 				Result: libraryElement{
 					ID:          1,
 					OrgID:       1,
-					FolderID:    1,
+					FolderID:    1, // nolint:staticcheck
 					UID:         result.Result.UID,
 					Name:        "Library Panel Name",
 					Kind:        int64(model.PanelElement),

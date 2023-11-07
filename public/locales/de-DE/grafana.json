@@ -196,25 +196,21 @@
       "title": ""
     },
     "transform": {
-      "add-btn": "",
+      "add-button": "",
+      "heading": "",
+      "no-transform": ""
+    },
+    "transform-row": {
       "expression-label": "",
       "expression-required": "",
       "expression-tooltip": "",
       "field-input": "",
       "field-label": "",
       "field-tooltip": "",
-      "heading": "",
-      "logfmt-description": "",
-      "logfmt-label": "",
-      "map-label": "",
-      "map-tooltip": "",
-      "no-tranform": "",
-      "regex-description": "",
-      "regex-label": "",
-      "remove": "",
-      "remove-tooltip": "",
+      "map-value-label": "",
+      "map-value-tooltip": "",
+      "remove-button": "",
       "type-label": "",
-      "type-rules": "",
       "type-tooltip": ""
     }
   },
@@ -931,12 +927,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "Kiosk-Modus aktivieren",
-      "toggle-menu": "Menü umschalten",
+      "open-menu": "",
       "toggle-search-bar": "Obere Suchleiste umschalten"
     }
   },
@@ -950,7 +946,6 @@
   "panel": {
     "header-menu": {
       "copy": "Kopieren",
-      "create-alert": "",
       "create-library-panel": "Bibliotheksleiste erstellen",
       "duplicate": "Duplikat",
       "edit": "Bearbeiten",
@@ -961,6 +956,7 @@
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
+      "new-alert-rule": "",
       "query": "Abfrage",
       "remove": "Entfernen",
       "share": "Teilen",
@@ -1112,7 +1108,6 @@
       "cancel-button": "Abbrechen",
       "info-text": "Dieses Dashboard exportieren.",
       "save-button": "In Datei speichern …",
-      "share-default-label": "Export mit entfernten Standardwerten",
       "share-externally-label": "Export für externe Freigabe",
       "view-button": "JSON anzeigen"
     },
@@ -1159,6 +1154,7 @@
       "export": "Exportieren",
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
+      "panel-embed": "",
       "snapshot": "Schnappschuss"
     },
     "theme-picker": {

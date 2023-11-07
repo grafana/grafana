@@ -11,6 +11,8 @@ import {
   acOptionsLoaded,
   pageChanged,
   queryChanged,
+  rolesFetchBegin,
+  rolesFetchEnd,
   serviceAccountsFetchBegin,
   serviceAccountsFetched,
   serviceAccountsFetchEnd,
@@ -51,6 +53,18 @@ export function fetchServiceAccounts(
             serviceAccountStateFilter
           )}&accesscontrol=true`
         );
+
+        if (contextSrv.licensedAccessControlEnabled()) {
+          dispatch(rolesFetchBegin());
+          const orgId = contextSrv.user.orgId;
+          const userIds = result?.serviceAccounts.map((u: ServiceAccountDTO) => u.id);
+          const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, { userIds, orgId });
+          result.serviceAccounts.forEach((u: ServiceAccountDTO) => {
+            u.roles = roles ? roles[u.id] || [] : [];
+          });
+          dispatch(rolesFetchEnd());
+        }
+
         dispatch(serviceAccountsFetched(result));
       }
     } catch (error) {

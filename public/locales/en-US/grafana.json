@@ -196,26 +196,22 @@
       "title": "Setup the target for the correlation (Step 2 of 3)"
     },
     "transform": {
-      "add-btn": "Add transformation",
+      "add-button": "Add transformation",
+      "heading": "Transformations",
+      "no-transform": "No transformations defined."
+    },
+    "transform-row": {
       "expression-label": "Expression",
       "expression-required": "Please define an expression",
       "expression-tooltip": "Required for regular expression. The expression the transformation will use. Logfmt does not use further specifications.",
       "field-input": "field",
       "field-label": "  Field",
-      "field-tooltip": "  Optional. The field to transform. If not specified, the transformation will be applied to the results field.",
-      "heading": "Transformations",
-      "logfmt-description": "Parse provided field with logfmt to get variables",
-      "logfmt-label": "Logfmt",
-      "map-label": "Map value",
-      "map-tooltip": "Optional. Defines the name of the variable. This is currently only valid for regular expressions with a single, unnamed capture group.",
-      "no-tranform": "No transformations defined.",
-      "regex-description": "Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.",
-      "regex-label": "Regular expression",
-      "remove": "Remove",
-      "remove-tooltip": "Remove transformation",
-      "type-label": "     Type",
-      "type-rules": "Please select a transformation type",
-      "type-tooltip": "  The type of transformation that will be applied to the source data."
+      "field-tooltip": "   Optional. The field to transform. If not specified, the transformation will be applied to the results field.",
+      "map-value-label": "  Map value",
+      "map-value-tooltip": "  Optional. Defines the name of the variable. This is currently only valid for regular expressions with a single, unnamed capture group.",
+      "remove-button": "  Remove",
+      "type-label": "   Type",
+      "type-tooltip": "The type of transformation that will be applied to the source data."
     }
   },
   "dashboard": {
@@ -700,7 +696,7 @@
       "title": "API keys"
     },
     "application": {
-      "title": "Application (preview)"
+      "title": "Application"
     },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
@@ -931,12 +927,12 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "dock": "Dock menu",
-      "undock": "Undock menu"
+      "dock": "Dock menu"
     },
     "toolbar": {
+      "close-menu": "Close menu",
       "enable-kiosk": "Enable kiosk mode",
-      "toggle-menu": "Toggle menu",
+      "open-menu": "Open menu",
       "toggle-search-bar": "Toggle top search bar"
     }
   },
@@ -950,7 +946,6 @@
   "panel": {
     "header-menu": {
       "copy": "Copy",
-      "create-alert": "Create alert",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
@@ -961,6 +956,7 @@
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
       "share": "Share",
@@ -1112,7 +1108,6 @@
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
       "save-button": "Save to file",
-      "share-default-label": "Export with default values removed",
       "share-externally-label": "Export for sharing externally",
       "view-button": "View JSON"
     },
@@ -1159,6 +1154,7 @@
       "export": "Export",
       "library-panel": "Library panel",
       "link": "Link",
+      "panel-embed": "Embed",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
