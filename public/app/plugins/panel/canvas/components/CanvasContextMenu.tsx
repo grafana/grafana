@@ -117,9 +117,11 @@ export const CanvasContextMenu = ({ scene, panel, visibleFun }: Props) => {
         let offsetY = anchorPoint.y;
         let offsetX = anchorPoint.x;
         if (scene.div) {
+          const transformRef = scene.transformComponentRef?.current;
+          const transformScale = transformRef?.instance.transformState.scale ?? 1;
           const sceneContainerDimensions = scene.div.getBoundingClientRect();
-          offsetY = offsetY - sceneContainerDimensions.top;
-          offsetX = offsetX - sceneContainerDimensions.left;
+          offsetY = (offsetY - sceneContainerDimensions.top) / transformScale;
+          offsetX = (offsetX - sceneContainerDimensions.left) / transformScale;
         }
 
         onAddItem(option, rootLayer, {
