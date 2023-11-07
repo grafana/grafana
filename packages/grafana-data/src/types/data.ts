@@ -218,7 +218,7 @@ export const isTruthy = <T>(value: T): value is Truthy<T> => Boolean(value);
  * Serves no runtime purpose - only used to make typescript check a value has been correctly
  * narrowed to an object
  */
-function checkObject(value: object): object {
+function identityObject(value: object): object {
   return value;
 }
 
@@ -230,7 +230,7 @@ function checkObject(value: object): object {
  */
 export function isObject(value: unknown): value is object {
   if (typeof value === 'object' && value !== null) {
-    checkObject(value);
+    identityObject(value);
 
     return true;
   }
