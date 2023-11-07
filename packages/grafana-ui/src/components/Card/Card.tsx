@@ -23,6 +23,7 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   /** @deprecated Use `Card.Description` instead */
   description?: string;
   isSelected?: boolean;
+  disableReadOnly?: boolean;
 }
 
 export interface CardInterface extends FC<Props> {
@@ -40,6 +41,7 @@ const CardContext = React.createContext<{
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   isSelected?: boolean;
+  disableReadOnly?: boolean;
 } | null>(null);
 
 /**
@@ -47,7 +49,16 @@ const CardContext = React.createContext<{
  *
  * @public
  */
-export const Card: CardInterface = ({ disabled, href, onClick, children, isSelected, className, ...htmlProps }) => {
+export const Card: CardInterface = ({
+  disabled,
+  href,
+  onClick,
+  children,
+  isSelected,
+  className,
+  disableReadOnly,
+  ...htmlProps
+}) => {
   const hasHeadingComponent = useMemo(
     () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Heading),
     [children]
@@ -66,7 +77,7 @@ export const Card: CardInterface = ({ disabled, href, onClick, children, isSelec
       className={cx(styles.container, className)}
       {...htmlProps}
     >
-      <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
+      <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected, disableReadOnly }}>
         {!hasHeadingComponent && <Heading />}
         {children}
       </CardContext.Provider>
@@ -85,11 +96,11 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
 
-  const { href, onClick, isSelected, disabled } = context ?? {
+  const { href, onClick, isSelected, disableReadOnly } = context ?? {
     href: undefined,
     onClick: undefined,
     isSelected: undefined,
-    disabled: false,
+    disableReadOnly: false,
   };
 
   return (
@@ -105,7 +116,9 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
-      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly={disabled} checked={isSelected} />}
+      {isSelected !== undefined && (
+        <input aria-label="option" type="radio" readOnly={disableReadOnly} checked={isSelected} />
+      )}
     </h2>
   );
 };
