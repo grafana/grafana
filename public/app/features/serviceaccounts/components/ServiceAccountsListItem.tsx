@@ -144,6 +144,16 @@ const ServiceAccountListItem = memo(
               )}
             </HorizontalGroup>
           )}
+          {serviceAccount.isManaged && (
+            <HorizontalGroup justify="flex-end">
+              <IconButton
+                disabled={true}
+                name="lock"
+                size="md"
+                tooltip={`This is a managed Service account and cannot be modified.`}
+              />
+            </HorizontalGroup>
+          )}
         </td>
       </tr>
     );
