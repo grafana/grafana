@@ -35,6 +35,8 @@ import { CustomFormatterVariable } from '@grafana/scenes';
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { QueryFormat, SQLQuery } from '../../../features/plugins/sql';
+
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
@@ -300,11 +302,16 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
-    if (this.version === InfluxVersion.Flux || this.isMigrationToggleOnAndIsAccessProxy()) {
-      const target: InfluxQuery = {
+    if (
+      this.version === InfluxVersion.Flux ||
+      this.version === InfluxVersion.SQL ||
+      this.isMigrationToggleOnAndIsAccessProxy()
+    ) {
+      const target: InfluxQuery & SQLQuery = {
         refId: 'metricFindQuery',
         query,
         rawQuery: true,
+        ...(this.version === InfluxVersion.SQL ? { rawSql: query, format: QueryFormat.Table } : {}),
       };
       return lastValueFrom(
         super.query({
