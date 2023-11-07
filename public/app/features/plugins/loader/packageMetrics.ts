@@ -34,16 +34,16 @@ function createMetricsProxy<T extends object>(obj: T, parentName: string, packag
 
       let value = Reflect.get(target, key);
 
-      // proxies don't play nice with functions scopes
-      if (typeof value === 'function') {
-        value = value.bind(target);
-      }
-
       if (value !== null && typeof value === 'object' && !(value instanceof RegExp)) {
         if (!cachedMetricProxies.has(value)) {
           cachedMetricProxies.set(value, createMetricsProxy(value, `${parentName}.${String(key)}`, packageName));
         }
         return cachedMetricProxies.get(value);
+      }
+
+      // proxies don't play nice with functions scopes
+      if (typeof value === 'function') {
+        value = value.bind(target);
       }
       return value;
     },
