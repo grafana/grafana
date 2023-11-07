@@ -2,13 +2,14 @@ package rest
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 var (
@@ -57,6 +58,7 @@ type LegacyStorage interface {
 type DualWriter struct {
 	Storage
 	legacy LegacyStorage
+	log    log.Logger
 }
 
 // NewDualWriter returns a new DualWriter.
@@ -64,6 +66,7 @@ func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
 	return &DualWriter{
 		Storage: storage,
 		legacy:  legacy,
+		log:     log.New("grafana-apiserver.dualwriter"),
 	}
 }
 
@@ -77,8 +80,7 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 		obj = created // write the updated version
 		rsp, err := d.Storage.Create(ctx, obj, createValidation, options)
 		if err != nil {
-			// TODO
-			fmt.Printf("TODO: delete %v\n", created)
+			d.log.Error("unable to create object in duplicate storage", "error", err)
 		}
 		return rsp, err
 	}
