@@ -48,7 +48,7 @@ export function LogsTable(props: Props) {
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
-      if (!frame || !frame.length) {
+      if (!frame.length) {
         return frame;
       }
       // Parse the dataframe to a logFrame
@@ -184,12 +184,12 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
 function extractFieldsAndExclude(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      const isFieldLokiLabels = field.typeInfo?.frame === 'json.RawMessage' && field.name === 'labels';
+      const isFieldLokiLabels =
+        field.typeInfo?.frame === 'json.RawMessage' &&
+        field.name === 'labels' &&
+        dataFrame?.meta?.type !== DataFrameType.LogLines;
       const isFieldDataplaneLabels =
-        field.name === 'attributes' &&
-        field.type === FieldType.other &&
-        dataFrame?.meta?.type === DataFrameType.LogLines;
-
+        field.name === 'labels' && field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines;
       return isFieldLokiLabels || isFieldDataplaneLabels;
     })
     .flatMap((field: Field) => {
@@ -244,7 +244,7 @@ function buildLabelFilters(columnsWithMeta: Record<string, fieldNameMeta>, logsF
 
   // We could be getting fresh data
   const uniqueLabels = new Set<string>();
-  const logFrameLabels = logsFrame?.getAttributesAsLabels();
+  const logFrameLabels = logsFrame?.getLogFrameLabelsAsLabels();
 
   // Populate the set with all labels from latest dataframe
   logFrameLabels?.forEach((labels) => {
