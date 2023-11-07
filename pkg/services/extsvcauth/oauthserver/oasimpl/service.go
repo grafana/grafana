@@ -145,33 +145,6 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 	return client, nil
 }
 
-func (s *OAuth2ServiceImpl) RemoveExternalService(ctx context.Context, name string) error {
-	s.logger.Info("Remove external service", "service", name)
-
-	slug := slugify.Slugify(name)
-	client, err := s.sqlstore.GetExternalServiceByName(ctx, slug)
-	if err != nil {
-		if errors.Is(err, oauthserver.ErrClientNotFound) {
-			s.logger.Debug("No external service linked to this name", "name", name)
-			return nil
-		}
-		s.logger.Error("Error fetching external service", "name", name, "error", err.Error())
-		return err
-	}
-
-	// Since we will delete the service, clear cache entry
-	s.cache.Delete(client.ClientID)
-
-	// Delete the external service in store
-	if err := s.sqlstore.DeleteExternalService(ctx, client.ClientID); err != nil {
-		s.logger.Error("Error deleting external service", "name", name, "error", err.Error())
-		return err
-	}
-	s.logger.Debug("Deleted external service", "name", name, "client_id", client.ClientID)
-
-	return s.saService.RemoveExtSvcAccount(ctx, oauthserver.TmpOrgID, slugify.Slugify(name))
-}
-
 // setClientUser sets the SignedInUser and SelfPermissions fields of the client
 func (s *OAuth2ServiceImpl) setClientUser(ctx context.Context, client *oauthserver.OAuthExternalService) error {
 	if client.ServiceAccountID == oauthserver.NoServiceAccountID {
@@ -208,6 +181,33 @@ func (s *OAuth2ServiceImpl) setClientUser(ctx context.Context, client *oauthserv
 	}
 	client.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(client.SelfPermissions)
 	return nil
+}
+
+func (s *OAuth2ServiceImpl) RemoveExternalService(ctx context.Context, name string) error {
+	s.logger.Info("Remove external service", "service", name)
+
+	slug := slugify.Slugify(name)
+	client, err := s.sqlstore.GetExternalServiceByName(ctx, slug)
+	if err != nil {
+		if errors.Is(err, oauthserver.ErrClientNotFound) {
+			s.logger.Debug("No external service linked to this name", "name", name)
+			return nil
+		}
+		s.logger.Error("Error fetching external service", "name", name, "error", err.Error())
+		return err
+	}
+
+	// Since we will delete the service, clear cache entry
+	s.cache.Delete(client.ClientID)
+
+	// Delete the external service in store
+	if err := s.sqlstore.DeleteExternalService(ctx, client.ClientID); err != nil {
+		s.logger.Error("Error deleting external service", "name", name, "error", err.Error())
+		return err
+	}
+	s.logger.Debug("Deleted external service", "name", name, "client_id", client.ClientID)
+
+	return s.saService.RemoveExtSvcAccount(ctx, oauthserver.TmpOrgID, slugify.Slugify(name))
 }
 
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
