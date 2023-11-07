@@ -5,6 +5,7 @@ import {
   getDataSourceRef,
   isDataSourceRef,
   isEmptyObject,
+  isObject,
   LoadingState,
   TimeRange,
   TypedVariableModel,
@@ -1106,5 +1107,5 @@ export function upgradeLegacyQueries(
 }
 
 function isDataQueryType(query: unknown): query is DataQuery {
-  return typeof query === 'object' && query !== null && 'refId' in query && typeof query.refId === 'string';
+  return isObject(query) && 'refId' in query && typeof query.refId === 'string';
 }
