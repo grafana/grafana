@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { isEmpty, truncate } from 'lodash';
 import React, { useMemo } from 'react';
 
@@ -15,6 +16,7 @@ import {
   TabContent,
   TabsBar,
   Text,
+  useStyles2,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -129,7 +131,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
     return (
       <>
-        <Stack direction="column" gap={3}>
+        <Stack direction="column" gap={2}>
           {/* breadcrumb and actions */}
           <BreadCrumbs folder={rule.namespace.name} evaluationGroup={rule.group.name} />
 
@@ -328,7 +330,7 @@ const Metadata = ({ labels, annotations, interval }: MetadataProps) => {
         {/* TODO truncate, maybe build in to component? */}
         {!isEmpty(labels) && (
           <MetaText direction="column">
-            Custom labels
+            Labels
             <AlertLabels labels={labels} size="sm" />
           </MetaText>
         )}
@@ -342,24 +344,41 @@ interface BreadcrumbProps {
   evaluationGroup: string;
 }
 
-const BreadCrumbs = ({ folder, evaluationGroup }: BreadcrumbProps) => (
-  // TODO fix vertical alignment here
-  // TODO make folder and group clickable -> use list filter(s)
-  <Stack alignItems="center" gap={0.5}>
-    <Text color="secondary">
-      <Icon name="folder" />
-    </Text>
-    <Text variant="body" color="primary">
-      {folder}
-    </Text>
-    <Text variant="body" color="secondary">
-      <Icon name="angle-right" />
-    </Text>
-    <Text variant="body" color="primary">
-      {evaluationGroup}
-    </Text>
-  </Stack>
-);
+const createListFilterLink = (values: Array<[string, string]>) => {
+  const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
+  return createUrl(`/alerting/list?` + params.toString());
+};
+
+const BreadCrumbs = ({ folder, evaluationGroup }: BreadcrumbProps) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Stack alignItems="baseline" gap={0}>
+      <Text color="secondary">
+        <Icon name="folder" />
+      </Text>
+      <LinkButton size="sm" variant="secondary" fill="text" href={createListFilterLink([['namespace', folder]])}>
+        {folder}
+      </LinkButton>
+      <div className={styles.breadCrumbSeparatorFix}>
+        <Text variant="body" color="secondary">
+          <Icon name="angle-right" />
+        </Text>
+      </div>
+      <LinkButton
+        size="sm"
+        variant="secondary"
+        fill="text"
+        href={createListFilterLink([
+          ['namespace', folder],
+          ['group', evaluationGroup],
+        ])}
+      >
+        {evaluationGroup}
+      </LinkButton>
+    </Stack>
+  );
+};
 
 interface TitleProps {
   name: string;
@@ -424,8 +443,6 @@ const Summary = ({ text }: SummaryProps) => (
   </Text>
 );
 
-export default RuleViewer;
-
 function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
   const tabFromQuery = queryParams['tab'];
@@ -444,3 +461,12 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
   // @ts-ignore
   return isString && Object.values(ActiveTab).includes(tab);
 }
+
+const getStyles = () => ({
+  breadCrumbSeparatorFix: css({
+    marginLeft: -4,
+    width: 12,
+  }),
+});
+
+export default RuleViewer;

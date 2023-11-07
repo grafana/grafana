@@ -4,7 +4,7 @@ import { useObservable } from 'react-use';
 
 import { LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
