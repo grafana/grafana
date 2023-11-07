@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { Stack } from '@grafana/experimental';
-import { Field, Icon, IconButton, Input, Label, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getSupportedTransTypeDetails, getTransformOptions } from './types';
 
@@ -38,7 +37,7 @@ const TransformationEditorRow = (props: Props) => {
   const transformOptions = getTransformOptions();
 
   return (
-    <Stack direction="row" key={defaultValue.id} alignItems="top">
+    <Stack direction="row" key={defaultValue.id} alignItems="flex-start">
       <Field
         label={
           <Stack gap={0.5}>

@@ -3,8 +3,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, FieldArray, useStyles2 } from '@grafana/ui';
+import { Button, FieldArray, Stack, useStyles2 } from '@grafana/ui';
 
 import TransformationsEditorRow from './TransformationEditorRow';
 
