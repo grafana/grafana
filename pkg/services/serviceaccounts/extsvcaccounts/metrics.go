@@ -24,14 +24,14 @@ func newMetrics(reg prometheus.Registerer, saSvc serviceaccounts.Service, logger
 		prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Name:      "extsvc_total",
-			Help:      "Number of external service accounts in store",
+			Help:      "Number of managed service accounts in store",
 		},
 		func() float64 {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			res, err := saSvc.SearchOrgServiceAccounts(ctx, &serviceaccounts.SearchOrgServiceAccountsQuery{
 				OrgID:     extsvcauth.TmpOrgID,
-				Filter:    serviceaccounts.FilterOnlyExternal,
+				Filter:    serviceaccounts.FilterOnlyManaged,
 				CountOnly: true,
 				SignedInUser: &user.SignedInUser{
 					OrgID: extsvcauth.TmpOrgID,

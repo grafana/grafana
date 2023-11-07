@@ -166,10 +166,10 @@ type ServiceAccountProfileDTO struct {
 type ServiceAccountFilter string // used for filtering
 
 const (
-	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
-	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
 	FilterIncludeAll        ServiceAccountFilter = "all"
-	FilterOnlyExternal      ServiceAccountFilter = "external"
+	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
+	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
+	FilterOnlyManaged       ServiceAccountFilter = "managed"
 )
 
 type Stats struct {
