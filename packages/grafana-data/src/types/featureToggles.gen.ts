@@ -18,7 +18,6 @@
  * @public
  */
 export interface FeatureToggles {
-  trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
@@ -37,6 +36,7 @@ export interface FeatureToggles {
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
+  newVizTooltips?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -86,7 +86,6 @@ export interface FeatureToggles {
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
-  dataSourcePageHeader?: boolean;
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
@@ -112,6 +111,7 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   azureMonitorDataplane?: boolean;
+  traceToProfiles?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -139,6 +139,7 @@ export interface FeatureToggles {
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  kubernetesPlaylistsAPI?: boolean;
   cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
@@ -150,7 +151,13 @@ export interface FeatureToggles {
   costManagementUi?: boolean;
   managedPluginsInstall?: boolean;
   prometheusPromQAIL?: boolean;
+  addFieldFromCalculationStatFunctions?: boolean;
   alertmanagerRemoteSecondary?: boolean;
   alertmanagerRemotePrimary?: boolean;
   alertmanagerRemoteOnly?: boolean;
+  annotationPermissionUpdate?: boolean;
+  extractFieldsNameDeduplication?: boolean;
+  dashboardSceneForViewers?: boolean;
+  panelFilterVariable?: boolean;
+  pdfTables?: boolean;
 }

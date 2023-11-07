@@ -236,7 +236,7 @@ func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx back
 		return err
 	}
 	logsClient := NewLogsAPI(session)
-	_, err = logsClient.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(1)})
+	_, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(1)})
 	return err
 }
 

@@ -857,12 +857,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "启用 kiosk 模式",
-      "toggle-menu": "切换菜单",
+      "open-menu": "",
       "toggle-search-bar": "切换顶部搜索栏"
     }
   },
@@ -876,7 +876,6 @@
   "panel": {
     "header-menu": {
       "copy": "复制",
-      "create-alert": "",
       "create-library-panel": "创建库面板",
       "duplicate": "复制",
       "edit": "编辑",
@@ -887,6 +886,7 @@
       "inspect-data": "数据",
       "inspect-json": "面板 JSON",
       "more": "更多...",
+      "new-alert-rule": "",
       "query": "查询",
       "remove": "删除",
       "share": "分享",
@@ -1038,7 +1038,6 @@
       "cancel-button": "取消",
       "info-text": "导出此仪表板。",
       "save-button": "保存至文件",
-      "share-default-label": "导出时清除默认值",
       "share-externally-label": "导出以供外部分享",
       "view-button": "查看 JSON"
     },
@@ -1085,6 +1084,7 @@
       "export": "导出",
       "library-panel": "库面板",
       "link": "链接",
+      "panel-embed": "",
       "snapshot": "快照"
     },
     "theme-picker": {

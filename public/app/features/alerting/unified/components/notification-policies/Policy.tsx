@@ -6,8 +6,18 @@ import { Link } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  Button,
+  Dropdown,
+  Icon,
+  Menu,
+  Stack,
+  Text,
+  Tooltip,
+  getTagColorsFromName,
+  useStyles2,
+} from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { AlertmanagerGroup, ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
