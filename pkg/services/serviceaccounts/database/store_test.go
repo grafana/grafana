@@ -440,7 +440,7 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
 				OrgID:        orgID,
 				SignedInUser: userWithPerm,
-				Filter:       serviceaccounts.FilterOnlyExternal,
+				Filter:       serviceaccounts.FilterOnlyManaged,
 			},
 			expectedTotal: 4,
 			expectedCount: 4,
