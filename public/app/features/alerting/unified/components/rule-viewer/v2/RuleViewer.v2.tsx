@@ -35,6 +35,7 @@ import {
   isOpenSourceEdition,
   makeDashboardLink,
   makePanelLink,
+  makeRuleBasedSilenceLink,
 } from '../../../utils/misc';
 import * as ruleId from '../../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../../utils/rules';
@@ -148,7 +149,13 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                     overlay={
                       <Menu>
                         {/* TODO hook these up to actions and move to separate component */}
-                        {canSilence && <Menu.Item label="Silence" icon="bell-slash" />}
+                        {canSilence && (
+                          <Menu.Item
+                            label="Silence"
+                            icon="bell-slash"
+                            url={makeRuleBasedSilenceLink(identifier.ruleSourceName, rule)}
+                          />
+                        )}
                         {shouldShowDeclareIncidentButton && (
                           <DeclareIncidentMenuItem title={rule.name} url={buildShareUrl()} />
                         )}
