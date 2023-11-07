@@ -1,13 +1,14 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
@@ -17,8 +18,8 @@ import (
 
 // CreateTransportOptions creates options for the http client. Probably should be shared and should not live in the
 // buffered package.
-func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, logger log.Logger) (*sdkhttpclient.Options, error) {
-	opts, err := settings.HTTPClientOptions()
+func CreateTransportOptions(ctx context.Context, settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, logger log.Logger) (*sdkhttpclient.Options, error) {
+	opts, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting HTTP options: %w", err)
 	}

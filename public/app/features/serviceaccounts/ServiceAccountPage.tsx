@@ -73,10 +73,9 @@ export const ServiceAccountPageUnconnected = ({
     !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) || serviceAccount.isDisabled;
 
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
-  const canReadPermissions = contextSrv.hasAccessInMetadata(
+  const canReadPermissions = contextSrv.hasPermissionInMetadata(
     AccessControlAction.ServiceAccountsPermissionsRead,
-    serviceAccount!,
-    false
+    serviceAccount!
   );
 
   const pageNav: NavModelItem = {

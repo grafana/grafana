@@ -259,7 +259,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   const labelNode = node.getChild(Identifier);
   const label = getString(expr, labelNode);
-  const op = getString(expr, labelNode!.nextSibling);
+  const op = getString(expr, labelNode?.nextSibling);
   let value = getString(expr, node.getChild(String));
   // `value` is wrapped in double quotes, so we need to remove them. As a value can contain double quotes, we can't use RegEx here.
   value = value.substring(1, value.length - 1);

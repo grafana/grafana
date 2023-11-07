@@ -16,7 +16,7 @@ jest.mock('../../core/app_events', () => ({
 jest.mock('app/core/core', () => ({
   contextSrv: {
     user: { orgId: 1 },
-    hasAccess: () => false,
+    hasPermission: () => false,
     licensedAccessControlEnabled: () => false,
   },
 }));
@@ -38,6 +38,7 @@ const setup = (propOverrides?: object) => {
     changePage: mockToolkitActionCreator(pageChanged),
     changeSort: mockToolkitActionCreator(sortChanged),
     isLoading: false,
+    rolesLoading: false,
   };
 
   Object.assign(props, propOverrides);

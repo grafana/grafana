@@ -3,9 +3,9 @@ import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, Checkbox, Form, TextArea, useStyles2 } from '@grafana/ui';
+import { Dashboard } from '@grafana/schema';
+import { Button, Checkbox, Form, TextArea, useStyles2, Stack } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { GenAIDashboardChangesButton } from '../../GenAI/GenAIDashboardChangesButton';
@@ -21,7 +21,7 @@ export type SaveProps = {
   saveModel: SaveDashboardData; // already cloned
   onCancel: () => void;
   onSuccess: () => void;
-  onSubmit?: (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
+  onSubmit?: (saveModel: Dashboard, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
   options: SaveDashboardOptions;
   onOptionsChange: (opts: SaveDashboardOptions) => void;
 };
@@ -37,7 +37,7 @@ export const SaveDashboardForm = ({
   onOptionsChange,
 }: SaveProps) => {
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
-  const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
+  const hasVariableChanged = useMemo(() => dashboard.hasVariablesChanged(), [dashboard]);
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(options.message);
@@ -53,12 +53,6 @@ export const SaveDashboardForm = ({
         options = { ...options, message };
         const result = await onSubmit(saveModel.clone, options, dashboard);
         if (result.status === 'success') {
-          if (options.saveVariables) {
-            dashboard.resetOriginalVariables();
-          }
-          if (options.saveTimerange) {
-            dashboard.resetOriginalTime();
-          }
           onSuccess();
         } else {
           setSaving(false);
@@ -105,6 +99,7 @@ export const SaveDashboardForm = ({
                     });
                     setMessage(text);
                   }}
+                  disabled={!saveModel.hasChanges}
                 />
               )}
               <TextArea
@@ -130,7 +125,7 @@ export const SaveDashboardForm = ({
               <Button
                 type="submit"
                 disabled={!saveModel.hasChanges || isLoading}
-                icon={saving ? 'fa fa-spinner' : undefined}
+                icon={saving ? 'spinner' : undefined}
                 aria-label={selectors.pages.SaveDashboardModal.save}
               >
                 {isLoading ? 'Saving...' : 'Save'}

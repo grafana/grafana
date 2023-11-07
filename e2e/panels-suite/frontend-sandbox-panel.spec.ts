@@ -11,12 +11,10 @@ describe('Panel sandbox', () => {
 
   describe('Sandbox disabled', () => {
     beforeEach(() => {
-      e2e.flows.openDashboard({
-        uid: DASHBOARD_ID,
-        queryParams: {
-          '__feature.pluginsFrontendSandbox': false,
-        },
+      cy.window().then((win) => {
+        win.localStorage.setItem('grafana.featureToggles', 'pluginsFrontendSandbox=0');
       });
+      cy.reload();
     });
 
     it('Add iframes to body', () => {
@@ -51,28 +49,22 @@ describe('Panel sandbox', () => {
       e2e.flows.openDashboard({
         uid: DASHBOARD_ID,
         queryParams: {
-          '__feature.pluginsFrontendSandbox': false,
           editPanel: 1,
         },
       });
 
       cy.get('[data-testid="panel-editor-custom-editor-input"]').should('not.be.disabled');
-      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x');
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true });
       cy.get('[data-sandbox-test="panel-editor"]').should('exist');
     });
   });
 
   describe('Sandbox enabled', () => {
     beforeEach(() => {
-      e2e.flows.openDashboard({
-        uid: DASHBOARD_ID,
-        queryParams: {
-          '__feature.pluginsFrontendSandbox': true,
-        },
-      });
       cy.window().then((win) => {
         win.localStorage.setItem('grafana.featureToggles', 'pluginsFrontendSandbox=1');
       });
+      cy.reload();
     });
 
     it('Does not add iframes to body', () => {
@@ -108,15 +100,21 @@ describe('Panel sandbox', () => {
       e2e.flows.openDashboard({
         uid: DASHBOARD_ID,
         queryParams: {
-          '__feature.pluginsFrontendSandbox': false,
           editPanel: 1,
         },
       });
 
       cy.get('[data-testid="panel-editor-custom-editor-input"]').should('not.be.disabled');
-      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x');
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true });
       cy.wait(100); // small delay to prevent false positives from too fast tests
       cy.get('[data-sandbox-test="panel-editor"]').should('not.exist');
+    });
+
+    it('Can access specific window global variables', () => {
+      cy.get('[data-testid="button-test-globals"]').click();
+      cy.get('[data-sandbox-global="Prism"]').should('be.visible');
+      cy.get('[data-sandbox-global="jQuery"]').should('be.visible');
+      cy.get('[data-sandbox-global="location"]').should('be.visible');
     });
   });
 

@@ -22,11 +22,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
@@ -34,13 +34,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/store"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -57,14 +56,14 @@ type OAuth2ServiceImpl struct {
 	logger        log.Logger
 	accessControl ac.AccessControl
 	acService     ac.Service
-	saService     serviceaccounts.Service
+	saService     serviceaccounts.ExtSvcAccountsService
 	userService   user.Service
 	teamService   team.Service
 	publicKey     any
 }
 
-func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
-	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
+func ProvideService(router routing.RouteRegister, bus bus.Bus, db db.DB, cfg *setting.Cfg,
+	extSvcAccSvc serviceaccounts.ExtSvcAccountsService, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
 	teamSvc team.Service, keySvc signingkeys.Service, fmgmt *featuremgmt.FeatureManager) (*OAuth2ServiceImpl, error) {
 	if !fmgmt.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 		return nil, nil
@@ -86,12 +85,14 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 		sqlstore:      store.NewStore(db),
 		logger:        log.New("oauthserver"),
 		userService:   userSvc,
-		saService:     svcAccSvc,
+		saService:     extSvcAccSvc,
 		teamService:   teamSvc,
 	}
 
 	api := api.NewAPI(router, s)
 	api.RegisterAPIEndpoints()
+
+	bus.AddEventListener(s.handlePluginStateChanged)
 
 	s.oauthProvider = newProvider(config, s, keySvc)
 
@@ -136,44 +137,50 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 		return nil, err
 	}
 
-	// Handle the case where the external service has no service account
+	if err := s.setClientUser(ctx, client); err != nil {
+		return nil, err
+	}
+
+	s.cache.Set(id, *client, cacheExpirationTime)
+	return client, nil
+}
+
+// setClientUser sets the SignedInUser and SelfPermissions fields of the client
+func (s *OAuth2ServiceImpl) setClientUser(ctx context.Context, client *oauthserver.OAuthExternalService) error {
 	if client.ServiceAccountID == oauthserver.NoServiceAccountID {
-		s.logger.Debug("GetExternalService: service has no service account, hence no permission", "id", id, "name", client.Name)
-		// Create a signed in user with no role and no permissions
+		s.logger.Debug("GetExternalService: service has no service account, hence no permission", "client_id", client.ClientID, "name", client.Name)
+
+		// Create a signed in user with no role and no permission
 		client.SignedInUser = &user.SignedInUser{
 			UserID:      oauthserver.NoServiceAccountID,
 			OrgID:       oauthserver.TmpOrgID,
 			Name:        client.Name,
 			Permissions: map[int64]map[string][]string{oauthserver.TmpOrgID: {}},
 		}
-		s.cache.Set(id, *client, cacheExpirationTime)
-		return client, nil
+		return nil
 	}
 
-	// Retrieve self permissions and generate a signed in user
-	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
-	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, client.ServiceAccountID)
+	s.logger.Debug("GetExternalService: fetch permissions", "client_id", client.ClientID)
+	sa, err := s.saService.RetrieveExtSvcAccount(ctx, oauthserver.TmpOrgID, client.ServiceAccountID)
 	if err != nil {
-		s.logger.Error("GetExternalService: error fetching service account", "id", id, "error", err)
-		return nil, err
+		s.logger.Error("GetExternalService: error fetching service account", "id", client.ClientID, "error", err)
+		return err
 	}
 	client.SignedInUser = &user.SignedInUser{
-		UserID:      sa.Id,
+		UserID:      sa.ID,
 		OrgID:       oauthserver.TmpOrgID,
-		OrgRole:     org.RoleType(sa.Role), // Need this to compute the permissions in OSS
+		OrgRole:     sa.Role,
 		Login:       sa.Login,
 		Name:        sa.Name,
 		Permissions: map[int64]map[string][]string{},
 	}
 	client.SelfPermissions, err = s.acService.GetUserPermissions(ctx, client.SignedInUser, ac.Options{})
 	if err != nil {
-		s.logger.Error("GetExternalService: error fetching permissions", "id", id, "error", err)
-		return nil, err
+		s.logger.Error("GetExternalService: error fetching permissions", "client_id", client.ClientID, "error", err)
+		return err
 	}
 	client.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(client.SelfPermissions)
-
-	s.cache.Set(id, *client, cacheExpirationTime)
-	return client, nil
+	return nil
 }
 
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
@@ -188,14 +195,9 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 
 	// Check if the client already exists in store
 	client, errFetchExtSvc := s.sqlstore.GetExternalServiceByName(ctx, registration.Name)
-	if errFetchExtSvc != nil {
-		var srcError errutil.Error
-		if errors.As(errFetchExtSvc, &srcError) {
-			if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
-				s.logger.Error("Error fetching service", "external service", registration.Name, "error", errFetchExtSvc)
-				return nil, errFetchExtSvc
-			}
-		}
+	if errFetchExtSvc != nil && !errors.Is(errFetchExtSvc, oauthserver.ErrClientNotFound) {
+		s.logger.Error("Error fetching service", "external service", registration.Name, "error", errFetchExtSvc)
+		return nil, errFetchExtSvc
 	}
 	// Otherwise, create a new client
 	if client == nil {
@@ -225,13 +227,6 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		return nil, errGenCred
 	}
 
-	s.logger.Debug("Save service account")
-	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.Name, client.ServiceAccountID, client.SelfPermissions)
-	if errSaveServiceAccount != nil {
-		return nil, errSaveServiceAccount
-	}
-	client.ServiceAccountID = saID
-
 	grantTypes := s.computeGrantTypes(registration.Self.Enabled, registration.Impersonation.Enabled)
 	client.GrantTypes = strings.Join(grantTypes, ",")
 
@@ -253,6 +248,18 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		return nil, err
 	}
 	client.Secret = string(hashedSecret)
+
+	s.logger.Debug("Save service account")
+	saID, errSaveServiceAccount := s.saService.ManageExtSvcAccount(ctx, &serviceaccounts.ManageExtSvcAccountCmd{
+		ExtSvcSlug:  slugify.Slugify(client.Name),
+		Enabled:     registration.Self.Enabled,
+		OrgID:       oauthserver.TmpOrgID,
+		Permissions: client.SelfPermissions,
+	})
+	if errSaveServiceAccount != nil {
+		return nil, errSaveServiceAccount
+	}
+	client.ServiceAccountID = saID
 
 	err = s.sqlstore.SaveExternalService(ctx, client)
 	if err != nil {
@@ -380,105 +387,13 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *ext
 	return nil, fmt.Errorf("at least one key option must be specified")
 }
 
-// saveServiceAccount creates a service account if the service account ID is NoServiceAccountID, otherwise it updates the service account's permissions
-func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName string, saID int64, permissions []ac.Permission) (int64, error) {
-	if saID == oauthserver.NoServiceAccountID {
-		// Create a service account
-		s.logger.Debug("Create service account", "external service name", extSvcName)
-		return s.createServiceAccount(ctx, extSvcName, permissions)
-	}
-
-	// check if the service account exists
-	s.logger.Debug("Update service account", "external service name", extSvcName)
-	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, saID)
-	if err != nil {
-		s.logger.Error("Error retrieving service account", "external service name", extSvcName, "error", err)
-		return oauthserver.NoServiceAccountID, err
-	}
-
-	// update the service account's permissions
-	if len(permissions) > 0 {
-		s.logger.Debug("Update role permissions", "external service name", extSvcName, "saID", saID)
-		if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
-			OrgID:             ac.GlobalOrgID,
-			Global:            true,
-			ExternalServiceID: extSvcName,
-			ServiceAccountID:  sa.Id,
-			Permissions:       permissions,
-		}); err != nil {
-			return oauthserver.NoServiceAccountID, err
-		}
-		return saID, nil
-	}
-
-	// remove the service account
-	errDelete := s.deleteServiceAccount(ctx, extSvcName, sa.Id)
-	return oauthserver.NoServiceAccountID, errDelete
-}
-
-// deleteServiceAccount deletes a service account by ID and removes its associated role
-func (s *OAuth2ServiceImpl) deleteServiceAccount(ctx context.Context, extSvcName string, saID int64) error {
-	s.logger.Debug("Delete service account", "external service name", extSvcName, "saID", saID)
-	if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, saID); err != nil {
-		return err
-	}
-	return s.acService.DeleteExternalServiceRole(ctx, extSvcName)
-}
-
-// createServiceAccount creates a service account with the given permissions and returns the ID of the service account
-// When no permission is given, the account isn't created and NoServiceAccountID is returned
-// This first design does not use a single transaction for the whole service account creation process => database consistency is not guaranteed.
-// Consider changing this in the future.
-func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName string, permissions []ac.Permission) (int64, error) {
-	if len(permissions) == 0 {
-		// No permission, no service account
-		s.logger.Debug("No permission, no service account", "external service name", extSvcName)
-		return oauthserver.NoServiceAccountID, nil
-	}
-
-	newRole := func(r roletype.RoleType) *roletype.RoleType {
-		return &r
-	}
-	newBool := func(b bool) *bool {
-		return &b
-	}
-
-	slug := slugify.Slugify(extSvcName)
-
-	s.logger.Debug("Generate service account", "external service name", extSvcName, "orgID", oauthserver.TmpOrgID, "name", slug)
-	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
-		Name:       slug,
-		Role:       newRole(roletype.RoleNone),
-		IsDisabled: newBool(false),
-	})
-	if err != nil {
-		return oauthserver.NoServiceAccountID, err
-	}
-
-	s.logger.Debug("Create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
-	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
-		OrgID:             ac.GlobalOrgID,
-		Global:            true,
-		ExternalServiceID: slug,
-		ServiceAccountID:  sa.Id,
-		Permissions:       permissions,
-	}); err != nil {
-		return oauthserver.NoServiceAccountID, err
-	}
-
-	return sa.Id, nil
-}
-
 // handleRegistrationPermissions parses the registration form to retrieve requested permissions and adds default
 // permissions when impersonation is requested
 func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *extsvcauth.ExternalServiceRegistration) ([]ac.Permission, []ac.Permission) {
-	selfPermissions := []ac.Permission{}
+	selfPermissions := registration.Self.Permissions
 	impersonatePermissions := []ac.Permission{}
 
-	if registration.Self.Enabled {
-		selfPermissions = append(selfPermissions, registration.Self.Permissions...)
-	}
-	if registration.Impersonation.Enabled {
+	if len(registration.Impersonation.Permissions) > 0 {
 		requiredForToken := []ac.Permission{
 			{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf},
 			{Action: ac.ActionUsersPermissionsRead, Scope: oauthserver.ScopeUsersSelf},
@@ -490,4 +405,43 @@ func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *extsvcauth
 		selfPermissions = append(selfPermissions, ac.Permission{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll})
 	}
 	return selfPermissions, impersonatePermissions
+}
+
+// handlePluginStateChanged reset the client authorized grant_types according to the plugin state
+func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
+	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+
+	// Retrieve client associated to the plugin
+	slug := slugify.Slugify(event.PluginId)
+	client, err := s.sqlstore.GetExternalServiceByName(ctx, slug)
+	if err != nil {
+		if errors.Is(err, oauthserver.ErrClientNotFound) {
+			s.logger.Debug("No external service linked to this plugin", "pluginId", event.PluginId)
+			return nil
+		}
+		s.logger.Error("Error fetching service", "pluginId", event.PluginId, "error", err)
+		return err
+	}
+
+	// Since we will change the grants, clear cache entry
+	s.cache.Delete(client.ClientID)
+
+	if !event.Enabled {
+		// Plugin is disabled => remove all grant_types
+		return s.sqlstore.UpdateExternalServiceGrantTypes(ctx, client.ClientID, "")
+	}
+
+	if err := s.setClientUser(ctx, client); err != nil {
+		return err
+	}
+
+	// The plugin has self permissions (not only impersonate)
+	canOnlyImpersonate := len(client.SelfPermissions) == 1 && (client.SelfPermissions[0].Action == ac.ActionUsersImpersonate)
+	selfEnabled := len(client.SelfPermissions) > 0 && !canOnlyImpersonate
+	// The plugin declared impersonate permissions
+	impersonateEnabled := len(client.ImpersonatePermissions) > 0
+
+	grantTypes := s.computeGrantTypes(selfEnabled, impersonateEnabled)
+
+	return s.sqlstore.UpdateExternalServiceGrantTypes(ctx, client.ClientID, strings.Join(grantTypes, ","))
 }

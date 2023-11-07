@@ -31,19 +31,19 @@ export function getQueryVariableDemo(): DashboardScene {
         new QueryVariable({
           name: 'instance (using datasource variable)',
           refresh: VariableRefresh.onTimeRangeChanged,
-          query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
+          query: { query: 'label_values(go_gc_duration_seconds, ${metric})', refId: 'A' },
           datasource: { uid: '${datasource}' },
         }),
         new QueryVariable({
           name: 'label values (on time range refresh)',
           refresh: VariableRefresh.onTimeRangeChanged,
-          query: { query: 'label_values(go_gc_duration_seconds, ${metric})' },
+          query: { query: 'label_values(go_gc_duration_seconds, ${metric})', refId: 'B' },
           datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         }),
         new QueryVariable({
           name: 'legacy (graphite)',
           refresh: VariableRefresh.onTimeRangeChanged,
-          query: { queryType: 'Default', target: 'stats.response.*' },
+          query: { queryType: 'Default', target: 'stats.response.*', refId: 'C' },
           datasource: { uid: 'gdev-graphite', type: 'graphite' },
         }),
       ],

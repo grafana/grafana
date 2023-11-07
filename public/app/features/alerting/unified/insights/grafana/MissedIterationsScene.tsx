@@ -58,7 +58,7 @@ export function getGrafanaMissedIterationsScene(datasource: DataSourceRef, panel
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The number of missed iterations per evaluation group')
       .setData(transformation)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)

@@ -1,3 +1,4 @@
+import { clamp } from 'lodash';
 import React, { PureComponent, CSSProperties } from 'react';
 
 import { VizOrientation } from '@grafana/data';
@@ -31,6 +32,7 @@ interface Props<V, D> {
   minVizWidth?: number;
   minVizHeight?: number;
   isOverflow?: boolean;
+  maxVizHeight?: number;
 }
 
 export interface VizRepeaterRenderValueProps<V, D = {}> {
@@ -152,6 +154,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
       getAlignmentFactors,
       autoGrid,
       orientation,
+      maxVizHeight,
       minVizWidth,
       minVizHeight,
     } = this.props as PropsWithDefaults<V, D>;
@@ -187,15 +190,16 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     let vizHeight = height;
     let vizWidth = width;
 
-    let resolvedOrientation = this.getOrientation();
+    const resolvedOrientation = this.getOrientation();
 
     switch (resolvedOrientation) {
       case VizOrientation.Horizontal:
+        const defaultVizHeight = (height + itemSpacing) / values.length - itemSpacing;
         repeaterStyle.flexDirection = 'column';
         repeaterStyle.height = `${height}px`;
         itemStyles.marginBottom = `${itemSpacing}px`;
         vizWidth = width;
-        vizHeight = Math.max(height / values.length - itemSpacing + itemSpacing / values.length, minVizHeight ?? 0);
+        vizHeight = clamp(defaultVizHeight, minVizHeight ?? 0, maxVizHeight ?? defaultVizHeight);
         break;
       case VizOrientation.Vertical:
         repeaterStyle.flexDirection = 'row';

@@ -6,18 +6,19 @@ import semver from 'semver';
 import {
   CoreApp,
   DataFrame,
+  DataFrameDTO,
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
   dateTime,
-  Field,
   FieldType,
   isValidGoDuration,
   LoadingState,
   rangeUtil,
   ScopedVars,
+  TestDataSourceResponse,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -85,6 +86,17 @@ const featuresToTempoVersion = {
 // The version that we use as default in case we cannot retrieve it from the backend.
 // This is the last minor version of Tempo that does not expose the endpoint for build information.
 const defaultTempoVersion = '2.1.0';
+
+interface ServiceMapQueryResponse {
+  nodes: DataFrame;
+  edges: DataFrame;
+}
+
+interface ServiceMapQueryResponseWithRates {
+  rates: Array<DataFrame | DataFrameDTO>;
+  nodes: DataFrame;
+  edges: DataFrame;
+}
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
@@ -485,7 +497,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return merge(...subQueries);
   }
 
-  applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars) {
     return this.applyVariables(query, scopedVars);
   }
 
@@ -620,7 +632,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (response.error) {
           return response;
         }
-        return transformTrace(response, this.nodeGraph?.enabled);
+        return transformTrace(response, this.instanceSettings, this.nodeGraph?.enabled);
       })
     );
   }
@@ -674,7 +686,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return await lastValueFrom(this._request(url, params, { method: 'GET', hideFromInspector: true }));
   }
 
-  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
+  private _request(
+    apiUrl: string,
+    data?: unknown,
+    options?: Partial<BackendSrvRequest>
+  ): Observable<Record<string, any>> {
     const params = data ? serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
@@ -682,7 +698,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return getBackendSrv().fetch(req);
   }
 
-  async testDatasource(): Promise<any> {
+  async testDatasource(): Promise<TestDataSourceResponse> {
     const options: BackendSrvRequest = {
       headers: {},
       method: 'GET',
@@ -783,7 +799,11 @@ function queryPrometheus(request: DataQueryRequest<PromQuery>, datasourceUid: st
   );
 }
 
-function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string, tempoDatasourceUid: string) {
+function serviceMapQuery(
+  request: DataQueryRequest<TempoQuery>,
+  datasourceUid: string,
+  tempoDatasourceUid: string
+): Observable<ServiceMapQueryResponse> {
   const serviceMapRequest = makePromServiceMapRequest(request);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
@@ -849,7 +869,8 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       }
 
       return {
-        data: [nodes, edges],
+        nodes,
+        edges,
         state: LoadingState.Done,
       };
     })
@@ -858,9 +879,9 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
 
 function rateQuery(
   request: DataQueryRequest<TempoQuery>,
-  serviceMapResponse: DataQueryResponse,
+  serviceMapResponse: ServiceMapQueryResponse,
   datasourceUid: string
-) {
+): Observable<ServiceMapQueryResponseWithRates> {
   const serviceMapRequest = makePromServiceMapRequest(request);
   serviceMapRequest.targets = makeServiceGraphViewRequest([buildExpr(rateMetric, defaultTableFilter, request)]);
 
@@ -872,8 +893,9 @@ function rateQuery(
         throw new Error(getErrorMessage(errorRes.error?.message));
       }
       return {
-        data: [responses[0]?.data ?? [], serviceMapResponse.data[0], serviceMapResponse.data[1]],
-        state: LoadingState.Done,
+        rates: responses[0]?.data ?? [],
+        nodes: serviceMapResponse.nodes,
+        edges: serviceMapResponse.edges,
       };
     })
   );
@@ -883,7 +905,7 @@ function rateQuery(
 // -> which determine the errorRate/duration span_name(s) we need to query
 function errorAndDurationQuery(
   request: DataQueryRequest<TempoQuery>,
-  rateResponse: DataQueryResponse,
+  rateResponse: ServiceMapQueryResponseWithRates,
   datasourceUid: string,
   tempoDatasourceUid: string
 ) {
@@ -892,14 +914,14 @@ function errorAndDurationQuery(
   let durationsBySpanName: string[] = [];
 
   let labels = [];
-  if (rateResponse.data[0][0] && request.app === CoreApp.Explore) {
-    const spanNameField = rateResponse.data[0][0].fields.find((field: Field) => field.name === 'span_name');
+  if (rateResponse.rates[0] && request.app === CoreApp.Explore) {
+    const spanNameField = rateResponse.rates[0].fields.find((field) => field.name === 'span_name');
     if (spanNameField && spanNameField.values) {
       labels = spanNameField.values;
     }
-  } else if (rateResponse.data[0]) {
-    rateResponse.data[0].map((df: DataFrame) => {
-      const spanNameLabels = df.fields.find((field: Field) => field.labels?.['span_name']);
+  } else if (rateResponse.rates) {
+    rateResponse.rates.map((df: DataFrame | DataFrameDTO) => {
+      const spanNameLabels = df.fields.find((field) => field.labels?.['span_name']);
       if (spanNameLabels) {
         labels.push(spanNameLabels.labels?.['span_name']);
       }
@@ -941,13 +963,13 @@ function errorAndDurationQuery(
 
       if (serviceGraphView.fields.length === 0) {
         return {
-          data: [rateResponse.data[1], rateResponse.data[2]],
+          data: [rateResponse.nodes, rateResponse.edges],
           state: LoadingState.Done,
         };
       }
 
       return {
-        data: [serviceGraphView, rateResponse.data[1], rateResponse.data[2]],
+        data: [serviceGraphView, rateResponse.nodes, rateResponse.edges],
         state: LoadingState.Done,
       };
     })
@@ -1078,7 +1100,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
 
 function getServiceGraphView(
   request: DataQueryRequest<TempoQuery>,
-  rateResponse: DataQueryResponse,
+  rateResponse: ServiceMapQueryResponseWithRates,
   secondResponse: DataQueryResponse,
   errorRateBySpanName: string,
   durationsBySpanName: string[],
@@ -1086,14 +1108,15 @@ function getServiceGraphView(
   tempoDatasourceUid: string
 ) {
   let df: any = { fields: [] };
-  const rate = rateResponse.data[0]?.filter((x: { refId: string }) => {
+
+  const rate = rateResponse.rates.filter((x) => {
     return x.refId === buildExpr(rateMetric, defaultTableFilter, request);
   });
   const errorRate = secondResponse.data.filter((x) => {
     return x.refId === errorRateBySpanName;
   });
   const duration = secondResponse.data.filter((x) => {
-    return durationsBySpanName.includes(x.refId);
+    return durationsBySpanName.includes(x.refId ?? '');
   });
 
   if (rate.length > 0 && rate[0].fields?.length > 2) {
@@ -1187,30 +1210,33 @@ function getServiceGraphView(
     });
   }
 
-  if (duration.length > 0 && duration[0].fields?.length > 1) {
+  if (duration.length > 0) {
     let durationObj: any = {};
-    duration.map((d) => {
-      const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
-      const name = d.refId?.split(delimiter)[1].split('"}')[0];
-      durationObj[name] = { value: d.fields[1].values[0] };
+    duration.forEach((d) => {
+      if (d.fields.length > 1) {
+        const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
+        const name = d.refId?.split(delimiter)[1].split('"}')[0];
+        durationObj[name!] = { value: d.fields[1].values[0] };
+      }
     });
-
-    df.fields.push({
-      ...duration[0].fields[1],
-      name: 'Duration (p90)',
-      values: getRateAlignedValues({ ...rate }, durationObj),
-      config: {
-        links: [
-          makePromLink(
-            'Duration',
-            buildLinkExpr(buildExpr(durationMetric, 'span_name="${__data.fields[0]}"', request)),
-            datasourceUid,
-            false
-          ),
-        ],
-        unit: 's',
-      },
-    });
+    if (Object.keys(durationObj).length > 0) {
+      df.fields.push({
+        ...duration[0].fields[1],
+        name: 'Duration (p90)',
+        values: getRateAlignedValues({ ...rate }, durationObj),
+        config: {
+          links: [
+            makePromLink(
+              'Duration',
+              buildLinkExpr(buildExpr(durationMetric, 'span_name="${__data.fields[0]}"', request)),
+              datasourceUid,
+              false
+            ),
+          ],
+          unit: 's',
+        },
+      });
+    }
   }
 
   if (df.fields.length > 0 && df.fields[0].values) {
@@ -1276,7 +1302,7 @@ export function getRateAlignedValues(
   return values;
 }
 
-export function makeServiceGraphViewRequest(metrics: any[]) {
+export function makeServiceGraphViewRequest(metrics: string[]): PromQuery[] {
   return metrics.map((metric) => {
     return {
       refId: metric,

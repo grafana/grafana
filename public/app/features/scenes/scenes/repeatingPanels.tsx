@@ -79,7 +79,7 @@ export function getRepeatingPanelsDemo(): DashboardScene {
 function changeVariable(variable: TestVariable) {
   const sub = variable.subscribeToState((state, old) => {
     if (!state.loading && old.loading) {
-      if (variable.state.optionsToReturn.length === 2) {
+      if (variable.state.optionsToReturn?.length === 2) {
         variable.setState({
           query: 'ABC',
           optionsToReturn: [

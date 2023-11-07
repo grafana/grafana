@@ -2,6 +2,7 @@ import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -49,16 +50,18 @@ const saveDashboard = async (
   }
 };
 
-export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
+export const useDashboardSave = (isCopy = false) => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
   const [state, onDashboardSave] = useAsyncFn(
-    async (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+    async (clone: Dashboard, options: SaveDashboardOptions, dashboard: DashboardModel) => {
       try {
         const result = await saveDashboard(clone, options, dashboard, saveDashboardRtkQuery);
         dashboard.version = result.version;
-        dashboard.clearUnsavedChanges();
+
+        clone.version = result.version;
+        dashboard.clearUnsavedChanges(clone, options);
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());

@@ -12,28 +12,44 @@ import {
   LoadingState,
   createDataFrame,
 } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import {
+  BackendSrv,
+  DataSourceSrv,
+  FetchResponse,
+  getBackendSrv,
+  setBackendSrv,
+  getDataSourceSrv,
+  setDataSourceSrv,
+} from '@grafana/runtime';
 import { QueryFormat, SQLQuery } from 'app/features/plugins/sql/types';
 import { makeVariable } from 'app/features/plugins/sql/utils/testHelpers';
 
 import { PostgresDatasource } from './datasource';
 import { PostgresOptions } from './types';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
-}));
+const backendSrv: BackendSrv = {
+  // this will get mocked below, it only needs to exist
+  fetch: () => undefined,
+} as unknown as BackendSrv; // we cast it so that we do not have to implement all the methods
 
-jest.mock('@grafana/runtime/src/services', () => ({
-  ...jest.requireActual('@grafana/runtime/src/services'),
-  getBackendSrv: () => backendSrv,
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: () => ({ id: 8674 }),
-    };
-  },
-}));
+// we type this as `any` to not have to define the whole type
+const fakeDataSourceSrv: DataSourceSrv = {
+  getInstanceSettings: () => ({ id: 8674 }),
+} as unknown as DataSourceSrv;
+
+let origBackendSrv: BackendSrv;
+let origDataSourceSrv: DataSourceSrv;
+beforeAll(() => {
+  origBackendSrv = getBackendSrv();
+  origDataSourceSrv = getDataSourceSrv();
+  setBackendSrv(backendSrv);
+  setDataSourceSrv(fakeDataSourceSrv);
+});
+
+afterAll(() => {
+  setBackendSrv(origBackendSrv);
+  setDataSourceSrv(origDataSourceSrv);
+});
 
 describe('PostgreSQLDatasource', () => {
   const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
