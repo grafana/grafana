@@ -1,5 +1,5 @@
 import { DataFrame, ExplorePanelsState } from '@grafana/data';
-import { DataQuery, DataSourceRef, Panel } from '@grafana/schema';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
@@ -18,7 +18,7 @@ interface AddPanelToDashboardOptions {
   queryResponse: ExplorePanelData;
   datasource?: DataSourceRef;
   dashboardUid?: string;
-  panelState: ExplorePanelsState;
+  panelState?: ExplorePanelsState;
 }
 
 function createDashboard(): DashboardDTO {
@@ -31,7 +31,7 @@ function createDashboard(): DashboardDTO {
 }
 
 export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
-  const panelType = getPanelType(options.queries, options.queryResponse, options.panelState);
+  const panelType = getPanelType(options.queries, options.queryResponse, options?.panelState);
   let transformations: DataTransformerConfig[] = [];
   if (panelType === 'table' && options.panelState?.logs?.columns) {
     transformations.push({
@@ -89,7 +89,7 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
 
-function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData, panelState: ExplorePanelsState) {
+function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData, panelState?: ExplorePanelsState) {
   for (const { refId } of queries.filter(isVisible)) {
     const hasQueryRefId = hasRefId(refId);
     if (queryResponse.flameGraphFrames.some(hasQueryRefId)) {
