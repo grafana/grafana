@@ -90,7 +90,7 @@ const FlameGraphContainer = ({
       return;
     }
     return new FlameGraphDataContainer(data, { collapsing: Boolean(collapsing) }, theme);
-  }, [data, theme]);
+  }, [data, theme, collapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme, vertical);
 
