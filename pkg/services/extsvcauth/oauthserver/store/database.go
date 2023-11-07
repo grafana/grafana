@@ -126,6 +126,7 @@ func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver
 			return err
 		}
 		if !found {
+			res = nil
 			return oauthserver.ErrClientNotFoundFn(id)
 		}
 
