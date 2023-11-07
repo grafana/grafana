@@ -140,9 +140,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     updateTimeRange({ exploreId, absoluteRange });
   };
 
-  loadMore = (absoluteRange: AbsoluteTimeRange, refIds: string[]) => {
+  loadMore = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, loadMore } = this.props;
-    loadMore({ exploreId, absoluteRange, refIds });
+    loadMore({ exploreId, absoluteRange });
   };
 
   private getQuery(
