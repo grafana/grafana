@@ -14,7 +14,6 @@ type DashboardMeta struct {
 	CanEdit    bool      `json:"canEdit"`
 	CanAdmin   bool      `json:"canAdmin"`
 	CanStar    bool      `json:"canStar"`
-	CanShare   bool      `json:"canShare"`
 	CanDelete  bool      `json:"canDelete"`
 	Slug       string    `json:"slug"`
 	Url        string    `json:"url"`

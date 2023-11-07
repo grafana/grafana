@@ -239,7 +239,6 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 			IsSnapshot: true,
 			Created:    snapshot.Created,
 			Expires:    snapshot.Expires,
-			CanShare:   false,
 		},
 	}
 
