@@ -61,7 +61,7 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 	}
 }
 
-// RemoveExternalService removes an external service and it's associated resources from the database (ex: service account, token).
+// RemoveExternalService removes an external service and its associated resources from the database (ex: service account, token).
 func (r *Registry) RemoveExternalService(ctx context.Context, name string) error {
 	provider, ok := r.extSvcProvider[name]
 	if !ok {

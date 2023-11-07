@@ -22,7 +22,7 @@ type ExternalServiceRegistry interface {
 	// associated service account has the correct permissions.
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ExternalService, error)
 
-	// RemoveExternalService removes an external service and it's associated resources from the database (ex: service account, token).
+	// RemoveExternalService removes an external service and its associated resources from the database (ex: service account, token).
 	RemoveExternalService(ctx context.Context, name string) error
 }
 
