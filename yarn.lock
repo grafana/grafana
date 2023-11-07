@@ -3242,12 +3242,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.9":
-  version: 0.0.9
-  resolution: "@grafana/lezer-traceql@npm:0.0.9"
+"@grafana/lezer-traceql@npm:0.0.10":
+  version: 0.0.10
+  resolution: "@grafana/lezer-traceql@npm:0.0.10"
   peerDependencies:
     "@lezer/lr": ^1.3.0
-  checksum: 1511e34d47466a9bd4880cd04f817d263dc01c0d4cd4dea0ad1bd7829d59e3d6b15c723e9ba4b240d812fc5d288ec0c4726928a2da031ee3d60573a8861d21a3
+  checksum: 9335458543a5155a4ece6a0d526dd78d8dba087f197b19ca80546529a39a107d62d4d0faa3fabc3f4d5caefc173cb1a6b93650a471101d34a0ee1c8f7c348de0
   languageName: node
   linkType: hard
 
@@ -17099,7 +17099,7 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.1"
     "@grafana/lezer-logql": "npm:0.2.1"
-    "@grafana/lezer-traceql": "npm:0.0.9"
+    "@grafana/lezer-traceql": "npm:0.0.10"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^1.20.1"

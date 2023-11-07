@@ -1510,6 +1510,34 @@ Specify the frequency of polling for Alertmanager config changes. The default va
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
+### ha_redis_address
+
+The Redis server address that should be connected to.
+
+### ha_redis_username
+
+The username that should be used to authenticate with the Redis server.
+
+### ha_redis_password
+
+The password that should be used to authenticate with the Redis server.
+
+### ha_redis_db
+
+The Redis database. The default value is `0`.
+
+### ha_redis_prefix
+
+A prefix that is used for every key or channel that is created on the Redis server as part of HA for alerting.
+
+### ha_redis_peer_name
+
+The name of the cluster peer that will be used as an identifier. If none is provided, a random one will be generated.
+
+### ha_redis_max_conns
+
+The maximum number of simultaneous Redis connections.
+
 ### ha_listen_address
 
 Listen IP address and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
@@ -1529,6 +1557,10 @@ be assigned a position (e.g. 0, 1). We then multiply this position with the time
 each instance wait before sending the notification to take into account replication lag. The default value is `15s`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_label
+
+The label is an optional string to include on each packet and stream. It uniquely identifies the cluster and prevents cross-communication issues when sending gossip messages in an environment with multiple clusters.
 
 ### ha_gossip_interval
 
@@ -1550,7 +1582,7 @@ Enable or disable alerting rule execution. The default value is `true`. The aler
 
 ### evaluation_timeout
 
-Sets the alert evaluation timeout when fetching data from the datasource. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
+Sets the alert evaluation timeout when fetching data from the data source. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
 
 The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 

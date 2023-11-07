@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import {
   Button,
   ClipboardButton,
@@ -15,6 +14,7 @@ import {
   Menu,
   Tooltip,
   useStyles2,
+  Stack,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';

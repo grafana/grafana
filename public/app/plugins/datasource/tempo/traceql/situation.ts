@@ -202,9 +202,7 @@ const RESOLVERS: Resolver[] = [
   },
   {
     path: [ERROR_NODE_ID, SpansetFilter],
-    fun: () => ({
-      type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE',
-    }),
+    fun: resolveSpansetWithNoClosedBrace,
   },
   {
     path: [ERROR_NODE_ID, Aggregate],
@@ -253,16 +251,35 @@ const resolveAttributeCompletion = (node: SyntaxNode, text: string, pos: number)
   // The user is completing an expression. We can take advantage of the fact that the Monaco editor is smart
   // enough to automatically detect that there are some characters before the cursor and to take them into
   // account when providing suggestions.
-  const endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
-  if (endOfPathNode && text[pos - 1] !== ' ') {
-    const attributeFieldParent = walk(endOfPathNode, [['firstChild', [AttributeField]]]);
+  const getAttributeFieldUpToDot = (node: SyntaxNode) => {
+    const attributeFieldParent = walk(node, [['firstChild', [AttributeField]]]);
     const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
     const indexOfDot = attributeFieldParentText.indexOf('.');
-    const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
+    return attributeFieldParentText.slice(0, indexOfDot);
+  };
 
+  // If there is a space, for sure the attribute is completed and no suggestions to complete it should be provided
+  if (text[pos - 1] === ' ') {
+    return;
+  }
+
+  const endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
+  if (endOfPathNode) {
     return {
       type: 'SPANSET_IN_NAME_SCOPE',
-      scope: attributeFieldUpToDot,
+      scope: getAttributeFieldUpToDot(endOfPathNode),
+    };
+  }
+
+  const endOfPathNode2 = walk(node, [
+    ['parent', [SpansetFilter]],
+    ['firstChild', [FieldExpression]],
+  ]);
+  // In this case, we also need to check the character at `pos`
+  if (endOfPathNode2 && text[pos] !== ' ') {
+    return {
+      type: 'SPANSET_IN_NAME_SCOPE',
+      scope: getAttributeFieldUpToDot(endOfPathNode2),
     };
   }
 };
@@ -413,5 +430,16 @@ function resolveSpansetPipeline(node: SyntaxNode, _1: string, _2: number): Situa
   }
   return {
     type: 'NEW_SPANSET',
+  };
+}
+
+function resolveSpansetWithNoClosedBrace(node: SyntaxNode, text: string, originalPos: number): SituationType {
+  const situation = resolveAttributeCompletion(node, text, originalPos);
+  if (situation) {
+    return situation;
+  }
+
+  return {
+    type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE',
   };
 }

@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Alert, LinkButton } from '@grafana/ui';
+import { Alert, LinkButton, Stack } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
