@@ -204,8 +204,8 @@ export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<
   };
 }
 
-export function isNestedPanelOptions(item: any): item is NestedPanelOptionsBuilder {
-  return item.id === 'nested-panel-options';
+export function isNestedPanelOptions(item: unknown): item is NestedPanelOptionsBuilder {
+  return Boolean(typeof item === 'object' && item && 'id' in item && item.id === 'nested-panel-options');
 }
 
 /**

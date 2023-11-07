@@ -155,8 +155,13 @@ async function rulerGetRequest<T>(url: string, empty: T, params?: Record<string,
 }
 
 function isResponseError(error: unknown): error is FetchResponse<ErrorResponseMessage> {
-  const hasErrorMessage = (error as FetchResponse<ErrorResponseMessage>).data != null;
-  const hasErrorCode = Number.isFinite((error as FetchResponse<ErrorResponseMessage>).status);
+  if (typeof error !== 'object' || !error) {
+    return false;
+  }
+
+  const hasErrorMessage = 'data' in error && error.data !== null;
+  const hasErrorCode = 'status' in error && Number.isFinite(error.status);
+
   return hasErrorCode && hasErrorMessage;
 }
 
