@@ -34,7 +34,6 @@ export const VariableTextField = ({
         value={localValue}
         onChange={(e) => setLocalValue(e.currentTarget.value)}
         onBlur={() => onBlur(localValue)}
-        width={25}
       />
     </EditorField>
   ) : (

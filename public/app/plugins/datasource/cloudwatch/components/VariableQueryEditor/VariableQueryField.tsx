@@ -34,7 +34,6 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
     <EditorField label={label} htmlFor={inputId} className={css({ marginBottom: 8 })}>
       <Select
         aria-label={label}
-        width={25}
         allowCustomValue={allowCustomValue}
         value={value}
         onChange={({ value }) => onChange(value!)}
