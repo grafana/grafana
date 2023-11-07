@@ -57,7 +57,6 @@ export const updateTimeRange = (options: {
 export const loadMore = (options: {
   exploreId: string;
   absoluteRange: AbsoluteTimeRange;
-  refIds: string[];
 }): ThunkResult<void> => {
   return (dispatch) => {
     dispatch(runLoadMoreQueries({ ...options }));
