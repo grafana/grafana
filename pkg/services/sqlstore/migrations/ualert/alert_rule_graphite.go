@@ -66,7 +66,8 @@ func fixGraphiteReferencedSubQueries(l log.Logger, queryData map[string]json.Raw
 	successfulGraphiteMigrationDashboard++
 	l.Debug("graphite query migration: successfully unwrapped query using the dashboard", "query", fullQueryRaw, "rule_id", ruleID)
 	queryData[graphite.TargetModelField] = b
-
+	// Always delete target full, as it might be set and always used as the first option by the query engine.
+	delete(queryData, graphite.TargetFullModelField)
 	return queryData
 }
 
