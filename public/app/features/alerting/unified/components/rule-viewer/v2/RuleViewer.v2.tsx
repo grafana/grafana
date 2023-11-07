@@ -2,7 +2,6 @@ import { isEmpty, truncate } from 'lodash';
 import React, { useMemo } from 'react';
 
 import { UrlQueryValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import {
   Alert,
   Button,
@@ -11,6 +10,7 @@ import {
   LinkButton,
   LoadingPlaceholder,
   Menu,
+  Stack,
   Tab,
   TabContent,
   TabsBar,
@@ -129,11 +129,11 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
     return (
       <>
-        <Stack direction="column" gap={3} wrap={false}>
+        <Stack direction="column" gap={3}>
           {/* breadcrumb and actions */}
           <BreadCrumbs folder={rule.namespace.name} evaluationGroup={rule.group.name} />
 
-          <Stack direction="column" gap={2} wrap={false}>
+          <Stack direction="column" gap={2}>
             {/* header */}
             <Stack direction="column" gap={1}>
               <Stack direction="row" alignItems="center">

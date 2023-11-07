@@ -3,9 +3,18 @@ import React, { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, useStyles2, VerticalGroup } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Collapse,
+  Icon,
+  IconButton,
+  LoadingPlaceholder,
+  useStyles2,
+  VerticalGroup,
+  Stack,
+} from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -114,7 +123,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
       {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
       <RuleViewerLayoutContent>
         <div>
-          <Stack direction="row" alignItems="center" wrap={false} gap={1}>
+          <Stack direction="row" alignItems="center" gap={1}>
             <Icon name="bell" size="lg" /> <span className={styles.title}>{rule.name}</span>
           </Stack>
           <RuleState rule={rule} isCreating={false} isDeleting={false} />

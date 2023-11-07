@@ -17,6 +17,7 @@ newDBLibrary,preview,@grafana/backend-platform,false,false,false,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,false,true
+newVizTooltips,GA,@grafana/dataviz-squad,false,false,false,true
 scenes,experimental,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false,false
@@ -66,7 +67,6 @@ enableElasticsearchBackendQuerying,GA,@grafana/observability-logs,false,false,fa
 advancedDataSourcePicker,GA,@grafana/dashboards-squad,false,false,false,true
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,preview,@grafana/grafana-bi-squad,false,false,false,true
-dataSourcePageHeader,preview,@grafana/enterprise-datasources,false,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,false,true
 pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false,true
@@ -140,3 +140,4 @@ annotationPermissionUpdate,experimental,@grafana/identity-access-team,false,fals
 extractFieldsNameDeduplication,experimental,@grafana/grafana-bi-squad,false,false,false,true
 dashboardSceneForViewers,experimental,@grafana/dashboards-squad,false,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,false,true
+pdfTables,privatePreview,@grafana/sharing-squad,false,false,false,false
