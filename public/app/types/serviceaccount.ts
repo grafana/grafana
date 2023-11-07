@@ -61,6 +61,7 @@ export interface ServiceAccountProfileState {
 export enum ServiceAccountStateFilter {
   All = 'All',
   WithExpiredTokens = 'WithExpiredTokens',
+  Managed = 'Managed',
   Disabled = 'Disabled',
 }
 
