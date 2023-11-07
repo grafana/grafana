@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -91,6 +92,20 @@ func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
 		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
 		if err != nil {
 			return nil, err
+		}
+		for teamID, headers := range teamHTTPHeadersJSON {
+			if teamID == "" {
+				return nil, errors.New("teamID is missing or empty in teamHttpHeaders")
+			}
+
+			for _, header := range headers {
+				if header.Header == "" {
+					return nil, errors.New("header name is missing or empty")
+				}
+				if header.Value == "" {
+					return nil, errors.New("header value is missing or empty")
+				}
+			}
 		}
 	}
 

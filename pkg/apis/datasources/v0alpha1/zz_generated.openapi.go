@@ -14,7 +14,7 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.DataSourceConfig":     schema_pkg_apis_datasources_v0alpha1_DataSourceConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.DataSourceConfigList": schema_pkg_apis_datasources_v0alpha1_DataSourceConfigList(ref),

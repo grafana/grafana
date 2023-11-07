@@ -6,8 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -204,96 +202,4 @@ func TestApplyUserHeader(t *testing.T) {
 		ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin"})
 		require.Equal(t, "admin", req.Header.Get("X-Grafana-User"))
 	})
-}
-
-func TestApplyteamHTTPHeaders(t *testing.T) {
-	testCases := []struct {
-		desc      string
-		jsonData  any
-		userTeams []int64
-		want      map[string]string
-	}{
-		{
-			desc: "Should apply team headers for users teams",
-			jsonData: map[string]interface{}{
-				"1": []map[string]interface{}{
-					{
-						"header": "X-Team-Header",
-						"value":  "1",
-					},
-				},
-				"2": []map[string]interface{}{
-					{
-						"header": "X-Prom-Label-Policy",
-						"value":  "2",
-					},
-				},
-				// user is not part of this team
-				"3": []map[string]interface{}{
-					{
-						"header": "X-Custom-Label-Policy",
-						"value":  "3",
-					},
-				},
-			},
-			userTeams: []int64{1, 2},
-			want: map[string]string{
-				"X-Team-Header":       "1",
-				"X-Prom-Label-Policy": "2",
-			},
-		},
-		{
-			desc: "Should be able to parse header values with commas",
-			jsonData: map[string]interface{}{
-				"101": []map[string]interface{}{
-					{
-						"header": "X-Prom-Label-Policy",
-						"value":  `1234:{ foo="bar", bar="baz" }`,
-					},
-				},
-			},
-			userTeams: []int64{101},
-			want: map[string]string{
-				"X-Prom-Label-Policy": "1234:%7B%20foo=%22bar%22%2C%20bar=%22baz%22%20%7D",
-			},
-		}, {
-			desc: "Should be able to handle multiple header values",
-			jsonData: map[string]interface{}{
-				"101": []map[string]interface{}{
-					{
-						"header": "X-Prom-Label-Policy",
-						"value":  `1234:{ foo="bar" }`,
-					},
-					{
-						"header": "X-Prom-Label-Policy",
-						"value":  `1234:{ bar="baz" }`,
-					},
-				},
-			},
-			userTeams: []int64{101},
-			want: map[string]string{
-				"X-Prom-Label-Policy": "1234:%7B%20foo=%22bar%22%20%7D,1234:%7B%20bar=%22baz%22%20%7D",
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run("Should apply team headers for users teams", func(t *testing.T) {
-			req, err := http.NewRequest(http.MethodGet, "/", nil)
-			require.NoError(t, err)
-			ds := &datasources.DataSource{
-				JsonData: simplejson.New(),
-			}
-
-			// add team headers
-			ds.JsonData.Set("teamHttpHeaders", testCase.jsonData)
-
-			err = ApplyTeamHTTPHeaders(req, ds, testCase.userTeams)
-			require.NoError(t, err)
-			for header, value := range testCase.want {
-				require.Contains(t, req.Header, header)
-				require.Equal(t, value, req.Header.Get(header))
-			}
-		})
-	}
 }

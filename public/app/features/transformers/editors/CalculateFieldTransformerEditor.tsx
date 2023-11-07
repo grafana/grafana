@@ -24,10 +24,15 @@ import {
   BinaryOptions,
   UnaryOptions,
   CalculateFieldMode,
+  WindowAlignment,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
   IndexOptions,
   ReduceOptions,
+  CumulativeOptions,
+  WindowOptions,
+  WindowSizeMode,
+  defaultWindowOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import {
@@ -38,9 +43,11 @@ import {
   InlineLabel,
   InlineSwitch,
   Input,
+  RadioButtonGroup,
   Select,
   StatsPicker,
 } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -56,6 +63,13 @@ const calculationModes = [
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
   { value: CalculateFieldMode.Index, label: 'Row index' },
 ];
+
+if (cfg.featureToggles.addFieldFromCalculationStatFunctions) {
+  calculationModes.push(
+    { value: CalculateFieldMode.CumulativeFunctions, label: 'Cumulative functions' },
+    { value: CalculateFieldMode.WindowFunctions, label: 'Window functions' }
+  );
+}
 
 const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
 
@@ -188,6 +202,9 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const { options, onChange } = this.props;
     const mode = value.value ?? CalculateFieldMode.BinaryOperation;
+    if (mode === CalculateFieldMode.WindowFunctions) {
+      options.window = options.window ?? defaultWindowOptions;
+    }
     onChange({
       ...options,
       mode,
@@ -203,14 +220,13 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   };
 
   //---------------------------------------------------------
-  // Reduce by Row
+  // Cumulative functions
   //---------------------------------------------------------
 
   updateReduceOptions = (v: ReduceOptions) => {
     const { options, onChange } = this.props;
     onChange({
       ...options,
-      mode: CalculateFieldMode.ReduceRow,
       reduce: v,
     });
   };
@@ -250,6 +266,149 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     );
   }
 
+  //---------------------------------------------------------
+  // Window functions
+  //---------------------------------------------------------
+
+  updateWindowOptions = (v: WindowOptions) => {
+    const { options, onChange } = this.props;
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.WindowFunctions,
+      window: v,
+    });
+  };
+
+  onWindowFieldChange = (v: SelectableValue<string>) => {
+    const { window } = this.props.options;
+    this.updateWindowOptions({
+      ...window!,
+      field: v.value!,
+    });
+  };
+
+  onWindowSizeChange = (v?: number) => {
+    const { window } = this.props.options;
+    this.updateWindowOptions({
+      ...window!,
+      windowSize: v && window?.windowSizeMode === WindowSizeMode.Percentage ? v / 100 : v,
+    });
+  };
+
+  onWindowSizeModeChange = (val: string) => {
+    const { window } = this.props.options;
+    const mode = val as WindowSizeMode;
+    this.updateWindowOptions({
+      ...window!,
+      windowSize: window?.windowSize
+        ? mode === WindowSizeMode.Percentage
+          ? window!.windowSize! / 100
+          : window!.windowSize! * 100
+        : undefined,
+      windowSizeMode: mode,
+    });
+  };
+
+  onWindowStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { window } = this.props.options;
+    this.updateWindowOptions({ ...window, reducer });
+  };
+
+  onTypeChange = (val: string) => {
+    const { window } = this.props.options;
+    this.updateWindowOptions({
+      ...window!,
+      windowAlignment: val as WindowAlignment,
+    });
+  };
+
+  renderWindowFunctions(options?: WindowOptions) {
+    const { names } = this.state;
+    options = defaults(options, { reducer: ReducerID.sum });
+    const selectOptions = names.map((v) => ({ label: v, value: v }));
+    const typeOptions = [
+      { label: 'Trailing', value: WindowAlignment.Trailing },
+      { label: 'Centered', value: WindowAlignment.Centered },
+    ];
+    const windowSizeModeOptions = [
+      { label: 'Percentage', value: WindowSizeMode.Percentage },
+      { label: 'Fixed', value: WindowSizeMode.Fixed },
+    ];
+
+    return (
+      <>
+        <InlineField label="Field" labelWidth={labelWidth}>
+          <Select
+            placeholder="Field"
+            options={selectOptions}
+            className="min-width-18"
+            value={options?.field}
+            onChange={this.onWindowFieldChange}
+          />
+        </InlineField>
+        <InlineField label="Calculation" labelWidth={labelWidth}>
+          <StatsPicker
+            allowMultiple={false}
+            className="width-18"
+            stats={[options.reducer]}
+            onChange={this.onWindowStatsChange}
+            defaultStat={ReducerID.mean}
+            filterOptions={(ext) =>
+              ext.id === ReducerID.mean || ext.id === ReducerID.variance || ext.id === ReducerID.stdDev
+            }
+          />
+        </InlineField>
+        <InlineField label="Type" labelWidth={labelWidth}>
+          <RadioButtonGroup
+            value={options.windowAlignment ?? WindowAlignment.Trailing}
+            options={typeOptions}
+            onChange={this.onTypeChange}
+          />
+        </InlineField>
+        <InlineField label="Window size mode">
+          <RadioButtonGroup
+            value={options.windowSizeMode ?? WindowSizeMode.Percentage}
+            options={windowSizeModeOptions}
+            onChange={this.onWindowSizeModeChange}
+          ></RadioButtonGroup>
+        </InlineField>
+        <InlineField
+          label={options.windowSizeMode === WindowSizeMode.Percentage ? 'Window size %' : 'Window size'}
+          labelWidth={labelWidth}
+          tooltip={
+            options.windowSizeMode === WindowSizeMode.Percentage
+              ? 'Set the window size as a percentage of the total data'
+              : 'Window size'
+          }
+        >
+          <NumberInput
+            placeholder="Auto"
+            min={0.1}
+            value={
+              options.windowSize && options.windowSizeMode === WindowSizeMode.Percentage
+                ? options.windowSize * 100
+                : options.windowSize
+            }
+            onChange={this.onWindowSizeChange}
+          ></NumberInput>
+        </InlineField>
+      </>
+    );
+  }
+
+  //---------------------------------------------------------
+  // Reduce by Row
+  //---------------------------------------------------------
+
+  onReducerStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { reduce } = this.props.options;
+    this.updateReduceOptions({ ...reduce, reducer });
+  };
+
   renderReduceRow(options?: ReduceOptions) {
     const { names, selected } = this.state;
     options = defaults(options, { reducer: ReducerID.sum });
@@ -279,6 +438,64 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             stats={[options.reducer]}
             onChange={this.onStatsChange}
             defaultStat={ReducerID.sum}
+          />
+        </InlineField>
+      </>
+    );
+  }
+
+  //---------------------------------------------------------
+  // Cumulative Operator
+  //---------------------------------------------------------
+
+  onCumulativeStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { reduce } = this.props.options;
+    this.updateCumulativeOptions({ ...reduce, reducer });
+  };
+
+  updateCumulativeOptions = (v: CumulativeOptions) => {
+    const { options, onChange } = this.props;
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.CumulativeFunctions,
+      cumulative: v,
+    });
+  };
+
+  onCumulativeFieldChange = (v: SelectableValue<string>) => {
+    const { cumulative } = this.props.options;
+    this.updateCumulativeOptions({
+      ...cumulative!,
+      field: v.value!,
+    });
+  };
+
+  renderCumulativeFunctions(options?: CumulativeOptions) {
+    const { names } = this.state;
+    options = defaults(options, { reducer: ReducerID.sum });
+    const selectOptions = names.map((v) => ({ label: v, value: v }));
+
+    return (
+      <>
+        <InlineField label="Field" labelWidth={labelWidth}>
+          <Select
+            placeholder="Field"
+            options={selectOptions}
+            className="min-width-18"
+            value={options?.field}
+            onChange={this.onCumulativeFieldChange}
+          />
+        </InlineField>
+        <InlineField label="Calculation" labelWidth={labelWidth}>
+          <StatsPicker
+            allowMultiple={false}
+            className="width-18"
+            stats={[options.reducer]}
+            onChange={this.onCumulativeStatsChange}
+            defaultStat={ReducerID.sum}
+            filterOptions={(ext) => ext.id === ReducerID.sum || ext.id === ReducerID.mean}
           />
         </InlineField>
       </>
@@ -468,6 +685,8 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.UnaryOperation && this.renderUnaryOperation(options.unary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
+        {mode === CalculateFieldMode.CumulativeFunctions && this.renderCumulativeFunctions(options.cumulative)}
+        {mode === CalculateFieldMode.WindowFunctions && this.renderWindowFunctions(options.window)}
         {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
         <InlineField labelWidth={labelWidth} label="Alias">
           <Input

@@ -33,6 +33,7 @@ type Props = StandardEditorProps<APIEditorConfig>;
 const httpMethodOptions = [
   { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
+  { label: HttpRequestMethod.PUT, value: HttpRequestMethod.PUT },
 ];
 
 const contentTypeOptions: SelectableValue[] = [
@@ -157,7 +158,7 @@ export function APIEditor({ value, context, onChange }: Props) {
           <RadioButtonGroup value={value?.method} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
         </InlineField>
       </InlineFieldRow>
-      {value?.method === HttpRequestMethod.POST && (
+      {value?.method !== HttpRequestMethod.GET && (
         <InlineFieldRow>
           <InlineField label="Content-Type" labelWidth={LABEL_WIDTH} grow={true}>
             <Select
@@ -178,7 +179,7 @@ export function APIEditor({ value, context, onChange }: Props) {
       <Field label="Header parameters">
         <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
       </Field>
-      {value?.method === HttpRequestMethod.POST && value?.contentType && (
+      {value?.method !== HttpRequestMethod.GET && value?.contentType && (
         <Field label="Payload">
           <StringValueEditor
             context={context}
@@ -190,7 +191,7 @@ export function APIEditor({ value, context, onChange }: Props) {
       )}
       {renderTestAPIButton(value)}
       <br />
-      {value?.method === HttpRequestMethod.POST &&
+      {value?.method !== HttpRequestMethod.GET &&
         value?.contentType === defaultApiConfig.contentType &&
         renderJSON(value?.data ?? '{}')}
     </>

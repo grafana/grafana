@@ -11,7 +11,7 @@ export const CorrelationFormNavigation = () => {
   const { readOnly, loading, correlation } = useCorrelationsFormContext();
 
   const LastPageNext = !readOnly && (
-    <Button variant="primary" icon={loading ? 'fa fa-spinner' : 'save'} type="submit" disabled={loading}>
+    <Button variant="primary" icon={loading ? 'spinner' : 'save'} type="submit" disabled={loading}>
       {correlation === undefined ? 'Add' : 'Save'}
     </Button>
   );

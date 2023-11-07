@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
+import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar, Text, Stack } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
