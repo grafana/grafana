@@ -14,11 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
+	cfg                  *config.Cfg
 	pluginRepo           repo.Service
 	pluginStorage        storage.ZipExtractor
 	pluginStorageDirFunc storage.DirNameGeneratorFunc
@@ -30,14 +32,15 @@ type PluginInstaller struct {
 
 func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service, serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
-	return New(pluginRegistry, pluginLoader, pluginRepo,
+	return New(cfg, pluginRegistry, pluginLoader, pluginRepo,
 		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc, serviceRegistry)
 }
 
-func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
+func New(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
 	pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc,
 	serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
 	return &PluginInstaller{
+		cfg:                  cfg,
 		pluginLoader:         pluginLoader,
 		pluginRegistry:       pluginRegistry,
 		pluginRepo:           pluginRepo,
@@ -160,8 +163,10 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		}
 	}
 
-	// TODO (gamab) feature toggle check to prevent the call?
-	return m.serviceRegistry.RemoveExternalService(ctx, pluginID)
+	if m.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || m.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+		return m.serviceRegistry.RemoveExternalService(ctx, pluginID)
+	}
+	return nil
 }
 
 // plugin finds a plugin with `pluginID` from the store
