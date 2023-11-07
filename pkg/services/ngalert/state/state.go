@@ -410,7 +410,10 @@ func nextEndsTime(interval int64, evaluatedAt time.Time) time.Time {
 	if intv > ResendDelay {
 		ends = intv
 	}
-	return evaluatedAt.Add(3 * ends)
+	// Allow for at least two evaluation cycles to pass before expiring, every time.
+	// Synchronized with Prometheus:
+	// https://github.com/prometheus/prometheus/blob/6a9b3263ffdba5ea8c23e6f9ef69fb7a15b566f8/rules/alerting.go#L493
+	return evaluatedAt.Add(4 * ends)
 }
 
 func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {

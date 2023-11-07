@@ -14,57 +14,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	validConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
-
-	// Valid config for Cloud AM, no `grafana_managed_receievers` field.
-	upstreamConfig = `{"template_files": {}, "alertmanager_config": "{\"global\": {\"smtp_from\": \"test@test.com\"}, \"route\": {\"receiver\": \"discord\"}, \"receivers\": [{\"name\": \"discord\", \"discord_configs\": [{\"webhook_url\": \"http://localhost:1234\"}]}]}"}`
-)
+// Valid config for Cloud AM, no `grafana_managed_receievers` field.
+const upstreamConfig = `{"template_files": {}, "alertmanager_config": "{\"global\": {\"smtp_from\": \"test@test.com\"}, \"route\": {\"receiver\": \"discord\"}, \"receivers\": [{\"name\": \"discord\", \"discord_configs\": [{\"webhook_url\": \"http://localhost:1234\"}]}]}"}`
 
 func TestNewAlertmanager(t *testing.T) {
 	tests := []struct {
-		name          string
-		url           string
-		tenantID      string
-		password      string
-		orgID         int64
-		defaultConfig string
-		expErr        string
+		name     string
+		url      string
+		tenantID string
+		password string
+		orgID    int64
+		expErr   string
 	}{
 		{
-			name:          "empty URL",
-			url:           "",
-			tenantID:      "1234",
-			password:      "test",
-			defaultConfig: validConfig,
-			orgID:         1,
-			expErr:        "empty URL for tenant 1234",
+			name:     "empty URL",
+			url:      "",
+			tenantID: "1234",
+			password: "test",
+			orgID:    1,
+			expErr:   "empty URL for tenant 1234",
 		},
 		{
-			name:          "empty default config",
-			url:           "http://localhost:8080",
-			tenantID:      "1234",
-			defaultConfig: "",
-			password:      "test",
-			orgID:         1,
-			expErr:        "unable to parse Alertmanager configuration: unexpected end of JSON input",
-		},
-		{
-			name:          "invalid default config",
-			url:           "http://localhost:8080",
-			tenantID:      "1234",
-			defaultConfig: `{"invalid": true}`,
-			password:      "test",
-			orgID:         1,
-			expErr:        "unable to parse Alertmanager configuration: no route provided in config",
-		},
-		{
-			name:          "valid parameters",
-			url:           "http://localhost:8080",
-			tenantID:      "1234",
-			defaultConfig: validConfig,
-			password:      "test",
-			orgID:         1,
+			name:     "valid parameters",
+			url:      "http://localhost:8080",
+			tenantID: "1234",
+			password: "test",
+			orgID:    1,
 		},
 	}
 
@@ -74,7 +49,6 @@ func TestNewAlertmanager(t *testing.T) {
 				URL:               test.url,
 				TenantID:          test.tenantID,
 				BasicAuthPassword: test.password,
-				DefaultConfig:     test.defaultConfig,
 			}
 			am, err := NewAlertmanager(cfg, test.orgID)
 			if test.expErr != "" {
@@ -85,8 +59,7 @@ func TestNewAlertmanager(t *testing.T) {
 			require.NoError(tt, err)
 			require.Equal(tt, am.tenantID, test.tenantID)
 			require.Equal(tt, am.url, test.url)
-			require.Equal(tt, am.defaultConfig, test.defaultConfig)
-			require.Equal(tt, am.OrgID(), test.orgID)
+			require.Equal(tt, am.orgID, test.orgID)
 			require.NotNil(tt, am.amClient)
 			require.NotNil(tt, am.httpClient)
 		})
@@ -109,7 +82,6 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
-		DefaultConfig:     validConfig,
 	}
 	am, err := NewAlertmanager(cfg, 1)
 	require.NoError(t, err)
@@ -189,10 +161,13 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
-		DefaultConfig:     validConfig,
 	}
 	am, err := NewAlertmanager(cfg, 1)
 	require.NoError(t, err)
+
+	// Wait until the Alertmanager is ready to send alerts.
+	require.NoError(t, am.checkReadiness(context.Background()))
+	require.True(t, am.Ready())
 
 	// We should have no alerts and no groups at first.
 	alerts, err := am.GetAlerts(context.Background(), true, true, true, []string{}, "")
@@ -214,9 +189,11 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have two alerts and one group now.
-	alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
-	require.NoError(t, err)
-	require.Equal(t, 2, len(alerts))
+	require.Eventually(t, func() bool {
+		alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
+		require.NoError(t, err)
+		return len(alerts) == 2
+	}, 16*time.Second, 1*time.Second)
 
 	alertGroups, err = am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
 	require.NoError(t, err)
@@ -245,7 +222,6 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		URL:               amURL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
-		DefaultConfig:     validConfig,
 	}
 
 	am, err := NewAlertmanager(cfg, 1)

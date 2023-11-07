@@ -3,8 +3,7 @@ import { isEmpty } from 'lodash';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Stack } from '@grafana/experimental';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Stack } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
