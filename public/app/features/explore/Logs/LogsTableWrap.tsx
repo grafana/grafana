@@ -320,8 +320,6 @@ export function LogsTableWrap(props: Props) {
       const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
       if (matchingDataFrame) {
         setDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
-      } else {
-        console.warn('uhhhhh');
       }
       props.updatePanelState({ refId: value.value });
     }
