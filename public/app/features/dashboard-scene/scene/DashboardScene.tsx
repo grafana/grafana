@@ -1,8 +1,8 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavModelItem, UrlQueryMap } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, UrlQueryMap } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
@@ -14,21 +14,19 @@ import {
   SceneObjectStateChangedEvent,
   sceneUtils,
 } from '@grafana/scenes';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import {
-  findVizPanelByKey,
-  forceRenderChildren,
-  getClosestVizPanel,
-  getDashboardUrl,
-  getPanelIdForVizPanel,
-} from '../utils/utils';
+import { getDashboardUrl } from '../utils/urlBuilders';
+import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -95,6 +93,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.startTrackingChanges();
     }
 
+    const clearKeyBindings = setupKeyboardShortcuts(this);
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
     // @ts-expect-error
@@ -103,6 +102,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = undefined;
+      clearKeyBindings();
       this.stopTrackingChanges();
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
@@ -157,15 +157,44 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
   };
 
-  public getPageNav(location: H.Location) {
+  public getPageNav(location: H.Location, navIndex: NavIndex) {
+    const { meta } = this.state;
+
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: getDashboardUrl({
         uid: this.state.uid,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null },
+        useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && meta.canEdit),
       }),
     };
+
+    const { folderTitle, folderUid } = meta;
+
+    if (folderUid) {
+      if (newBrowseDashboardsEnabled()) {
+        const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+        // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+        // don't show the "page not found" breadcrumb
+        if (folderNavModel.id !== 'not-found') {
+          pageNav = {
+            ...pageNav,
+            parentItem: folderNavModel,
+          };
+        }
+      } else {
+        if (folderTitle) {
+          pageNav = {
+            ...pageNav,
+            parentItem: {
+              text: folderTitle,
+              url: `/dashboards/f/${meta.folderUid}`,
+            },
+          };
+        }
+      }
+    }
 
     if (this.state.viewPanelKey) {
       pageNav = {
@@ -218,6 +247,25 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ overlay: undefined });
   }
 
+  public async onStarDashboard() {
+    const { meta, uid } = this.state;
+    if (!uid) {
+      return;
+    }
+    try {
+      const result = await getDashboardSrv().starDashboard(uid, Boolean(meta.isStarred));
+
+      this.setState({
+        meta: {
+          ...meta,
+          isStarred: result,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to star dashboard', err);
+    }
+  }
+
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
    */
@@ -232,6 +280,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   canEditDashboard() {
-    return Boolean(this.state.meta.canEdit || this.state.meta.canMakeEditable);
+    const { meta } = this.state;
+
+    return Boolean(meta.canEdit || meta.canMakeEditable);
   }
 }

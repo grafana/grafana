@@ -3,6 +3,7 @@ package permissions
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -40,7 +41,7 @@ type PermissionsFilter interface {
 	Where() (string, []any)
 
 	buildClauses()
-	nestedFoldersSelectors(permSelector string, permSelectorArgs []any, leftTableCol string, rightTableCol string) (string, []any)
+	nestedFoldersSelectors(permSelector string, permSelectorArgs []any, leftTableCol string, rightTableCol string, orgID int64) (string, []any)
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
@@ -125,7 +126,8 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 		userID, _ = identity.IntIdentifier(namespaceID, identifier)
 	}
 
-	filter, params := accesscontrol.UserRolesFilter(f.user.GetOrgID(), userID, f.user.GetTeams(), accesscontrol.GetOrgRoles(f.user))
+	orgID := f.user.GetOrgID()
+	filter, params := accesscontrol.UserRolesFilter(orgID, userID, f.user.GetTeams(), accesscontrol.GetOrgRoles(f.user))
 	rolesFilter := " AND role_id IN(SELECT id FROM role " + filter + ") "
 	var args []any
 	builder := strings.Builder{}
@@ -207,9 +209,10 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 						builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
 						recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
 						f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
-						builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)", recQueryName))
+						builder.WriteString(fmt.Sprintf("WHERE d.org_id = ? AND d.uid IN (SELECT uid FROM %s)", recQueryName))
+						args = append(args, orgID)
 					default:
-						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard.folder_id", "d.id")
+						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard.folder_id", "d.id", orgID)
 						builder.WriteRune('(')
 						builder.WriteString(nestedFoldersSelectors)
 						args = append(args, nestedFoldersArgs...)
@@ -221,7 +224,8 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			default:
 				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
 				if len(permSelectorArgs) > 0 {
-					builder.WriteString("WHERE d.uid IN ")
+					builder.WriteString("WHERE d.org_id = ? AND d.uid IN ")
+					args = append(args, orgID)
 					builder.WriteString(permSelector.String())
 					args = append(args, permSelectorArgs...)
 				} else {
@@ -229,6 +233,11 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				}
 			}
 			builder.WriteString(") AND NOT dashboard.is_folder)")
+
+			// Include all the dashboards under the root if the user has the required permissions on the root (used to be the General folder)
+			if hasAccessToRoot(toCheck, f.user) {
+				builder.WriteString(" OR (dashboard.folder_id = 0 AND NOT dashboard.is_folder)")
+			}
 		} else {
 			builder.WriteString("NOT dashboard.is_folder")
 		}
@@ -281,7 +290,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 						builder.WriteString("(dashboard.uid IN ")
 						builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
 					default:
-						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard.uid", "d.uid")
+						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard.uid", "d.uid", orgID)
 						builder.WriteRune('(')
 						builder.WriteString(nestedFoldersSelectors)
 						builder.WriteRune(')')
@@ -366,7 +375,7 @@ func actionsToCheck(actions []string, permissions map[string][]string, wildcards
 	return toCheck
 }
 
-func (f *accessControlDashboardPermissionFilter) nestedFoldersSelectors(permSelector string, permSelectorArgs []any, leftTableCol string, rightTableCol string) (string, []any) {
+func (f *accessControlDashboardPermissionFilter) nestedFoldersSelectors(permSelector string, permSelectorArgs []any, leftTableCol string, rightTableCol string, orgID int64) (string, []any) {
 	wheres := make([]string, 0, folder.MaxNestedFolderDepth+1)
 	args := make([]any, 0, len(permSelectorArgs)*(folder.MaxNestedFolderDepth+1))
 
@@ -381,7 +390,8 @@ func (f *accessControlDashboardPermissionFilter) nestedFoldersSelectors(permSele
 		s := fmt.Sprintf(tmpl, t, prev, onCol, t, prev, t)
 		joins = append(joins, s)
 
-		wheres = append(wheres, fmt.Sprintf("(%s IN (SELECT %s FROM dashboard d %s WHERE %s.uid IN %s)", leftTableCol, rightTableCol, strings.Join(joins, " "), t, permSelector))
+		wheres = append(wheres, fmt.Sprintf("(%s IN (SELECT %s FROM dashboard d %s WHERE %s.org_id = ? AND %s.uid IN %s)", leftTableCol, rightTableCol, strings.Join(joins, " "), t, t, permSelector))
+		args = append(args, orgID)
 		args = append(args, permSelectorArgs...)
 
 		prev = t
@@ -422,4 +432,15 @@ func getAllowedUIDs(actions []string, user identity.Requester, scopePrefix strin
 		}
 	}
 	return args
+}
+
+// Checks if the user has the required permissions on the root (used to be the General folder)
+func hasAccessToRoot(actionsToCheck []any, user identity.Requester) bool {
+	generalFolderScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)
+	for _, action := range actionsToCheck {
+		if !slices.Contains(user.GetPermissions()[action.(string)], generalFolderScope) {
+			return false
+		}
+	}
+	return true
 }

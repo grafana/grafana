@@ -65,7 +65,7 @@ The button element lets you add a basic button to the canvas. Button elements su
 A button click will only trigger an API call when [inline editing](#inline-editing) is disabled.
 {{% /admonition %}}
 
-{{< video-embed src="/media/docs/grafana/screen-recording-10-2-canvas-button-element-demo.mp4" max-width="750px" caption="Canvas button element demo" >}}
+{{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
 ## Connections
 

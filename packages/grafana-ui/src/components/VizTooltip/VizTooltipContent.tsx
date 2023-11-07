@@ -39,7 +39,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     gap: 4,
     borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: `${theme.spacing(1)} 0`,
+    padding: theme.spacing(1),
   }),
   customContentPadding: css({
     padding: `${theme.spacing(1)} 0`,

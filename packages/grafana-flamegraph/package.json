@@ -70,7 +70,7 @@
     "@types/react": "18.2.15",
     "@types/react-virtualized-auto-sizer": "1.0.1",
     "@types/tinycolor2": "1.4.3",
-    "babel-jest": "29.3.1",
+    "babel-jest": "29.7.0",
     "jest": "^29.6.4",
     "jest-canvas-mock": "2.5.2",
     "rollup": "2.79.1",

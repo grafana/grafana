@@ -226,7 +226,7 @@ func (e *cloudWatchExecutor) checkHealthMetrics(ctx context.Context, pluginCtx b
 		return err
 	}
 	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), e.cfg)
-	_, err = metricClient.ListMetricsWithPageLimit(params)
+	_, err = metricClient.ListMetricsWithPageLimit(ctx, params)
 	return err
 }
 
@@ -236,7 +236,7 @@ func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx back
 		return err
 	}
 	logsClient := NewLogsAPI(session)
-	_, err = logsClient.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(1)})
+	_, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(1)})
 	return err
 }
 
