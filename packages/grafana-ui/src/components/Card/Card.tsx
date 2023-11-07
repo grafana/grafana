@@ -85,7 +85,12 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   const context = useContext(CardContext);
   const styles = useStyles2(getHeadingStyles);
 
-  const { href, onClick, isSelected, disabled } = context ?? { href: undefined, onClick: undefined, isSelected: undefined, disabled: false };
+  const { href, onClick, isSelected, disabled } = context ?? {
+    href: undefined,
+    onClick: undefined,
+    isSelected: undefined,
+    disabled: false,
+  };
 
   return (
     <h2 className={cx(styles.heading, className)}>
@@ -100,7 +105,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
-      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly = {disabled} checked={isSelected} />}
+      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly={disabled} checked={isSelected} />}
     </h2>
   );
 };
