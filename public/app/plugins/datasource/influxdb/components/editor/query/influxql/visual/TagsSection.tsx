@@ -10,8 +10,8 @@ import { toSelectableValue } from '../utils/toSelectableValue';
 import { AddButton } from './AddButton';
 import { Seg } from './Seg';
 
-type KnownOperator = '=' | '!=' | '<>' | '<' | '>' | '=~' | '!~';
-const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<', '>', '=~', '!~'];
+type KnownOperator = '=' | '!=' | '<>' | '<=' | '<' | '>=' | '>' | '=~' | '!~';
+const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<=', '<', '>=', '>', '=~', '!~', '>='];
 
 type KnownCondition = 'AND' | 'OR';
 const knownConditions: KnownCondition[] = ['AND', 'OR'];

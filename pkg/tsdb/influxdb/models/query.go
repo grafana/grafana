@@ -72,7 +72,7 @@ func (query *Query) renderTags() []string {
 		switch tag.Operator {
 		case "=~", "!~":
 			textValue = tag.Value
-		case "<", ">", "<>":
+		case "<", ">", "<>", ">=", "<=":
 			textValue = tag.Value
 		default:
 			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
