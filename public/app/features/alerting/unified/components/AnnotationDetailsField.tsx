@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { Annotation, annotationLabels } from '../utils/constants';
 
 import { DetailsField } from './DetailsField';
+import { Link } from './ExternalLink';
 import { Tokenize } from './Tokenize';
 import { Well } from './Well';
 
@@ -44,9 +45,9 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
 
   if (valueLink) {
     return (
-      <a href={textUtil.sanitizeUrl(valueLink)} className={styles.link}>
+      <Link href={valueLink} external>
         {value}
-      </a>
+      </Link>
     );
   }
 
@@ -56,9 +57,9 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
 
   if (needsExternalLink) {
     return (
-      <a href={textUtil.sanitizeUrl(value)} target="__blank" className={styles.link}>
+      <Link href={value} external>
         {value}
-      </a>
+      </Link>
     );
   }
 
@@ -68,9 +69,5 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
 export const getStyles = (theme: GrafanaTheme2) => ({
   well: css`
     word-break: break-word;
-  `,
-  link: css`
-    word-break: break-all;
-    color: ${theme.colors.primary.text};
   `,
 });

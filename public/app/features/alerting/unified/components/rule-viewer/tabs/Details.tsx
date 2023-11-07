@@ -8,7 +8,9 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotations } from 'app/types/unified-alerting-dto';
 
 import { isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
+import { Link } from '../../ExternalLink';
 import { MetaText } from '../../MetaText';
+import { Tokenize } from '../../Tokenize';
 
 interface DetailsProps {
   rule: CombinedRule;
@@ -63,7 +65,7 @@ const Details = ({ rule }: DetailsProps) => {
               Rule Identifier
               <Stack direction="row" alignItems="center" gap={0.5}>
                 <Text color="primary">
-                  {rule.rulerRule.grafana_alert.uid}{' '}
+                  {rule.rulerRule.grafana_alert.uid}
                   <ClipboardButton fill="text" variant="secondary" icon="copy" size="sm" getText={copyRuleUID} />
                 </Text>
               </Stack>
@@ -122,7 +124,7 @@ const Details = ({ rule }: DetailsProps) => {
               {Object.entries(annotations).map(([name, value]) => (
                 <MetaText direction="column" key={name}>
                   {name}
-                  <Text color="primary">{value}</Text>
+                  <AnnotationValue value={value} />
                 </MetaText>
               ))}
             </div>
@@ -132,6 +134,25 @@ const Details = ({ rule }: DetailsProps) => {
     </Stack>
   );
 };
+
+interface AnnotationValueProps {
+  value: string;
+}
+
+function AnnotationValue({ value }: AnnotationValueProps) {
+  const needsExternalLink = value && value.startsWith('http');
+  const tokenizeValue = <Tokenize input={value} delimiter={['{{', '}}']} />;
+
+  if (needsExternalLink) {
+    return (
+      <Link href={value} size="sm" external>
+        {value}
+      </Link>
+    );
+  }
+
+  return <Text color="primary">{tokenizeValue}</Text>;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   metadataWrapper: css({

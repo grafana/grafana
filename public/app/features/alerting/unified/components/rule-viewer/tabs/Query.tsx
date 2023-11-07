@@ -74,7 +74,7 @@ const QueryResults = ({ rule }: Props) => {
   return (
     <>
       {loadingData ? (
-        <LoadingPlaceholder text={'Loading...'} />
+        'Loading...'
       ) : (
         <>
           {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (

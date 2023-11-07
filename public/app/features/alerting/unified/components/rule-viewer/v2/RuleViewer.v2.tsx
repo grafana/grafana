@@ -289,7 +289,7 @@ const Metadata = ({ labels, annotations, interval }: MetadataProps) => {
 
   return (
     <>
-      <Stack direction="row">
+      <Stack direction="row" gap={4}>
         {runbookUrl && (
           <MetaText direction="column">
             Runbook
