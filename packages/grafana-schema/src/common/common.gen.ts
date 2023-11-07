@@ -645,7 +645,7 @@ export enum BarGaugeNamePlacement {
 }
 
 /**
- * Allows for the bar gauge size to be setted explicitly
+ * Allows for the bar gauge size to be set explicitly
  */
 export enum BarGaugeSizing {
   Auto = 'auto',
