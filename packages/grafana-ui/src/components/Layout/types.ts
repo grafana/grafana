@@ -47,5 +47,5 @@ export type FlexProps = {
   /** Sets the property `flex-basis` */
   basis?: ResponsiveProp<FlexBasis>;
   /** Sets the property `flex` */
-  flex?: Flex;
+  flex?: ResponsiveProp<Flex>;
 };
