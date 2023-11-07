@@ -276,7 +276,11 @@ func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQu
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
 	}
-	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders)
+	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: cmd.OrgID, SignedInUser: cmd.SignedInUser})
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch folders from dashboard store: %w", err)
+	}
+	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
 	return availableNonRootFolders, nil
 }
 
@@ -312,10 +316,11 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 	return nonRootFolders, nil
 }
 
-func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder) []*folder.Folder {
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.Folder) []*folder.Folder {
+	allFolders := append(folders, rootFolders...)
 	foldersDedup := make([]*folder.Folder, 0)
 	for _, f := range folders {
-		isSubfolder := slices.ContainsFunc(folders, func(folder *folder.Folder) bool {
+		isSubfolder := slices.ContainsFunc(allFolders, func(folder *folder.Folder) bool {
 			return f.ParentUID == folder.UID
 		})
 
@@ -327,7 +332,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 			}
 
 			for _, parent := range parents {
-				contains := slices.ContainsFunc(folders, func(f *folder.Folder) bool {
+				contains := slices.ContainsFunc(allFolders, func(f *folder.Folder) bool {
 					return f.UID == parent.UID
 				})
 				if contains {
