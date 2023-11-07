@@ -3115,7 +3115,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.7.4, @grafana/experimental@npm:^1.7.4":
+"@grafana/experimental@npm:1.7.4":
   version: 1.7.4
   resolution: "@grafana/experimental@npm:1.7.4"
   dependencies:
@@ -3363,7 +3363,6 @@ __metadata:
     "@emotion/react": "npm:11.11.1"
     "@grafana/data": "npm:10.3.0-pre"
     "@grafana/e2e-selectors": "npm:10.3.0-pre"
-    "@grafana/experimental": "npm:1.7.4"
     "@grafana/faro-web-sdk": "npm:1.2.1"
     "@grafana/schema": "npm:10.3.0-pre"
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
@@ -17337,7 +17336,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:6.0.1"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/experimental": "npm:^1.7.4"
+    "@grafana/experimental": "npm:1.7.4"
     "@grafana/faro-core": "npm:1.2.1"
     "@grafana/faro-web-sdk": "npm:1.2.1"
     "@grafana/flamegraph": "workspace:*"
