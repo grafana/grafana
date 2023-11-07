@@ -127,16 +127,16 @@ describe('QueryGroup', () => {
   describe('Angular deprecation', () => {
     const deprecationText = /legacy platform based on AngularJS/i;
 
-    const oldAngularDetected = mockDS.angularDetected;
+    const oldAngularDetected = mockDS.meta.angularDetected;
     const oldDatasources = config.datasources;
 
     afterEach(() => {
-      mockDS.angularDetected = oldAngularDetected;
+      mockDS.meta.angularDetected = oldAngularDetected;
       config.datasources = oldDatasources;
     });
 
     it('Should render angular deprecation notice for angular plugins', async () => {
-      mockDS.angularDetected = true;
+      mockDS.meta.angularDetected = true;
       config.datasources[mockDS.name] = mockDS;
       renderScenario({});
       await waitFor(async () => {
@@ -145,7 +145,7 @@ describe('QueryGroup', () => {
     });
 
     it('Should not render angular deprecation notice for non-angular plugins', async () => {
-      mockDS.angularDetected = false;
+      mockDS.meta.angularDetected = false;
       config.datasources[mockDS.name] = mockDS;
       renderScenario({});
       await waitFor(async () => {
