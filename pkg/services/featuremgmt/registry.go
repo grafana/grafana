@@ -498,13 +498,6 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
-			Name:         "dataSourcePageHeader",
-			Description:  "Apply new pageHeader UI in data source edit page",
-			FrontendOnly: true,
-			Stage:        FeatureStagePublicPreview,
-			Owner:        enterpriseDatasourcesSquad,
-		},
-		{
 			Name:         "extraThemes",
 			Description:  "Enables extra themes",
 			FrontendOnly: true,

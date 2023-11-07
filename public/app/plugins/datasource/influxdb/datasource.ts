@@ -138,12 +138,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return merge(...streams);
     }
 
-    if (this.isMigrationToggleOnAndIsAccessProxy()) {
-      return super.query(filteredRequest);
+    if (this.version === InfluxVersion.InfluxQL && !this.isMigrationToggleOnAndIsAccessProxy()) {
+      // Fallback to classic query support
+      return this.classicQuery(request);
     }
 
-    // Fallback to classic query support
-    return this.classicQuery(request);
+    return super.query(filteredRequest);
   }
 
   getQueryDisplayText(query: InfluxQuery) {
