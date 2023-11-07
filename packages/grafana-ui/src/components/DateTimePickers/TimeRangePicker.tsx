@@ -83,9 +83,20 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     setOpen(false);
   };
 
-  const ref = createRef<HTMLDivElement>();
-  const { overlayProps, underlayProps } = useOverlay({ onClose, isDismissable: true, isOpen }, ref);
-  const { dialogProps } = useDialog({}, ref);
+  const overlayRef = createRef<HTMLElement>();
+  const buttonRef = createRef<HTMLElement>();
+  const { overlayProps, underlayProps } = useOverlay(
+    {
+      onClose,
+      isDismissable: true,
+      isOpen,
+      shouldCloseOnInteractOutside: (element) => {
+        return !buttonRef.current?.contains(element);
+      },
+    },
+    overlayRef
+  );
+  const { dialogProps } = useDialog({}, overlayRef);
 
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -106,49 +117,49 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           narrow
         />
       )}
-      <div ref={ref} {...overlayProps}>
-        <Tooltip content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />} placement="bottom" interactive>
-          <ToolbarButton
-            data-testid={selectors.components.TimePicker.openButton}
-            aria-label={t(
-              'time-picker.range-picker.current-time-selected',
-              'Time range selected: {{currentTimeRange}}',
-              {
-                currentTimeRange,
-              }
-            )}
-            aria-controls="TimePickerContent"
-            onClick={onToolbarButtonSwitch}
-            icon="clock-nine"
-            isOpen={isOpen}
-            variant={variant}
-          >
-            <TimePickerButtonLabel {...props} />
-          </ToolbarButton>
-        </Tooltip>
-        {isOpen && (
-          <div data-testid={selectors.components.TimePicker.overlayContent}>
-            <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
-            <FocusScope contain autoFocus>
-              <section className={styles.content} {...dialogProps}>
-                <TimePickerContent
-                  timeZone={timeZone}
-                  fiscalYearStartMonth={fiscalYearStartMonth}
-                  value={value}
-                  onChange={onChange}
-                  quickOptions={quickOptions}
-                  history={history}
-                  showHistory
-                  widthOverride={widthOverride}
-                  onChangeTimeZone={onChangeTimeZone}
-                  onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
-                  hideQuickRanges={hideQuickRanges}
-                />
-              </section>
-            </FocusScope>
-          </div>
-        )}
-      </div>
+
+      <Tooltip
+        ref={buttonRef}
+        content={<TimePickerTooltip timeRange={value} timeZone={timeZone} />}
+        placement="bottom"
+        interactive
+      >
+        <ToolbarButton
+          data-testid={selectors.components.TimePicker.openButton}
+          aria-label={t('time-picker.range-picker.current-time-selected', 'Time range selected: {{currentTimeRange}}', {
+            currentTimeRange,
+          })}
+          aria-controls="TimePickerContent"
+          onClick={onToolbarButtonSwitch}
+          icon="clock-nine"
+          isOpen={isOpen}
+          variant={variant}
+        >
+          <TimePickerButtonLabel {...props} />
+        </ToolbarButton>
+      </Tooltip>
+      {isOpen && (
+        <div data-testid={selectors.components.TimePicker.overlayContent}>
+          <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
+          <FocusScope contain autoFocus>
+            <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
+              <TimePickerContent
+                timeZone={timeZone}
+                fiscalYearStartMonth={fiscalYearStartMonth}
+                value={value}
+                onChange={onChange}
+                quickOptions={quickOptions}
+                history={history}
+                showHistory
+                widthOverride={widthOverride}
+                onChangeTimeZone={onChangeTimeZone}
+                onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
+                hideQuickRanges={hideQuickRanges}
+              />
+            </section>
+          </FocusScope>
+        </div>
+      )}
 
       {timeSyncButton}
 

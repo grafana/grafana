@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { dateTime, TimeRange } from '@grafana/data';
@@ -32,7 +33,7 @@ describe('TimePicker', () => {
 
     expect(container.queryByLabelText(/Time range selected/i)).toBeInTheDocument();
   });
-  it('switches overlay content visibility when toolbar button is clicked twice', () => {
+  it('switches overlay content visibility when toolbar button is clicked twice', async () => {
     render(
       <TimeRangePicker
         onChangeTimeZone={() => {}}
@@ -48,9 +49,9 @@ describe('TimePicker', () => {
     const overlayContent = screen.queryByTestId(selectors.overlayContent);
 
     expect(overlayContent).not.toBeInTheDocument();
-    fireEvent.click(openButton);
+    await userEvent.click(openButton);
     expect(screen.getByTestId(selectors.overlayContent)).toBeInTheDocument();
-    fireEvent.click(openButton);
+    await userEvent.click(openButton);
     expect(overlayContent).not.toBeInTheDocument();
   });
 });
