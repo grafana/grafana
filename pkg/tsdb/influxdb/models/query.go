@@ -74,6 +74,12 @@ func (query *Query) renderTags() []string {
 			textValue = tag.Value
 		case "<", ">", "<>", ">=", "<=":
 			textValue = tag.Value
+		case "Is":
+			tag.Operator = "="
+			textValue = tag.Value
+		case "is Not":
+			tag.Operator = "!="
+			textValue = tag.Value
 		default:
 			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 		}
