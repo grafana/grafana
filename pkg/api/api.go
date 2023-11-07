@@ -282,11 +282,6 @@ func (hs *HTTPServer) registerRoutes() {
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
 		}
 
-		// Allow HTTP access to the entity storage feature (dev only for now)
-		if hs.Features.IsEnabled(featuremgmt.FlagEntityStore) {
-			apiRoute.Group("/entity", hs.httpEntityStore.RegisterHTTPRoutes)
-		}
-
 		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}

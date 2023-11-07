@@ -14,6 +14,7 @@ import { createOrderFieldsComparer } from '@grafana/data/src/transformations/tra
 import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
 import { Input, IconButton, Icon, FieldValidationMessage, useStyles2 } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
@@ -206,8 +207,9 @@ export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<Organi
   id: DataTransformerID.organize,
   editor: OrganizeFieldsTransformerEditor,
   transformation: standardTransformers.organizeFieldsTransformer,
-  name: 'Organize fields',
+  name: standardTransformers.organizeFieldsTransformer.name,
   description:
     "Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.",
   categories: new Set([TransformerCategory.ReorderAndRename]),
+  help: getTransformationContent(DataTransformerID.organize).helperDocs,
 };

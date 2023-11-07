@@ -30,7 +30,7 @@ export const MegaMenu = React.memo(
     // Remove profile + help from tree
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
-      .map((item) => enrichWithInteractionTracking(item, true));
+      .map((item) => enrichWithInteractionTracking(item, state.megaMenu));
 
     const activeItem = getActiveItem(navItems, location.pathname);
 
@@ -60,14 +60,10 @@ export const MegaMenu = React.memo(
                     onClick={state.megaMenu === 'open' ? onClose : undefined}
                     activeItem={activeItem}
                   />
-                  {index === 0 && (
+                  {index === 0 && Boolean(state.megaMenu === 'open') && (
                     <IconButton
                       className={styles.dockMenuButton}
-                      tooltip={
-                        state.megaMenu === 'docked'
-                          ? t('navigation.megamenu.undock', 'Undock menu')
-                          : t('navigation.megamenu.dock', 'Dock menu')
-                      }
+                      tooltip={t('navigation.megamenu.dock', 'Dock menu')}
                       name="web-section-alt"
                       onClick={handleDockedMenu}
                       variant="secondary"
