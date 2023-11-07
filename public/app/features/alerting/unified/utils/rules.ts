@@ -161,7 +161,8 @@ const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | A
   [AlertState.Paused]: 'warning',
   [AlertState.Alerting]: 'bad',
   [AlertState.OK]: 'good',
-  [AlertState.Pending]: 'warning',
+  // AlertState.Pending is not included because the 'pending' value is already covered by `PromAlertingRuleState.Pending`
+  // [AlertState.Pending]: 'warning',
   [AlertState.Unknown]: 'info',
 };
 

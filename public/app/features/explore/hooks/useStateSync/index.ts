@@ -102,10 +102,11 @@ export function useStateSync(params: ExploreQueryParams) {
       // if navigating the history causes one of the time range to not being equal to all the other ones,
       // we set syncedTimes to false to avoid inconsistent UI state.
       // Ideally `syncedTimes` should be saved in the URL.
-      const paneTimesUnequal = Object.values(urlState.panes).some(
-        ({ range }, _, [{ range: firstRange }]) => !isEqual(range, firstRange)
-      );
-      dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
+      const paneArray = Object.values(urlState.panes);
+      if (paneArray.length > 1) {
+        const paneTimesUnequal = paneArray.some(({ range }, _, [{ range: firstRange }]) => !isEqual(range, firstRange));
+        dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
+      }
 
       Object.entries(urlState.panes).forEach(([exploreId, urlPane], i) => {
         const { datasource, queries, range, panelsState } = urlPane;
@@ -241,10 +242,12 @@ export function useStateSync(params: ExploreQueryParams) {
           }
         );
 
-        const paneTimesUnequal = initializedPanes.some(
-          ({ state }, _, [{ state: firstState }]) => !isEqual(state.range.raw, firstState.range.raw)
-        );
-        dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
+        if (initializedPanes.length > 1) {
+          const paneTimesUnequal = initializedPanes.some(
+            ({ state }, _, [{ state: firstState }]) => !isEqual(state.range.raw, firstState.range.raw)
+          );
+          dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
+        }
 
         initState.current = 'done';
         // we need to use partial here beacuse replace doesn't encode the query params.
