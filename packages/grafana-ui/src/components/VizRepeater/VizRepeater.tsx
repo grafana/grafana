@@ -4,8 +4,6 @@ import React, { PureComponent, CSSProperties } from 'react';
 import { VizOrientation } from '@grafana/data';
 
 import { calculateGridDimensions } from '../../utils/squares';
-import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip';
 
 interface Props<V, D> {
   /**
@@ -172,20 +170,6 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
       overflow: `${minVizWidth ? 'auto' : 'hidden'} ${minVizHeight ? 'auto' : 'hidden'}`,
     };
 
-    const overflowStyle: React.CSSProperties = {
-      position: 'absolute',
-      // required for tooltip interaction
-      zIndex: 1,
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-    };
-
-    const overflowText: React.CSSProperties = {
-      marginLeft: '4px',
-      fontSize: '12px',
-    };
-
     let vizHeight = height;
     let vizWidth = width;
 
@@ -213,44 +197,23 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
 
-    // calculate if there is overflow
-    const numberOfGauges = values.length;
-
-    const remainderWidth = width - numberOfGauges * minVizWidth!;
-    const isHorizontalOverflow = orientation === VizOrientation.Horizontal && remainderWidth < 0;
-
-    const remainderHeight = height - numberOfGauges * minVizHeight!;
-    const isVerticalOverflow = orientation === VizOrientation.Vertical && remainderHeight < 0;
-
-    const isOverflow = isHorizontalOverflow || isVerticalOverflow;
-
     return (
-      <>
-        {isOverflow && (
-          <Tooltip content="Some content may be hidden in overflow and requires scrolling">
-            <div style={overflowStyle}>
-              <Icon name="info-circle" size="sm" />
-              <span style={overflowText}>Overflow</span>
+      <div style={repeaterStyle}>
+        {values.map((value, index) => {
+          return (
+            <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
+              {renderValue({
+                value,
+                width: vizWidth,
+                height: vizHeight,
+                alignmentFactors,
+                orientation: resolvedOrientation,
+                count: values.length,
+              })}
             </div>
-          </Tooltip>
-        )}
-        <div style={repeaterStyle}>
-          {values.map((value, index) => {
-            return (
-              <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
-                {renderValue({
-                  value,
-                  width: vizWidth,
-                  height: vizHeight,
-                  alignmentFactors,
-                  orientation: resolvedOrientation,
-                  count: values.length,
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </>
+          );
+        })}
+      </div>
     );
   }
 }
