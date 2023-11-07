@@ -343,5 +343,11 @@ func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) 
 	}); err != nil {
 		return nil, err
 	}
+
+	// Add URLs
+	for _, f := range folders {
+		f = f.WithURL()
+	}
+
 	return folders, nil
 }
