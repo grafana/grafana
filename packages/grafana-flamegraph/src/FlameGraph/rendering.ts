@@ -143,14 +143,18 @@ function useRenderFunc(
           const groupStripWidth = 6;
 
           if (width >= LABEL_THRESHOLD) {
-            renderLabel(ctx, data, label, item, width, groupStripX + 4, y, textAlign);
+            renderLabel(ctx, data, label, item, width, textAlign === 'left' ? groupStripX + 4 : x, y, textAlign);
           }
+
+          // This is to mask the label in case we align it right to left.
+          ctx.beginPath();
+          ctx.rect(x, y, groupStripX - x + groupStripWidth + 6, height);
+          ctx.fill();
 
           // For item in a group that can be collapsed, we draw a small strip to mark them. On the items that are at the
           // start or and end of a group we draw just half the strip so 2 groups next to each other are separated
           // visually.
           ctx.beginPath();
-
           if (collapsedItemConfig.collapsed) {
             ctx.rect(groupStripX, y + height / 4, groupStripWidth, height / 2);
           } else {
