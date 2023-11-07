@@ -90,7 +90,7 @@ describe('FlameGraphDataContainer', () => {
     });
   });
 
-  it('creates empty collapse if no items are similar', () => {
+  it('creates empty collapse map if no items are similar', () => {
     const container = textToDataContainer(`
       [0//////////////]
       [1][3//][6///]
