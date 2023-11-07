@@ -54,7 +54,7 @@ export const TransformationsEditor = (props: Props) => {
               </div>
               {fields.length === 0 && (
                 <div>
-                  <Trans i18nKey="correlations.transform.no-tranform">No transformations defined.</Trans>
+                  <Trans i18nKey="correlations.transform.no-transform">No transformations defined.</Trans>
                 </div>
               )}
               {fields.length > 0 && (
