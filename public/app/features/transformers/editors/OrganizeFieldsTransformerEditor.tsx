@@ -6,13 +6,13 @@ import {
   DataTransformerID,
   GrafanaTheme2,
   standardTransformers,
-  TransformerCategory,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
 import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
-import { FieldValidationMessage, Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
+import { Input, IconButton, Icon, FieldValidationMessage, useStyles2 } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
@@ -189,7 +189,6 @@ const getFieldNameStyles = (theme: GrafanaTheme2) => ({
   `,
   draggable: css`
     opacity: 0.4;
-
     &:hover {
       color: ${theme.colors.text.maxContrast};
     }
