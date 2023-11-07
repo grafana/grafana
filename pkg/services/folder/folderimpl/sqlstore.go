@@ -345,8 +345,8 @@ func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) 
 	}
 
 	// Add URLs
-	for _, f := range folders {
-		f = f.WithURL()
+	for i, f := range folders {
+		folders[i] = f.WithURL()
 	}
 
 	return folders, nil

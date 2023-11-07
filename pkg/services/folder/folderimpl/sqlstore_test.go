@@ -758,9 +758,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 			assert.NotEmpty(t, rf.Created)
 			assert.NotEmpty(t, rf.Updated)
 			assert.NotEmpty(t, rf.URL)
-
 		}
-
 	})
 }
 
