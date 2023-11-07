@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -25,33 +24,51 @@ import (
 )
 
 type Key struct {
-	Group     string
-	Kind      string
-	Namespace string
-	Name      string
+	Group       string
+	Resource    string
+	Namespace   string
+	Name        string
+	Subresource string
 }
 
 func ParseKey(key string) (*Key, error) {
-	// /<group>/<kind plural lowercase>/<namespace>/<name>
-	parts := strings.Split(key, "/")
-	if len(parts) != 5 {
-		return nil, fmt.Errorf("invalid key (expecting 4 parts) " + key)
+	// /<group>/<resource>/<namespace>/<name>(/<subresource>)
+	parts := strings.SplitN(key, "/", 6)
+	if len(parts) != 5 && len(parts) != 6 {
+		return nil, fmt.Errorf("invalid key (expecting 4 or 5 parts) " + key)
 	}
 
-	return &Key{
+	if parts[0] != "" {
+		return nil, fmt.Errorf("invalid key (expecting leading slash) " + key)
+	}
+
+	k := &Key{
 		Group:     parts[1],
-		Kind:      parts[2],
+		Resource:  parts[2],
 		Namespace: parts[3],
 		Name:      parts[4],
-	}, nil
+	}
+
+	if len(parts) == 6 {
+		k.Subresource = parts[5]
+	}
+
+	return k, nil
 }
 
 func (k *Key) String() string {
-	return fmt.Sprintf("/%s/%s/%s/%s", k.Group, k.Kind, k.Namespace, k.Name)
+	if len(k.Subresource) > 0 {
+		return fmt.Sprintf("/%s/%s/%s/%s/%s", k.Group, k.Resource, k.Namespace, k.Name, k.Subresource)
+	}
+	return fmt.Sprintf("/%s/%s/%s/%s", k.Group, k.Resource, k.Namespace, k.Name)
 }
 
 func (k *Key) IsEqual(other *Key) bool {
-	return k.Group == other.Group && k.Kind == other.Kind && k.Namespace == other.Namespace && k.Name == other.Name
+	return k.Group == other.Group &&
+		k.Resource == other.Resource &&
+		k.Namespace == other.Namespace &&
+		k.Name == other.Name &&
+		k.Subresource == other.Subresource
 }
 
 func (k *Key) TenantID() (int64, error) {
@@ -69,27 +86,32 @@ func (k *Key) TenantID() (int64, error) {
 	return intVar, nil
 }
 
-func (k *Key) ToGRN(kindName string) (*grn.GRN, error) {
+func (k *Key) ToGRN() (*grn.GRN, error) {
 	tid, err := k.TenantID()
 	if err != nil {
 		return nil, err
 	}
 
+	fullResource := k.Resource
+	if k.Subresource != "" {
+		fullResource = fmt.Sprintf("%s/%s", k.Resource, k.Subresource)
+	}
+
 	return &grn.GRN{
 		ResourceGroup:      k.Group,
-		ResourceKind:       kindName,
+		ResourceKind:       fullResource,
 		ResourceIdentifier: k.Name,
 		TenantID:           tid,
 	}, nil
 }
 
 // Convert an etcd key to GRN style
-func keyToGRN(key string, kindName string) (*grn.GRN, error) {
+func keyToGRN(key string) (*grn.GRN, error) {
 	k, err := ParseKey(key)
 	if err != nil {
 		return nil, err
 	}
-	return k.ToGRN(kindName)
+	return k.ToGRN()
 }
 
 // this is terrible... but just making it work!!!!
@@ -118,11 +140,13 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 	} else {
 		metaAccessor.SetNamespace("default") // org 1
 	}
-	res.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   rsp.GRN.ResourceGroup,
-		Version: rsp.GroupVersion,
-		Kind:    rsp.GRN.ResourceKind,
-	})
+	/*
+		res.GetObjectKind().SetGroupVersionKind(schema.GroupVersionKind{
+			Group:   rsp.GRN.ResourceGroup,
+			Version: rsp.GroupVersion,
+			Kind:    rsp.GRN.ResourceKind,
+		})
+	*/
 	metaAccessor.SetUID(types.UID(rsp.Guid))
 	metaAccessor.SetResourceVersion(rsp.Version)
 	metaAccessor.SetCreationTimestamp(metav1.Unix(rsp.CreatedAt/1000, rsp.CreatedAt%1000*1000000))
@@ -185,7 +209,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 	return nil
 }
 
-func resourceToEntity(key string, res runtime.Object) (*entityStore.Entity, error) {
+func resourceToEntity(key string, res runtime.Object, requestInfo *request.RequestInfo) (*entityStore.Entity, error) {
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
 		return nil, err
@@ -193,7 +217,7 @@ func resourceToEntity(key string, res runtime.Object) (*entityStore.Entity, erro
 
 	fmt.Printf("RESOURCE: %+v\n", res)
 
-	g, err := keyToGRN(key, res.GetObjectKind().GroupVersionKind().Kind)
+	g, err := keyToGRN(key)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +226,7 @@ func resourceToEntity(key string, res runtime.Object) (*entityStore.Entity, erro
 
 	rsp := &entityStore.Entity{
 		GRN:          g,
-		GroupVersion: res.GetObjectKind().GroupVersionKind().Version,
+		GroupVersion: requestInfo.APIVersion,
 		Key:          key,
 		Name:         metaAccessor.GetName(),
 		Guid:         string(metaAccessor.GetUID()),
@@ -215,7 +239,7 @@ func resourceToEntity(key string, res runtime.Object) (*entityStore.Entity, erro
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
 			Key:    grafanaAccessor.GetOriginKey(),
-			// Path: kinds.GetOriginPath(metaAccessor),
+			// Path: 	grafanaAccessor.GetOriginPath(),
 		},
 		Labels: metaAccessor.GetLabels(),
 	}
