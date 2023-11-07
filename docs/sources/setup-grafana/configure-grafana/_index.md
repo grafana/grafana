@@ -2271,7 +2271,7 @@ It can be useful to set this to `true` when troubleshooting.
 
 Instruct a headless browser instance on whether to record metrics for the duration of every rendering step. Default is `false`.
 
-It can be useful to set this to `true` when optimizing the rendering mode settings to improve the plugin performance or when troubleshooting.
+Setting this to `true` when optimizing the rendering mode settings to improve the plugin performance or when troubleshooting can be useful.
 
 ### rendering_args
 
