@@ -30,6 +30,11 @@ function createDashboard(): DashboardDTO {
   return dto;
 }
 
+/**
+ *
+ * @param panelType
+ * @param options
+ */
 function getLogsTableTransformations(panelType: string, options: AddPanelToDashboardOptions): DataTransformerConfig[] {
   let transformations: DataTransformerConfig[] = [];
   if (panelType === 'table' && options.panelState?.logs?.columns) {
@@ -48,9 +53,9 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
       id: 'organize',
       options: {
         includeByName: Object.values(options.panelState.logs.columns).reduce(
-          (a: Record<string, boolean>, v) => ({
-            ...a,
-            [v]: true,
+          (acc: Record<string, boolean>, value: string) => ({
+            ...acc,
+            [value]: true,
           }),
           {}
         ),
@@ -60,6 +65,11 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
   return transformations;
 }
 
+/**
+ * Returns the transformations to apply to the panel based on the panel type
+ * @param panelType
+ * @param options
+ */
 function getExploreToPanelTransformations(panelType: string, options: AddPanelToDashboardOptions) {
   let transformations: DataTransformerConfig[] = [];
   transformations.push(...getLogsTableTransformations(panelType, options));
