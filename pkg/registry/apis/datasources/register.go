@@ -21,8 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const VersionID = "v0alpha1" //
@@ -38,9 +40,11 @@ type DSAPIBuilder struct {
 	client          plugins.Client
 	dsService       datasources.DataSourceService
 	dataSourceCache datasources.CacheService
+	namespacer      request.NamespaceMapper
 }
 
 func RegisterAPIService(
+	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration grafanaapiserver.APIRegistrar,
 	pluginClient plugins.Client,
@@ -72,6 +76,7 @@ func RegisterAPIService(
 			client:          pluginClient,
 			dsService:       dsService,
 			dataSourceCache: dataSourceCache,
+			namespacer:      request.GetNamespaceMapper(cfg),
 		}
 		apiregistration.RegisterAPI(builder)
 	}

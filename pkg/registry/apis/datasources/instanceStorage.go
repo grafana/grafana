@@ -72,7 +72,7 @@ func (s *instanceStorage) asInstance(ds *datasources.DataSource) *v0alpha1.Insta
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              ds.UID,
-			Namespace:         fmt.Sprintf("org-%d", ds.OrgID),
+			Namespace:         s.builder.namespacer(ds.OrgID),
 			CreationTimestamp: metav1.NewTime(ds.Created),
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
 			UID:               types.UID(uid), // make it different so we don't confuse it with "name"

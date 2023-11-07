@@ -2,7 +2,6 @@ package datasources
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +62,7 @@ func (s *configStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: fmt.Sprintf("org-%d", info.OrgID),
+			Namespace: s.builder.namespacer(info.OrgID),
 		},
 		Spec: map[string]any{
 			"hello": "world",
