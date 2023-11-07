@@ -13,6 +13,8 @@ import { VariableHide } from '../../variables/types';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
+import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
+
 jest.mock('app/core/services/context_srv', () => ({}));
 
 const dataSources = {
@@ -228,7 +230,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(38);
+      expect(model.schemaVersion).toBe(DASHBOARD_SCHEMA_VERSION);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -1077,12 +1079,14 @@ describe('DashboardModel', () => {
               type: 'query',
               name: 'variable_with_unknown_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
+              // @ts-expect-error
               refresh: 2001,
             },
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_without_options',
               options: [],
+              // @ts-expect-error
               refresh: 2001,
             },
             {
@@ -1902,13 +1906,13 @@ describe('DashboardModel', () => {
               },
             ],
           },
+          // @ts-expect-error
           {
             type: 'row',
             id: 5,
             panels: [
               {
                 id: 6,
-                // @ts-expect-error
                 datasource: 'prom',
               },
             ],

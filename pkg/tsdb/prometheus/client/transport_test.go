@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,7 +21,7 @@ func TestCreateTransportOptions(t *testing.T) {
 				"httpHeaderValue1": "bar",
 			},
 		}
-		opts, err := CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, &logtest.Fake{})
+		opts, err := CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
 		require.Equal(t, map[string]string{"foo": "bar"}, opts.Headers)
 		require.Equal(t, 2, len(opts.Middlewares))
@@ -39,7 +38,7 @@ func TestCreateTransportOptions(t *testing.T) {
 			}`),
 			DecryptedSecureJSONData: map[string]string{},
 		}
-		opts, err := CreateTransportOptions(context.Background(), settings, &setting.Cfg{AzureAuthEnabled: true, Azure: &azsettings.AzureSettings{}}, &logtest.Fake{})
+		opts, err := CreateTransportOptions(context.Background(), settings, &setting.Cfg{AzureAuthEnabled: true, Azure: &azsettings.AzureSettings{}}, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
 		require.Equal(t, 3, len(opts.Middlewares))
 	})

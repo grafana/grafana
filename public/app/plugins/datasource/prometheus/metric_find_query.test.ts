@@ -1,10 +1,9 @@
 import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { of } from 'rxjs';
 
-import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
+import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
+import { FetchResponse, TemplateSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
@@ -21,28 +20,19 @@ const instanceSettings = {
   url: 'proxied',
   id: 1,
   uid: 'ABCDEF',
-  directUrl: 'direct',
   user: 'test',
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },
 } as Partial<DataSourceInstanceSettings<PromOptions>> as DataSourceInstanceSettings<PromOptions>;
-const raw = {
+
+const raw: TimeRange = {
   from: toUtc('2018-04-25 10:00'),
   to: toUtc('2018-04-25 11:00'),
+  raw: {
+    from: '2018-04-25 10:00',
+    to: '2018-04-25 11:00',
+  },
 };
-
-jest.mock('app/features/dashboard/services/TimeSrv', () => ({
-  __esModule: true,
-  getTimeSrv: jest.fn().mockReturnValue({
-    timeRange() {
-      return {
-        from: raw.from,
-        to: raw.to,
-        raw: raw,
-      };
-    },
-  }),
-}));
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn().mockImplementation(() => []),
@@ -80,7 +70,7 @@ describe('PrometheusMetricFindQuery', () => {
           data: ['name1', 'name2', 'name3'],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -102,7 +92,7 @@ describe('PrometheusMetricFindQuery', () => {
           data: ['value1', 'value2', 'value3'],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -126,7 +116,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -152,7 +142,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -176,7 +166,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(2);
       expect(results[0].text).toBe('value1');
@@ -201,7 +191,7 @@ describe('PrometheusMetricFindQuery', () => {
           data: ['metric1', 'metric2', 'metric3', 'nomatch'],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -228,16 +218,17 @@ describe('PrometheusMetricFindQuery', () => {
           },
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(1);
       expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${raw.to.unix()}`,
-        requestId: undefined,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric`,
         headers: {},
+        hideFromInspector: true,
+        showErrorAlert: false,
       });
     });
 
@@ -251,15 +242,16 @@ describe('PrometheusMetricFindQuery', () => {
           },
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
       expect(results).toHaveLength(1);
       expect(results[0].text).toBe('2');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
-        requestId: undefined,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1`,
         headers: {},
+        hideFromInspector: true,
+        showErrorAlert: false,
       });
     });
 
@@ -274,7 +266,7 @@ describe('PrometheusMetricFindQuery', () => {
           ],
         },
       });
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(results[0].text).toBe('up{instance="127.0.0.1:1234",job="job1"}');
@@ -309,7 +301,7 @@ describe('PrometheusMetricFindQuery', () => {
         },
         prometheusDatasource
       );
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(3);
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -337,7 +329,7 @@ describe('PrometheusMetricFindQuery', () => {
         },
         prometheusDatasource
       );
-      const results = await query.process();
+      const results = await query.process(raw);
 
       expect(results).toHaveLength(1);
       expect(fetchMock).toHaveBeenCalledTimes(1);

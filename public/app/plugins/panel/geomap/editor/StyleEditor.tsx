@@ -110,16 +110,17 @@ export const StyleEditor = (props: Props) => {
   };
 
   const onAlignHorizontalChange = (alignHorizontal: HorizontalAlign) => {
-    onChange({ ...value, symbolAlign: { ...value.symbolAlign, horizontal: alignHorizontal } });
+    onChange({ ...value, symbolAlign: { ...value?.symbolAlign, horizontal: alignHorizontal } });
   };
 
   const onAlignVerticalChange = (alignVertical: VerticalAlign) => {
-    onChange({ ...value, symbolAlign: { ...value.symbolAlign, vertical: alignVertical } });
+    onChange({ ...value, symbolAlign: { ...value?.symbolAlign, vertical: alignVertical } });
   };
 
   const propertyOptions = useObservable(settings?.layerInfo ?? of());
   const featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;
   const hasTextLabel = styleUsesText(value);
+  const maxFiles = 2000;
 
   // Simple fixed value display
   if (settings?.simpleFixedValues) {
@@ -141,6 +142,7 @@ export const StyleEditor = (props: Props) => {
                         placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                         placeholderValue: defaultStyleConfig.symbol.fixed,
                         showSourceRadio: false,
+                        maxFiles,
                       },
                     } as StandardEditorsRegistryItem
                   }
@@ -230,6 +232,7 @@ export const StyleEditor = (props: Props) => {
                     placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                     placeholderValue: defaultStyleConfig.symbol.fixed,
                     showSourceRadio: false,
+                    maxFiles,
                   },
                 } as StandardEditorsRegistryItem
               }

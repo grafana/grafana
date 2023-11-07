@@ -6,11 +6,11 @@
     "panel-tests": ""
   },
   "fields": {
-    "schemaVersion": 18
+    "schemaVersion": "18"
   },
   "nested": [
     {
-      "uid": "graph-gradient-area-fills.json#2",
+      "UID": "graph-gradient-area-fills.json#2",
       "kind": "panel",
       "name": "Req/s",
       "fields": {
@@ -23,12 +23,12 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph-gradient-area-fills.json#11",
+      "UID": "graph-gradient-area-fills.json#11",
       "kind": "panel",
       "name": "Req/s",
       "fields": {
@@ -41,12 +41,12 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph-gradient-area-fills.json#7",
+      "UID": "graph-gradient-area-fills.json#7",
       "kind": "panel",
       "name": "Memory",
       "fields": {
@@ -59,12 +59,12 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph-gradient-area-fills.json#10",
+      "UID": "graph-gradient-area-fills.json#10",
       "kind": "panel",
       "name": "Req/s",
       "fields": {
@@ -77,7 +77,7 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     }
@@ -89,7 +89,7 @@
     {
       "family": "plugin",
       "type": "panel",
-      "ID": "graph"
+      "identifier": "graph"
     }
   ]
 }

@@ -111,6 +111,10 @@ func ParseSettings(cfg *setting.Cfg) (*TracingService, error) {
 	return ots, err
 }
 
+func (ots *TracingService) GetTracerProvider() tracerProvider {
+	return ots.tracerProvider
+}
+
 func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	spanCtx := trace.SpanContextFromContext(ctx)
 	if !spanCtx.HasTraceID() || !spanCtx.IsValid() || (requireSampled && !spanCtx.IsSampled()) {

@@ -1,4 +1,4 @@
-import { cloneDeep, extend, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { cloneDeep, extend, has, isString, map as _map, omit, pick, reduce } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -138,53 +138,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return merge(...streams);
     }
 
-    if (this.version === InfluxVersion.Flux || this.version === InfluxVersion.SQL) {
-      return super.query(filteredRequest);
+    if (this.version === InfluxVersion.InfluxQL && !this.isMigrationToggleOnAndIsAccessProxy()) {
+      // Fallback to classic query support
+      return this.classicQuery(request);
     }
 
-    if (this.isMigrationToggleOnAndIsAccessProxy()) {
-      return super.query(filteredRequest).pipe(
-        map((res) => {
-          if (res.error) {
-            throw {
-              message: 'InfluxDB Error: ' + res.error.message,
-              res,
-            };
-          }
-
-          const groupedFrames = groupBy(res.data, (x) => x.refId);
-          if (Object.keys(groupedFrames).length === 0) {
-            return { data: [] };
-          }
-
-          const seriesList: any[] = [];
-          filteredRequest.targets.forEach((target) => {
-            const filteredFrames = groupedFrames[target.refId] ?? [];
-            switch (target.resultFormat) {
-              case 'logs':
-              case 'table':
-                seriesList.push(
-                  this.responseParser.getTable(filteredFrames, target, {
-                    preferredVisualisationType: target.resultFormat,
-                  })
-                );
-                break;
-              default: {
-                for (let i = 0; i < filteredFrames.length; i++) {
-                  seriesList.push(filteredFrames[i]);
-                }
-                break;
-              }
-            }
-          });
-
-          return { data: seriesList };
-        })
-      );
-    }
-
-    // Fallback to classic query support
-    return this.classicQuery(request);
+    return super.query(filteredRequest);
   }
 
   getQueryDisplayText(query: InfluxQuery) {
@@ -337,12 +296,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       super.query({
         targets: [target],
       } as DataQueryRequest)
-    ).then((rsp) => {
-      if (rsp.data?.length) {
-        return frameToMetricFindValue(rsp.data[0]);
-      }
-      return [];
-    });
+    ).then(this.toMetricFindValue);
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
@@ -354,22 +308,25 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       };
       return lastValueFrom(
         super.query({
-          ...options, // includes 'range'
+          ...(options ?? {}), // includes 'range'
           targets: [target],
         })
-      ).then((rsp) => {
-        if (rsp.data?.length) {
-          return frameToMetricFindValue(rsp.data[0]);
-        }
-        return [];
-      });
+      ).then(this.toMetricFindValue);
     }
 
-    const interpolated = this.templateSrv.replace(query, options.scopedVars, this.interpolateQueryExpr);
+    const interpolated = this.templateSrv.replace(query, options?.scopedVars, this.interpolateQueryExpr);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
       return this.responseParser.parse(query, resp);
     });
+  }
+
+  toMetricFindValue(rsp: DataQueryResponse): MetricFindValue[] {
+    const data = rsp.data ?? [];
+    // Create MetricFindValue object for all frames
+    const values = data.map((d) => frameToMetricFindValue(d)).flat();
+    // Filter out duplicate elements
+    return values.filter((elm, idx, self) => idx === self.findIndex((t) => t.text === elm.text));
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
@@ -633,7 +590,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
     return this._seriesQuery(allQueries, options).pipe(
-      map((data: any) => {
+      map((data) => {
         if (!data || !data.results) {
           return { data: [] };
         }
@@ -733,7 +690,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     let query = annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, undefined, this.interpolateQueryExpr);
 
-    return lastValueFrom(this._seriesQuery(query, options)).then((data: any) => {
+    return lastValueFrom(this._seriesQuery(query, options)).then((data) => {
       if (!data || !data.results || !data.results[0]) {
         throw { message: 'No results in response from InfluxDB' };
       }
