@@ -365,6 +365,46 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		assert.Equal(t, "alias logins.count", result.Frames[1].Name)
 	})
 
+	t.Run("Influxdb response parser when multiple measurement in response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu.upc",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						},
+						{
+							"name": "logins.count",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query := models.Query{}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.True(t, strings.Contains(result.Frames[0].Name, ","))
+		assert.True(t, strings.Contains(result.Frames[1].Name, ","))
+	})
+
 	t.Run("Influxdb response parser with alias", func(t *testing.T) {
 		response := `
 		{
@@ -407,6 +447,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
+
 		t.Run("should parse aliases", func(t *testing.T) {
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -575,6 +616,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
+
 		t.Run("shouldn't parse aliases", func(t *testing.T) {
 			query = models.Query{Alias: "alias words with no brackets"}
 			result = ResponseParse(prepare(response), 200, generateQuery(query))
@@ -680,6 +722,23 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
 		_, err := parseTimestamp("hello")
 		require.Error(t, err)
+	})
+
+	t.Run("InfluxDB returns empty DataResponse when there is empty response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"statement_id": 0
+				}
+			]
+		}
+		`
+
+		query := models.Query{}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.NotNil(t, result.Frames)
+		assert.Equal(t, 0, len(result.Frames))
 	})
 }
 

@@ -1,21 +1,14 @@
 import { css } from '@emotion/css';
+import uFuzzy from '@leeoniya/ufuzzy';
 import { SerializedError } from '@reduxjs/toolkit';
-import { groupBy, size, upperFirst } from 'lodash';
+import { groupBy, size, uniq, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import {
-  Alert,
-  Dropdown,
-  Icon,
-  LoadingPlaceholder,
-  Menu,
-  Tooltip,
-  useStyles2,
   Text,
   LinkButton,
   TabsBar,
@@ -23,6 +16,14 @@ import {
   Tab,
   Pagination,
   Button,
+  Stack,
+  Alert,
+  LoadingPlaceholder,
+  useStyles2,
+  Menu,
+  Dropdown,
+  Tooltip,
+  Icon,
 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
@@ -31,6 +32,7 @@ import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
+import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -48,8 +50,9 @@ import { UnusedContactPointBadge } from '../receivers/ReceiversTable';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
-import { MessageTemplates } from './MessageTemplates';
+import { ContactPointsFilter } from './ContactPointsFilter';
 import { useDeleteContactPointModal } from './Modals';
+import { NotificationTemplates } from './NotificationTemplates';
 import {
   RECEIVER_META_KEY,
   RECEIVER_PLUGIN_META_KEY,
@@ -61,7 +64,7 @@ import { ContactPointWithMetadata, getReceiverDescription, isProvisioned, Receiv
 
 enum ActiveTab {
   ContactPoints,
-  MessageTemplates,
+  NotificationTemplates,
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -82,8 +85,11 @@ const ContactPoints = () => {
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
+  const [searchParams] = useURLSearchParams();
+  const { search } = getContactPointsFilters(searchParams);
+
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
-  const showingMessageTemplates = activeTab === ActiveTab.MessageTemplates;
+  const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
 
   if (error) {
     // TODO fix this type casting, when error comes from "getContactPointsStatus" it probably won't be a SerializedError
@@ -105,9 +111,9 @@ const ContactPoints = () => {
             onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
           />
           <Tab
-            label="Message Templates"
-            active={showingMessageTemplates}
-            onChangeTab={() => setActiveTab(ActiveTab.MessageTemplates)}
+            label="Notification Templates"
+            active={showNotificationTemplates}
+            onChangeTab={() => setActiveTab(ActiveTab.NotificationTemplates)}
           />
         </TabsBar>
         <TabContent>
@@ -122,10 +128,8 @@ const ContactPoints = () => {
                   ) : (
                     <>
                       {/* TODO we can add some additional info here with a ToggleTip */}
-                      <Stack direction="row" alignItems="center">
-                        <Text variant="body" color="secondary">
-                          Define where notifications are sent, a contact point can contain multiple integrations.
-                        </Text>
+                      <Stack direction="row" alignItems="end">
+                        <ContactPointsFilter />
                         <Spacer />
                         <Stack direction="row" gap={1}>
                           {addContactPointSupported && (
@@ -152,6 +156,7 @@ const ContactPoints = () => {
                       </Stack>
                       <ContactPointsList
                         contactPoints={contactPoints}
+                        search={search}
                         pageSize={DEFAULT_PAGE_SIZE}
                         onDelete={(name) => showDeleteModal(name)}
                         disabled={updateAlertmanagerState.isLoading}
@@ -162,19 +167,19 @@ const ContactPoints = () => {
                   )}
                 </>
               )}
-              {/* Message Templates tab */}
-              {showingMessageTemplates && (
+              {/* Notification Templates tab */}
+              {showNotificationTemplates && (
                 <>
                   <Stack direction="row" alignItems="center">
                     <Text variant="body" color="secondary">
-                      Create message templates to customize your notifications.
+                      Create notification templates to customize your notifications.
                     </Text>
                     <Spacer />
                     <LinkButton icon="plus" variant="primary" href="/alerting/notifications/templates/new">
-                      Add message template
+                      Add notification template
                     </LinkButton>
                   </Stack>
-                  <MessageTemplates />
+                  <NotificationTemplates />
                 </>
               )}
             </>
@@ -189,6 +194,7 @@ const ContactPoints = () => {
 
 interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
+  search?: string;
   disabled?: boolean;
   onDelete: (name: string) => void;
   pageSize?: number;
@@ -197,20 +203,23 @@ interface ContactPointsListProps {
 const ContactPointsList = ({
   contactPoints,
   disabled = false,
+  search,
   pageSize = DEFAULT_PAGE_SIZE,
   onDelete,
 }: ContactPointsListProps) => {
-  const { page, pageItems, numberOfPages, onPageChange } = usePagination(contactPoints, 1, pageSize);
+  const searchResults = useContactPointsSearch(contactPoints, search);
+  const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
   return (
     <>
       {pageItems.map((contactPoint, index) => {
         const provisioned = isProvisioned(contactPoint);
         const policies = contactPoint.numberOfPolicies;
+        const key = `${contactPoint.name}-${index}`;
 
         return (
           <ContactPoint
-            key={`${contactPoint.name}-${index}`}
+            key={key}
             name={contactPoint.name}
             disabled={disabled}
             onDelete={onDelete}
@@ -224,6 +233,42 @@ const ContactPointsList = ({
     </>
   );
 };
+
+const fuzzyFinder = new uFuzzy({
+  intraMode: 1,
+  intraIns: 1,
+  intraSub: 1,
+  intraDel: 1,
+  intraTrn: 1,
+});
+
+// let's search in two different haystacks, the name of the contact point and the type of the receiver(s)
+function useContactPointsSearch(
+  contactPoints: ContactPointWithMetadata[],
+  search?: string
+): ContactPointWithMetadata[] {
+  const nameHaystack = useMemo(() => {
+    return contactPoints.map((contactPoint) => contactPoint.name);
+  }, [contactPoints]);
+
+  const typeHaystack = useMemo(() => {
+    return contactPoints.map((contactPoint) =>
+      // we're using the resolved metadata key here instead of the "type" property – ex. we alias "teams" to "microsoft teams"
+      contactPoint.grafana_managed_receiver_configs.map((receiver) => receiver[RECEIVER_META_KEY].name).join(' ')
+    );
+  }, [contactPoints]);
+
+  if (!search) {
+    return contactPoints;
+  }
+
+  const nameHits = fuzzyFinder.filter(nameHaystack, search) ?? [];
+  const typeHits = fuzzyFinder.filter(typeHaystack, search) ?? [];
+
+  const hits = [...nameHits, ...typeHits];
+
+  return uniq(hits).map((id) => contactPoints[id]) ?? [];
+}
 
 interface ContactPointProps {
   name: string;
@@ -570,6 +615,10 @@ const useExportContactPoint = (): ExportProps => {
 
   return [drawer, handleOpen];
 };
+
+const getContactPointsFilters = (searchParams: URLSearchParams) => ({
+  search: searchParams.get('search') ?? undefined,
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({

@@ -50,6 +50,26 @@ export const transformationDocsContent: TransformationDocsContentType = {
       - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
       - **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
       - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
+    - **Cumulative functions** - Apply functions on the current row and all preceding rows.
+      
+      **Note:** This mode is an experimental feature. Engineering and on-call support is not available.
+      Documentation is either limited or not provided outside of code comments. No SLA is provided.
+      Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature.
+      Contact Grafana Support to enable this feature in Grafana Cloud.
+      - **Total** - Calculates the cumulative total up to and including the current row.
+      - **Mean** - Calculates the mean up to and including the current row.
+    - **Window functions** - Apply window functions. The window can either be **trailing** or **centered**.
+      With a trailing window the current row will be the last row in the window. 
+      With a centered window the window will be centered on the current row. 
+      For even window sizes, the window will be centered between the current row, and the previous row. 
+      
+      **Note:** This mode is an experimental feature. Engineering and on-call support is not available. 
+      Documentation is either limited or not provided outside of code comments. No SLA is provided. 
+      Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature. 
+      Contact Grafana Support to enable this feature in Grafana Cloud.
+      - **Mean** - Calculates the moving mean or running average.
+      - **Stddev** - Calculates the moving standard deviation.
+      - **Variance** - Calculates the moving variance.
     - **Row index -** Insert a field with the row index.
   - **Field name -** Select the names of fields you want to use in the calculation for the new field.
   - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
@@ -63,7 +83,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png',
     imageRenderType,
-    this.name
+    'Add field from calculation'
   )}
   `;
     },
@@ -316,7 +336,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-by-query-stat-example-7-0.png',
     imageRenderType,
-    this.name
+    'Filter data by query refId'
   )}
   `;
     },
@@ -420,7 +440,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2023-03-04 23:56:23 | 22.2         | 20.2          |
   | 2023-03-04 23:56:23 | 22.1         | 20.1          |
   
-  The regular expression can include an interpolated dashboard variable by using the \${$${'variableName'}} syntax.
+  The regular expression can include an interpolated dashboard variable by using the \${${'variableName'}} syntax.
   
   #### Manually select included fields
   
@@ -433,7 +453,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-table-before-7-0.png',
     imageRenderType,
-    this.name + 1
+    // Distinguish alt text for multiple images by appending a number.
+    'Filter fields by name' + 1
   )}
 
   Here's the table after we applied the transformation to remove the Min field.
@@ -441,7 +462,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-table-after-7-0.png',
     imageRenderType,
-    this.name + 2
+    'Filter fields by name' + 2
   )}
 
   Here is the same query using a Stat visualization.
@@ -449,7 +470,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-stat-after-7-0.png',
     imageRenderType,
-    this.name + 3
+    'Filter fields by name' + 3
   )}
   `;
     },
@@ -722,11 +743,19 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   In the following example, a template query displays time series data from multiple servers in a table visualization. The results of only one query can be viewed at a time.
 
-  ${buildImageContent('/static/img/docs/transformations/join-fields-before-7-0.png', imageRenderType, this.name + 1)}
+  ${buildImageContent(
+    '/static/img/docs/transformations/join-fields-before-7-0.png',
+    imageRenderType,
+    'Join by field' + 1
+  )}
 
   I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
-  ${buildImageContent('/static/img/docs/transformations/join-fields-after-7-0.png', imageRenderType, this.name + 2)}
+  ${buildImageContent(
+    '/static/img/docs/transformations/join-fields-after-7-0.png',
+    imageRenderType,
+    'Join by field' + 2
+  )}
   `;
     },
   },
@@ -1051,12 +1080,16 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/rename-by-regex-before-7-3.png',
     imageRenderType,
-    this.name + 1
+    'Rename by regex' + 1
   )}
 
   With the transformation applied, you can see we are left with just the remainder of the string.
 
-  ${buildImageContent('/static/img/docs/transformations/rename-by-regex-after-7-3.png', imageRenderType, this.name + 1)}
+  ${buildImageContent(
+    '/static/img/docs/transformations/rename-by-regex-after-7-3.png',
+    imageRenderType,
+    'Rename by regex' + 2
+  )}
   `;
     },
   },
@@ -1220,5 +1253,5 @@ function buildImageContent(source: string, imageRenderType: ImageRenderType, ima
     ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.
       `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" >}}`
     : // This will build generic Markdown image syntax for UI rendering.
-      `![${imageName} helper image](${source})`;
+      `![${imageName} helper image](https://grafana.com${source})`;
 }
