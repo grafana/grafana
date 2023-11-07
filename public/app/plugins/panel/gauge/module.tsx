@@ -49,6 +49,7 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
           ],
         },
         defaultValue: defaultOptions.sizing,
+        showIf: (options: Options) => options.orientation !== VizOrientation.Auto,
       })
       .addNumberInput({
         path: 'minVizWidth',
