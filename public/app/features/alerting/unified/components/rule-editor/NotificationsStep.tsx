@@ -1,8 +1,7 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Stack } from '@grafana/experimental';
-import { Icon, Text } from '@grafana/ui';
+import { Icon, Text, Stack } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';

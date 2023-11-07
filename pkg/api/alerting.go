@@ -112,7 +112,7 @@ func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 			OrgId:        c.SignedInUser.GetOrgID(),
 			DashboardIds: dashboardIDs,
 			Type:         string(model.DashHitDB),
-			FolderIds:    folderIDs,
+			FolderIds:    folderIDs, // nolint:staticcheck
 			Permission:   dashboards.PERMISSION_VIEW,
 		}
 
