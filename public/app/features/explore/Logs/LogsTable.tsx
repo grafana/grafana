@@ -48,7 +48,7 @@ export function LogsTable(props: Props) {
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
-      if (!frame || !frame.length) {
+      if (!frame.length) {
         return frame;
       }
       // Parse the dataframe to a logFrame
