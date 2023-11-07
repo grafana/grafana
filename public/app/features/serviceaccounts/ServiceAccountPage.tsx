@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { getTimeZone, NavModelItem } from '@grafana/data';
-import { Button, ConfirmModal, HorizontalGroup } from '@grafana/ui';
+import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -134,7 +134,7 @@ export const ServiceAccountPageUnconnected = ({
     <Page navId="serviceaccounts" pageNav={pageNav}>
       <Page.Contents isLoading={isLoading}>
         <div>
-          {serviceAccount && (
+          {serviceAccount && !serviceAccount.isExternal && (
             <HorizontalGroup spacing="md" height="auto" justify="flex-end">
               <Button
                 type={'button'}
@@ -163,6 +163,16 @@ export const ServiceAccountPageUnconnected = ({
                   Disable service account
                 </Button>
               )}
+            </HorizontalGroup>
+          )}
+          {serviceAccount && serviceAccount.isExternal && (
+            <HorizontalGroup spacing="md" height="auto" justify="flex-end">
+              <IconButton
+                disabled={true}
+                name="lock"
+                size="md"
+                tooltip={`This is a managed Service account and cannot be modified.`}
+              />
             </HorizontalGroup>
           )}
           {serviceAccount && (
