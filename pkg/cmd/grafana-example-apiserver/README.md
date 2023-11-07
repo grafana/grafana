@@ -22,7 +22,7 @@ Have `etcd` running in your environment:
 etcd &
 ```
 
-With etcd running, you can now start the example-apiserver. The Authn / Authz flags are setup so that the kind cluster
+With etcd running, you can now start the example-apiserver. The Authn / Authz flags are set up so that the kind cluster
 can be used as a root server for this example-apiserver (in aggregated mode). Here, it's assumed that you have a local
 kind cluster and that you can provide its kubeconfig in the parameters to the example-apiserver.
 
