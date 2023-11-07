@@ -41,6 +41,7 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
+	// Deprecated: use FolderUID instead
 	FolderID  int64  `xorm:"folder_id"`
 	FolderUID string `xorm:"folder_uid"`
 	IsFolder  bool
@@ -104,6 +105,7 @@ func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, any] {
 			Key:  d.PluginID,
 		})
 	}
+	// nolint:staticcheck
 	if d.FolderID > 0 {
 		res.Metadata.SetFolder(fmt.Sprintf("folder:%d", d.FolderID))
 	}
@@ -186,6 +188,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
 	dash.UpdateSlug()

@@ -345,7 +345,7 @@ func setupDB(b testing.TB) benchScenario {
 				OrgID:    signedInUser.OrgID,
 				IsFolder: false,
 				UID:      str,
-				FolderID: f0.ID,
+				FolderID: f0.ID, // nolint:staticcheck
 				Slug:     str,
 				Title:    str,
 				Data:     simplejson.New(),
@@ -372,7 +372,7 @@ func setupDB(b testing.TB) benchScenario {
 					OrgID:    signedInUser.OrgID,
 					IsFolder: false,
 					UID:      str,
-					FolderID: f1.ID,
+					FolderID: f1.ID, // nolint:staticcheck
 					Slug:     str,
 					Title:    str,
 					Data:     simplejson.New(),
@@ -399,7 +399,7 @@ func setupDB(b testing.TB) benchScenario {
 						OrgID:    signedInUser.OrgID,
 						IsFolder: false,
 						UID:      str,
-						FolderID: f2.ID,
+						FolderID: f2.ID, // nolint:staticcheck
 						Slug:     str,
 						Title:    str,
 						Data:     simplejson.New(),
