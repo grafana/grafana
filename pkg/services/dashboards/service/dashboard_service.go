@@ -564,6 +564,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				Tags:        []string{},
 			}
 
+			// nolint:staticcheck
 			if item.FolderID > 0 {
 				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
 			}

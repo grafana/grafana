@@ -348,12 +348,13 @@ type SaveDashboardDTO struct {
 }
 
 type DashboardSearchProjection struct {
-	ID          int64  `xorm:"id"`
-	UID         string `xorm:"uid"`
-	Title       string
-	Slug        string
-	Term        string
-	IsFolder    bool
+	ID       int64  `xorm:"id"`
+	UID      string `xorm:"uid"`
+	Title    string
+	Slug     string
+	Term     string
+	IsFolder bool
+	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	FolderUID   string `xorm:"folder_uid"`
 	FolderSlug  string
