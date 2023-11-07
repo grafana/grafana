@@ -2,6 +2,7 @@ import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { Dashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
@@ -15,22 +16,23 @@ const prepareDashboardMock = (
   resetTimeSpy: jest.Mock,
   resetVarsSpy: jest.Mock
 ) => {
-  const json = {
+  const json: Dashboard = {
     title: 'name',
-    hasTimeChanged: jest.fn().mockReturnValue(timeChanged),
-    hasVariableValuesChanged: jest.fn().mockReturnValue(variableValuesChanged),
-    resetOriginalTime: () => resetTimeSpy(),
-    resetOriginalVariables: () => resetVarsSpy(),
-    getSaveModelClone: jest.fn().mockReturnValue({}),
+    id: 5,
+    schemaVersion: 30,
   };
 
   return {
-    id: 5,
-    meta: {},
     ...json,
+    meta: {},
+    hasTimeChanged: jest.fn().mockReturnValue(timeChanged),
+    hasVariablesChanged: jest.fn().mockReturnValue(variableValuesChanged),
+    resetOriginalTime: () => resetTimeSpy(),
+    resetOriginalVariables: () => resetVarsSpy(),
     getSaveModelClone: () => json,
   } as unknown as DashboardModel;
 };
+
 const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mock) => {
   render(
     <SaveDashboardForm
@@ -43,7 +45,7 @@ const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mo
         return { status: 'success' };
       }}
       saveModel={{
-        clone: dashboard,
+        clone: dashboard.getSaveModelClone(),
         diff: {},
         diffCount: 0,
         hasChanges: true,
@@ -71,7 +73,7 @@ describe('SaveDashboardAsForm', () => {
             return {};
           }}
           saveModel={{
-            clone: prepareDashboardMock(true, true, jest.fn(), jest.fn()),
+            clone: { id: 1, schemaVersion: 3 },
             diff: {},
             diffCount: 0,
             hasChanges: true,
@@ -134,7 +136,7 @@ describe('SaveDashboardAsForm', () => {
             return {};
           }}
           saveModel={{
-            clone: createDashboardModelFixture(),
+            clone: createDashboardModelFixture().getSaveModelClone(),
             diff: {},
             diffCount: 0,
             hasChanges: true,

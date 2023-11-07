@@ -224,7 +224,7 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 		cmd.SignedInUser = c.SignedInUser
 		theFolder, err := hs.folderService.Move(c.Req.Context(), &cmd)
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, "move folder failed", err)
+			return response.ErrOrFallback(http.StatusInternalServerError, "move folder failed", err)
 		}
 
 		folderDTO, err := hs.newToFolderDto(c, theFolder)
@@ -444,7 +444,7 @@ func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folde
 	searchQuery := search.Query{
 		SignedInUser: c.SignedInUser,
 		DashboardIds: make([]int64, 0),
-		FolderIds:    make([]int64, 0),
+		FolderIds:    make([]int64, 0), // nolint:staticcheck
 		Limit:        c.QueryInt64("limit"),
 		OrgId:        c.SignedInUser.GetOrgID(),
 		Type:         "dash-folder",

@@ -306,8 +306,8 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 	}
 }
 
-func TestInitializer_oauthEnvVars(t *testing.T) {
-	t.Run("backend datasource with oauth registration", func(t *testing.T) {
+func TestInitializer_authEnvVars(t *testing.T) {
+	t.Run("backend datasource with auth registration", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:                          "test",
@@ -322,7 +322,6 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 
 		envVarsProvider := NewProvider(&config.Cfg{
 			GrafanaAppURL: "https://myorg.com/",
-			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
@@ -499,5 +498,16 @@ func TestService_GetConfigMap_featureToggles(t *testing.T) {
 			}
 			require.Equal(t, tc.expectedConfig, s.GetConfigMap(context.Background(), "", nil))
 		}
+	})
+}
+
+func TestService_GetConfigMap_appURL(t *testing.T) {
+	t.Run("Uses the configured app URL", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				GrafanaAppURL: "https://myorg.com/",
+			},
+		}
+		require.Equal(t, map[string]string{"GF_APP_URL": "https://myorg.com/"}, s.GetConfigMap(context.Background(), "", nil))
 	})
 }

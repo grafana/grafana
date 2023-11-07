@@ -136,10 +136,6 @@ Latest Version: v0.0.6 | Signature: Community | Last Updated: 2021
 
 > **Migration available - plugin superseded:** The original plugin only claims support for Grafana v4.x.x, it was replaced with a [new plugin](https://grafana.com/grafana/plugins/grafadruid-druid-datasource/) based on React.
 
-### [Cognite Data Fusion](https://grafana.com/grafana/plugins/cognitedata-datasource/)
-
-Latest Version: 3.1.0 | Signature: Commercial | Last Updated: 2023
-
 ### [Akumuli](https://grafana.com/grafana/plugins/akumuli-datasource/)
 
 Latest Version: 1.3.12 | Signature: Community | Last Updated: 2021
@@ -396,14 +392,6 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
 > **Migration available - plugin superseded:** this plugin was [discontinued in favour of the InfluxDB data source](https://github.com/ntop/ntopng-grafana-datasource) - a Core plugin included in Grafana, additional guidance is available [here](https://www.ntop.org/guides/ntopng/basic_concepts/timeseries.html#influxdb-driver).
 
-### [Oracle Cloud Infrastructure Logs](https://grafana.com/grafana/plugins/oci-logs-datasource/)
-
-Latest Version: 3.0.0 | Signature: Commercial | Last Updated: 2023
-
-### [Oracle Cloud Infrastructure Metrics](https://grafana.com/grafana/plugins/oci-metrics-datasource/)
-
-Latest Version: 4.0.1 | Signature: Commercial | Last Updated: 2023
-
 ### [Warp 10](https://grafana.com/grafana/plugins/ovh-warp10-datasource/)
 
 Latest Version: 2.2.1 | Signature: Community | Last Updated: 2021
@@ -511,7 +499,7 @@ The [migration issue](https://github.com/Altinity/clickhouse-grafana/issues/475)
 Latest Version: 0.2.2 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/skydive-project/skydive-grafana-datasource) in the past year suggests project _may_ not be actively maintained.
+Lack of recent activity in the [project repository](https://github.com/xginn8/grafana-pagerduty) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
 {{% admonition type="warning" %}}

@@ -1,14 +1,18 @@
-import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { llms } from '@grafana/experimental';
 
-import { openai } from './llms';
+import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
+import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
+
 import { getDashboardChanges, isLLMPluginEnabled, sanitizeReply } from './utils';
 
 // Mock the llms.openai module
-jest.mock('./llms', () => ({
-  openai: {
-    streamChatCompletions: jest.fn(),
-    accumulateContent: jest.fn(),
-    enabled: jest.fn(),
+jest.mock('@grafana/experimental', () => ({
+  llms: {
+    openai: {
+      streamChatCompletions: jest.fn(),
+      accumulateContent: jest.fn(),
+      enabled: jest.fn(),
+    },
   },
 }));
 
@@ -18,10 +22,10 @@ describe('getDashboardChanges', () => {
     const deprecatedOptions = {
       legend: { displayMode: 'hidden', showLegend: false },
     };
-    const deprecatedVersion = 37;
+    const deprecatedVersion = DASHBOARD_SCHEMA_VERSION - 1;
     const dashboard = createDashboardModelFixture({
       schemaVersion: deprecatedVersion,
-      panels: [createPanelJSONFixture({ title: 'Panel 1', options: deprecatedOptions })],
+      panels: [createPanelSaveModel({ title: 'Panel 1', options: deprecatedOptions })],
     });
 
     // Update title for the first panel
@@ -37,36 +41,56 @@ describe('getDashboardChanges', () => {
     const result = getDashboardChanges(dashboard);
 
     // Assertions
-    expect(result.userChanges).toEqual({
-      panels: [
-        {
-          op: 'replace',
-          originalValue: 'Panel 1',
-          value: 'New title',
-          startLineNumber: expect.any(Number),
-          path: ['panels', '0', 'title'],
-        },
-      ],
-    });
+    expect(result.migrationChanges).toContain(
+      `-  "schemaVersion": ${deprecatedVersion},\n+  "schemaVersion": ${DASHBOARD_SCHEMA_VERSION},\n`
+    );
+
+    expect(result.migrationChanges).not.toContain(
+      '   "panels": [\n' +
+        '     {\n' +
+        '-      "type": "timeseries",\n' +
+        '-      "title": "Panel 1",\n' +
+        '+      "id": 1,\n'
+    );
+
+    expect(result.migrationChanges).not.toContain(
+      '-      }\n' +
+        '+      },\n' +
+        '+      "title": "New title",\n' +
+        '+      "type": "timeseries"\n' +
+        '     }\n' +
+        '   ]\n' +
+        ' }\n'
+    );
+
+    expect(result.userChanges).not.toContain('-  "schemaVersion": 37,\n' + '+  "schemaVersion": 38,\n');
+
+    expect(result.userChanges).toContain(
+      '   "panels": [\n' +
+        '     {\n' +
+        '-      "type": "timeseries",\n' +
+        '-      "title": "Panel 1",\n' +
+        '+      "id": 1,\n'
+    );
+
+    expect(result.userChanges).toContain(
+      '-      }\n' +
+        '+      },\n' +
+        '+      "title": "New title",\n' +
+        '+      "type": "timeseries"\n' +
+        '     }\n' +
+        '   ]\n' +
+        ' }\n'
+    );
+
     expect(result.migrationChanges).toBeDefined();
-    expect(result.userChanges).not.toContain({
-      panels: [
-        {
-          op: 'replace',
-          originalValue: 'Panel 1',
-          value: 'New title',
-          startLineNumber: expect.any(Number),
-          path: ['panels', '0', 'title'],
-        },
-      ],
-    });
   });
 });
 
 describe('isLLMPluginEnabled', () => {
   it('should return true if LLM plugin is enabled', async () => {
     // Mock llms.openai.enabled to return true
-    jest.mocked(openai.enabled).mockResolvedValue(true);
+    jest.mocked(llms.openai.enabled).mockResolvedValue({ ok: true, configured: false });
 
     const enabled = await isLLMPluginEnabled();
 
@@ -75,7 +99,7 @@ describe('isLLMPluginEnabled', () => {
 
   it('should return false if LLM plugin is not enabled', async () => {
     // Mock llms.openai.enabled to return false
-    jest.mocked(openai.enabled).mockResolvedValue(false);
+    jest.mocked(llms.openai.enabled).mockResolvedValue({ ok: false, configured: false });
 
     const enabled = await isLLMPluginEnabled();
 

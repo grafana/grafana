@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
-import { omit } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, UseFormWatch } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { config, logInfo } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2, Stack } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -15,19 +13,19 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
+import { logInfo, LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
+  formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
+  ignoreHiddenQueries,
   MINUTE,
   normalizeDefaultAnnotations,
-  rulerRuleToFormValues,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
@@ -233,6 +231,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
                       existing={Boolean(existing)}
+                      enableProvisionedGroups={false}
                     />
                   )}
 
@@ -279,17 +278,6 @@ const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
   return (ruleType === RuleFormType.cloudAlerting || ruleType === RuleFormType.cloudRecording) && dataSourceName !== '';
 };
 
-// the backend will always execute "hidden" queries, so we have no choice but to remove the property in the front-end
-// to avoid confusion. The query editor shows them as "disabled" and that's a different semantic meaning.
-// furthermore the "AlertingQueryRunner" calls `filterQuery` on each data source and those will skip running queries that are "hidden"."
-// It seems like we have no choice but to act like "hidden" queries don't exist in alerting.
-const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
-  return {
-    ...ruleDefinition,
-    queries: ruleDefinition.queries?.map((query) => omit(query, 'model.hide')),
-  };
-};
-
 function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): RuleFormValues {
   let ruleFromQueryParams: Partial<RuleFormValues>;
 
@@ -319,9 +307,6 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
   });
 }
 
-function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
-  return ignoreHiddenQueries(rulerRuleToFormValues(rule));
-}
 const getStyles = (theme: GrafanaTheme2) => ({
   buttonSpinner: css({
     marginRight: theme.spacing(1),

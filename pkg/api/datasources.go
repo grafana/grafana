@@ -6,19 +6,24 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/prometheus/promql/parser"
+	"golang.org/x/exp/slices"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -332,21 +337,76 @@ func validateURL(cmdType string, url string) response.Response {
 // validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
 // For more context take a look at CVE-2022-35957
-func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
-	if jsonData == nil || !cfg.AuthProxyEnabled {
+func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features *featuremgmt.FeatureManager) error {
+	if jsonData == nil {
 		return nil
 	}
 
-	for key, value := range jsonData.MustMap() {
-		if strings.HasPrefix(key, datasources.CustomHeaderName) {
-			header := fmt.Sprint(value)
-			if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
-				datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
+	if cfg.AuthProxyEnabled {
+		for key, value := range jsonData.MustMap() {
+			if strings.HasPrefix(key, datasources.CustomHeaderName) {
+				header := fmt.Sprint(value)
+				if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
+					datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
+					return errors.New("validation error, invalid header name specified")
+				}
+			}
+		}
+	}
+
+	// Prevent adding a data source team header with a name that matches the auth proxy header name
+	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+		err := validateTeamHTTPHeaderJSON(jsonData)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// we only allow for now the following headers to be added to a data source team header
+var validHeaders = []string{"X-Prom-Label-Policy"}
+
+func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
+	teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
+	if err != nil {
+		datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
+		return errors.New("validation error, invalid format of TeamHTTPHeaders")
+	}
+	// whitelisting ValidHeaders
+	// each teams headers
+	for _, teamheaders := range teamHTTPHeadersJSON {
+		for _, header := range teamheaders {
+			if !slices.ContainsFunc(validHeaders, func(v string) bool {
+				return http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(header.Header)
+			}) {
+				datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", header.Header)
 				return errors.New("validation error, invalid header name specified")
+			}
+			if !validateLBACHeader(header.Value) {
+				datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
+				return errors.New("validation error, invalid header value syntax")
 			}
 		}
 	}
 	return nil
+}
+
+// validateLBACHeader returns true if the header value matches the syntax
+// 1234:{ name!="value",foo!~"bar" }
+func validateLBACHeader(headervalue string) bool {
+	exp := `^\d+:(.+)`
+	pattern, err := regexp.Compile(exp)
+	if err != nil {
+		return false
+	}
+	match := pattern.FindSubmatch([]byte(strings.TrimSpace(headervalue)))
+	if match == nil || len(match) < 2 {
+		return false
+	}
+	_, err = parser.ParseMetricSelector(string(match[1]))
+	return err == nil
 }
 
 // swagger:route POST /datasources datasources addDataSource
@@ -372,15 +432,21 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError,
+			"Failed to add datasource", err)
+	}
+
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.URL)
 	cmd.OrgID = c.SignedInUser.GetOrgID()
-	cmd.UserID = c.UserID
+	cmd.UserID = userID
 	if cmd.URL != "" {
 		if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 			return resp
 		}
 	}
-	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
 
@@ -445,7 +511,7 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 		return resp
 	}
-	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
 
@@ -485,7 +551,7 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 		return resp
 	}
-	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
 

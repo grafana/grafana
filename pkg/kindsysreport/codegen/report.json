@@ -1322,31 +1322,26 @@
     },
     "playlist": {
       "category": "core",
-      "codeowners": [
-        "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
-      ],
+      "codeowners": [],
       "crd": {
         "dummySchema": false,
-        "group": "playlist.core.grafana.com",
-        "scope": "Namespaced"
+        "group": "",
+        "scope": ""
       },
       "currentVersion": [
         0,
         0
       ],
-      "description": "A playlist is a series of dashboards that is automatically rotated in the browser, on a configurable interval.",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/playlist/schema-reference",
-        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/playlist",
-        "schema": "https://github.com/grafana/grafana/tree/main/kinds/playlist/playlist_kind.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/playlist/x/playlist_types.gen.ts"
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
       },
       "machineName": "playlist",
-      "maturity": "merged",
+      "maturity": "planned",
       "name": "Playlist",
       "pluralMachineName": "playlists",
       "pluralName": "Playlists"
@@ -2277,7 +2272,6 @@
           "folder",
           "googlecloudmonitoringdataquery",
           "heatmappanelcfg",
-          "playlist",
           "preferences",
           "publicdashboard",
           "role",
@@ -2286,7 +2280,7 @@
           "timeseriespanelcfg",
           "trendpanelcfg"
         ],
-        "count": 14
+        "count": 13
       },
       "planned": {
         "name": "planned",
@@ -2319,6 +2313,7 @@
           "mysqldataquery",
           "mysqldatasourcecfg",
           "parcadatasourcecfg",
+          "playlist",
           "postgresqldataquery",
           "postgresqldatasourcecfg",
           "prometheusdatasourcecfg",
@@ -2335,7 +2330,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 43
+        "count": 44
       },
       "stable": {
         "name": "stable",

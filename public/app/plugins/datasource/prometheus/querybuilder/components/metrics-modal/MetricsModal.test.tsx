@@ -233,7 +233,6 @@ function createDatasource(withLabels?: boolean) {
       meta: {} as DataSourcePluginMeta,
     } as DataSourceInstanceSettings<PromOptions>,
     undefined,
-    undefined,
     languageProvider
   );
   return datasource;

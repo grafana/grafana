@@ -5,6 +5,7 @@ import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { NavModelItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 
 import { TestProvider } from '../../../../../test/helpers/TestProvider';
@@ -35,7 +36,7 @@ const setup = () => {
   ];
 
   const grafanaContext = getGrafanaContextMock();
-  grafanaContext.chrome.onToggleMegaMenu();
+  grafanaContext.chrome.setMegaMenu('open');
 
   return render(
     <TestProvider storeState={{ navBarTree }} grafanaContext={grafanaContext}>
@@ -53,7 +54,7 @@ describe('MegaMenu', () => {
   it('should render component', async () => {
     setup();
 
-    expect(await screen.findByTestId('navbarmenu')).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.components.NavMenu.Menu)).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
   });
 

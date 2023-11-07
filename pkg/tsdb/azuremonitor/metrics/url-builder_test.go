@@ -91,18 +91,56 @@ func TestURLBuilder(t *testing.T) {
 				url := ub.BuildMetricsURL()
 				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/providers/microsoft.insights/metrics", url)
 			})
+		})
+	})
+}
 
-			t.Run("when metric definition is Microsoft.Storage/storageAccounts/blobServices", func(t *testing.T) {
-				ub := &urlBuilder{
-					DefaultSubscription: strPtr("default-sub"),
-					ResourceGroup:       strPtr("rg"),
-					MetricNamespace:     strPtr("Microsoft.Storage/storageAccounts/blobServices"),
-					ResourceName:        strPtr("rn1"),
+func TestBuildResourceURI(t *testing.T) {
+	t.Run("AzureMonitor Resource URI Builder", func(t *testing.T) {
+		t.Run("when there is no resource uri", func(t *testing.T) {
+			ub := &urlBuilder{
+				DefaultSubscription: strPtr("default-sub"),
+				MetricDefinition:    strPtr("Microsoft.Web/serverFarms"),
+				ResourceGroup:       strPtr("rg"),
+				ResourceName:        strPtr("rn1"),
+			}
+
+			result, err := ub.buildResourceURI()
+			if err != nil {
+				return
+			}
+			url := *result
+			assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Web/serverFarms/rn1", url)
+		})
+
+		t.Run("when metric definition is Microsoft.Storage/storageAccounts/blobServices", func(t *testing.T) {
+			ub := &urlBuilder{
+				DefaultSubscription: strPtr("default-sub"),
+				ResourceGroup:       strPtr("rg"),
+				MetricNamespace:     strPtr("Microsoft.Storage/storageAccounts/blobServices"),
+				ResourceName:        strPtr("rn1"),
+			}
+
+			result, err := ub.buildResourceURI()
+			if err != nil {
+				return
+			}
+			url := *result
+			assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default", url)
+		})
+
+		t.Run("when metricDefinition or metricNamespace is not defined an error is thrown", func(t *testing.T) {
+			ub := &urlBuilder{}
+
+			_, err := ub.buildResourceURI()
+			if err == nil {
+				t.Errorf("Expected an error, but got nil")
+			} else {
+				expectedErrorMessage := "no metricNamespace or metricDefiniton value provided"
+				if err.Error() != expectedErrorMessage {
+					t.Errorf("Expected error message %s, but got %s", expectedErrorMessage, err.Error())
 				}
-
-				url := *ub.buildResourceURI()
-				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default", url)
-			})
+			}
 		})
 	})
 }

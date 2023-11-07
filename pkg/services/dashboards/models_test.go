@@ -66,7 +66,7 @@ func TestSaveDashboardCommand_GetDashboardModel(t *testing.T) {
 		json := simplejson.New()
 		json.Set("title", "test dash")
 
-		cmd := &SaveDashboardCommand{Dashboard: json, FolderID: 1}
+		cmd := &SaveDashboardCommand{Dashboard: json, FolderID: 1, FolderUID: "1"}
 		dash := cmd.GetDashboardModel()
 
 		assert.Equal(t, int64(1), dash.FolderID)
@@ -121,13 +121,13 @@ func TestResourceConversion(t *testing.T) {
 		  "resourceVersion": "10",
 		  "creationTimestamp": "2000-01-01T08:00:00Z",
 		  "annotations": {
-			"grafana.com/createdBy": "user:10",
-			"grafana.com/folder": "folder:1234",
-			"grafana.com/origin/key": "plugin-xyz",
-			"grafana.com/origin/name": "plugin",
-			"grafana.com/slug": "test-dash",
-			"grafana.com/updatedBy": "user:11",
-			"grafana.com/updatedTimestamp": "2010-01-01T08:00:00Z"
+			"grafana.app/createdBy": "user:10",
+			"grafana.app/folder": "folder:1234",
+			"grafana.app/originKey": "plugin-xyz",
+			"grafana.app/originName": "plugin",
+			"grafana.app/slug": "test-dash",
+			"grafana.app/updatedBy": "user:11",
+			"grafana.app/updatedTimestamp": "2010-01-01T08:00:00Z"
 		  }
 		},
 		"spec": {

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -119,10 +120,16 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) respon
 		cmd.Name = "Unnamed snapshot"
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError,
+			"Failed to create external snapshot", err)
+	}
+
 	var snapshotUrl string
 	cmd.ExternalURL = ""
 	cmd.OrgID = c.SignedInUser.GetOrgID()
-	cmd.UserID = c.UserID
+	cmd.UserID = userID
 	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Invalid app URL", err)

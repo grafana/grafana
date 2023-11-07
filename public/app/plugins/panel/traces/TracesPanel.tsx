@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 import { PanelProps } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
+import { SpanLinkFunc } from 'app/features/explore/TraceView/components';
 import { TopOfViewRefType } from 'app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 
@@ -15,7 +16,11 @@ const styles = {
   `,
 };
 
-export const TracesPanel = ({ data }: PanelProps) => {
+export interface TracesPanelOptions {
+  createSpanLink?: SpanLinkFunc;
+}
+
+export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) => {
   const topOfViewRef = createRef<HTMLDivElement>();
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const dataSource = useAsync(async () => {
@@ -41,6 +46,7 @@ export const TracesPanel = ({ data }: PanelProps) => {
         datasource={dataSource.value}
         topOfViewRef={topOfViewRef}
         topOfViewRefType={TopOfViewRefType.Panel}
+        createSpanLink={options.createSpanLink}
       />
     </div>
   );

@@ -38,15 +38,11 @@ docker run -d -p 3000:3000 --name=grafana grafana/grafana-enterprise
 
 Where:
 
-run = run directly from the command line
-
-`d` = run in the background
-
-`p` = assign the port number, which in this case is `3000`
-
-`name` = assign a logical name to the container, for example, `grafana`
-
-`grafana/grafana-enterprise` = the image to run in the container
+- [`docker run`](https://docs.docker.com/engine/reference/commandline/run/) is a Docker CLI command that runs a new container from an image
+- `-d` (`--detach`) runs the container in the background
+- `-p <host-port>:<container-port>` (`--publish`) publish a container's port(s) to the host, allowing you to reach the container's port via a host port. In this case, we can reach the container's port `3000` via the host's port `3000`
+- `--name` assign a logical name to the container (e.g. `grafana`). This allows you to refer to the container by name instead of by ID.
+- `grafana/grafana-enterprise` is the image to run
 
 ### Stop the Grafana container
 
@@ -68,24 +64,24 @@ docker stop grafana
 
 ### Save your Grafana data
 
-When you use Docker containers, their data is temporary by default. If you don't specify where to store the information, all the Grafana data will be lost when you stop the Docker container. To avoid losing your data, you can set up [persistent storage](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
+By default, Grafana uses an embedded SQLite version 3 database to store configuration, users, dashboards, and other data. When you run Docker images as containers, changes to these Grafana data are written to the filesystem within the container, which will only persist for as long as the container exists. If you stop and remove the container, any filesystem changes (i.e. the Grafana data) will be discarded. To avoid losing your data, you can set up persistent storage using [Docker volumes](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
 
 > **Note:** Though both methods are similar, there is a slight difference. If you want your storage to be fully managed by Docker and accessed only through Docker containers and the Docker CLI, you should choose to use persistent storage. However, if you need full control of the storage and want to allow other processes besides Docker to access or modify the storage layer, then bind mounts is the right choice for your environment.
 
-#### Use persistent storage (recommended)
+#### Use Docker volumes (recommended)
 
-It is recommended to have persistent storage because, without it, all data will be lost once the container is shut down. Use this method when you want the Docker service to manage the storage volume fully.
+Use Docker volumes when you want the Docker Engine to manage the storage volume.
 
-To use persistent storage, complete the following steps:
+To use Docker volumes for persistent storage, complete the following steps:
 
-1. Create a Grafana Docker volume `grafana-storage` by running the following commands:
+1. Create a Docker volume to be used by the Grafana container, giving it a descriptive name (e.g. `grafana-storage`). Run the following command:
 
    ```bash
    # create a persistent volume for your data
    docker volume create grafana-storage
 
    # verify that the volume was created correctly
-   # you should see a json output
+   # you should see some JSON output
    docker volume inspect grafana-storage
    ```
 
@@ -99,15 +95,15 @@ To use persistent storage, complete the following steps:
 
 #### Use bind mounts
 
-If you plan to use folders on your host for the database or configuration when running Grafana in Docker, you must start the container with a user with permission to access and write to the folder you map.
+If you plan to use directories on your host for the database or configuration when running Grafana in Docker, you must start the container with a user with permission to access and write to the directory you map.
 
 To use bind mounts, run the following command:
 
 ```bash
-# create a folder for your data
+# create a directory for your data
 mkdir data
 
-# start grafana with your user id and using the data folder
+# start grafana with your user id and using the data directory
 docker run -d -p 3000:3000 --name=grafana \
   --user "$(id -u)" \
   --volume "$PWD/data:/var/lib/grafana" \
@@ -158,7 +154,7 @@ To install plugins in the Docker container, complete the following steps:
 
    > **Note:** If you do not specify a version number, the latest version is used.
 
-1. To install a plugin from a custom URL, use the following convention to specify the URL: `<url to plugin zip>;<plugin install folder name>`.
+1. To install a plugin from a custom URL, use the following convention to specify the URL: `<url to plugin zip>;<plugin install directory name>`.
 
    For example:
 
@@ -170,7 +166,7 @@ To install plugins in the Docker container, complete the following steps:
 
 ## Example
 
-The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel) plugin installed.
+The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the `grafana-storage` docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel) plugin installed.
 
 ```bash
 # create a persistent volume for your data
@@ -212,7 +208,7 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
 
    ```bash
    # first go into the directory where you have created this docker-compose.yaml file
-   cd /path/to/docker-compose-folder
+   cd /path/to/docker-compose-directory
 
    # now create the docker-compose.yaml file
    touch docker-compose.yaml
@@ -260,19 +256,19 @@ docker compose down
 
 ### Save your Grafana data
 
-When you use Docker containers, their data is temporary by default. If you don't specify where to store the information, all the Grafana data will be lost when you stop the Docker container. To avoid losing your data, you can set up [persistent storage](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
+By default, Grafana uses an embedded SQLite version 3 database to store configuration, users, dashboards, and other data. When you run Docker images as containers, changes to these Grafana data are written to the filesystem within the container, which will only persist for as long as the container exists. If you stop and remove the container, any filesystem changes (i.e. the Grafana data) will be discarded. To avoid losing your data, you can set up persistent storage using [Docker volumes](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
 
-#### Use persistent storage (recommended)
+#### Use Docker volumes (recommended)
 
-It is recommended to have persistent storage because without it, all data will be lost once the container is shut down. Use this method when you want the Docker service to fully manage the storage volume.
+Use Docker volumes when you want the Docker Engine to manage the storage volume.
 
-Complete the following steps to use persistent storage.
+To use Docker volumes for persistent storage, complete the following steps:
 
 1. Create a `docker-compose.yaml` file
 
    ```bash
    # first go into the directory where you have created this docker-compose.yaml file
-   cd /path/to/docker-compose-folder
+   cd /path/to/docker-compose-directory
 
    # now create the docker-compose.yaml file
    touch docker-compose.yaml
@@ -290,9 +286,9 @@ Complete the following steps to use persistent storage.
        ports:
          - '3000:3000'
        volumes:
-         - grafana_data:/var/lib/grafana
+         - grafana-storage:/var/lib/grafana
    volumes:
-     grafana_data: {}
+     grafana-storage: {}
    ```
 
 1. Save the file and run the following command:
@@ -303,7 +299,7 @@ Complete the following steps to use persistent storage.
 
 #### Use bind mounts
 
-If you plan to use folders on your host for the database or configuration when running Grafana in Docker, you must start the container with a user that has the permission to access and write to the folder you map.
+If you plan to use directories on your host for the database or configuration when running Grafana in Docker, you must start the container with a user that has the permission to access and write to the directory you map.
 
 To use bind mounts, complete the following steps:
 
@@ -311,13 +307,13 @@ To use bind mounts, complete the following steps:
 
    ```bash
    # first go into the directory where you have created this docker-compose.yaml file
-   cd /path/to/docker-compose-folder
+   cd /path/to/docker-compose-directory
 
    # now create the docker-compose.yaml file
    touch docker-compose.yaml
    ```
 
-1. Create the folder where you will be mounting your data, in this case is `/data` e.g. in your current working directory:
+1. Create the directory where you will be mounting your data, in this case is `/data` e.g. in your current working directory:
 
    ```bash
    mkdir $PWD/data
@@ -350,7 +346,7 @@ To use bind mounts, complete the following steps:
 
 ### Example
 
-The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel) plugin installed.
+The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the `grafana-storage` docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel/) plugin installed.
 
 ```bash
 version: "3.8"

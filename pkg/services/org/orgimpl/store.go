@@ -46,14 +46,16 @@ type store interface {
 	RemoveOrgUser(context.Context, *org.RemoveOrgUserCommand) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
+	RegisterDelete(query string)
 }
 
 type sqlStore struct {
 	db      db.DB
 	dialect migrator.Dialect
 	//TODO: moved to service
-	log log.Logger
-	cfg *setting.Cfg
+	log     log.Logger
+	cfg     *setting.Cfg
+	deletes []string
 }
 
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
@@ -239,7 +241,15 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			"DELETE FROM alert WHERE org_id = ?",
 			"DELETE FROM annotation WHERE org_id = ?",
 			"DELETE FROM kv_store WHERE org_id = ?",
+			"DELETE FROM team WHERE org_id = ?",
+			"DELETE FROM team_member WHERE org_id = ?",
+			"DELETE FROM team_role WHERE org_id = ?",
+			"DELETE FROM user_role WHERE org_id = ?",
+			"DELETE FROM builtin_role WHERE org_id = ?",
 		}
+
+		// Add registered deletes
+		deletes = append(deletes, ss.deletes...)
 
 		for _, sql := range deletes {
 			_, err := sess.Exec(sql, cmd.ID)
@@ -821,4 +831,9 @@ func removeUserOrg(sess *db.Session, userID int64) error {
 
 	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
 	return err
+}
+
+// RegisterDelete registers a delete query to be executed when an org is deleted, used to delete enterprise data.
+func (ss *sqlStore) RegisterDelete(query string) {
+	ss.deletes = append(ss.deletes, query)
 }

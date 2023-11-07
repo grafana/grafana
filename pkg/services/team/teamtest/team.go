@@ -72,3 +72,6 @@ func (s *FakeService) GetUserTeamMemberships(ctx context.Context, orgID, userID 
 func (s *FakeService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	return s.ExpectedMembers, s.ExpectedError
 }
+
+func (s *FakeService) RegisterDelete(query string) {
+}

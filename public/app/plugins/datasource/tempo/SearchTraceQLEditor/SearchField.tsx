@@ -82,6 +82,11 @@ const SearchField = ({
     query,
   ]);
 
+  // Add selected option if it doesn't exist in the current list of options
+  if (filter.value && !Array.isArray(filter.value) && options && !options.find((o) => o.value === filter.value)) {
+    options.push({ label: filter.value.toString(), value: filter.value.toString(), type: filter.valueType });
+  }
+
   useEffect(() => {
     if (Array.isArray(filter.value) && filter.value.length > 1 && filter.operator !== '=~') {
       setPrevOperator(filter.operator);
