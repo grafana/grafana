@@ -31,7 +31,9 @@ function createDashboard(): DashboardDTO {
 }
 
 /**
- *
+ * Returns transformations for the logs table visualisation in explore.
+ * If the logs table supports a labels column, we need to extract the fields.
+ * Then we can set the columns to show in the table via the organize/includeByName transformation
  * @param panelType
  * @param options
  */
@@ -48,7 +50,7 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
       });
     }
 
-    // If we have columns defined, set them to show in the table via the organize/includeByName transformation
+    // Show the columns that the user selected in explore
     transformations.push({
       id: 'organize',
       options: {
