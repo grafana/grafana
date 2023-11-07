@@ -1,6 +1,6 @@
-import { DataSourceInstanceSettings, TimeRange } from '@grafana/data/src';
+import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime/src';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
 import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
