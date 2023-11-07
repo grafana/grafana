@@ -186,6 +186,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
 	dash.UpdateSlug()

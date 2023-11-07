@@ -833,7 +833,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
-		FolderID:  dash.FolderID,
+		FolderID:  dash.FolderID, // nolint:staticcheck
 		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,

@@ -128,7 +128,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Dashboard: simplejson.NewFromAny(map[string]any{
 							"title": "Dash",
 						}),
-						FolderID:  sc.otherSavedFolder.ID,
+						FolderID:  sc.otherSavedFolder.ID, // nolint:staticcheck
 						FolderUID: sc.otherSavedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
@@ -152,7 +152,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Dashboard: simplejson.NewFromAny(map[string]any{
 							"title": sc.savedDashInFolder.Title,
 						}),
-						FolderID:  sc.savedFolder.ID,
+						FolderID:  sc.savedFolder.ID, // nolint:staticcheck
 						FolderUID: sc.savedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
@@ -177,7 +177,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"uid":   sc.savedDashInFolder.UID,
 							"title": "New dash",
 						}),
-						FolderID:  sc.savedFolder.ID,
+						FolderID:  sc.savedFolder.ID, // nolint:staticcheck
 						FolderUID: sc.savedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
@@ -202,7 +202,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInGeneralFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.savedDashInGeneralFolder.FolderID,
+						FolderID:  sc.savedDashInGeneralFolder.FolderID, // nolint:staticcheck
 						FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 						UserID:    10000,
 						Overwrite: true,
@@ -227,7 +227,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.savedDashInFolder.FolderID,
+						FolderID:  sc.savedDashInFolder.FolderID, // nolint:staticcheck
 						FolderUID: sc.savedDashInFolder.FolderUID,
 						UserID:    10000,
 						Overwrite: true,
@@ -252,7 +252,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInGeneralFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.otherSavedFolder.ID,
+						FolderID:  sc.otherSavedFolder.ID, // nolint:staticcheck
 						FolderUID: sc.otherSavedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
@@ -277,7 +277,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  0,
+						FolderID:  0, // nolint:staticcheck
 						FolderUID: "",
 						UserID:    10000,
 						Overwrite: true,
@@ -302,7 +302,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"uid":   sc.savedDashInGeneralFolder.UID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.otherSavedFolder.ID,
+						FolderID:  sc.otherSavedFolder.ID, // nolint:staticcheck
 						FolderUID: sc.otherSavedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
@@ -327,7 +327,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"uid":   sc.savedDashInFolder.UID,
 							"title": "Dash",
 						}),
-						FolderID:  0,
+						FolderID:  0, // nolint:staticcheck
 						FolderUID: "",
 						UserID:    10000,
 						Overwrite: true,
@@ -359,7 +359,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderID:  0,
+							FolderID:  0, // nolint:staticcheck
 							FolderUID: "",
 							Overwrite: shouldOverwrite,
 						}
@@ -383,7 +383,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderID:  sc.savedFolder.ID,
+							FolderID:  sc.savedFolder.ID, // nolint:staticcheck
 							FolderUID: sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
@@ -475,7 +475,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Dashboard: simplejson.NewFromAny(map[string]any{
 								"title": "Expect error",
 							}),
-							FolderID:  123412321,
+							FolderID:  123412321, // nolint:staticcheck
 							FolderUID: "123412321",
 							Overwrite: shouldOverwrite,
 						}
@@ -492,7 +492,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    sc.savedDashInGeneralFolder.ID,
 								"title": "test dash 23",
 							}),
-							FolderID:  sc.savedFolder.ID,
+							FolderID:  sc.savedFolder.ID, // nolint:staticcheck
 							FolderUID: sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
@@ -510,7 +510,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title":   "Updated title",
 								"version": sc.savedDashInGeneralFolder.Version,
 							}),
-							FolderID:  sc.savedFolder.ID,
+							FolderID:  sc.savedFolder.ID, // nolint:staticcheck
 							FolderUID: sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
@@ -534,7 +534,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"uid":   sc.savedDashInFolder.UID,
 								"title": "test dash 23",
 							}),
-							FolderID:  0,
+							FolderID:  0, // nolint:staticcheck
 							FolderUID: "",
 							Overwrite: shouldOverwrite,
 						}
@@ -552,7 +552,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title":   "Updated title",
 								"version": sc.savedDashInFolder.Version,
 							}),
-							FolderID:  0,
+							FolderID:  0, // nolint:staticcheck
 							FolderUID: "",
 							Overwrite: shouldOverwrite,
 						}
@@ -575,7 +575,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderID:  sc.savedDashInFolder.FolderID,
+							FolderID:  sc.savedDashInFolder.FolderID, // nolint:staticcheck
 							FolderUID: sc.savedDashInFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
@@ -592,7 +592,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderID:  sc.savedDashInGeneralFolder.FolderID,
+							FolderID:  sc.savedDashInGeneralFolder.FolderID, // nolint:staticcheck
 							FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
@@ -629,7 +629,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    sc.savedDashInGeneralFolder.ID,
 								"title": "Updated title",
 							}),
-							FolderID:  sc.savedFolder.ID,
+							FolderID:  sc.savedFolder.ID, // nolint:staticcheck
 							FolderUID: sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
@@ -652,7 +652,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"uid":   sc.savedDashInFolder.UID,
 								"title": "Updated title",
 							}),
-							FolderID:  0,
+							FolderID:  0, // nolint:staticcheck
 							FolderUID: "",
 							Overwrite: shouldOverwrite,
 						}
@@ -715,7 +715,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderID:  sc.savedDashInFolder.FolderID,
+							FolderID:  sc.savedDashInFolder.FolderID, // nolint:staticcheck
 							FolderUID: sc.savedDashInFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
@@ -740,7 +740,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderID:  sc.savedDashInGeneralFolder.FolderID,
+							FolderID:  sc.savedDashInGeneralFolder.FolderID, // nolint:staticcheck
 							FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
@@ -993,7 +993,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, folder
 
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgID,
-		FolderID:  folderID,
+		FolderID:  folderID, // nolint:staticcheck
 		FolderUID: folderUID,
 		IsFolder:  false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -1038,7 +1038,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgID,
-		FolderID:  0,
+		FolderID:  0, // nolint:staticcheck
 		FolderUID: "",
 		IsFolder:  true,
 		Dashboard: simplejson.NewFromAny(map[string]any{

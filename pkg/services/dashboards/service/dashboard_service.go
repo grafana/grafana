@@ -193,7 +193,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
-		FolderID:  dash.FolderID,
+		FolderID:  dash.FolderID, // nolint:staticcheck
 		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
