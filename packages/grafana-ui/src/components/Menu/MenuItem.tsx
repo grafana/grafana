@@ -17,6 +17,8 @@ export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivEle
 export interface MenuItemProps<T = unknown> {
   /** Label of the menu item */
   label: string;
+  /** Description of item */
+  description?: string;
   /** Aria label for accessibility support */
   ariaLabel?: string;
   /** Aria checked for accessibility support */
@@ -57,6 +59,7 @@ export const MenuItem = React.memo(
       url,
       icon,
       label,
+      description,
       ariaLabel,
       ariaChecked,
       target,
@@ -159,10 +162,9 @@ export const MenuItem = React.memo(
         tabIndex={tabIndex}
         {...disabledProps}
       >
-        <>
+        <div>
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
           {label}
-
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
               <div className={styles.shortcut}>
@@ -181,7 +183,16 @@ export const MenuItem = React.memo(
               />
             )}
           </div>
-        </>
+        </div>
+        {description && (
+          <div
+            className={cx(styles.description, {
+              [styles.descriptionWithIcon]: icon !== undefined,
+            })}
+          >
+            {description}
+          </div>
+        )}
       </ItemElement>
     );
   })
@@ -197,13 +208,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       color: theme.colors.text.primary,
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'start',
       padding: theme.spacing(0.5, 2),
       minHeight: theme.spacing(4),
       margin: 0,
       border: 'none',
       width: '100%',
       position: 'relative',
+      flexDirection: 'column',
+      alignContent: 'flex-start',
+      flexWrap: 'wrap',
 
       '&:hover, &:focus, &:focus-visible': {
         background: theme.colors.action.hover,
@@ -212,6 +226,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:focus-visible': getFocusStyles(theme),
+
+      '>div': {
+        display: 'flex',
+        width: '100%',
+      },
     }),
     active: css({
       background: theme.colors.action.hover,
@@ -265,6 +284,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginLeft: theme.spacing(2),
       color: theme.colors.text.secondary,
       opacity: 0.7,
+    }),
+    description: css({
+      fontStyle: 'italic',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    descriptionWithIcon: css({
+      marginLeft: theme.spacing(3),
     }),
   };
 };
