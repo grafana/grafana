@@ -2269,7 +2269,7 @@ It can be useful to set this to `true` when troubleshooting.
 
 > **Note:** Available from grafana-image-renderer v3.9.0+
 
-Instruct headless browser instance whether to register metrics for the duration of every rendering step. Default is `false`.
+Instruct a headless browser instance on whether to record metrics for the duration of every rendering step. Default is `false`.
 
 It can be useful to set this to `true` when optimizing the rendering mode settings to improve the plugin performance or when troubleshooting.
 
