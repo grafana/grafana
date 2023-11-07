@@ -194,7 +194,9 @@ export const ServiceAccountPageUnconnected = ({
               tokenActionsDisabled={tokenActionsDisabled}
             />
           )}
-          {canReadPermissions && <ServiceAccountPermissions serviceAccount={serviceAccount} />}
+          {!serviceAccount.isExternal && canReadPermissions && (
+            <ServiceAccountPermissions serviceAccount={serviceAccount} />
+          )}
         </div>
 
         <ConfirmModal
