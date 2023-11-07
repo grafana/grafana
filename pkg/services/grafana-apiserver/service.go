@@ -307,6 +307,9 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		if g == nil || len(g.PrioritizedVersions) < 1 {
+			continue
+		}
 		err = server.InstallAPIGroup(g)
 		if err != nil {
 			return err

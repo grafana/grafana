@@ -3,8 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { dateTime, dateTimeFormat } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2, Stack } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { ContactPointsState, NotifiersState, ReceiversState, useDispatch } from 'app/types';
 
