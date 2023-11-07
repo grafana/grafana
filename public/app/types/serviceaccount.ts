@@ -34,6 +34,7 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
   avatarUrl?: string;
   createdAt: string;
   isDisabled: boolean;
+  isManaged?: boolean;
   teams: string[];
   role: OrgRole;
   roles?: Role[];
