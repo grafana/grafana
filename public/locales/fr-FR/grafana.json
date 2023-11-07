@@ -1090,6 +1090,7 @@
       "export": "Exporter",
       "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
+      "panel-embed": "Intégrer",
       "snapshot": "Instantané"
     },
     "theme-picker": {
