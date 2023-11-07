@@ -201,6 +201,10 @@ var (
 		Group:       "Settings",
 		Permissions: []Permission{
 			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsAuth,
+			},
+			{
 				Action: ActionSettingsWrite,
 				Scope:  ScopeSettingsAuth,
 			},

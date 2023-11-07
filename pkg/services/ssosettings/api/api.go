@@ -47,14 +47,14 @@ func (api *Api) RegisterAPIEndpoints() {
 			ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAuth),
 			ac.EvalPermission(ac.ActionSettingsWrite, settingsScope)))
 
-		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth)), routing.Wrap(api.GetSettingsForAllProviders))
+		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth)), routing.Wrap(api.ListAllProvidersSettings))
 		router.Get("/:key", auth(ac.EvalPermission(ac.ActionSettingsRead, settingsScope)), routing.Wrap(api.GetSettingsForProvider))
 		router.Put("/:key", reqWriteAccess, routing.Wrap(api.UpdateProviderSettings))
 		router.Delete("/:key", reqWriteAccess, routing.Wrap(api.RemoveProviderSettings))
 	})
 }
 
-func (api *Api) GetSettingsForAllProviders(c *contextmodel.ReqContext) response.Response {
+func (api *Api) ListAllProvidersSettings(c *contextmodel.ReqContext) response.Response {
 	providers, err := api.SSOSettingsService.List(c.Req.Context(), c.SignedInUser)
 	if err != nil {
 		return response.Error(500, "Failed to get providers", err)
