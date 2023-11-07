@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
@@ -78,6 +79,10 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
 func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
+
+	if s.cfg.GrafanaAppURL != "" {
+		m[backend.AppURL] = s.cfg.GrafanaAppURL
+	}
 
 	// TODO add support via plugin SDK
 	//if externalService != nil {

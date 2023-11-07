@@ -41,6 +41,10 @@ export const filterTitle = (f: TraceqlFilter) => {
   if (f.tag === 'name') {
     return 'Span Name';
   }
+  // Special case for the resource service name
+  if (f.tag === 'service.name' && f.scope === TraceqlSearchScope.Resource) {
+    return 'Service Name';
+  }
   return startCase(filterScopedTag(f));
 };
 
