@@ -123,3 +123,10 @@ func (session *Session) Nullable(columns ...string) *Session {
 	session.statement.Nullable(columns...)
 	return session
 }
+
+// NoAutoTime means do not automatically give created field and updated field
+// the current time on the current session temporarily
+func (session *Session) NoAutoTime() *Session {
+	session.statement.UseAutoTime = false
+	return session
+}

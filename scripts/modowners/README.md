@@ -47,7 +47,7 @@ Example output:
 @grafana/dataviz-squad 1
 @grafana/backend-platform 75
 @grafana/grafana-as-code 11
-@grafana/grafana-authnz-team 6
+@grafana/identity-access-team 6
 @grafana/partner-datasources 4
 ```
 
@@ -67,7 +67,7 @@ List all dependencies of given owner(s).
 
 Example CLI command to list all direct dependencies owned by Delivery and Authnz:
 
-`go run scripts/modowners/modowners.go modules -o @grafana/grafana-delivery,@grafana/grafana-authnz-team go.mod`
+`go run scripts/modowners/modowners.go modules -o @grafana/grafana-delivery,@grafana/identity-access-team go.mod`
 
 Example output:
 
