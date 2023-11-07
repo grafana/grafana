@@ -94,6 +94,7 @@ type resourcePermissionDTO struct {
 
 func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
+	mapPermission := c.QueryBoolWithDefault("map_permission", true)
 
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
@@ -110,36 +111,40 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
-		if permission := a.service.MapActions(p); permission != "" {
-			teamAvatarUrl := ""
-			if p.TeamId != 0 {
-				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)
-			}
-
-			dto = append(dto, resourcePermissionDTO{
-				ID:               p.ID,
-				RoleName:         p.RoleName,
-				UserID:           p.UserId,
-				UserLogin:        p.UserLogin,
-				UserAvatarUrl:    dtos.GetGravatarUrl(p.UserEmail),
-				Team:             p.Team,
-				TeamID:           p.TeamId,
-				TeamAvatarUrl:    teamAvatarUrl,
-				BuiltInRole:      p.BuiltInRole,
-				Actions:          p.Actions,
-				Permission:       permission,
-				IsManaged:        p.IsManaged,
-				IsInherited:      p.IsInherited,
-				IsServiceAccount: p.IsServiceAccount,
-			})
+		permission := a.service.MapActions(p)
+		if mapPermission && permission == "" {
+			continue
 		}
+
+		teamAvatarUrl := ""
+		if p.TeamId != 0 {
+			teamAvatarUrl = dtos.GetGravatarUrlWithDefault(p.TeamEmail, p.Team)
+		}
+
+		dto = append(dto, resourcePermissionDTO{
+			ID:               p.ID,
+			RoleName:         p.RoleName,
+			UserID:           p.UserId,
+			UserLogin:        p.UserLogin,
+			UserAvatarUrl:    dtos.GetGravatarUrl(p.UserEmail),
+			Team:             p.Team,
+			TeamID:           p.TeamId,
+			TeamAvatarUrl:    teamAvatarUrl,
+			BuiltInRole:      p.BuiltInRole,
+			Actions:          p.Actions,
+			Permission:       permission,
+			IsManaged:        p.IsManaged,
+			IsInherited:      p.IsInherited,
+			IsServiceAccount: p.IsServiceAccount,
+		})
 	}
 
 	return response.JSON(http.StatusOK, dto)
 }
 
 type setPermissionCommand struct {
-	Permission string `json:"permission"`
+	Permission string   `json:"permission"`
+	Actions    []string `json:"actions"`
 }
 
 type setPermissionsCommand struct {
@@ -158,7 +163,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetUserPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
+	_, err = a.service.SetUserPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission, cmd.Actions)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}
@@ -178,7 +183,7 @@ func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetTeamPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, resourceID, cmd.Permission)
+	_, err = a.service.SetTeamPermission(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, resourceID, cmd.Permission, cmd.Actions)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
 	}
@@ -195,7 +200,7 @@ func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.SignedInUser.GetOrgID(), builtInRole, resourceID, cmd.Permission)
+	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.SignedInUser.GetOrgID(), builtInRole, resourceID, cmd.Permission, cmd.Actions)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
 	}

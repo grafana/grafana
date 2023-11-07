@@ -114,15 +114,15 @@ func (f *FakePermissionsService) GetPermissions(ctx context.Context, user identi
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
-func (f *FakePermissionsService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (f *FakePermissionsService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
 	return f.ExpectedPermission, f.ExpectedErr
 }
 
-func (f *FakePermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (f *FakePermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
 	return f.ExpectedPermission, f.ExpectedErr
 }
 
-func (f *FakePermissionsService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*accesscontrol.ResourcePermission, error) {
+func (f *FakePermissionsService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
 	return f.ExpectedPermission, f.ExpectedErr
 }
 

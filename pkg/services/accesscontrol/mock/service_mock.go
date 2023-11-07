@@ -24,17 +24,17 @@ func (m *MockPermissionsService) GetPermissions(ctx context.Context, user identi
 	return mockedArgs.Get(0).([]accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }
 
-func (m *MockPermissionsService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (m *MockPermissionsService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
 	mockedArgs := m.Called(ctx, orgID, user, resourceID, permission)
 	return mockedArgs.Get(0).(*accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }
 
-func (m *MockPermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (m *MockPermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
 	mockedArgs := m.Called(ctx, orgID, teamID, resourceID, permission)
 	return mockedArgs.Get(0).(*accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }
 
-func (m *MockPermissionsService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (m *MockPermissionsService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
 	mockedArgs := m.Called(ctx, orgID, builtInRole, resourceID, permission)
 	return mockedArgs.Get(0).(*accesscontrol.ResourcePermission), mockedArgs.Error(1)
 }

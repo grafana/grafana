@@ -108,7 +108,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 
 		if _, err := api.permissionService.SetUserPermission(c.Req.Context(),
 			c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID},
-			strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+			strconv.FormatInt(serviceAccount.Id, 10), "Admin", nil); err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
 		}
 	}

@@ -700,7 +700,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 							expected.Alert.NamespaceUID = ""
 						}
 
-						keep := make(map[accesscontrol.SetResourcePermissionCommand]dashboardaccess.PermissionType)
+						keep := make(map[string]convertResourcePermsMapping)
 						for _, p := range rperms {
 							if permission := service.migrationStore.MapActions(p); permission != "" {
 								sp := accesscontrol.SetResourcePermissionCommand{
@@ -708,17 +708,25 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 									TeamID:      p.TeamId,
 									BuiltinRole: p.BuiltInRole,
 								}
-								pType := permissionMap[permission]
-								current, ok := keep[sp]
-								if !ok || pType > current {
-									keep[sp] = pType
+								spKey, err := createMapKey(&sp)
+								if err != nil {
+									require.NoError(t, err)
 								}
+								pType := permissionMap[permission]
+								current, ok := keep[spKey]
+								if !ok {
+									current = convertResourcePermsMapping{dashPermission: pType, cmd: sp}
+								}
+								if pType > current.dashPermission {
+									current.dashPermission = pType
+								}
+								keep[spKey] = current
 							}
 						}
 						perms := make([]accesscontrol.SetResourcePermissionCommand, 0, len(keep))
-						for p, pType := range keep {
-							p.Permission = pType.String()
-							perms = append(perms, p)
+						for _, keepItem := range keep {
+							keepItem.cmd.Permission = keepItem.dashPermission.String()
+							perms = append(perms, keepItem.cmd)
 						}
 
 						actual = append(actual, expectedAlertMigration{

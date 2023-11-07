@@ -138,10 +138,15 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 	})
 }
 
-func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID string, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
+	// TODO(aarongodin): change here
+	// validate actions passed in on command (reuse custom role validation logic?)
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
+	}
+	if len(customActions) > 0 {
+		actions = customActions
 	}
 
 	if err := s.validateResource(ctx, orgID, resourceID); err != nil {
@@ -161,10 +166,15 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	}, s.options.OnSetUser)
 }
 
-func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID string, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
+	// TODO(aarongodin): change here
+	// validate actions passed in on command (reuse custom role validation logic?)
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
+	}
+	if len(customActions) > 0 {
+		actions = customActions
 	}
 
 	if err := s.validateTeam(ctx, orgID, teamID); err != nil {
@@ -184,10 +194,15 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 	}, s.options.OnSetTeam)
 }
 
-func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole, resourceID string, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
+	// TODO(aarongodin): change here
+	// validate actions passed in on command (reuse custom role validation logic?)
 	actions, err := s.mapPermission(permission)
 	if err != nil {
 		return nil, err
+	}
+	if len(customActions) > 0 {
+		actions = customActions
 	}
 
 	if err := s.validateBuiltinRole(ctx, builtInRole); err != nil {
@@ -231,9 +246,14 @@ func (s *Service) SetPermissions(
 			}
 		}
 
+		// TODO(aarongodin): change here
+		// validate actions passed in on command (reuse custom role validation logic?)
 		actions, err := s.mapPermission(cmd.Permission)
 		if err != nil {
 			return nil, err
+		}
+		if len(cmd.Actions) > 0 {
+			actions = cmd.Actions
 		}
 
 		dbCommands = append(dbCommands, SetResourcePermissionsCommand{
@@ -257,6 +277,9 @@ func (s *Service) SetPermissions(
 	})
 }
 
+// MapActions returns the logical "Permission" (e.g. Access Level) that corresponds to a given set of a actions.
+// There is no guarantee of possible overlap between two access levels. The first Permission that contains
+// the set of actions will be
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
 	for _, p := range s.permissions {
 		if permission.Contains(s.options.PermissionsToActions[p]) {

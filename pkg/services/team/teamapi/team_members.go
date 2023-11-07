@@ -173,7 +173,7 @@ func (tapi *TeamAPI) removeTeamMember(c *contextmodel.ReqContext) response.Respo
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)
-	if _, err := tapi.teamPermissionsService.SetUserPermission(c.Req.Context(), orgId, accesscontrol.User{ID: userId}, teamIDString, ""); err != nil {
+	if _, err := tapi.teamPermissionsService.SetUserPermission(c.Req.Context(), orgId, accesscontrol.User{ID: userId}, teamIDString, "", nil); err != nil {
 		if errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(http.StatusNotFound, "Team not found", nil)
 		}
@@ -192,7 +192,7 @@ func (tapi *TeamAPI) removeTeamMember(c *contextmodel.ReqContext) response.Respo
 // Stubbable by tests.
 var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService accesscontrol.TeamPermissionsService, userID, orgID, teamID int64, permission string) error {
 	teamIDString := strconv.FormatInt(teamID, 10)
-	if _, err := resourcePermissionService.SetUserPermission(ctx, orgID, accesscontrol.User{ID: userID}, teamIDString, permission); err != nil {
+	if _, err := resourcePermissionService.SetUserPermission(ctx, orgID, accesscontrol.User{ID: userID}, teamIDString, permission, nil); err != nil {
 		return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
 	}
 	return nil

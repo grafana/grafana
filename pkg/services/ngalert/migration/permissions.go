@@ -3,7 +3,9 @@ package migration
 import (
 	"context"
 	"crypto"
+	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -51,6 +53,16 @@ var (
 		"Admin": dashboardaccess.PERMISSION_ADMIN,
 	}
 )
+
+func createMapKey(value any) (string, error) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return "", err
+	}
+	h := sha256.New()
+	h.Write(data)
+	return string(h.Sum(nil)), nil
+}
 
 // getMigrationUser returns a background user for the given orgID with permissions to execute migration-related tasks.
 func getMigrationUser(orgID int64) identity.Requester {
@@ -179,6 +191,11 @@ func isBasic(roleName string) bool {
 	return strings.HasPrefix(roleName, accesscontrol.BasicRolePrefix)
 }
 
+type convertResourcePermsMapping struct {
+	dashPermission dashboardaccess.PermissionType
+	cmd            accesscontrol.SetResourcePermissionCommand
+}
+
 // convertResourcePerms converts the given resource permissions (from a dashboard or folder) to a set of unique, sorted SetResourcePermissionCommands.
 // This is done by iterating over the managed, basic, and inherited resource permissions and adding the highest permission for each orgrole/user/team.
 //
@@ -206,7 +223,7 @@ func isBasic(roleName string) bool {
 // For now, we choose the simpler approach of handling managed and basic roles. Fixed and custom roles will not
 // be taken into account, but we will log a warning if they had the potential to override the folder permissions.
 func (om *OrgMigration) convertResourcePerms(rperms []accesscontrol.ResourcePermission) ([]accesscontrol.SetResourcePermissionCommand, []accesscontrol.ResourcePermission) {
-	keep := make(map[accesscontrol.SetResourcePermissionCommand]dashboardaccess.PermissionType)
+	keep := make(map[string]convertResourcePermsMapping)
 	unusedPerms := make([]accesscontrol.ResourcePermission, 0)
 	for _, p := range rperms {
 		if p.IsManaged || p.IsInherited || isBasic(p.RoleName) {
@@ -216,13 +233,18 @@ func (om *OrgMigration) convertResourcePerms(rperms []accesscontrol.ResourcePerm
 					TeamID:      p.TeamId,
 					BuiltinRole: p.BuiltInRole,
 				}
+				spKey, _ := createMapKey(&sp)
 				// We could have redundant perms, ex: if one is inherited from the parent folder, or we have basic roles from enterprise.
 				// We use the highest permission available.
 				pType := permissionMap[permission]
-				current, ok := keep[sp]
-				if !ok || pType > current {
-					keep[sp] = pType
+				current, ok := keep[spKey]
+				if !ok {
+					current = convertResourcePermsMapping{dashPermission: pType, cmd: sp}
 				}
+				if pType > current.dashPermission {
+					current.dashPermission = pType
+				}
+				keep[spKey] = current
 			}
 		} else {
 			// Keep track of unused perms, so we can later log a warning if they had the potential to override the folder permissions.
@@ -231,9 +253,9 @@ func (om *OrgMigration) convertResourcePerms(rperms []accesscontrol.ResourcePerm
 	}
 
 	permissions := make([]accesscontrol.SetResourcePermissionCommand, 0, len(keep))
-	for p, pType := range keep {
-		p.Permission = pType.String()
-		permissions = append(permissions, p)
+	for _, keepItem := range keep {
+		keepItem.cmd.Permission = keepItem.dashPermission.String()
+		permissions = append(permissions, keepItem.cmd)
 	}
 
 	// Stable sort since we will be creating a hash of this to compare dashboard perms to folder perms.

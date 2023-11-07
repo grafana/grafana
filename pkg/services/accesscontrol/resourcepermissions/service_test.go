@@ -66,7 +66,7 @@ func TestService_SetUserPermission(t *testing.T) {
 				}
 			}
 
-			_, err = service.SetUserPermission(context.Background(), user.OrgID, accesscontrol.User{ID: user.ID}, "1", "")
+			_, err = service.SetUserPermission(context.Background(), user.OrgID, accesscontrol.User{ID: user.ID}, "1", "", nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})
@@ -110,7 +110,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 				}
 			}
 
-			_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, "1", "")
+			_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, "1", "", nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})
@@ -150,7 +150,7 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 				}
 			}
 
-			_, err := service.SetBuiltInRolePermission(context.Background(), 1, "Viewer", "1", "")
+			_, err := service.SetBuiltInRolePermission(context.Background(), 1, "Viewer", "1", "", nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})

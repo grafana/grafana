@@ -266,15 +266,15 @@ func (e DatasourcePermissionsService) GetPermissions(ctx context.Context, user i
 	return nil, nil
 }
 
-func (e DatasourcePermissionsService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (e DatasourcePermissionsService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
 	return nil, nil
 }
 
-func (e DatasourcePermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
+func (e DatasourcePermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
 	return nil, nil
 }
 
-func (e DatasourcePermissionsService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*accesscontrol.ResourcePermission, error) {
+func (e DatasourcePermissionsService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
 	return nil, nil
 }
 

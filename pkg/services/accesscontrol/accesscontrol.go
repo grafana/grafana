@@ -60,7 +60,7 @@ type SearchOptions struct {
 
 type TeamPermissionsService interface {
 	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
-	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string, customActions []string) (*ResourcePermission, error)
 }
 
 type FolderPermissionsService interface {
@@ -79,15 +79,16 @@ type ServiceAccountPermissionsService interface {
 	PermissionsService
 }
 
+// TODO(aarongodin): this would need to change when I change the matching stucts
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
 	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
-	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string, customActions []string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
-	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string) (*ResourcePermission, error)
+	SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string, customActions []string) (*ResourcePermission, error)
 	// SetBuiltInRolePermission sets permission on resource for a built-in role (Admin, Editor, Viewer)
-	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*ResourcePermission, error)
+	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string, customActions []string) (*ResourcePermission, error)
 	// SetPermissions sets several permissions on resource for either built-in role, team or user
 	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
 	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.

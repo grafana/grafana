@@ -25,6 +25,7 @@ type store struct {
 	features featuremgmt.FeatureToggles
 }
 
+// flatResourcePermission implements scanning for a SQL results row from a SELECT query on the permissions table (and related tables).
 type flatResourcePermission struct {
 	ID               int64 `xorm:"id"`
 	RoleName         string
@@ -42,14 +43,9 @@ type flatResourcePermission struct {
 	Updated          time.Time
 }
 
-func (p *flatResourcePermission) IsManaged(scope string) bool {
-	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope == scope
-}
-
-// IsInherited returns true for scopes from managed permissions that don't directly match the required scope
-// (ie, managed permissions on a parent resource)
-func (p *flatResourcePermission) IsInherited(scope string) bool {
-	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope != scope
+// IsManaged checks whether this resource permission is a permission managed by Grafana itself.
+func (p *flatResourcePermission) IsManaged() bool {
+	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix)
 }
 
 type DeleteResourcePermissionsCmd struct {
@@ -214,6 +210,7 @@ func (s *store) SetResourcePermissions(
 			} else if cmd.TeamID != 0 {
 				p, err = s.setTeamResourcePermission(sess, orgID, cmd.TeamID, cmd.SetResourcePermissionCommand, hooks.Team)
 			} else if org.RoleType(cmd.BuiltinRole).IsValid() || cmd.BuiltinRole == accesscontrol.RoleGrafanaAdmin {
+				// TODO(aarongodin): can we remove the above validation?
 				p, err = s.setBuiltInResourcePermission(sess, orgID, cmd.BuiltinRole, cmd.SetResourcePermissionCommand, hooks.BuiltInRole)
 			}
 			if err != nil {
@@ -275,12 +272,12 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	permission := flatPermissionsToResourcePermission(scope, permissions)
-	if permission == nil {
+	if len(permissions) == 0 {
 		return &accesscontrol.ResourcePermission{}, nil
 	}
 
-	return permission, nil
+	permission := flatPermissionsToResourcePermission(scope, permissions)
+	return &permission, nil
 }
 
 func (s *store) GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
@@ -300,6 +297,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 		return nil, nil
 	}
 
+	// TODO(aarongodin): john madden
 	rawSelect := `
 	SELECT
 		p.*,
@@ -459,43 +457,47 @@ func groupPermissionsByAssignment(permissions []flatResourcePermission) (map[int
 }
 
 func flatPermissionsToResourcePermissions(scope string, permissions []flatResourcePermission) []accesscontrol.ResourcePermission {
+	// create new slices of DB rows to contain three kinds of permissions.
 	var managed, inherited, provisioned []flatResourcePermission
+
 	for _, p := range permissions {
-		if p.IsManaged(scope) {
-			managed = append(managed, p)
-		} else if p.IsInherited(scope) {
-			inherited = append(inherited, p)
+		if p.IsManaged() {
+			if p.Scope == scope {
+				inherited = append(inherited, p)
+			} else {
+				managed = append(managed, p)
+			}
 		} else {
 			provisioned = append(provisioned, p)
 		}
 	}
 
 	var result []accesscontrol.ResourcePermission
-	if g := flatPermissionsToResourcePermission(scope, managed); g != nil {
-		result = append(result, *g)
+	if len(managed) > 0 {
+		result = append(result, flatPermissionsToResourcePermission(scope, managed))
 	}
-	if g := flatPermissionsToResourcePermission(scope, inherited); g != nil {
-		result = append(result, *g)
+	if len(inherited) > 0 {
+		result = append(result, flatPermissionsToResourcePermission(scope, inherited))
 	}
-	if g := flatPermissionsToResourcePermission(scope, provisioned); g != nil {
-		result = append(result, *g)
+	if len(provisioned) > 0 {
+		result = append(result, flatPermissionsToResourcePermission(scope, provisioned))
 	}
 
 	return result
 }
 
-func flatPermissionsToResourcePermission(scope string, permissions []flatResourcePermission) *accesscontrol.ResourcePermission {
-	if len(permissions) == 0 {
-		return nil
-	}
-
+// flatPermissionsToResourcePermission consolidates a set of permission records from the DB into a single domain entity.
+// Conceptually this groups the set of raw permissions into their related role, though this guarantee is only made
+// through related code that provisions role permissions.
+func flatPermissionsToResourcePermission(scope string, permissions []flatResourcePermission) accesscontrol.ResourcePermission {
+	// collect permission actions into a new set for the domain entity.
 	actions := make([]string, 0, len(permissions))
 	for _, p := range permissions {
 		actions = append(actions, p.Action)
 	}
 
 	first := permissions[0]
-	return &accesscontrol.ResourcePermission{
+	return accesscontrol.ResourcePermission{
 		ID:               first.ID,
 		RoleName:         first.RoleName,
 		Actions:          actions,
@@ -509,8 +511,8 @@ func flatPermissionsToResourcePermission(scope string, permissions []flatResourc
 		BuiltInRole:      first.BuiltInRole,
 		Created:          first.Created,
 		Updated:          first.Updated,
-		IsManaged:        first.IsManaged(scope),
-		IsInherited:      first.IsInherited(scope),
+		IsManaged:        first.IsManaged(),
+		IsInherited:      first.IsManaged() && first.Scope == scope,
 		IsServiceAccount: first.IsServiceAccount,
 	}
 }

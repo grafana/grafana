@@ -169,7 +169,7 @@ func TestApi_getPermissions(t *testing.T) {
 
 			seedPermissions(t, tt.resourceID, sql, service)
 
-			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
+			permissions, recorder := getPermissions(t, server, testOptions.Resource, tt.resourceID)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
@@ -248,7 +248,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				permissions, _ := getPermission(t, server, testOptions.Resource, tt.resourceID)
+				permissions, _ := getPermissions(t, server, testOptions.Resource, tt.resourceID)
 				require.Len(t, permissions, 1)
 				assert.Equal(t, tt.permission, permissions[0].Permission)
 				assert.Equal(t, tt.builtInRole, permissions[0].BuiltInRole)
@@ -331,7 +331,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 			if tt.expectedStatus == http.StatusOK {
-				permissions, _ := getPermission(t, server, testOptions.Resource, tt.resourceID)
+				permissions, _ := getPermissions(t, server, testOptions.Resource, tt.resourceID)
 				require.Len(t, permissions, 1)
 				assert.Equal(t, tt.permission, permissions[0].Permission)
 				assert.Equal(t, tt.teamID, permissions[0].TeamID)
@@ -421,7 +421,7 @@ func TestApi_setUserPermission(t *testing.T) {
 
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 			if tt.expectedStatus == http.StatusOK {
-				permissions, _ := getPermission(t, server, testOptions.Resource, tt.resourceID)
+				permissions, _ := getPermissions(t, server, testOptions.Resource, tt.resourceID)
 				require.Len(t, permissions, 1)
 				assert.Equal(t, tt.permission, permissions[0].Permission)
 				assert.Equal(t, tt.userID, permissions[0].UserID)
@@ -470,7 +470,7 @@ var testOptions = Options{
 	},
 }
 
-func getPermission(t *testing.T, server *web.Mux, resource, resourceID string) ([]resourcePermissionDTO, *httptest.ResponseRecorder) {
+func getPermissions(t *testing.T, server *web.Mux, resource, resourceID string) ([]resourcePermissionDTO, *httptest.ResponseRecorder) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/%s", resource, resourceID), nil)
 	require.NoError(t, err)
 	recorder := httptest.NewRecorder()
@@ -513,7 +513,7 @@ func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, se
 	teamSvc := teamimpl.ProvideService(sql, sql.Cfg)
 	team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
 	require.NoError(t, err)
-	_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, resourceID, "Edit")
+	_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, resourceID, "Edit", nil)
 	require.NoError(t, err)
 	// seed user 1 with "View" permission on dashboard 1
 	orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
@@ -522,9 +522,9 @@ func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, se
 	require.NoError(t, err)
 	u, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 	require.NoError(t, err)
-	_, err = service.SetUserPermission(context.Background(), u.OrgID, accesscontrol.User{ID: u.ID}, resourceID, "View")
+	_, err = service.SetUserPermission(context.Background(), u.OrgID, accesscontrol.User{ID: u.ID}, resourceID, "View", nil)
 	require.NoError(t, err)
 	// seed built in role Admin with "Edit" permission on dashboard 1
-	_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", resourceID, "Edit")
+	_, err = service.SetBuiltInRolePermission(context.Background(), 1, "Admin", resourceID, "Edit", nil)
 	require.NoError(t, err)
 }
