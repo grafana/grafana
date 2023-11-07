@@ -863,12 +863,12 @@
     },
     "megamenu": {
       "close": "Cľőşę męŉū",
-      "dock": "Đőčĸ męŉū",
-      "undock": "Ůŉđőčĸ męŉū"
+      "dock": "Đőčĸ męŉū"
     },
     "toolbar": {
+      "close-menu": "Cľőşę męŉū",
       "enable-kiosk": "Ēŉäþľę ĸįőşĸ mőđę",
-      "toggle-menu": "Ŧőģģľę męŉū",
+      "open-menu": "Øpęŉ męŉū",
       "toggle-search-bar": "Ŧőģģľę ŧőp şęäřčĥ þäř"
     }
   },
@@ -882,7 +882,6 @@
   "panel": {
     "header-menu": {
       "copy": "Cőpy",
-      "create-alert": "Cřęäŧę äľęřŧ",
       "create-library-panel": "Cřęäŧę ľįþřäřy päŉęľ",
       "duplicate": "Đūpľįčäŧę",
       "edit": "Ēđįŧ",
@@ -893,6 +892,7 @@
       "inspect-data": "Đäŧä",
       "inspect-json": "Päŉęľ ĴŜØŃ",
       "more": "Mőřę...",
+      "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
       "query": "Qūęřy",
       "remove": "Ŗęmővę",
       "share": "Ŝĥäřę",
@@ -1044,7 +1044,6 @@
       "cancel-button": "Cäŉčęľ",
       "info-text": "Ēχpőřŧ ŧĥįş đäşĥþőäřđ.",
       "save-button": "Ŝävę ŧő ƒįľę",
-      "share-default-label": "Ēχpőřŧ ŵįŧĥ đęƒäūľŧ väľūęş řęmővęđ",
       "share-externally-label": "Ēχpőřŧ ƒőř şĥäřįŉģ ęχŧęřŉäľľy",
       "view-button": "Vįęŵ ĴŜØŃ"
     },
@@ -1091,6 +1090,7 @@
       "export": "Ēχpőřŧ",
       "library-panel": "Ŀįþřäřy päŉęľ",
       "link": "Ŀįŉĸ",
+      "panel-embed": "Ēmþęđ",
       "snapshot": "Ŝŉäpşĥőŧ"
     },
     "theme-picker": {
