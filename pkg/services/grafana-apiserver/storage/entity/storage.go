@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
@@ -83,7 +84,12 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	fmt.Printf("k8s CREATE: %#v\n\n%#v\n\n%#v\n\n", key, obj, out)
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+	}
+
+	fmt.Printf("k8s CREATE: %#v\n\n%#v\n\n%#v\n\n%#v\n\n", key, obj, out, requestInfo)
 
 	if err := s.Versioner().PrepareObjectForStorage(obj); err != nil {
 		return err
@@ -107,7 +113,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		metaAccessor.SetGenerateName("")
 	}
 
-	e, err := resourceToEntity(key, obj)
+	e, err := resourceToEntity(key, obj, requestInfo)
 	if err != nil {
 		return err
 	}
@@ -155,7 +161,7 @@ func (s *Storage) Delete(
 		return apierrors.NewInternalError(err)
 	}
 
-	grn, err := keyToGRN(key, out.GetObjectKind().GroupVersionKind().Kind)
+	grn, err := keyToGRN(key)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -244,7 +250,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return apierrors.NewInternalError(err)
 	}
 
-	k := key // s.newFunc().GetObjectKind()
+	k := key
 
 	fmt.Printf("kind: %#v\n", k)
 
@@ -258,7 +264,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	rsp, err := s.store.Search(ctx, &entityStore.EntitySearchRequest{
-		// Kind:     []string{s.newFunc().GetObjectKind().GroupVersionKind().Kind},
 		Key:      []string{k},
 		WithBody: true,
 	})
@@ -342,6 +347,11 @@ func (s *Storage) guaranteedUpdate(
 		return err
 	}
 
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+	}
+
 	err = s.Get(ctx, key, storage.GetOptions{}, destination)
 	if err != nil {
 		return err
@@ -359,15 +369,15 @@ func (s *Storage) guaranteedUpdate(
 			}
 		}
 
-		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object of type=%s, key=%s, err=%s", destination.GetObjectKind(), key, err.Error()))
+		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object. key=%s, err=%s", key, err.Error()))
 	}
 
-	e, err := resourceToEntity(key, updatedObj)
+	e, err := resourceToEntity(key, updatedObj, requestInfo)
 	if err != nil {
 		return err
 	}
 
-	e.GRN.ResourceKind = destination.GetObjectKind().GroupVersionKind().Kind
+	// e.GRN.ResourceKind = destination.GetObjectKind().GroupVersionKind().Kind
 
 	previousVersion := ""
 	if preconditions != nil && preconditions.ResourceVersion != nil {
