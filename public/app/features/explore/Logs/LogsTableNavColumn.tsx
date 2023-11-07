@@ -80,10 +80,10 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
     }
 
     // Finally sort by percent enabled, this could have conflicts with the special fields above, except they are always on 100% of logs
-    if (labels[a].percentOfLinesWithLabel > labels[b].percentOfLinesWithLabel) {
+    if (a < b) {
       return -1;
     }
-    if (labels[a].percentOfLinesWithLabel < labels[b].percentOfLinesWithLabel) {
+    if (a > b) {
       return 1;
     }
 

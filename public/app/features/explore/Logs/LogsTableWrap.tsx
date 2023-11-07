@@ -105,7 +105,7 @@ export function LogsTableWrap(props: Props) {
     }
     const numberOfLogLines = dataFrame ? dataFrame.length : 0;
     const logsFrame = parseLogsFrame(dataFrame);
-    const labels = logsFrame?.getAttributesAsLabels();
+    const labels = logsFrame?.getLogFrameLabelsAsLabels();
 
     const otherFields = [];
 

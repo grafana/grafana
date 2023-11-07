@@ -13,28 +13,29 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
+	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/playlist"
+	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GroupName is the group name for this API.
 const GroupName = "playlist.grafana.app"
-const VersionID = runtime.APIVersionInternal
+const VersionID = "v0alpha1"
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
-	service    playlist.Service
+	service    playlistsvc.Service
 	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
 }
 
-func RegisterAPIService(p playlist.Service,
+func RegisterAPIService(p playlistsvc.Service,
 	apiregistration grafanaapiserver.APIRegistrar,
 	cfg *setting.Cfg,
 ) *PlaylistAPIBuilder {
@@ -53,10 +54,27 @@ func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(b.gv,
-		&Playlist{},
-		&PlaylistList{},
+		&playlist.Playlist{},
+		&playlist.PlaylistList{},
 	)
-	return nil
+
+	// Link this version to the internal representation.
+	// This is used for server-side-apply (PATCH), and avoids the error:
+	//   "no kind is registered for the type"
+	scheme.AddKnownTypes(schema.GroupVersion{
+		Group:   b.gv.Group,
+		Version: runtime.APIVersionInternal,
+	},
+		&playlist.Playlist{},
+		&playlist.PlaylistList{},
+	)
+
+	// If multiple versions exist, then register conversions from zz_generated.conversion.go
+	// if err := playlist.RegisterConversions(scheme); err != nil {
+	//   return err
+	// }
+	metav1.AddToGroupVersion(scheme, b.gv)
+	return scheme.SetVersionPriority(b.gv)
 }
 
 func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
@@ -82,7 +100,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			{Name: "Created At", Type: "date"},
 		},
 		func(obj runtime.Object) ([]interface{}, error) {
-			m, ok := obj.(*Playlist)
+			m, ok := obj.(*playlist.Playlist)
 			if !ok {
 				return nil, fmt.Errorf("expected playlist")
 			}
@@ -105,12 +123,12 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap["v0alpha1"] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return nil // no custom OpenAPI definitions
+	return playlist.GetOpenAPIDefinitions
 }
 
 func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {

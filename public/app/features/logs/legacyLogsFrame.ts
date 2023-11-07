@@ -68,8 +68,8 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
     timeNanosecondField,
     severityField,
     idField,
-    getAttributes: getL,
-    getAttributesAsLabels: getL,
+    getLogFrameLabels: getL,
+    getLogFrameLabelsAsLabels: getL,
     extraFields,
   };
 }
