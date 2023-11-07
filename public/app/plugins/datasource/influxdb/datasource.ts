@@ -171,7 +171,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return true;
   }
 
-  applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery {
+  applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery & SQLQuery {
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars || {};
 

@@ -32,7 +32,7 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
         id: influxDatasource.id,
 
         jsonData: {
-          // Not applicable to flightSQL? @itsmylife
+          // TODO Clean this
           allowCleartextPasswords: false,
           tlsAuth: false,
           tlsAuthWithCACert: false,
