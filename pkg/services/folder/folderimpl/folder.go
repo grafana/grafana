@@ -132,7 +132,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	var dashFolder *folder.Folder
 	var err error
 	switch {
-	case cmd.UID != nil:
+	case cmd.UID != nil && *cmd.UID != "":
 		dashFolder, err = s.getFolderByUID(ctx, cmd.OrgID, *cmd.UID)
 		if err != nil {
 			return nil, err

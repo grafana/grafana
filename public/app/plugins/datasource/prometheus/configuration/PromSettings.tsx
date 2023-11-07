@@ -309,7 +309,7 @@ export const PromSettings = (props: Props) => {
                   <>
                     Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing
                     this field will save your current settings, and attempt to detect the version. Certain types of
-                    Prometheus support or do not support various APIs. For example, some types support regex matching
+                    Prometheus supports or does not support various APIs. For example, some types support regex matching
                     for label queries to improve performance. Some types have an API for metadata. If you set this
                     incorrectly you may experience odd behavior when querying metrics and labels. Please check your
                     Prometheus documentation to ensure you enter the correct type. {docsTip()}
@@ -459,7 +459,7 @@ export const PromSettings = (props: Props) => {
               <InlineField
                 label="Disable recording rules (beta)"
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
-                tooltip={<>This feature will disable recording rules Turn this on to improve dashboard performance</>}
+                tooltip={<>This feature will disable recording rules. Turn this on to improve dashboard performance</>}
                 interactive={true}
                 className={styles.switchField}
                 disabled={options.readOnly}
@@ -549,11 +549,11 @@ export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement
     return '';
   }
 
-  if (eventItem.hasOwnProperty('currentTarget')) {
+  if ('currentTarget' in eventItem) {
     return eventItem.currentTarget.value;
   }
 
-  return (eventItem as SelectableValue<string>).value;
+  return eventItem.value;
 };
 
 const onChangeHandler =

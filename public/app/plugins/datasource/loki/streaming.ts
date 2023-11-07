@@ -45,7 +45,7 @@ export function doLokiChannelStream(
   let frame: StreamingDataFrame | undefined = undefined;
   const updateFrame = (msg: any) => {
     if (msg?.message) {
-      const p = msg.message as DataFrameJSON;
+      const p: DataFrameJSON = msg.message;
       if (!frame) {
         frame = StreamingDataFrame.fromDataFrameJSON(p, {
           maxLength,

@@ -294,17 +294,8 @@ func (am *Alertmanager) Ready() bool {
 	return am.ready
 }
 
-func (am *Alertmanager) FileStore() *notifier.FileStore {
-	return &notifier.FileStore{}
-}
-
-func (am *Alertmanager) OrgID() int64 {
-	return am.orgID
-}
-
-func (am *Alertmanager) ConfigHash() [16]byte {
-	return [16]byte{}
-}
+// We don't have files on disk, no-op.
+func (am *Alertmanager) CleanUp() {}
 
 type roundTripper struct {
 	tenantID          string

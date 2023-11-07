@@ -3,19 +3,20 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import {
-  Button,
-  ConfirmModal,
-  Icon,
-  Tooltip,
-  CellProps,
-  Tag,
-  InteractiveTable,
-  Column,
-  FetchDataFunc,
-  Pagination,
   Avatar,
+  Box,
+  Button,
+  CellProps,
+  Column,
+  ConfirmModal,
+  FetchDataFunc,
+  Icon,
+  InteractiveTable,
+  Pagination,
+  Stack,
+  Tag,
+  Tooltip,
 } from '@grafana/ui';
-import { Flex, Stack, Box } from '@grafana/ui/src/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -24,8 +25,6 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
-
-import { TableWrapper } from './TableWrapper';
 
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
@@ -56,6 +55,7 @@ export interface Props {
   changePage: (page: number) => void;
   page: number;
   totalPages: number;
+  rolesLoading?: boolean;
 }
 
 export const OrgUsersTable = ({
@@ -67,6 +67,7 @@ export const OrgUsersTable = ({
   changePage,
   page,
   totalPages,
+  rolesLoading,
 }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
@@ -126,6 +127,8 @@ export const OrgUsersTable = ({
           return contextSrv.licensedAccessControlEnabled() ? (
             <UserRolePicker
               userId={original.userId}
+              roles={original.roles || []}
+              isLoading={rolesLoading}
               orgId={orgId}
               roleOptions={roleOptions}
               basicRole={value}
@@ -210,22 +213,15 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [orgId, roleOptions, onRoleChange]
+    [rolesLoading, orgId, roleOptions, onRoleChange]
   );
 
   return (
     <Stack gap={2} data-testid={selectors.container}>
-      <TableWrapper>
-        <InteractiveTable
-          columns={columns}
-          data={users}
-          getRowId={(user) => String(user.userId)}
-          fetchData={fetchData}
-        />
-        <Flex justifyContent="flex-end">
-          <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
-        </Flex>
-      </TableWrapper>
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} fetchData={fetchData} />
+      <Stack justifyContent="flex-end">
+        <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
+      </Stack>
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}
