@@ -271,10 +271,93 @@ func TestFinder_Find(t *testing.T) {
 	}
 }
 
+func TestFinder_getAbsPluginJSONPaths_PluginClass(t *testing.T) {
+	t.Run("Plugin class can dictate what plugin.json path is resolved", func(t *testing.T) {
+		dir, err := filepath.Abs("../../testdata/pluginWithDist")
+		require.NoError(t, err)
+
+		tcs := []struct {
+			name     string
+			class    plugins.Class
+			expected []string
+		}{
+			{
+				name:  "Top-level plugin.json is preferred for Core plugin source",
+				class: plugins.ClassCore,
+				expected: []string{
+					filepath.Join(dir, "test-datasource/plugin.json"),
+				},
+			},
+			{
+				name:  "Top-level plugin.json is preferred for Bundled plugin source",
+				class: plugins.ClassBundled,
+				expected: []string{
+					filepath.Join(dir, "test-datasource/plugin.json"),
+				},
+			},
+			{
+				name:  "dist/plugin.json is preferred for External plugin source",
+				class: plugins.ClassExternal,
+				expected: []string{
+					filepath.Join(dir, "test-datasource/dist/plugin.json"),
+				},
+			},
+		}
+		for _, tc := range tcs {
+			pluginBundles, err := NewLocalFinder(false).getAbsPluginJSONPaths(dir, tc.class)
+			require.NoError(t, err)
+
+			sort.Strings(pluginBundles)
+			require.Equal(t, tc.expected, pluginBundles)
+		}
+	})
+
+	t.Run("When a dist folder exists as a direct child of the plugins path, it will be resolved", func(t *testing.T) {
+		dir, err := filepath.Abs("../../testdata/pluginRootWithDist")
+		require.NoError(t, err)
+
+		tcs := []struct {
+			name     string
+			class    plugins.Class
+			expected []string
+		}{
+			{
+				name:  "Root dist folder plugin will be excluded for Core plugins",
+				class: plugins.ClassCore,
+				expected: []string{
+					filepath.Join(dir, "test-datasource/plugin.json"),
+				},
+			},
+			{
+				name:  "Root dist folder plugin will be excluded for Bundled plugins",
+				class: plugins.ClassBundled,
+				expected: []string{
+					filepath.Join(dir, "test-datasource/plugin.json"),
+				},
+			},
+			{
+				name:  "Root dist folder plugin will be included for External plugins",
+				class: plugins.ClassExternal,
+				expected: []string{
+					filepath.Join(dir, "dist/plugin.json"),
+					filepath.Join(dir, "test-datasource/dist/plugin.json"),
+				},
+			},
+		}
+		for _, tc := range tcs {
+			pluginBundles, err := NewLocalFinder(false).getAbsPluginJSONPaths(dir, tc.class)
+			require.NoError(t, err)
+
+			sort.Strings(pluginBundles)
+			require.Equal(t, tc.expected, pluginBundles)
+		}
+	})
+}
+
 func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 	t.Run("When scanning a folder that doesn't exists shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, os.ErrNotExist)
 		}
 		t.Cleanup(func() {
@@ -282,14 +365,14 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		})
 
 		finder := NewLocalFinder(false)
-		paths, err := finder.getAbsPluginJSONPaths("test", true)
+		paths, err := finder.getAbsPluginJSONPaths("test", plugins.ClassCore)
 		require.NoError(t, err)
 		require.Empty(t, paths)
 	})
 
 	t.Run("When scanning a folder that lacks permission shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, os.ErrPermission)
 		}
 		t.Cleanup(func() {
@@ -297,14 +380,14 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		})
 
 		finder := NewLocalFinder(false)
-		paths, err := finder.getAbsPluginJSONPaths("test", true)
+		paths, err := finder.getAbsPluginJSONPaths("test", plugins.ClassExternal)
 		require.NoError(t, err)
 		require.Empty(t, paths)
 	})
 
 	t.Run("When scanning a folder that returns a non-handled error should return that error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, errors.New("random error"))
 		}
 		t.Cleanup(func() {
@@ -312,26 +395,8 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		})
 
 		finder := NewLocalFinder(false)
-		paths, err := finder.getAbsPluginJSONPaths("test", true)
+		paths, err := finder.getAbsPluginJSONPaths("test", plugins.ClassBundled)
 		require.Error(t, err)
-		require.Empty(t, paths)
-	})
-
-	t.Run("should forward if the dist folder should be evaluated", func(t *testing.T) {
-		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
-			if followDistFolder {
-				return walkFn(path, nil, errors.New("unexpected followDistFolder"))
-			}
-			return walkFn(path, nil, filepath.SkipDir)
-		}
-		t.Cleanup(func() {
-			walk = origWalk
-		})
-
-		finder := NewLocalFinder(false)
-		paths, err := finder.getAbsPluginJSONPaths("test", false)
-		require.ErrorIs(t, err, filepath.SkipDir)
 		require.Empty(t, paths)
 	})
 }

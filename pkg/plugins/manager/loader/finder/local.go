@@ -57,11 +57,7 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 			continue
 		}
 
-		followDistFolder := true
-		if src.PluginClass(ctx) == plugins.ClassCore {
-			followDistFolder = false
-		}
-		paths, err := l.getAbsPluginJSONPaths(path, followDistFolder)
+		paths, err := l.getAbsPluginJSONPaths(path, src.PluginClass(ctx))
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +154,7 @@ func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) 
 	return plugin, nil
 }
 
-func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]string, error) {
+func (l *Local) getAbsPluginJSONPaths(path string, class plugins.Class) ([]string, error) {
 	pluginJSONPaths := map[string]struct{}{}
 
 	var err error
@@ -167,7 +163,12 @@ func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]str
 		return []string{}, err
 	}
 
-	if err = walk(path, true, true, followDistFolder,
+	followDistFolder := true
+	if class == plugins.ClassCore || class == plugins.ClassBundled {
+		followDistFolder = false
+	}
+
+	if err = walk(path, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
@@ -182,15 +183,14 @@ func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]str
 				return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 			}
 
-			if fi.Name() == "node_modules" {
+			switch {
+			case fi.Name() == "node_modules":
 				return util.ErrWalkSkipDir
-			}
-
-			if fi.IsDir() {
+			case fi.Name() == "dist" && !followDistFolder:
+				return util.ErrWalkSkipDir
+			case fi.IsDir():
 				return nil
-			}
-
-			if fi.Name() != "plugin.json" {
+			case fi.Name() != "plugin.json":
 				return nil
 			}
 
@@ -200,14 +200,16 @@ func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]str
 		return []string{}, err
 	}
 
-	// If we found a plugin path with a dist directory, we want to ignore the plugin.json path found
-	// in the parent folder if it exists.
-	// For example, if we found a plugin.json in /path/to/plugin/dist/plugin.json, we want to ignore
-	// the path /path/to/plugin/plugin.json.
-	for pluginJSONPath := range pluginJSONPaths {
-		pluginDir := filepath.Dir(pluginJSONPath)
-		if filepath.Base(pluginDir) == "dist" {
-			delete(pluginJSONPaths, filepath.Join(filepath.Dir(pluginDir), "plugin.json"))
+	// For external plugins, if we found a plugin directory that contains a "dist" directory, we want to ignore the
+	// plugin.json file found in the parent folder if it exists.
+	// For example, if we found encountered /path/to/plugin/dist/plugin.json, we want to ignore the path
+	// /path/to/plugin/plugin.json in order to prioritize the built version and avoid loading the plugin twice.
+	if class == plugins.ClassExternal {
+		for pluginJSONPath := range pluginJSONPaths {
+			pluginDir := filepath.Dir(pluginJSONPath)
+			if filepath.Base(pluginDir) == "dist" {
+				delete(pluginJSONPaths, filepath.Join(filepath.Dir(pluginDir), "plugin.json"))
+			}
 		}
 	}
 
