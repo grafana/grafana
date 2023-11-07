@@ -318,7 +318,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 
 	cmd := &dashboards.GetDashboardQuery{
 		Title:    &folderName,
-		FolderID: util.Pointer(int64(0)),
+		FolderID: util.Pointer(int64(0)), // nolint:staticcheck
 		OrgID:    cfg.OrgID,
 	}
 	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
