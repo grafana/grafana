@@ -3,8 +3,7 @@ import { debounce, uniqueId } from 'lodash';
 import React, { FormEvent, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Field, Icon, Input, Label, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { parseMatchers } from '../../utils/alertmanager';
