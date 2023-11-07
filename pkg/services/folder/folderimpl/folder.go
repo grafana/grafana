@@ -26,16 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const SharedFolderUID = "sharedwithme"
-
-var SharedWithMeFolder folder.Folder = folder.Folder{
-	Title:       "Shared with me",
-	Description: "Dashboards and folders shared with me",
-	UID:         SharedFolderUID,
-	ParentUID:   "",
-	ID:          -1,
-}
-
 type Service struct {
 	store                store
 	db                   db.DB
@@ -125,10 +115,6 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if cmd.UID != nil && *cmd.UID == SharedFolderUID {
-		return &SharedWithMeFolder, nil
-	}
-
 	var dashFolder *folder.Folder
 	var err error
 	switch {
@@ -196,10 +182,6 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if cmd.UID == SharedFolderUID {
-		return s.GetSharedWithMe(ctx, cmd)
-	}
-
 	if cmd.UID != "" {
 		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
 		if err != nil {
@@ -263,14 +245,10 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		}
 	}
 
-	if len(filtered) < len(children) {
-		// add "shared with me" folder
-		filtered = append(filtered, &SharedWithMeFolder)
-	}
-
 	return filtered, nil
 }
 
+// GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
 func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
 	if err != nil {
