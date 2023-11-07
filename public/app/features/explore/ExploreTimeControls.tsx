@@ -74,9 +74,7 @@ export class ExploreTimeControls extends Component<Props> {
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
     } = this.props;
-    const timeSyncButton = splitted ? (
-      <TimeSyncButton onClick={onChangeTimeSync} isSynced={splitted && syncedTimes} />
-    ) : undefined;
+    const timeSyncButton = splitted ? <TimeSyncButton onClick={onChangeTimeSync} isSynced={syncedTimes} /> : undefined;
     const timePickerCommonProps = {
       value: range,
       timeZone,
@@ -92,7 +90,7 @@ export class ExploreTimeControls extends Component<Props> {
         isOnCanvas
         {...timePickerCommonProps}
         timeSyncButton={timeSyncButton}
-        isSynced={splitted && syncedTimes}
+        isSynced={syncedTimes}
         widthOverride={splitted ? window.innerWidth / 2 : undefined}
         onChange={this.onChangeTimePicker}
         onChangeTimeZone={onChangeTimeZone}

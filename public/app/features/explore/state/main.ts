@@ -87,6 +87,7 @@ export const splitOpen = createAsyncThunk(
         eventBridge: new EventBusSrv(),
       })
     );
+    await dispatch(syncTimesAction({ syncedTimes: true }));
   },
   {
     idGenerator: generateExploreId,
@@ -147,7 +148,7 @@ export const navigateToExplore = (
  */
 const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
-  syncedTimes: true,
+  syncedTimes: false,
   panes: {},
   correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
   richHistoryStorageFull: false,
@@ -171,7 +172,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       largerExploreId: undefined,
       maxedExploreId: undefined,
       evenSplitPanes: true,
-      syncedTimes: true,
+      syncedTimes: false,
     };
   }
 
