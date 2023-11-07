@@ -280,7 +280,7 @@ func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
 			return tracesdk.NeverSample(), nil
 		}
 
-		return nil, fmt.Errorf("invalid param for const Sampler - must be 0 or 1: %f", ots.SamplerParam)
+		return nil, fmt.Errorf("invalid param for const sampler - must be 0 or 1: %f", ots.SamplerParam)
 	case "probabilistic":
 		return tracesdk.TraceIDRatioBased(ots.SamplerParam), nil
 	case "rateLimiting":
@@ -291,7 +291,7 @@ func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
 			jaegerremote.WithInitialSampler(tracesdk.TraceIDRatioBased(ots.SamplerParam)),
 		), nil
 	default:
-		return nil, fmt.Errorf("invalid Sampler type: %s", ots.Sampler)
+		return nil, fmt.Errorf("invalid sampler type: %s", ots.Sampler)
 	}
 }
 
