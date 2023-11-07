@@ -1,6 +1,5 @@
-import { config } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { backendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 // Used in the snapshot list
@@ -19,9 +18,13 @@ export interface DashboardSnapshotSrv {
 }
 
 const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
-  getSnapshots: () => backendSrv.get<Snapshot[]>('/api/dashboard/snapshots'),
-  deleteSnapshot: (key: string) => backendSrv.delete('/api/snapshots/' + key),
-  getSnapshot: (key: string) => backendSrv.get<DashboardDTO>('/api/snapshots/' + key),
+  getSnapshots: () => getBackendSrv().get<Snapshot[]>('/api/dashboard/snapshots'),
+  deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
+  getSnapshot: async (key: string) => {
+    const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
+    dto.meta.canShare = false;
+    return dto;
+  },
 };
 
 interface K8sMetadata {
