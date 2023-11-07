@@ -35,7 +35,7 @@ import { ScatterHoverEvent, ScatterSeries } from './types';
 type Props = PanelProps<Options>;
 const TOOLTIP_OFFSET = 10;
 
-export const XYChartPanel2 = (props: Props) => {
+export const XYChartPanel = (props: Props) => {
   const [error, setError] = useState<string | undefined>();
   const [series, setSeries] = useState<ScatterSeries[]>([]);
   const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
@@ -186,11 +186,11 @@ export const XYChartPanel2 = (props: Props) => {
     }
 
     const legendStyle = {
-      flexStart: css`
-        div {
-          justify-content: flex-start !important;
-        }
-      `,
+      flexStart: css({
+        div: {
+          justifyContent: 'flex-start !important',
+        },
+      }),
     };
 
     return (
