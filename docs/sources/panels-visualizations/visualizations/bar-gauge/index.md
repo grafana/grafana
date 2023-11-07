@@ -105,9 +105,9 @@ Automatically show y-axis scrollbar when there is a large amount of data.
 
 ### Max height
 
-Limit the maximum height of the bar row in the horizontal direction.
+Limit the maximum height of the bar row when the gauge is oriented horizontally.
 
-Automatically show y-axis scrollbar when there is a large amount of data.
+Automatically show y-axis scrollbar when there's a large amount of data.
 
 {{% docs/reference %}}
 [Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
