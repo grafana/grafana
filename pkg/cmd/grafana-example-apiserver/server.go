@@ -84,7 +84,10 @@ func (o ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, err
 	o.RecommendedOptions.CoreAPI = nil
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
-	o.RecommendedOptions.ApplyTo(serverConfig)
+
+	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
+		return nil, err
+	}
 
 	return serverConfig, nil
 }
