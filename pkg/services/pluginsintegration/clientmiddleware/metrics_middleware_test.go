@@ -156,10 +156,12 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagPluginsInstrumentationStatusSource)
 	metricsMw := newMetricsMiddleware(promRegistry, pluginsRegistry, features)
 	cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(
+		NewPluginRequestMetaMiddleware(),
 		plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 			metricsMw.next = next
 			return metricsMw
 		}),
+		NewStatusSourceMiddleware(),
 	))
 
 	t.Run("Metrics", func(t *testing.T) {

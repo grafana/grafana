@@ -94,7 +94,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with library panels inside and outside of rows, it should connect all",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.CreateLibraryElementCommand{
-				FolderID: sc.initialResult.Result.FolderID,
+				FolderID: sc.initialResult.Result.FolderID, // nolint:staticcheck
 				Name:     "Outside row",
 				Model: []byte(`
 			{
@@ -233,7 +233,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with unused/removed library panels, it should disconnect unused/removed library panels",
 		func(t *testing.T, sc scenarioContext) {
 			unused, err := sc.elementService.CreateElement(sc.ctx, sc.user, model.CreateLibraryElementCommand{
-				FolderID: sc.folder.ID,
+				FolderID: sc.folder.ID, // nolint:staticcheck
 				Name:     "Unused Libray Panel",
 				Model: []byte(`
 			{
@@ -638,7 +638,7 @@ func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement 
 	return libraryElement{
 		ID:          res.ID,
 		OrgID:       res.OrgID,
-		FolderID:    res.FolderID,
+		FolderID:    res.FolderID, // nolint:staticcheck
 		UID:         res.UID,
 		Name:        res.Name,
 		Type:        res.Type,
@@ -762,7 +762,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := model.CreateLibraryElementCommand{
-			FolderID: sc.folder.ID,
+			FolderID: sc.folder.ID, // nolint:staticcheck
 			Name:     "Text - Library Panel",
 			Model: []byte(`
 			{
@@ -785,7 +785,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			Result: libraryPanel{
 				ID:          resp.ID,
 				OrgID:       resp.OrgID,
-				FolderID:    resp.FolderID,
+				FolderID:    resp.FolderID, // nolint:staticcheck
 				UID:         resp.UID,
 				Name:        resp.Name,
 				Type:        resp.Type,

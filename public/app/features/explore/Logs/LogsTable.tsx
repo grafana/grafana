@@ -5,8 +5,10 @@ import {
   applyFieldOverrides,
   CustomTransformOperator,
   DataFrame,
+  DataFrameType,
   DataTransformerConfig,
   Field,
+  FieldType,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -25,7 +27,7 @@ import { getFieldLinksForExplore } from '../utils/links';
 import { fieldNameMeta } from './LogsTableWrap';
 
 interface Props {
-  logsFrames?: DataFrame[];
+  logsFrames: DataFrame[];
   width: number;
   timeZone: string;
   splitOpen: SplitOpen;
@@ -35,7 +37,6 @@ interface Props {
   height: number;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
-  datasourceType?: string;
 }
 
 export function LogsTable(props: Props) {
@@ -47,6 +48,9 @@ export function LogsTable(props: Props) {
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
+      if (!frame.length) {
+        return frame;
+      }
       // Parse the dataframe to a logFrame
       const logsFrame = parseLogsFrame(frame);
       const timeIndex = logsFrame?.timeField.index;
@@ -106,10 +110,8 @@ export function LogsTable(props: Props) {
       let dataFrame = logFrameRaw;
 
       // create extract JSON transformation for every field that is `json.RawMessage`
-      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFieldsAndExclude(
-        dataFrame,
-        props.datasourceType
-      );
+      const transformations: Array<DataTransformerConfig | CustomTransformOperator> =
+        extractFieldsAndExclude(dataFrame);
 
       // remove hidden fields
       transformations.push(...removeHiddenFields(dataFrame));
@@ -130,23 +132,24 @@ export function LogsTable(props: Props) {
       }
     };
     prepare();
-  }, [columnsWithMeta, logFrameRaw, logsSortOrder, props.datasourceType, prepareTableFrame]);
+  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame]);
 
   if (!tableFrame) {
     return null;
   }
 
   const onCellFilterAdded = (filter: AdHocFilterItem) => {
-    if (!props.onClickFilterLabel || !props.onClickFilterOutLabel) {
+    const { value, key, operator } = filter;
+    const { onClickFilterLabel, onClickFilterOutLabel } = props;
+    if (!onClickFilterLabel || !onClickFilterOutLabel) {
       return;
     }
-    const { value, key, operator } = filter;
     if (operator === FILTER_FOR_OPERATOR) {
-      props.onClickFilterLabel(key, value);
+      onClickFilterLabel(key, value);
     }
 
     if (operator === FILTER_OUT_OPERATOR) {
-      props.onClickFilterOutLabel(key, value);
+      onClickFilterOutLabel(key, value);
     }
   };
 
@@ -154,7 +157,7 @@ export function LogsTable(props: Props) {
     <Table
       data={tableFrame}
       width={width}
-      onCellFilterAdded={onCellFilterAdded}
+      onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
     />
@@ -178,10 +181,16 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
 
 // TODO: explore if `logsFrame.ts` can help us with getting the right fields
 // TODO Why is typeInfo not defined on the Field interface?
-function extractFieldsAndExclude(dataFrame: DataFrame, datasourceType?: string) {
+function extractFieldsAndExclude(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      return field.typeInfo?.frame === 'json.RawMessage' && datasourceType === 'loki';
+      const isFieldLokiLabels =
+        field.typeInfo?.frame === 'json.RawMessage' &&
+        field.name === 'labels' &&
+        dataFrame?.meta?.type !== DataFrameType.LogLines;
+      const isFieldDataplaneLabels =
+        field.name === 'labels' && field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines;
+      return isFieldLokiLabels || isFieldDataplaneLabels;
     })
     .flatMap((field: Field) => {
       return [
@@ -235,7 +244,7 @@ function buildLabelFilters(columnsWithMeta: Record<string, fieldNameMeta>, logsF
 
   // We could be getting fresh data
   const uniqueLabels = new Set<string>();
-  const logFrameLabels = logsFrame?.getAttributesAsLabels();
+  const logFrameLabels = logsFrame?.getLogFrameLabelsAsLabels();
 
   // Populate the set with all labels from latest dataframe
   logFrameLabels?.forEach((labels) => {

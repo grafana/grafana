@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import memoizeOne from 'memoize-one';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import {
@@ -11,15 +10,16 @@ import {
   LogsSortOrder,
   SplitOpen,
   TimeRange,
-} from '@grafana/data/src';
-import { Themeable2 } from '@grafana/ui/src';
+} from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
+import { Themeable2 } from '@grafana/ui/';
 
-import { fuzzySearch } from '../../../plugins/datasource/prometheus/querybuilder/components/metrics-modal/uFuzzy';
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsColumnSearch } from './LogsColumnSearch';
 import { LogsTable } from './LogsTable';
 import { LogsTableMultiSelect } from './LogsTableMultiSelect';
+import { fuzzySearch } from './utils/uFuzzy';
 
 interface Props extends Themeable2 {
   logsFrames: DataFrame[];
@@ -32,10 +32,13 @@ interface Props extends Themeable2 {
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
-  datasourceType?: string;
 }
 
-export type fieldNameMeta = { percentOfLinesWithLabel: number; active: boolean | undefined };
+export type fieldNameMeta = {
+  percentOfLinesWithLabel: number;
+  active: boolean | undefined;
+  type?: 'BODY_FIELD' | 'TIME_FIELD';
+};
 type fieldName = string;
 type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
@@ -47,6 +50,7 @@ export function LogsTableWrap(props: Props) {
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
+  const height = getTableHeight();
   const dataFrame = logsFrames[0];
 
   const getColumnsFromProps = useCallback(
@@ -95,13 +99,27 @@ export function LogsTableWrap(props: Props) {
    *
    */
   useEffect(() => {
+    // If the data frame is empty, there's nothing to viz, it could mean the user has unselected all columns
+    if (!dataFrame.length) {
+      return;
+    }
     const numberOfLogLines = dataFrame ? dataFrame.length : 0;
     const logsFrame = parseLogsFrame(dataFrame);
-    const labels = logsFrame?.getAttributesAsLabels();
+    const labels = logsFrame?.getLogFrameLabelsAsLabels();
 
-    const otherFields = logsFrame ? logsFrame.extraFields : [];
+    const otherFields = [];
+
+    if (logsFrame) {
+      otherFields.push(...logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden));
+    }
     if (logsFrame?.severityField) {
       otherFields.push(logsFrame?.severityField);
+    }
+    if (logsFrame?.bodyField) {
+      otherFields.push(logsFrame?.bodyField);
+    }
+    if (logsFrame?.timeField) {
+      otherFields.push(logsFrame?.timeField);
     }
 
     // Use a map to dedupe labels and count their occurrences in the logs
@@ -139,7 +157,7 @@ export function LogsTableWrap(props: Props) {
       // Convert count to percent of log lines
       Object.keys(pendingLabelState).forEach((key) => {
         pendingLabelState[key].percentOfLinesWithLabel = normalize(
-          pendingLabelState[key].percentOfLinesWithLabel ?? 0,
+          pendingLabelState[key].percentOfLinesWithLabel,
           numberOfLogLines
         );
       });
@@ -148,12 +166,33 @@ export function LogsTableWrap(props: Props) {
     // Normalize the other fields
     otherFields.forEach((field) => {
       pendingLabelState[field.name] = {
-        percentOfLinesWithLabel: normalize(field.values.filter((value) => value).length, numberOfLogLines),
+        percentOfLinesWithLabel: normalize(
+          field.values.filter((value) => value !== null && value !== undefined).length,
+          numberOfLogLines
+        ),
         active: pendingLabelState[field.name]?.active,
       };
     });
 
     pendingLabelState = getColumnsFromProps(pendingLabelState);
+
+    // Get all active columns
+    const active = Object.keys(pendingLabelState).filter((key) => pendingLabelState[key].active);
+
+    // If nothing is selected, then select the default columns
+    if (active.length === 0) {
+      if (logsFrame?.bodyField?.name) {
+        pendingLabelState[logsFrame.bodyField.name].active = true;
+      }
+      if (logsFrame?.timeField?.name) {
+        pendingLabelState[logsFrame.timeField.name].active = true;
+      }
+    }
+
+    if (logsFrame?.bodyField?.name && logsFrame?.timeField?.name) {
+      pendingLabelState[logsFrame.bodyField.name].type = 'BODY_FIELD';
+      pendingLabelState[logsFrame.timeField.name].type = 'TIME_FIELD';
+    }
 
     setColumnsWithMeta(pendingLabelState);
 
@@ -164,16 +203,39 @@ export function LogsTableWrap(props: Props) {
     return null;
   }
 
+  function columnFilterEvent(columnName: string) {
+    if (columnsWithMeta) {
+      const newState = !columnsWithMeta[columnName]?.active;
+      const priorActiveCount = Object.keys(columnsWithMeta).filter((column) => columnsWithMeta[column]?.active)?.length;
+      const event = {
+        columnAction: newState ? 'add' : 'remove',
+        columnCount: newState ? priorActiveCount + 1 : priorActiveCount - 1,
+      };
+
+      reportInteraction('grafana_explore_logs_table_column_filter_clicked', event);
+    }
+  }
+
+  function searchFilterEvent(searchResultCount: number) {
+    reportInteraction('grafana_explore_logs_table_text_search_result_count', {
+      resultCount: searchResultCount,
+    });
+  }
+
   // Toggle a column on or off when the user interacts with an element in the multi-select sidebar
   const toggleColumn = (columnName: fieldName) => {
     if (!columnsWithMeta || !(columnName in columnsWithMeta)) {
       console.warn('failed to get column', columnsWithMeta);
       return;
     }
+
     const pendingLabelState = {
       ...columnsWithMeta,
       [columnName]: { ...columnsWithMeta[columnName], active: !columnsWithMeta[columnName]?.active },
     };
+
+    // Analytics
+    columnFilterEvent(columnName);
 
     // Set local state
     setColumnsWithMeta(pendingLabelState);
@@ -208,12 +270,15 @@ export function LogsTableWrap(props: Props) {
   const dispatcher = (data: string[][]) => {
     const matches = data[0];
     let newColumnsWithMeta: fieldNameMetaStore = {};
+    let numberOfResults = 0;
     matches.forEach((match) => {
       if (match in columnsWithMeta) {
         newColumnsWithMeta[match] = columnsWithMeta[match];
+        numberOfResults++;
       }
     });
     setFilteredColumnsWithMeta(newColumnsWithMeta);
+    searchFilterEvent(numberOfResults);
   };
 
   // uFuzzy search
@@ -235,7 +300,6 @@ export function LogsTableWrap(props: Props) {
     }
   };
 
-  const height = getTableHeight(logsFrames);
   const sidebarWidth = 220;
   const totalWidth = props.width;
   const tableWidth = totalWidth - sidebarWidth;
@@ -262,22 +326,13 @@ export function LogsTableWrap(props: Props) {
         logsFrames={logsFrames}
         columnsWithMeta={columnsWithMeta}
         height={height}
-        datasourceType={props.datasourceType}
       />
     </div>
   );
 }
 
-const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
-  const largestFrameLength = dataFrames?.reduce((length, frame) => {
-    return frame.length > length ? frame.length : length;
-  }, 0);
-  // from TableContainer.tsx
-  return Math.min(600, Math.max(largestFrameLength ?? 0, 300) + 40 + 46);
-});
-
 const normalize = (value: number, total: number): number => {
-  return Math.floor((100 * value) / total);
+  return Math.ceil((100 * value) / total);
 };
 
 function getStyles(theme: GrafanaTheme2, height: number, width: number) {
@@ -297,3 +352,11 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
     checkbox: css({}),
   };
 }
+
+const getTableHeight = () => {
+  // Instead of making the height of the table based on the content (like in the table panel itself), let's try to use the vertical space that is available.
+  // Since this table is in explore, we can expect the user to be running multiple queries that return disparate numbers of rows and labels in the same session
+  // Also changing the height of the table between queries can be and cause content to jump, so we'll set a minimum height of 500px, and a max based on the innerHeight
+  // Ideally the table container should always be able to fit in the users viewport without needing to scroll
+  return Math.max(window.innerHeight - 500, 500);
+};

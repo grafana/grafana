@@ -7,7 +7,6 @@ import { useLocation } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { isFetchError } from '@grafana/runtime';
 import {
   Alert,
@@ -21,6 +20,7 @@ import {
   Tab,
   TabsBar,
   useStyles2,
+  Stack,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -203,7 +203,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                           </Field>
                           <div className={styles.buttons}>
                             {loading && (
-                              <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                              <Button disabled={true} icon="spinner" variant="primary">
                                 Saving...
                               </Button>
                             )}

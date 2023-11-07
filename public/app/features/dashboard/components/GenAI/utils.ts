@@ -1,7 +1,8 @@
+import { llms } from '@grafana/experimental';
+
 import { DashboardModel, PanelModel } from '../../state';
 
 import { getDashboardStringDiff } from './jsonDiffText';
-import { openai } from './llms';
 
 export enum Role {
   // System content cannot be overwritten by user prompts.
@@ -11,7 +12,7 @@ export enum Role {
   'user' = 'user',
 }
 
-export type Message = openai.Message;
+export type Message = llms.openai.Message;
 
 export enum QuickFeedbackType {
   Shorter = 'Even shorter',
@@ -22,7 +23,9 @@ export enum QuickFeedbackType {
 /**
  * The OpenAI model to be used.
  */
-export const OPEN_AI_MODEL = 'gpt-4';
+export const DEFAULT_OAI_MODEL = 'gpt-4';
+
+export type OAI_MODEL = 'gpt-4' | 'gpt-4-32k' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k';
 
 /**
  * Sanitize the reply from OpenAI by removing the leading and trailing quotes.
@@ -53,14 +56,29 @@ export function getDashboardChanges(dashboard: DashboardModel): {
 }
 
 /**
- * Check if the LLM plugin is enabled and configured.
- * @returns true if the LLM plugin is enabled and configured.
+ * Check if the LLM plugin is enabled.
+ * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled() {
-  // Check if the LLM plugin is enabled and configured.
+  // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
-  return await openai.enabled();
+  return llms.openai.enabled().then((response) => response.ok);
 }
+
+/**
+ * Get the message to be sent to OpenAI to generate a new response.
+ * @param previousResponse
+ * @param feedback
+ * @returns Message[] to be sent to OpenAI to generate a new response
+ */
+export const getFeedbackMessage = (previousResponse: string, feedback: string | QuickFeedbackType): Message[] => {
+  return [
+    {
+      role: Role.system,
+      content: `Your previous response was: ${previousResponse}. The user has provided the following feedback: ${feedback}. Re-generate your response according to the provided feedback.`,
+    },
+  ];
+};
 
 /**
  *

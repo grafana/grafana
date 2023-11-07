@@ -57,7 +57,11 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 			continue
 		}
 
-		paths, err := l.getAbsPluginJSONPaths(path)
+		followDistFolder := true
+		if src.PluginClass(ctx) == plugins.ClassCore {
+			followDistFolder = false
+		}
+		paths, err := l.getAbsPluginJSONPaths(path, followDistFolder)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +158,7 @@ func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) 
 	return plugin, nil
 }
 
-func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
+func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]string, error) {
 	var pluginJSONPaths []string
 
 	var err error
@@ -163,7 +167,7 @@ func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
 		return []string{}, err
 	}
 
-	if err = walk(path, true, true,
+	if err = walk(path, true, true, followDistFolder,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {

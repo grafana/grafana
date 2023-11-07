@@ -500,3 +500,14 @@ func TestService_GetConfigMap_featureToggles(t *testing.T) {
 		}
 	})
 }
+
+func TestService_GetConfigMap_appURL(t *testing.T) {
+	t.Run("Uses the configured app URL", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				GrafanaAppURL: "https://myorg.com/",
+			},
+		}
+		require.Equal(t, map[string]string{"GF_APP_URL": "https://myorg.com/"}, s.GetConfigMap(context.Background(), "", nil))
+	})
+}

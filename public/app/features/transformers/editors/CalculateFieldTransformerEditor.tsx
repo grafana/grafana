@@ -1,5 +1,5 @@
 import { defaults } from 'lodash';
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { identity, of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -24,10 +24,15 @@ import {
   BinaryOptions,
   UnaryOptions,
   CalculateFieldMode,
+  WindowAlignment,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
   IndexOptions,
   ReduceOptions,
+  CumulativeOptions,
+  WindowOptions,
+  WindowSizeMode,
+  defaultWindowOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import {
@@ -38,14 +43,15 @@ import {
   InlineLabel,
   InlineSwitch,
   Input,
+  RadioButtonGroup,
   Select,
   StatsPicker,
 } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
 interface CalculateFieldTransformerEditorState {
-  include: string[];
   names: string[];
   selected: string[];
 }
@@ -57,51 +63,41 @@ const calculationModes = [
   { value: CalculateFieldMode.Index, label: 'Row index' },
 ];
 
+if (cfg.featureToggles.addFieldFromCalculationStatFunctions) {
+  calculationModes.push(
+    { value: CalculateFieldMode.CumulativeFunctions, label: 'Cumulative functions' },
+    { value: CalculateFieldMode.WindowFunctions, label: 'Window functions' }
+  );
+}
+
 const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
 
 const labelWidth = 16;
 
-export class CalculateFieldTransformerEditor extends React.PureComponent<
-  CalculateFieldTransformerEditorProps,
-  CalculateFieldTransformerEditorState
-> {
-  constructor(props: CalculateFieldTransformerEditorProps) {
-    super(props);
+export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformerEditorProps) => {
+  const { options, onChange, input } = props;
+  const configuredOptions = options?.reduce?.include;
 
-    this.state = {
-      include: props.options?.reduce?.include || [],
-      names: [],
-      selected: [],
-    };
-  }
+  const [state, setState] = useState<CalculateFieldTransformerEditorState>({ names: [], selected: [] });
 
-  componentDidMount() {
-    this.initOptions();
-  }
-
-  componentDidUpdate(oldProps: CalculateFieldTransformerEditorProps) {
-    if (this.props.input !== oldProps.input) {
-      this.initOptions();
-    }
-  }
-
-  private initOptions() {
-    const { options } = this.props;
-    const configuredOptions = options?.reduce?.include || [];
+  useEffect(() => {
     const ctx = { interpolate: (v: string) => v };
-    const subscription = of(this.props.input)
+    const subscription = of(input)
       .pipe(
         standardTransformers.ensureColumnsTransformer.operator(null, ctx),
-        this.extractAllNames(),
-        this.getVariableNames(),
-        this.extractNamesAndSelected(configuredOptions)
+        extractAllNames(),
+        getVariableNames(),
+        extractNamesAndSelected(configuredOptions || [])
       )
       .subscribe(({ selected, names }) => {
-        this.setState({ names, selected }, () => subscription.unsubscribe());
+        setState({ names, selected });
       });
-  }
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [input, configuredOptions]);
 
-  private getVariableNames(): OperatorFunction<string[], string[]> {
+  const getVariableNames = (): OperatorFunction<string[], string[]> => {
     if (!cfg.featureToggles.transformationsVariableSupport) {
       return identity;
     }
@@ -113,9 +109,9 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           return input;
         })
       );
-  }
+  };
 
-  private extractAllNames(): OperatorFunction<DataFrame[], string[]> {
+  const extractAllNames = (): OperatorFunction<DataFrame[], string[]> => {
     return (source) =>
       source.pipe(
         map((input) => {
@@ -140,11 +136,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           return allNames;
         })
       );
-  }
+  };
 
-  private extractNamesAndSelected(
+  const extractNamesAndSelected = (
     configuredOptions: string[]
-  ): OperatorFunction<string[], { names: string[]; selected: string[] }> {
+  ): OperatorFunction<string[], { names: string[]; selected: string[] }> => {
     return (source) =>
       source.pipe(
         map((allNames) => {
@@ -165,19 +161,39 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           return { names, selected };
         })
       );
-  }
+  };
 
-  onToggleReplaceFields = (e: React.FormEvent<HTMLInputElement>) => {
-    const { options } = this.props;
-    this.props.onChange({
+  const onToggleReplaceFields = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({
       ...options,
       replaceFields: e.currentTarget.checked,
     });
   };
 
-  onToggleRowIndexAsPercentile = (e: React.FormEvent<HTMLInputElement>) => {
-    const { options } = this.props;
-    this.props.onChange({
+  const onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
+    const mode = value.value ?? CalculateFieldMode.BinaryOperation;
+    if (mode === CalculateFieldMode.WindowFunctions) {
+      options.window = options.window ?? defaultWindowOptions;
+    }
+    onChange({
+      ...options,
+      mode,
+    });
+  };
+
+  const onAliasChanged = (evt: ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      ...options,
+      alias: evt.target.value,
+    });
+  };
+
+  //---------------------------------------------------------
+  // Row index
+  //---------------------------------------------------------
+
+  const onToggleRowIndexAsPercentile = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({
       ...options,
       index: {
         asPercentile: e.currentTarget.checked,
@@ -185,73 +201,187 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
-    const { options, onChange } = this.props;
-    const mode = value.value ?? CalculateFieldMode.BinaryOperation;
+  const renderRowIndex = (options?: IndexOptions) => {
+    return (
+      <>
+        <InlineField labelWidth={labelWidth} label="As percentile" tooltip="Transform the row index as a percentile.">
+          <InlineSwitch value={!!options?.asPercentile} onChange={onToggleRowIndexAsPercentile} />
+        </InlineField>
+      </>
+    );
+  };
+
+  //---------------------------------------------------------
+  // Window functions
+  //---------------------------------------------------------
+
+  const updateWindowOptions = (v: WindowOptions) => {
+    const { options, onChange } = props;
     onChange({
       ...options,
-      mode,
+      mode: CalculateFieldMode.WindowFunctions,
+      window: v,
     });
   };
 
-  onAliasChanged = (evt: ChangeEvent<HTMLInputElement>) => {
-    const { options } = this.props;
-    this.props.onChange({
-      ...options,
-      alias: evt.target.value,
+  const onWindowFieldChange = (v: SelectableValue<string>) => {
+    const { window } = options;
+    updateWindowOptions({
+      ...window!,
+      field: v.value!,
     });
+  };
+
+  const onWindowSizeChange = (v?: number) => {
+    const { window } = options;
+    updateWindowOptions({
+      ...window!,
+      windowSize: v && window?.windowSizeMode === WindowSizeMode.Percentage ? v / 100 : v,
+    });
+  };
+
+  const onWindowSizeModeChange = (val: string) => {
+    const { window } = options;
+    const mode = val as WindowSizeMode;
+    updateWindowOptions({
+      ...window!,
+      windowSize: window?.windowSize
+        ? mode === WindowSizeMode.Percentage
+          ? window!.windowSize! / 100
+          : window!.windowSize! * 100
+        : undefined,
+      windowSizeMode: mode,
+    });
+  };
+
+  const onWindowStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { window } = options;
+    updateWindowOptions({ ...window, reducer });
+  };
+
+  const onTypeChange = (val: string) => {
+    const { window } = options;
+    updateWindowOptions({
+      ...window!,
+      windowAlignment: val as WindowAlignment,
+    });
+  };
+
+  const renderWindowFunctions = (options?: WindowOptions) => {
+    const { names } = state;
+    options = defaults(options, { reducer: ReducerID.sum });
+    const selectOptions = names.map((v) => ({ label: v, value: v }));
+    const typeOptions = [
+      { label: 'Trailing', value: WindowAlignment.Trailing },
+      { label: 'Centered', value: WindowAlignment.Centered },
+    ];
+    const windowSizeModeOptions = [
+      { label: 'Percentage', value: WindowSizeMode.Percentage },
+      { label: 'Fixed', value: WindowSizeMode.Fixed },
+    ];
+
+    return (
+      <>
+        <InlineField label="Field" labelWidth={labelWidth}>
+          <Select
+            placeholder="Field"
+            options={selectOptions}
+            className="min-width-18"
+            value={options?.field}
+            onChange={onWindowFieldChange}
+          />
+        </InlineField>
+        <InlineField label="Calculation" labelWidth={labelWidth}>
+          <StatsPicker
+            allowMultiple={false}
+            className="width-18"
+            stats={[options.reducer]}
+            onChange={onWindowStatsChange}
+            defaultStat={ReducerID.mean}
+            filterOptions={(ext) =>
+              ext.id === ReducerID.mean || ext.id === ReducerID.variance || ext.id === ReducerID.stdDev
+            }
+          />
+        </InlineField>
+        <InlineField label="Type" labelWidth={labelWidth}>
+          <RadioButtonGroup
+            value={options.windowAlignment ?? WindowAlignment.Trailing}
+            options={typeOptions}
+            onChange={onTypeChange}
+          />
+        </InlineField>
+        <InlineField label="Window size mode">
+          <RadioButtonGroup
+            value={options.windowSizeMode ?? WindowSizeMode.Percentage}
+            options={windowSizeModeOptions}
+            onChange={onWindowSizeModeChange}
+          ></RadioButtonGroup>
+        </InlineField>
+        <InlineField
+          label={options.windowSizeMode === WindowSizeMode.Percentage ? 'Window size %' : 'Window size'}
+          labelWidth={labelWidth}
+          tooltip={
+            options.windowSizeMode === WindowSizeMode.Percentage
+              ? 'Set the window size as a percentage of the total data'
+              : 'Window size'
+          }
+        >
+          <NumberInput
+            placeholder="Auto"
+            min={0.1}
+            value={
+              options.windowSize && options.windowSizeMode === WindowSizeMode.Percentage
+                ? options.windowSize * 100
+                : options.windowSize
+            }
+            onChange={onWindowSizeChange}
+          ></NumberInput>
+        </InlineField>
+      </>
+    );
   };
 
   //---------------------------------------------------------
   // Reduce by Row
   //---------------------------------------------------------
 
-  updateReduceOptions = (v: ReduceOptions) => {
-    const { options, onChange } = this.props;
+  const updateReduceOptions = (v: ReduceOptions) => {
+    const { onChange } = props;
     onChange({
       ...options,
-      mode: CalculateFieldMode.ReduceRow,
       reduce: v,
     });
   };
 
-  onFieldToggle = (fieldName: string) => {
-    const { selected } = this.state;
+  const onFieldToggle = (fieldName: string) => {
+    const { selected } = state;
     if (selected.indexOf(fieldName) > -1) {
-      this.onChange(selected.filter((s) => s !== fieldName));
+      onReduceFieldsChanged(selected.filter((s) => s !== fieldName));
     } else {
-      this.onChange([...selected, fieldName]);
+      onReduceFieldsChanged([...selected, fieldName]);
     }
   };
 
-  onChange = (selected: string[]) => {
-    this.setState({ selected });
-    const { reduce } = this.props.options;
-    this.updateReduceOptions({
+  const onReduceFieldsChanged = (selected: string[]) => {
+    setState({ ...state, ...{ selected } });
+    const { reduce } = options;
+    updateReduceOptions({
       ...reduce!,
       include: selected,
     });
   };
 
-  onStatsChange = (stats: string[]) => {
+  const onStatsChange = (stats: string[]) => {
     const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
 
-    const { reduce } = this.props.options;
-    this.updateReduceOptions({ ...reduce, reducer });
+    const { reduce } = options;
+    updateReduceOptions({ ...reduce, reducer });
   };
 
-  renderRowIndex(options?: IndexOptions) {
-    return (
-      <>
-        <InlineField labelWidth={labelWidth} label="As percentile" tooltip="Transform the row index as a percentile.">
-          <InlineSwitch value={!!options?.asPercentile} onChange={this.onToggleRowIndexAsPercentile} />
-        </InlineField>
-      </>
-    );
-  }
-
-  renderReduceRow(options?: ReduceOptions) {
-    const { names, selected } = this.state;
+  const renderReduceRow = (options?: ReduceOptions) => {
+    const { names, selected } = state;
     options = defaults(options, { reducer: ReducerID.sum });
 
     return (
@@ -263,7 +393,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
                 <FilterPill
                   key={`${o}/${i}`}
                   onClick={() => {
-                    this.onFieldToggle(o);
+                    onFieldToggle(o);
                   }}
                   label={o}
                   selected={selected.indexOf(o) > -1}
@@ -277,20 +407,76 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             allowMultiple={false}
             className="width-18"
             stats={[options.reducer]}
-            onChange={this.onStatsChange}
+            onChange={onStatsChange}
             defaultStat={ReducerID.sum}
           />
         </InlineField>
       </>
     );
-  }
+  };
+
+  //---------------------------------------------------------
+  // Cumulative Operator
+  //---------------------------------------------------------
+
+  const onCumulativeStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { cumulative } = options;
+    updateCumulativeOptions({ ...cumulative, reducer });
+  };
+
+  const updateCumulativeOptions = (v: CumulativeOptions) => {
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.CumulativeFunctions,
+      cumulative: v,
+    });
+  };
+
+  const onCumulativeFieldChange = (v: SelectableValue<string>) => {
+    const { cumulative } = options;
+    updateCumulativeOptions({
+      ...cumulative!,
+      field: v.value!,
+    });
+  };
+
+  const renderCumulativeFunctions = (options?: CumulativeOptions) => {
+    const { names } = state;
+    options = defaults(options, { reducer: ReducerID.sum });
+    const selectOptions = names.map((v) => ({ label: v, value: v }));
+
+    return (
+      <>
+        <InlineField label="Field" labelWidth={labelWidth}>
+          <Select
+            placeholder="Field"
+            options={selectOptions}
+            className="min-width-18"
+            value={options?.field}
+            onChange={onCumulativeFieldChange}
+          />
+        </InlineField>
+        <InlineField label="Calculation" labelWidth={labelWidth}>
+          <StatsPicker
+            allowMultiple={false}
+            className="width-18"
+            stats={[options.reducer]}
+            onChange={onCumulativeStatsChange}
+            defaultStat={ReducerID.sum}
+            filterOptions={(ext) => ext.id === ReducerID.sum || ext.id === ReducerID.mean}
+          />
+        </InlineField>
+      </>
+    );
+  };
 
   //---------------------------------------------------------
   // Binary Operator
   //---------------------------------------------------------
 
-  updateBinaryOptions = (v: BinaryOptions) => {
-    const { options, onChange } = this.props;
+  const updateBinaryOptions = (v: BinaryOptions) => {
     onChange({
       ...options,
       mode: CalculateFieldMode.BinaryOperation,
@@ -298,36 +484,36 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onBinaryLeftChanged = (v: SelectableValue<string>) => {
-    const { binary } = this.props.options;
-    this.updateBinaryOptions({
+  const onBinaryLeftChanged = (v: SelectableValue<string>) => {
+    const { binary } = options;
+    updateBinaryOptions({
       ...binary!,
       left: v.value!,
     });
   };
 
-  onBinaryRightChanged = (v: SelectableValue<string>) => {
-    const { binary } = this.props.options;
-    this.updateBinaryOptions({
+  const onBinaryRightChanged = (v: SelectableValue<string>) => {
+    const { binary } = options;
+    updateBinaryOptions({
       ...binary!,
       right: v.value!,
     });
   };
 
-  onBinaryOperationChanged = (v: SelectableValue<BinaryOperationID>) => {
-    const { binary } = this.props.options;
-    this.updateBinaryOptions({
+  const onBinaryOperationChanged = (v: SelectableValue<BinaryOperationID>) => {
+    const { binary } = options;
+    updateBinaryOptions({
       ...binary!,
       operator: v.value!,
     });
   };
 
-  renderBinaryOperation(options?: BinaryOptions) {
+  const renderBinaryOperation = (options?: BinaryOptions) => {
     options = defaults(options, { operator: BinaryOperationID.Add });
 
     let foundLeft = !options?.left;
     let foundRight = !options?.right;
-    const names = this.state.names.map((v) => {
+    const names = state.names.map((v) => {
       if (v === options?.left) {
         foundLeft = true;
       }
@@ -353,7 +539,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               options={leftNames}
               className="min-width-18"
               value={options?.left}
-              onChange={this.onBinaryLeftChanged}
+              onChange={onBinaryLeftChanged}
             />
           </InlineField>
           <InlineField>
@@ -361,7 +547,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               className="width-4"
               options={ops}
               value={options.operator ?? ops[0].value}
-              onChange={this.onBinaryOperationChanged}
+              onChange={onBinaryOperationChanged}
             />
           </InlineField>
           <InlineField>
@@ -371,20 +557,19 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               className="min-width-10"
               options={rightNames}
               value={options?.right}
-              onChange={this.onBinaryRightChanged}
+              onChange={onBinaryRightChanged}
             />
           </InlineField>
         </InlineFieldRow>
       </>
     );
-  }
+  };
 
   //---------------------------------------------------------
   // Unary Operator
   //---------------------------------------------------------
 
-  updateUnaryOptions = (v: UnaryOptions) => {
-    const { options, onChange } = this.props;
+  const updateUnaryOptions = (v: UnaryOptions) => {
     onChange({
       ...options,
       mode: CalculateFieldMode.UnaryOperation,
@@ -392,27 +577,27 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onUnaryOperationChanged = (v: SelectableValue<UnaryOperationID>) => {
-    const { unary } = this.props.options;
-    this.updateUnaryOptions({
+  const onUnaryOperationChanged = (v: SelectableValue<UnaryOperationID>) => {
+    const { unary } = options;
+    updateUnaryOptions({
       ...unary!,
       operator: v.value!,
     });
   };
 
-  onUnaryValueChanged = (v: SelectableValue<string>) => {
-    const { unary } = this.props.options;
-    this.updateUnaryOptions({
+  const onUnaryValueChanged = (v: SelectableValue<string>) => {
+    const { unary } = options;
+    updateUnaryOptions({
       ...unary!,
       fieldName: v.value!,
     });
   };
 
-  renderUnaryOperation(options?: UnaryOptions) {
+  const renderUnaryOperation = (options?: UnaryOptions) => {
     options = defaults(options, { operator: UnaryOperationID.Abs });
 
     let found = !options?.fieldName;
-    const names = this.state.names.map((v) => {
+    const names = state.names.map((v) => {
       if (v === options?.fieldName) {
         found = true;
       }
@@ -429,7 +614,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       <>
         <InlineFieldRow>
           <InlineField label="Operation" labelWidth={labelWidth}>
-            <Select options={ops} value={options.operator ?? ops[0].value} onChange={this.onUnaryOperationChanged} />
+            <Select options={ops} value={options.operator ?? ops[0].value} onChange={onUnaryOperationChanged} />
           </InlineField>
           <InlineField label="(" labelWidth={2}>
             <Select
@@ -437,53 +622,47 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               className="min-width-11"
               options={fieldName}
               value={options?.fieldName}
-              onChange={this.onUnaryValueChanged}
+              onChange={onUnaryValueChanged}
             />
           </InlineField>
           <InlineLabel width={2}>)</InlineLabel>
         </InlineFieldRow>
       </>
     );
-  }
+  };
 
-  //---------------------------------------------------------
-  // Render
-  //---------------------------------------------------------
+  const mode = options.mode ?? CalculateFieldMode.BinaryOperation;
 
-  render() {
-    const { options } = this.props;
-
-    const mode = options.mode ?? CalculateFieldMode.BinaryOperation;
-
-    return (
-      <>
-        <InlineField labelWidth={labelWidth} label="Mode">
-          <Select
-            className="width-18"
-            options={calculationModes}
-            value={calculationModes.find((v) => v.value === mode)}
-            onChange={this.onModeChanged}
-          />
-        </InlineField>
-        {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
-        {mode === CalculateFieldMode.UnaryOperation && this.renderUnaryOperation(options.unary)}
-        {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
-        {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
-        <InlineField labelWidth={labelWidth} label="Alias">
-          <Input
-            className="width-18"
-            value={options.alias ?? ''}
-            placeholder={getNameFromOptions(options)}
-            onChange={this.onAliasChanged}
-          />
-        </InlineField>
-        <InlineField labelWidth={labelWidth} label="Replace all fields">
-          <InlineSwitch value={!!options.replaceFields} onChange={this.onToggleReplaceFields} />
-        </InlineField>
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <InlineField labelWidth={labelWidth} label="Mode">
+        <Select
+          className="width-18"
+          options={calculationModes}
+          value={calculationModes.find((v) => v.value === mode)}
+          onChange={onModeChanged}
+        />
+      </InlineField>
+      {mode === CalculateFieldMode.BinaryOperation && renderBinaryOperation(options.binary)}
+      {mode === CalculateFieldMode.UnaryOperation && renderUnaryOperation(options.unary)}
+      {mode === CalculateFieldMode.ReduceRow && renderReduceRow(options.reduce)}
+      {mode === CalculateFieldMode.CumulativeFunctions && renderCumulativeFunctions(options.cumulative)}
+      {mode === CalculateFieldMode.WindowFunctions && renderWindowFunctions(options.window)}
+      {mode === CalculateFieldMode.Index && renderRowIndex(options.index)}
+      <InlineField labelWidth={labelWidth} label="Alias">
+        <Input
+          className="width-18"
+          value={options.alias ?? ''}
+          placeholder={getNameFromOptions(options)}
+          onChange={onAliasChanged}
+        />
+      </InlineField>
+      <InlineField labelWidth={labelWidth} label="Replace all fields">
+        <InlineSwitch value={!!options.replaceFields} onChange={onToggleReplaceFields} />
+      </InlineField>
+    </>
+  );
+};
 
 export const calculateFieldTransformRegistryItem: TransformerRegistryItem<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,

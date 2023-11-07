@@ -9,11 +9,12 @@ import {
   toUtc,
 } from '@grafana/data/src';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { config } from '@grafana/runtime';
 
 import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsTableWrap } from './LogsTableWrap';
-import { getMockLokiFrame } from './utils/testMocks.test';
+import { getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
 
 const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap>>) => {
   return (
@@ -23,7 +24,6 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
         to: toUtc('2019-01-01 16:00:00'),
         raw: { from: 'now-1h', to: 'now' },
       }}
-      datasourceType={'loki'}
       onClickFilterOutLabel={() => undefined}
       onClickFilterLabel={() => undefined}
       updatePanelState={() => undefined}
@@ -69,6 +69,17 @@ describe('LogsTableWrap', () => {
     });
   });
 
+  it('should render 4 table rows (dataplane)', async () => {
+    config.featureToggles.lokiLogsDataplane = true;
+    setup({ logsFrames: [getMockLokiFrameDataPlane()] });
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      // tableFrame has 3 rows + 1 header row
+      expect(rows.length).toBe(4);
+    });
+  });
+
   it('updatePanelState should be called when a column is selected', async () => {
     const updatePanelState = jest.fn() as (panelState: Partial<ExploreLogsPanelState>) => void;
     setup({
@@ -89,7 +100,7 @@ describe('LogsTableWrap', () => {
       checkboxLabel.click();
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
-        columns: { 0: 'app' },
+        columns: { 0: 'app', 1: 'Line', 2: 'Time' },
       });
     });
 
@@ -98,12 +109,13 @@ describe('LogsTableWrap', () => {
       checkboxLabel.click();
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
-        columns: {},
+        columns: { 0: 'Line', 1: 'Time' },
       });
     });
   });
 
   it('search input should search matching columns', async () => {
+    config.featureToggles.lokiLogsDataplane = false;
     const updatePanelState = jest.fn() as (panelState: Partial<ExploreLogsPanelState>) => void;
     setup({
       panelState: {
@@ -118,7 +130,31 @@ describe('LogsTableWrap', () => {
       expect(screen.getByLabelText('cluster')).toBeInTheDocument();
     });
 
-    const searchInput = screen.getByPlaceholderText('Search columns by name');
+    const searchInput = screen.getByPlaceholderText('Search fields by name');
+    fireEvent.change(searchInput, { target: { value: 'app' } });
+
+    expect(screen.getByLabelText('app')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByLabelText('cluster')).not.toBeInTheDocument();
+    });
+  });
+
+  it('search input should search matching columns (dataplane)', async () => {
+    config.featureToggles.lokiLogsDataplane = true;
+
+    const updatePanelState = jest.fn() as (panelState: Partial<ExploreLogsPanelState>) => void;
+    setup({
+      panelState: {},
+      updatePanelState: updatePanelState,
+      logsFrames: [getMockLokiFrameDataPlane()],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('app')).toBeInTheDocument();
+      expect(screen.getByLabelText('cluster')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText('Search fields by name');
     fireEvent.change(searchInput, { target: { value: 'app' } });
 
     expect(screen.getByLabelText('app')).toBeInTheDocument();

@@ -6,12 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/prometheus/promql/parser"
+	"golang.org/x/exp/slices"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -335,42 +338,75 @@ func validateURL(cmdType string, url string) response.Response {
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
 // For more context take a look at CVE-2022-35957
 func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features *featuremgmt.FeatureManager) error {
-	if jsonData == nil || !cfg.AuthProxyEnabled {
+	if jsonData == nil {
 		return nil
 	}
 
-	for key, value := range jsonData.MustMap() {
-		if strings.HasPrefix(key, datasources.CustomHeaderName) {
-			header := fmt.Sprint(value)
-			if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
-				datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
-				return errors.New("validation error, invalid header name specified")
+	if cfg.AuthProxyEnabled {
+		for key, value := range jsonData.MustMap() {
+			if strings.HasPrefix(key, datasources.CustomHeaderName) {
+				header := fmt.Sprint(value)
+				if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
+					datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
+					return errors.New("validation error, invalid header name specified")
+				}
 			}
 		}
 	}
 
 	// Prevent adding a data source team header with a name that matches the auth proxy header name
 	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
+		err := validateTeamHTTPHeaderJSON(jsonData)
 		if err != nil {
-			datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
-			return errors.New("validation error, invalid format of TeamHTTPHeaders")
-		}
-		// whitelisting X-Prom-Label-Policy
-		for _, headers := range teamHTTPHeadersJSON {
-			for _, header := range headers {
-				// TODO: currently we only allow for X-Prom-Label-Policy header to be used by our proxy
-				for _, name := range []string{"X-Prom-Label-Policy"} {
-					if http.CanonicalHeaderKey(header.Header) != http.CanonicalHeaderKey(name) {
-						datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", name)
-						return errors.New("validation error, invalid header name specified")
-					}
-				}
-			}
+			return err
 		}
 	}
 
 	return nil
+}
+
+// we only allow for now the following headers to be added to a data source team header
+var validHeaders = []string{"X-Prom-Label-Policy"}
+
+func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
+	teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
+	if err != nil {
+		datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
+		return errors.New("validation error, invalid format of TeamHTTPHeaders")
+	}
+	// whitelisting ValidHeaders
+	// each teams headers
+	for _, teamheaders := range teamHTTPHeadersJSON {
+		for _, header := range teamheaders {
+			if !slices.ContainsFunc(validHeaders, func(v string) bool {
+				return http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(header.Header)
+			}) {
+				datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", header.Header)
+				return errors.New("validation error, invalid header name specified")
+			}
+			if !validateLBACHeader(header.Value) {
+				datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
+				return errors.New("validation error, invalid header value syntax")
+			}
+		}
+	}
+	return nil
+}
+
+// validateLBACHeader returns true if the header value matches the syntax
+// 1234:{ name!="value",foo!~"bar" }
+func validateLBACHeader(headervalue string) bool {
+	exp := `^\d+:(.+)`
+	pattern, err := regexp.Compile(exp)
+	if err != nil {
+		return false
+	}
+	match := pattern.FindSubmatch([]byte(strings.TrimSpace(headervalue)))
+	if match == nil || len(match) < 2 {
+		return false
+	}
+	_, err = parser.ParseMetricSelector(string(match[1]))
+	return err == nil
 }
 
 // swagger:route POST /datasources datasources addDataSource

@@ -4,28 +4,19 @@
   ],
   "enabledManagers": ["npm"],
   "ignoreDeps": [
-    "commander", // we are planning to remove this, so no need to update it
-    "execa", // we should bump this once we move to esm modules
-    "history", // we should bump this together with react-router-dom
-    "@mdx-js/react", // storybook peer-depends on its 1.x version, we should upgrade this when we upgrade storybook
+    "history", // we should bump this together with react-router-dom (see https://github.com/grafana/grafana/issues/76744)
+    "react-router-dom", // we should bump this together with history (see https://github.com/grafana/grafana/issues/76744)
     "monaco-editor", // due to us exposing this via @grafana/ui/CodeEditor's props bumping can break plugins
     "react-hook-form", // due to us exposing these hooks via @grafana/ui form components bumping can break plugins
-    "react-redux", // react-beautiful-dnd depends on react-redux 7.x, we need to update that one first
-    "react-router-dom", // we should bump this together with history
-    "ts-loader", // we should remove ts-loader and use babel-loader instead
-    "ora", // we should bump this once we move to esm modules
-    "@locker/near-membrane-dom", // critical library. we need to bump this only intentionally
-    "@locker/near-membrane-shared", // critical library. we need to bump this only intentionally
-    "@locker/near-membrane-shared-dom", // critical library. we need to bump this only intentionally
   ],
   "includePaths": ["package.json", "packages/**", "public/app/plugins/**"],
-  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
+  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**", "packages/grafana-e2e/**"],
   "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
   "postUpdateOptions": ["yarnDedupeHighest"],
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
-      "excludePackagePatterns": ["^@?storybook"],
+      "excludePackagePatterns": ["^@?storybook", "^@locker"],
       "extends": ["schedule:monthly"],
       "groupName": "Monthly patch updates"
     },
@@ -77,6 +68,13 @@
         "uplot"
       ],
       "reviewers": ["leeoniya"],
+    },
+    {
+      "groupName": "locker",
+      "matchPackagePrefixes": [
+        "@locker/"
+      ],
+      "reviewers": ["team:grafana/plugins-platform-frontend"],
     },
   ],
   "pin": {
