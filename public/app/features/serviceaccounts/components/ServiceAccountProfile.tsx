@@ -53,7 +53,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
           <ServiceAccountProfileRow
             label="Name"
             value={serviceAccount.name}
-            onChange={onNameChange}
+            onChange={!serviceAccount.isExternal ? onNameChange : undefined}
             disabled={!ableToWrite || serviceAccount.isDisabled}
           />
           <ServiceAccountProfileRow label="ID" value={serviceAccount.login} disabled={serviceAccount.isDisabled} />
