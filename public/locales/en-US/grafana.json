@@ -178,7 +178,7 @@
     "source-form": {
       "control-required": "This field is required.",
       "description": "You have used following variables in the target query: <1></1><2></2>A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<4></4>Note: Not every variable needs to be explicitly defined below. A transformation such as <7>logfmt</7> will create variables for every key/value pair.",
-      "heading": "  Variables used in the target query",
+      "heading": "Variables used in the target query",
       "results-description": "The link will be shown next to the value of this field",
       "results-label": "Results field",
       "results-required": "This field is required.",
@@ -205,12 +205,12 @@
       "expression-required": "Please define an expression",
       "expression-tooltip": "Required for regular expression. The expression the transformation will use. Logfmt does not use further specifications.",
       "field-input": "field",
-      "field-label": "  Field",
-      "field-tooltip": "   Optional. The field to transform. If not specified, the transformation will be applied to the results field.",
-      "map-value-label": "  Map value",
-      "map-value-tooltip": "  Optional. Defines the name of the variable. This is currently only valid for regular expressions with a single, unnamed capture group.",
-      "remove-button": "  Remove",
-      "type-label": "   Type",
+      "field-label": "Field",
+      "field-tooltip": "Optional. The field to transform. If not specified, the transformation will be applied to the results field.",
+      "map-value-label": "Map value",
+      "map-value-tooltip": "Optional. Defines the name of the variable. This is currently only valid for regular expressions with a single, unnamed capture group.",
+      "remove-button": "Remove",
+      "type-label": "Type",
       "type-tooltip": "The type of transformation that will be applied to the source data."
     }
   },
