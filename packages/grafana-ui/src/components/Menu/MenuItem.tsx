@@ -230,6 +230,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       '>div': {
         display: 'flex',
         width: '100%',
+        alignItems: 'center',
       },
     }),
     active: css({
