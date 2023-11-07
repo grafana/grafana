@@ -412,16 +412,9 @@ func teamHTTPHeaderValueRegexMatch(headervalue string) bool {
 	return reg.Match([]byte(strings.TrimSpace(headervalue)))
 }
 
-func evaluateTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, jsonData *simplejson.Json) (bool, error) {
-	ev := ac.EvalPermission(datasources.ActionPermissionsWrite, ac.Scope(datasources.ScopeAll))
-	hasAccess, errAccess := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ev)
-	if errAccess != nil {
-		datasourcesLogger.Warn("Failed to evaluate permissions", "warning", errAccess)
-	}
-	if !hasAccess {
-		return false, errAccess
-	}
-	return true, nil
+func evaluateTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, scope string) (bool, error) {
+	ev := ac.EvalPermission(datasources.ActionPermissionsWrite, ac.Scope(scope))
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ev)
 }
 
 // swagger:route POST /datasources datasources addDataSource
@@ -467,16 +460,14 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 	}
 
 	// check if user has given LBAC rules and have permissions
-	if hs.Features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		teamHTTPHeaders, err := datasources.GetTeamHTTPHeaders(cmd.JsonData)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to add datasource", err)
-		}
-		if len(teamHTTPHeaders) > 0 {
-			hasAccess, errAccess := evaluateTeamHTTPHeaderPermissions(hs, c, cmd.JsonData)
-			if !hasAccess || errAccess != nil {
-				return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), err)
-			}
+	teamHTTPHeaders, err := datasources.GetTeamHTTPHeaders(cmd.JsonData)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to add datasource", err)
+	}
+	if len(teamHTTPHeaders) > 0 {
+		hasAccess, errAccess := evaluateTeamHTTPHeaderPermissions(hs, c, datasources.ScopeAll)
+		if !hasAccess {
+			return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), errAccess)
 		}
 	}
 
@@ -552,22 +543,19 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 		return response.Error(500, "Failed to update datasource", err)
 	}
 
-	// check if user has given LBAC rules and have permissions
-	if hs.Features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		// check if LBAC rules have been modified
-		teamHTTPheaders, err := datasources.GetTeamHTTPHeaders(ds.JsonData)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
-		}
-		NewTeamHTTPHeaders, err := datasources.GetTeamHTTPHeaders(cmd.JsonData)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
-		}
-		if reflect.DeepEqual(teamHTTPheaders, NewTeamHTTPHeaders) {
-			hasAccess, errAccess := evaluateTeamHTTPHeaderPermissions(hs, c, cmd.JsonData)
-			if !hasAccess || errAccess != nil {
-				return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), err)
-			}
+	// check if LBAC rules have been modified
+	teamHTTPheaders, err := datasources.GetTeamHTTPHeaders(ds.JsonData)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
+	}
+	NewTeamHTTPHeaders, err := datasources.GetTeamHTTPHeaders(cmd.JsonData)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
+	}
+	if reflect.DeepEqual(teamHTTPheaders, NewTeamHTTPHeaders) {
+		hasAccess, errAccess := evaluateTeamHTTPHeaderPermissions(hs, c, datasources.ScopePrefix+strconv.FormatInt(ds.ID, 10))
+		if !hasAccess {
+			return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), errAccess)
 		}
 	}
 
