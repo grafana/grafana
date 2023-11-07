@@ -77,7 +77,7 @@ func (query *Query) renderTags() []string {
 		case "Is":
 			tag.Operator = "="
 			textValue = strings.ToLower(tag.Value)
-		case "is Not":
+		case "Is Not":
 			tag.Operator = "!="
 			textValue = strings.ToLower(tag.Value)
 		default:
