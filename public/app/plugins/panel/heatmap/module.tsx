@@ -411,7 +411,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Show color scale',
       defaultValue: defaultOptions.tooltip.showColorScale,
       category,
-      showIf: (opts) => opts.tooltip.show,
+      showIf: (opts) => opts.tooltip.show && config.featureToggles.newVizTooltips,
     });
 
     category = ['Legend'];
