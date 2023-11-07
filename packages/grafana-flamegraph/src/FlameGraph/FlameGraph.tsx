@@ -121,6 +121,8 @@ const FlameGraph = ({
           root={levelsCallers[levelsCallers.length - 1][0]}
           depth={levelsCallers.length}
           direction={'parents'}
+          // We do not support collapsing in sandwich view for now.
+          collapsing={false}
         />
       </div>
 
@@ -129,7 +131,13 @@ const FlameGraph = ({
           <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
           Callees
         </div>
-        <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
+        <FlameGraphCanvas
+          {...commonCanvasProps}
+          root={levels[0][0]}
+          depth={levels.length}
+          direction={'children'}
+          collapsing={false}
+        />
       </div>
     </>
   ) : (
