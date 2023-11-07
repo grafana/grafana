@@ -41,7 +41,7 @@ func init() {
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
 }
 
-// ExampleServerOptions contains state for master/api server
+// ExampleServerOptions contains the state for the apiserver
 type ExampleServerOptions struct {
 	RecommendedOptions *options.RecommendedOptions
 	Builders           []grafanaAPIServer.APIGroupBuilder
