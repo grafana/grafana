@@ -89,4 +89,4 @@ export const METRIC_AGGREGATION_TYPES: MetricAggregationType[] = [
 ];
 
 export const isMetricAggregationType = (s: MetricAggregationType | string): s is MetricAggregationType =>
-  METRIC_AGGREGATION_TYPES.includes(s as MetricAggregationType);
+  s in METRIC_AGGREGATION_TYPES;
