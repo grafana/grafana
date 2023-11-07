@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -68,21 +67,15 @@ func (query *Query) renderTags() []string {
 			}
 		}
 
-		// quote value unless regex, number or boolean
+		// quote value unless regex or number
 		var textValue string
-		booleanValues := []string{"true", "false"}
-
-		if slices.Contains(booleanValues, strings.ToLower(tag.Value)) {
+		switch tag.Operator {
+		case "=~", "!~":
 			textValue = tag.Value
-		} else {
-			switch tag.Operator {
-			case "=~", "!~":
-				textValue = tag.Value
-			case "<", ">", "<>":
-				textValue = tag.Value
-			default:
-				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
-			}
+		case "<", ">", "<>":
+			textValue = tag.Value
+		default:
+			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 		}
 
 		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)
