@@ -47,7 +47,6 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
           [field]: !shouldInclude,
         },
       };
-      console.log('pendingState', pendingState);
       onChange(pendingState);
     },
     [onChange, options, includeByName]
@@ -106,6 +105,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
               const isIncludeFilter = includeByName && fieldName in includeByName ? includeByName[fieldName] : false;
               const isVisible = filterType === 'include' ? isIncludeFilter : !excludeByName[fieldName];
               const onToggleFunction = filterType === 'include' ? onToggleVisibilityInclude : onToggleVisibility;
+
               return (
                 <DraggableFieldName
                   fieldName={fieldName}
