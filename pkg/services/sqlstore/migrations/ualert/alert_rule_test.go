@@ -14,10 +14,11 @@ import (
 
 func TestMigrateAlertRuleQueries(t *testing.T) {
 	tc := []struct {
-		name     string
-		input    *simplejson.Json
-		expected string
-		err      error
+		name      string
+		input     *simplejson.Json
+		expected  string
+		err       error
+		dashboard *dashboards.Dashboard
 	}{
 		{
 			name: "when a query has a sub query - it is extracted",
@@ -25,21 +26,36 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 				"targetFull": "thisisafullquery",
 				"target":     "ahalfquery",
 			}),
-			expected: `{"target":"thisisafullquery"}`,
+			expected:  `{"target":"thisisafullquery"}`,
+			dashboard: &dashboards.Dashboard{},
+		},
+		{
+			name: "when a query has a sub query that is not fully unwrapped, it unwraps it",
+			input: simplejson.NewFromAny(map[string]interface{}{
+				"refId":      "B",
+				"targetFull": "alias(xxx, #A)",
+				"target":     "alias(#A, #A)",
+			}),
+			expected: `{"refId":"B", "target": "alias(xxx, xxx)"}`,
+			dashboard: &dashboards.Dashboard{
+				Data: simplejson.MustJson([]byte(`{"panels":[{"id":0,"targets":[{"refId":"A","target":"xxx"},{"refId":"B","target":"alias(#A, #A)"}]}]}`)),
+			},
 		},
 		{
 			name: "when a query does not have a sub query - it no-ops",
 			input: simplejson.NewFromAny(map[string]interface{}{
 				"target": "ahalfquery",
 			}),
-			expected: `{"target":"ahalfquery"}`,
+			expected:  `{"target":"ahalfquery"}`,
+			dashboard: &dashboards.Dashboard{},
 		},
 		{
 			name: "when query was hidden, it removes the flag",
 			input: simplejson.NewFromAny(map[string]interface{}{
 				"hide": true,
 			}),
-			expected: `{}`,
+			expected:  `{}`,
+			dashboard: &dashboards.Dashboard{},
 		},
 	}
 
@@ -47,7 +63,7 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			model, err := tt.input.Encode()
 			require.NoError(t, err)
-			queries, err := migrateAlertRuleQueries(log.NewNopLogger(), 0, []alertQuery{{Model: model, DatasourceUID: "a"}}, 0, &dashboards.Dashboard{}, map[string]string{"a": "graphite"})
+			queries, err := migrateAlertRuleQueries(log.NewNopLogger(), 0, []alertQuery{{Model: model, DatasourceUID: "a"}}, 0, tt.dashboard, map[string]string{"a": "graphite"})
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.err.Error())
