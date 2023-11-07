@@ -100,7 +100,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       navModel.children!.push({
         ...analytics,
         url: analytics.url + '/upgrade',
-        tabSuffix: () => ProBadge({experimentId: analyticsExperimentId}),
+        tabSuffix: () => ProBadge({ experimentId: analyticsExperimentId }),
       });
     }
   }
