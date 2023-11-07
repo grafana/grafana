@@ -1,6 +1,7 @@
 import { AnyAction } from 'redux';
 
 import { llms } from '@grafana/experimental';
+import { reportInteraction } from '@grafana/runtime';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
@@ -199,6 +200,11 @@ export async function promQailSuggest(
         query: interaction.prompt,
         collection: promQLTemplatesCollection,
         topK: 5,
+      });
+      reportInteraction('grafana_prometheus_promqail_vector_results', {
+        metric: query.metric,
+        prompt: interaction.prompt,
+        results: results,
       });
       // TODO: handle errors from vector search
     }
