@@ -87,7 +87,15 @@ const rulerRuleIdentifier = ruleId.fromRulerRule('prometheus', 'ns-default', 'gr
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
+  const promDsSettings = mockDataSource({
+    name: dsName,
+    uid: dsName,
+  });
 
+  setupDataSources(promDsSettings);
+});
+
+beforeEach(() => {
   // some action buttons need to check what Alertmanager setup we have for Grafana managed rules
   mockAlertmanagerChoiceResponse(server, {
     alertmanagersChoice: AlertmanagerChoice.Internal,
@@ -95,13 +103,6 @@ beforeAll(() => {
   });
   // we need to mock this one for the "declare incident" button
   mockPluginSettings(server, SupportedPlugin.Incident);
-
-  const promDsSettings = mockDataSource({
-    name: dsName,
-    uid: dsName,
-  });
-
-  setupDataSources(promDsSettings);
 
   mockAlertRuleApi(server).rulerRules('grafana', {
     [mockGrafanaRule.namespace.name]: [
