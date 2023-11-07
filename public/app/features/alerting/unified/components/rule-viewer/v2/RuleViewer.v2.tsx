@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { isEmpty, truncate } from 'lodash';
 import React, { useMemo } from 'react';
 
-import { UrlQueryValue } from '@grafana/data';
+import { AppEvents, UrlQueryValue } from '@grafana/data';
 import {
   Alert,
   Button,
@@ -18,7 +18,7 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
@@ -128,7 +128,14 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
      * We should show it in development mode
      */
     const shouldShowDeclareIncidentButton = !isOpenSourceEdition() || isLocalDevEnv();
-    const buildShareUrl = () => createShareLink(rule.namespace.rulesSource, rule);
+    const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
+
+    const copyShareUrl = () => {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareUrl);
+        appEvents.emit(AppEvents.alertSuccess, ['URL copied to clipboard']);
+      }
+    };
 
     return (
       <>
@@ -157,22 +164,13 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                           />
                         )}
                         {shouldShowDeclareIncidentButton && (
-                          <DeclareIncidentMenuItem title={rule.name} url={buildShareUrl()} />
+                          <DeclareIncidentMenuItem title={rule.name} url={shareUrl} />
                         )}
                         {isGrafanaManagedRule && hasCreateRulePermission && !isFederatedRule && (
                           <Menu.Item label="Duplicate" icon="copy" />
                         )}
                         <Menu.Divider />
-                        <Menu.Item
-                          label="Copy link"
-                          icon="clipboard-alt"
-                          onClick={() => {
-                            if (navigator.clipboard) {
-                              const url = buildShareUrl();
-                              navigator.clipboard.writeText(url);
-                            }
-                          }}
-                        />
+                        <Menu.Item label="Copy link" icon="share-alt" onClick={copyShareUrl} />
                         {/* TODO - RBAC check for these actions! */}
                         <Menu.Item
                           label="Export"
