@@ -857,12 +857,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "启用 kiosk 模式",
-      "toggle-menu": "切换菜单",
+      "open-menu": "",
       "toggle-search-bar": "切换顶部搜索栏"
     }
   },
@@ -1084,6 +1084,7 @@
       "export": "导出",
       "library-panel": "库面板",
       "link": "链接",
+      "panel-embed": "",
       "snapshot": "快照"
     },
     "theme-picker": {
