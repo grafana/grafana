@@ -265,9 +265,13 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	// its okay that it fails, it is only filtering that might be weird, but to safe quard against any weird incoming query param
 	onlyWithExpiredTokens := c.QueryBool("expiredTokens")
 	onlyDisabled := c.QueryBool("disabled")
+	onlyManaged := c.QueryBool("managed")
 	filter := serviceaccounts.FilterIncludeAll
 	if onlyWithExpiredTokens {
 		filter = serviceaccounts.FilterOnlyExpiredTokens
+	}
+	if onlyManaged {
+		filter = serviceaccounts.FilterOnlyManaged
 	}
 	if onlyDisabled {
 		filter = serviceaccounts.FilterOnlyDisabled
