@@ -3,7 +3,6 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import {
   Button,
   Field,
@@ -15,6 +14,7 @@ import {
   Icon,
   Input,
   LoadingPlaceholder,
+  Stack,
 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 

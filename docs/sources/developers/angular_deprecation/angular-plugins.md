@@ -499,7 +499,7 @@ The [migration issue](https://github.com/Altinity/clickhouse-grafana/issues/475)
 Latest Version: 0.2.2 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/skydive-project/skydive-grafana-datasource) in the past year suggests project _may_ not be actively maintained.
+Lack of recent activity in the [project repository](https://github.com/xginn8/grafana-pagerduty) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
 {{% admonition type="warning" %}}

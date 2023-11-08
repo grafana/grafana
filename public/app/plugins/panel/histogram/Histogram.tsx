@@ -157,8 +157,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     incrs: isOrdinalX ? [1] : useLogScale ? undefined : histogramBucketSizes,
     splits: useLogScale || isOrdinalX ? undefined : xSplits,
     values: isOrdinalX
-      ? (u: uPlot, splits: any[]) => splits
-      : (u: uPlot, splits: any[]) => {
+      ? (u, splits) => splits
+      : (u, splits) => {
           const tickLabels = splits.map(xAxisFormatter);
 
           const maxWidth = tickLabels.reduce(
