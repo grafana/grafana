@@ -20,8 +20,8 @@ describe('DashList panel', () => {
       });
 
     // update variable to b
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('query0').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('b').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('server').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').click();
     // blur the dropdown
     cy.get('body').click();
 
