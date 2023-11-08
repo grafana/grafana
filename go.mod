@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.20
+go 1.21
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -65,10 +65,10 @@ require (
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
-	github.com/grafana/grafana-plugin-sdk-go v0.187.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.191.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
-	github.com/hashicorp/go-plugin v1.4.9 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-plugin v1.5.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/backend-platform
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-squad-backend
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3 // @grafana/observability-metrics
@@ -496,7 +496,8 @@ replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 // happen, for example, during a read when the sqlite db is under heavy write load.
 // This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
 // This has also been patched to support the azuresql driver that is a thin wrapper for the mssql driver with azure authentication support.
-replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20230627081928-d04aa38aa209
+//replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20230627081928-d04aa38aa209
+replace xorm.io/xorm => ./pkg/util/xorm
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.

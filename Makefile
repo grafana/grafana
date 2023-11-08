@@ -132,6 +132,10 @@ build-server: ## Build Grafana server.
 	@echo "build server"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
 
+build-example-apiserver: ## Build Grafana example-apiserver application.
+	@echo "build grafana-cli"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-example-apiserver
+
 build-cli: ## Build Grafana CLI application.
 	@echo "build grafana-cli"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
@@ -261,7 +265,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:22.04 \
-	--build-arg GO_IMAGE=golang:1.20.10 \
+	--build-arg GO_IMAGE=golang:1.21.3 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
