@@ -15,6 +15,7 @@ export const Components = {
   },
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
+    overlayContent: 'data-testid TimePicker Overlay Content',
     fromField: 'Time Range from field',
     toField: 'Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',

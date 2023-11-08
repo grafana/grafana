@@ -5,7 +5,7 @@ import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
-import { Message, Role } from './utils';
+import { Message, Role, getFilteredPanelString } from './utils';
 
 interface GenAIPanelDescriptionButtonProps {
   onGenerate: (description: string) => void;
@@ -39,6 +39,7 @@ export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDes
 
 function getMessages(panel: PanelModel): Message[] {
   const dashboard = getDashboardSrv().getCurrent()!;
+  const panelString = getFilteredPanelString(panel);
 
   return [
     {
@@ -54,7 +55,7 @@ function getMessages(panel: PanelModel): Message[] {
       role: Role.system,
     },
     {
-      content: `This is the JSON which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
+      content: `This is the JSON which defines the panel: ${panelString}`,
       role: Role.user,
     },
   ];
