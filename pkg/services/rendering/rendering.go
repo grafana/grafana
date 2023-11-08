@@ -178,11 +178,11 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	}
 
 	if rp, exists := rs.RendererPluginManager.Renderer(ctx); exists {
+		rs.log = rs.log.New("renderer", "plugin")
+
 		if err := rp.Start(ctx); err != nil {
 			return err
 		}
-
-		rs.log = rs.log.New("renderer", "plugin")
 		rs.version = rp.Version()
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
