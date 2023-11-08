@@ -119,6 +119,23 @@ it('Will transform multiple data series with the same label', () => {
   expect(results[2].fields[1].values[0]).toBe('B');
 });
 
+it('will not transform frames with time fields that are non-timeseries', () => {
+  const series = [
+    getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
+    getNonTimeSeries('B', { instance: 'A', pod: 'B' }, [3, 4, 5]),
+  ];
+
+  const results = timeSeriesToTableTransform({}, series);
+
+  // Expect the timeseries to be transformed
+  // Having a trend field will show this
+  expect(results[1].fields[2].name).toBe('Trend #A');
+
+  // We should expect the field length to remain at
+  // 2 with a time field and a value field
+  expect(results[0].fields.length).toBe(2);
+});
+
 function assertFieldsEqual(field1: Field, field2: Field) {
   expect(field1.type).toEqual(field2.type);
   expect(field1.name).toEqual(field2.name);
@@ -141,6 +158,23 @@ function getTimeSeries(refId: string, labels: Labels, values: number[] = [10]) {
     refId,
     fields: [
       { name: 'Time', type: FieldType.time, values: [10] },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        values,
+        labels,
+      },
+    ],
+  });
+}
+
+function getNonTimeSeries(refId: string, labels: Labels, values: Array<number>) {
+  return toDataFrame({
+    refId,
+    fields: [
+      // These times are in non-ascending order
+      // and thus this isn't a timeseries
+      { name: 'Time', type: FieldType.time, values: [1699476339, 1699475339, 1699476300] },
       {
         name: 'Value',
         type: FieldType.number,
