@@ -729,6 +729,7 @@ export class Scene {
           }
         }}
         limitToBounds={true}
+        disabled={!config.featureToggles.canvasPanelPanZoom}
       >
         <div
           style={{
@@ -739,7 +740,7 @@ export class Scene {
             right: '0px',
           }}
         >
-          {this.shouldDisplayMiniMap && (
+          {config.featureToggles.canvasPanelPanZoom && this.shouldDisplayMiniMap && (
             <MiniMap width={200} borderColor={config.theme2.colors.border.weak}>
               {element}
             </MiniMap>
