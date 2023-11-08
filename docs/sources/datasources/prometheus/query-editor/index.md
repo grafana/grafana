@@ -128,7 +128,7 @@ This video demonstrates how to use the visual Prometheus query builder available
 {{< figure src="/static/img/docs/prometheus/metrics-and-labels.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and label filters" >}}
 
 When you are ready to create a query, you can choose the specific metric name from the dropdown list under **Metric**.
-The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
+The data source requests the list of available metrics from the Prometheus server based on the selected time range.
 You can also enter text into the selector when the dropdown is open to search and filter the list.
 
 #### Metrics explorer
