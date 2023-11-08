@@ -562,4 +562,8 @@ const (
 	// FlagDashboardSceneForViewers
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
+
+	// FlagCanvasPanelPanZoom
+	// Allow pan and zoom in canvas panel
+	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
 )

@@ -974,5 +974,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
+		{
+			Name:         "canvasPanelPanZoom",
+			Description:  "Allow pan and zoom in canvas panel",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
 	}
 )
