@@ -149,7 +149,7 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('dashlist_url_variables', import '../dev-dashboards/panel-dashlist/dashlist_url_variables.json') +
+    dashboard.new('dashlist', import '../dev-dashboards/panel-dashlist/dashlist.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
