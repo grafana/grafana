@@ -9,7 +9,6 @@ import configCore from 'app/core/config';
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
 import { ExternallyManagedButton } from '../components/InstallControls/ExternallyManagedButton';
-import { InstallInfoModal } from '../components/InstallInfoModal';
 import { getLatestCompatibleVersion, hasInstallControlWarning, isInstallControlsEnabled } from '../helpers';
 import { useIsRemotePluginsAvailable } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';
@@ -23,7 +22,6 @@ export const PluginActions = ({ plugin }: Props) => {
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin?.details?.versions);
   const [needReload, setNeedReload] = useState(false);
-  const [showInstallationInfoModal, setShowInstallationInfoModal] = useState(false);
 
   if (!plugin) {
     return null;
@@ -57,8 +55,6 @@ export const PluginActions = ({ plugin }: Props) => {
                   pluginStatus={pluginStatus}
                   setNeedReload={setNeedReload}
                   hasInstallWarning={hasInstallWarning}
-                  isExternallyManaged={isExternallyManaged}
-                  onManagedInstallCallback={setShowInstallationInfoModal}
                 />
               )}
             </>
@@ -72,7 +68,6 @@ export const PluginActions = ({ plugin }: Props) => {
           </HorizontalGroup>
         )}
       </VerticalGroup>
-      <InstallInfoModal isOpen={showInstallationInfoModal} onDismiss={() => setShowInstallationInfoModal(false)} />
     </>
   );
 };

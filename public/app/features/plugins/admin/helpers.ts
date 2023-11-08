@@ -1,19 +1,30 @@
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
-import { Settings } from 'app/core/config';
+import configCore, { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 
-import { CatalogPlugin, LocalPlugin, RemotePlugin, RemotePluginStatus, Version } from './types';
+import { CatalogPlugin, InstancePlugin, LocalPlugin, RemotePlugin, RemotePluginStatus, Version } from './types';
 
-export function mergeLocalsAndRemotes(
-  local: LocalPlugin[] = [],
-  remote: RemotePlugin[] = [],
-  errors?: PluginError[]
-): CatalogPlugin[] {
+export function mergeLocalsAndRemotes({
+  local = [],
+  remote = [],
+  instance = [],
+  pluginErrors: errors,
+}: {
+  local: LocalPlugin[];
+  remote?: RemotePlugin[];
+  instance?: InstancePlugin[];
+  pluginErrors?: PluginError[];
+}): CatalogPlugin[] {
   const catalogPlugins: CatalogPlugin[] = [];
   const errorByPluginId = groupErrorsByPluginId(errors);
+
+  const instancesSet = instance.reduce((set, instancePlugin) => {
+    set.add(instancePlugin.pluginSlug);
+    return set;
+  }, new Set<string>());
 
   // add locals
   local.forEach((localPlugin) => {
@@ -32,7 +43,18 @@ export function mergeLocalsAndRemotes(
     const shouldSkip = remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart; // We are only listing deprecated plugins in case they are installed.
 
     if (!shouldSkip) {
-      catalogPlugins.push(mergeLocalAndRemote(localCounterpart, remotePlugin, error));
+      const catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
+
+      // all non cloud plugins are always fully installed
+      catalogPlugin.isFullyInstalled = catalogPlugin.isInstalled;
+
+      // for managed instances, check if plugin is installed, but not yet present in the current instance
+      if (configCore.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled) {
+        catalogPlugin.isFullyInstalled = instancesSet.has(remotePlugin.slug) && catalogPlugin.isInstalled;
+        catalogPlugin.isInstalled = instancesSet.has(remotePlugin.slug) || catalogPlugin.isInstalled;
+      }
+
+      catalogPlugins.push(catalogPlugin);
     }
   });
 
