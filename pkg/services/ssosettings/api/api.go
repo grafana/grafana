@@ -48,7 +48,7 @@ func (api *Api) RegisterAPIEndpoints() {
 			ac.EvalPermission(ac.ActionSettingsWrite, settingsScope)))
 
 		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth)), routing.Wrap(api.listAllProvidersSettings))
-		router.Get("/:key", auth(ac.EvalPermission(ac.ActionSettingsRead, settingsScope)), routing.Wrap(api.getSettingsForProvider))
+		router.Get("/:key", auth(ac.EvalPermission(ac.ActionSettingsRead, settingsScope)), routing.Wrap(api.getProviderSettings))
 		router.Put("/:key", reqWriteAccess, routing.Wrap(api.updateProviderSettings))
 		router.Delete("/:key", reqWriteAccess, routing.Wrap(api.removeProviderSettings))
 	})
@@ -63,7 +63,7 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 	return response.JSON(200, providers)
 }
 
-func (api *Api) getSettingsForProvider(c *contextmodel.ReqContext) response.Response {
+func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
 		return response.Error(400, "Missing key", nil)

@@ -73,14 +73,14 @@ func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSetting, erro
 func (s *SSOSettingsStore) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		found, err := sess.Where("provider = ? AND is_deleted = false", provider).Exist(&models.SSOSetting{})
+		found, err := sess.Where("provider = ? AND is_deleted = ?", provider, s.sqlStore.GetDialect().BooleanStr(false)).Exist(&models.SSOSetting{})
 
 		if err != nil {
 			return err
 		}
 
 		if found {
-			_, err = sess.Where("provider = ? AND is_deleted = false", provider).Update(&models.SSOSetting{
+			_, err = sess.Where("provider = ? AND is_deleted = ?", provider, s.sqlStore.GetDialect().BooleanStr(false)).Update(&models.SSOSetting{
 				Settings: data,
 				Updated:  time.Now().UTC(),
 			})
