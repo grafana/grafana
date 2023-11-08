@@ -94,7 +94,7 @@ type resourcePermissionDTO struct {
 
 func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
-	mapPermission := c.QueryBoolWithDefault("map_permission", true)
+	requirePermission := c.QueryBoolWithDefault("require_permission", true)
 
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
 	if err != nil {
@@ -112,7 +112,7 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	dto := make([]resourcePermissionDTO, 0, len(permissions))
 	for _, p := range permissions {
 		permission := a.service.MapActions(p)
-		if mapPermission && permission == "" {
+		if requirePermission && permission == "" {
 			continue
 		}
 
