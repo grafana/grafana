@@ -82,40 +82,30 @@ export const PromQail = (props: PromQailProps) => {
         </div>
         {state.showStartingMessage ? (
           <>
+            <div className={styles.dataList}>
+              <ol>
+                <li className={styles.textPadding}>
+                  Query Advisor suggests queries based on a metric and an user-generated request.
+                </li>
+                <li className={styles.textPadding}>
+                  Query Advisor sends Prometheus metrics, labels and metadata to the LLM provider you&#39;ve configured.
+                  Be sure to align its usage with your company&#39;s internal policies.
+                </li>
+                <li className={styles.textPadding}>
+                  An AI-suggested query may not fully answer your question. Always take a moment to understand a query
+                  before you use it.
+                </li>
+              </ol>
+            </div>
             <Alert
               title={''}
               severity={'info'}
               key={'promqail-llm-app'}
               className={cx(styles.textPadding, styles.noMargin)}
             >
-              Ensure the LLM plugin has been set up for your instance before you use the Query Advisor.{' '}
-              <a
-                href={'https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/'}
-                className={styles.doc}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Learn more
-              </a>
+              Query Advisor is currently in Private Preview. Feedback is appreciated and can be provided on explanations
+              and suggestions.
             </Alert>
-            <div className={styles.textPadding}>
-              This assistant can suggest queries based on your use case and the metric you want to query
-            </div>
-            <div className={styles.textPadding}>
-              The assistant will connect to OpenAI using your API key. The following information will be sent to OpenAI:
-            </div>
-            <div className={styles.dataList}>
-              <ul>
-                <li>Metrics</li>
-                <li>Labels</li>
-                <li>Metrics metadata</li>
-              </ul>
-            </div>
-            <div className={styles.textPadding}>Check with OpenAI to understand how your data is being used.</div>
-            <div>
-              AI-suggested queries may not always be the right one for your use case. Always take a moment to understand
-              the queries before using them.
-            </div>
 
             {/* don't show this message again, store in localstorage */}
             <div className={styles.textPadding}>
@@ -408,7 +398,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginRight: '10px',
     }),
     dataList: css({
-      padding: '0px 28px 28px 28px',
+      padding: '0px 28px 0px 28px',
     }),
     textPadding: css({
       paddingBottom: '12px',
