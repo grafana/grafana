@@ -139,7 +139,6 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
-  kubernetesPlaylistsAPI?: boolean;
   cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;

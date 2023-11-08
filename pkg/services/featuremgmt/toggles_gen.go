@@ -484,16 +484,12 @@ const (
 	FlagTransformationsVariableSupport = "transformationsVariableSupport"
 
 	// FlagKubernetesPlaylists
-	// Use the kubernetes API in the frontend for playlists
+	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
 	// FlagKubernetesSnapshots
 	// Use the kubernetes API in the frontend for snapshots
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
-
-	// FlagKubernetesPlaylistsAPI
-	// Route /api/playlist API to k8s handlers
-	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
