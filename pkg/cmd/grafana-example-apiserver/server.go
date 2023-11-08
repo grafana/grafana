@@ -78,8 +78,6 @@ func (o ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, err
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 
-	o.RecommendedOptions.SecureServing.SecureServingOptions.BindPort = 8443
-
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.CoreAPI = nil
 

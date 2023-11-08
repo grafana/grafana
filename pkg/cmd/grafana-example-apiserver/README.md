@@ -1,7 +1,9 @@
 # grafana-example-apiserver
 
-The example-apiserver allows the same CLI flags as kube-apiserver for customization. It closely resembles
-the setup provided by the [sample-apiserver](https://github.com/kubernetes/sample-apiserver/tree/master).
+The example-apiserver closely resembles the 
+[sample-apiserver](https://github.com/kubernetes/sample-apiserver/tree/master) project in code and thus
+allows the same
+[CLI flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/) as kube-apiserver
 It is currently used for testing our deployment pipelines for aggregated servers.
 
 ## Prerequisites:
@@ -31,7 +33,8 @@ go run ./pkg/cmd/grafana-example-apiserver \
   --etcd-servers=http://127.0.0.1:2379 \
   --authentication-kubeconfig ~/.kube/config \
   --authorization-kubeconfig ~/.kube/config \
-  --kubeconfig ~/.kube/config
+  --kubeconfig ~/.kube/config \
+  --secure-port 8443
 ```
 
 Once, the `example-apiserver` is running, you can configure aggregation against your kind cluster
