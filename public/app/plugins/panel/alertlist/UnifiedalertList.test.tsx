@@ -65,17 +65,19 @@ const fakeResponse: PromRulesResponse = {
 
 const server = setupMswServer();
 
-mockPromRulesApiResponse(server, fakeResponse);
-const originRule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
-  {
-    for: '1m',
-    labels: { severity: 'critical', region: 'nasa' },
-    annotations: { [Annotation.summary]: 'This is a very important alert rule' },
-  },
-  { uid: 'grafana-rule-1', title: 'First Grafana Rule', data: [] }
-);
-mockRulerRulesApiResponse(server, 'grafana', {
-  'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
+beforeEach(() => {
+  mockPromRulesApiResponse(server, fakeResponse);
+  const originRule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
+    {
+      for: '1m',
+      labels: { severity: 'critical', region: 'nasa' },
+      annotations: { [Annotation.summary]: 'This is a very important alert rule' },
+    },
+    { uid: 'grafana-rule-1', title: 'First Grafana Rule', data: [] }
+  );
+  mockRulerRulesApiResponse(server, 'grafana', {
+    'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
+  });
 });
 
 const defaultOptions: UnifiedAlertListOptions = {

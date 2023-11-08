@@ -13530,6 +13530,7 @@
           "format": "date-time"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -13629,27 +13630,15 @@
         "externalUrl": {
           "type": "string"
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "key": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
         "updated": {
           "type": "string",
           "format": "date-time"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -15289,6 +15278,7 @@
       "type": "object",
       "properties": {
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -15409,6 +15399,7 @@
           "$ref": "#/definitions/Json"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -15444,6 +15435,7 @@
           "type": "string"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -15773,6 +15765,7 @@
           "type": "string"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -16604,7 +16597,7 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "ID of the folder where the library element is stored.",
+          "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
