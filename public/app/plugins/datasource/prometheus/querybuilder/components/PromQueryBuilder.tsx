@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+
+import { config, reportInteraction  } from '@grafana/runtime';
 import { Button, Drawer, Tooltip } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
