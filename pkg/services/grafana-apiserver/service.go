@@ -231,12 +231,10 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
 			return err
 		}
-	}
-
-	// override ExternalAddress and LoopbackClientConfig in prod mode.
-	// in dev mode we want to use the loopback client config
-	// and address provided by SecureServingOptions.
-	if !s.config.devMode {
+	} else {
+		// In production mode, override ExternalAddress and LoopbackClientConfig.
+		// In dev mode we want to use the loopback client config
+		// and address provided by SecureServingOptions.
 		serverConfig.ExternalAddress = s.config.host
 		serverConfig.LoopbackClientConfig = &clientrest.Config{
 			Host: s.config.apiURL,
@@ -316,6 +314,8 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
+	// Used by the proxy wrapper registered in ProvideService
+	s.handler = server.Handler
 	s.restConfig = server.LoopbackClientConfig
 
 	// only write kubeconfig in dev mode
@@ -323,13 +323,8 @@ func (s *service) start(ctx context.Context) error {
 		if err := s.ensureKubeConfig(); err != nil {
 			return err
 		}
-	}
-
-	// Used by the proxy wrapper registered in ProvideService
-	s.handler = server.Handler
-
-	// skip starting the server in prod mode
-	if !s.config.devMode {
+	} else {
+		// skip starting an independent server in prod mode
 		return nil
 	}
 
