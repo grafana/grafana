@@ -540,6 +540,19 @@ export const getStyles = (theme: GrafanaTheme2) => {
     noMargin: css({
       margin: 0,
     }),
+    enableButtonTooltip: css({
+      padding: 8,
+
+      div: {
+        color: `${theme.colors.text.secondary}`,
+        ul: {
+          marginLeft: 16,
+        },
+      },
+    }),
+    link: css({
+      color: `${theme.colors.text.link} !important`,
+    }),
   };
 };
 

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
+import { EditorRow, llms } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Drawer, Tooltip } from '@grafana/ui';
+import { Button, Drawer, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -22,7 +22,7 @@ import { PromVisualQuery } from '../types';
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
-import { PromQail } from './promQail/PromQail';
+import { PromQail, getStyles } from './promQail/PromQail';
 import AI_Logo_color from './promQail/resources/AI_Logo_color.svg';
 
 export interface Props {
@@ -42,10 +42,84 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
   const [showDrawer, setShowDrawer] = useState<boolean>(false);
+  const [llmAppEnabled, updateLlmAppEnabled] = useState<boolean>(false);
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
   const initHints = datasource.getInitHints();
+
+  useEffect(() => {
+    async function checkLlms() {
+      const check = (await llms.openai.enabled()).ok;
+      updateLlmAppEnabled(check);
+    }
+    checkLlms();
+  }, []);
+
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+
+  const queryAssistantButton = function () {
+    const button = () => {
+      return (
+        <Button
+          variant={'secondary'}
+          onClick={() => {
+            reportInteraction('grafana_prometheus_promqail_ai_button_clicked', {
+              metric: query.metric,
+            });
+            setShowDrawer(true);
+          }}
+          disabled={!query.metric}
+        >
+          <img height={16} src={AI_Logo_color} alt="AI logo black and white" />
+          {'\u00A0'}Get query suggestions
+        </Button>
+      );
+    };
+
+    const llmAppTrue = (
+      <Tooltip content={'First, select a metric.'} placement={'bottom-end'}>
+        {button()}
+      </Tooltip>
+    );
+
+    const llmAppFalse = (
+      <Tooltip
+        interactive={true}
+        placement={'auto-end'}
+        content={
+          <div className={styles.enableButtonTooltip}>
+            <h6>Query Advisor is disabled</h6>
+            <div>To enable the Query Advisor you must:</div>
+            <div>
+              <ul>
+                <li>
+                  <a
+                    href={'https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/'}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className={styles.link}
+                  >
+                    Install and enable the LLM plugin
+                  </a>
+                </li>
+                <li>Select a metric</li>
+              </ul>
+            </div>
+          </div>
+        }
+      >
+        {button()}
+      </Tooltip>
+    );
+
+    if (llmAppEnabled) {
+      return llmAppTrue;
+    } else {
+      return llmAppFalse;
+    }
+  };
 
   return (
     <>
@@ -98,21 +172,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
               padding: '0 0 0 6px',
             })}
           >
-            <Tooltip content={'To use this feature, first select a metric'}>
-              <Button
-                variant={'secondary'}
-                onClick={() => {
-                  reportInteraction('grafana_prometheus_promqail_ai_button_clicked', {
-                    metric: query.metric,
-                  });
-                  setShowDrawer(true);
-                }}
-                disabled={!query.metric}
-              >
-                <img height={16} src={AI_Logo_color} alt="AI logo black and white" />
-                {'\u00A0'}Get query suggestions
-              </Button>
-            </Tooltip>
+            {queryAssistantButton()}
           </div>
         )}
         <QueryBuilderHints<PromVisualQuery>
