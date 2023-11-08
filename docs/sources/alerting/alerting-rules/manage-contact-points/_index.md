@@ -49,8 +49,8 @@ Complete the following steps to edit a contact point.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points** to view a list of existing contact points.
-2. On the **Contact Points** tab, find the contact point you want to edit, and then click **Edit**.
-3. Update the contact point and save your changes.
+1. On the **Contact Points** tab, find the contact point you want to edit, and then click **Edit**.
+1. Update the contact point and save your changes.
 
 ## Delete a contact point
 
@@ -58,8 +58,8 @@ Complete the following steps to delete a contact point.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points** to view a list of existing contact points.
-2. On the **Contact Points** tab, find the contact point you want to delete, and then click **More** -> **Delete**.
-3. In the confirmation dialog, click **Yes, delete**.
+1. On the **Contact Points** tab, find the contact point you want to delete, and then click **More** -> **Delete**.
+1. In the confirmation dialog, click **Yes, delete**.
 
 {{% admonition type="note" %}}
 You cannot delete contact points that are in use by a notification policy. YEither delete the notification policy or update it to use another contact point.
@@ -71,7 +71,7 @@ Complete the following steps to test a contact point.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points** to view a list of existing contact points.
-2. On the **Contact Points** tab, find the contact point you want to test, then click **Edit**. You can also create a new contact point if needed.
-3. Click **Test** to open the contact point testing modal.
-4. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
-5. Click **Send test notification** to fire the alert.
+1. On the **Contact Points** tab, find the contact point you want to test, then click **Edit**. You can also create a new contact point if needed.
+1. Click **Test** to open the contact point testing modal.
+1. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
+1. Click **Send test notification** to fire the alert.
