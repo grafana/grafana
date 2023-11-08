@@ -53,15 +53,15 @@ func (fam *RemoteSecondaryForkedAlertmanager) ListSilences(ctx context.Context, 
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
-	return apimodels.GettableAlerts{}, nil
+	return fam.internal.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
-	return apimodels.AlertGroups{}, nil
+	return fam.internal.GetAlertGroups(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
-	return nil
+	return fam.internal.PutAlerts(ctx, alerts)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
