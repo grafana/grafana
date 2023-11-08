@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -101,6 +101,9 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
             <Button
               variant={'secondary'}
               onClick={() => {
+                reportInteraction('grafana_prometheus_promqail_ai_button_clicked', {
+                  metric: query.metric,
+                });
                 setShowDrawer(true);
               }}
               title={'Get query suggestions.'}

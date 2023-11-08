@@ -8,7 +8,7 @@ import { PanelModel } from '../../state';
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
   selectedTheme?: string;
-  panel?: PanelModel;
+  panel?: { timeFrom?: string; id: number };
   search?: string;
   range?: TimeRange;
   orgId?: number;
@@ -82,10 +82,11 @@ export function buildSoloUrl(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  panel?: PanelModel
+  panel?: { timeFrom?: string; id: number },
+  range?: TimeRange
 ) {
   const baseUrl = buildBaseUrl();
-  const params = buildParams({ useCurrentTimeRange, selectedTheme, panel });
+  const params = buildParams({ useCurrentTimeRange, selectedTheme, panel, range });
 
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
@@ -121,10 +122,11 @@ export function buildIframeHtml(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  panel?: PanelModel
+  panel?: { timeFrom?: string; id: number },
+  range?: TimeRange
 ) {
-  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel);
-  return '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel, range);
+  return `<iframe src="${soloUrl}" width="450" height="200" frameborder="0"></iframe>`;
 }
 
 export function getLocalTimeZone() {
