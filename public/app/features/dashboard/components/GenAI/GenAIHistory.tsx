@@ -9,7 +9,6 @@ import {
   Icon,
   IconButton,
   Input,
-  Spinner,
   Text,
   TextLink,
   useStyles2,
@@ -45,7 +44,7 @@ export const GenAIHistory = ({
   const [showError, setShowError] = useState(false);
   const [customFeedback, setCustomPrompt] = useState('');
 
-  const { setMessages, reply, streamStatus, error } = useOpenAIStream(DEFAULT_OAI_MODEL, temperature);
+  const { setMessages, setShouldStop, reply, streamStatus, error } = useOpenAIStream(DEFAULT_OAI_MODEL, temperature);
 
   const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
 
@@ -80,7 +79,12 @@ export const GenAIHistory = ({
   };
 
   const onApply = () => {
-    onApplySuggestion(history[currentIndex - 1]);
+    if (isStreamGenerating) {
+      setShouldStop(true);
+      updateHistory(sanitizeReply(reply));
+    } else {
+      onApplySuggestion(history[currentIndex - 1]);
+    }
   };
 
   const onNavigate = (index: number) => {
@@ -148,9 +152,8 @@ export const GenAIHistory = ({
       </div>
       <div className={styles.applySuggestion}>
         <HorizontalGroup justify={'flex-end'}>
-          {isStreamGenerating && <Spinner />}
-          <Button onClick={onApply} disabled={isStreamGenerating}>
-            Apply
+          <Button icon={!isStreamGenerating ? 'check' : 'fa fa-spinner'} onClick={onApply}>
+            {isStreamGenerating ? 'Stop generating' : 'Apply'}
           </Button>
         </HorizontalGroup>
       </div>
