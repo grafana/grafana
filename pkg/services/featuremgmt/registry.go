@@ -1040,6 +1040,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           identityAccessTeam,
 		},
+		{
+			Name:         "pluginsSkipHostEnvVars",
+			Description:  "Disables passing host environment variable to plugin processes",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
 	}
 )
 

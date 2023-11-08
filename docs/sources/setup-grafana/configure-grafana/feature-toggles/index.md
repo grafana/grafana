@@ -164,6 +164,7 @@ Experimental features might be changed or removed without prior notice.
 | `annotationPermissionUpdate`                | Separate annotation permissions from dashboard permissions to allow for more granular control.                                                                                                                                                                                    |
 | `extractFieldsNameDeduplication`            | Make sure extracted field names are unique in the dataframe                                                                                                                                                                                                                       |
 | `dashboardSceneForViewers`                  | Enables dashboard rendering using Scenes for viewer roles                                                                                                                                                                                                                         |
+| `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 
 ## Development feature toggles
 

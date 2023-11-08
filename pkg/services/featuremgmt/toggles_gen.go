@@ -578,4 +578,8 @@ const (
 	// FlagSsoSettingsApi
 	// Enables the SSO settings API
 	FlagSsoSettingsApi = "ssoSettingsApi"
+
+	// FlagPluginsSkipHostEnvVars
+	// Disables passing host environment variable to plugin processes
+	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
 )
