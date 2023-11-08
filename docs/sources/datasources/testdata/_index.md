@@ -125,13 +125,13 @@ If you want to use a version of TestData different from the one shipped with Gra
 
 1. Enable the [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) `externalCorePlugins`.
 1. Set the configuration field `as_external` for the plugin to `true`. An example configuration would be:
-      ```ini
-      [feature_toggles]
-      externalCorePlugins = true
-      
-      [plugin.grafana-testdata-datasource]
-      as_external = true
-      ```
+   ```ini
+   [feature_toggles]
+   externalCorePlugins = true
+
+   [plugin.grafana-testdata-datasource]
+   as_external = true
+   ```
 1. Restart Grafana.
 
 These settings, if enabled, allows you to to install TestData as an external plugin and manage its lifecycle independently of Grafana.
