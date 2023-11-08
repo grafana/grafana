@@ -37,25 +37,24 @@ The following table highlights the key differences between mute timings and sile
 | Uses time interval definitions that can reoccur    | Has a fixed start and end time                                               |
 | Is created and then added to notification policies | Uses labels to match against an alert to determine whether to silence or not |
 
-## Create a mute timing
+## Add mute timings
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
-1. Click **Notification policies**.
+1. Click **Notification policies** and then the **Mute Timings** tab.
 1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
-1. Scroll down to the Mute timings section.
 1. Click **+ Add mute timing**.
 1. Fill out the form to create a [time interval](#time-intervals) to match against for your mute timing.
-1. Click **Submit** to create the mute timing.
+1. Save your mute timing.
 
 ## Add mute timing to a notification policy
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
-1. Click **Notification policies**.
-1. Identify the notification policy you would like to add the mute timing to and click the **Edit** button for that policy.
-1. In the Specific routing section, from the **Mute timings** dropdown, select the mute timings you would like to add to the route.
-1. Click **Save policy**.
+1. Click **Notification policies** and make sure you are on the **Notification Policies** tab.
+2. Find the notification policy you would like to add the mute timing to and click **...** ->  **Edit**.
+3. From the **Mute timings** dropdown, choose the mute timings you would like to add to the policy.
+4. Save your changes.
 
-## Time intervals
+## Timing options
 
 A time interval is a definition for a moment in time. If an alert fires during this interval it will be suppressed. All fields are lists, and at least one list element must be satisfied to match the field. Fields also support ranges using `:` (ex: `monday:thursday`). The fields available for a time interval are: mute timing can contain multiple time intervals. A time interval is a specific duration when alerts are suppressed from firing. The duration typically consists of a specific time range along with days of a week, month, or year.
 
