@@ -375,10 +375,6 @@ const (
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
 
-	// FlagAzureMonitorDataplane
-	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
-	FlagAzureMonitorDataplane = "azureMonitorDataplane"
-
 	// FlagTraceToProfiles
 	// Enables linking between traces and profiles
 	FlagTraceToProfiles = "traceToProfiles"

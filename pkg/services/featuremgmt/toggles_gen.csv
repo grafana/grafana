@@ -91,7 +91,6 @@ grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
 awsAsyncQueryCaching,preview,@grafana/aws-datasources,false,false,false,false
 splitScopes,preview,@grafana/identity-access-team,false,false,true,false
-azureMonitorDataplane,GA,@grafana/partner-datasources,false,false,false,false
 traceToProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,false,false,false,false
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,false,false,false,false

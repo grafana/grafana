@@ -671,14 +671,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:           "azureMonitorDataplane",
-			Description:    "Adds dataplane compliant frame metadata in the Azure Monitor datasource",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaPartnerPluginsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: falsePtr,
-		},
-		{
 			Name:         "traceToProfiles",
 			Description:  "Enables linking between traces and profiles",
 			Stage:        FeatureStageExperimental,
