@@ -10,13 +10,16 @@ import {
   UrlQueryValue,
   urlUtil,
 } from '@grafana/data';
-import { CustomScrollbar, useStyles2, IconButton, useForceUpdate } from '@grafana/ui';
+import { CustomScrollbar, useStyles2, IconButton } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
+import { appEvents } from 'app/core/core';
+import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
+import { VariablesChanged } from 'app/features/variables/types';
 import { useDispatch } from 'app/types';
 
 import { Options } from './panelcfg.gen';
@@ -148,10 +151,10 @@ export function DashList(props: PanelProps<Options>) {
   ];
 
   const css = useStyles2(getStyles);
-  const [urlParams, onReInterpolateUrlMacros] = useDashListUrlParams(props);
+  const urlParams = useDashListUrlParams(props);
 
   const renderList = (dashboards: Dashboard[]) => (
-    <ul onMouseEnter={onReInterpolateUrlMacros} onFocus={onReInterpolateUrlMacros}>
+    <ul>
       {dashboards.map((dash) => {
         let url = dash.url;
 
@@ -195,7 +198,10 @@ export function DashList(props: PanelProps<Options>) {
   );
 }
 
-function useDashListUrlParams(props: PanelProps<Options>): [string, () => void] {
+function useDashListUrlParams(props: PanelProps<Options>) {
+  // We don't care about the payload just want to get re-render when this event is published
+  useBusEvent(appEvents, VariablesChanged);
+
   let params: { [key: string]: string | DateTime | UrlQueryValue } = {};
 
   if (props.options.keepTime) {
@@ -207,14 +213,6 @@ function useDashListUrlParams(props: PanelProps<Options>): [string, () => void] 
   }
 
   const urlParms = props.replaceVariables(urlUtil.toUrlParams(params));
-  const forceUpdate = useForceUpdate();
 
-  const onReInterpolateUrlMacros = () => {
-    const newUrlParms = props.replaceVariables(urlUtil.toUrlParams(params));
-    if (newUrlParms !== urlParms) {
-      forceUpdate();
-    }
-  };
-
-  return [urlParms, onReInterpolateUrlMacros];
+  return urlParms;
 }
