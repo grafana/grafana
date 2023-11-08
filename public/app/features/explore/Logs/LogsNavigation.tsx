@@ -22,6 +22,7 @@ type Props = {
   addResultsToCache: () => void;
   clearCache: () => void;
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
+  scrollElement?: HTMLDivElement;
 };
 
 export type LogsPage = {
@@ -41,6 +42,7 @@ function LogsNavigation({
   clearCache,
   addResultsToCache,
   loadMoreLogs,
+  scrollElement
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
 
@@ -87,17 +89,18 @@ function LogsNavigation({
   }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
 
   useEffect(() => {
-    const scrollView = document.querySelector('.scrollbar-view');
+    const scrollView = scrollElement;
     if (!scrollView) {
       return;
     }
-    const delta = 1;
+    const delta = 5;
     function handleScroll(e: Event) {
       if (!e.target || !loadMoreLogs) {
         return;
       }
       const target: HTMLDivElement = e.target as HTMLDivElement;
       const diff = (target.scrollHeight - target.scrollTop) - target.clientHeight;
+      console.log(diff)
       if (diff > delta) {
         return;
       }
@@ -117,7 +120,7 @@ function LogsNavigation({
     return () => {
       scrollView.removeEventListener('scroll', handleScroll);
     }
-  }, [currentPageIndex, loadMoreLogs, oldestLogsFirst, onLastPage, pages, visibleRange.from]);
+  }, [currentPageIndex, loadMoreLogs, oldestLogsFirst, onLastPage, pages, scrollElement, visibleRange.from]);
 
   const changeTime = useCallback(
     ({ from, to }: AbsoluteTimeRange) => {
