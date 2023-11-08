@@ -37,6 +37,7 @@ export interface SessionDashboard {
 export interface SessionUser {
   email: string;
   firstSeenAtAge: string;
+  lastSeenAtAge: string;
   totalDashboards: number;
 }
 
