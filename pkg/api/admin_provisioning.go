@@ -8,6 +8,29 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
+// swagger:route POST /admin/provisioning/orgs/reload admin_provisioning adminProvisioningReloadOrgs
+//
+// Reload org provisioning configurations.
+//
+// Reloads the provisioning config files for orgs again. It won’t return until the new provisioned entities are already stored in the database. In case of dashboards, it will stop polling for changes in dashboard files and then restart it with new configurations after returning.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:orgs`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) AdminProvisioningReloadOrgs(c *contextmodel.ReqContext) response.Response {
+	err := hs.ProvisioningService.ProvisionOrgs(c.Req.Context())
+	if err != nil && !errors.Is(err, context.Canceled) {
+		return response.Error(500, "", err)
+	}
+	return response.Success("Orgs config reloaded")
+}
+
 // swagger:route POST /admin/provisioning/dashboards/reload admin_provisioning adminProvisioningReloadDashboards
 //
 // Reload dashboard provisioning configurations.

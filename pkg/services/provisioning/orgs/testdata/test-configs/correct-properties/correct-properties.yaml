@@ -1,0 +1,10 @@
+apiVersion: 1
+
+orgs:
+- name: Org One
+  initialAdminLoginOrEmail: user1
+- name: Org Two
+  initialAdminLoginOrEmail: user2@example.org
+
+deleteOrgs:
+- name: Existing Org

@@ -68,6 +68,40 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 | Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                                          |
 | NixOS     | [services.grafana.provision module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |
 
+## Orgs
+
+{{% admonition type="note" %}}
+Available in Grafana v10.3 and higher.
+{{% /admonition %}}
+
+You can manage orgs in Grafana by adding YAML configuration files in the [`provisioning/orgs`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
+Each config file can contain a list of `orgs` to add or update during startup.
+
+The configuration file can also list orgs to automatically delete, called `deleteOrgs`.
+Grafana deletes the orgs listed in `deleteOrgs` _after_ adding or updating those in the `orgs` list.
+
+### Example org config file
+
+This example provisions two orgs:
+
+```yaml
+# Configuration file version
+apiVersion: 1
+
+orgs:
+  # <string> org name
+- name: Org One
+  # <string> initial admin login or email, mandatory
+  initialAdminLoginOrEmail: user1
+  # another org
+- name: Org Two
+  initialAdminLoginOrEmail: user2@example.org
+
+# List of orgs to delete from the database.
+deleteOrgs:
+- name: Existing Org
+```
+
 ## Data sources
 
 {{% admonition type="note" %}}
