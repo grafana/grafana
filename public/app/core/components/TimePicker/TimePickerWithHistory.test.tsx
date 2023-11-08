@@ -113,14 +113,13 @@ describe('TimePickerWithHistory', () => {
 
     const timeRange = getDefaultTimeRange();
     render(<TimePickerWithHistory value={timeRange} {...props} />);
-    await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     for (const [inputFrom, inputTo] of inputRanges) {
+      await userEvent.click(screen.getByLabelText(/Time range selected/));
       await clearAndType(getFromField(), inputFrom);
       await clearAndType(getToField(), inputTo);
 
       await userEvent.click(getApplyButton());
-      await userEvent.click(screen.getByLabelText(/Time range selected/));
     }
 
     const newLsValue = JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY) ?? '[]');
