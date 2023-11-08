@@ -574,4 +574,8 @@ const (
 	// FlagSsoSettingsApi
 	// Enables the SSO settings API
 	FlagSsoSettingsApi = "ssoSettingsApi"
+
+	// FlagCanvasPanelPanZoom
+	// Allow pan and zoom in canvas panel
+	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
 )
