@@ -452,6 +452,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		hit := hits[0]
 		require.Equal(t, hit.ID, savedDash.ID)
 		require.Equal(t, hit.URL, fmt.Sprintf("/d/%s/%s", savedDash.UID, savedDash.Slug))
+		// nolint:staticcheck
 		require.Equal(t, hit.FolderID, savedFolder.ID)
 		require.Equal(t, hit.FolderUID, savedFolder.UID)
 		require.Equal(t, hit.FolderTitle, savedFolder.Title)
@@ -479,6 +480,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		hit := hits[0]
 		require.Equal(t, hit.ID, savedDash.ID)
 		require.Equal(t, hit.URL, fmt.Sprintf("/d/%s/%s", savedDash.UID, savedDash.Slug))
+		// nolint:staticcheck
 		require.Equal(t, hit.FolderID, savedFolder.ID)
 		require.Equal(t, hit.FolderUID, savedFolder.UID)
 		require.Equal(t, hit.FolderTitle, savedFolder.Title)
@@ -897,7 +899,8 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc           string
+		desc string
+		// Deprecated: use FolderUID instead
 		folderIDs      []int64
 		folderUIDs     []string
 		query          string
@@ -906,7 +909,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	}{
 		{
 			desc:      "find dashboard under general using folder id",
-			folderIDs: []int64{0},
+			folderIDs: []int64{0}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"":                            {{title: "dashboard under general"}},
@@ -915,7 +918,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under general using folder id",
-			folderIDs: []int64{0},
+			folderIDs: []int64{0}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"":                            {{title: "dashboard under general"}},
@@ -924,7 +927,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under f0 using folder id",
-			folderIDs: []int64{f0.ID},
+			folderIDs: []int64{f0.ID}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title}},
@@ -932,7 +935,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under f0 or f1 using folder id",
-			folderIDs: []int64{f0.ID, f1.ID},
+			folderIDs: []int64{f0.ID, f1.ID}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
@@ -981,7 +984,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under general or f0 using folder id",
-			folderIDs: []int64{0, f0.ID},
+			folderIDs: []int64{0, f0.ID}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
@@ -992,7 +995,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		},
 		{
 			desc:      "find dashboard under general or f0 or f1 using folder id",
-			folderIDs: []int64{0, f0.ID, f1.ID},
+			folderIDs: []int64{0, f0.ID, f1.ID}, // nolint:staticcheck
 			typ:       searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
@@ -1046,7 +1049,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 				res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
 					SignedInUser: user,
 					Type:         tc.typ,
-					FolderIds:    tc.folderIDs,
+					FolderIds:    tc.folderIDs, // nolint:staticcheck
 					FolderUIDs:   tc.folderUIDs,
 				})
 				require.NoError(t, err)
@@ -1230,7 +1233,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				URI:         "db/" + item.Slug,
 				URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
 				Type:        hitType,
-				FolderID:    item.FolderID,
+				FolderID:    item.FolderID, // nolint:staticcheck
 				FolderUID:   item.FolderUID,
 				FolderTitle: item.FolderTitle,
 				Tags:        []string{},
