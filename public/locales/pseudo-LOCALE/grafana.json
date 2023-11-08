@@ -1032,6 +1032,7 @@
       "config-tooltip": "Cőŉƒįģūřę pūþľįč đäşĥþőäřđ",
       "not-orphaned-title": "<0>{{title}}</0>",
       "orphaned-title": "<0>Øřpĥäŉęđ pūþľįč đäşĥþőäřđ</0>",
+      "orphaned-tooltip": "Ŧĥę ľįŉĸęđ đäşĥþőäřđ ĥäş äľřęäđy þęęŉ đęľęŧęđ",
       "pause-sharing-label": "Päūşę şĥäřįŉģ",
       "revoke-tooltip": "Ŗęvőĸę pūþľįč đäşĥþőäřđ ŮŖĿ",
       "view-tooltip": "Vįęŵ pūþľįč đäşĥþőäřđ"
@@ -1177,7 +1178,6 @@
       "unsupported-data-source-alert-title": "Ůŉşūppőřŧęđ đäŧä şőūřčęş",
       "unsupported-template-variable-alert": "Ŧĥįş pūþľįč đäşĥþőäřđ mäy ŉőŧ ŵőřĸ şįŉčę įŧ ūşęş ŧęmpľäŧę väřįäþľęş",
       "unsupported-template-variable-alert-title": "Ŧęmpľäŧę väřįäþľęş äřę ŉőŧ şūppőřŧęđ",
-      "usage-ack-desc": "Mäĸįŉģ ä đäşĥþőäřđ pūþľįč ŵįľľ čäūşę qūęřįęş ŧő řūŉ ęäčĥ ŧįmę įş vįęŵęđ, ŵĥįčĥ mäy įŉčřęäşę čőşŧş*",
       "usage-ack-tooltip": "Ŀęäřŉ mőřę äþőūŧ qūęřy čäčĥįŉģ",
       "welcome-title": "Ŵęľčőmę ŧő pūþľįč đäşĥþőäřđş!"
     },

@@ -1032,6 +1032,7 @@
       "config-tooltip": "Configure public dashboard",
       "not-orphaned-title": "<0>{{title}}</0>",
       "orphaned-title": "<0>Orphaned public dashboard</0>",
+      "orphaned-tooltip": "The linked dashboard has already been deleted",
       "pause-sharing-label": "Pause sharing",
       "revoke-tooltip": "Revoke public dashboard URL",
       "view-tooltip": "View public dashboard"
@@ -1177,7 +1178,6 @@
       "unsupported-data-source-alert-title": "Unsupported data sources",
       "unsupported-template-variable-alert": "This public dashboard may not work since it uses template variables",
       "unsupported-template-variable-alert-title": "Template variables are not supported",
-      "usage-ack-desc": "Making a dashboard public will cause queries to run each time is viewed, which may increase costs*",
       "usage-ack-tooltip": "Learn more about query caching",
       "welcome-title": "Welcome to public dashboards!"
     },

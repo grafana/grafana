@@ -1038,6 +1038,7 @@
       "config-tooltip": "",
       "not-orphaned-title": "",
       "orphaned-title": "",
+      "orphaned-tooltip": "",
       "pause-sharing-label": "",
       "revoke-tooltip": "",
       "view-tooltip": ""
@@ -1183,7 +1184,6 @@
       "unsupported-data-source-alert-title": "",
       "unsupported-template-variable-alert": "",
       "unsupported-template-variable-alert-title": "",
-      "usage-ack-desc": "",
       "usage-ack-tooltip": "",
       "welcome-title": ""
     },

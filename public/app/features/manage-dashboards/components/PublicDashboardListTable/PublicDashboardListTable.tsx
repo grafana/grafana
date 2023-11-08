@@ -71,7 +71,13 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
             <span>{{ title: pd.title }}</span>
           </Trans>
         ) : (
-          <Tooltip content="The linked dashboard has already been deleted" placement="top">
+          <Tooltip
+            content={t(
+              'public-dashboard-list-table.public-dashboard.orphaned-tooltip',
+              'The linked dashboard has already been deleted'
+            )}
+            placement="top"
+          >
             <div className={styles.orphanedTitle}>
               <Trans i18nKey="public-dashboard-list-table.public-dashboard.orphaned-title">
                 <span>Orphaned public dashboard</span>
