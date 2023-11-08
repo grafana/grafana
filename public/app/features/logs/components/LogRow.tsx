@@ -127,6 +127,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
   };
 
+  onMouseMove = (e: MouseEvent) => {
+    // The user is selecting text, so hide the log row menu so it doesn't interfere.
+    if (document.getSelection()?.toString() && e.buttons > 0) {
+      this.setState({ mouseIsOver: false });
+    }
+  };
+
   onMouseLeave = () => {
     this.setState({ mouseIsOver: false });
     if (this.props.onLogRowHover) {
@@ -214,6 +221,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           onClick={this.onRowClick}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
+          onMouseMove={this.onMouseMove}
           /**
            * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
            * to onBlur event in the LogRowMenuCell (to hide it). This way, the LogRowMenuCell is displayed when the user navigates
