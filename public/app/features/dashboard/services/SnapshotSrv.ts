@@ -10,14 +10,23 @@ export interface Snapshot {
   url?: string;
 }
 
+export interface SnapshotSharingOptions {
+  externalEnabled: boolean;
+  externalSnapshotName: string;
+  externalSnapshotURL: string;
+  snapshotEnabled: boolean;
+}
+
 export interface DashboardSnapshotSrv {
   getSnapshots: () => Promise<Snapshot[]>;
+  getSharingOptions: () => Promise<SnapshotSharingOptions>;
   deleteSnapshot: (key: string) => Promise<void>;
   getSnapshot: (key: string) => Promise<DashboardDTO>;
 }
 
 const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   getSnapshots: () => getBackendSrv().get<Snapshot[]>('/api/dashboard/snapshots'),
+  getSharingOptions: () => getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options'),
   deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
   getSnapshot: async (key: string) => {
     const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
