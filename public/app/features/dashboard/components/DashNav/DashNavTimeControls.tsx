@@ -19,6 +19,7 @@ export interface Props {
   isOnCanvas?: boolean;
   onRefreshClick?: () => void;
   onZoomClick?: () => void;
+  onTimePickerClick?: () => void;
 }
 
 export class DashNavTimeControls extends Component<Props> {
@@ -118,6 +119,7 @@ export class DashNavTimeControls extends Component<Props> {
           onChangeTimeZone={this.onChangeTimeZone}
           onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
           isOnCanvas={isOnCanvas}
+          onTimePickerClick={this.props.onTimePickerClick}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
