@@ -54,9 +54,7 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 		b.sql.WriteString("\n")
 
 		// // this where clause should come after all joins
-		if b.Dialect.DriverName() == migrator.MySQL {
-			b.sql.WriteString(`WHERE MATCH(panel.title) AGAINST (? IN NATURAL LANGUAGE MODE)`)
-		} else if b.Dialect.DriverName() == migrator.Postgres {
+		if b.Dialect.DriverName() == migrator.Postgres {
 			b.sql.WriteString(`WHERE panel.title @@ to_tsquery('english', ?)`)
 		} else {
 			b.sql.WriteString(`WHERE panel.title LIKE ?`)
