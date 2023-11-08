@@ -42,9 +42,9 @@ export const TransformationOperationRow = ({
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);
   const disabled = !!configs[index].transformation.disabled;
-  const filter = configs[index].transformation.filter != null;
   const source = configs[index].transformation.source;
-  const showFilter = filter || source != null || data.series.length > 1 || (data.annotations?.length ?? 0) > 0;
+  const showFilterEditor = configs[index].transformation.filter != null || source != null;
+  const showFilterToggle = showFilterEditor || data.series.length > 1 || (data.annotations?.length ?? 0) > 0;
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -102,12 +102,12 @@ export const TransformationOperationRow = ({
           onClick={instrumentToggleCallback(toggleShowHelp, 'help', showHelp)}
           active={showHelp}
         />
-        {showFilter && (
+        {showFilterToggle && (
           <QueryOperationToggleAction
             title="Filter"
             icon="filter"
-            onClick={instrumentToggleCallback(toggleFilter, 'filter', filter)}
-            active={filter}
+            onClick={instrumentToggleCallback(toggleFilter, 'filter', showFilterEditor)}
+            active={showFilterEditor}
           />
         )}
         <QueryOperationToggleAction
@@ -159,7 +159,7 @@ export const TransformationOperationRow = ({
           open: 'Expand transformation row',
         }}
       >
-        {showFilter && (
+        {showFilterEditor && (
           <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
         )}
 
