@@ -107,8 +107,7 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 			a.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginId", p.ID)
 			return errors.New("angular plugins are not supported")
 		}
-		p.Angular.HideDeprecation = a.cfg.PluginSettings[p.ID]["hide_angular_deprecation"] == "true"
 	}
-
+	p.Angular.HideDeprecation = a.cfg.PluginSettings[p.ID]["hide_angular_deprecation"] == "true"
 	return nil
 }
