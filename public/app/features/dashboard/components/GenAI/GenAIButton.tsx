@@ -28,7 +28,7 @@ export interface GenAIButtonProps {
   // Whether the button should be disabled
   disabled?: boolean;
 }
-const stopGenerationButton = 'Stop generating';
+export const STOP_GENERATION_TEXT = 'Stop generating';
 
 export const GenAIButton = ({
   text = 'Auto-generate',
@@ -43,7 +43,7 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  const { setMessages, setShouldStop, reply, value, error, streamStatus } = useOpenAIStream(model, temperature);
+  const { setMessages, setStopGeneration, reply, value, error, streamStatus } = useOpenAIStream(model, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(true);
@@ -55,7 +55,7 @@ export const GenAIButton = ({
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (streamStatus === StreamStatus.GENERATING) {
-      setShouldStop(true);
+      setStopGeneration(true);
     } else {
       if (!hasHistory) {
         onClickProp?.(e);
@@ -128,7 +128,7 @@ export const GenAIButton = ({
     }
 
     if (isFirstHistoryEntry) {
-      buttonText = stopGenerationButton;
+      buttonText = STOP_GENERATION_TEXT;
     }
 
     if (hasHistory) {
@@ -203,6 +203,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
   }),
   spinner: css({
-    color: '#6E9FFF',
+    color: theme.colors.text.link,
   }),
 });

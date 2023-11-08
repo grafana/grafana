@@ -47,7 +47,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
         setMessages: jest.fn(),
-        setShouldStop: jest.fn(),
+        setStopGeneration: jest.fn(),
         value: {
           enabled: false,
           stream: new Observable().subscribe(),
@@ -71,7 +71,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
         setMessages: setMessagesMock,
-        setShouldStop: setShouldStopMock,
+        setStopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -123,7 +123,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.GENERATING,
         reply: 'Some incomplete generated text',
         setMessages: jest.fn(),
-        setShouldStop: jest.fn(),
+        setStopGeneration: jest.fn(),
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -146,7 +146,6 @@ describe('GenAIButton', () => {
       const { getByText, getByRole } = setup();
       const generateButton = getByText('Stop generating');
 
-      // The loading text should be visible and the button disabled
       expect(generateButton).toBeVisible();
       await waitFor(() => expect(getByRole('button')).toBeEnabled());
     });
@@ -170,7 +169,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: '',
         setMessages: setMessagesMock,
-        setShouldStop: setShouldStopMock,
+        setStopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
