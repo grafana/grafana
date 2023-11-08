@@ -13,7 +13,6 @@ export function isTimeSeriesFrame(frame: DataFrame) {
   const timeField = frame.fields.find((field) => field.type === FieldType.time);
   const numberField = frame.fields.find((field) => field.type === FieldType.number);
 
-  
   // There are certain query types in which we will
   // get times but they will be the same or not be
   // in increasing order. To have a time-series the
@@ -21,17 +20,15 @@ export function isTimeSeriesFrame(frame: DataFrame) {
   if (timeField !== undefined) {
     let greatestTime: number | null = null;
 
-
     for (let i = 0; i < timeField.values.length; i++) {
       const time = timeField.values[i];
 
       // Check to see if the current time is greater than
-      // the great time. If we get to the end then we 
+      // the great time. If we get to the end then we
       // have a time series otherwise we return false
       if (greatestTime === null || time > greatestTime) {
         greatestTime = time;
-      }
-      else {
+      } else {
         return false;
       }
     }
