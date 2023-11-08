@@ -32,6 +32,7 @@ var _ grafanaapiserver.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
 type SnapshotsAPIBuilder struct {
 	service    dashboardsnapshots.Service
 	namespacer request.NamespaceMapper
+	options    sharingOptionsGetter
 	gv         schema.GroupVersion
 }
 
@@ -46,6 +47,7 @@ func RegisterAPIService(
 	}
 	builder := &SnapshotsAPIBuilder{
 		service:    p,
+		options:    newSharingOptionsGetter(cfg),
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
 	}
@@ -61,6 +63,7 @@ func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(b.gv,
 		&snapshots.DashboardSnapshot{},
 		&snapshots.DashboardSnapshotList{},
+		&snapshots.SnapshotSharingConfig{},
 	)
 
 	// Link this version to the internal representation.
@@ -72,6 +75,7 @@ func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	},
 		&snapshots.DashboardSnapshot{},
 		&snapshots.DashboardSnapshotList{},
+		&snapshots.SnapshotSharingConfig{},
 	)
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
@@ -128,6 +132,11 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	// Dummy resource that only supports delete
 	storage["dashboards-delete"] = &deleteKeyStorage{
 		service:        b.service,
+		tableConverter: legacyStore.tableConverter,
+	}
+
+	storage["options"] = &optionsStorage{
+		getter:         b.options,
 		tableConverter: legacyStore.tableConverter,
 	}
 

@@ -47,5 +47,21 @@ type SnapshotInfo struct {
 	Timestamp   string `json:"timestamp,omitempty"`
 }
 
-// 	"externalUrl": "",
-// 	"expires": "2073-10-21T12:46:06-07:00",
+// Each tenant, may have different sharing options
+// This is currently set using custom.ini, but multi-tenant support will need
+// to be managed differently
+type SnapshotSharingOptions struct {
+	SnapshotsEnabled     bool   `json:"snapshotEnabled"`
+	ExternalSnapshotURL  string `json:"externalSnapshotURL,omitempty"`
+	ExternalSnapshotName string `json:"externalSnapshotName,omitempty"`
+	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type SnapshotSharingConfig struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// Show the options inline
+	SnapshotSharingOptions `json:",inline"`
+}
