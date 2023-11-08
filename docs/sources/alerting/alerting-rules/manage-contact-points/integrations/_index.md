@@ -1,7 +1,7 @@
 ---
 aliases:
   - alerting/manage-notifications/manage-contact-points/configure-integrations/
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/configure-integrations/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/
 description: Configure integrations
 keywords:
   - Grafana
