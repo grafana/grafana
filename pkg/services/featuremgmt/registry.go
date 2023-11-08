@@ -873,15 +873,8 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
-			Name:         "kubernetesPlaylists",
-			Description:  "Use the kubernetes API in the frontend for playlists",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAppPlatformSquad,
-		},
-		{
-			Name:            "kubernetesPlaylistsAPI",
-			Description:     "Route /api/playlist API to k8s handlers",
+			Name:            "kubernetesPlaylists",
+			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
