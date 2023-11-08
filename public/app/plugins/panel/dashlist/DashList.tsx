@@ -2,17 +2,16 @@ import { take } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import {
+  DataLinkBuiltInVars,
   DateTime,
   InterpolateFunction,
   PanelProps,
   textUtil,
-  UrlQueryMap,
   UrlQueryValue,
   urlUtil,
 } from '@grafana/data';
-import { CustomScrollbar, useStyles2, IconButton } from '@grafana/ui';
+import { CustomScrollbar, useStyles2, IconButton, useForceUpdate } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { appEvents } from 'app/core/core';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -20,7 +19,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
-import { VariablesChanged } from 'app/features/variables/types';
 import { useDispatch } from 'app/types';
 
 import { Options } from './panelcfg.gen';
@@ -36,10 +34,8 @@ interface DashboardGroup {
 
 async function fetchDashboards(options: Options, replaceVars: InterpolateFunction) {
   let starredDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
-  if (options.showStarred) {
-    const params = { limit: options.maxItems, starred: 'true' };
-    starredDashboards = getBackendSrv().search(params);
-  }
+  const params = { limit: options.maxItems, starred: 'true' };
+  starredDashboards = getBackendSrv().search(params);
 
   let recentDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
   let dashUIDs: string[] = [];
@@ -99,28 +95,9 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
   return dashMap;
 }
 
-function useVariablesForURL(subscribe: boolean) {
-  const [variables, setVariables] = useState<UrlQueryMap>(() => getVariablesUrlParams());
-
-  useEffect(() => {
-    if (!subscribe) {
-      return;
-    }
-
-    const sub = appEvents.subscribe(VariablesChanged, () => {
-      setVariables(getVariablesUrlParams());
-    });
-
-    return () => sub.unsubscribe();
-  }, [subscribe]);
-
-  return variables;
-}
-
 export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
   const dispatch = useDispatch();
-  const urlVariables = useVariablesForURL(props.options.includeVars);
 
   useEffect(() => {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
@@ -170,27 +147,14 @@ export function DashList(props: PanelProps<Options>) {
   ];
 
   const css = useStyles2(getStyles);
+  const [urlParams, onReInterpolateUrlMacros] = useDashListUrlParams(props);
 
   const renderList = (dashboards: Dashboard[]) => (
-    <ul>
+    <ul onMouseEnter={onReInterpolateUrlMacros} onFocus={onReInterpolateUrlMacros}>
       {dashboards.map((dash) => {
         let url = dash.url;
-        let params: { [key: string]: string | DateTime | UrlQueryValue } = {};
 
-        if (props.options.keepTime) {
-          const range = getTimeSrv().timeRangeForUrl();
-          params['from'] = range.from;
-          params['to'] = range.to;
-        }
-
-        if (props.options.includeVars) {
-          params = {
-            ...params,
-            ...urlVariables,
-          };
-        }
-
-        url = urlUtil.appendQueryToUrl(url, urlUtil.toUrlParams(params));
+        url = urlUtil.appendQueryToUrl(url, urlParams);
         url = getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
 
         return (
@@ -228,4 +192,28 @@ export function DashList(props: PanelProps<Options>) {
       )}
     </CustomScrollbar>
   );
+}
+
+function useDashListUrlParams(props: PanelProps<Options>): [string, () => void] {
+  let params: { [key: string]: string | DateTime | UrlQueryValue } = {};
+
+  if (props.options.keepTime) {
+    params[`\$${DataLinkBuiltInVars.keepTime}`] = true;
+  }
+
+  if (props.options.includeVars) {
+    params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
+  }
+
+  const urlParms = props.replaceVariables(urlUtil.toUrlParams(params));
+  const forceUpdate = useForceUpdate();
+
+  const onReInterpolateUrlMacros = () => {
+    const newUrlParms = props.replaceVariables(urlUtil.toUrlParams(params));
+    if (newUrlParms !== urlParms) {
+      forceUpdate();
+    }
+  };
+
+  return [urlParms, onReInterpolateUrlMacros];
 }
