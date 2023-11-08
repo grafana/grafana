@@ -863,12 +863,12 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "dock": "Dock menu",
-      "undock": "Undock menu"
+      "dock": "Dock menu"
     },
     "toolbar": {
+      "close-menu": "Close menu",
       "enable-kiosk": "Enable kiosk mode",
-      "toggle-menu": "Toggle menu",
+      "open-menu": "Open menu",
       "toggle-search-bar": "Toggle top search bar"
     }
   },
@@ -882,7 +882,6 @@
   "panel": {
     "header-menu": {
       "copy": "Copy",
-      "create-alert": "Create alert",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
@@ -893,6 +892,7 @@
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
       "share": "Share",
@@ -1044,7 +1044,6 @@
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
       "save-button": "Save to file",
-      "share-default-label": "Export with default values removed",
       "share-externally-label": "Export for sharing externally",
       "view-button": "View JSON"
     },
@@ -1091,6 +1090,7 @@
       "export": "Export",
       "library-panel": "Library panel",
       "link": "Link",
+      "panel-embed": "Embed",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
