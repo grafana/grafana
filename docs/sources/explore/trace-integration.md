@@ -122,6 +122,8 @@ You can navigate from a span in a trace view directly to metrics relevant for th
 Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
 Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source#trace-to-profiles) for configuration instructions.
 
+![Selecting a link in the span queries the profile data source](/static/img/docs/tempo/profiles/tempo-profiles-Span-link-profile-data-source.png)
+
 ## Node graph
 
 You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
