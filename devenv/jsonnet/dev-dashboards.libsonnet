@@ -149,13 +149,6 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('dashlist_url_variables', import '../dev-dashboards/panel-dashlist/dashlist_url_variables.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
     dashboard.new('datadata-macros', import '../dev-dashboards/feature-templating/datadata-macros.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {

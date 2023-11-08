@@ -1,18 +1,9 @@
 import { take } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import {
-  DateTime,
-  InterpolateFunction,
-  PanelProps,
-  textUtil,
-  UrlQueryMap,
-  UrlQueryValue,
-  urlUtil,
-} from '@grafana/data';
+import { DateTime, InterpolateFunction, PanelProps, textUtil, UrlQueryValue, urlUtil } from '@grafana/data';
 import { CustomScrollbar, useStyles2, IconButton } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { appEvents } from 'app/core/core';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -20,7 +11,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
-import { VariablesChanged } from 'app/features/variables/types';
 import { useDispatch } from 'app/types';
 
 import { Options } from './panelcfg.gen';
@@ -99,29 +89,9 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
   return dashMap;
 }
 
-function useVariablesForURL(subscribe: boolean) {
-  const [variables, setVariables] = useState<UrlQueryMap>(() => getVariablesUrlParams());
-
-  useEffect(() => {
-    if (!subscribe) {
-      return;
-    }
-
-    const sub = appEvents.subscribe(VariablesChanged, () => {
-      setVariables(getVariablesUrlParams());
-    });
-
-    return () => sub.unsubscribe();
-  }, [subscribe]);
-
-  return variables;
-}
-
 export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
   const dispatch = useDispatch();
-  const urlVariables = useVariablesForURL(props.options.includeVars);
-
   useEffect(() => {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
       setDashboards(dashes);
@@ -186,7 +156,7 @@ export function DashList(props: PanelProps<Options>) {
         if (props.options.includeVars) {
           params = {
             ...params,
-            ...urlVariables,
+            ...getVariablesUrlParams(),
           };
         }
 
