@@ -83,6 +83,10 @@ You can then click on any panel icon in the content outline to navigate to that 
 
 When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
 
+{{% admonition type="note" %}}
+Explore may generate relatively long URLs, some tools, like messaging or videoconferencing apps, may truncate messages to a fixed length. In such cases Explore will display a warning message and load a default state. If you encounter issues when sharing Explore links in such apps, you can generate shortened links. See [Share shortened link]("#share-shortened-link"}}) for more information.
+{{% /admonition %}}
+
 ### Generating Explore URLs from external tools
 
 Because Explore URLs have a defined structure, you can build a URL from external tools and open it in Grafana. The URL structure is:

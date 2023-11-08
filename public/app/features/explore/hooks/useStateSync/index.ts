@@ -98,13 +98,12 @@ export function useStateSync(params: ExploreQueryParams) {
   useEffect(() => {
     const isURLOutOfSync = prevParams.current?.panes !== params.panes;
 
-    const [urlState, error] = parseURL(params);
-    if (error) {
+    const [urlState, hasParseError] = parseURL(params);
+    hasParseError &&
       warning(
-        'Could not parse Explore state from URL',
-        'The requested URL contains invalid parameters. Falling back to default state.'
+        'Could not parse Explore URL',
+        'The requested URL contains invalid parameters, a default Explore state has been loaded.'
       );
-    }
 
     async function sync() {
       // if navigating the history causes one of the time range to not being equal to all the other ones,
@@ -256,8 +255,9 @@ export function useStateSync(params: ExploreQueryParams) {
               acc[key] = undefined;
               return acc;
             }, {}),
-            panes: JSON.stringify(newParams.panes),
+            // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
             schemaVersion: urlState.schemaVersion,
+            panes: JSON.stringify(newParams.panes),
             orgId,
           },
           true
