@@ -54,7 +54,7 @@ The following table highlights the key differences between mute timings and sile
 3. From the **Mute timings** dropdown, choose the mute timings you would like to add to the policy.
 4. Save your changes.
 
-## Timing options
+## Time intervals
 
 A time interval is a definition for a moment in time. If an alert fires during this interval it will be suppressed. All fields are lists, and at least one list element must be satisfied to match the field. Fields also support ranges using `:` (ex: `monday:thursday`). The fields available for a time interval are: mute timing can contain multiple time intervals. A time interval is a specific duration when alerts are suppressed from firing. The duration typically consists of a specific time range along with days of a week, month, or year.
 
