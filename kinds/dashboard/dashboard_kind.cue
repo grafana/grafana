@@ -435,6 +435,8 @@ lineage: schemas: [{
 			index?: int32
 		} @cuetsy(kind="interface")
 
+		#DataFramesSource: "series" | "annotations" @cuetsy(kind="enum",memberNames="Series|Annotations")
+
 		// Transformations allow to manipulate data returned by a query before the system applies a visualization.
 		// Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
 		// use the output of one transformation as the input to another transformation, etc.
@@ -448,6 +450,8 @@ lineage: schemas: [{
 			// Options to be passed to the transformer
 			// Valid options depend on the transformer id
 			options: _
+			// Where to pull DataFrames from as input to transformation
+			source?: #DataFramesSource
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		// 0 for no shared crosshair or tooltip (default).

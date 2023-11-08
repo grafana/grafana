@@ -26,6 +26,12 @@ const (
 	LinkTypeLink       LinkType = "link"
 )
 
+// Defines values for DataFramesSource.
+const (
+	DataFramesSourceAnnotations DataFramesSource = "annotations"
+	DataFramesSourceSeries      DataFramesSource = "series"
+)
+
 // Defines values for FieldColorModeId.
 const (
 	FieldColorModeIdContinuousBlPu       FieldColorModeId = "continuous-BlPu"
@@ -276,6 +282,9 @@ type Link struct {
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 type LinkType string
 
+// DataFramesSource defines model for DataFramesSource.
+type DataFramesSource string
+
 // Ref to a DataSource instance
 type DataSourceRef struct {
 	// The plugin type-id
@@ -301,7 +310,8 @@ type DataTransformerConfig struct {
 
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
-	Options any `json:"options"`
+	Options any               `json:"options"`
+	Source  *DataFramesSource `json:"source,omitempty"`
 }
 
 // DynamicConfigValue defines model for DynamicConfigValue.

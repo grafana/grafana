@@ -208,6 +208,7 @@ use the output of one transformation as the input to another transformation, etc
 | `options`  |                                 | **Yes**  |         | Options to be passed to the transformer<br/>Valid options depend on the transformer id                                                                                                                                                                                              |
 | `disabled` | boolean                         | No       |         | Disabled transformations are skipped                                                                                                                                                                                                                                                |
 | `filter`   | [MatcherConfig](#matcherconfig) | No       |         | Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.<br/>It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type. |
+| `source`   | string                          | No       |         | Possible values are: `series`, `annotations`.                                                                                                                                                                                                                                       |
 
 ### MatcherConfig
 
