@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { PanelProps } from '@grafana/data';
-import { useTheme2, ZoomPlugin, TooltipPlugin2 } from '@grafana/ui';
+import { useTheme2, TooltipDisplayMode, TooltipPlugin2, ZoomPlugin } from '@grafana/ui';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
@@ -83,21 +83,23 @@ export const StatusHistoryPanel = ({
               onChangeTimeRange({ from, to });
             }}
           />
-          <TooltipPlugin2
-            config={config}
-            render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
-              return (
-                <StatusHistoryTooltip
-                  data={frames ?? []}
-                  dataIdxs={dataIdxs}
-                  alignedData={alignedFrame}
-                  seriesIdx={seriesIdx}
-                  timeZone={timeZone}
-                  isPinned={isPinned}
-                />
-              );
-            }}
-          />
+          {options.tooltip.mode !== TooltipDisplayMode.None && (
+            <TooltipPlugin2
+              config={config}
+              render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+                return (
+                  <StatusHistoryTooltip
+                    data={frames ?? []}
+                    dataIdxs={dataIdxs}
+                    alignedData={alignedFrame}
+                    seriesIdx={seriesIdx}
+                    timeZone={timeZone}
+                    isPinned={isPinned}
+                  />
+                );
+              }}
+            />
+          )}
         </>
       )}
     </TimelineChart>
