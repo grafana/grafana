@@ -18,10 +18,6 @@ func NewCommandStartExampleAPIServer(defaults *ExampleServerOptions, stopCh <-ch
 				return err
 			}
 
-			if err := o.Validate(args); err != nil {
-				return err
-			}
-
 			config, err := o.Config()
 			if err != nil {
 				return err
