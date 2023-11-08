@@ -157,5 +157,4 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
-  canvasPanelPanZoom?: boolean;
 }
