@@ -344,7 +344,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 					Updated:                d.Updated,
 					Version:                d.Version,
 					IsFolder:               false,
-					FolderId:               d.FolderID,
+					FolderId:               d.FolderID, // nolint:staticcheck
 					PublicDashboardEnabled: true,
 				},
 			},
@@ -372,7 +372,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 					Updated:                d.Updated,
 					Version:                d.Version,
 					IsFolder:               false,
-					FolderId:               d.FolderID,
+					FolderId:               d.FolderID, // nolint:staticcheck
 					PublicDashboardEnabled: true,
 				},
 			},
@@ -411,6 +411,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 				assert.Equal(t, test.DashResp.Meta.Updated, dashboardFullWithMeta.Meta.Updated)
 				assert.Equal(t, test.DashResp.Meta.Version, dashboardFullWithMeta.Meta.Version)
 				assert.Equal(t, false, dashboardFullWithMeta.Meta.IsFolder)
+				// nolint:staticcheck
 				assert.Equal(t, test.DashResp.Meta.FolderId, dashboardFullWithMeta.Meta.FolderId)
 				assert.Equal(t, test.DashResp.Meta.PublicDashboardEnabled, dashboardFullWithMeta.Meta.PublicDashboardEnabled)
 

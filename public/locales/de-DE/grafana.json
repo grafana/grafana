@@ -863,12 +863,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "Kiosk-Modus aktivieren",
-      "toggle-menu": "Menü umschalten",
+      "open-menu": "",
       "toggle-search-bar": "Obere Suchleiste umschalten"
     }
   },
@@ -1090,6 +1090,7 @@
       "export": "Exportieren",
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
+      "panel-embed": "",
       "snapshot": "Schnappschuss"
     },
     "theme-picker": {

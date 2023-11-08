@@ -21,6 +21,7 @@ import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldName
 import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor';
 import { findField } from 'app/features/dimensions';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';
 
 import { EnumMappingEditor } from './EnumMappingEditor';
@@ -201,4 +202,5 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   name: standardTransformers.convertFieldTypeTransformer.name,
   description: standardTransformers.convertFieldTypeTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
+  help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
 };
