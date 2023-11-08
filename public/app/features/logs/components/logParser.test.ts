@@ -267,7 +267,7 @@ describe('logParser', () => {
             },
             {
               config: {},
-              name: 'attributes',
+              name: 'labels',
               type: FieldType.other,
               values: [{ a: 1, b: 2 }],
             },
@@ -315,7 +315,7 @@ describe('logParser', () => {
             },
             {
               config: { links },
-              name: 'attributes',
+              name: 'labels',
               type: FieldType.other,
               values: [{ a: 1, b: 2 }],
             },
@@ -335,7 +335,7 @@ describe('logParser', () => {
         expectHasField(output, 'timestamp');
         expectHasField(output, 'body');
         expectHasField(output, 'id');
-        expectHasField(output, 'attributes');
+        expectHasField(output, 'labels');
         expectHasField(output, 'severity');
       });
 
