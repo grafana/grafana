@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isEqual } from 'lodash';
 import React, { ReactNode } from 'react';
 import Highlighter from 'react-highlight-words';
 
@@ -20,6 +21,7 @@ export interface OptionsPaneItemProps {
   showIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
   addon?: ReactNode;
+  panelType?: string;
 }
 
 /**
@@ -31,7 +33,7 @@ export class OptionsPaneItemDescriptor {
   constructor(public props: OptionsPaneItemProps) {}
 
   getLabel(searchQuery?: string): ReactNode {
-    const { title, description, overrides, addon } = this.props;
+    const { title, description, overrides, addon, panelType } = this.props;
 
     if (!searchQuery) {
       // Do not render label for categories with only one child
@@ -39,7 +41,15 @@ export class OptionsPaneItemDescriptor {
         return null;
       }
 
-      return <OptionPaneLabel title={title} description={description} overrides={overrides} addon={addon} />;
+      return (
+        <OptionPaneLabel
+          title={title}
+          description={description}
+          overrides={overrides}
+          addon={addon}
+          panelType={panelType}
+        />
+      );
     }
 
     const categories: React.ReactNode[] = [];
@@ -103,20 +113,36 @@ interface OptionPanelLabelProps {
   description?: string;
   overrides?: OptionPaneItemOverrideInfo[];
   addon: ReactNode;
+  panelType?: string;
 }
 
-function OptionPaneLabel({ title, description, overrides, addon }: OptionPanelLabelProps) {
-  const styles = useStyles2(getLabelStyles);
-  return (
-    <div className={styles.container}>
-      <Label description={description}>
-        {title}
-        {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
-      </Label>
-      {addon}
-    </div>
-  );
-}
+const OptionPaneLabel = React.memo(
+  function OptionPaneLabel({ title, description, overrides, addon }: OptionPanelLabelProps) {
+    const styles = useStyles2(getLabelStyles);
+    return (
+      <div className={styles.container}>
+        <Label description={description}>
+          {title}
+          {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+        </Label>
+        {addon}
+      </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Compare all props except for 'title' and 'addon'
+    const { title: prevTitle, addon: prevaddOn, ...restPrevProps } = prevProps;
+    const { title: nextTitle, addon: nextaddOn, ...restNextProps } = nextProps;
+
+    // Return false (triggering a re-render) if 'panelType' has changed
+    if (prevProps.panelType !== nextProps.panelType) {
+      return false;
+    }
+
+    // Otherwise, compare the rest of the props
+    return isEqual(restPrevProps, restNextProps);
+  }
+);
 
 function getLabelStyles(theme: GrafanaTheme2) {
   return {

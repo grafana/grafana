@@ -20,7 +20,9 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   `The title should be shorter than ${PANEL_TITLE_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
-  const messages = React.useMemo(() => getMessages(panel), [panel]);
+  // We want to recompute messages when panel type changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const messages = React.useMemo(() => getMessages(panel), [panel, panel.type]);
 
   return (
     <GenAIButton
