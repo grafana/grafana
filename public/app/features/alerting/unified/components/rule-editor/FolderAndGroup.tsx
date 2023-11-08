@@ -28,7 +28,7 @@ import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
 
-export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGroups: boolean) => {
+export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups: boolean) => {
   const dispatch = useDispatch();
 
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
@@ -41,7 +41,7 @@ export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGrou
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   const grafanaFolders = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
+  const folderGroups = grafanaFolders.find((f) => f.uid === folderUid)?.groups ?? [];
 
   const groupOptions = folderGroups
     .map<SelectableValue<string>>((group) => {
@@ -94,7 +94,7 @@ export function FolderAndGroup({
   const folder = watch('folder');
   const group = watch('group');
 
-  const { groupOptions, loading } = useFolderGroupOptions(folder?.title ?? '', enableProvisionedGroups);
+  const { groupOptions, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
@@ -168,7 +168,7 @@ export function FolderAndGroup({
                     rules={{
                       required: { value: true, message: 'Select a folder' },
                       validate: {
-                        pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+                        pathSeparator: (folder: Folder) => checkForPathSeparator(folder.uid),
                       },
                     }}
                   />
