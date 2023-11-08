@@ -73,13 +73,23 @@ export const language: languages.IMonarchLanguage = {
       // trace ID
       [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
 
-      // functions, keywords, predefined values
+      // keywords
       [
-        /[a-zA-Z_.]\w*/,
+        `(?:${keywords.join('|')})`,
+        {
+          cases: {
+            '@keywords': 'keyword',
+            '@default': 'tag',
+          },
+        },
+      ],
+
+      // functions and predefined values
+      [
+        /(?:\w|[.]|"(?:\\"|\\\\|[^\\"])*")+/,
         {
           cases: {
             '@functions': 'predefined',
-            '@keywords': 'keyword',
             '@statusValues': 'type',
             '@default': 'tag',
           },
@@ -89,8 +99,8 @@ export const language: languages.IMonarchLanguage = {
       // strings
       [/"([^"\\]|\\.)*$/, 'string.invalid'], // non-teminated string
       [/'([^'\\]|\\.)*$/, 'string.invalid'], // non-teminated string
-      [/"/, 'string', '@string_double'],
-      [/'/, 'string', '@string_single'],
+      [/([^\w])(")/, [{ token: '' }, { token: 'string', next: '@string_double' }]],
+      [/([^\w])(')/, [{ token: '' }, { token: 'string', next: '@string_single' }]],
 
       // delimiters and operators
       [/[{}()\[\]]/, 'delimiter.bracket'],
