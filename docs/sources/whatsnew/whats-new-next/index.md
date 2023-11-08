@@ -18,6 +18,18 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Contact points list view redesign
+
+<!-- Brenda Muir -->
+<!-- OSS, Enterprise from 10.3-->
+
+November 8, 2023
+
+_Generally available in Grafana Cloud_
+
+The Contact points list view has been redesigned and split into two tabs: Contact Points and
+Notification Templates, making it easier to view all contact point information at a glance. You can now search for name and type of contact points and integrations, view how many notification policies each contact point is being used for, and navigate directly to the linked notification policies.
+
 ## Export alerting resources to Terraform
 
 <!-- Yuri Tseretyan -->
