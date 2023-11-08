@@ -1,4 +1,5 @@
 import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
@@ -28,6 +29,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     name: 'Mini Map',
     description: 'Display mini map during zoom',
     defaultValue: true,
+    showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
   });
 };
 
