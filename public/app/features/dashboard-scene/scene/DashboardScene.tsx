@@ -13,6 +13,7 @@ import {
   SceneObjectState,
   SceneObjectStateChangedEvent,
   sceneUtils,
+  SceneVariable,
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
@@ -301,18 +302,14 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     return this._emptySet;
   }
 
-  /**
-   * Used to check for dependency on a specific variable
-   */
   public hasDependencyOn(): boolean {
     return false;
   }
 
-  /**
-   * This is called whenever any set of variables have new values. It up to this implementation to check if it's relevant given the current dependencies.
-   */
-  public variableUpdatesCompleted() {
-    // Temp solution for some core panels (like dashlist) to know that variables have changed
-    appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
+  public variableUpdatesCompleted(changedVars: Set<SceneVariable>) {
+    if (changedVars.size > 0) {
+      // Temp solution for some core panels (like dashlist) to know that variables have changed
+      appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
+    }
   }
 }
