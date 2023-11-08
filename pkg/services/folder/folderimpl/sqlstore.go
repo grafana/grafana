@@ -139,7 +139,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			return folder.ErrInternal.Errorf("failed to get affected row: %w", err)
 		}
 		if affected == 0 {
-			return folder.ErrFolderNotFound
+			return folder.ErrInternal.Errorf("no folders are updated: %w", folder.ErrFolderNotFound)
 		}
 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
