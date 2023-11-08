@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-example-apiserver build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -132,6 +132,10 @@ build-server: ## Build Grafana server.
 	@echo "build server"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
 
+build-example-apiserver: ## Build Grafana example-apiserver application.
+	@echo "build grafana-cli"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-example-apiserver
+
 build-cli: ## Build Grafana CLI application.
 	@echo "build grafana-cli"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
@@ -140,6 +144,22 @@ build-js: ## Build frontend assets.
 	@echo "build frontend"
 	yarn run build
 	yarn run plugins:build-bundled
+
+build-plugins-go: ## Build decoupled plugins
+	@echo "build plugins"
+	@cd pkg/tsdb; \
+	mage -v
+
+PLUGIN_ID ?=
+
+build-plugin-go: ## Build decoupled plugins
+	@echo "build plugin $(PLUGIN_ID)"
+	@cd pkg/tsdb; \
+	if [ -z "$(PLUGIN_ID)" ]; then \
+		echo "PLUGIN_ID is not set"; \
+		exit 1; \
+	fi; \
+	mage -v buildplugin $(PLUGIN_ID)
 
 build: build-go build-js ## Build backend and frontend.
 
@@ -163,6 +183,13 @@ test-go-unit: ## Run unit tests for backend with flags.
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
 	$(GO) test -count=1 -run "^TestIntegration" -covermode=atomic -timeout=5m $(GO_INTEGRATION_TESTS)
+
+.PHONY: test-go-integration-alertmanager
+test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
+	@echo "test remote alertmanager integration tests"
+	$(GO) clean -testcache
+	AM_URL=http://localhost:8080 AM_TENANT_ID=test AM_PASSWORD=test \
+	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/notifier/...
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
@@ -238,7 +265,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:22.04 \
-	--build-arg GO_IMAGE=golang:1.20.10 \
+	--build-arg GO_IMAGE=golang:1.21.3 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 

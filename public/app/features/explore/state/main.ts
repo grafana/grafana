@@ -1,7 +1,7 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions, TimeRange } from '@grafana/data';
+import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -84,6 +84,7 @@ export const splitOpen = createAsyncThunk(
         range: options?.range || originState?.range.raw || DEFAULT_RANGE,
         panelsState: options?.panelsState || originState?.panelsState,
         correlationHelperData: options?.correlationHelperData,
+        eventBridge: new EventBusSrv(),
       })
     );
   },
@@ -148,7 +149,7 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
-  correlationEditorDetails: { editorMode: false, dirty: false, isExiting: false },
+  correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   largerExploreId: undefined,
@@ -262,7 +263,17 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (changeCorrelationEditorDetails.match(action)) {
-    const { editorMode, label, description, canSave, dirty, isExiting, postConfirmAction } = action.payload;
+    const {
+      editorMode,
+      label,
+      description,
+      canSave,
+      correlationDirty,
+      queryEditorDirty,
+      isExiting,
+      postConfirmAction,
+      transformations,
+    } = action.payload;
     return {
       ...state,
       correlationEditorDetails: {
@@ -270,7 +281,9 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         canSave: Boolean(canSave ?? state.correlationEditorDetails?.canSave),
         label: label ?? state.correlationEditorDetails?.label,
         description: description ?? state.correlationEditorDetails?.description,
-        dirty: Boolean(dirty ?? state.correlationEditorDetails?.dirty),
+        transformations: transformations ?? state.correlationEditorDetails?.transformations,
+        correlationDirty: Boolean(correlationDirty ?? state.correlationEditorDetails?.correlationDirty),
+        queryEditorDirty: Boolean(queryEditorDirty ?? state.correlationEditorDetails?.queryEditorDirty),
         isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
         postConfirmAction,
       },

@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -19,6 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+var (
+	truePtr  = boolPtr(true)
+	falsePtr = boolPtr(false)
 )
 
 func TestGetFeatureToggles(t *testing.T) {
@@ -108,20 +116,27 @@ func TestGetFeatureToggles(t *testing.T) {
 				Name:  "toggle3",
 				Stage: featuremgmt.FeatureStagePrivatePreview,
 			}, {
-				Name:  "toggle4",
-				Stage: featuremgmt.FeatureStagePublicPreview,
+				Name:           "toggle4",
+				Stage:          featuremgmt.FeatureStagePublicPreview,
+				AllowSelfServe: truePtr,
 			}, {
-				Name:  "toggle5",
-				Stage: featuremgmt.FeatureStageGeneralAvailability,
+				Name:           "toggle5",
+				Stage:          featuremgmt.FeatureStageGeneralAvailability,
+				AllowSelfServe: truePtr,
 			}, {
-				Name:  "toggle6",
-				Stage: featuremgmt.FeatureStageDeprecated,
+				Name:           "toggle6",
+				Stage:          featuremgmt.FeatureStageDeprecated,
+				AllowSelfServe: truePtr,
+			}, {
+				Name:           "toggle7",
+				Stage:          featuremgmt.FeatureStageGeneralAvailability,
+				AllowSelfServe: falsePtr,
 			},
 		}
 
 		t.Run("unknown, experimental, and private preview toggles are hidden by default", func(t *testing.T) {
 			result := runGetScenario(t, features, setting.FeatureMgmtSettings{}, readPermissions, http.StatusOK)
-			assert.Len(t, result, 3)
+			assert.Len(t, result, 4)
 
 			_, ok := findResult(t, result, "toggle1")
 			assert.False(t, ok)
@@ -131,13 +146,13 @@ func TestGetFeatureToggles(t *testing.T) {
 			assert.False(t, ok)
 		})
 
-		t.Run("only public preview and GA are writeable by default", func(t *testing.T) {
+		t.Run("only public preview and GA with AllowSelfServe are writeable", func(t *testing.T) {
 			settings := setting.FeatureMgmtSettings{
 				AllowEditing:  true,
 				UpdateWebhook: "bogus",
 			}
 			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
-			assert.Len(t, result, 3)
+			assert.Len(t, result, 4)
 
 			t4, ok := findResult(t, result, "toggle4")
 			assert.True(t, ok)
@@ -156,7 +171,7 @@ func TestGetFeatureToggles(t *testing.T) {
 				UpdateWebhook: "",
 			}
 			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
-			assert.Len(t, result, 3)
+			assert.Len(t, result, 4)
 
 			t4, ok := findResult(t, result, "toggle4")
 			assert.True(t, ok)
@@ -261,7 +276,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
-			assert.Equal(t, fmt.Sprintf("invalid toggle passed in: %s", featuremgmt.FlagFeatureToggleAdminPage), p["error"])
+			assert.Equal(t, "invalid toggle passed in", p["message"])
 		})
 
 		t.Run("because it is not GA or Deprecated", func(t *testing.T) {
@@ -274,7 +289,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
-			assert.Equal(t, "invalid toggle passed in: toggle2", p["error"])
+			assert.Equal(t, "invalid toggle passed in", p["message"])
 		})
 
 		t.Run("because it is configured to be read-only", func(t *testing.T) {
@@ -287,7 +302,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
-			assert.Equal(t, "invalid toggle passed in: toggle3", p["error"])
+			assert.Equal(t, "invalid toggle passed in", p["message"])
 		})
 	})
 
@@ -306,13 +321,15 @@ func TestSetFeatureToggles(t *testing.T) {
 				Enabled: false,
 				Stage:   featuremgmt.FeatureStageGeneralAvailability,
 			}, {
-				Name:    "toggle4",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:           "toggle4",
+				Enabled:        false,
+				Stage:          featuremgmt.FeatureStageGeneralAvailability,
+				AllowSelfServe: truePtr,
 			}, {
-				Name:    "toggle5",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageDeprecated,
+				Name:           "toggle5",
+				Enabled:        false,
+				Stage:          featuremgmt.FeatureStageDeprecated,
+				AllowSelfServe: truePtr,
 			},
 		}
 

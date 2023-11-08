@@ -96,23 +96,34 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'page-content',
       flexGrow: 1,
     }),
-    pageInner: css({
-      label: 'page-inner',
-      padding: theme.spacing(2),
-      borderRadius: theme.shape.radius.default,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderBottom: 'none',
-      background: theme.colors.background.primary,
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-      margin: theme.spacing(0, 0, 0, 0),
-
-      [theme.breakpoints.up('md')]: {
-        margin: theme.spacing(2, 2, 0, config.featureToggles.dockedMegaMenu ? 2 : 1),
-        padding: theme.spacing(3),
+    pageInner: css(
+      {
+        label: 'page-inner',
+        padding: theme.spacing(2),
+        borderBottom: 'none',
+        background: theme.colors.background.primary,
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+        margin: theme.spacing(0, 0, 0, 0),
       },
-    }),
+      config.featureToggles.dockedMegaMenu
+        ? {
+            [theme.breakpoints.up('md')]: {
+              padding: theme.spacing(4),
+            },
+          }
+        : {
+            borderRadius: theme.shape.radius.default,
+            border: `1px solid ${theme.colors.border.weak}`,
+
+            [theme.breakpoints.up('md')]: {
+              margin: theme.spacing(2, 2, 0, 1),
+              padding: theme.spacing(3),
+            },
+          }
+    ),
+
     canvasContent: css({
       label: 'canvas-content',
       display: 'flex',

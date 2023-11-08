@@ -32,7 +32,8 @@ import { DashboardDTO } from 'app/types';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { getPanelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
@@ -194,17 +195,22 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  const controls: SceneObject[] = [
+  let controls: SceneObject[] = [
     new VariableValueSelectors({}),
     ...filtersSets,
     new SceneDataLayerControls(),
     new SceneControlsSpacer(),
-    new SceneTimePicker({}),
-    new SceneRefreshPicker({
-      refresh: oldModel.refresh,
-      intervals: oldModel.timepicker.refresh_intervals,
-    }),
   ];
+
+  if (!Boolean(oldModel.timepicker.hidden)) {
+    controls = controls.concat([
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({
+        refresh: oldModel.refresh,
+        intervals: oldModel.timepicker.refresh_intervals,
+      }),
+    ]);
+  }
 
   return new DashboardScene({
     title: oldModel.title,
@@ -338,9 +344,19 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
 }
 
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
+  const hasPanelLinks = panel.links && panel.links.length > 0;
+  let panelLinks;
+
+  if (hasPanelLinks) {
+    panelLinks = new VizPanelLinks({
+      menu: new VizPanelLinksMenu({ $behaviors: [getPanelLinksBehavior(panel)] }),
+    });
+  }
+
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title,
+    description: panel.description,
     pluginId: panel.type,
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
@@ -352,6 +368,8 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    titleItems: panelLinks,
+
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
@@ -366,7 +384,6 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
 
   if (panel.repeat) {
     const repeatDirection = panel.repeatDirection ?? 'h';
-
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,

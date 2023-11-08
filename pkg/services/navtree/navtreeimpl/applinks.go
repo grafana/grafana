@@ -254,7 +254,7 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDMonitoring, SortWeight: 1, Text: "Kubernetes"},
-		"grafana-app-observability-app":    {SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Application (preview)"},
+		"grafana-app-observability-app":    {SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Application"},
 		"grafana-pyroscope-app":            {SectionID: navtree.NavIDMonitoring, SortWeight: 3, Text: "Profiles"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDMonitoring, SortWeight: 4, Text: "Frontend"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 5, Text: "Synthetics"},
@@ -262,8 +262,16 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incidents"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
+		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
 		"k6-app":                           {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"},
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagNavAdminSubsections) && s.features.IsEnabled(featuremgmt.FlagCostManagementUi) {
+		// if cost management is enabled we want to nest adaptive metrics and log volume explorer under that plugin
+		// in the admin section
+		s.navigationAppConfig["grafana-adaptive-metrics-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg}
+		s.navigationAppConfig["grafana-logvolumeexplorer-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg}
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

@@ -68,7 +68,8 @@ const ui = {
   loadingIndicator: byText(/Loading rule/i),
 };
 
-const renderRuleViewer = async (ruleId?: string) => {
+const renderRuleViewer = async (ruleId: string) => {
+  locationService.push(`/alerting/grafana/${ruleId}/view`);
   render(
     <TestProvider>
       <RuleViewer {...mockRoute(ruleId)} />
@@ -86,7 +87,15 @@ const rulerRuleIdentifier = ruleId.fromRulerRule('prometheus', 'ns-default', 'gr
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
+  const promDsSettings = mockDataSource({
+    name: dsName,
+    uid: dsName,
+  });
 
+  setupDataSources(promDsSettings);
+});
+
+beforeEach(() => {
   // some action buttons need to check what Alertmanager setup we have for Grafana managed rules
   mockAlertmanagerChoiceResponse(server, {
     alertmanagersChoice: AlertmanagerChoice.Internal,
@@ -94,13 +103,6 @@ beforeAll(() => {
   });
   // we need to mock this one for the "declare incident" button
   mockPluginSettings(server, SupportedPlugin.Incident);
-
-  const promDsSettings = mockDataSource({
-    name: dsName,
-    uid: dsName,
-  });
-
-  setupDataSources(promDsSettings);
 
   mockAlertRuleApi(server).rulerRules('grafana', {
     [mockGrafanaRule.namespace.name]: [
@@ -153,7 +155,7 @@ describe('RuleViewer', () => {
 
   it('should render page with grafana alert', async () => {
     mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
-    await renderRuleViewer();
+    await renderRuleViewer('test1');
 
     expect(screen.getByText(/test alert/i)).toBeInTheDocument();
   });
@@ -195,7 +197,7 @@ describe('RuleDetails RBAC', () => {
       });
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
@@ -215,7 +217,7 @@ describe('RuleDetails RBAC', () => {
       const user = userEvent.setup();
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
       await user.click(ui.moreButton.get());
 
       // Assert
@@ -234,7 +236,7 @@ describe('RuleDetails RBAC', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       await waitFor(() => {
@@ -256,7 +258,7 @@ describe('RuleDetails RBAC', () => {
         .mockImplementation((action) => action === AccessControlAction.AlertingInstanceCreate);
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       await waitFor(() => {
@@ -275,7 +277,7 @@ describe('RuleDetails RBAC', () => {
 
       const user = userEvent.setup();
 
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
       await user.click(ui.moreButton.get());
 
       expect(ui.moreButtons.duplicate.get()).toBeInTheDocument();
@@ -293,7 +295,7 @@ describe('RuleDetails RBAC', () => {
       grantUserPermissions([AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete]);
       const user = userEvent.setup();
 
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
       await user.click(ui.moreButton.get());
 
       expect(ui.moreButtons.duplicate.query()).not.toBeInTheDocument();
@@ -321,7 +323,7 @@ describe('RuleDetails RBAC', () => {
       });
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       expect(ui.actionButtons.edit.query()).toBeInTheDocument();
@@ -341,7 +343,7 @@ describe('RuleDetails RBAC', () => {
       const user = userEvent.setup();
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
       await user.click(ui.moreButton.get());
 
       // Assert

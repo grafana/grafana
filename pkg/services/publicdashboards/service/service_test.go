@@ -344,7 +344,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 					Updated:                d.Updated,
 					Version:                d.Version,
 					IsFolder:               false,
-					FolderId:               d.FolderID,
+					FolderId:               d.FolderID, // nolint:staticcheck
 					PublicDashboardEnabled: true,
 				},
 			},
@@ -372,7 +372,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 					Updated:                d.Updated,
 					Version:                d.Version,
 					IsFolder:               false,
-					FolderId:               d.FolderID,
+					FolderId:               d.FolderID, // nolint:staticcheck
 					PublicDashboardEnabled: true,
 				},
 			},
@@ -411,6 +411,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 				assert.Equal(t, test.DashResp.Meta.Updated, dashboardFullWithMeta.Meta.Updated)
 				assert.Equal(t, test.DashResp.Meta.Version, dashboardFullWithMeta.Meta.Version)
 				assert.Equal(t, false, dashboardFullWithMeta.Meta.IsFolder)
+				// nolint:staticcheck
 				assert.Equal(t, test.DashResp.Meta.FolderId, dashboardFullWithMeta.Meta.FolderId)
 				assert.Equal(t, test.DashResp.Meta.PublicDashboardEnabled, dashboardFullWithMeta.Meta.PublicDashboardEnabled)
 
@@ -594,7 +595,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]any{}, nil)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 		service := &PublicDashboardServiceImpl{
@@ -680,7 +681,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 			dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-			dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]any{}, nil)
+			dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 			serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 			service := &PublicDashboardServiceImpl{
@@ -718,7 +719,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]any{}, nil)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 		service := &PublicDashboardServiceImpl{
@@ -752,7 +753,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 		templateVars := make([]map[string]any, 1)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, templateVars, nil)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, templateVars, nil)
 		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 		service := &PublicDashboardServiceImpl{
@@ -827,7 +828,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]any{}, nil)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 		service := &PublicDashboardServiceImpl{
@@ -905,7 +906,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 		service := &PublicDashboardServiceImpl{
@@ -966,7 +967,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 		require.NoError(t, err)
 
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]any{}, nil)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 
 		publicdashboardStore := &FakePublicDashboardStore{}
 		publicdashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(&PublicDashboard{Uid: "newPubdashUid"}, nil)
@@ -1003,7 +1004,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]any{}, nil)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 		service := &PublicDashboardServiceImpl{
@@ -1047,8 +1048,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 	require.NoError(t, err)
 	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
-	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]any{}, nil)
-	dashboard2 := insertTestDashboard(t, dashboardStore, "testDashie2", 1, 0, true, []map[string]any{}, nil)
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
+	dashboard2 := insertTestDashboard(t, dashboardStore, "testDashie2", 1, 0, "", true, []map[string]any{}, nil)
 
 	service := &PublicDashboardServiceImpl{
 		log:            log.New("test.logger"),
@@ -1233,7 +1234,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			require.NoError(t, err)
 			publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 			serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
-			dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]any{}, nil)
+			dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
 
 			service := &PublicDashboardServiceImpl{
 				log:            log.New("test.logger"),
@@ -1803,7 +1804,7 @@ func AddAnnotationsToDashboard(t *testing.T, dash *dashboards.Dashboard, annotat
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
-	folderId int64, isFolder bool, templateVars []map[string]any, customPanels []any, tags ...any) *dashboards.Dashboard {
+	folderId int64, folderUID string, isFolder bool, templateVars []map[string]any, customPanels []any, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 
 	var dashboardPanels []any
@@ -1852,9 +1853,10 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	}
 
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:    orgId,
-		FolderID: folderId,
-		IsFolder: isFolder,
+		OrgID:     orgId,
+		FolderID:  folderId,
+		FolderUID: folderUID,
+		IsFolder:  isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":     nil,
 			"title":  title,

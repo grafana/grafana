@@ -50,13 +50,16 @@ export function NodeGraphSettings({ options, onOptionsChange }: Props) {
 }
 
 export const NodeGraphSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  let suffix = options.type;
+  suffix += options.type === 'tempo' ? '/configure-tempo-data-source/#node-graph' : '/#node-graph';
+
   return (
     <ConfigSubSection
       title="Node graph"
       description={
         <ConfigDescriptionLink
           description="Show or hide the node graph visualization."
-          suffix={`${options.type}/#node-graph`}
+          suffix={suffix}
           feature="the node graph"
         />
       }

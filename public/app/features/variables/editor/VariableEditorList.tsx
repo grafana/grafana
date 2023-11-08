@@ -4,9 +4,8 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2, Stack } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
