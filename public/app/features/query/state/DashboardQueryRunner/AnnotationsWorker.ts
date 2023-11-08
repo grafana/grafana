@@ -59,7 +59,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
       }
 
       return datasourceObservable.pipe(
-        mergeMap((datasource?: DataSourceApi) => {
+        mergeMap((datasource: DataSourceApi | undefined) => {
           const runner = this.runners.find((r) => r.canRun(datasource));
           if (!runner) {
             return of([]);

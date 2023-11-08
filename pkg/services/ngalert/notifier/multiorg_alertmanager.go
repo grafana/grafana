@@ -30,7 +30,7 @@ var (
 	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
 )
 
-//go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mocks
+//go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
 type Alertmanager interface {
 	// Configuration
 	ApplyConfig(context.Context, *models.AlertConfiguration) error

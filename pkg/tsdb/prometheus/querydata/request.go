@@ -64,6 +64,10 @@ func New(
 		return nil, err
 	}
 
+	if httpMethod == "" {
+		httpMethod = http.MethodPost
+	}
+
 	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
 
 	// standard deviation sampler is the default for backwards compatibility
@@ -97,6 +101,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		if err != nil {
 			return &result, err
 		}
+
 		r := s.fetch(ctx, s.client, query, req.Headers)
 		if r == nil {
 			s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)

@@ -34,9 +34,14 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
    * Specifies the type of profile to query.
    */
   profileTypeId: string;
+  /**
+   * Specifies the query span selectors.
+   */
+  spanSelector?: Array<string>;
 }
 
 export const defaultGrafanaPyroscopeDataQuery: Partial<GrafanaPyroscopeDataQuery> = {
   groupBy: [],
   labelSelector: '{}',
+  spanSelector: [],
 };

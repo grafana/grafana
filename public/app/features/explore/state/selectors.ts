@@ -11,6 +11,9 @@ export const selectPanesEntries = createSelector<
 >(selectPanes, Object.entries);
 
 export const isSplit = createSelector(selectPanesEntries, (panes) => panes.length > 1);
+export const selectIsHelperShowing = createSelector(selectPanesEntries, (panes) =>
+  panes.some((pane) => pane[1].correlationEditorHelperData !== undefined)
+);
 
 export const isLeftPaneSelector = (exploreId: string) =>
   createSelector(selectPanes, (panes) => {

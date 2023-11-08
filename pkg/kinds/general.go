@@ -60,10 +60,15 @@ const annoKeyOriginTimestamp = "grafana.app/originTimestamp"
 
 func (m *GrafanaResourceMetadata) set(key string, val string) {
 	if val == "" {
-		delete(m.Annotations, key)
-	} else {
-		m.Annotations[key] = val
+		if m.Annotations != nil {
+			delete(m.Annotations, key)
+		}
+		return
 	}
+	if m.Annotations == nil {
+		m.Annotations = make(map[string]string)
+	}
+	m.Annotations[key] = val
 }
 
 func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
@@ -77,12 +82,21 @@ func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
 	return nil
 }
 
-func (m *GrafanaResourceMetadata) SetUpdatedTimestamp(v *time.Time) {
-	if v == nil {
-		delete(m.Annotations, annoKeyUpdatedTimestamp)
+func (m *GrafanaResourceMetadata) SetUpdatedTimestampMillis(v int64) {
+	if v > 0 {
+		t := time.UnixMilli(v)
+		m.SetUpdatedTimestamp(&t)
 	} else {
-		m.Annotations[annoKeyUpdatedTimestamp] = v.Format(time.RFC3339)
+		m.SetUpdatedTimestamp(nil)
 	}
+}
+
+func (m *GrafanaResourceMetadata) SetUpdatedTimestamp(v *time.Time) {
+	txt := ""
+	if v != nil {
+		txt = v.UTC().Format(time.RFC3339)
+	}
+	m.set(annoKeyUpdatedTimestamp, txt)
 }
 
 func (m *GrafanaResourceMetadata) GetCreatedBy() string {
@@ -123,13 +137,9 @@ func (m *GrafanaResourceMetadata) SetOriginInfo(info *ResourceOriginInfo) {
 	delete(m.Annotations, annoKeyOriginKey)
 	delete(m.Annotations, annoKeyOriginTimestamp)
 	if info != nil || info.Name != "" {
-		m.Annotations[annoKeyOriginName] = info.Name
-		if info.Path != "" {
-			m.Annotations[annoKeyOriginPath] = info.Path
-		}
-		if info.Key != "" {
-			m.Annotations[annoKeyOriginKey] = info.Key
-		}
+		m.set(annoKeyOriginName, info.Name)
+		m.set(annoKeyOriginKey, info.Key)
+		m.set(annoKeyOriginPath, info.Path)
 		if info.Timestamp != nil {
 			m.Annotations[annoKeyOriginTimestamp] = info.Timestamp.Format(time.RFC3339)
 		}
