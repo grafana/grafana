@@ -135,6 +135,12 @@ Each linked query consists of:
   Interpolate tags using the `$__tags` keyword.
   For example, when you configure the query `requests_total{$__tags}`with the tags `k8s.pod=pod` and `cluster`, the result looks like `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
+## Trace to profiles
+
+[//]: # 'Shared content for Trace to profiles in the Tempo data source'
+
+{{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" version="<GRAFANA VERSION>" >}}
+
 ## Service Graph
 
 The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/metrics-generator/service_graphs/enable-service-graphs/) feature.
