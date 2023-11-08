@@ -205,6 +205,10 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	return userInfo, nil
 }
 
+func (s *SocialGenericOAuth) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
 	s.log.Debug("Extracting user info from OAuth token")
 

@@ -162,6 +162,10 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
+func (s *SocialGitlab) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, token *oauth2.Token) (*userData, error) {
 	apiResp := &apiData{}
 	response, err := s.httpGet(ctx, client, s.apiUrl+"/user")

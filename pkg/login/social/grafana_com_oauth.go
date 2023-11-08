@@ -86,3 +86,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 
 	return userInfo, nil
 }
+
+func (s *SocialGrafanaCom) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}

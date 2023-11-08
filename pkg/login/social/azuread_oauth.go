@@ -16,8 +16,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+var _ SocialConnector = (*SocialAzureAD)(nil)
 
 type SocialAzureAD struct {
 	*SocialBase
@@ -55,6 +60,26 @@ type azureAccessClaims struct {
 
 type keySetJWKS struct {
 	jose.JSONWebKeySet
+}
+
+func NewAzureADProvider(cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) *SocialAzureAD {
+	sectionName := "auth.azuread"
+	section := cfg.Raw.Section(sectionName)
+	info := loadOAuthInfo(section, sectionName)
+	config := createOAuthConfig(section, info, cfg, "azuread")
+	provider := &SocialAzureAD{
+		SocialBase:           newSocialBase(info.Name, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		cache:                cache,
+		allowedOrganizations: util.SplitString(section.Key("allowed_organizations").String()),
+		forceUseGraphAPI:     section.Key("force_use_graph_api").MustBool(false),
+		skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
+	}
+
+	if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+		appendUniqueScope(config, OfflineAccessScope)
+	}
+
+	return provider
 }
 
 func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -120,6 +145,10 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}, nil
+}
+
+func (s *SocialAzureAD) GetOAuthInfo() *OAuthInfo {
+	return s.info
 }
 
 func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {

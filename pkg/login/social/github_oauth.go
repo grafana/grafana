@@ -276,6 +276,10 @@ func (t *GithubTeam) GetShorthand() (string, error) {
 	return fmt.Sprintf("@%s/%s", t.Organization.Login, t.Slug), nil
 }
 
+func (s *SocialGithub) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 func convertToGroupList(t []GithubTeam) []string {
 	groups := make([]string, 0)
 	for _, team := range t {

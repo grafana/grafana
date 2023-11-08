@@ -92,6 +92,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
+func (s *SocialGoogle) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 type googleAPIData struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`

@@ -107,6 +107,10 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	}, nil
 }
 
+func (s *SocialOkta) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
 	rawUserInfoResponse, err := s.httpGet(ctx, client, s.apiUrl)
 	if err != nil {
