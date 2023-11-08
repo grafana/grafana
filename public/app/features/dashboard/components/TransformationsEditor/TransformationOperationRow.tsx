@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
 import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID, SelectableValue } from '@grafana/data';
