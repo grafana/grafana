@@ -38,7 +38,7 @@ const EnumMappingRow = ({
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, []);
+  }, [inputRef]);
 
   const onEnumInputChange = (event: FormEvent<HTMLInputElement>) => {
     if (
