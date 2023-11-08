@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/pager-duty/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/pager-duty/
 description: Configure PagerDuty
 keywords:
   - grafana

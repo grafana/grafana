@@ -1,5 +1,5 @@
 ---
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/configure-oncall/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/configure-oncall/
 description: Configure the Alerting - Grafana OnCall integration
 keywords:
   - grafana
