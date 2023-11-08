@@ -38,6 +38,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
         showIf: (cfg) => cfg.seriesMapping === 'manual',
       });
 
-    commonOptionsBuilder.addTooltipOptions(builder);
+    commonOptionsBuilder.addTooltipOptions(builder, true);
     commonOptionsBuilder.addLegendOptions(builder);
   });
