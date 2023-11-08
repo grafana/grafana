@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 
-import { dateTime, findCommonLabels } from '@grafana/data';
+import { PluginExtensionPoints, dateTime, findCommonLabels } from '@grafana/data';
 import { Alert, PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { AlertInstanceExtensionPoint } from '../extensions/AlertInstanceExtensionPoint';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
 import { AlertStateTag } from './AlertStateTag';
@@ -75,5 +76,17 @@ const columns: AlertTableColumnProps[] = [
       <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>
     ),
     size: '150px',
+  },
+  {
+    id: 'actions',
+    label: '',
+    renderCell: ({ data: alert }) => (
+      <AlertInstanceExtensionPoint
+        instance={alert}
+        extensionPointId={PluginExtensionPoints.AlertInstanceAction}
+        key="alert-instance-extension-point"
+      />
+    ),
+    size: '40px',
   },
 ];
