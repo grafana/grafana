@@ -32,8 +32,11 @@ interface DashboardGroup {
 
 async function fetchDashboards(options: Options, replaceVars: InterpolateFunction) {
   let starredDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
-  const params = { limit: options.maxItems, starred: 'true' };
-  starredDashboards = getBackendSrv().search(params);
+
+  if (options.showStarred) {
+    const params = { limit: options.maxItems, starred: 'true' };
+    starredDashboards = getBackendSrv().search(params);
+  }
 
   let recentDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
   let dashUIDs: string[] = [];
