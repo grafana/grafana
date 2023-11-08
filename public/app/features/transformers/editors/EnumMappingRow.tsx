@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useState, KeyboardEvent } from 'react';
+import React, { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -27,8 +27,18 @@ const EnumMappingRow = ({
   const styles = useStyles2(getStyles);
 
   const [enumValue, setEnumValue] = useState<string>(value);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  // If the enum value is empty, we assume it is a new row and should be editable
+  const [isEditing, setIsEditing] = useState<boolean>(enumValue === '');
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus the input field if it is rendered
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
 
   const onEnumInputChange = (event: FormEvent<HTMLInputElement>) => {
     if (
@@ -47,6 +57,13 @@ const EnumMappingRow = ({
   const onEnumInputBlur = () => {
     setIsEditing(false);
     setValidationError(null);
+
+    // Do not add empty or duplicate enum values
+    if (enumValue === '' || validationError !== null) {
+      onRemoveEnumRow(mappedIndex);
+      return;
+    }
+
     onChangeEnumValue(mappedIndex, enumValue);
   };
 
@@ -81,6 +98,7 @@ const EnumMappingRow = ({
           {isEditing ? (
             <td>
               <Input
+                ref={inputRef}
                 type="text"
                 value={enumValue}
                 onChange={onEnumInputChange}
@@ -132,6 +150,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   clickableTableCell: css({
     cursor: 'pointer',
+    width: '100px',
+    '&:hover': {
+      color: theme.colors.text.maxContrast,
+    },
   }),
 });
 
