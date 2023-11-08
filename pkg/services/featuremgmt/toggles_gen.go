@@ -79,6 +79,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagNewVizTooltips
+	// New visualizations tooltips UX
+	FlagNewVizTooltips = "newVizTooltips"
+
 	// FlagScenes
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
@@ -274,10 +278,6 @@ const (
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
-
-	// FlagDataSourcePageHeader
-	// Apply new pageHeader UI in data source edit page
-	FlagDataSourcePageHeader = "dataSourcePageHeader"
 
 	// FlagExtraThemes
 	// Enables extra themes
@@ -570,4 +570,12 @@ const (
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
+
+	// FlagPdfTables
+	// Enables generating table data as PDF in reporting
+	FlagPdfTables = "pdfTables"
+
+	// FlagSsoSettingsApi
+	// Enables the SSO settings API
+	FlagSsoSettingsApi = "ssoSettingsApi"
 )

@@ -3,8 +3,19 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Field, Icon, IconButton, Input, InputControl, Label, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Field,
+  Icon,
+  IconButton,
+  Input,
+  InputControl,
+  Label,
+  Stack,
+  Switch,
+  Text,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { logInfo, LogMessages } from '../../Analytics';

@@ -80,7 +80,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
 		Type:          dashboardType,
-		FolderIds:     folderIDs,
+		FolderIds:     folderIDs, // nolint:staticcheck
 		FolderUIDs:    folderUIDs,
 		Permission:    permission,
 		Sort:          sort,
