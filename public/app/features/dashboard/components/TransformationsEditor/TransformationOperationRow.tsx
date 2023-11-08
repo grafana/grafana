@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
-import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID, SelectableValue } from '@grafana/data';
+import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { DataFramesSource } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
-import { ConfirmModal, Select } from '@grafana/ui';
+import { DataFramesSource } from '@grafana/schema';
+import { ConfirmModal } from '@grafana/ui';
 import {
   QueryOperationAction,
   QueryOperationToggleAction,
@@ -29,11 +29,6 @@ interface TransformationOperationRowProps {
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
-const dataFramesSourceOpts: Array<SelectableValue<DataFramesSource>> = [
-  { value: DataFramesSource.Series, label: 'Series' },
-  { value: DataFramesSource.Annotations, label: 'Annotations' },
-];
-
 export const TransformationOperationRow = ({
   onRemove,
   index,
@@ -48,8 +43,8 @@ export const TransformationOperationRow = ({
   const [showHelp, toggleShowHelp] = useToggle(false);
   const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
-  const dataFramesSource = configs[index].transformation.source;
-  const showFilter = filter || data.series.length > 1;
+  const source = configs[index].transformation.source;
+  const showFilter = filter || source != null || data.series.length > 1 || (data.annotations?.length ?? 0) > 0;
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -60,17 +55,6 @@ export const TransformationOperationRow = ({
       });
     },
     [onChange, configs]
-  );
-
-  const onChangeSource = useCallback(
-    (dataFramesSource: DataFramesSource) => {
-      const current = configs[index].transformation;
-      onChange(index, {
-        ...current,
-        source: dataFramesSource,
-      });
-    },
-    [onChange, configs, index]
   );
 
   // Adds or removes the frame filter
@@ -175,28 +159,14 @@ export const TransformationOperationRow = ({
           open: 'Expand transformation row',
         }}
       >
-        {filter && (
+        {showFilter && (
           <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
         )}
-
-        <div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <div className="gf-form-label width-8">Data source</div>
-              <Select
-                className="width-18"
-                options={dataFramesSourceOpts}
-                value={dataFramesSourceOpts.find((v) => v.value === dataFramesSource)}
-                onChange={(option) => onChangeSource(option.value!)}
-              />
-            </div>
-          </div>
-        </div>
 
         <TransformationEditor
           debugMode={showDebug}
           index={index}
-          data={dataFramesSource === DataFramesSource.Series ? data.series : data.annotations ?? []}
+          data={source === DataFramesSource.Annotations ? data.annotations ?? [] : data.series}
           configs={configs}
           uiConfig={uiConfig}
           onChange={onChange}
