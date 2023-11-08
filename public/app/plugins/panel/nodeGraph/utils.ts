@@ -251,8 +251,8 @@ function computableField(field?: Field) {
  * @param edgeFields
  */
 function normalizeStatsForNodes(nodesMap: { [id: string]: NodeDatumFromEdge }, edgeFields: EdgeFields): NodeDatum[] {
-  const secondaryStatValues: any[] = [];
-  const mainStatValues: any[] = [];
+  const secondaryStatValues: Array<number | undefined> = [];
+  const mainStatValues: Array<number | undefined> = [];
   const secondaryStatField = computableField(edgeFields.secondaryStat)
     ? {
         ...edgeFields.secondaryStat!,

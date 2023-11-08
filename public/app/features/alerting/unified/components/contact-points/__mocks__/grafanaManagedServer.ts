@@ -1,18 +1,17 @@
 import { rest } from 'msw';
+import { SetupServer } from 'msw/lib/node';
 
 import { AlertmanagerChoice, AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversStateDTO } from 'app/types';
 
-import { mockApi, setupMswServer } from '../../../mockApi';
+import { mockApi } from '../../../mockApi';
 import { mockAlertmanagerChoiceResponse } from '../../../mocks/alertmanagerApi';
 import { grafanaNotifiersMock } from '../../../mocks/grafana-notifiers';
 
 import alertmanagerMock from './alertmanager.config.mock.json';
 import receiversMock from './receivers.mock.json';
 
-export default () => {
-  const server = setupMswServer();
-
+export default (server: SetupServer) => {
   server.use(
     // this endpoint is a grafana built-in alertmanager
     rest.get('/api/alertmanager/grafana/config/api/v1/alerts', (_req, res, ctx) =>

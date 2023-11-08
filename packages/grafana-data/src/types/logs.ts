@@ -153,7 +153,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
-  if (!datasource) {
+  if (!datasource || typeof datasource !== 'object') {
     return false;
   }
 
@@ -253,7 +253,7 @@ export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
 };
 
 export const hasLogsContextUiSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
-  if (!datasource) {
+  if (!datasource || typeof datasource !== 'object') {
     return false;
   }
 
