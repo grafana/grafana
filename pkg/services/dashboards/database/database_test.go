@@ -517,12 +517,14 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		// setup() saves one dashboard in the general folder and two in the "savedFolder".
 		count, err := dashboardStore.CountDashboardsInFolder(
 			context.Background(),
+			// nolint:staticcheck
 			&dashboards.CountDashboardsInFolderRequest{FolderID: 0, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 
 		count, err = dashboardStore.CountDashboardsInFolder(
 			context.Background(),
+			// nolint:staticcheck
 			&dashboards.CountDashboardsInFolderRequest{FolderID: savedFolder.ID, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
@@ -542,6 +544,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			})
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		count, err := dashboardStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 2, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, count, int64(0))
