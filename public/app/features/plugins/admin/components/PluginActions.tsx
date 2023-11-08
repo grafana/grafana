@@ -37,38 +37,36 @@ export const PluginActions = ({ plugin }: Props) => {
   const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();
 
   return (
-    <>
-      <VerticalGroup>
-        <HorizontalGroup>
-          {!isInstallControlsDisabled && (
-            <>
-              {isExternallyManaged && !hasInstallWarning && !configCore.featureToggles.managedPluginsInstall ? (
-                <ExternallyManagedButton
-                  pluginId={plugin.id}
-                  pluginStatus={pluginStatus}
-                  angularDetected={plugin.angularDetected}
-                />
-              ) : (
-                <InstallControlsButton
-                  plugin={plugin}
-                  latestCompatibleVersion={latestCompatibleVersion}
-                  pluginStatus={pluginStatus}
-                  setNeedReload={setNeedReload}
-                  hasInstallWarning={hasInstallWarning}
-                />
-              )}
-            </>
-          )}
-          <GetStartedWithPlugin plugin={plugin} />
-        </HorizontalGroup>
-        {needReload && (
-          <HorizontalGroup>
-            <Icon name="exclamation-triangle" />
-            <span className={styles.message}>Refresh the page to see the changes</span>
-          </HorizontalGroup>
+    <VerticalGroup>
+      <HorizontalGroup>
+        {!isInstallControlsDisabled && (
+          <>
+            {isExternallyManaged && !hasInstallWarning && !configCore.featureToggles.managedPluginsInstall ? (
+              <ExternallyManagedButton
+                pluginId={plugin.id}
+                pluginStatus={pluginStatus}
+                angularDetected={plugin.angularDetected}
+              />
+            ) : (
+              <InstallControlsButton
+                plugin={plugin}
+                latestCompatibleVersion={latestCompatibleVersion}
+                pluginStatus={pluginStatus}
+                setNeedReload={setNeedReload}
+                hasInstallWarning={hasInstallWarning}
+              />
+            )}
+          </>
         )}
-      </VerticalGroup>
-    </>
+        <GetStartedWithPlugin plugin={plugin} />
+      </HorizontalGroup>
+      {needReload && (
+        <HorizontalGroup>
+          <Icon name="exclamation-triangle" />
+          <span className={styles.message}>Refresh the page to see the changes</span>
+        </HorizontalGroup>
+      )}
+    </VerticalGroup>
   );
 };
 
