@@ -8,6 +8,7 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -49,6 +50,10 @@ var _ dashboards.Store = (*dashboardStore)(nil)
 func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (dashboards.Store, error) {
 	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 
+	if features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) {
+		s.DBMigration(sqlStore)
+	}
+
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -63,6 +68,62 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 	}
 
 	return s, nil
+}
+
+func (d *dashboardStore) DBMigration(db db.DB) {
+	ctx := context.Background()
+	var dashboards = make([]*dashboards.Dashboard, 0)
+
+	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		migTable := "migration_log"
+		mig := migrator.MigrationLog{
+			MigrationID: "Add DB migration for panel table",
+			Success:     true,
+		}
+
+		// #TODO: we might want truncate the table after this if block just in case panels were inserted if
+		// "_, err = sess.Table(migTable).Insert(&mig)" failed
+		// #TODO: is there a uniqueness constraint for panels within a dashboard?
+		if exists, err := sess.Table(migTable).Get(&mig); exists || (err != nil) {
+			d.log.Info("DB migration on dashboard store start skipped")
+			return err
+		}
+
+		err = sess.Table("dashboard").Find(&dashboards)
+		if err != nil {
+			return err
+		}
+		for _, d := range dashboards {
+			// #TODO: all of this could happen in a function called update dashboard panels or something -->
+			// given a dashboard it wipes out any entries related to it and adds them fresh...
+			panels := getPanelTitles(d)
+			for _, p := range panels {
+				// #TODO make sure this is the correct syntax for all three DBs
+				_, err = sess.Exec("INSERT INTO panel (dashid, title) VALUES (?, ?)", p, d.ID)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		mig.Timestamp = time.Now()
+		_, err = sess.Table(migTable).Insert(&mig)
+		return err
+	})
+	if err != nil {
+		d.log.Error("DB migration on dashboard store start failed:", err)
+	}
+}
+
+func getPanelTitles(dash *dashboards.Dashboard) []string {
+	titles := make([]string, 0)
+	panels := dash.Data.Get("panels").MustArray()
+	for _, p := range panels {
+		panel := simplejson.NewFromAny(p)
+		titles = append(titles, panel.Get("title").MustString())
+	}
+	return titles
 }
 
 func (d *dashboardStore) emitEntityEvent() bool {
@@ -141,7 +202,7 @@ func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd dashb
 	var result *dashboards.Dashboard
 	var err error
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
+		result, err = d.saveDashboard(sess, &cmd, d.emitEntityEvent())
 		if err != nil {
 			return err
 		}
@@ -159,7 +220,7 @@ func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveD
 	var result *dashboards.Dashboard
 	var err error
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
+		result, err = d.saveDashboard(sess, &cmd, d.emitEntityEvent())
 		if err != nil {
 			return err
 		}
@@ -378,7 +439,7 @@ func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Das
 	return isParentFolderChanged, nil
 }
 
-func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitEntityEvent bool) (*dashboards.Dashboard, error) {
+func (d *dashboardStore) saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitEntityEvent bool) (*dashboards.Dashboard, error) {
 	dash := cmd.GetDashboardModel()
 
 	userId := cmd.UserID
