@@ -77,14 +77,14 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 }
 
 func (s *SSOSettingsService) List(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error) {
-	result := make([]*models.SSOSetting, 0, len(ssosettings.ConfigurableOAuthProviders))
+	result := make([]*models.SSOSetting, 0, len(ssosettings.AllOAuthProviders))
 	storedSettings, err := s.store.List(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, provider := range ssosettings.ConfigurableOAuthProviders {
+	for _, provider := range ssosettings.AllOAuthProviders {
 		ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", "auth."+provider, "*"))
 		hasAccess, err := s.ac.Evaluate(ctx, requester, ev)
 		if err != nil {
@@ -112,7 +112,7 @@ func (s *SSOSettingsService) List(ctx context.Context, requester identity.Reques
 }
 
 func (s *SSOSettingsService) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
-	// TODO: validation
+	// TODO: validation (configurable provider? Contains the required fields? etc)
 	err := s.store.Upsert(ctx, provider, data)
 	if err != nil {
 		return err

@@ -11,6 +11,8 @@ var (
 	// ConfigurableOAuthProviders is a list of OAuth providers that can be configured from the API
 	// TODO: make it configurable
 	ConfigurableOAuthProviders = []string{"github", "gitlab", "google", "generic_oauth", "azuread", "okta"}
+
+	AllOAuthProviders = []string{"github", "gitlab", "google", "generic_oauth", "grafana_com", "azuread", "okta"}
 )
 
 // Service is a SSO settings service

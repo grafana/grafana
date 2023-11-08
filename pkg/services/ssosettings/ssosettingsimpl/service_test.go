@@ -206,6 +206,13 @@ func TestSSOSettingsService_List(t *testing.T) {
 					},
 					Source: models.System,
 				},
+				{
+					Provider: "grafana_com",
+					Settings: map[string]interface{}{
+						"enabled": false,
+					},
+					Source: models.System,
+				},
 			},
 			wantErr: false,
 		},
@@ -307,6 +314,13 @@ func TestSSOSettingsService_List(t *testing.T) {
 				},
 				{
 					Provider: "azuread",
+					Settings: map[string]interface{}{
+						"enabled": false,
+					},
+					Source: models.System,
+				},
+				{
+					Provider: "grafana_com",
 					Settings: map[string]interface{}{
 						"enabled": false,
 					},

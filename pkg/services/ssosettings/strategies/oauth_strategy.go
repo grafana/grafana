@@ -18,7 +18,7 @@ type OAuthStrategy struct {
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)
 
 func NewOAuthStrategy(cfg *setting.Cfg) *OAuthStrategy {
-	compiledRegex := regexp.MustCompile(`^` + strings.Join(ssosettings.ConfigurableOAuthProviders, "|") + `$`)
+	compiledRegex := regexp.MustCompile(`^` + strings.Join(ssosettings.AllOAuthProviders, "|") + `$`)
 	return &OAuthStrategy{
 		cfg:                     cfg,
 		supportedProvidersRegex: compiledRegex,
