@@ -25,7 +25,6 @@ import (
 	_ "github.com/stretchr/testify/require"
 	_ "github.com/vectordotdev/go-datemath"
 	_ "golang.org/x/time/rate"
-	_ "google.golang.org/genproto/googleapis/cloud/kms/v1"
 )
 
 var IsEnterprise bool = false
