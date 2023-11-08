@@ -205,11 +205,11 @@ describe('LogsTable', () => {
       });
     });
 
-    it('should not render `attributes`', async () => {
+    it('should not render `labels`', async () => {
       setup(undefined, getMockLokiFrameDataPlane());
 
       await waitFor(() => {
-        const columns = screen.queryAllByRole('columnheader', { name: 'attributes' });
+        const columns = screen.queryAllByRole('columnheader', { name: 'labels' });
 
         expect(columns.length).toBe(0);
       });

@@ -1090,6 +1090,7 @@
       "export": "Export",
       "library-panel": "Library panel",
       "link": "Link",
+      "panel-embed": "Embed",
       "snapshot": "Snapshot"
     },
     "theme-picker": {

@@ -76,6 +76,10 @@ describe('Check for syntax errors in query', () => {
     ['{true} << {true}'],
     ['{true} !>> {true}'],
     ['{true} !<< {true}'],
+    [
+      `{ true } /* && { false } && */ && { true } // && { false }
+    && { true }`,
+    ],
   ])('valid query - %s', (query: string) => {
     expect(getErrorNodes(query)).toStrictEqual([]);
   });

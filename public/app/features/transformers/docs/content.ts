@@ -83,7 +83,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png',
     imageRenderType,
-    this.name
+    'Add field from calculation'
   )}
   `;
     },
@@ -336,7 +336,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-by-query-stat-example-7-0.png',
     imageRenderType,
-    this.name
+    'Filter data by query refId'
   )}
   `;
     },
@@ -440,7 +440,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2023-03-04 23:56:23 | 22.2         | 20.2          |
   | 2023-03-04 23:56:23 | 22.1         | 20.1          |
   
-  The regular expression can include an interpolated dashboard variable by using the \${$${'variableName'}} syntax.
+  The regular expression can include an interpolated dashboard variable by using the \${${'variableName'}} syntax.
   
   #### Manually select included fields
   
@@ -453,7 +453,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-table-before-7-0.png',
     imageRenderType,
-    this.name + 1
+    // Distinguish alt text for multiple images by appending a number.
+    'Filter fields by name' + 1
   )}
 
   Here's the table after we applied the transformation to remove the Min field.
@@ -461,7 +462,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-table-after-7-0.png',
     imageRenderType,
-    this.name + 2
+    'Filter fields by name' + 2
   )}
 
   Here is the same query using a Stat visualization.
@@ -469,7 +470,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/filter-name-stat-after-7-0.png',
     imageRenderType,
-    this.name + 3
+    'Filter fields by name' + 3
   )}
   `;
     },
@@ -742,11 +743,19 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   In the following example, a template query displays time series data from multiple servers in a table visualization. The results of only one query can be viewed at a time.
 
-  ${buildImageContent('/static/img/docs/transformations/join-fields-before-7-0.png', imageRenderType, this.name + 1)}
+  ${buildImageContent(
+    '/static/img/docs/transformations/join-fields-before-7-0.png',
+    imageRenderType,
+    'Join by field' + 1
+  )}
 
   I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
-  ${buildImageContent('/static/img/docs/transformations/join-fields-after-7-0.png', imageRenderType, this.name + 2)}
+  ${buildImageContent(
+    '/static/img/docs/transformations/join-fields-after-7-0.png',
+    imageRenderType,
+    'Join by field' + 2
+  )}
   `;
     },
   },
@@ -1071,12 +1080,16 @@ export const transformationDocsContent: TransformationDocsContentType = {
   ${buildImageContent(
     '/static/img/docs/transformations/rename-by-regex-before-7-3.png',
     imageRenderType,
-    this.name + 1
+    'Rename by regex' + 1
   )}
 
   With the transformation applied, you can see we are left with just the remainder of the string.
 
-  ${buildImageContent('/static/img/docs/transformations/rename-by-regex-after-7-3.png', imageRenderType, this.name + 1)}
+  ${buildImageContent(
+    '/static/img/docs/transformations/rename-by-regex-after-7-3.png',
+    imageRenderType,
+    'Rename by regex' + 2
+  )}
   `;
     },
   },
@@ -1240,5 +1253,5 @@ function buildImageContent(source: string, imageRenderType: ImageRenderType, ima
     ? // This will build a Hugo Shortcode "figure" image template, which shares the same default class and max-width.
       `{{< figure src="${source}" class="docs-image--no-shadow" max-width= "1100px" >}}`
     : // This will build generic Markdown image syntax for UI rendering.
-      `![${imageName} helper image](${source})`;
+      `![${imageName} helper image](https://grafana.com${source})`;
 }
