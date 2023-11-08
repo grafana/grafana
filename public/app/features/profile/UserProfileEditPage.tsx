@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
+import { PluginExtensionPoints } from '@grafana/data';
+import { getPluginComponentExtensions } from '@grafana/runtime';
 import { VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
@@ -57,6 +59,16 @@ export function UserProfileEditPage({
 }: Props) {
   useMount(() => initUserProfilePage());
 
+  const extensionComponents = useMemo(() => {
+    const { extensions } = getPluginComponentExtensions({
+      extensionPointId: PluginExtensionPoints.UserProfileSettings,
+      context: {},
+      limitPerPlugin: 3,
+    });
+
+    return extensions;
+  }, []);
+
   return (
     <Page navId="profile/settings">
       <Page.Contents isLoading={!user}>
@@ -66,6 +78,9 @@ export function UserProfileEditPage({
           <UserTeams isLoading={teamsAreLoading} teams={teams} />
           <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
           <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
+          {extensionComponents.map(({ component: Component }, index) => (
+            <Component key={index} />
+          ))}
         </VerticalGroup>
       </Page.Contents>
     </Page>
