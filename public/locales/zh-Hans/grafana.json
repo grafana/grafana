@@ -119,6 +119,24 @@
     },
     "save": "保存"
   },
+  "config-public-dashboard": {
+    "public-dashboard": {
+      "field-label": "",
+      "pause-sharing-dashboard": "",
+      "revoke-public-URL": "",
+      "settings-title": ""
+    }
+  },
+  "configuration": {
+    "public-dashboard": {
+      "default-time-range": "",
+      "default-time-range-label-desc": "",
+      "show-annotations": "",
+      "show-annotations-label-desc": "",
+      "time-range-picker-enabled": "",
+      "time-range-picker-label-desc": ""
+    }
+  },
   "connections": {
     "connect-data": {
       "category-header-label": ""
@@ -349,6 +367,22 @@
       "delete-user-close-button": "",
       "delete-user-desc": "",
       "delete-user-text": ""
+    }
+  },
+  "email-sharing-configuration": {
+    "public-dashboard": {
+      "can-view-dashboard-label": "",
+      "email-share-type-label": "",
+      "invalid-email": "",
+      "invite-content": "",
+      "invite-desc": "",
+      "invite-label": "",
+      "public-share-type-label": "",
+      "required-email": "",
+      "resend-label": "",
+      "resend-text": "",
+      "revoke-label": "",
+      "revoke-text": ""
     }
   },
   "explore": {
@@ -1019,6 +1053,11 @@
       "turned-off": ""
     }
   },
+  "save-dashboard-changes-alert": {
+    "public-dashboard": {
+      "alert-title": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "包括面板",
@@ -1061,6 +1100,21 @@
     "no-results": {
       "clear": "",
       "text": ""
+    }
+  },
+  "settings-bar-header": {
+    "public-dashboard": {
+      "collapse-tooltip": "",
+      "expand-tooltip": ""
+    }
+  },
+  "settings-summary": {
+    "public-dashboard": {
+      "annotations-hidden": "",
+      "annotations-shown": "",
+      "time-range": "",
+      "time-range-picker-disabled": "",
+      "time-range-picker-enabled": ""
     }
   },
   "share-modal": {

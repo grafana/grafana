@@ -16,6 +16,7 @@ import {
   useStyles2,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Trans, t } from 'app/core/internationalization';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
@@ -118,7 +119,10 @@ const ConfigPublicDashboard = () => {
 
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
 
-      <Field label="Dashboard URL" className={styles.fieldSpace}>
+      <Field
+        label={t('config-public-dashboard.public-dashboard.field-label', 'Dashboard URL')}
+        className={styles.fieldSpace}
+      >
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           readOnly
@@ -157,14 +161,16 @@ const ConfigPublicDashboard = () => {
               margin-bottom: 0;
             `}
           >
-            Pause sharing dashboard
+            <Trans i18nKey="config-public-dashboard.public-dashboard.pause-sharing-dashboard">
+              Pause sharing dashboard
+            </Trans>
           </Label>
         </Layout>
       </Field>
 
       <Field className={styles.fieldSpace}>
         <SettingsBar
-          title="Settings"
+          title={t('config-public-dashboard.public-dashboard.settings-title', 'Settings')}
           headerElement={({ className }) => (
             <SettingsSummary
               className={className}
@@ -200,7 +206,7 @@ const ConfigPublicDashboard = () => {
               title: dashboard.title,
             }}
           >
-            Revoke public URL
+            <Trans i18nKey="config-public-dashboard.public-dashboard.revoke-public-URL">Revoke public URL</Trans>
           </DeletePublicDashboardButton>
         </HorizontalGroup>
       </Layout>

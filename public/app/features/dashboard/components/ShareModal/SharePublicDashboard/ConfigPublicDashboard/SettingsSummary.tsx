@@ -3,6 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Spinner, TimeRangeLabel, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 export interface Props {
   timeRange: TimeRange;
@@ -21,6 +22,23 @@ export function SettingsSummary({
 }: Props) {
   const styles = useStyles2(getStyles);
 
+  const translatedTimeRangePickerEnabledStatus = t(
+    'settings-summary.public-dashboard.time-range-picker-enabled',
+    'Time range picker = enabled'
+  );
+  const translatedTimeRangePickerDisabledStatus = t(
+    'settings-summary.public-dashboard.time-range-picker-disabled',
+    'Time range picker = disabled'
+  );
+  const translatedAnnotationShownStatus = t(
+    'settings-summary.public-dashboard.annotations-shown',
+    'Annotations = show'
+  );
+  const translatedAnnotationHiddenStatus = t(
+    'settings-summary.public-dashboard.annotations-hidden',
+    'Annotations = hide'
+  );
+
   return isDataLoading ? (
     <div className={cx(styles.summaryWrapper, className)}>
       <Spinner className={styles.summary} inline={true} size="sm" />
@@ -28,11 +46,15 @@ export function SettingsSummary({
   ) : (
     <div className={cx(styles.summaryWrapper, className)}>
       <span className={styles.summary}>
-        {'Time range = '}
+        <Trans i18nKey="settings-summary.public-dashboard.time-range">Time range =</Trans>
         <TimeRangeLabel className={styles.timeRange} value={timeRange} />
       </span>
-      <span className={styles.summary}>{`Time range picker = ${timeSelectionEnabled ? 'enabled' : 'disabled'}`}</span>
-      <span className={styles.summary}>{`Annotations = ${annotationsEnabled ? 'show' : 'hide'}`}</span>
+      <span className={styles.summary}>
+        {timeSelectionEnabled ? translatedTimeRangePickerEnabledStatus : translatedTimeRangePickerDisabledStatus}
+      </span>
+      <span className={styles.summary}>
+        {annotationsEnabled ? translatedAnnotationShownStatus : translatedAnnotationHiddenStatus}
+      </span>
     </div>
   );
 }

@@ -124,6 +124,24 @@
     },
     "save": "Save"
   },
+  "config-public-dashboard": {
+    "public-dashboard": {
+      "field-label": "Dashboard URL",
+      "pause-sharing-dashboard": "Pause sharing dashboard",
+      "revoke-public-URL": "Revoke public URL",
+      "settings-title": "Settings"
+    }
+  },
+  "configuration": {
+    "public-dashboard": {
+      "default-time-range": "Default time range",
+      "default-time-range-label-desc": "The public dashboard uses the default time range settings of the dashboard",
+      "show-annotations": "Show annotations",
+      "show-annotations-label-desc": "Show annotations on public dashboard",
+      "time-range-picker-enabled": "Time range picker enabled",
+      "time-range-picker-label-desc": "Allow viewers to change time range"
+    }
+  },
   "connections": {
     "connect-data": {
       "category-header-label": "Data sources"
@@ -354,6 +372,22 @@
       "delete-user-close-button": "Close",
       "delete-user-desc": "The user {{email}} is currently present in {{totalDashboards}} public dashboard(s). If you wish to remove this user, please navigate to the settings of the corresponding public dashboard.",
       "delete-user-text": "Delete user"
+    }
+  },
+  "email-sharing-configuration": {
+    "public-dashboard": {
+      "can-view-dashboard-label": "Can view dashboard",
+      "email-share-type-label": "Only specified people",
+      "invalid-email": "Invalid email",
+      "invite-content": "Invite",
+      "invite-desc": "Invite people by email",
+      "invite-label": "Invite",
+      "public-share-type-label": "Anyone with a link",
+      "required-email": "Email is required",
+      "resend-label": "Resend",
+      "resend-text": "Resend",
+      "revoke-label": "Revoke",
+      "revoke-text": "Revoke"
     }
   },
   "explore": {
@@ -1025,6 +1059,11 @@
       "turned-off": "Auto refresh off"
     }
   },
+  "save-dashboard-changes-alert": {
+    "public-dashboard": {
+      "alert-title": "Please save your dashboard changes before updating the public configuration"
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Include panels",
@@ -1067,6 +1106,21 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query."
+    }
+  },
+  "settings-bar-header": {
+    "public-dashboard": {
+      "collapse-tooltip": "Collapse settings",
+      "expand-tooltip": "Expand settings"
+    }
+  },
+  "settings-summary": {
+    "public-dashboard": {
+      "annotations-hidden": "Annotations = hide",
+      "annotations-shown": "Annotations = show",
+      "time-range": "Time range = ",
+      "time-range-picker-disabled": "Time range picker = disabled",
+      "time-range-picker-enabled": "Time range picker = enabled"
     }
   },
   "share-modal": {

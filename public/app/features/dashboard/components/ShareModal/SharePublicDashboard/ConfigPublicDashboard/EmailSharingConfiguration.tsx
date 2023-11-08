@@ -16,6 +16,7 @@ import {
   Spinner,
   useStyles2,
 } from '@grafana/ui/src';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   useAddRecipientMutation,
@@ -36,8 +37,14 @@ interface EmailSharingConfigurationForm {
 }
 
 const options: Array<SelectableValue<PublicDashboardShareType>> = [
-  { label: 'Anyone with a link', value: PublicDashboardShareType.PUBLIC },
-  { label: 'Only specified people', value: PublicDashboardShareType.EMAIL },
+  {
+    label: t('email-sharing-configuration.public-dashboard.public-share-type-label', 'Anyone with a link'),
+    value: PublicDashboardShareType.PUBLIC,
+  },
+  {
+    label: t('email-sharing-configuration.public-dashboard.email-share-type-label', 'Only specified people'),
+    value: PublicDashboardShareType.EMAIL,
+  },
 ];
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
@@ -67,6 +74,9 @@ const EmailList = ({
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
+  const translatedRevokeLabel = t('email-sharing-configuration.public-dashboard.revoke-label', 'Revoke');
+  const translatedResendLabel = t('email-sharing-configuration.public-dashboard.resend-label', 'Resend');
+
   return (
     <table className={styles.table} data-testid={selectors.EmailSharingList}>
       <tbody>
@@ -79,27 +89,27 @@ const EmailList = ({
                   type="button"
                   variant="destructive"
                   fill="text"
-                  aria-label="Revoke"
-                  title="Revoke"
+                  aria-label={translatedRevokeLabel}
+                  title={translatedRevokeLabel}
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onDeleteEmail(recipient.uid)}
                   data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
-                  Revoke
+                  <Trans i18nKey="email-sharing-configuration.public-dashboard.revoke-text">Revoke</Trans>
                 </Button>
                 <Button
                   type="button"
                   variant="primary"
                   fill="text"
-                  aria-label="Resend"
-                  title="Resend"
+                  aria-label={translatedResendLabel}
+                  title={translatedResendLabel}
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onReshare(recipient.uid)}
                   data-testid={`${selectors.ReshareLink}-${idx}`}
                 >
-                  Resend
+                  <Trans i18nKey="email-sharing-configuration.public-dashboard.resend-text">Resend</Trans>
                 </Button>
               </ButtonGroup>
             </td>
@@ -160,7 +170,10 @@ export const EmailSharingConfiguration = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <FieldSet disabled={!hasWritePermissions} data-testid={selectors.Container} className={styles.container}>
-        <Field label="Can view dashboard" className={styles.field}>
+        <Field
+          label={t('email-sharing-configuration.public-dashboard.can-view-dashboard-label', 'Can view dashboard')}
+          className={styles.field}
+        >
           <InputControl
             name="shareType"
             control={control}
@@ -187,8 +200,8 @@ export const EmailSharingConfiguration = () => {
         {watch('shareType') === PublicDashboardShareType.EMAIL && (
           <>
             <Field
-              label="Invite"
-              description="Invite people by email"
+              label={t('email-sharing-configuration.public-dashboard.invite-label', 'Invite')}
+              description={t('email-sharing-configuration.public-dashboard.invite-desc', 'Invite people by email')}
               error={errors.email?.message}
               invalid={!!errors.email?.message || undefined}
               className={styles.field}
@@ -199,8 +212,11 @@ export const EmailSharingConfiguration = () => {
                   placeholder="email"
                   autoCapitalize="none"
                   {...register('email', {
-                    required: 'Email is required',
-                    pattern: { value: validEmailRegex, message: 'Invalid email' },
+                    required: t('email-sharing-configuration.public-dashboard.required-email', 'Email is required'),
+                    pattern: {
+                      value: validEmailRegex,
+                      message: t('email-sharing-configuration.public-dashboard.invalid-email', 'Invalid email'),
+                    },
                   })}
                   data-testid={selectors.EmailSharingInput}
                 />
@@ -210,7 +226,8 @@ export const EmailSharingConfiguration = () => {
                   disabled={isAddEmailLoading}
                   data-testid={selectors.EmailSharingInviteButton}
                 >
-                  Invite {isAddEmailLoading && <Spinner />}
+                  <Trans i18nKey="email-sharing-configuration.public-dashboard.invite-content">Invite</Trans>
+                  {isAddEmailLoading && <Spinner />}
                 </Button>
               </div>
             </Field>
