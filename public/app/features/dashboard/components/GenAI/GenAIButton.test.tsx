@@ -117,13 +117,15 @@ describe('GenAIButton', () => {
   });
 
   describe('when it is generating data', () => {
+    const setShouldStopMock = jest.fn();
+
     beforeEach(() => {
       jest.mocked(useOpenAIStream).mockReturnValue({
         error: undefined,
         streamStatus: StreamStatus.GENERATING,
         reply: 'Some incomplete generated text',
         setMessages: jest.fn(),
-        setStopGeneration: jest.fn(),
+        setStopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -157,6 +159,17 @@ describe('GenAIButton', () => {
       await waitFor(() => expect(onGenerate).toHaveBeenCalledTimes(1));
 
       expect(onGenerate).toHaveBeenCalledWith('Some incomplete generated text');
+    });
+
+    it('should stop generating when clicking the button', async () => {
+      const onGenerate = jest.fn();
+      const { getByText } = setup({ onGenerate, messages: [], eventTrackingSrc: eventTrackingSrc });
+      const generateButton = getByText('Stop generating');
+
+      await fireEvent.click(generateButton);
+
+      expect(setShouldStopMock).toHaveBeenCalledTimes(1);
+      expect(setShouldStopMock).toHaveBeenCalledWith(true);
     });
   });
 
