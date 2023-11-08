@@ -60,7 +60,7 @@ export const getMockLokiFrameDataPlane = (override?: Partial<DataFrame>): DataFr
     fields: [
       {
         config: {},
-        name: 'attributes',
+        name: 'labels',
         type: FieldType.other,
         values: [
           { app: 'grafana', cluster: 'dev-us-central-0', container: 'hg-plugins' },

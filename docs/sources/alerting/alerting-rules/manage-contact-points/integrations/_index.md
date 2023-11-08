@@ -1,7 +1,7 @@
 ---
 aliases:
   - alerting/manage-notifications/manage-contact-points/configure-integrations/
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/configure-integrations/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/
 description: Configure integrations
 keywords:
   - Grafana
@@ -15,13 +15,13 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Configure integrations
+title: Configure contact point integrations
 weight: 100
 ---
 
-# Configure integrations
+# Configure contact point integrations
 
-Configure integrations in Grafana to select your preferred communication channel for receiving notifications when your alert rules are firing. Each integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
+Configure contact point integrations in Grafana to select your preferred communication channel for receiving notifications when your alert rules are firing. Each integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
 
 Once configured, you can use integrations as part of your contact points to receive notifications whenever your alert changes its state. In this section, we'll cover the basic steps to configure your integrations, so you can start receiving real-time alerts and stay on top of your monitoring data.
 
@@ -38,7 +38,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | Line                    | `line`                    |
 | Microsoft Teams         | `teams`                   |
 | Opsgenie                | `opsgenie`                |
-| [Pagerduty](#pagerduty) | `pagerduty`               |
+| Pagerduty               | `pagerduty`               |
 | Prometheus Alertmanager | `prometheus-alertmanager` |
 | Pushover                | `pushover`                |
 | Sensu                   | `sensu`                   |
@@ -48,28 +48,3 @@ Once configured, you can use integrations as part of your contact points to rece
 | Threema                 | `threema`                 |
 | VictorOps               | `victorops`               |
 | Webhook                 | `webhook`                 |
-
-### PagerDuty
-
-To set up PagerDuty, provide an integration key.
-
-| Setting         | Description                                            |
-| --------------- | ------------------------------------------------------ |
-| Integration Key | Integration key for PagerDuty                          |
-| Severity        | Level for dynamic notifications, default is `critical` |
-| Custom Details  | Additional details about the event                     |
-
-The `CustomDetails` field is an object containing arbitrary key-value pairs. The user-defined details are merged with the ones we use by default.
-
-Our default values for `CustomDetails` are:
-
-```go
-{
-	"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
-	"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
-	"num_firing":   `{{ .Alerts.Firing | len }}`,
-	"num_resolved": `{{ .Alerts.Resolved | len }}`,
-}
-```
-
-In case of duplicate keys, the user-defined details overwrite the default ones.
