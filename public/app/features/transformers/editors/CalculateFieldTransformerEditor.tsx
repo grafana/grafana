@@ -27,7 +27,6 @@ import {
   WindowAlignment,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
-  IndexOptions,
   ReduceOptions,
   CumulativeOptions,
   WindowOptions,
