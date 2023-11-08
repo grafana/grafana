@@ -13,12 +13,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
@@ -155,10 +156,10 @@ func readLokiError(body io.ReadCloser) error {
 	return makeLokiError(bytes)
 }
 
-func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
+func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) backend.DataResponse {
 	req, err := makeDataRequest(ctx, api.url, query)
 	if err != nil {
-		return nil, err
+		return errorsource.Response(errorsource.PluginError(err, false))
 	}
 
 	queryAttrs := []any{"start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr, "queryType", query.QueryType, "direction", query.Direction, "maxLines", query.MaxLines, "supportingQueryType", query.SupportingQueryType, "lokiHost", req.URL.Host, "lokiPath", req.URL.Path}
@@ -176,7 +177,8 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 			lp = append(lp, "statusCode", resp.StatusCode)
 		}
 		api.log.Error("Error received from Loki", lp...)
-		return nil, err
+		// Here, errors source is provided by errorsource middleware
+		return errorsource.Response(err)
 	}
 
 	defer func() {
@@ -191,7 +193,11 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		err := readLokiError(resp.Body)
 		lp = append(lp, "status", "error", "error", err)
 		api.log.Error("Error received from Loki", lp...)
-		return nil, err
+		// errors should be processed by errorsource middleware
+		// here we do here something extra - turning non-200 to error
+		//  we will consider this Plugin error, but let's re-evaluate if we need this
+		// @todo Re-evaluate if we need to turn non-200 to error
+		return errorsource.Response(errorsource.PluginError(err, false))
 	} else {
 		lp = append(lp, "status", "ok")
 		api.log.Info("Response received from loki", lp...)
@@ -211,12 +217,12 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		span.SetStatus(codes.Error, err.Error())
 		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
 		api.log.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
-		return nil, res.Error
+		return res
 	}
 	instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
 	api.log.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "stage", stageParseResponse)
 
-	return res.Frames, nil
+	return res
 }
 
 func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) (*http.Request, error) {
