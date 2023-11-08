@@ -26,6 +26,7 @@ export function useOpenAIStream(
   temperature = 1
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  setShouldStop: React.Dispatch<React.SetStateAction<boolean>>;
   reply: string;
   streamStatus: StreamStatus;
   error: Error | undefined;
@@ -42,6 +43,7 @@ export function useOpenAIStream(
 } {
   // The messages array to send to the LLM, updated when the button is clicked.
   const [messages, setMessages] = useState<Message[]>([]);
+  const [shouldStop, setShouldStop] = useState(false);
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
   const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
@@ -52,6 +54,7 @@ export function useOpenAIStream(
     (e: Error) => {
       setStreamStatus(StreamStatus.IDLE);
       setMessages([]);
+      setShouldStop(false);
       setError(e);
       notifyError(
         'Failed to generate content using OpenAI',
@@ -104,6 +107,7 @@ export function useOpenAIStream(
             setStreamStatus(StreamStatus.IDLE);
           });
           setMessages([]);
+          setShouldStop(false);
           setError(undefined);
         },
       }),
@@ -118,6 +122,17 @@ export function useOpenAIStream(
       }
     };
   }, [value]);
+
+  // Unsubscribe from the stream when user stops the generation.
+  useEffect(() => {
+    if (shouldStop) {
+      value?.stream?.unsubscribe();
+      setStreamStatus(StreamStatus.IDLE);
+      setShouldStop(false);
+      setError(undefined);
+      setMessages([]);
+    }
+  }, [shouldStop, value?.stream]);
 
   // If the stream is generating and we haven't received a reply, it times out.
   useEffect(() => {
@@ -138,6 +153,7 @@ export function useOpenAIStream(
 
   return {
     setMessages,
+    setShouldStop,
     reply,
     streamStatus,
     error,
