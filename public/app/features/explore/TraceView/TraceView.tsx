@@ -6,7 +6,6 @@ import {
   CoreApp,
   DataFrame,
   DataLink,
-  DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
   Field,
@@ -38,6 +37,7 @@ import {
 } from './components';
 import memoizedTraceCriticalPath from './components/CriticalPath';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
+import { TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
@@ -64,7 +64,6 @@ type Props = {
   scrollElement?: Element;
   scrollElementClass?: string;
   traceProp: Trace;
-  request: DataQueryRequest<DataQuery> | undefined;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
@@ -74,7 +73,6 @@ type Props = {
 export function TraceView(props: Props) {
   const {
     traceProp,
-    request,
     datasource,
     topOfViewRef,
     topOfViewRefType,
@@ -104,6 +102,7 @@ export function TraceView(props: Props) {
   const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
   const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(100);
+  const [traceFlameGraphs, setTraceFlameGraphs] = useState<TraceFlameGraphs>({});
 
   const styles = useStyles2(getStyles);
 
@@ -200,7 +199,6 @@ export function TraceView(props: Props) {
           <TraceTimelineViewer
             findMatchesIDs={spanFilterMatches}
             trace={traceProp}
-            request={request}
             traceToProfilesOptions={traceToProfilesOptions}
             datasourceType={datasourceType}
             spanBarOptions={spanBarOptions?.spanBar}
@@ -238,6 +236,8 @@ export function TraceView(props: Props) {
             topOfViewRefType={topOfViewRefType}
             headerHeight={headerHeight}
             criticalPath={criticalPath}
+            traceFlameGraphs={traceFlameGraphs}
+            setTraceFlameGraphs={setTraceFlameGraphs}
           />
         </>
       ) : (

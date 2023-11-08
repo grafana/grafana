@@ -18,9 +18,8 @@ import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import { RefObject } from 'react';
 
-import { DataQueryRequest, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
@@ -32,6 +31,7 @@ import { getColorByKey } from '../utils/color-generator';
 
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
+import { TraceFlameGraphs } from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import SpanDetailRow from './SpanDetailRow';
 import {
@@ -85,7 +85,6 @@ type TVirtualizedTraceViewOwnProps = {
   timeZone: TimeZone;
   findMatchesIDs: Set<string> | TNil;
   trace: Trace;
-  request: DataQueryRequest<DataQuery> | undefined;
   traceToProfilesOptions?: TraceToProfilesOptions;
   spanBarOptions: SpanBarOptions | undefined;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
@@ -116,6 +115,8 @@ type TVirtualizedTraceViewOwnProps = {
   datasourceType: string;
   headerHeight: number;
   criticalPath: CriticalPathSection[];
+  traceFlameGraphs: TraceFlameGraphs;
+  setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
@@ -550,7 +551,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailToggle,
       spanNameColumnWidth,
       trace,
-      request,
       traceToProfilesOptions,
       timeZone,
       hoverIndentGuideIds,
@@ -563,6 +563,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       topOfViewRefType,
       theme,
       datasourceType,
+      traceFlameGraphs,
+      setTraceFlameGraphs,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -587,7 +589,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           warningsToggle={detailWarningsToggle}
           stackTracesToggle={detailStackTracesToggle}
           span={span}
-          request={request}
           traceToProfilesOptions={traceToProfilesOptions}
           timeZone={timeZone}
           tagsToggle={detailTagsToggle}
@@ -601,6 +602,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           topOfViewRefType={topOfViewRefType}
           datasourceType={datasourceType}
           visibleSpanIds={visibleSpanIds}
+          traceFlameGraphs={traceFlameGraphs}
+          setTraceFlameGraphs={setTraceFlameGraphs}
         />
       </div>
     );

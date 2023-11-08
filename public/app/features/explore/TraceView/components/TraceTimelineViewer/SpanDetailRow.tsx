@@ -16,8 +16,7 @@ import { css } from '@emotion/css';
 import classNames from 'classnames';
 import React from 'react';
 
-import { DataQueryRequest, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
@@ -25,7 +24,7 @@ import { autoColor } from '../Theme';
 import { SpanLinkFunc } from '../types';
 import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
-import SpanDetail from './SpanDetail';
+import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
@@ -87,7 +86,6 @@ export type SpanDetailRowProps = {
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
   span: TraceSpan;
-  request: DataQueryRequest<DataQuery> | undefined;
   traceToProfilesOptions?: TraceToProfilesOptions;
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
@@ -102,6 +100,8 @@ export type SpanDetailRowProps = {
   topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
   visibleSpanIds: string[];
+  traceFlameGraphs: TraceFlameGraphs;
+  setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -127,7 +127,6 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       warningsToggle,
       stackTracesToggle,
       span,
-      request,
       traceToProfilesOptions,
       timeZone,
       tagsToggle,
@@ -142,6 +141,8 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       topOfViewRefType,
       datasourceType,
       visibleSpanIds,
+      traceFlameGraphs,
+      setTraceFlameGraphs,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -176,7 +177,6 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               warningsToggle={warningsToggle}
               stackTracesToggle={stackTracesToggle}
               span={span}
-              request={request}
               traceToProfilesOptions={traceToProfilesOptions}
               timeZone={timeZone}
               tagsToggle={tagsToggle}
@@ -186,6 +186,8 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               createFocusSpanLink={createFocusSpanLink}
               topOfViewRefType={topOfViewRefType}
               datasourceType={datasourceType}
+              traceFlameGraphs={traceFlameGraphs}
+              setTraceFlameGraphs={setTraceFlameGraphs}
             />
           </div>
         </TimelineRow.Cell>

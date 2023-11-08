@@ -27,7 +27,6 @@ function getTraceView(frames: DataFrame[]) {
         datasource={undefined}
         topOfViewRef={topOfViewRef}
         topOfViewRefType={TopOfViewRefType.Explore}
-        request={undefined}
       />
     </Provider>
   );

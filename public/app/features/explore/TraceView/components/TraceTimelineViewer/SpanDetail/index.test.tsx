@@ -14,10 +14,6 @@
 
 jest.mock('../utils');
 
-jest.mock('./utils', () => ({
-  getProfileFrame: () => Promise.resolve(createDataFrame(data)),
-}));
-
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -74,18 +70,14 @@ describe('<SpanDetail>', () => {
     referencesToggle: jest.fn(),
     createFocusSpanLink: jest.fn().mockReturnValue({}),
     topOfViewRefType: 'Explore',
+    traceFlameGraphs: { [span.spanID]: createDataFrame(data) },
   };
 
   span.tags = [
     ...span.tags,
     {
       key: pyroscopeProfileTag,
-      value: true,
-    },
-    {
-      key: 'flameGraph',
-      type: 'flameGraph',
-      value: createDataFrame(data),
+      value: span.spanID,
     },
   ];
 
@@ -253,7 +245,6 @@ describe('<SpanDetail>', () => {
 
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await act(async () => {
-      expect(screen.getByText('flameGraph')).toBeInTheDocument();
       expect(screen.getByText(/16.5 Bil/)).toBeInTheDocument();
       expect(screen.getByText(/(Count)/)).toBeInTheDocument();
     });

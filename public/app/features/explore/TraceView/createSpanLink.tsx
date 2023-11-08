@@ -85,7 +85,7 @@ export function createSpanLinkFactory({
           profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
         }
         const hasConfiguredPyroscopeDS = profilesDataSourceSettings?.type === 'grafana-pyroscope-datasource';
-        const hasPyroscopeProfile = span.tags.filter((tag) => tag.key === pyroscopeProfileTag).length > 0;
+        const hasPyroscopeProfile = span.tags.some((tag) => tag.key === pyroscopeProfileTag);
         const shouldCreatePyroscopeLink = hasConfiguredPyroscopeDS && hasPyroscopeProfile;
 
         let links: ExploreFieldLinkModel[] = [];

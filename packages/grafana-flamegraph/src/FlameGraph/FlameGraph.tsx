@@ -44,6 +44,7 @@ type Props = {
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  showFlameGraphOnly?: boolean;
 };
 
 const FlameGraph = ({
@@ -61,6 +62,7 @@ const FlameGraph = ({
   onFocusPillClick,
   onSandwichPillClick,
   colorScheme,
+  showFlameGraphOnly,
 }: Props) => {
   const styles = getStyles();
 
@@ -96,6 +98,7 @@ const FlameGraph = ({
     totalProfileTicks,
     totalProfileTicksRight,
     totalViewTicks,
+    showFlameGraphOnly,
   };
   const canvas = levelsCallers ? (
     <>

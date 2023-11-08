@@ -24,7 +24,7 @@ import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
 import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 
 import * as markers from './AccordianKeyValues.markers';
-import KeyValuesTable, { FlameGraphKey } from './KeyValuesTable';
+import KeyValuesTable from './KeyValuesTable';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -110,8 +110,7 @@ export function KeyValuesSummary(props: { data?: TraceKeyValuePair[] }) {
         <li className={styles.summaryItem} key={`${item.key}-${i}`}>
           <span className={styles.summaryLabel}>{item.key}</span>
           <span className={styles.summaryDelim}>=</span>
-          {item.type === FlameGraphKey && (item.value ? item.value.refId : '')}
-          {item.type !== FlameGraphKey && String(item.value)}
+          {String(item.value)}
         </li>
       ))}
     </ul>

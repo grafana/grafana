@@ -206,6 +206,7 @@ const FlameGraphContainer = ({
               onFocusPillClick={resetFocus}
               onSandwichPillClick={resetSandwich}
               colorScheme={colorScheme}
+              showFlameGraphOnly={showFlameGraphOnly}
             />
           )}
         </div>

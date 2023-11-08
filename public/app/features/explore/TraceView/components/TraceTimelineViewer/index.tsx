@@ -15,9 +15,8 @@
 import { css } from '@emotion/css';
 import React, { RefObject } from 'react';
 
-import { DataQueryRequest, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
@@ -28,6 +27,7 @@ import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
+import { TraceFlameGraphs } from './SpanDetail';
 import TimelineHeaderRow from './TimelineHeaderRow';
 import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
@@ -72,7 +72,6 @@ export type TProps = {
   findMatchesIDs: Set<string> | TNil;
   traceTimeline: TTraceTimeline;
   trace: Trace;
-  request: DataQueryRequest<DataQuery> | undefined;
   traceToProfilesOptions?: TraceToProfilesOptions;
   datasourceType: string;
   spanBarOptions: SpanBarOptions | undefined;
@@ -112,6 +111,8 @@ export type TProps = {
   topOfViewRefType?: TopOfViewRefType;
   headerHeight: number;
   criticalPath: CriticalPathSection[];
+  traceFlameGraphs: TraceFlameGraphs;
+  setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
 };
 
 type State = {

@@ -32,6 +32,7 @@ type Props = {
   totalProfileTicks: number;
   totalProfileTicksRight?: number;
   totalViewTicks: number;
+  showFlameGraphOnly?: boolean;
 };
 
 const FlameGraphCanvas = ({
@@ -52,6 +53,7 @@ const FlameGraphCanvas = ({
   root,
   direction,
   depth,
+  showFlameGraphOnly,
 }: Props) => {
   const styles = getStyles();
 
@@ -166,7 +168,7 @@ const FlameGraphCanvas = ({
         />
       </div>
       <FlameGraphTooltip position={mousePosition} item={tooltipItem} data={data} totalTicks={totalViewTicks} />
-      {clickedItemData && (
+      {!showFlameGraphOnly && clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}
           onMenuItemClick={() => {

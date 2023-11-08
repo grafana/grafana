@@ -46,6 +46,7 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     tagsToggle: jest.fn(),
     traceStartTime: 1000,
     theme: createTheme(),
+    traceFlameGraphs: {},
     ...propOverrides,
   };
   return render(<UnthemedSpanDetailRow {...(props as SpanDetailRowProps)} />);

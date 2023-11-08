@@ -15,28 +15,14 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
-import React, { useEffect } from 'react';
+import React from 'react';
 
-import {
-  DataFrame,
-  DataQueryRequest,
-  DataSourceInstanceSettings,
-  dateTimeFormat,
-  GrafanaTheme2,
-  IconName,
-  LinkModel,
-  TimeZone,
-} from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel, TimeZone } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PyroscopeQueryType } from 'app/plugins/datasource/grafana-pyroscope-datasource/dataquery.gen';
-import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
-import { pyroscopeProfileTag } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
@@ -53,8 +39,7 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
-import { FlameGraphKey } from './KeyValuesTable';
-import { getProfileFrame } from './utils';
+import SpanFlameGraph from './SpanFlameGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -124,6 +109,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+export type TraceFlameGraphs = {
+  [spanID: string]: DataFrame;
+};
+
 export type SpanDetailProps = {
   detailState: DetailState;
   linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
@@ -131,7 +120,6 @@ export type SpanDetailProps = {
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
   span: TraceSpan;
-  request: DataQueryRequest<DataQuery> | undefined;
   traceToProfilesOptions?: TraceToProfilesOptions;
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
@@ -145,6 +133,8 @@ export type SpanDetailProps = {
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
+  traceFlameGraphs: TraceFlameGraphs;
+  setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -155,8 +145,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     logsToggle,
     processToggle,
     span,
-    request,
-    traceToProfilesOptions,
     tagsToggle,
     traceStartTime,
     warningsToggle,
@@ -167,6 +155,9 @@ export default function SpanDetail(props: SpanDetailProps) {
     createFocusSpanLink,
     topOfViewRefType,
     datasourceType,
+    traceFlameGraphs,
+    setTraceFlameGraphs,
+    traceToProfilesOptions,
   } = props;
   const {
     isTagsOpen,
@@ -218,45 +209,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
 
-  const [flameGraphFrame, setFlameGraphFrame] = React.useState<DataFrame>();
-
-  useEffect(() => {
-    if (config.featureToggles.traceToProfiles && request) {
-      let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-      if (traceToProfilesOptions?.datasourceUid) {
-        profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
-      }
-      const hasPyroscopeProfile = span.tags.filter((tag) => tag.key === pyroscopeProfileTag).length > 0;
-
-      if (hasPyroscopeProfile && traceToProfilesOptions && profilesDataSourceSettings) {
-        const pyroRequest = {
-          ...request,
-          targets: [
-            {
-              labelSelector: '{}',
-              groupBy: [],
-              profileTypeId: traceToProfilesOptions.profileTypeId ?? '',
-              queryType: 'profile' as PyroscopeQueryType,
-              spanSelector: [spanID],
-              refId: 'flamegraph-in-span',
-              datasource: {
-                type: profilesDataSourceSettings.type,
-                uid: profilesDataSourceSettings.uid,
-              },
-            },
-          ],
-        };
-        queryProfile(pyroRequest, profilesDataSourceSettings.uid);
-      }
-    }
-
-    async function queryProfile(request: DataQueryRequest<Query>, datasourceUid: string) {
-      const frame = await getProfileFrame(request, datasourceUid);
-      if (frame && frame.length > 1) {
-        setFlameGraphFrame(frame);
-      }
-    }
-  }, [request, span.tags, spanID, traceToProfilesOptions]);
+  const styles = useStyles2(getStyles);
 
   if (span.kind) {
     overviewItems.push({
@@ -300,8 +253,6 @@ export default function SpanDetail(props: SpanDetailProps) {
       value: span.traceState,
     });
   }
-
-  const styles = useStyles2(getStyles);
 
   const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
     return (
@@ -365,15 +316,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       <div>
         <div>
           <AccordianKeyValues
-            data={
-              flameGraphFrame
-                ? tags.concat({
-                    key: FlameGraphKey,
-                    type: FlameGraphKey,
-                    value: flameGraphFrame,
-                  })
-                : tags
-            }
+            data={tags}
             label="Span Attributes"
             linksGetter={linksGetter}
             isOpen={isTagsOpen}
@@ -449,6 +392,13 @@ export default function SpanDetail(props: SpanDetailProps) {
             createFocusSpanLink={createFocusSpanLink}
           />
         )}
+        <SpanFlameGraph
+          span={span}
+          timeZone={timeZone}
+          traceFlameGraphs={traceFlameGraphs}
+          setTraceFlameGraphs={setTraceFlameGraphs}
+          traceToProfilesOptions={traceToProfilesOptions}
+        />
         {topOfViewRefType === TopOfViewRefType.Explore && (
           <small className={styles.debugInfo}>
             {/* TODO: fix keyboard a11y */}
