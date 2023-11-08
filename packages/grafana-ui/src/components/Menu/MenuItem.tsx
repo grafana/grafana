@@ -16,7 +16,7 @@ export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivEle
 /** @internal */
 export interface MenuItemProps<T = unknown> {
   /** Label of the menu item */
-  label: string;
+  label: string | React.ReactNode;
   /** Aria label for accessibility support */
   ariaLabel?: string;
   /** Aria checked for accessibility support */
