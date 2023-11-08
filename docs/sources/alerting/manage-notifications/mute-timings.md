@@ -50,9 +50,9 @@ The following table highlights the key differences between mute timings and sile
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification policies** and make sure you are on the **Notification Policies** tab.
-2. Find the notification policy you would like to add the mute timing to and click **...** ->  **Edit**.
-3. From the **Mute timings** dropdown, choose the mute timings you would like to add to the policy.
-4. Save your changes.
+1. Find the notification policy you would like to add the mute timing to and click **...** -> **Edit**.
+1. From the **Mute timings** dropdown, choose the mute timings you would like to add to the policy.
+1. Save your changes.
 
 ## Time intervals
 
