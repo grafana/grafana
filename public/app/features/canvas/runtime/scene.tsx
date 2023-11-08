@@ -459,7 +459,13 @@ export class Scene {
         e.events.forEach((event) => {
           const targetedElement = this.findElementByTarget(event.target);
           if (targetedElement) {
-            targetedElement.setPlacementFromConstraint();
+            if (targetedElement) {
+              targetedElement.setPlacementFromConstraint(
+                undefined,
+                undefined,
+                this.transformComponentRef?.current?.instance.transformState.scale
+              );
+            }
           }
         });
 
