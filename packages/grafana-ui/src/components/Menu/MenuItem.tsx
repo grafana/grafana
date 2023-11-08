@@ -98,15 +98,20 @@ export const MenuItem = React.memo(
 
     const hasSubMenu = childItems && childItems.length > 0;
     const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
-    const itemStyle = cx(
+    const itemWrapperStyle = cx(
       {
-        [styles.item]: true,
+        [styles.menuItemWrapper]: true,
         [styles.active]: isActive,
-        [styles.disabled]: disabled,
         [styles.destructive]: destructive && !disabled,
       },
       className
     );
+
+    const itemStyle = cx({
+      [styles.item]: true,
+      [styles.disabled]: disabled,
+    });
+
     const disabledProps = {
       [ItemElement === 'button' ? 'disabled' : 'aria-disabled']: disabled,
       ...(ItemElement === 'a' && disabled && { href: undefined, onClick: undefined }),
@@ -144,46 +149,53 @@ export const MenuItem = React.memo(
     const hasShortcut = Boolean(shortcut && shortcut.length > 0);
 
     return (
-      <ItemElement
-        target={target}
-        className={itemStyle}
-        rel={target === '_blank' ? 'noopener noreferrer' : undefined}
-        href={url}
+      <div
+        tabIndex={tabIndex}
+        className={itemWrapperStyle}
         onClick={onClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
-        role={url === undefined ? role : undefined}
-        data-role="menuitem" // used to identify menuitem in Menu.tsx
-        ref={localRef}
-        data-testid={testId}
-        aria-label={ariaLabel}
-        aria-checked={ariaChecked}
-        tabIndex={tabIndex}
-        {...disabledProps}
+        role="presentation"
       >
-        <div>
-          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
-          {label}
-          <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
-            {hasShortcut && (
-              <div className={styles.shortcut}>
-                <Icon name="keyboard" title="keyboard shortcut" />
-                {shortcut}
-              </div>
-            )}
-            {hasSubMenu && (
-              <SubMenu
-                items={childItems}
-                isOpen={isSubMenuOpen}
-                openedWithArrow={openedWithArrow}
-                setOpenedWithArrow={setOpenedWithArrow}
-                close={closeSubMenu}
-                customStyle={customSubMenuContainerStyles}
-              />
-            )}
-          </div>
-        </div>
+        <ItemElement
+          tabIndex={-1}
+          onClick={onClick}
+          target={target}
+          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+          href={url}
+          ref={localRef}
+          data-testid={testId}
+          aria-label={ariaLabel}
+          aria-checked={ariaChecked}
+          className={itemStyle}
+          role={url === undefined ? role : undefined}
+          data-role="menuitem"
+          {...disabledProps}
+        >
+          <>
+            {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+            {label}
+            <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
+              {hasShortcut && (
+                <div className={styles.shortcut}>
+                  <Icon name="keyboard" title="keyboard shortcut" />
+                  {shortcut}
+                </div>
+              )}
+              {hasSubMenu && (
+                <SubMenu
+                  items={childItems}
+                  isOpen={isSubMenuOpen}
+                  openedWithArrow={openedWithArrow}
+                  setOpenedWithArrow={setOpenedWithArrow}
+                  close={closeSubMenu}
+                  customStyle={customSubMenuContainerStyles}
+                />
+              )}
+            </div>
+          </>
+        </ItemElement>
         {description && (
           <div
             className={cx(styles.description, {
@@ -193,7 +205,7 @@ export const MenuItem = React.memo(
             {description}
           </div>
         )}
-      </ItemElement>
+      </div>
     );
   })
 );
@@ -202,35 +214,43 @@ MenuItem.displayName = 'MenuItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    item: css({
+    menuItemWrapper: css({
+      label: 'menu-item-wrapper',
       background: 'none',
-      cursor: 'pointer',
-      whiteSpace: 'nowrap',
-      color: theme.colors.text.primary,
       display: 'flex',
-      alignItems: 'start',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
       padding: theme.spacing(0.5, 2),
       minHeight: theme.spacing(4),
       margin: 0,
       border: 'none',
       width: '100%',
       position: 'relative',
-      flexDirection: 'column',
-      alignContent: 'flex-start',
       flexWrap: 'wrap',
-
+      cursor: 'pointer',
       '&:hover, &:focus, &:focus-visible': {
         background: theme.colors.action.hover,
         color: theme.colors.text.primary,
         textDecoration: 'none',
       },
+      '&:focus-within': getFocusStyles(theme),
+    }),
+    item: css({
+      label: 'menu-item',
+      background: 'none',
+      whiteSpace: 'nowrap',
+      color: theme.colors.text.primary,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      margin: 0,
+      border: 'none',
+      padding: 0,
 
-      '&:focus-visible': getFocusStyles(theme),
-
-      '>div': {
-        display: 'flex',
-        width: '100%',
-        alignItems: 'center',
+      // wrapper is handling the focus styles
+      '&:focus-visible': {
+        outline: 'none',
+        boxShadow: 'none',
       },
     }),
     active: css({
@@ -254,7 +274,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     disabled: css({
       color: theme.colors.action.disabledText,
-
+      label: 'menu-item-disabled',
       '&:hover, &:focus, &:focus-visible': {
         cursor: 'not-allowed',
         background: 'none',
