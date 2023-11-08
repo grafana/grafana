@@ -2,6 +2,7 @@ package mssql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -12,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -40,12 +40,12 @@ func TestMSSQL(t *testing.T) {
 	}
 
 	x := initMSSQLTestDB(t)
-	origXormEngine := sqleng.NewXormEngine
+	origDB := sqleng.NewDB
 	t.Cleanup(func() {
-		sqleng.NewXormEngine = origXormEngine
+		sqleng.NewDB = origDB
 	})
 
-	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+	sqleng.NewDB = func(d, c string) (*sql.DB, error) {
 		return x, nil
 	}
 
@@ -61,9 +61,7 @@ func TestMSSQL(t *testing.T) {
 	endpoint, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	require.NoError(t, err)
 
-	sess := x.NewSession()
-	t.Cleanup(sess.Close)
-	db := sess.DB()
+	db := x
 
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
@@ -381,17 +379,17 @@ func TestMSSQL(t *testing.T) {
 	t.Run("Given a table with metrics having multiple values and measurements", func(t *testing.T) {
 		type metric_values struct {
 			Time                time.Time
-			TimeInt64           int64    `xorm:"bigint 'timeInt64' not null"`
-			TimeInt64Nullable   *int64   `xorm:"bigint 'timeInt64Nullable' null"`
-			TimeFloat64         float64  `xorm:"float 'timeFloat64' not null"`
-			TimeFloat64Nullable *float64 `xorm:"float 'timeFloat64Nullable' null"`
-			TimeInt32           int32    `xorm:"int(11) 'timeInt32' not null"`
-			TimeInt32Nullable   *int32   `xorm:"int(11) 'timeInt32Nullable' null"`
-			TimeFloat32         float32  `xorm:"float(11) 'timeFloat32' not null"`
-			TimeFloat32Nullable *float32 `xorm:"float(11) 'timeFloat32Nullable' null"`
+			TimeInt64           int64
+			TimeInt64Nullable   *int64
+			TimeFloat64         float64
+			TimeFloat64Nullable *float64
+			TimeInt32           int32
+			TimeInt32Nullable   *int32
+			TimeFloat32         float32
+			TimeFloat32Nullable *float32
 			Measurement         string
-			ValueOne            int64 `xorm:"integer 'valueOne'"`
-			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
+			ValueOne            int64
+			ValueTwo            int64
 		}
 
 		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
@@ -1481,18 +1479,13 @@ func TestGenerateConnectionString(t *testing.T) {
 	}
 }
 
-func initMSSQLTestDB(t *testing.T) *xorm.Engine {
+func initMSSQLTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
 	testDB := sqlutil.MSSQLTestDB()
-	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
+	x, err := sql.Open(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
 		serverIP, 1))
 	require.NoError(t, err)
-
-	x.DatabaseTZ = time.UTC
-	x.TZLocation = time.UTC
-
-	// x.ShowSQL()
 
 	return x
 }
