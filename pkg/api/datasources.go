@@ -588,6 +588,9 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 }
 
 func getEncodedString(jsonData *simplejson.Json, key string) string {
+	if jsonData == nil {
+		return ""
+	}
 	jsonValues, exists := jsonData.CheckGet(key)
 	if !exists {
 		return ""
@@ -597,13 +600,7 @@ func getEncodedString(jsonData *simplejson.Json, key string) string {
 }
 
 func checkTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) (bool, error) {
-	if cmd.JsonData == nil {
-		return true, nil
-	}
-	currentTeamHTTPHeaders := ""
-	if ds.JsonData != nil {
-		currentTeamHTTPHeaders = getEncodedString(ds.JsonData, "teamHttpHeaders")
-	}
+	currentTeamHTTPHeaders := getEncodedString(ds.JsonData, "teamHttpHeaders")
 	newTeamHTTPHeaders := getEncodedString(cmd.JsonData, "teamHttpHeaders")
 	if (currentTeamHTTPHeaders != "" || newTeamHTTPHeaders != "") && currentTeamHTTPHeaders != newTeamHTTPHeaders {
 		return evaluateTeamHTTPHeaderPermissions(hs, c, datasources.ScopePrefix+ds.UID)
