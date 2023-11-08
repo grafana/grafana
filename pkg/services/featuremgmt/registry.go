@@ -671,14 +671,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:           "azureMonitorDataplane",
-			Description:    "Adds dataplane compliant frame metadata in the Azure Monitor datasource",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaPartnerPluginsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: falsePtr,
-		},
-		{
 			Name:         "traceToProfiles",
 			Description:  "Enables linking between traces and profiles",
 			Stage:        FeatureStageExperimental,
@@ -1038,6 +1030,14 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaSharingSquad,
+		},
+		{
+			Name:            "ssoSettingsApi",
+			Description:     "Enables the SSO settings API",
+			RequiresDevMode: true,
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           identityAccessTeam,
 		},
 	}
 )

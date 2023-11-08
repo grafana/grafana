@@ -94,4 +94,31 @@ func TestTableConverter(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, table)
 	require.Equal(t, "the resource y.x does not support being converted to a Table", err.Error())
+
+	// Default table converter
+	// Convert a single table
+	converter = utils.NewDefaultTableConverter(schema.GroupResource{Group: "x", Resource: "y"})
+	table, err = converter.ConvertToTable(context.Background(), &metav1.APIGroup{
+		Name: "hello",
+	}, nil)
+	require.NoError(t, err)
+	out, err = json.MarshalIndent(table.Rows, "", "  ")
+	require.NoError(t, err)
+	//fmt.Printf("%s", string(out))
+	require.JSONEq(t, `[
+		{
+		  "cells": [
+			"hello",
+			""
+		  ],
+		  "object": {
+			"name": "hello",
+			"versions": null,
+			"preferredVersion": {
+			  "groupVersion": "",
+			  "version": ""
+			}
+		  }
+		}
+	  ]`, string(out))
 }

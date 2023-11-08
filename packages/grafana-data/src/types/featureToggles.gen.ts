@@ -110,7 +110,6 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
-  azureMonitorDataplane?: boolean;
   traceToProfiles?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
@@ -161,4 +160,5 @@ export interface FeatureToggles {
   dashboardSceneForViewers?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
+  ssoSettingsApi?: boolean;
 }
