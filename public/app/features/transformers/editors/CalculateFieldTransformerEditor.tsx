@@ -194,286 +194,6 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
   // Row index
   //---------------------------------------------------------
 
-  const onToggleRowIndexAsPercentile = (e: React.FormEvent<HTMLInputElement>) => {
-    onChange({
-      ...options,
-      index: {
-        asPercentile: e.currentTarget.checked,
-      },
-    });
-  };
-
-  const renderRowIndex = (options?: IndexOptions) => {
-    return (
-      <>
-        <InlineField labelWidth={labelWidth} label="As percentile" tooltip="Transform the row index as a percentile.">
-          <InlineSwitch value={!!options?.asPercentile} onChange={onToggleRowIndexAsPercentile} />
-        </InlineField>
-      </>
-    );
-  };
-
-  //---------------------------------------------------------
-  // Window functions
-  //---------------------------------------------------------
-
-  const updateWindowOptions = (v: WindowOptions) => {
-    const { options, onChange } = props;
-    onChange({
-      ...options,
-      mode: CalculateFieldMode.WindowFunctions,
-      window: v,
-    });
-  };
-
-  const onWindowFieldChange = (v: SelectableValue<string>) => {
-    const { window } = options;
-    updateWindowOptions({
-      ...window!,
-      field: v.value!,
-    });
-  };
-
-  const onWindowSizeChange = (v?: number) => {
-    const { window } = options;
-    updateWindowOptions({
-      ...window!,
-      windowSize: v && window?.windowSizeMode === WindowSizeMode.Percentage ? v / 100 : v,
-    });
-  };
-
-  const onWindowSizeModeChange = (val: string) => {
-    const { window } = options;
-    const mode = val as WindowSizeMode;
-    updateWindowOptions({
-      ...window!,
-      windowSize: window?.windowSize
-        ? mode === WindowSizeMode.Percentage
-          ? window!.windowSize! / 100
-          : window!.windowSize! * 100
-        : undefined,
-      windowSizeMode: mode,
-    });
-  };
-
-  const onWindowStatsChange = (stats: string[]) => {
-    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
-
-    const { window } = options;
-    updateWindowOptions({ ...window, reducer });
-  };
-
-  const onTypeChange = (val: string) => {
-    const { window } = options;
-    updateWindowOptions({
-      ...window!,
-      windowAlignment: val as WindowAlignment,
-    });
-  };
-
-  const renderWindowFunctions = (options?: WindowOptions) => {
-    const { names } = state;
-    options = defaults(options, { reducer: ReducerID.sum });
-    const selectOptions = names.map((v) => ({ label: v, value: v }));
-    const typeOptions = [
-      { label: 'Trailing', value: WindowAlignment.Trailing },
-      { label: 'Centered', value: WindowAlignment.Centered },
-    ];
-    const windowSizeModeOptions = [
-      { label: 'Percentage', value: WindowSizeMode.Percentage },
-      { label: 'Fixed', value: WindowSizeMode.Fixed },
-    ];
-
-    return (
-      <>
-        <InlineField label="Field" labelWidth={labelWidth}>
-          <Select
-            placeholder="Field"
-            options={selectOptions}
-            className="min-width-18"
-            value={options?.field}
-            onChange={onWindowFieldChange}
-          />
-        </InlineField>
-        <InlineField label="Calculation" labelWidth={labelWidth}>
-          <StatsPicker
-            allowMultiple={false}
-            className="width-18"
-            stats={[options.reducer]}
-            onChange={onWindowStatsChange}
-            defaultStat={ReducerID.mean}
-            filterOptions={(ext) =>
-              ext.id === ReducerID.mean || ext.id === ReducerID.variance || ext.id === ReducerID.stdDev
-            }
-          />
-        </InlineField>
-        <InlineField label="Type" labelWidth={labelWidth}>
-          <RadioButtonGroup
-            value={options.windowAlignment ?? WindowAlignment.Trailing}
-            options={typeOptions}
-            onChange={onTypeChange}
-          />
-        </InlineField>
-        <InlineField label="Window size mode">
-          <RadioButtonGroup
-            value={options.windowSizeMode ?? WindowSizeMode.Percentage}
-            options={windowSizeModeOptions}
-            onChange={onWindowSizeModeChange}
-          ></RadioButtonGroup>
-        </InlineField>
-        <InlineField
-          label={options.windowSizeMode === WindowSizeMode.Percentage ? 'Window size %' : 'Window size'}
-          labelWidth={labelWidth}
-          tooltip={
-            options.windowSizeMode === WindowSizeMode.Percentage
-              ? 'Set the window size as a percentage of the total data'
-              : 'Window size'
-          }
-        >
-          <NumberInput
-            placeholder="Auto"
-            min={0.1}
-            value={
-              options.windowSize && options.windowSizeMode === WindowSizeMode.Percentage
-                ? options.windowSize * 100
-                : options.windowSize
-            }
-            onChange={onWindowSizeChange}
-          ></NumberInput>
-        </InlineField>
-      </>
-    );
-  };
-
-  //---------------------------------------------------------
-  // Reduce by Row
-  //---------------------------------------------------------
-
-  const updateReduceOptions = (v: ReduceOptions) => {
-    const { onChange } = props;
-    onChange({
-      ...options,
-      reduce: v,
-    });
-  };
-
-  const onFieldToggle = (fieldName: string) => {
-    const { selected } = state;
-    if (selected.indexOf(fieldName) > -1) {
-      onReduceFieldsChanged(selected.filter((s) => s !== fieldName));
-    } else {
-      onReduceFieldsChanged([...selected, fieldName]);
-    }
-  };
-
-  const onReduceFieldsChanged = (selected: string[]) => {
-    setState({ ...state, ...{ selected } });
-    const { reduce } = options;
-    updateReduceOptions({
-      ...reduce!,
-      include: selected,
-    });
-  };
-
-  const onStatsChange = (stats: string[]) => {
-    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
-
-    const { reduce } = options;
-    updateReduceOptions({ ...reduce, reducer });
-  };
-
-  const renderReduceRow = (options?: ReduceOptions) => {
-    const { names, selected } = state;
-    options = defaults(options, { reducer: ReducerID.sum });
-
-    return (
-      <>
-        <InlineField label="Operation" labelWidth={labelWidth} grow={true}>
-          <HorizontalGroup spacing="xs" align="flex-start" wrap>
-            {names.map((o, i) => {
-              return (
-                <FilterPill
-                  key={`${o}/${i}`}
-                  onClick={() => {
-                    onFieldToggle(o);
-                  }}
-                  label={o}
-                  selected={selected.indexOf(o) > -1}
-                />
-              );
-            })}
-          </HorizontalGroup>
-        </InlineField>
-        <InlineField label="Calculation" labelWidth={labelWidth}>
-          <StatsPicker
-            allowMultiple={false}
-            className="width-18"
-            stats={[options.reducer]}
-            onChange={onStatsChange}
-            defaultStat={ReducerID.sum}
-          />
-        </InlineField>
-      </>
-    );
-  };
-
-  //---------------------------------------------------------
-  // Cumulative Operator
-  //---------------------------------------------------------
-
-  const onCumulativeStatsChange = (stats: string[]) => {
-    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
-
-    const { cumulative } = options;
-    updateCumulativeOptions({ ...cumulative, reducer });
-  };
-
-  const updateCumulativeOptions = (v: CumulativeOptions) => {
-    onChange({
-      ...options,
-      mode: CalculateFieldMode.CumulativeFunctions,
-      cumulative: v,
-    });
-  };
-
-  const onCumulativeFieldChange = (v: SelectableValue<string>) => {
-    const { cumulative } = options;
-    updateCumulativeOptions({
-      ...cumulative!,
-      field: v.value!,
-    });
-  };
-
-  const renderCumulativeFunctions = (options?: CumulativeOptions) => {
-    const { names } = state;
-    options = defaults(options, { reducer: ReducerID.sum });
-    const selectOptions = names.map((v) => ({ label: v, value: v }));
-
-    return (
-      <>
-        <InlineField label="Field" labelWidth={labelWidth}>
-          <Select
-            placeholder="Field"
-            options={selectOptions}
-            className="min-width-18"
-            value={options?.field}
-            onChange={onCumulativeFieldChange}
-          />
-        </InlineField>
-        <InlineField label="Calculation" labelWidth={labelWidth}>
-          <StatsPicker
-            allowMultiple={false}
-            className="width-18"
-            stats={[options.reducer]}
-            onChange={onCumulativeStatsChange}
-            defaultStat={ReducerID.sum}
-            filterOptions={(ext) => ext.id === ReducerID.sum || ext.id === ReducerID.mean}
-          />
-        </InlineField>
-      </>
-    );
-  };
-
   //---------------------------------------------------------
   // Binary Operator
   //---------------------------------------------------------
@@ -567,72 +287,6 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
     );
   };
 
-  //---------------------------------------------------------
-  // Unary Operator
-  //---------------------------------------------------------
-
-  const updateUnaryOptions = (v: UnaryOptions) => {
-    onChange({
-      ...options,
-      mode: CalculateFieldMode.UnaryOperation,
-      unary: v,
-    });
-  };
-
-  const onUnaryOperationChanged = (v: SelectableValue<UnaryOperationID>) => {
-    const { unary } = options;
-    updateUnaryOptions({
-      ...unary!,
-      operator: v.value!,
-    });
-  };
-
-  const onUnaryValueChanged = (v: SelectableValue<string>) => {
-    const { unary } = options;
-    updateUnaryOptions({
-      ...unary!,
-      fieldName: v.value!,
-    });
-  };
-
-  const renderUnaryOperation = (options?: UnaryOptions) => {
-    options = defaults(options, { operator: UnaryOperationID.Abs });
-
-    let found = !options?.fieldName;
-    const names = state.names.map((v) => {
-      if (v === options?.fieldName) {
-        found = true;
-      }
-      return { label: v, value: v };
-    });
-
-    const ops = unaryOperators.list().map((v) => {
-      return { label: v.unaryOperationID, value: v.unaryOperationID };
-    });
-
-    const fieldName = found ? names : [...names, { label: options?.fieldName, value: options?.fieldName }];
-
-    return (
-      <>
-        <InlineFieldRow>
-          <InlineField label="Operation" labelWidth={labelWidth}>
-            <Select options={ops} value={options.operator ?? ops[0].value} onChange={onUnaryOperationChanged} />
-          </InlineField>
-          <InlineField label="(" labelWidth={2}>
-            <Select
-              placeholder="Field"
-              className="min-width-11"
-              options={fieldName}
-              value={options?.fieldName}
-              onChange={onUnaryValueChanged}
-            />
-          </InlineField>
-          <InlineLabel width={2}>)</InlineLabel>
-        </InlineFieldRow>
-      </>
-    );
-  };
-
   const mode = options.mode ?? CalculateFieldMode.BinaryOperation;
 
   return (
@@ -646,11 +300,30 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
         />
       </InlineField>
       {mode === CalculateFieldMode.BinaryOperation && renderBinaryOperation(options.binary)}
-      {mode === CalculateFieldMode.UnaryOperation && renderUnaryOperation(options.unary)}
-      {mode === CalculateFieldMode.ReduceRow && renderReduceRow(options.reduce)}
-      {mode === CalculateFieldMode.CumulativeFunctions && renderCumulativeFunctions(options.cumulative)}
-      {mode === CalculateFieldMode.WindowFunctions && renderWindowFunctions(options.window)}
-      {mode === CalculateFieldMode.Index && renderRowIndex(options.index)}
+      {mode === CalculateFieldMode.UnaryOperation && (
+        <UnaryOperationEditor names={state.names} options={options} onChange={props.onChange}></UnaryOperationEditor>
+      )}
+      {mode === CalculateFieldMode.ReduceRow && (
+        <ReduceRowOptionsEditor
+          names={state.names}
+          selected={state.selected}
+          options={options}
+          onChange={props.onChange}
+        ></ReduceRowOptionsEditor>
+      )}
+      {mode === CalculateFieldMode.CumulativeFunctions && (
+        <CumulativeOptionsEditor
+          names={state.names}
+          options={options}
+          onChange={props.onChange}
+        ></CumulativeOptionsEditor>
+      )}
+      {mode === CalculateFieldMode.WindowFunctions && (
+        <WindowOptionsEditor names={state.names} options={options} onChange={props.onChange}></WindowOptionsEditor>
+      )}
+      {mode === CalculateFieldMode.Index && (
+        <IndexOptionsEditor options={options} onChange={props.onChange}></IndexOptionsEditor>
+      )}
       <InlineField labelWidth={labelWidth} label="Alias">
         <Input
           className="width-18"
@@ -674,4 +347,344 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   description: 'Use the row values to calculate a new field.',
   categories: new Set([TransformerCategory.CalculateNewFields]),
   help: getTransformationContent(DataTransformerID.calculateField).helperDocs,
+};
+
+const WindowOptionsEditor = (props: {
+  options: CalculateFieldTransformerOptions;
+  names: string[];
+  onChange: (options: CalculateFieldTransformerOptions) => void;
+}) => {
+  const { options, names, onChange } = props;
+  const { window } = options;
+  const selectOptions = names.map((v) => ({ label: v, value: v }));
+  const typeOptions = [
+    { label: 'Trailing', value: WindowAlignment.Trailing },
+    { label: 'Centered', value: WindowAlignment.Centered },
+  ];
+  const windowSizeModeOptions = [
+    { label: 'Percentage', value: WindowSizeMode.Percentage },
+    { label: 'Fixed', value: WindowSizeMode.Fixed },
+  ];
+
+  const updateWindowOptions = (v: WindowOptions) => {
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.WindowFunctions,
+      window: v,
+    });
+  };
+
+  const onWindowFieldChange = (v: SelectableValue<string>) => {
+    updateWindowOptions({
+      ...window!,
+      field: v.value!,
+    });
+  };
+
+  const onWindowSizeChange = (v?: number) => {
+    updateWindowOptions({
+      ...window!,
+      windowSize: v && window?.windowSizeMode === WindowSizeMode.Percentage ? v / 100 : v,
+    });
+  };
+
+  const onWindowSizeModeChange = (val: string) => {
+    const mode = val as WindowSizeMode;
+    updateWindowOptions({
+      ...window!,
+      windowSize: window?.windowSize
+        ? mode === WindowSizeMode.Percentage
+          ? window!.windowSize! / 100
+          : window!.windowSize! * 100
+        : undefined,
+      windowSizeMode: mode,
+    });
+  };
+
+  const onWindowStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    updateWindowOptions({ ...window, reducer });
+  };
+
+  const onTypeChange = (val: string) => {
+    updateWindowOptions({
+      ...window!,
+      windowAlignment: val as WindowAlignment,
+    });
+  };
+
+  return (
+    <>
+      <InlineField label="Field" labelWidth={labelWidth}>
+        <Select
+          placeholder="Field"
+          options={selectOptions}
+          className="min-width-18"
+          value={window?.field}
+          onChange={onWindowFieldChange}
+        />
+      </InlineField>
+      <InlineField label="Calculation" labelWidth={labelWidth}>
+        <StatsPicker
+          allowMultiple={false}
+          className="width-18"
+          stats={[window?.reducer || ReducerID.mean]}
+          onChange={onWindowStatsChange}
+          defaultStat={ReducerID.mean}
+          filterOptions={(ext) =>
+            ext.id === ReducerID.mean || ext.id === ReducerID.variance || ext.id === ReducerID.stdDev
+          }
+        />
+      </InlineField>
+      <InlineField label="Type" labelWidth={labelWidth}>
+        <RadioButtonGroup
+          value={window?.windowAlignment ?? WindowAlignment.Trailing}
+          options={typeOptions}
+          onChange={onTypeChange}
+        />
+      </InlineField>
+      <InlineField label="Window size mode">
+        <RadioButtonGroup
+          value={window?.windowSizeMode ?? WindowSizeMode.Percentage}
+          options={windowSizeModeOptions}
+          onChange={onWindowSizeModeChange}
+        ></RadioButtonGroup>
+      </InlineField>
+      <InlineField
+        label={window?.windowSizeMode === WindowSizeMode.Percentage ? 'Window size %' : 'Window size'}
+        labelWidth={labelWidth}
+        tooltip={
+          window?.windowSizeMode === WindowSizeMode.Percentage
+            ? 'Set the window size as a percentage of the total data'
+            : 'Window size'
+        }
+      >
+        <NumberInput
+          placeholder="Auto"
+          min={0.1}
+          value={
+            window?.windowSize && window.windowSizeMode === WindowSizeMode.Percentage
+              ? window.windowSize * 100
+              : window?.windowSize
+          }
+          onChange={onWindowSizeChange}
+        ></NumberInput>
+      </InlineField>
+    </>
+  );
+};
+
+const CumulativeOptionsEditor = (props: {
+  options: CalculateFieldTransformerOptions;
+  names: string[];
+  onChange: (options: CalculateFieldTransformerOptions) => void;
+}) => {
+  const { names, onChange, options } = props;
+  const { cumulative } = options;
+  const selectOptions = names.map((v) => ({ label: v, value: v }));
+
+  const onCumulativeStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    updateCumulativeOptions({ ...cumulative, reducer });
+  };
+
+  const updateCumulativeOptions = (v: CumulativeOptions) => {
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.CumulativeFunctions,
+      cumulative: v,
+    });
+  };
+
+  const onCumulativeFieldChange = (v: SelectableValue<string>) => {
+    updateCumulativeOptions({
+      ...cumulative!,
+      field: v.value!,
+    });
+  };
+
+  return (
+    <>
+      <InlineField label="Field" labelWidth={labelWidth}>
+        <Select
+          placeholder="Field"
+          options={selectOptions}
+          className="min-width-18"
+          value={cumulative?.field}
+          onChange={onCumulativeFieldChange}
+        />
+      </InlineField>
+      <InlineField label="Calculation" labelWidth={labelWidth}>
+        <StatsPicker
+          allowMultiple={false}
+          className="width-18"
+          stats={[cumulative?.reducer || ReducerID.sum]}
+          onChange={onCumulativeStatsChange}
+          defaultStat={ReducerID.sum}
+          filterOptions={(ext) => ext.id === ReducerID.sum || ext.id === ReducerID.mean}
+        />
+      </InlineField>
+    </>
+  );
+};
+
+const ReduceRowOptionsEditor = (props: {
+  options: CalculateFieldTransformerOptions;
+  names: string[];
+  selected: string[];
+  onChange: (options: CalculateFieldTransformerOptions) => void;
+}) => {
+  const { names, selected, onChange, options } = props;
+  const { reduce } = options;
+
+  const updateReduceOptions = (v: ReduceOptions) => {
+    onChange({
+      ...options,
+      reduce: v,
+    });
+  };
+
+  const onFieldToggle = (fieldName: string) => {
+    if (selected.indexOf(fieldName) > -1) {
+      onReduceFieldsChanged(selected.filter((s) => s !== fieldName));
+    } else {
+      onReduceFieldsChanged([...selected, fieldName]);
+    }
+  };
+
+  const onReduceFieldsChanged = (selected: string[]) => {
+    updateReduceOptions({
+      ...reduce!,
+      include: selected,
+    });
+  };
+
+  const onStatsChange = (stats: string[]) => {
+    const reducer = stats.length ? (stats[0] as ReducerID) : ReducerID.sum;
+
+    const { reduce } = options;
+    updateReduceOptions({ ...reduce, reducer });
+  };
+
+  return (
+    <>
+      <InlineField label="Operation" labelWidth={labelWidth} grow={true}>
+        <HorizontalGroup spacing="xs" align="flex-start" wrap>
+          {names.map((o, i) => {
+            return (
+              <FilterPill
+                key={`${o}/${i}`}
+                onClick={() => {
+                  onFieldToggle(o);
+                }}
+                label={o}
+                selected={selected.indexOf(o) > -1}
+              />
+            );
+          })}
+        </HorizontalGroup>
+      </InlineField>
+      <InlineField label="Calculation" labelWidth={labelWidth}>
+        <StatsPicker
+          allowMultiple={false}
+          className="width-18"
+          stats={[reduce?.reducer || ReducerID.sum]}
+          onChange={onStatsChange}
+          defaultStat={ReducerID.sum}
+        />
+      </InlineField>
+    </>
+  );
+};
+
+const IndexOptionsEditor = (props: {
+  options: CalculateFieldTransformerOptions;
+  onChange: (options: CalculateFieldTransformerOptions) => void;
+}) => {
+  const { options, onChange } = props;
+  const { index } = options;
+
+  const onToggleRowIndexAsPercentile = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({
+      ...options,
+      index: {
+        asPercentile: e.currentTarget.checked,
+      },
+    });
+  };
+  return (
+    <>
+      <InlineField labelWidth={labelWidth} label="As percentile" tooltip="Transform the row index as a percentile.">
+        <InlineSwitch value={!!index?.asPercentile} onChange={onToggleRowIndexAsPercentile} />
+      </InlineField>
+    </>
+  );
+};
+
+const UnaryOperationEditor = (props: {
+  options: CalculateFieldTransformerOptions;
+  names: string[];
+  onChange: (options: CalculateFieldTransformerOptions) => void;
+}) => {
+  const { options, onChange } = props;
+  const { unary } = options;
+
+  const updateUnaryOptions = (v: UnaryOptions) => {
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.UnaryOperation,
+      unary: v,
+    });
+  };
+
+  const onUnaryOperationChanged = (v: SelectableValue<UnaryOperationID>) => {
+    updateUnaryOptions({
+      ...unary!,
+      operator: v.value!,
+    });
+  };
+
+  const onUnaryValueChanged = (v: SelectableValue<string>) => {
+    updateUnaryOptions({
+      ...unary!,
+      fieldName: v.value!,
+    });
+  };
+
+  let found = !unary?.fieldName;
+  const names = props.names.map((v) => {
+    if (v === unary?.fieldName) {
+      found = true;
+    }
+    return { label: v, value: v };
+  });
+
+  const ops = unaryOperators.list().map((v) => {
+    return { label: v.unaryOperationID, value: v.unaryOperationID };
+  });
+
+  const fieldName = found ? names : [...names, { label: unary?.fieldName, value: unary?.fieldName }];
+
+  // TODO: default operation?
+  return (
+    <>
+      <InlineFieldRow>
+        <InlineField label="Operation" labelWidth={labelWidth}>
+          <Select options={ops} value={options.unary ?? ops[0].value} onChange={onUnaryOperationChanged} />
+        </InlineField>
+        <InlineField label="(" labelWidth={2}>
+          <Select
+            placeholder="Field"
+            className="min-width-11"
+            options={fieldName}
+            value={unary?.fieldName}
+            onChange={onUnaryValueChanged}
+          />
+        </InlineField>
+        <InlineLabel width={2}>)</InlineLabel>
+      </InlineFieldRow>
+    </>
+  );
 };
