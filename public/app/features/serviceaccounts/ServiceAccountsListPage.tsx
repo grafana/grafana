@@ -194,7 +194,7 @@ export const ServiceAccountsListPageUnconnected = ({
             options={[
               { label: 'All', value: ServiceAccountStateFilter.All },
               { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
-              { label: 'Managed', value: ServiceAccountStateFilter.Managed },
+              { label: 'Managed', value: ServiceAccountStateFilter.External },
               { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
             ]}
             onChange={onStateFilterChange}

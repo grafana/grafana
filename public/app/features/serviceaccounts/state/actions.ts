@@ -114,8 +114,8 @@ const getStateFilter = (value: ServiceAccountStateFilter) => {
       return '&expiredTokens=true';
     case ServiceAccountStateFilter.Disabled:
       return '&disabled=true';
-    case ServiceAccountStateFilter.Managed:
-      return '&managed=true';
+    case ServiceAccountStateFilter.External:
+      return '&external=true';
     default:
       return '';
   }

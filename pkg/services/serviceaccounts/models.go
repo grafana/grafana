@@ -85,7 +85,7 @@ type ServiceAccountDTO struct {
 	// example: false
 	IsDisabled bool `json:"isDisabled" xorm:"is_disabled"`
 	// example: false
-	IsManaged bool `json:"isManaged,omitempty" xorm:"-"`
+	IsExternal bool `json:"isExternal,omitempty" xorm:"-"`
 	// example: Viewer
 	Role string `json:"role" xorm:"role"`
 	// example: 0
@@ -157,7 +157,7 @@ type ServiceAccountProfileDTO struct {
 	// example: []
 	Teams []string `json:"teams" xorm:"-"`
 	// example: false
-	IsManaged bool `json:"isManaged,omitempty" xorm:"-"`
+	IsExternal bool `json:"isExternal,omitempty" xorm:"-"`
 
 	Tokens        int64           `json:"tokens,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
@@ -166,10 +166,10 @@ type ServiceAccountProfileDTO struct {
 type ServiceAccountFilter string // used for filtering
 
 const (
-	FilterIncludeAll        ServiceAccountFilter = "all"
-	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
-	FilterOnlyManaged       ServiceAccountFilter = "managed"
+	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
+	FilterIncludeAll        ServiceAccountFilter = "all"
+	FilterOnlyExternal      ServiceAccountFilter = "external"
 )
 
 type Stats struct {

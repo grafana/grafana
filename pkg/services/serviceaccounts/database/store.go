@@ -318,7 +318,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				whereConditions,
 				"is_disabled = ?")
 			whereParams = append(whereParams, s.sqlStore.GetDialect().BooleanStr(true))
-		case serviceaccounts.FilterOnlyManaged:
+		case serviceaccounts.FilterOnlyExternal:
 			whereConditions = append(
 				whereConditions,
 				"login "+s.sqlStore.GetDialect().LikeStr()+" ?")

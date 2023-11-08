@@ -91,7 +91,7 @@ const ServiceAccountListItem = memo(
             <OrgRolePicker
               aria-label="Role"
               value={serviceAccount.role}
-              disabled={serviceAccount.isManaged || !canUpdateRole || serviceAccount.isDisabled}
+              disabled={serviceAccount.isExternal || !canUpdateRole || serviceAccount.isDisabled}
               onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
             />
           </td>
@@ -112,7 +112,7 @@ const ServiceAccountListItem = memo(
           </a>
         </td>
         <td>
-          {!serviceAccount.isManaged && (
+          {!serviceAccount.isExternal && (
             <HorizontalGroup justify="flex-end">
               {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !serviceAccount.tokens && (
                 <Button
@@ -144,7 +144,7 @@ const ServiceAccountListItem = memo(
               )}
             </HorizontalGroup>
           )}
-          {serviceAccount.isManaged && (
+          {serviceAccount.isExternal && (
             <HorizontalGroup justify="flex-end">
               <IconButton
                 disabled={true}
