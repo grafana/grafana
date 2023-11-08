@@ -23,7 +23,7 @@ Using Trace to profiles, you can use Grafana’s ability to correlate different 
 **Trace to profiles** lets you link your Grafana Pyroscope data source to tracing data.
 When configured, this connection lets you run queries from a trace span into the profile data.
 
-To use tract to profiles, you must have a configured Grafana Pyroscope data source.
+To use trace to profiles, you must have a configured Grafana Pyroscope data source.
 
 1. Select the Pyroscope data source from the **Data source** drop-down.
 1. Optional: Choose any tags that will be used in the query. If left blank. the default values of `service.name` and `service.namespace` are used.
