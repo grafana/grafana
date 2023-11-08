@@ -68,7 +68,7 @@ const filterCategoriesLabels: Array<[FilterCategory, string]> = [
 export interface TransformationData {
   series: DataFrame[];
   annotations?: DataFrame[];
-};
+}
 
 interface State {
   data: TransformationData;
