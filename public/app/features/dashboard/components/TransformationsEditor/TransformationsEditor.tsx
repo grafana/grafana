@@ -65,8 +65,13 @@ const filterCategoriesLabels: Array<[FilterCategory, string]> = [
   ...(Object.entries(categoriesLabels) as Array<[FilterCategory, string]>),
 ];
 
+export interface TransformationData {
+  series: DataFrame[];
+  annotations?: DataFrame[];
+};
+
 interface State {
-  data: DataFrame[];
+  data: TransformationData;
   transformations: TransformationsEditorTransformation[];
   search: string;
   showPicker?: boolean;
@@ -89,7 +94,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         transformation: t,
         id: ids[i],
       })),
-      data: [],
+      data: {
+        series: [],
+      },
       search: '',
       selectedFilter: viewAllValue,
       showIllustrations: true,
@@ -141,7 +148,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       .getQueryRunner()
       .getData({ withTransforms: false, withFieldConfig: false })
       .subscribe({
-        next: (panelData: PanelData) => this.setState({ data: panelData.series }),
+        next: (panelData: PanelData) => this.setState({ data: panelData }),
       });
   }
 
@@ -487,7 +494,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 <TransformationsGrid
                   showIllustrations={this.state.showIllustrations}
                   transformations={xforms}
-                  data={this.state.data}
+                  data={this.state.data.series}
                   onClick={(id) => {
                     this.onTransformationAdd({ value: id });
                   }}

@@ -596,12 +596,21 @@ export interface ValueMappingResult {
   text?: string;
 }
 
+export const enum DataFramesSource {
+  Series = 'series',
+  Annotations = 'annotations',
+}
+
 /**
  * Transformations allow to manipulate data returned by a query before the system applies a visualization.
  * Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
  * use the output of one transformation as the input to another transformation, etc.
  */
 export interface DataTransformerConfig {
+  /**
+   * Where to pull DataFrames from as input to transformation
+   */
+  source?: DataFramesSource;
   /**
    * Disabled transformations are skipped
    */
@@ -881,7 +890,7 @@ export interface FieldConfig {
   /**
    * An explicit path to the field in the datasource.  When the frame meta includes a path,
    * This will default to `${frame.meta.path}/${field.name}
-   * 
+   *
    * When defined, this value can be used as an identifier within the datasource scope, and
    * may be used to update the results
    */

@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import {
-  DataFrame,
   DataTransformerConfig,
   GrafanaTheme2,
   StandardEditorContext,
@@ -11,10 +10,12 @@ import {
 import { Field, useStyles2 } from '@grafana/ui';
 import { FrameSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
+import { TransformationData } from './TransformationsEditor';
+
 interface TransformationFilterProps {
   index: number;
   config: DataTransformerConfig;
-  data: DataFrame[];
+  data: TransformationData;
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
@@ -22,7 +23,7 @@ export const TransformationFilter = ({ index, data, config, onChange }: Transfor
   const styles = useStyles2(getStyles);
   const context = useMemo(() => {
     // eslint-disable-next-line
-    return { data } as StandardEditorContext<unknown>;
+    return { data: data.series } as StandardEditorContext<unknown>;
   }, [data]);
 
   return (

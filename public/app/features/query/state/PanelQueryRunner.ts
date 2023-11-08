@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, merge } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
@@ -28,6 +28,7 @@ import {
   preProcessPanelData,
   ApplyFieldOverrideOptions,
   StreamingDataFrame,
+  DataTopic,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
@@ -41,6 +42,7 @@ import { PanelModel } from '../../dashboard/state';
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { runRequest } from './runRequest';
+import { DataFramesSource } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -221,8 +223,18 @@ export class PanelQueryRunner {
       interpolate: (v: string) => this.templateSrv.replace(v, data?.request?.scopedVars),
     };
 
-    return transformDataFrame(transformations, data.series, ctx).pipe(
-      map((series) => ({ ...data, series })),
+    let seriesTransformations = transformations.filter((t) => t.source == null || t.source === DataFramesSource.Series);
+    let annotationsTransformations = transformations.filter((t) => t.source === DataFramesSource.Annotations);
+
+    let seriesStream = transformDataFrame(seriesTransformations, data.series, ctx);
+    let annotationsStream = transformDataFrame(annotationsTransformations, data.annotations ?? [], ctx);
+
+    return merge(seriesStream, annotationsStream).pipe(
+      map((frames) => {
+        let isAnnotations = frames.some((f) => f.meta?.dataTopic === DataTopic.Annotations);
+        let transformed = isAnnotations ? { annotations: frames } : { series: frames };
+        return { ...data, ...transformed };
+      }),
       catchError((err) => {
         console.warn('Error running transformation:', err);
         return of({
