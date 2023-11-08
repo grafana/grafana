@@ -260,18 +260,6 @@
       "validation-required": ""
     }
   },
-  "dashboard-list-modal-button": {
-    "mode": {
-      "public-dashboard": {
-        "dashboard-title": "",
-        "loading-text": "",
-        "modal-title": "",
-        "open-dashboard-list": "",
-        "public-dashboard-link": "",
-        "public-dashboard-setting": ""
-      }
-    }
-  },
   "dashboard-settings": {
     "annotations": {
       "title": ""
@@ -320,6 +308,18 @@
     },
     "versions": {
       "title": ""
+    }
+  },
+  "dashboards-list-modal-button": {
+    "public-dashboard": {
+      "public-dashboard": {
+        "dashboard-title": "",
+        "loading-text": "",
+        "modal-title": "",
+        "open-dashboard-list": "",
+        "public-dashboard-link": "",
+        "public-dashboard-setting": ""
+      }
     }
   },
   "data-source-picker": {

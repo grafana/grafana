@@ -265,18 +265,6 @@
       "validation-required": "Need a dashboard JSON model"
     }
   },
-  "dashboard-list-modal-button": {
-    "mode": {
-      "public-dashboard": {
-        "dashboard-title": "{{dashboardTitle}}",
-        "loading-text": "Loading...",
-        "modal-title": "Public dashboards",
-        "open-dashboard-list": "Open dashboards list",
-        "public-dashboard-link": "Public dashboard URL",
-        "public-dashboard-setting": "Public dashboard settings"
-      }
-    }
-  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotations"
@@ -325,6 +313,18 @@
     },
     "versions": {
       "title": "Versions"
+    }
+  },
+  "dashboards-list-modal-button": {
+    "public-dashboard": {
+      "public-dashboard": {
+        "dashboard-title": "{{dashboardTitle}}",
+        "loading-text": "Loading...",
+        "modal-title": "Public dashboards",
+        "open-dashboard-list": "Open dashboards list",
+        "public-dashboard-link": "Public dashboard URL",
+        "public-dashboard-setting": "Public dashboard settings"
+      }
     }
   },
   "data-source-picker": {

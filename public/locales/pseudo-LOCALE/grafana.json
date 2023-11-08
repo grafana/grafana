@@ -265,18 +265,6 @@
       "validation-required": "Ńęęđ ä đäşĥþőäřđ ĴŜØŃ mőđęľ"
     }
   },
-  "dashboard-list-modal-button": {
-    "mode": {
-      "public-dashboard": {
-        "dashboard-title": "{{dashboardTitle}}",
-        "loading-text": "Ŀőäđįŉģ...",
-        "modal-title": "Pūþľįč đäşĥþőäřđş",
-        "open-dashboard-list": "Øpęŉ đäşĥþőäřđş ľįşŧ",
-        "public-dashboard-link": "Pūþľįč đäşĥþőäřđ ŮŖĿ",
-        "public-dashboard-setting": "Pūþľįč đäşĥþőäřđ şęŧŧįŉģş"
-      }
-    }
-  },
   "dashboard-settings": {
     "annotations": {
       "title": "Åŉŉőŧäŧįőŉş"
@@ -325,6 +313,18 @@
     },
     "versions": {
       "title": "Vęřşįőŉş"
+    }
+  },
+  "dashboards-list-modal-button": {
+    "public-dashboard": {
+      "public-dashboard": {
+        "dashboard-title": "{{dashboardTitle}}",
+        "loading-text": "Ŀőäđįŉģ...",
+        "modal-title": "Pūþľįč đäşĥþőäřđş",
+        "open-dashboard-list": "Øpęŉ đäşĥþőäřđş ľįşŧ",
+        "public-dashboard-link": "Pūþľįč đäşĥþőäřđ ŮŖĿ",
+        "public-dashboard-setting": "Pūþľįč đäşĥþőäřđ şęŧŧįŉģş"
+      }
     }
   },
   "data-source-picker": {
