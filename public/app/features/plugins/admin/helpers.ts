@@ -45,9 +45,6 @@ export function mergeLocalsAndRemotes({
     if (!shouldSkip) {
       const catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
 
-      // all non cloud plugins are always fully installed
-      catalogPlugin.isFullyInstalled = catalogPlugin.isInstalled;
-
       // for managed instances, check if plugin is installed, but not yet present in the current instance
       if (configCore.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled) {
         catalogPlugin.isFullyInstalled = instancesSet.has(remotePlugin.slug) && catalogPlugin.isInstalled;
@@ -117,6 +114,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     type: typeCode,
     error: error?.errorCode,
     angularDetected,
+    isFullyInstalled: isDisabled,
   };
 }
 
@@ -162,6 +160,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     error: error?.errorCode,
     accessControl: accessControl,
     angularDetected,
+    isFullyInstalled: true,
   };
 }
 
@@ -218,6 +217,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     // Only local plugins have access control metadata
     accessControl: local?.accessControl,
     angularDetected: local?.angularDetected || remote?.angularDetected,
+    isFullyInstalled: Boolean(local) || isDisabled,
   };
 }
 
