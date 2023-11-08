@@ -255,23 +255,19 @@ export interface LinkService {
 
 export class LinkSrv implements LinkService {
   getLinkUrl(link: any) {
-    let url = locationUtil.assureBaseUrl(getTemplateSrv().replace(link.url || ''));
     let params: { [key: string]: any } = {};
 
     if (link.keepTime) {
-      const range = getTimeSrv().timeRangeForUrl();
-      params['from'] = range.from;
-      params['to'] = range.to;
+      params[`\$${DataLinkBuiltInVars.keepTime}`] = true;
     }
 
     if (link.includeVars) {
-      params = {
-        ...params,
-        ...getVariablesUrlParams(),
-      };
+      params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
     }
 
-    url = urlUtil.appendQueryToUrl(url, urlUtil.toUrlParams(params));
+    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url, urlUtil.toUrlParams(params)));
+    url = getTemplateSrv().replace(url);
+
     return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   }
 
