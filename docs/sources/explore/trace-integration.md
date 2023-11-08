@@ -101,10 +101,6 @@ Clicking anywhere on the span row shows span details.
 
 ### Trace to logs
 
-{{% admonition type="note" %}}
-Available in Grafana 7.4 and later versions.
-{{% /admonition %}}
-
 You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-logs) for configuration instructions.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-trace-to-logs.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view in Explore with icon next to the spans" >}}

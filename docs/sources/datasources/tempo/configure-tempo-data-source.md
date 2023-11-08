@@ -41,11 +41,6 @@ You can also configure settings specific to the Tempo data source. These options
 
 ![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
-{{% admonition type="note" %}}
-Available in Grafana v7.4 and higher.
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
-
 The **Trace to logs** setting configures the [trace to logs feature][explore-trace-integration] that is available when you integrate Grafana with Tempo.
 
 There are two ways to configure the trace to logs feature:
@@ -139,7 +134,7 @@ Each linked query consists of:
 
 [//]: # 'Shared content for Trace to profiles in the Tempo data source'
 
-{{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" version="<GRAFANA VERSION>" >}}
+{{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" leveloffset="+1" version="<GRAFANA VERSION>" >}}
 
 ## Service Graph
 
