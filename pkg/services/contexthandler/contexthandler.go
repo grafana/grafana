@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -126,6 +127,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
 			reqContext.IsRenderCall = identity.AuthenticatedBy == login.RenderModule
+
 		}
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
@@ -135,8 +137,55 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			attribute.Int64("userId", reqContext.UserID),
 		))
 
+		if h.Cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
+			namespace, id := getNamespaceAndID(reqContext.SignedInUser)
+			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(namespace, id))
+		}
+
 		next.ServeHTTP(w, r)
 	})
+}
+
+// TODO(kalleep): Refactor to user identity.Requester interface and methods after we have backported this
+func getNamespaceAndID(user *user.SignedInUser) (string, string) {
+	var namespace, id string
+	if user.UserID > 0 && user.IsServiceAccount {
+		id = strconv.Itoa(int(user.UserID))
+		namespace = "service-account"
+	} else if user.UserID > 0 {
+		id = strconv.Itoa(int(user.UserID))
+		namespace = "user"
+	} else if user.ApiKeyID > 0 {
+		id = strconv.Itoa(int(user.ApiKeyID))
+		namespace = "api-key"
+	}
+
+	return namespace, id
+}
+
+var namespaceToHeader = map[string]string{
+	"user":            "User",
+	"api-key":         "Api-Key",
+	"service-account": "Service-Account",
+}
+
+func (h *ContextHandler) addIDHeaderEndOfRequestFunc(namespace, id string) web.BeforeFunc {
+	return func(w web.ResponseWriter) {
+		if w.Written() {
+			return
+		}
+
+		if namespace == "" || id == "" {
+			return
+		}
+
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace]; !ok {
+			return
+		}
+
+		headerName := h.Cfg.IDResponseHeaderPrefix + namespaceToHeader[namespace] + "-Id"
+		w.Header().Add(headerName, id)
+	}
 }
 
 func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
