@@ -45,7 +45,6 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
                 label={<div className={styles.label}>{resolvedLink.title}</div>}
                 data-testid={selectors.components.DashboardLinks.link}
                 aria-label={`${resolvedLink.title} dashboard`}
-                // rel="noreferrer"
               />
             );
           })}
