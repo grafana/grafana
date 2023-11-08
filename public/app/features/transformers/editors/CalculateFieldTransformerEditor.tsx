@@ -49,6 +49,8 @@ import {
 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
+
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
 interface CalculateFieldTransformerEditorState {
@@ -668,7 +670,8 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   id: DataTransformerID.calculateField,
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,
-  name: 'Add field from calculation',
+  name: standardTransformers.calculateFieldTransformer.name,
   description: 'Use the row values to calculate a new field.',
   categories: new Set([TransformerCategory.CalculateNewFields]),
+  help: getTransformationContent(DataTransformerID.calculateField).helperDocs,
 };

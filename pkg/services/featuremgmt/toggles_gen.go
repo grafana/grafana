@@ -574,4 +574,8 @@ const (
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
+
+	// FlagSsoSettingsApi
+	// Enables the SSO settings API
+	FlagSsoSettingsApi = "ssoSettingsApi"
 )
