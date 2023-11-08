@@ -46,9 +46,9 @@ export const TransformationOperationRow = ({
   const [showDeleteModal, setShowDeleteModal] = useToggle(false);
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);
-  const [dataFramesSource, setDataFramesSource] = useState<DataFramesSource>(DataFramesSource.Series);
   const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
+  const dataFramesSource = configs[index].transformation.source;
   const showFilter = filter || data.series.length > 1;
 
   const onDisableToggle = useCallback(
@@ -69,7 +69,6 @@ export const TransformationOperationRow = ({
         ...current,
         source: dataFramesSource,
       });
-      setDataFramesSource(dataFramesSource);
     },
     [onChange, configs, index]
   );

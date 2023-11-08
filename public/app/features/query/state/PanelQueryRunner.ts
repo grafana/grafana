@@ -32,6 +32,7 @@ import {
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataFramesSource } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
@@ -42,7 +43,6 @@ import { PanelModel } from '../../dashboard/state';
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 import { runRequest } from './runRequest';
-import { DataFramesSource } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
