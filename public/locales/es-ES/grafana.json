@@ -1096,6 +1096,7 @@
       "export": "Exportar",
       "library-panel": "Panel de librería",
       "link": "Enlace",
+      "panel-embed": "",
       "snapshot": "Instantánea"
     },
     "theme-picker": {
