@@ -161,4 +161,5 @@ export interface FeatureToggles {
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
+  pluginsSkipHostEnvVars?: boolean;
 }
