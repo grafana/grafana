@@ -126,7 +126,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		// globally since kept inside Redis.
 		err := setupRedisLiveEngine(g, node)
 		if err != nil {
-			logger.Error("failed to setup redis live engine: %w", err)
+			logger.Error("failed to setup redis live engine: %v", err)
 		} else {
 			redisHealthy = true
 		}
@@ -143,7 +143,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		})
 		cmd := redisClient.Ping(context.Background())
 		if _, err := cmd.Result(); err != nil {
-			logger.Error("live engine failed to ping redis, proceeding without live ha, error: %w", err)
+			logger.Error("live engine failed to ping redis, proceeding without live ha, error: %v", err)
 			redisClient = nil
 		}
 	}
