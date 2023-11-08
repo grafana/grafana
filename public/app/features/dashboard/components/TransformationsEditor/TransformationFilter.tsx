@@ -38,7 +38,7 @@ export const TransformationFilter = ({ index, data, config, onChange }: Transfor
       <div>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <div className="gf-form-label width-8">Data source</div>
+            <div className="gf-form-label width-8">Source</div>
             <Select
               className="width-18"
               options={dataFramesSourceOpts}
