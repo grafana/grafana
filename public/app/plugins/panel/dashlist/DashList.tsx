@@ -16,9 +16,7 @@ import { setStarred } from 'app/core/reducers/navBarTree';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
 import { useDispatch } from 'app/types';
 
 import { Options } from './panelcfg.gen';

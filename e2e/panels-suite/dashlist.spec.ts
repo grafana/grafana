@@ -11,11 +11,11 @@ describe('DashList panel', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
 
     // check the initial value of the urls contain the variable value correctly
-    e2e.components.Panels.Panel.title('Dashboard list panel')
+    e2e.components.Panels.Panel.title('Include time range and variables enabled')
       .should('be.visible')
       .within(() => {
         cy.get('a').each(($el) => {
-          cy.wrap($el).should('have.attr', 'href').and('contain', 'var-query0=a');
+          cy.wrap($el).should('have.attr', 'href').and('contain', 'var-server=A');
         });
       });
 
@@ -26,11 +26,11 @@ describe('DashList panel', () => {
     cy.get('body').click();
 
     // check the urls are updated with the new variable value
-    e2e.components.Panels.Panel.title('Dashboard list panel')
+    e2e.components.Panels.Panel.title('Include time range and variables enabled')
       .should('be.visible')
       .within(() => {
         cy.get('a').each(($el) => {
-          cy.wrap($el).should('have.attr', 'href').and('contain', 'var-query0=b');
+          cy.wrap($el).should('have.attr', 'href').and('contain', 'var-server=B');
         });
       });
   });
