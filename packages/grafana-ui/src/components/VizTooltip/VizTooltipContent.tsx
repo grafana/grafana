@@ -52,8 +52,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: 400,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+    minWidth: '48px',
   }),
   value: css({
     fontWeight: 500,
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
   }),
 });

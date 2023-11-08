@@ -19,13 +19,11 @@ export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: Props) => {
     <>
       {keyValuePairs?.map((keyValuePair, i) => (
         <div className={styles.contentWrapper} key={i}>
-          <div className={styles.label}>{keyValuePair.label}</div>
-          <div className={styles.value}>
-            {keyValuePair.color && (
-              <VizTooltipColorIndicator color={keyValuePair.color} colorIndicator={keyValuePair.colorIndicator!} />
-            )}
-            {keyValuePair.value}
-          </div>
+          <span className={styles.label}>{keyValuePair.label}</span>
+          {keyValuePair.color && (
+            <VizTooltipColorIndicator color={keyValuePair.color} colorIndicator={keyValuePair.colorIndicator!} />
+          )}
+          <span className={styles.value}>{keyValuePair.value}</span>
         </div>
       ))}
     </>
@@ -39,14 +37,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     color: theme.colors.text.secondary,
     fontWeight: 400,
-    marginRight: theme.spacing(0.5),
+    marginRight: 'auto',
     textOverflow: 'ellipsis',
     overflow: 'hidden',
-    whiteSpace: 'nowrap',
+    minWidth: '48px',
   }),
   value: css({
-    display: 'flex',
-    alignItems: 'center',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
   }),
   contentWrapper: css({
     display: 'flex',
