@@ -20,7 +20,7 @@ function renderTraceViewContainer(frames = [frameOld]) {
 
   const { container, baseElement } = render(
     <Provider store={store}>
-      <TraceViewContainer exploreId="left" dataFrames={frames} splitOpenFn={() => {}} request={undefined} />
+      <TraceViewContainer exploreId="left" dataFrames={frames} splitOpenFn={() => {}} />
     </Provider>
   );
   return {
