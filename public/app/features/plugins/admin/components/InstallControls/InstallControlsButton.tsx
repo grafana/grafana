@@ -69,7 +69,8 @@ export function InstallControlsButton({
     if (!errorInstalling && !('error' in result)) {
       let successMessage = `Installed ${plugin.name}`;
       if (config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall) {
-        successMessage = 'Plugin marked for installation. Please note that it can take from 30 s to 5 min for the plugin to be available for usage.';
+        successMessage =
+          'Plugin marked for installation. Please note that it can take from 30 s to 5 min for the plugin to be available for usage.';
       }
 
       appEvents.emit(AppEvents.alertSuccess, [successMessage]);

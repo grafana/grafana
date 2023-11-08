@@ -105,7 +105,6 @@ export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   return localPlugins.filter(isLocalPluginVisibleByConfig);
 }
 
-
 export async function getInstancePlugins(): Promise<InstancePlugin[]> {
   const { items: instancePlugins }: { items: InstancePlugin[] } = await getBackendSrv().get(
     `${INSTANCE_API_ROOT}/plugins`
