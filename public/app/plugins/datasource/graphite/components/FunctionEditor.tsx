@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2, type PopoverContent } from '@grafana/ui';
 
 import { FuncInstance } from '../gfunc';
 
@@ -29,17 +29,17 @@ const getStyles = (theme: GrafanaTheme2) => {
 const FunctionEditor = ({ onMoveLeft, onMoveRight, func, ...props }: FunctionEditorProps) => {
   const styles = useStyles2(getStyles);
 
-  const renderContent = ({ updatePopperPosition }: any) => (
+  const renderContent: PopoverContent = ({ updatePopperPosition }) => (
     <FunctionEditorControls
       {...props}
       func={func}
       onMoveLeft={() => {
         onMoveLeft(func);
-        updatePopperPosition();
+        updatePopperPosition?.();
       }}
       onMoveRight={() => {
         onMoveRight(func);
-        updatePopperPosition();
+        updatePopperPosition?.();
       }}
     />
   );
