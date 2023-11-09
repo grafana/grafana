@@ -302,9 +302,10 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 //
 // Multiple constraints can be combined.
 type GetDashboardQuery struct {
-	ID       int64
-	UID      string
-	Title    *string
+	ID    int64
+	UID   string
+	Title *string
+	// Deprecated: use FolderUID instead
 	FolderID *int64
 	OrgID    int64
 }

@@ -93,7 +93,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:    util.Pointer("test dash 23"),
-			FolderID: &savedFolder.ID,
+			FolderID: &savedFolder.ID, // nolint:staticcheck
 			OrgID:    1,
 		}
 
@@ -122,7 +122,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:    util.Pointer("test dash 23"),
-			FolderID: util.Pointer(int64(0)),
+			FolderID: util.Pointer(int64(0)), // nolint:staticcheck
 			OrgID:    1,
 		}
 
