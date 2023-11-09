@@ -569,6 +569,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				Tags:        []string{},
 			}
 
+			// nolint:staticcheck
 			if item.FolderID > 0 {
 				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
 			}
@@ -606,6 +607,7 @@ func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, f
 		return 0, err
 	}
 
+	// nolint:staticcheck
 	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: orgID})
 }
 

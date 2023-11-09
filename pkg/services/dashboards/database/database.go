@@ -888,6 +888,7 @@ func (d *dashboardStore) deleteAlertDefinition(dashboardId int64, sess *db.Sessi
 func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
 	var queryResult *dashboards.Dashboard
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		// nolint:staticcheck
 		if query.ID == 0 && len(query.UID) == 0 && (query.Title == nil || query.FolderID == nil) {
 			return dashboards.ErrDashboardIdentifierNotSet
 		}
@@ -898,6 +899,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			dashboard.Title = *query.Title
 			mustCols = append(mustCols, "title")
 		}
+		// nolint:staticcheck
 		if query.FolderID != nil {
 			// nolint:staticcheck
 			dashboard.FolderID = *query.FolderID
@@ -1007,6 +1009,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		filters = append(filters, searchstore.TypeFilter{Dialect: d.store.GetDialect(), Type: query.Type})
 	}
 
+	// nolint:staticcheck
 	if len(query.FolderIds) > 0 {
 		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
 	}
@@ -1073,6 +1076,7 @@ func (d *dashboardStore) CountDashboardsInFolder(
 	var count int64
 	var err error
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		// nolint:staticcheck
 		session := sess.In("folder_id", req.FolderID).In("org_id", req.OrgID).
 			In("is_folder", d.store.GetDialect().BooleanStr(false))
 		count, err = session.Count(&dashboards.Dashboard{})

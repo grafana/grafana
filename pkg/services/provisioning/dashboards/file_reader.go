@@ -322,7 +322,7 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 
 	cmd := &dashboards.GetDashboardQuery{
 		Title:    &folderName,
-		FolderID: util.Pointer(int64(0)),
+		FolderID: util.Pointer(int64(0)), // nolint:staticcheck
 		OrgID:    cfg.OrgID,
 	}
 	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
@@ -484,6 +484,7 @@ type provisioningMetadata struct {
 }
 
 type dashboardIdentity struct {
+	// Deprecated: use FolderUID instead
 	folderID int64
 	title    string
 }

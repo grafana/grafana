@@ -91,7 +91,6 @@ grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
 awsAsyncQueryCaching,preview,@grafana/aws-datasources,false,false,false,false
 splitScopes,preview,@grafana/identity-access-team,false,false,true,false
-azureMonitorDataplane,GA,@grafana/partner-datasources,false,false,false,false
 traceToProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,false,false,false,false
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,false,false,false,false
@@ -119,8 +118,7 @@ panelMonitoring,experimental,@grafana/dataviz-squad,false,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false,false
 formatString,experimental,@grafana/grafana-bi-squad,false,false,false,true
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
-kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
-kubernetesPlaylistsAPI,experimental,@grafana/grafana-app-platform-squad,false,false,true,false
+kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,true,false
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false,false
 navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
 recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
@@ -141,3 +139,6 @@ extractFieldsNameDeduplication,experimental,@grafana/grafana-bi-squad,false,fals
 dashboardSceneForViewers,experimental,@grafana/dashboards-squad,false,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,false,true
 pdfTables,privatePreview,@grafana/sharing-squad,false,false,false,false
+ssoSettingsApi,experimental,@grafana/identity-access-team,true,false,false,false
+logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,false,true
+flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,false,true

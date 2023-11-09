@@ -170,7 +170,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						FolderIds: []int64{
 							rootFolderId,
 							folder1.ID,
-						},
+						}, // nolint:staticcheck
 						SignedInUser: currentUser,
 						OrgId:        1,
 					}
