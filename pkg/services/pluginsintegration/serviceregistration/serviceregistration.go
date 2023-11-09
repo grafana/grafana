@@ -15,18 +15,18 @@ import (
 )
 
 type Service struct {
+	featureEnabled bool
+	log            log.Logger
 	reg            extsvcauth.ExternalServiceRegistry
 	settingsSvc    pluginsettings.Service
-	log            log.Logger
-	featureEnabled bool
 }
 
 func ProvideService(cfg *config.Cfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
-		reg:            reg,
-		settingsSvc:    settingsSvc,
 		featureEnabled: cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAccounts),
 		log:            log.New("plugins.external.registration"),
+		reg:            reg,
+		settingsSvc:    settingsSvc,
 	}
 	return s
 }

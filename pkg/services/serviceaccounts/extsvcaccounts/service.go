@@ -142,7 +142,7 @@ func (esa *ExtSvcAccountsService) RemoveExtSvcAccount(ctx context.Context, orgID
 	}
 
 	if saID <= 0 {
-		esa.logger.Debug("No external service account associated with this name", "service", extSvcSlug)
+		esa.logger.Debug("No external service account associated with this service", "service", extSvcSlug, "orgID", orgID)
 		return nil
 	}
 
@@ -153,8 +153,7 @@ func (esa *ExtSvcAccountsService) RemoveExtSvcAccount(ctx context.Context, orgID
 			"error", err.Error())
 		return err
 	}
-	esa.metrics.deletedCount.Inc()
-	esa.logger.Info("Deleted external service account", "service", extSvcSlug)
+	esa.logger.Info("Deleted external service account", "service", extSvcSlug, "orgID", orgID)
 	return nil
 }
 
@@ -185,7 +184,6 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 					"error", err.Error())
 				return 0, err
 			}
-			esa.metrics.deletedCount.Inc()
 		}
 		esa.logger.Info("Skipping service account creation, no permission",
 			"service", cmd.ExtSvcSlug,
@@ -205,8 +203,6 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		esa.logger.Error("Could not save service account", "service", cmd.ExtSvcSlug, "error", errSave.Error())
 		return 0, errSave
 	}
-	esa.metrics.savedCount.Inc()
-
 	return saID, nil
 }
 
@@ -244,6 +240,8 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		return 0, err
 	}
 
+	esa.metrics.savedCount.Inc()
+
 	return cmd.SaID, nil
 }
 
@@ -256,7 +254,11 @@ func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID
 	if err := esa.acSvc.DeleteExternalServiceRole(ctx, slug); err != nil {
 		return err
 	}
-	return esa.DeleteExtSvcCredentials(ctx, orgID, slug)
+	if err := esa.DeleteExtSvcCredentials(ctx, orgID, slug); err != nil {
+		return err
+	}
+	esa.metrics.deletedCount.Inc()
+	return nil
 }
 
 // getExtSvcAccountToken get or create the token of an External Service
