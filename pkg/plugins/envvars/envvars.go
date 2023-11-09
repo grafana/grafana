@@ -180,10 +180,18 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", s.cfg.Tracing.OpenTelemetry.Address),
 		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", s.cfg.Tracing.OpenTelemetry.Propagation),
 	}
+
+	// Pass tracing sampler config to plugins if the sampler type is set, or if its param is set.
+	// An empty sampler type is valid (it defaults to act the same as "const"), so if we have an empty sampler type
+	// with a param that's not zero, we still need to pass the sampler config.
 	if s.cfg.Tracing.OpenTelemetry.Sampler != "" || s.cfg.Tracing.OpenTelemetry.SamplerParam != 0 {
 		vars = append(vars,
 			fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_TYPE=%s", s.cfg.Tracing.OpenTelemetry.Sampler),
 			fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%.6f", s.cfg.Tracing.OpenTelemetry.SamplerParam),
+		)
+	}
+	if s.cfg.Tracing.OpenTelemetry.SamplerRemoteURL != "" {
+		vars = append(vars,
 			fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=%s", s.cfg.Tracing.OpenTelemetry.SamplerRemoteURL),
 		)
 	}
