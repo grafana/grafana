@@ -45,7 +45,6 @@ describe('<SpanDetail>', () => {
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
     createFocusSpanLink: jest.fn().mockReturnValue({}),
-    topOfViewRefType: 'Explore',
   };
 
   span.kind = 'test-kind';
