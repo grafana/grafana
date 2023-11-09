@@ -70,9 +70,9 @@ export const ServiceAccountPageUnconnected = ({
 
   const serviceAccountId = parseInt(match.params.id, 10);
   const tokenActionsDisabled =
-    serviceAccount.isExternal &&
-    contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) &&
-    !serviceAccount.isDisabled;
+    serviceAccount.isDisabled ||
+    serviceAccount.isExternal ||
+    !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
   const canReadPermissions = contextSrv.hasPermissionInMetadata(
