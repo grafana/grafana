@@ -259,7 +259,7 @@ export class DatasourceSrv implements DataSourceService {
         let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;
         if (Array.isArray(dsValue)) {
           // Support for multi-value variables with only one selected datasource
-              dsValue = dsValue[0]
+          dsValue = dsValue[0];
         }
         const dsSettings =
           !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.settingsMapByUid[dsValue]);
@@ -363,10 +363,10 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
 }
 
 export function variableInterpolation(value: any[]) {
-  const events = new EventBusSrv();
-
   if (Array.isArray(value)) {
-    events.publish(new PanelDataSourceIsMultiVar())
+    if (value.length > 1) {
+      appEvents.publish(new PanelDataSourceIsMultiVar());
+    }
     return value[0];
   }
   return value;

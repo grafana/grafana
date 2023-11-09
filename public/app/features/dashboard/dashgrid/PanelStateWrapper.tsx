@@ -31,6 +31,7 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -211,7 +212,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     // Subscribe to panel events
     this.subs.add(panel.events.subscribe(RefreshEvent, this.onRefresh));
     this.subs.add(panel.events.subscribe(RenderEvent, this.onRender));
-    this.subs.add(panel.events.subscribe(PanelDataSourceIsMultiVar, this.onPanelWarning));
+    appEvents.subscribe(PanelDataSourceIsMultiVar, this.onPanelWarning);
 
     dashboard.panelInitialized(this.props.panel);
 
@@ -390,11 +391,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   };
 
   onPanelWarning = (event: BusEvent) => {
-    console.log(
+    console.log('Panel warning', event);
+    const panelWarning =
       'The data source of this ' +
-        this.props.panel.id +
-        ' panel is multi-choice var. You are only seeing the first (in visible order) data source selected for the variable.'
-    );
+      this.props.panel.id +
+      ' panel is multi-choice var. You are only seeing the first (in visible order) data source selected for the variable.';
+    this.setState({ errorMessage: panelWarning });
   };
 
   logPanelChangesOnError() {
