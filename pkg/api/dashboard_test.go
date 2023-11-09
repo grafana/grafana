@@ -385,6 +385,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		dashTwo := dashboards.NewDashboard("dash")
 		dashTwo.ID = 4
+		// nolint:staticcheck
 		dashTwo.FolderID = 3
 		dashTwo.HasACL = false
 	})

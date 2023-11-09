@@ -69,6 +69,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, savedFolder.Slug, "1-test-dash-folder")
 		require.NotEqual(t, savedFolder.ID, 0)
 		require.True(t, savedFolder.IsFolder)
+		// nolint:staticcheck
 		require.EqualValues(t, savedFolder.FolderID, 0)
 		require.Positive(t, len(savedFolder.UID))
 	})
