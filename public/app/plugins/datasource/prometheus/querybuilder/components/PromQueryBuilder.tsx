@@ -50,7 +50,10 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
 
   useEffect(() => {
     async function checkLlms() {
-      const check = (await llms.openai.enabled()).ok;
+      const openaiEnabled = (await llms.openai.enabled()).ok;
+      const vectorEnabled = (await llms.vector.enabled()).ok;
+
+      const check = openaiEnabled && vectorEnabled;
       updateLlmAppEnabled(check);
     }
     checkLlms();
@@ -70,7 +73,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
             });
             setShowDrawer(true);
           }}
-          disabled={!query.metric}
+          disabled={!query.metric || !llmAppEnabled}
         >
           <img height={16} src={AI_Logo_color} alt="AI logo black and white" />
           {'\u00A0'}Get query suggestions
