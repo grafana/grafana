@@ -14,6 +14,8 @@ import {
 } from '@grafana/data/src/transformations/transformers/concat';
 import { Input, Select } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
+
 interface ConcatenateTransformerEditorProps extends TransformerUIProps<ConcatenateTransformerOptions> {}
 
 const nameModes: Array<SelectableValue<ConcatenateFrameNameMode>> = [
@@ -88,8 +90,9 @@ export const concatenateTransformRegistryItem: TransformerRegistryItem<Concatena
   id: DataTransformerID.concatenate,
   editor: ConcatenateTransformerEditor,
   transformation: standardTransformers.concatenateTransformer,
-  name: 'Concatenate fields',
+  name: standardTransformers.concatenateTransformer.name,
   description:
     'Combine all fields into a single frame.  Values will be appended with undefined values if not the same length.',
   categories: new Set([TransformerCategory.Combine]),
+  help: getTransformationContent(DataTransformerID.concatenate).helperDocs,
 };
