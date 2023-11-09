@@ -82,9 +82,6 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
   const renderRef = useRef(render);
   renderRef.current = render;
 
-  const hoverModeRef = useRef(hoverMode);
-  hoverModeRef.current = hoverMode;
-
   useLayoutEffect(() => {
     sizeRef.current = {
       width: 0,
@@ -214,7 +211,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
       // in mode: 2 uPlot won't fire the proximity-based setSeries (below)
       // so we set closestSeriesIdx here instead
       // TODO: setSeries only fires for TimeSeries & Trend...not state timeline or statsus history
-      if (hoverModeRef.current === TooltipHoverMode.xyOne) {
+      if (hoverMode === TooltipHoverMode.xyOne) {
         closestSeriesIdx = hoveredSeriesIdx;
       }
 
