@@ -193,7 +193,6 @@ export const TooltipPlugin = ({
   if (!xField) {
     return null;
   }
-
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
   let tooltip: React.ReactNode = null;
 
