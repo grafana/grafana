@@ -3,6 +3,7 @@ package extsvcaccounts
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -78,6 +79,27 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 		IsDisabled: svcAcc.IsDisabled,
 		Role:       roletype.RoleType(svcAcc.Role),
 	}, nil
+}
+
+// GetExternalServiceNames get the names of External Service in store
+func (esa *ExtSvcAccountsService) GetExternalServiceNames(ctx context.Context) ([]string, error) {
+	esa.logger.Debug("Get external service names from store")
+	sas, err := esa.saSvc.SearchOrgServiceAccounts(ctx, &sa.SearchOrgServiceAccountsQuery{
+		OrgID:  extsvcauth.TmpOrgID,
+		Filter: sa.FilterOnlyExternal,
+	})
+	if err != nil {
+		esa.logger.Error("Could not fetch external service accounts from store", "error", err.Error())
+		return nil, err
+	}
+	if sas == nil {
+		return []string{}, nil
+	}
+	res := make([]string, len(sas.ServiceAccounts))
+	for i := range sas.ServiceAccounts {
+		res[i] = strings.TrimPrefix(sas.ServiceAccounts[i].Name, sa.ExtSvcPrefix)
+	}
+	return res, nil
 }
 
 // SaveExternalService creates, updates or delete a service account (and its token) with the requested permissions.

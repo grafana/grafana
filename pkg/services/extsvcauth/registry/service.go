@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -42,7 +43,7 @@ func (r *Registry) HasExternalService(ctx context.Context, name string) bool {
 
 // RemoveExternalService removes an external service and its associated resources from the database (ex: service account, token).
 func (r *Registry) RemoveExternalService(ctx context.Context, name string) error {
-	provider, ok := r.extSvcProvider[name]
+	provider, ok := r.extSvcProvider[slugify.Slugify(name)]
 	if !ok {
 		r.logger.Debug("external service not found", "service", name)
 		return nil
@@ -74,7 +75,7 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	// Record provider in case of removal
 	r.lock.Lock()
-	r.extSvcProvider[cmd.Name] = cmd.AuthProvider
+	r.extSvcProvider[slugify.Slugify(cmd.Name)] = cmd.AuthProvider
 	r.lock.Unlock()
 
 	switch cmd.AuthProvider {
@@ -95,4 +96,44 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 	default:
 		return nil, extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", cmd.AuthProvider)
 	}
+}
+
+func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
+	extsvcs := map[string]extsvcauth.AuthProvider{}
+	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+		names, err := r.saSvc.GetExternalServiceNames(ctx)
+		if err != nil {
+			return err
+		}
+		for i := range names {
+			extsvcs[names[i]] = extsvcauth.ServiceAccounts
+		}
+	}
+	// Important to run this second as the OAuth server uses External Service Accounts as well.
+	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		names, err := r.oauthServer.GetExternalServiceNames(ctx)
+		if err != nil {
+			return err
+		}
+		for i := range names {
+			extsvcs[names[i]] = extsvcauth.OAuth2Server
+		}
+	}
+	for name, provider := range extsvcs {
+		// The service did not register this time. Removed?
+		if _, ok := r.extSvcProvider[slugify.Slugify(name)]; !ok {
+			r.logger.Debug("Detected removed External Service", "service", name, "provider", provider)
+			switch provider {
+			case extsvcauth.ServiceAccounts:
+				if err := r.saSvc.RemoveExternalService(ctx, name); err != nil {
+					return err
+				}
+			case extsvcauth.OAuth2Server:
+				if err := r.oauthServer.RemoveExternalService(ctx, name); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
