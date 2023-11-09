@@ -128,7 +128,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
 			reqContext.IsRenderCall = identity.AuthenticatedBy == login.RenderModule
-
 		}
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
