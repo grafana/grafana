@@ -1,7 +1,7 @@
 import { keys as _keys } from 'lodash';
 
 import { dateTime, TimeRange, VariableHide } from '@grafana/data';
-import { Dashboard, defaultVariableModel } from '@grafana/schema';
+import { Dashboard, defaultVariableModel, RowPanel } from '@grafana/schema';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
@@ -538,6 +538,14 @@ describe('DashboardModel', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
+      const panels: RowPanel['panels'] = [
+        // this whole test is about dealing with out-of-spec (or at least ambigious) data...
+        // @ts-expect-error
+        { id: 3, type: 'graph', gridPos: { w: 12, h: 2 } },
+        // @ts-expect-error
+        { id: 4, type: 'graph', gridPos: { w: 12, h: 2 } },
+      ];
+
       dashboard = createDashboardModelFixture({
         panels: [
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
@@ -546,13 +554,7 @@ describe('DashboardModel', () => {
             type: 'row',
             gridPos: { x: 0, y: 6, w: 24, h: 1 },
             collapsed: true,
-            panels: [
-              // this whole test is about dealing with out-of-spec (or at least ambigious) data...
-              //@ts-expect-error
-              { id: 3, type: 'graph', gridPos: { w: 12, h: 2 } },
-              //@ts-expect-error
-              { id: 4, type: 'graph', gridPos: { w: 12, h: 2 } },
-            ],
+            panels: panels,
           },
           { id: 5, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 7, w: 1, h: 1 } },
         ],
