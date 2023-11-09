@@ -13,7 +13,8 @@ func TestURLBuilder(t *testing.T) {
 				ResourceURI: strPtr("/subscriptions/sub/resource/uri"),
 			}
 
-			url, _ := ub.BuildMetricsURL()
+			url, err := ub.BuildMetricsURL()
+			assert.Nil(t, err)
 			assert.Equal(t, "/subscriptions/sub/resource/uri/providers/microsoft.insights/metrics", *url)
 		})
 
@@ -26,7 +27,8 @@ func TestURLBuilder(t *testing.T) {
 				ResourceName:        strPtr("rn1/rn2/rn3"),
 			}
 
-			url, _ := ub.BuildMetricsURL()
+			url, err := ub.BuildMetricsURL()
+			assert.Nil(t, err)
 			assert.Equal(t, "/subscriptions/sub/resource/uri/providers/microsoft.insights/metrics", *url)
 		})
 
@@ -39,7 +41,8 @@ func TestURLBuilder(t *testing.T) {
 					ResourceName:        strPtr("rn"),
 				}
 
-				url, _ := ub.BuildMetricsURL()
+				url, err := ub.BuildMetricsURL()
+				assert.Nil(t, err)
 				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metrics", *url)
 			})
 
@@ -52,7 +55,8 @@ func TestURLBuilder(t *testing.T) {
 					ResourceName:        strPtr("rn"),
 				}
 
-				url, _ := ub.BuildMetricsURL()
+				url, err := ub.BuildMetricsURL()
+				assert.Nil(t, err)
 				assert.Equal(t, "/subscriptions/specified-sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metrics", *url)
 			})
 
@@ -64,7 +68,8 @@ func TestURLBuilder(t *testing.T) {
 					ResourceName:        strPtr("rn1/default"),
 				}
 
-				url, _ := ub.BuildMetricsURL()
+				url, err := ub.BuildMetricsURL()
+				assert.Nil(t, err)
 				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default/providers/microsoft.insights/metrics", *url)
 			})
 
@@ -76,7 +81,8 @@ func TestURLBuilder(t *testing.T) {
 					ResourceName:        strPtr("rn1/default"),
 				}
 
-				url, _ := ub.BuildMetricsURL()
+				url, err := ub.BuildMetricsURL()
+				assert.Nil(t, err)
 				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/providers/microsoft.insights/metrics", *url)
 			})
 
@@ -88,7 +94,8 @@ func TestURLBuilder(t *testing.T) {
 					ResourceName:        strPtr("rn1/rn2/rn3"),
 				}
 
-				url, _ := ub.BuildMetricsURL()
+				url, err := ub.BuildMetricsURL()
+				assert.Nil(t, err)
 				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/providers/microsoft.insights/metrics", *url)
 			})
 
