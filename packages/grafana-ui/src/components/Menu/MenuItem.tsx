@@ -156,8 +156,6 @@ export const MenuItem = React.memo(
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
-        role={url === undefined ? role : undefined}
-        data-role="menuitem"
         ref={localRef}
       >
         <ItemElement
@@ -169,6 +167,8 @@ export const MenuItem = React.memo(
           aria-label={ariaLabel}
           aria-checked={ariaChecked}
           className={itemStyle}
+          data-role="menuitem"
+          role={url === undefined ? role : undefined}
           {...disabledProps}
         >
           <>
@@ -306,7 +306,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       opacity: 0.7,
     }),
     description: css({
-      fontStyle: 'italic',
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
     }),
