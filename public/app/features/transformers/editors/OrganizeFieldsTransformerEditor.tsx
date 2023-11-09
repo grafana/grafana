@@ -23,7 +23,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
   const orderedFieldNames = useMemo(() => orderFieldNamesByIndex(fieldNames, indexByName), [fieldNames, indexByName]);
-  const filterType = includeByName ? 'include' : 'exclude';
+  const filterType = includeByName && Object.keys(includeByName).length > 0 ? 'include' : 'exclude';
 
   const onToggleVisibility = useCallback(
     (field: string, shouldExclude: boolean) => {
