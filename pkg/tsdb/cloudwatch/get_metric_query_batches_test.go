@@ -23,7 +23,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		Id:              "i3",
 	}
 
-	s1 := models.CloudWatchQuery{
+	metricStat := models.CloudWatchQuery{
 		MetricQueryType:  models.MetricQueryTypeSearch,
 		MetricEditorMode: models.MetricEditorModeBuilder,
 		Id:               "s1",
@@ -95,7 +95,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 
 	t.Run("zero insight queries should not separate into batches", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
-			&s1,
+			&metricStat,
 			&m1_ref_i1,
 			&m2_ref_i1,
 			&m3_ref_m1_m2,
@@ -110,7 +110,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 	t.Run("one insight query should not separate into batches", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
 			&insight1,
-			&s1,
+			&metricStat,
 		}
 
 		result := getMetricQueryBatches(batch, logger)
@@ -121,21 +121,21 @@ func TestGetMetricQueryBatches(t *testing.T) {
 	t.Run("multiple insight queries should separate into batches", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
 			&insight1,
-			&s1,
+			&metricStat,
 			&insight2,
 		}
 
 		result := getMetricQueryBatches(batch, logger)
 		assert.Len(t, result, 3)
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1}, result[0])
-		assert.ElementsMatch(t, []*models.CloudWatchQuery{&s1}, result[1])
+		assert.ElementsMatch(t, []*models.CloudWatchQuery{&metricStat}, result[1])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight2}, result[2])
 	})
 
 	t.Run("math queries with one insight query should not separate into batches", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
 			&insight1,
-			&s1,
+			&metricStat,
 			&m1_ref_i1,
 			&m2_ref_i1,
 			&m3_ref_m1_m2,
@@ -150,7 +150,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
 			&insight1,
 			&insight2,
-			&s1,
+			&metricStat,
 			&m1_ref_i1,
 			&m2_ref_i1,
 			&m3_ref_m1_m2,
@@ -161,7 +161,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 		assert.Len(t, result, 3)
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight2}, result[0])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1, &m1_ref_i1, &m2_ref_i1, &m3_ref_m1_m2}, result[1])
-		assert.ElementsMatch(t, []*models.CloudWatchQuery{&s1, &m4_ref_s1}, result[2])
+		assert.ElementsMatch(t, []*models.CloudWatchQuery{&metricStat, &m4_ref_s1}, result[2])
 	})
 	t.Run("a math query with multiple insight queries should batch them together", func(t *testing.T) {
 		batch := []*models.CloudWatchQuery{
