@@ -37,43 +37,43 @@ func (fam *RemoteSecondaryForkedAlertmanager) GetStatus() apimodels.GettableStat
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	return "", nil
+	return fam.internal.CreateSilence(ctx, silence)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
-	return nil
+	return fam.internal.DeleteSilence(ctx, id)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {
-	return apimodels.GettableSilence{}, nil
+	return fam.internal.GetSilence(ctx, id)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
-	return apimodels.GettableSilences{}, nil
+	return fam.internal.ListSilences(ctx, filter)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
-	return apimodels.GettableAlerts{}, nil
+	return fam.internal.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
-	return apimodels.AlertGroups{}, nil
+	return fam.internal.GetAlertGroups(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
-	return nil
+	return fam.internal.PutAlerts(ctx, alerts)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	return []apimodels.Receiver{}, nil
+	return fam.internal.GetReceivers(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return &notifier.TestReceiversResult{}, nil
+	return fam.internal.TestReceivers(ctx, c)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	return fam.internal.TestTemplate(ctx, c)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {}

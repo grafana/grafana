@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
+import { TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Stack } from '@grafana/ui';
@@ -10,12 +11,11 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { KeyedVariableIdentifier } from '../state/types';
-import { VariableModel } from '../types';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
 
 export interface Props {
-  variables: VariableModel[];
+  variables: TypedVariableModel[];
   usages: VariableUsageTree[];
   usagesNetwork: UsagesToNetwork[];
   onAdd: () => void;
