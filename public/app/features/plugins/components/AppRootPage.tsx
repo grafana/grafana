@@ -8,6 +8,7 @@ import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
@@ -60,6 +61,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     return (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
         {loading && <PageLoader />}
+        {!loading && <EntityNotFound entity="App" />}
       </Page>
     );
   }
