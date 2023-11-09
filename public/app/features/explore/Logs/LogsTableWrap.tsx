@@ -34,7 +34,11 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
 }
 
-export type fieldNameMeta = { percentOfLinesWithLabel: number; active: boolean | undefined };
+export type fieldNameMeta = {
+  percentOfLinesWithLabel: number;
+  active: boolean | undefined;
+  type?: 'BODY_FIELD' | 'TIME_FIELD';
+};
 type fieldName = string;
 type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
@@ -46,8 +50,7 @@ export function LogsTableWrap(props: Props) {
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
-  const [height, setHeight] = useState<number>(600);
-
+  const height = getTableHeight();
   const dataFrame = logsFrames[0];
 
   const getColumnsFromProps = useCallback(
@@ -96,13 +99,27 @@ export function LogsTableWrap(props: Props) {
    *
    */
   useEffect(() => {
+    // If the data frame is empty, there's nothing to viz, it could mean the user has unselected all columns
+    if (!dataFrame.length) {
+      return;
+    }
     const numberOfLogLines = dataFrame ? dataFrame.length : 0;
     const logsFrame = parseLogsFrame(dataFrame);
     const labels = logsFrame?.getLogFrameLabelsAsLabels();
 
-    const otherFields = logsFrame ? logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden) : [];
+    const otherFields = [];
+
+    if (logsFrame) {
+      otherFields.push(...logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden));
+    }
     if (logsFrame?.severityField) {
       otherFields.push(logsFrame?.severityField);
+    }
+    if (logsFrame?.bodyField) {
+      otherFields.push(logsFrame?.bodyField);
+    }
+    if (logsFrame?.timeField) {
+      otherFields.push(logsFrame?.timeField);
     }
 
     // Use a map to dedupe labels and count their occurrences in the logs
@@ -159,15 +176,28 @@ export function LogsTableWrap(props: Props) {
 
     pendingLabelState = getColumnsFromProps(pendingLabelState);
 
+    // Get all active columns
+    const active = Object.keys(pendingLabelState).filter((key) => pendingLabelState[key].active);
+
+    // If nothing is selected, then select the default columns
+    if (active.length === 0) {
+      if (logsFrame?.bodyField?.name) {
+        pendingLabelState[logsFrame.bodyField.name].active = true;
+      }
+      if (logsFrame?.timeField?.name) {
+        pendingLabelState[logsFrame.timeField.name].active = true;
+      }
+    }
+
+    if (logsFrame?.bodyField?.name && logsFrame?.timeField?.name) {
+      pendingLabelState[logsFrame.bodyField.name].type = 'BODY_FIELD';
+      pendingLabelState[logsFrame.timeField.name].type = 'TIME_FIELD';
+    }
+
     setColumnsWithMeta(pendingLabelState);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [dataFrame, getColumnsFromProps]);
-
-  // As the number of rows change, so too must the height of the table
-  useEffect(() => {
-    setHeight(getTableHeight(dataFrame.length, false));
-  }, [dataFrame.length]);
 
   if (!columnsWithMeta) {
     return null;
@@ -323,17 +353,10 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
   };
 }
 
-/**
- * from public/app/features/explore/Table/TableContainer.tsx
- */
-const getTableHeight = (rowCount: number, hasSubFrames: boolean) => {
-  if (rowCount === 0) {
-    return 200;
-  }
-  // 600px is pretty small for taller monitors, using the innerHeight minus an arbitrary 500px so the table can be viewed in its entirety without needing to scroll outside the panel to see the top and the bottom
-  const max = Math.max(window.innerHeight - 500, 600);
-  const min = Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46;
-  // tries to estimate table height, with a min of 300 and a max of 600
-  // if there are multiple tables, there is no min
-  return Math.min(max, min);
+const getTableHeight = () => {
+  // Instead of making the height of the table based on the content (like in the table panel itself), let's try to use the vertical space that is available.
+  // Since this table is in explore, we can expect the user to be running multiple queries that return disparate numbers of rows and labels in the same session
+  // Also changing the height of the table between queries can be and cause content to jump, so we'll set a minimum height of 500px, and a max based on the innerHeight
+  // Ideally the table container should always be able to fit in the users viewport without needing to scroll
+  return Math.max(window.innerHeight - 500, 500);
 };

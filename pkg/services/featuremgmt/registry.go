@@ -671,14 +671,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:           "azureMonitorDataplane",
-			Description:    "Adds dataplane compliant frame metadata in the Azure Monitor datasource",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaPartnerPluginsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: falsePtr,
-		},
-		{
 			Name:         "traceToProfiles",
 			Description:  "Enables linking between traces and profiles",
 			Stage:        FeatureStageExperimental,
@@ -881,15 +873,8 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
-			Name:         "kubernetesPlaylists",
-			Description:  "Use the kubernetes API in the frontend for playlists",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAppPlatformSquad,
-		},
-		{
-			Name:            "kubernetesPlaylistsAPI",
-			Description:     "Route /api/playlist API to k8s handlers",
+			Name:            "kubernetesPlaylists",
+			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
@@ -1031,6 +1016,14 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaSharingSquad,
+		},
+		{
+			Name:            "ssoSettingsApi",
+			Description:     "Enables the SSO settings API",
+			RequiresDevMode: true,
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           identityAccessTeam,
 		},
 	}
 )
