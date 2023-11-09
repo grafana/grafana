@@ -749,19 +749,6 @@
         },
         "description": "(empty)"
       },
-      "getCustomPermissionsReportResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/CustomPermissionsRecordDTO"
-              },
-              "type": "array"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "getDashboardPermissionsListResponse": {
         "content": {
           "application/json": {
@@ -4227,53 +4214,6 @@
           },
           "name": {
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "CustomPermissionsRecordDTO": {
-        "properties": {
-          "customPermissions": {
-            "type": "string"
-          },
-          "granteeName": {
-            "type": "string"
-          },
-          "granteeType": {
-            "type": "string"
-          },
-          "granteeUrl": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isFolder": {
-            "type": "boolean"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "orgRole": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          },
-          "usersCount": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -19232,12 +19172,10 @@
     },
     "/licensing/custom-permissions": {
       "get": {
+        "deprecated": true,
         "description": "You need to have a permission with action `licensing.reports:read`.",
         "operationId": "getCustomPermissionsReport",
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -19251,12 +19189,10 @@
     },
     "/licensing/custom-permissions-csv": {
       "get": {
+        "deprecated": true,
         "description": "You need to have a permission with action `licensing.reports:read`.",
         "operationId": "getCustomPermissionsCSV",
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
