@@ -53,7 +53,7 @@ func TestPlaylist(t *testing.T) {
 			APIServerStorageType: "file", // write the files to disk
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServer,
-				featuremgmt.FlagKubernetesPlaylistsAPI, // Required so that legacy calls are also written
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 		}))
 	})
