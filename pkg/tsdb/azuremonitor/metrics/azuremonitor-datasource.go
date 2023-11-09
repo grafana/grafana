@@ -109,19 +109,17 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 				MetricNamespace:     azJSONModel.MetricNamespace,
 				ResourceName:        resourceName,
 			}
-			azureURLPtr, err := ub.BuildMetricsURL()
-			if err != nil {
-				return nil, err
-			}
-			azureURL = *azureURLPtr
 
-			// POST requests are only supported at the subscription level
-			filterInBody = false
+			// Construct the resourceURI (for legacy query objects pre Grafana 9)
 			resourceUri, err := ub.buildResourceURI()
 			if err != nil {
 				return nil, err
 			}
+
+			// POST requests are only supported at the subscription level
+			filterInBody = false
 			if resourceUri != nil {
+				azureURL = fmt.Sprintf("%s/providers/microsoft.insights/metrics", *resourceUri)
 				resourceMap[*resourceUri] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
 			}
 		} else {
