@@ -173,6 +173,11 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 					OpenTelemetry: config.OpenTelemetryCfg{
 						Address:     "127.0.0.1:4317",
 						Propagation: "w3c",
+
+						// Sensible default values for the sampler set by pkg/infra/tracing while reading config.ini
+						Sampler:          "",
+						SamplerParam:     1.0,
+						SamplerRemoteURL: "",
 					},
 				},
 				PluginSettings: map[string]map[string]string{
@@ -187,7 +192,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[2])
 				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[3])
 				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_TYPE=", envVars[4])
-				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=0.000000", envVars[5])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=1.000000", envVars[5])
 				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[6])
 				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[7])
 			},
@@ -199,6 +204,11 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 					OpenTelemetry: config.OpenTelemetryCfg{
 						Address:     "127.0.0.1:4317",
 						Propagation: "w3c,jaeger",
+
+						// Sensible default values for the sampler set by pkg/infra/tracing while reading config.ini
+						Sampler:          "",
+						SamplerParam:     1.0,
+						SamplerRemoteURL: "",
 					},
 				},
 				PluginSettings: map[string]map[string]string{
@@ -213,7 +223,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[2])
 				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c,jaeger", envVars[3])
 				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_TYPE=", envVars[4])
-				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=0.000000", envVars[5])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=1.000000", envVars[5])
 				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[6])
 				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[7])
 			},
