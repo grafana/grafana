@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 
 import {
   TimeZone,
@@ -65,7 +65,7 @@ interface State {
   renderAll: boolean;
 }
 
-class UnThemedLogRows extends PureComponent<Props, State> {
+class UnThemedLogRows extends Component<Props, State> {
   renderAllTimer: number | null = null;
 
   static defaultProps = {
@@ -111,6 +111,18 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   sortLogs = memoizeOne((logRows: LogRowModel[], logsSortOrder: LogsSortOrder): LogRowModel[] =>
     sortLogRows(logRows, logsSortOrder)
   );
+
+  /**
+   * This method is used to prevent unnecessary re-renders of the component.
+   * If the log rows don't change, the component won't re-render
+   * @param nextProps
+   */
+  shouldComponentUpdate(nextProps: Readonly<Props>): boolean {
+    if (nextProps.logRows !== this.props.logRows || nextProps.deduplicatedRows !== this.props.deduplicatedRows) {
+      return true;
+    }
+    return false;
+  }
 
   render() {
     const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, ...rest } = this.props;
