@@ -78,7 +78,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Url state before editing started
    */
-  private _initiallUrlState?: UrlQueryMap;
+  private _initialUrlState?: UrlQueryMap;
   /**
    * change tracking subscription
    */
@@ -129,7 +129,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
-    this._initiallUrlState = locationService.getSearchObject();
+    this._initialUrlState = locationService.getSearchObject();
 
     // Switch to edit mode
     this.setState({ isEditing: true });
@@ -149,7 +149,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Stop url sync before updating url
     this.stopUrlSync();
     // Now we can update url
-    locationService.partial(this._initiallUrlState!, true);
+    locationService.partial(this._initialUrlState!, true);
     // Update state and disable editing
     this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again

@@ -559,6 +559,10 @@ const (
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
 
+	// FlagDashboardSceneSolo
+	// Enables rendering dashboards using scenes for solo panels
+	FlagDashboardSceneSolo = "dashboardSceneSolo"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
