@@ -3,8 +3,9 @@ package apiregistry
 import (
 	"context"
 
-	playlistsv0alpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/example"
+	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 )
 
 var (
@@ -13,8 +14,11 @@ var (
 
 type Service struct{}
 
-func ProvideService(
-	_ *playlistsv0alpha1.PlaylistAPIBuilder,
+// ProvideRegistryServiceSink is an entry point for each service that will force initialization
+// and give each builder the chance to register itself with the main server
+func ProvideRegistryServiceSink(
+	_ *playlist.PlaylistAPIBuilder,
+	_ *example.TestingAPIBuilder,
 ) *Service {
 	return &Service{}
 }

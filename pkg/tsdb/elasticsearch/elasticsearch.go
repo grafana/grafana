@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -71,13 +72,13 @@ func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.Data
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		httpCliOpts, err := settings.HTTPClientOptions()
+		httpCliOpts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
@@ -87,7 +88,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			httpCliOpts.SigV4.Service = "es"
 		}
 
-		httpCli, err := httpClientProvider.New(httpCliOpts)
+		// enable experimental http client to support errors with source
+		httpCli, err := exphttpclient.New(httpCliOpts)
 		if err != nil {
 			return nil, err
 		}

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
@@ -162,12 +163,13 @@ func ProvideDashboardPermissions(
 				}
 				return append([]string{parentScope}, nestedScopes...), nil
 			}
-			return []string{}, nil
+			return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}, nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:        true,
-			Teams:        true,
-			BuiltInRoles: true,
+			Users:           true,
+			Teams:           true,
+			BuiltInRoles:    true,
+			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  DashboardViewActions,
@@ -190,7 +192,7 @@ type FolderPermissionsService struct {
 	*resourcepermissions.Service
 }
 
-var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead}
+var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead}
 var FolderEditActions = append(FolderViewActions, []string{
 	dashboards.ActionFoldersWrite,
 	dashboards.ActionFoldersDelete,
@@ -198,6 +200,9 @@ var FolderEditActions = append(FolderViewActions, []string{
 	accesscontrol.ActionAlertingRuleCreate,
 	accesscontrol.ActionAlertingRuleUpdate,
 	accesscontrol.ActionAlertingRuleDelete,
+	libraryelements.ActionLibraryPanelsCreate,
+	libraryelements.ActionLibraryPanelsWrite,
+	libraryelements.ActionLibraryPanelsDelete,
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
@@ -226,9 +231,10 @@ func ProvideFolderPermissions(
 			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:        true,
-			Teams:        true,
-			BuiltInRoles: true,
+			Users:           true,
+			Teams:           true,
+			BuiltInRoles:    true,
+			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  append(DashboardViewActions, FolderViewActions...),

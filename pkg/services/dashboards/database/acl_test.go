@@ -38,8 +38,8 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 		dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
 		currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
-		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
-		childDash = insertTestDashboard(t, dashboardStore, "2 test dash", 1, savedFolder.ID, false, "prod", "webapp")
+		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
+		childDash = insertTestDashboard(t, dashboardStore, "2 test dash", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		return currentUser.OrgID
 	}
 

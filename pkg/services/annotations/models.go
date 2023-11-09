@@ -2,7 +2,7 @@ package annotations
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type ItemQuery struct {
@@ -18,7 +18,7 @@ type ItemQuery struct {
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
 	MatchAny     bool     `json:"matchAny"`
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 
 	Limit int64 `json:"limit"`
 }
@@ -87,6 +87,7 @@ func (i Item) TableName() string {
 	return "annotation"
 }
 
+// swagger:model Annotation
 type ItemDTO struct {
 	ID           int64            `json:"id" xorm:"id"`
 	AlertID      int64            `json:"alertId" xorm:"alert_id"`

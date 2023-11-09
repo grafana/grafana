@@ -23,13 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
-	client1 := &oauthserver.ExternalService{
+	client1 := &oauthserver.OAuthExternalService{
 		Name:             "testapp",
 		ClientID:         "RANDOMID",
 		GrantTypes:       string(fosite.GrantTypeClientCredentials),
@@ -51,13 +51,13 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 	tests := []struct {
 		name           string
 		scopes         []string
-		client         *oauthserver.ExternalService
+		client         *oauthserver.OAuthExternalService
 		expectedClaims map[string]any
 		wantErr        bool
 	}{
 		{
 			name: "no claim without client_credentials grant type",
-			client: &oauthserver.ExternalService{
+			client: &oauthserver.OAuthExternalService{
 				Name:             "testapp",
 				ClientID:         "RANDOMID",
 				GrantTypes:       string(fosite.GrantTypeJWTBearer),
@@ -146,7 +146,7 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 
 func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 	now := time.Now()
-	client1 := &oauthserver.ExternalService{
+	client1 := &oauthserver.OAuthExternalService{
 		Name:             "testapp",
 		ClientID:         "RANDOMID",
 		GrantTypes:       string(fosite.GrantTypeJWTBearer),
@@ -175,7 +175,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		{ID: 1, Name: "Team 1", OrgID: 1},
 		{ID: 2, Name: "Team 2", OrgID: 1},
 	}
-	client1WithPerm := func(perms []ac.Permission) *oauthserver.ExternalService {
+	client1WithPerm := func(perms []ac.Permission) *oauthserver.OAuthExternalService {
 		client := *client1
 		client.ImpersonatePermissions = perms
 		return &client
@@ -185,14 +185,14 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		name           string
 		initEnv        func(*TestEnv)
 		scopes         []string
-		client         *oauthserver.ExternalService
+		client         *oauthserver.OAuthExternalService
 		subject        string
 		expectedClaims map[string]any
 		wantErr        bool
 	}{
 		{
 			name: "no claim without jwtbearer grant type",
-			client: &oauthserver.ExternalService{
+			client: &oauthserver.OAuthExternalService{
 				Name:             "testapp",
 				ClientID:         "RANDOMID",
 				GrantTypes:       string(fosite.GrantTypeClientCredentials),
@@ -207,7 +207,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		},
 		{
 			name: "err client is not allowed to impersonate",
-			client: &oauthserver.ExternalService{
+			client: &oauthserver.OAuthExternalService{
 				Name:             "testapp",
 				ClientID:         "RANDOMID",
 				GrantTypes:       string(fosite.GrantTypeJWTBearer),
@@ -461,7 +461,7 @@ type claims struct {
 func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 	tests := []struct {
 		name            string
-		tweakTestClient func(*oauthserver.ExternalService)
+		tweakTestClient func(*oauthserver.OAuthExternalService)
 		reqParams       url.Values
 		wantCode        int
 		wantScope       []string
@@ -547,7 +547,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				},
 				"scope": {"profile email groups entitlements"},
 			},
-			tweakTestClient: func(es *oauthserver.ExternalService) {
+			tweakTestClient: func(es *oauthserver.OAuthExternalService) {
 				es.GrantTypes = string(fosite.GrantTypeClientCredentials)
 			},
 			wantCode: http.StatusBadRequest,
@@ -561,7 +561,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				"scope":         {"profile email groups entitlements"},
 				"audience":      {AppURL},
 			},
-			tweakTestClient: func(es *oauthserver.ExternalService) {
+			tweakTestClient: func(es *oauthserver.OAuthExternalService) {
 				es.GrantTypes = string(fosite.GrantTypeJWTBearer)
 			},
 			wantCode: http.StatusBadRequest,
@@ -575,7 +575,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				"scope":         {"profile email groups entitlements"},
 				"audience":      {AppURL},
 			},
-			tweakTestClient: func(es *oauthserver.ExternalService) {
+			tweakTestClient: func(es *oauthserver.OAuthExternalService) {
 				es.GrantTypes = string(fosite.GrantTypeClientCredentials)
 			},
 			wantCode: http.StatusUnauthorized,
@@ -591,7 +591,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				},
 				"scope": {"profile email groups entitlements"},
 			},
-			tweakTestClient: func(es *oauthserver.ExternalService) {
+			tweakTestClient: func(es *oauthserver.OAuthExternalService) {
 				es.GrantTypes = string(fosite.GrantTypeJWTBearer)
 			},
 			wantCode: http.StatusUnauthorized,
@@ -673,11 +673,11 @@ func genAssertion(t *testing.T, signKey *rsa.PrivateKey, clientID, sub string, a
 }
 
 // setupHandleTokenRequestEnv creates a client and a user and sets all Mocks call for the handleTokenRequest test cases
-func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserver.ExternalService)) {
+func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserver.OAuthExternalService)) {
 	now := time.Now()
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte("CLIENT1SECRET"), bcrypt.DefaultCost)
 	require.NoError(t, err)
-	client1 := &oauthserver.ExternalService{
+	client1 := &oauthserver.OAuthExternalService{
 		Name:             "client-1",
 		ClientID:         "CLIENT1ID",
 		Secret:           string(hashedSecret),
@@ -703,15 +703,13 @@ func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserve
 		opt(client1)
 	}
 
-	sa1 := &serviceaccounts.ServiceAccountProfileDTO{
-		Id:         client1.ServiceAccountID,
+	sa1 := &sa.ExtSvcAccount{
+		ID:         client1.ServiceAccountID,
 		Name:       client1.Name,
 		Login:      client1.Name,
-		OrgId:      oauthserver.TmpOrgID,
+		OrgID:      oauthserver.TmpOrgID,
 		IsDisabled: false,
-		Created:    now,
-		Updated:    now,
-		Role:       "Viewer",
+		Role:       roletype.RoleNone,
 	}
 
 	user56 := &user.User{
@@ -735,7 +733,7 @@ func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserve
 	// To retrieve the Client, its publicKey and its permissions
 	env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
 	env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: Client1Key.Public(), Algorithm: "RS256"}, nil)
-	env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
+	env.SAService.On("RetrieveExtSvcAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
 	env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
 	// To retrieve the user to impersonate, its permissions and its teams
 	env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{

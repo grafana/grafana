@@ -117,9 +117,6 @@ export {
 export { Sparkline } from './Sparkline/Sparkline';
 
 export { Gauge } from './Gauge/Gauge';
-export { Graph } from './Graph/Graph';
-export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge } from './BarGauge/BarGauge';
 export {
   VizTooltip,
@@ -130,7 +127,6 @@ export {
   type SeriesTableRowProps,
 } from './VizTooltip';
 export { VizRepeater, type VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
-export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export {
   PanelChrome,
   type PanelChromeProps,
@@ -154,7 +150,7 @@ export { VizLegend } from './VizLegend/VizLegend';
 export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
 export { Alert, type AlertVariant } from './Alert/Alert';
-export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
+export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from '../graveyard/Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
@@ -214,6 +210,8 @@ export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
 export { TextLink } from './Link/TextLink';
 export { Text } from './Text/Text';
+export { Box } from './Layout/Box/Box';
+export { Stack } from './Layout/Stack/Stack';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -261,10 +259,12 @@ export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
 export { type UserView } from './UsersIndicator/types';
+export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
 
+/** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {
   SecretFormField,
   FormField,
@@ -286,13 +286,24 @@ export { UPlotChart } from './uPlot/Plot';
 export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
-export { type PlotTooltipInterpolator, type PlotSelection } from './uPlot/types';
+export { type PlotTooltipInterpolator, type PlotSelection, FIXED_UNIT } from './uPlot/types';
 export { type UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
-export { GraphNG, type GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
-export { TimeSeries } from './TimeSeries/TimeSeries';
-export { useGraphNGContext } from './GraphNG/hooks';
-export { preparePlotFrame, buildScaleKey } from './GraphNG/utils';
-export { type GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
+
+// -----------------------------------------------------
+// Graveyard: exported, but no longer used internally
+// These will be removed in the future
+// -----------------------------------------------------
+
+export { Graph } from '../graveyard/Graph/Graph';
+export { GraphWithLegend } from '../graveyard/Graph/GraphWithLegend';
+export { GraphContextMenu, GraphContextMenuHeader } from '../graveyard/Graph/GraphContextMenu';
+export { graphTimeFormat, graphTickFormatter } from '../graveyard/Graph/utils';
+
+export { GraphNG, type GraphNGProps } from '../graveyard/GraphNG/GraphNG';
+export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
+export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
+export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
+export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';

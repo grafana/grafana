@@ -4,7 +4,7 @@ import { HistoryItem } from '@grafana/data';
 import { escapeLabelValueInExactSelector } from 'app/plugins/datasource/prometheus/language_utils';
 
 import LanguageProvider from '../../../LanguageProvider';
-import { ExtractedLabelKeys, LokiQuery } from '../../../types';
+import { ParserAndLabelKeysResult, LokiQuery } from '../../../types';
 
 import { Label } from './situation';
 
@@ -19,7 +19,7 @@ export class CompletionDataProvider {
   ) {
     this.queryToLabelKeysCache = new Map();
   }
-  private queryToLabelKeysCache: Map<string, ExtractedLabelKeys>;
+  private queryToLabelKeysCache: Map<string, ParserAndLabelKeysResult>;
 
   private buildSelector(labels: Label[]): string {
     const allLabelTexts = labels.map(
@@ -51,7 +51,7 @@ export class CompletionDataProvider {
   async getLabelValues(labelName: string, otherLabels: Label[]) {
     if (otherLabels.length === 0) {
       // if there is no filtering, we have to use a special endpoint
-      return await this.languageProvider.getLabelValues(labelName);
+      return await this.languageProvider.fetchLabelValues(labelName);
     }
 
     const data = await this.getSeriesLabels(otherLabels);
@@ -67,7 +67,7 @@ export class CompletionDataProvider {
    *
    * @param logQuery
    */
-  async getParserAndLabelKeys(logQuery: string): Promise<ExtractedLabelKeys> {
+  async getParserAndLabelKeys(logQuery: string): Promise<ParserAndLabelKeysResult> {
     const EXTRACTED_LABEL_KEYS_MAX_CACHE_SIZE = 2;
     const cachedLabelKeys = this.queryToLabelKeysCache.has(logQuery) ? this.queryToLabelKeysCache.get(logQuery) : null;
     if (cachedLabelKeys) {
@@ -90,6 +90,6 @@ export class CompletionDataProvider {
   }
 
   async getSeriesLabels(labels: Label[]) {
-    return await this.languageProvider.getSeriesLabels(this.buildSelector(labels)).then((data) => data ?? {});
+    return await this.languageProvider.fetchSeriesLabels(this.buildSelector(labels)).then((data) => data ?? {});
   }
 }

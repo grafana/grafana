@@ -1,7 +1,8 @@
-import { DashboardModel, PanelModel } from '../../state';
-import { Diffs, jsonDiff } from '../VersionHistory/utils';
+import { llms } from '@grafana/experimental';
 
-import { openai } from './llms';
+import { DashboardModel, PanelModel } from '../../state';
+
+import { getDashboardStringDiff } from './jsonDiffText';
 
 export enum Role {
   // System content cannot be overwritten by user prompts.
@@ -11,12 +12,27 @@ export enum Role {
   'user' = 'user',
 }
 
-export type Message = openai.Message;
+export type Message = llms.openai.Message;
+
+export enum QuickFeedbackType {
+  Shorter = 'Even shorter',
+  MoreDescriptive = 'More descriptive',
+  Regenerate = 'Regenerate',
+}
 
 /**
  * The OpenAI model to be used.
  */
-export const OPEN_AI_MODEL = 'gpt-4';
+export const DEFAULT_OAI_MODEL = 'gpt-4';
+
+export type OAI_MODEL = 'gpt-4' | 'gpt-4-32k' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k';
+
+/**
+ * Sanitize the reply from OpenAI by removing the leading and trailing quotes.
+ */
+export const sanitizeReply = (reply: string) => {
+  return reply.replace(/^"|"$/g, '');
+};
 
 /**
  * Diff the current dashboard with the original dashboard and the dashboard after migration
@@ -28,29 +44,41 @@ export const OPEN_AI_MODEL = 'gpt-4';
  * @returns user changes and migration changes
  */
 export function getDashboardChanges(dashboard: DashboardModel): {
-  userChanges: Diffs;
-  migrationChanges: Diffs;
+  userChanges: string;
+  migrationChanges: string;
 } {
-  // Re-parse the dashboard to remove functions and other non-serializable properties
-  const currentDashboard = JSON.parse(JSON.stringify(dashboard.getSaveModelClone()));
-  const originalDashboard = dashboard.getOriginalDashboard()!;
-  const dashboardAfterMigration = JSON.parse(JSON.stringify(new DashboardModel(originalDashboard).getSaveModelClone()));
+  const { migrationDiff, userDiff } = getDashboardStringDiff(dashboard);
 
   return {
-    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
-    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
+    userChanges: userDiff,
+    migrationChanges: migrationDiff,
   };
 }
 
 /**
- * Check if the LLM plugin is enabled and configured.
- * @returns true if the LLM plugin is enabled and configured.
+ * Check if the LLM plugin is enabled.
+ * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled() {
-  // Check if the LLM plugin is enabled and configured.
+  // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
-  return await openai.enabled();
+  return llms.openai.enabled().then((response) => response.ok);
 }
+
+/**
+ * Get the message to be sent to OpenAI to generate a new response.
+ * @param previousResponse
+ * @param feedback
+ * @returns Message[] to be sent to OpenAI to generate a new response
+ */
+export const getFeedbackMessage = (previousResponse: string, feedback: string | QuickFeedbackType): Message[] => {
+  return [
+    {
+      role: Role.system,
+      content: `Your previous response was: ${previousResponse}. The user has provided the following feedback: ${feedback}. Re-generate your response according to the provided feedback.`,
+    },
+  ];
+};
 
 /**
  *

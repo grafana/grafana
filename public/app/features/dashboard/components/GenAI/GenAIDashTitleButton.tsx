@@ -3,13 +3,15 @@ import React from 'react';
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { EventSource, reportGenerateAIButtonClicked } from './tracking';
+import { EventTrackingSrc } from './tracking';
 import { getDashboardPanelPrompt, Message, Role } from './utils';
 
 interface GenAIDashTitleButtonProps {
   dashboard: DashboardModel;
   onGenerate: (description: string) => void;
 }
+
+const DASH_TITLE_CHAR_LIMIT = 50;
 
 const TITLE_GENERATION_STANDARD_PROMPT =
   'You are an expert in creating Grafana Dashboards.\n' +
@@ -19,14 +21,21 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'If the dashboard has no panels, the title should be "Empty dashboard"\n' +
   'There should be no numbers in the title.\n' +
   'The dashboard title should not have quotation marks in it.\n' +
-  'The title should be, at most, 50 characters.\n' +
+  `The title should be, at most, ${DASH_TITLE_CHAR_LIMIT} characters.\n` +
   'Respond with only the title of the dashboard.';
 
 export const GenAIDashTitleButton = ({ onGenerate, dashboard }: GenAIDashTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(dashboard), [dashboard]);
-  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.dashboardTitle), []);
 
-  return <GenAIButton messages={messages} onClick={onClick} onGenerate={onGenerate} loadingText={'Generating title'} />;
+  return (
+    <GenAIButton
+      messages={messages}
+      onGenerate={onGenerate}
+      loadingText={'Generating title'}
+      eventTrackingSrc={EventTrackingSrc.dashboardTitle}
+      toggleTipTitle={'Improve your dashboard title'}
+    />
+  );
 };
 
 function getMessages(dashboard: DashboardModel): Message[] {

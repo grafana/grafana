@@ -396,6 +396,51 @@ message EntityWatchResponse {
   }
 }
 
+message EntitySummary {
+  string UID = 1;
+	string kind = 2;
+
+	string name = 3;
+	string description = 4;
+
+	// Key value pairs.  Tags are are represented as keys with empty values
+	map<string,string> labels = 5;
+
+	// Parent folder UID
+	string folder = 6;
+
+	// URL safe version of the name.  It will be unique within the folder
+	string slug = 7;
+
+	// When errors exist
+	EntityErrorInfo error = 8;
+
+	// Optional field values.  The schema will define and document possible values for a given kind
+	map<string, string> fields = 9;
+
+	// eg: panels within dashboard
+	repeated EntitySummary nested = 10;
+
+	// Optional references to external things
+	repeated EntityExternalReference references = 11;
+}
+
+message EntityExternalReference {
+	// Category of dependency
+	// eg: datasource, plugin, runtime
+	string family = 1;
+
+	// datasource > prometheus|influx|...
+	// plugin > panel | datasource
+	// runtime > transformer
+	string type = 2;
+
+	// datasource > UID
+	// plugin > plugin identifier
+	// runtime > name lookup
+	string identifier = 3;
+}
+
 
 //-----------------------------------------------
 // Storage interface

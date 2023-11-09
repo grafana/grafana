@@ -104,6 +104,7 @@ export class PanelQueryRunner {
         state: LoadingState.Done,
         series: this.dataConfigSource.snapshotData.map((v) => toDataFrame(v)),
         timeRange: getDefaultTimeRange(), // Don't need real time range for snapshots
+        structureRev,
       };
       return of(snapshotPanelData);
     }

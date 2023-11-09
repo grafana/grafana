@@ -63,8 +63,10 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oasimpl"
+	extsvcreg "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -89,6 +91,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngmigration "github.com/grafana/grafana/pkg/services/ngalert/migration"
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -117,7 +121,9 @@ import (
 	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
+	serviceaccountsproxy "github.com/grafana/grafana/pkg/services/serviceaccounts/proxy"
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
@@ -128,7 +134,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
@@ -138,6 +143,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
@@ -236,6 +242,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
 	ngimage.ProvideDeleteExpiredService,
+	ngmigration.ProvideService,
+	migrationStore.ProvideMigrationStore,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
@@ -280,7 +288,8 @@ var wireBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideServiceAccountPermissions,
 	wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)),
 	serviceaccountsmanager.ProvideServiceAccountsService,
-	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsmanager.ServiceAccountsService)),
+	serviceaccountsproxy.ProvideServiceAccountsProxy,
+	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsproxy.ServiceAccountsProxy)),
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
@@ -337,8 +346,8 @@ var wireBasicSet = wire.NewSet(
 	kind.ProvideService, // The registry of known kinds
 	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
-	httpentitystore.ProvideHTTPEntityStore,
 	teamimpl.ProvideService,
+	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
 	wire.Bind(new(loginattempt.Service), new(*loginattemptimpl.Service)),
@@ -357,10 +366,14 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideIdentitySynchronizer,
 	authnimpl.ProvideAuthnService,
 	supportbundlesimpl.ProvideService,
+	extsvcaccounts.ProvideExtSvcAccountsService,
+	wire.Bind(new(serviceaccounts.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)),
 	oasimpl.ProvideService,
+	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
+	extsvcreg.ProvideExtSvcRegistry,
+	wire.Bind(new(extsvcauth.ExternalServiceRegistry), new(*extsvcreg.Registry)),
 	anonstore.ProvideAnonDBStore,
 	wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)),
-	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	loggermw.Provide,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),

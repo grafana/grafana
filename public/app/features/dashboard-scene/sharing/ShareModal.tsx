@@ -11,6 +11,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { ShareExportTab } from './ShareExportTab';
 import { ShareLinkTab } from './ShareLinkTab';
+import { SharePanelEmbedTab } from './SharePanelEmbedTab';
 import { ShareSnapshotTab } from './ShareSnapshotTab';
 import { ModalSceneObjectLike, SceneShareTab } from './types';
 
@@ -46,7 +47,11 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
     }
 
     if (contextSrv.isSignedIn && config.snapshotEnabled) {
-      tabs.push(new ShareSnapshotTab({ panelRef, modalRef: this.getRef() }));
+      tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+    }
+
+    if (panelRef) {
+      tabs.push(new SharePanelEmbedTab({ panelRef, dashboardRef }));
     }
 
     this.setState({ tabs });

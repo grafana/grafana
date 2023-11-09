@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -119,10 +120,16 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) respon
 		cmd.Name = "Unnamed snapshot"
 	}
 
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError,
+			"Failed to create external snapshot", err)
+	}
+
 	var snapshotUrl string
 	cmd.ExternalURL = ""
-	cmd.OrgID = c.OrgID
-	cmd.UserID = c.UserID
+	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.UserID = userID
 	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Invalid app URL", err)
@@ -364,7 +371,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	dashboardID := queryResult.Dashboard.Get("id").MustInt64()
 
 	if dashboardID != 0 {
-		g, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+		g, err := guardian.New(c.Req.Context(), dashboardID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 		if err != nil {
 			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return response.Err(err)
@@ -417,7 +424,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 	searchQuery := dashboardsnapshots.GetDashboardSnapshotsQuery{
 		Name:         query,
 		Limit:        limit,
-		OrgID:        c.OrgID,
+		OrgID:        c.SignedInUser.GetOrgID(),
 		SignedInUser: c.SignedInUser,
 	}
 

@@ -6,7 +6,6 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { locationService } from '@grafana/runtime';
 import {
   Button,
@@ -19,6 +18,7 @@ import {
   ToolbarButton,
   ToolbarButtonRow,
   withTheme2,
+  Stack,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';

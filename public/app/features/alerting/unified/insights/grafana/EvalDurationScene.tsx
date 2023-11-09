@@ -1,9 +1,9 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
 
-export function getGrafanaEvalDurationScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getGrafanaEvalDurationScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -20,7 +20,6 @@ export function getGrafanaEvalDurationScene(timeRange: SceneTimeRange, datasourc
         legendFormat: 'failed',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({

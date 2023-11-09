@@ -420,3 +420,41 @@ interface MetricMetadataValue {
   name: AzureMonitorLocalizedValue;
   value: string;
 }
+
+export type Category = {
+  displayName: string;
+  id: string;
+  related: {
+    queries: string[];
+    tables: string[];
+  };
+};
+
+export type CheatsheetQuery = {
+  body: string;
+  description: string;
+  displayName: string;
+  id: string;
+  properties: {
+    ExampleQuery: boolean;
+    QueryAttributes: {
+      isMultiResource: boolean;
+    };
+  };
+  related: {
+    categories: string[];
+    resourceTypes: string[];
+    tables: string[];
+  };
+  tags: {
+    Topic: string[];
+  };
+};
+
+export type CheatsheetQueries = {
+  [key: string]: CheatsheetQuery[];
+};
+
+export type DropdownCategories = {
+  [key: string]: boolean;
+};

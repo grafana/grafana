@@ -1,11 +1,12 @@
 import { Observable } from 'rxjs';
 
+import { DataLinkTransformationConfig } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { CreateCorrelationParams } from 'app/features/correlations/types';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
-import { getCorrelationsBySourceUIDs, createCorrelation } from 'app/features/correlations/utils';
+import { getCorrelationsBySourceUIDs, createCorrelation, generateDefaultLabel } from 'app/features/correlations/utils';
 import { store } from 'app/store/store';
 import { ThunkResult } from 'app/types';
 
@@ -50,7 +51,11 @@ function reloadCorrelations(exploreId: string): ThunkResult<Promise<void>> {
   };
 }
 
-export function saveCurrentCorrelation(label?: string, description?: string): ThunkResult<Promise<void>> {
+export function saveCurrentCorrelation(
+  label?: string,
+  description?: string,
+  transformations?: DataLinkTransformationConfig[]
+): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     const keys = Object.keys(getState().explore?.panes);
     const sourcePane = getState().explore?.panes[keys[0]];
@@ -74,12 +79,13 @@ export function saveCurrentCorrelation(label?: string, description?: string): Th
       const correlation: CreateCorrelationParams = {
         sourceUID: sourceDatasource.uid,
         targetUID: targetDatasource.uid,
-        label: label || `${sourceDatasource?.name} to ${targetDatasource.name}`,
+        label: label || (await generateDefaultLabel(sourcePane, targetPane)),
         description,
         config: {
           field: targetPane.correlationEditorHelperData.resultField,
           target: targetPane.queries[0],
           type: 'query',
+          transformations: transformations,
         },
       };
       await createCorrelation(sourceDatasource.uid, correlation)

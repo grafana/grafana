@@ -109,11 +109,15 @@ type FeatureFlag struct {
 
 	// Special behavior flags
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initialized with the value
-	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
-	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
-	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
+	// This flag is currently unused.
+	RequiresRestart   bool  `json:"requiresRestart,omitempty"`   // The server must be initialized with the value
+	RequiresLicense   bool  `json:"requiresLicense,omitempty"`   // Must be enabled in the license
+	FrontendOnly      bool  `json:"frontend,omitempty"`          // change is only seen in the frontend
+	HideFromDocs      bool  `json:"hideFromDocs,omitempty"`      // don't add the values to docs
+	HideFromAdminPage bool  `json:"hideFromAdminPage,omitempty"` // don't display the feature in the admin page - add a comment with the reasoning
+	AllowSelfServe    *bool `json:"allowSelfServe,omitempty"`    // allow admin users to toggle the feature state from the admin page; this is required for GA toggles only
 
+	// This field is only for the feature management API. To enable your feature toggle by default, use `Expression`.
 	Enabled bool `json:"enabled,omitempty"`
 }
 
@@ -126,4 +130,9 @@ type FeatureToggleDTO struct {
 	Description string `json:"description"`
 	Enabled     bool   `json:"enabled"`
 	ReadOnly    bool   `json:"readOnly,omitempty"`
+}
+
+type FeatureManagerState struct {
+	RestartRequired bool `json:"restartRequired"`
+	AllowEditing    bool `json:"allowEditing"`
 }

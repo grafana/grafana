@@ -67,6 +67,23 @@ export const mockStandardProperties = () => {
     shouldApply: () => true,
   };
 
+  const fieldMinMax = {
+    id: 'fieldMinMax',
+    path: 'fieldMinMax',
+    name: 'localminmax',
+    description: 'Calculate min/max per field ',
+
+    editor: () => null,
+    override: () => null,
+    process: identityOverrideProcessor,
+
+    settings: {
+      placeholder: 'auto',
+    },
+
+    shouldApply: () => true,
+  };
+
   const decimals = {
     id: 'decimals',
     path: 'decimals',
@@ -166,5 +183,5 @@ export const mockStandardProperties = () => {
     shouldApply: () => true,
   };
 
-  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links, color];
+  return [unit, min, max, fieldMinMax, decimals, title, noValue, thresholds, mappings, links, color];
 };

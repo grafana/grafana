@@ -95,15 +95,21 @@ export type PluginExtensionComponentConfig<Context extends object = object> = {
 
 export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionComponentConfig;
 
+export type PluginExtensionOpenModalOptions = {
+  // The title of the modal
+  title: string;
+  // A React element that will be rendered inside the modal
+  body: React.ElementType<{ onDismiss?: () => void }>;
+  // Width of the modal in pixels or percentage
+  width?: string | number;
+  // Height of the modal in pixels or percentage
+  height?: string | number;
+};
+
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
-  openModal: (options: {
-    // The title of the modal
-    title: string;
-    // A React element that will be rendered inside the modal
-    body: React.ElementType<{ onDismiss?: () => void }>;
-  }) => void;
+  openModal: (options: PluginExtensionOpenModalOptions) => void;
 };
 
 // Extension Points & Contexts

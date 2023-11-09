@@ -17,7 +17,6 @@ import { DashboardMetaChangedEvent } from 'app/types/events';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { DashboardModel } from '../../state/DashboardModel';
 import { AccessControlDashboardPermissions } from '../DashboardPermissions/AccessControlDashboardPermissions';
-import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
 import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
@@ -148,14 +147,7 @@ function getSettingsPages(dashboard: DashboardModel) {
   const permissionsTitle = t('dashboard-settings.permissions.title', 'Permissions');
 
   if (dashboard.id && dashboard.meta.canAdmin) {
-    if (!config.rbacEnabled) {
-      pages.push({
-        title: permissionsTitle,
-        id: 'permissions',
-        icon: 'lock',
-        component: DashboardPermissions,
-      });
-    } else if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
+    if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pages.push({
         title: permissionsTitle,
         id: 'permissions',

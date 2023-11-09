@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
@@ -50,19 +49,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, plugins.ErrPluginNotRegistered
 	}
 
-	var totalBytes float64
-	for _, v := range req.Queries {
-		totalBytes += float64(len(v.JSON))
-	}
-
-	var resp *backend.QueryDataResponse
-	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, instrumentation.Cfg{
-		Target: p.Target(),
-	}, totalBytes, func(ctx context.Context) (innerErr error) {
-		resp, innerErr = p.QueryData(ctx, req)
-		return
-	})
-
+	resp, err := p.QueryData(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return nil, err
@@ -70,6 +57,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 		if errors.Is(err, plugins.ErrPluginUnavailable) {
 			return nil, err
+		}
+
+		if errors.Is(err, context.Canceled) {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request canceled: %w", err)
 		}
 
 		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to query data: %w", err)
@@ -101,36 +92,33 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return plugins.ErrPluginNotRegistered
 	}
 
-	totalBytes := float64(len(req.Body))
-	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, instrumentation.Cfg{
-		Target: p.Target(),
-	}, totalBytes, func(ctx context.Context) (innerErr error) {
-		removeConnectionHeaders(req.Headers)
-		removeHopByHopHeaders(req.Headers)
-		removeNonAllowedHeaders(req.Headers)
+	removeConnectionHeaders(req.Headers)
+	removeHopByHopHeaders(req.Headers)
+	removeNonAllowedHeaders(req.Headers)
 
-		processedStreams := 0
-		wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-			// Expected that headers and status are only part of first stream
-			if processedStreams == 0 && res != nil {
-				if len(res.Headers) > 0 {
-					removeConnectionHeaders(res.Headers)
-					removeHopByHopHeaders(res.Headers)
-					removeNonAllowedHeaders(res.Headers)
-				}
-
-				ensureContentTypeHeader(res)
+	processedStreams := 0
+	wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		// Expected that headers and status are only part of first stream
+		if processedStreams == 0 && res != nil {
+			if len(res.Headers) > 0 {
+				removeConnectionHeaders(res.Headers)
+				removeHopByHopHeaders(res.Headers)
+				removeNonAllowedHeaders(res.Headers)
 			}
 
-			processedStreams++
-			return sender.Send(res)
-		})
+			ensureContentTypeHeader(res)
+		}
 
-		innerErr = p.CallResource(ctx, req, wrappedSender)
-		return
+		processedStreams++
+		return sender.Send(res)
 	})
 
+	err := p.CallResource(ctx, req, wrappedSender)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request canceled: %w", err)
+		}
+
 		return plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to call resources: %w", err)
 	}
 
@@ -147,14 +135,12 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 		return nil, plugins.ErrPluginNotRegistered
 	}
 
-	var resp *backend.CollectMetricsResult
-	err := instrumentation.InstrumentCollectMetrics(ctx, &req.PluginContext, instrumentation.Cfg{
-		Target: p.Target(),
-	}, func(ctx context.Context) (innerErr error) {
-		resp, innerErr = p.CollectMetrics(ctx, req)
-		return
-	})
+	resp, err := p.CollectMetrics(ctx, req)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: collect metrics request canceled: %w", err)
+		}
+
 		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to collect metrics: %w", err)
 	}
 
@@ -171,14 +157,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return nil, plugins.ErrPluginNotRegistered
 	}
 
-	var resp *backend.CheckHealthResult
-	err := instrumentation.InstrumentCheckHealthRequest(ctx, &req.PluginContext, instrumentation.Cfg{
-		Target: p.Target(),
-	}, func(ctx context.Context) (innerErr error) {
-		resp, innerErr = p.CheckHealth(ctx, req)
-		return
-	})
-
+	resp, err := p.CheckHealth(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return nil, err
@@ -186,6 +165,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 		if errors.Is(err, plugins.ErrPluginUnavailable) {
 			return nil, err
+		}
+
+		if errors.Is(err, context.Canceled) {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: check health request canceled: %w", err)
 		}
 
 		return nil, plugins.ErrPluginHealthCheck.Errorf("client: failed to check health: %w", err)

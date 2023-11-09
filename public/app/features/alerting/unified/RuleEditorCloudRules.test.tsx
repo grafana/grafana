@@ -6,13 +6,14 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
-import { disableRBAC, mockDataSource } from './mocks';
+import { grantUserPermissions, mockDataSource } from './mocks';
 import {
   defaultAlertmanagerChoiceResponse,
   emptyExternalAlertmanagersResponse,
@@ -82,9 +83,18 @@ describe('RuleEditor cloud', () => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.DataSourcesRead,
+      AccessControlAction.DataSourcesWrite,
+      AccessControlAction.DataSourcesCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
   });
-
-  disableRBAC();
 
   it('can create a new cloud alert', async () => {
     mocks.api.setRulerRuleGroup.mockResolvedValue();

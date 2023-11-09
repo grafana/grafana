@@ -13,7 +13,6 @@ const loadingDSType = 'Loading';
 export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
   const pluginMeta = plugin.meta;
   const highlightsEnabled = config.featureToggles.featureHighlights;
-  const dataSourcePageHeader = config.featureToggles.dataSourcePageHeader;
   const navModel: NavModelItem = {
     img: pluginMeta.info.logos.large,
     id: 'datasource-' + dataSource.uid,
@@ -29,10 +28,6 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       },
     ],
   };
-
-  if (!dataSourcePageHeader) {
-    navModel.subTitle = `Type: ${pluginMeta.name}`;
-  }
 
   if (plugin.configPages) {
     for (const page of plugin.configPages) {
@@ -72,7 +67,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (featureEnabled('dspermissions.enforcement')) {
-    if (contextSrv.hasPermission(AccessControlAction.DataSourcesPermissionsRead)) {
+    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesPermissionsRead, dataSource)) {
       navModel.children!.push(dsPermissions);
     }
   } else if (highlightsEnabled && !isLoadingNav) {

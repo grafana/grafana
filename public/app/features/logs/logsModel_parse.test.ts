@@ -11,7 +11,7 @@ jest.mock('@grafana/data', () => ({
 }));
 
 describe('logSeriesToLogsModel should parse different logs-dataframe formats', () => {
-  it('should parse a dataplane-formatted logs-frame)', () => {
+  it('should parse a dataplane-formatted logs-frame', () => {
     const frames: DataFrame[] = [
       {
         refId: 'A',
@@ -23,7 +23,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
             values: ['info', 'debug', 'error'],
           },
           {
-            name: 'attributes',
+            name: 'labels',
             type: FieldType.other,
             config: {},
             values: [

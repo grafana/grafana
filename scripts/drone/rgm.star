@@ -30,7 +30,6 @@ load(
 )
 load(
     "scripts/drone/utils/utils.star",
-    "ignore_failure",
     "pipeline",
     "with_deps",
 )
@@ -76,6 +75,17 @@ tag_trigger = {
     },
 }
 
+main_trigger = {
+    "event": [
+        "push",
+    ],
+    "branch": "main",
+    "paths": docs_paths,
+    "repo": [
+        "grafana/grafana",
+    ],
+}
+
 nightly_trigger = {
     "event": {
         "include": [
@@ -103,7 +113,6 @@ def rgm_env_secrets(env):
     env["STORYBOOK_DESTINATION"] = from_secret(rgm_storybook_destination)
     env["CDN_DESTINATION"] = from_secret(rgm_cdn_destination)
     env["DOWNLOADS_DESTINATION"] = from_secret(rgm_downloads_destination)
-    env["PACKAGES_DESTINATION"] = "gs://grafana-packages-testing"
 
     env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
     env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
@@ -114,7 +123,7 @@ def rgm_env_secrets(env):
     env["DOCKER_USERNAME"] = from_secret("docker_username")
     env["DOCKER_PASSWORD"] = from_secret("docker_password")
     env["NPM_TOKEN"] = from_secret(npm_token)
-    env["GCOM_API_KEY"] = from_secret("grafana_api_key_dev")
+    env["GCOM_API_KEY"] = from_secret("grafana_api_key")
     return env
 
 def rgm_run(name, script):
@@ -128,6 +137,8 @@ def rgm_run(name, script):
     """
     env = {
         "GO_VERSION": golang_version,
+        "ALPINE_BASE": images["alpine"],
+        "UBUNTU_BASE": images["ubuntu"],
     }
     rgm_run_step = {
         "name": name,
@@ -209,21 +220,10 @@ def rgm_publish_packages(bucket = "grafana-packages"):
 
 def rgm_main():
     # Runs a package / build process (with some distros) when commits are merged to main
-    trigger = {
-        "event": [
-            "push",
-        ],
-        "branch": "main",
-        "paths": docs_paths,
-        "repo": [
-            "grafana/grafana",
-        ],
-    }
-
     return pipeline(
         name = "rgm-main-prerelease",
-        trigger = trigger,
-        steps = rgm_run("rgm-build", "drone_publish_main.sh"),
+        trigger = main_trigger,
+        steps = rgm_run("rgm-build", "drone_build_main.sh"),
         depends_on = ["main-test-backend", "main-test-frontend"],
     )
 
@@ -232,7 +232,7 @@ def rgm_tag():
     return pipeline(
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
-        steps = rgm_run("rgm-build", "drone_publish_tag_grafana.sh"),
+        steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
@@ -240,11 +240,9 @@ def rgm_tag_windows():
     return pipeline(
         name = "rgm-tag-prerelease-windows",
         trigger = tag_trigger,
-        steps = ignore_failure(
-            get_windows_steps(
-                ver_mode = "release",
-                bucket = "grafana-prerelease",
-            ),
+        steps = get_windows_steps(
+            ver_mode = "release",
+            bucket = "grafana-prerelease",
         ),
         depends_on = ["rgm-tag-prerelease"],
         platform = "windows",
@@ -255,7 +253,7 @@ def rgm_version_branch():
     return pipeline(
         name = "rgm-version-branch-prerelease",
         trigger = version_branch_trigger,
-        steps = rgm_run("rgm-build", "drone_publish_tag_grafana.sh"),
+        steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
@@ -282,7 +280,7 @@ def rgm_nightly_publish():
     dst = "$${DRONE_WORKSPACE}/dist"
 
     publish_steps = with_deps(rgm_run("rgm-publish", "drone_publish_nightly_grafana.sh"), ["rgm-copy"])
-    package_steps = with_deps(rgm_publish_packages("grafana-packages-testing"), ["rgm-publish"])
+    package_steps = with_deps(rgm_publish_packages(), ["rgm-publish"])
 
     return pipeline(
         name = "rgm-nightly-publish",

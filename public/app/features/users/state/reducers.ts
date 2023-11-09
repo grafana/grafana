@@ -9,14 +9,21 @@ export const initialState: UsersState = {
   page: 0,
   perPage: 30,
   totalPages: 1,
-  canInvite: !config.externalUserMngLinkName,
   externalUserMngInfo: config.externalUserMngInfo,
   externalUserMngLinkName: config.externalUserMngLinkName,
   externalUserMngLinkUrl: config.externalUserMngLinkUrl,
   isLoading: false,
+  rolesLoading: false,
 };
 
 export interface UsersFetchResult {
+  orgUsers: OrgUser[];
+  perPage: number;
+  page: number;
+  totalCount: number;
+}
+
+export interface UsersRolesFetchResult {
   orgUsers: OrgUser[];
   perPage: number;
   page: number;
@@ -61,6 +68,12 @@ const usersSlice = createSlice({
     usersFetchEnd: (state) => {
       return { ...state, isLoading: false };
     },
+    rolesFetchBegin: (state) => {
+      return { ...state, rolesLoading: true };
+    },
+    rolesFetchEnd: (state) => {
+      return { ...state, rolesLoading: false };
+    },
   },
 });
 
@@ -72,6 +85,8 @@ export const {
   usersFetchEnd,
   pageChanged,
   sortChanged,
+  rolesFetchBegin,
+  rolesFetchEnd,
 } = usersSlice.actions;
 
 export const usersReducer = usersSlice.reducer;

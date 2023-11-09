@@ -377,21 +377,17 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
           <OrgPicker inputId="new-org-input" onSelected={this.onOrgSelect} excludeOrgs={userOrgs} autoFocus />
         </Field>
         <Field label="Role" disabled={selectedOrg === null}>
-          {contextSrv.accessControlEnabled() ? (
-            <UserRolePicker
-              userId={user?.id || 0}
-              orgId={selectedOrg?.id}
-              basicRole={role}
-              onBasicRoleChange={this.onOrgRoleChange}
-              basicRoleDisabled={false}
-              roleOptions={roleOptions}
-              apply={true}
-              onApplyRoles={this.onRoleUpdate}
-              pendingRoles={this.state.pendingRoles}
-            />
-          ) : (
-            <OrgRolePicker inputId="new-org-role-input" value={role} onChange={this.onOrgRoleChange} />
-          )}
+          <UserRolePicker
+            userId={user?.id || 0}
+            orgId={selectedOrg?.id}
+            basicRole={role}
+            onBasicRoleChange={this.onOrgRoleChange}
+            basicRoleDisabled={false}
+            roleOptions={roleOptions}
+            apply={true}
+            onApplyRoles={this.onRoleUpdate}
+            pendingRoles={this.state.pendingRoles}
+          />
         </Field>
         <Modal.ButtonRow>
           <HorizontalGroup spacing="md" justify="center">

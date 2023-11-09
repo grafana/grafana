@@ -17,12 +17,12 @@ func TestStore_RegisterAndGetClient(t *testing.T) {
 	s := &store{db: db.InitTestDB(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagExternalServiceAuth}})}
 	tests := []struct {
 		name    string
-		client  oauthserver.ExternalService
+		client  oauthserver.OAuthExternalService
 		wantErr bool
 	}{
 		{
 			name: "register and get",
-			client: oauthserver.ExternalService{
+			client: oauthserver.OAuthExternalService{
 				Name:       "The Worst App Ever",
 				ClientID:   "ANonRandomClientID",
 				Secret:     "ICouldKeepSecrets",
@@ -59,7 +59,7 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 		},
 		{
 			name: "register with impersonate permissions and get",
-			client: oauthserver.ExternalService{
+			client: oauthserver.OAuthExternalService{
 				Name:             "The Best App Ever",
 				ClientID:         "AnAlmostRandomClientID",
 				Secret:           "ICannotKeepSecrets",
@@ -80,7 +80,7 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 		},
 		{
 			name: "register with audiences and get",
-			client: oauthserver.ExternalService{
+			client: oauthserver.OAuthExternalService{
 				Name:             "The Most Normal App Ever",
 				ClientID:         "AnAlmostRandomClientIDAgain",
 				Secret:           "ICanKeepSecretsEventually",
@@ -111,7 +111,7 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 }
 
 func TestStore_SaveExternalService(t *testing.T) {
-	client1 := oauthserver.ExternalService{
+	client1 := oauthserver.OAuthExternalService{
 		Name:                   "my-external-service",
 		ClientID:               "ClientID",
 		Secret:                 "Secret",
@@ -136,42 +136,42 @@ func TestStore_SaveExternalService(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		runs    []oauthserver.ExternalService
+		runs    []oauthserver.OAuthExternalService
 		wantErr bool
 	}{
 		{
 			name:    "error no name",
-			runs:    []oauthserver.ExternalService{{}},
+			runs:    []oauthserver.OAuthExternalService{{}},
 			wantErr: true,
 		},
 		{
 			name:    "simple register",
-			runs:    []oauthserver.ExternalService{client1},
+			runs:    []oauthserver.OAuthExternalService{client1},
 			wantErr: false,
 		},
 		{
 			name:    "no update",
-			runs:    []oauthserver.ExternalService{client1, client1},
+			runs:    []oauthserver.OAuthExternalService{client1, client1},
 			wantErr: false,
 		},
 		{
 			name:    "add permissions",
-			runs:    []oauthserver.ExternalService{client1, client1WithPerm},
+			runs:    []oauthserver.OAuthExternalService{client1, client1WithPerm},
 			wantErr: false,
 		},
 		{
 			name:    "remove permissions",
-			runs:    []oauthserver.ExternalService{client1WithPerm, client1},
+			runs:    []oauthserver.OAuthExternalService{client1WithPerm, client1},
 			wantErr: false,
 		},
 		{
 			name:    "update id and secrets",
-			runs:    []oauthserver.ExternalService{client1, client1WithNewSecrets},
+			runs:    []oauthserver.OAuthExternalService{client1, client1WithNewSecrets},
 			wantErr: false,
 		},
 		{
 			name:    "update audience",
-			runs:    []oauthserver.ExternalService{client1, client1WithAud},
+			runs:    []oauthserver.OAuthExternalService{client1, client1WithAud},
 			wantErr: false,
 		},
 	}
@@ -193,7 +193,7 @@ func TestStore_SaveExternalService(t *testing.T) {
 }
 
 func TestStore_GetExternalServiceByName(t *testing.T) {
-	client1 := oauthserver.ExternalService{
+	client1 := oauthserver.OAuthExternalService{
 		Name:                   "my-external-service",
 		ClientID:               "ClientID",
 		Secret:                 "Secret",
@@ -203,7 +203,7 @@ func TestStore_GetExternalServiceByName(t *testing.T) {
 		ImpersonatePermissions: []accesscontrol.Permission{},
 		RedirectURI:            "/whereto",
 	}
-	client2 := oauthserver.ExternalService{
+	client2 := oauthserver.OAuthExternalService{
 		Name:             "my-external-service-2",
 		ClientID:         "ClientID2",
 		Secret:           "Secret2",
@@ -224,7 +224,7 @@ func TestStore_GetExternalServiceByName(t *testing.T) {
 	tests := []struct {
 		name    string
 		search  string
-		want    *oauthserver.ExternalService
+		want    *oauthserver.OAuthExternalService
 		wantErr bool
 	}{
 		{
@@ -268,8 +268,8 @@ func TestStore_GetExternalServiceByName(t *testing.T) {
 
 func TestStore_GetExternalServicePublicKey(t *testing.T) {
 	clientID := "ClientID"
-	createClient := func(clientID string, publicPem string) *oauthserver.ExternalService {
-		return &oauthserver.ExternalService{
+	createClient := func(clientID string, publicPem string) *oauthserver.OAuthExternalService {
+		return &oauthserver.OAuthExternalService{
 			Name:                   "my-external-service",
 			ClientID:               clientID,
 			Secret:                 "Secret",
@@ -283,7 +283,7 @@ func TestStore_GetExternalServicePublicKey(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		client      *oauthserver.ExternalService
+		client      *oauthserver.OAuthExternalService
 		clientID    string
 		want        *jose.JSONWebKey
 		wantKeyType string
@@ -352,7 +352,7 @@ vuO8AU0bVoUmYMKhozkcCYHudkeS08hEjQIDAQAB
 	}
 }
 
-func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.ExternalService) {
+func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.OAuthExternalService) {
 	ctx := context.Background()
 	stored, err := s.GetExternalService(ctx, wanted.ClientID)
 	require.NoError(t, err)
@@ -361,7 +361,7 @@ func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.ExternalS
 	compareClients(t, stored, wanted)
 }
 
-func compareClients(t *testing.T, stored *oauthserver.ExternalService, wanted *oauthserver.ExternalService) {
+func compareClients(t *testing.T, stored *oauthserver.OAuthExternalService, wanted *oauthserver.OAuthExternalService) {
 	// Reset ID so we can compare
 	require.NotZero(t, stored.ID)
 	stored.ID = 0
