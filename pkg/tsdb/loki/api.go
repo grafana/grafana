@@ -217,6 +217,8 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		span.SetStatus(codes.Error, err.Error())
 		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
 		api.log.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
+		// Here the response.Error is set by converter.ReadPrometheusStyleResult without ErrorSource, which means it will always be PluginError.
+		// @todo: We should look into when successful response is returned with error field and what type of ErrorSource we should set for that
 		return res
 	}
 	instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
