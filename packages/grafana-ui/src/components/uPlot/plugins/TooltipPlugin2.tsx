@@ -79,6 +79,9 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
 
   const styles = useStyles2(getStyles);
 
+  const renderRef = useRef(render);
+  renderRef.current = render;
+
   useLayoutEffect(() => {
     sizeRef.current = {
       width: 0,
@@ -173,7 +176,9 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        contents: _isHovering ? render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss) : null,
+        contents: _isHovering
+          ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss)
+          : null,
         dismiss,
       };
 
@@ -207,6 +212,7 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
 
       // in mode: 2 uPlot won't fire the proximity-based setSeries (below)
       // so we set closestSeriesIdx here instead
+      // TODO: setSeries only fires for TimeSeries & Trend...not state timeline or statsus history
       if (hoverMode === TooltipHoverMode.xyOne) {
         closestSeriesIdx = hoveredSeriesIdx;
       }
@@ -233,10 +239,10 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
       // don't jiggle focused series styling when there's only one series
       // const isMultiSeries = u.series.length > 2;
 
-      if (TooltipHoverMode.xAll && closestSeriesIdx !== seriesIdx) {
-        closestSeriesIdx = seriesIdx;
-        scheduleRender();
-      }
+      // if (hoverModeRef.current === TooltipHoverMode.xAll && closestSeriesIdx !== seriesIdx) {
+      closestSeriesIdx = seriesIdx;
+      scheduleRender();
+      // }
     });
 
     // fires on mousemoves
