@@ -68,6 +68,7 @@ func CountPublicDashboardRequest() func(c *contextmodel.ReqContext) {
 	}
 }
 
+// Empty middleware created in order to bind the enterprise one
 type Middleware struct {
 }
 
