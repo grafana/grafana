@@ -40,17 +40,14 @@ export const AlertInstanceExtensionPoint = ({
   );
 };
 
-export type PluginExtensionAlertListItemContext = {
-  instance: Alert;
-};
-
 export type PluginExtensionAlertInstanceContext = {
   instance: Alert;
 };
 
-type Context = PluginExtensionAlertListItemContext | PluginExtensionAlertInstanceContext;
-
-function useExtensionLinks(context: Context, extensionPointId: PluginExtensionPoints): PluginExtensionLink[] {
+function useExtensionLinks(
+  context: PluginExtensionAlertInstanceContext,
+  extensionPointId: PluginExtensionPoints
+): PluginExtensionLink[] {
   return useMemo(() => {
     const { extensions } = getPluginLinkExtensions({
       extensionPointId,
