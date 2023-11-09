@@ -91,7 +91,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
         content={
           <div className={styles.enableButtonTooltip}>
             <h6>Query Advisor is disabled</h6>
-            <div>To enable the Query Advisor you must:</div>
+            <div>To enable Query Advisor you must:</div>
             <div>
               <ul>
                 <li>
