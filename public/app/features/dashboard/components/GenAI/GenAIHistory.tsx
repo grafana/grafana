@@ -157,9 +157,14 @@ export const GenAIHistory = ({
       <div className={styles.footer}>
         <Icon name="exclamation-circle" aria-label="exclamation-circle" className={styles.infoColor} />
         <Text variant="bodySmall" color="secondary">
-          This content is AI-generated.{' '}
-          <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external onClick={onClickDocs}>
-            Learn more
+          This content is AI-generated using the{' '}
+          <TextLink
+            variant="bodySmall"
+            href="https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/"
+            external
+            onClick={onClickDocs}
+          >
+            Grafana LLM plugin
           </TextLink>
         </Text>
       </div>
