@@ -19,7 +19,25 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1),
       justifyContent: 'space-between',
     }),
-    checkbox: css({}),
+    // Making the checkbox sticky and label scrollable for labels that are wider then the container
+    // However, the checkbox component does not support this, so we need to do some css hackery for now until the API of that component is updated.
+    checkboxLabel: css({
+      '> :first-child': {
+        position: 'sticky',
+        left: 0,
+        bottom: 0,
+        top: 0,
+      },
+      '> span': {
+        overflow: 'scroll',
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
+        '&::-moz-scrollbar': {
+          display: 'none',
+        },
+      },
+    }),
     columnWrapper: css({
       marginBottom: theme.spacing(1.5),
       // need some space or the outline of the checkbox is cut off
@@ -107,7 +125,7 @@ export const LogsTableNavColumn = (props: {
         {labelKeys.sort(sortLabels(labels)).map((labelName) => (
           <div className={styles.wrap} key={labelName}>
             <Checkbox
-              className={styles.checkbox}
+              className={styles.checkboxLabel}
               label={labelName}
               onChange={() => toggleColumn(labelName)}
               checked={labels[labelName]?.active ?? false}

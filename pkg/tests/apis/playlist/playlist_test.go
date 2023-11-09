@@ -41,7 +41,7 @@ func TestPlaylist(t *testing.T) {
 			DisableAnonymous:  true,
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServer,
-				featuremgmt.FlagKubernetesPlaylistsAPI, // <<< The change we are testing!
+				featuremgmt.FlagKubernetesPlaylists, // <<< The change we are testing!
 			},
 		}))
 	})
