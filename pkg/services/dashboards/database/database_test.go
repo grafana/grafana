@@ -93,7 +93,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:    util.Pointer("test dash 23"),
-			FolderID: &savedFolder.ID,
+			FolderID: &savedFolder.ID, // nolint:staticcheck
 			OrgID:    1,
 		}
 
@@ -122,7 +122,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:    util.Pointer("test dash 23"),
-			FolderID: util.Pointer(int64(0)),
+			FolderID: util.Pointer(int64(0)), // nolint:staticcheck
 			OrgID:    1,
 		}
 
@@ -276,7 +276,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:        1,
-			FolderIds:    []int64{savedFolder.ID},
+			FolderIds:    []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{},
 		}
 
@@ -435,7 +435,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:     1,
-			FolderIds: []int64{savedFolder.ID},
+			FolderIds: []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{
 				OrgID:   1,
 				OrgRole: org.RoleEditor,

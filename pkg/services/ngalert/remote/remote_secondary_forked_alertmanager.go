@@ -65,15 +65,15 @@ func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, ale
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	return []apimodels.Receiver{}, nil
+	return fam.internal.GetReceivers(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return &notifier.TestReceiversResult{}, nil
+	return fam.internal.TestReceivers(ctx, c)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	return fam.internal.TestTemplate(ctx, c)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {}
