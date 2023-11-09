@@ -70,7 +70,7 @@ func getQueriesReferencedByMathQueries(mathQueries []string, idToQuery map[strin
 func getBatch(startQueryId string, queryReferences map[string][]string, idToQuery map[string]*models.CloudWatchQuery) []*models.CloudWatchQuery {
 	connectedQueryIds := getConnectedQueriesIds(startQueryId, queryReferences)
 
-	batch := make([]*models.CloudWatchQuery, len(connectedQueryIds))
+	batch := make([]*models.CloudWatchQuery, 0, len(connectedQueryIds))
 
 	// map query ids to the actual queries
 	for _, id := range connectedQueryIds {
