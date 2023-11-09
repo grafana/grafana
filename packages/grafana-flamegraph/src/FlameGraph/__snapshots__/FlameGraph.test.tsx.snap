@@ -249,6 +249,51 @@ exports[`FlameGraph should render correctly 1`] = `
         },
         {
           "props": {
+            "height": 22,
+            "width": 20,
+            "x": 0,
+            "y": 22,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
             "height": 11,
             "width": 6,
             "x": 8,
@@ -766,51 +811,6 @@ exports[`FlameGraph should render correctly 1`] = `
             "width": 13.580801944106927,
             "x": 0.5,
             "y": 132,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 11,
-            "width": 6,
-            "x": 8,
-            "y": 137.5,
           },
           "transform": [
             1,
@@ -1900,6 +1900,51 @@ exports[`FlameGraph should render correctly 1`] = `
       0,
     ],
     "type": "fillText",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 20,
+            "x": 109.84204131227219,
+            "y": 66,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
   },
   {
     "props": {
@@ -3610,51 +3655,6 @@ exports[`FlameGraph should render correctly 1`] = `
   },
   {
     "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 11,
-            "width": 6,
-            "x": 155.7521263669502,
-            "y": 71.5,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
       "path": [
         {
           "props": {},
@@ -3719,51 +3719,6 @@ exports[`FlameGraph should render correctly 1`] = `
             "width": 11.636695018226003,
             "x": 148.2521263669502,
             "y": 88,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 11,
-            "width": 6,
-            "x": 155.7521263669502,
-            "y": 93.5,
           },
           "transform": [
             1,
@@ -4268,6 +4223,51 @@ exports[`FlameGraph should render correctly 1`] = `
       0,
     ],
     "type": "fillText",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 20,
+            "x": 168.16524908869988,
+            "y": 88,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
   },
   {
     "props": {
@@ -6553,6 +6553,51 @@ exports[`FlameGraph should render correctly 1`] = `
         },
         {
           "props": {
+            "height": 22,
+            "width": 20,
+            "x": 356.74362089914945,
+            "y": 44,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
             "height": 11,
             "width": 6,
             "x": 364.74362089914945,
@@ -7365,6 +7410,51 @@ exports[`FlameGraph should render correctly 1`] = `
         },
         {
           "props": {
+            "height": 22,
+            "width": 20,
+            "x": 398.5419198055893,
+            "y": 44,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
             "height": 11,
             "width": 6,
             "x": 406.5419198055893,
@@ -7497,6 +7587,51 @@ exports[`FlameGraph should render correctly 1`] = `
       0,
     ],
     "type": "fillText",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 20,
+            "x": 398.5419198055893,
+            "y": 66,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
   },
   {
     "props": {
@@ -7985,6 +8120,51 @@ exports[`FlameGraph should render correctly 1`] = `
         },
         {
           "props": {
+            "height": 22,
+            "width": 20,
+            "x": 398.5419198055893,
+            "y": 154,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
             "height": 11,
             "width": 6,
             "x": 406.5419198055893,
@@ -8136,6 +8316,51 @@ exports[`FlameGraph should render correctly 1`] = `
         },
         {
           "props": {
+            "height": 22,
+            "width": 20,
+            "x": 398.5419198055893,
+            "y": 176,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
             "height": 11,
             "width": 6,
             "x": 406.5419198055893,
@@ -8268,6 +8493,51 @@ exports[`FlameGraph should render correctly 1`] = `
       0,
     ],
     "type": "fillText",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 20,
+            "x": 398.5419198055893,
+            "y": 198,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
   },
   {
     "props": {
@@ -8469,51 +8739,6 @@ exports[`FlameGraph should render correctly 1`] = `
             "width": 15.52490886998785,
             "x": 399.0419198055893,
             "y": 242,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 11,
-            "width": 6,
-            "x": 406.5419198055893,
-            "y": 247.5,
           },
           "transform": [
             1,
@@ -11315,51 +11540,6 @@ exports[`FlameGraph should render correctly 1`] = `
         },
         {
           "props": {
-            "height": 11,
-            "width": 6,
-            "x": 495.9708383961118,
-            "y": 247.5,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
             "height": 22,
             "width": 5.832320777642771,
             "x": 487.9708383961118,
@@ -13458,6 +13638,51 @@ exports[`FlameGraph should render correctly 1`] = `
         },
         {
           "props": {
+            "height": 22,
+            "width": 20,
+            "x": 555.0425273390036,
+            "y": 176,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
             "height": 11,
             "width": 6,
             "x": 563.0425273390036,
@@ -13696,6 +13921,51 @@ exports[`FlameGraph should render correctly 1`] = `
       0,
     ],
     "type": "fillText",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 20,
+            "x": 555.0425273390036,
+            "y": 220,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
   },
   {
     "props": {
@@ -15042,51 +15312,6 @@ exports[`FlameGraph should render correctly 1`] = `
             "width": 9.69258809234508,
             "x": 586.6482381530984,
             "y": 308,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 11,
-            "width": 6,
-            "x": 594.1482381530984,
-            "y": 313.5,
           },
           "transform": [
             1,
@@ -19493,51 +19718,6 @@ exports[`FlameGraph should render correctly 1`] = `
         },
         {
           "props": {
-            "height": 11,
-            "width": 6,
-            "x": 774.9501822600243,
-            "y": 291.5,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
             "height": 22,
             "width": 5.832320777642771,
             "x": 766.9501822600243,
@@ -20036,51 +20216,6 @@ exports[`FlameGraph should render correctly 1`] = `
             "width": 11.636695018226003,
             "x": 782.0309842041313,
             "y": 286,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 11,
-            "width": 6,
-            "x": 789.5309842041313,
-            "y": 291.5,
           },
           "transform": [
             1,
@@ -21937,6 +22072,51 @@ exports[`FlameGraph should render correctly 1`] = `
         },
         {
           "props": {
+            "height": 22,
+            "width": 20,
+            "x": 869.0157958687728,
+            "y": 220,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
             "height": 11,
             "width": 6,
             "x": 877.0157958687728,
@@ -22069,6 +22249,51 @@ exports[`FlameGraph should render correctly 1`] = `
       0,
     ],
     "type": "fillText",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 20,
+            "x": 869.0157958687728,
+            "y": 242,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
   },
   {
     "props": {
@@ -22376,51 +22601,6 @@ exports[`FlameGraph should render correctly 1`] = `
             "width": 15.52490886998785,
             "x": 869.5157958687728,
             "y": 308,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 11,
-            "width": 6,
-            "x": 877.0157958687728,
-            "y": 313.5,
           },
           "transform": [
             1,
@@ -26044,6 +26224,51 @@ exports[`FlameGraph should render correctly 1`] = `
       0,
     ],
     "type": "fillText",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 20,
+            "x": 945.8080194410693,
+            "y": 44,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
   },
   {
     "props": {
