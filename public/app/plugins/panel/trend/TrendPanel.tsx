@@ -122,7 +122,7 @@ export const TrendPanel = ({
         return (
           <>
             <KeyboardPlugin config={uPlotConfig} />
-            {options.tooltip.mode === TooltipDisplayMode.None || (
+            {options.tooltip.mode !== TooltipDisplayMode.None && (
               <>
                 {config.featureToggles.newVizTooltips ? (
                   <TooltipPlugin2
