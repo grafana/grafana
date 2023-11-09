@@ -4791,7 +4791,7 @@
             "format": "int64",
             "type": "integer"
           },
-          "isExternal": {
+          "isManaged": {
             "type": "boolean"
           },
           "permission": {
