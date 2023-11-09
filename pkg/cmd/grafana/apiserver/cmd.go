@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/component-base/cli"
 )
 
@@ -34,9 +35,6 @@ func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan stru
 				return err
 			}
 
-			// Register standard standard flags flags
-			o.RecommendedOptions.AddFlags(c.Flags())
-
 			// Finish the config (applies all defaults)
 			if err := o.Complete(); err != nil {
 				return err
@@ -54,8 +52,15 @@ func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan stru
 		},
 	}
 
-	// Add grafana flags
+	// Register grafana flags
 	cmd.PersistentFlags().Bool(devAcknowledgementFlag, false, devAcknowledgementNotice)
+
+	// Register standard k8s flags with the command line
+	o.RecommendedOptions = options.NewRecommendedOptions(
+		defaultEtcdPathPrefix,
+		Codecs.LegacyCodec(), // the codec is passed to etcd and not used
+	)
+	o.RecommendedOptions.AddFlags(cmd.Flags())
 
 	return cmd
 }

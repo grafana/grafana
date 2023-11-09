@@ -59,9 +59,7 @@ func newExampleServerOptions(out, errOut io.Writer) *ExampleServerOptions {
 }
 
 func (o *ExampleServerOptions) LoadAPIGroupBuilders(args []string) error {
-	groupVersions := make([]schema.GroupVersion, 0, len(args))
 	o.builders = []grafanaAPIServer.APIGroupBuilder{}
-
 	for _, g := range args {
 		switch g {
 		// No dependencies for testing
@@ -78,16 +76,10 @@ func (o *ExampleServerOptions) LoadAPIGroupBuilders(args []string) error {
 
 	// Install schemas
 	for _, b := range o.builders {
-		groupVersions = append(groupVersions, b.GetGroupVersion())
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
 	}
-
-	o.RecommendedOptions = options.NewRecommendedOptions(
-		defaultEtcdPathPrefix,
-		Codecs.LegacyCodec(groupVersions...),
-	)
 	return nil
 }
 
