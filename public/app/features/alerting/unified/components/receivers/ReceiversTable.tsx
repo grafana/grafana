@@ -52,6 +52,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     setReceiverToDelete(undefined);
   };
 
+  const defaultContactPoint = config.alertmanager_config.route?.receiver;// LOGZ.IO GRAFANA CHANGE
   const rows = useMemo(
     () =>
       config.alertmanager_config.receivers?.map((receiver) => ({
@@ -119,7 +120,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
                 <td className={tableStyles.actionsCell}>
                   {
                     // prettier-ignore
-                    !isVanillaAM && !receiver.logzioSettings && ( // LOGZ.IO GRAFANA CHANGE
+                    !isVanillaAM && !receiver.logzioSettings && defaultContactPoint !== receiver.name && ( // LOGZ.IO GRAFANA CHANGE
                     <>
                       <Authorize actions={[permissions.update]}>
                         <ActionIcon
