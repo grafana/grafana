@@ -28,19 +28,20 @@ interface Props {
 
 interface State {
   loading: boolean;
+  loadingError: boolean;
   plugin?: AppPlugin | null;
   // Used to display a tab navigation (used before the new Top Nav)
   pluginNav: NavModel | null;
 }
 
-const initialState: State = { loading: true, pluginNav: null, plugin: null };
+const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
 
 export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const match = useRouteMatch();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
-  const { plugin, loading, pluginNav } = state;
+  const { plugin, loading, loadingError, pluginNav } = state;
   const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
@@ -61,7 +62,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     return (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
         {loading && <PageLoader />}
-        {!loading && <EntityNotFound entity="App" />}
+        {!loading && loadingError && <EntityNotFound entity="App" />}
       </Page>
     );
   }
@@ -169,12 +170,13 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       }
       return importAppPlugin(info);
     });
-    dispatch(stateSlice.actions.setState({ plugin: app, loading: false, pluginNav: null }));
+    dispatch(stateSlice.actions.setState({ plugin: app, loading: false, loadingError: false, pluginNav: null }));
   } catch (err) {
     dispatch(
       stateSlice.actions.setState({
         plugin: null,
         loading: false,
+        loadingError: true,
         pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       })
     );
