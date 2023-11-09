@@ -1024,7 +1024,8 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	sql, params := sb.ToSQL(limit, page)
 
 	// #TODO: look for better way to do this
-	if d.features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && len(query.PanelTitle) > 0 {
+	if d.features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && len(query.PanelTitle) > 0 &&
+		query.Type == searchstore.TypePanel {
 		if d.store.GetDialect().DriverName() == migrator.Postgres {
 			params = append(params, query.PanelTitle)
 		} else {

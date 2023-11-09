@@ -12,6 +12,7 @@ import (
 const (
 	TypeFolder      = "dash-folder"
 	TypeDashboard   = "dash-db"
+	TypePanel       = "dash-panel"
 	TypeAlertFolder = "dash-folder-alerting"
 	TypeAnnotation  = "dash-annotation"
 )

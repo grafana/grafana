@@ -18,6 +18,9 @@ type Builder struct {
 	Filters  []any
 	Dialect  migrator.Dialect
 	Features featuremgmt.FeatureToggles
+	// #TODO: if adding this field is an acceptable approach, create a
+	// SearchType type to be used here instead of string
+	SearchType string
 
 	params []any
 	sql    bytes.Buffer
@@ -49,7 +52,7 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 
 	// #TODO for FTS
 	// #TODO figure out if there's a better way overall to update the query
-	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) {
+	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
 		b.sql.WriteString("\n" + `LEFT OUTER JOIN panel ON dashboard.id = panel.dashid`)
 		b.sql.WriteString("\n")
 
@@ -88,7 +91,7 @@ func (b *Builder) buildSelect() {
 		b.sql.WriteString(`
 			folder.slug AS folder_slug,`)
 	}
-	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) {
+	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
 		b.sql.WriteString(`
 			panel.title,`)
 	}

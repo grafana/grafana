@@ -26,6 +26,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	starred := c.Query("starred")
 	limit := c.QueryInt64("limit")
 	page := c.QueryInt64("page")
+	// #TODO: is setting "type" how we want to toggle on panel title search?
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
 	panelTitle := c.Query("panelTitle")
@@ -135,13 +136,14 @@ type SearchParams struct {
 	// type: array
 	// collectionFormat: multi
 	Tag []string `json:"tag"`
-	// Type to search for, dash-folder or dash-db
+	// Type to search for dash-folder, dash-db or dash-panel
 	// in:query
 	// required: false
 	// Description:
 	// * `dash-folder` - Search for folder
-	// * `dash-db` - Seatch for dashboard
-	// Enum: dash-folder,dash-db
+	// * `dash-db` - Search for dashboard
+	// * `dash-panel` - Search for the dashboard associated with a given panel
+	// Enum: dash-folder,dash-db, dash-panel
 	Type string `json:"type"`
 	// List of dashboard id’s to search for
 	// This is deprecated: users should use the `dashboardUIDs` query parameter instead
