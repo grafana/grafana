@@ -16,12 +16,11 @@ import {
   VerticalGroup,
 } from '@grafana/ui';
 
-import { getFeedbackMessage } from './GenAIPanelTitleButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedback } from './QuickFeedback';
 import { StreamStatus, useOpenAIStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { Message, OPEN_AI_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
+import { getFeedbackMessage, Message, DEFAULT_OAI_MODEL, QuickFeedbackType, sanitizeReply } from './utils';
 
 export interface GenAIHistoryProps {
   history: string[];
@@ -46,7 +45,7 @@ export const GenAIHistory = ({
   const [showError, setShowError] = useState(false);
   const [customFeedback, setCustomPrompt] = useState('');
 
-  const { setMessages, reply, streamStatus, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, streamStatus, error } = useOpenAIStream(DEFAULT_OAI_MODEL, temperature);
 
   const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
 
@@ -158,9 +157,14 @@ export const GenAIHistory = ({
       <div className={styles.footer}>
         <Icon name="exclamation-circle" aria-label="exclamation-circle" className={styles.infoColor} />
         <Text variant="bodySmall" color="secondary">
-          This content is AI-generated.{' '}
-          <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external onClick={onClickDocs}>
-            Learn more
+          This content is AI-generated using the{' '}
+          <TextLink
+            variant="bodySmall"
+            href="https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/"
+            external
+            onClick={onClickDocs}
+          >
+            Grafana LLM plugin
           </TextLink>
         </Text>
       </div>

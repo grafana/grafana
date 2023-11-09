@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -223,6 +222,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 		Reporting: dtos.FrontendSettingsReportingDTO{
 			Enabled: hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
+		},
+		Analytics: dtos.FrontendSettingsAnalyticsDTO{
+			Enabled: hs.Cfg.SectionWithEnvOverrides("analytics").Key("enabled").MustBool(true),
 		},
 
 		UnifiedAlerting: dtos.FrontendSettingsUnifiedAlertingDTO{

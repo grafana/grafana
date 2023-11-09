@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -116,7 +118,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	var dashFolder *folder.Folder
 	var err error
 	switch {
-	case cmd.UID != nil:
+	case cmd.UID != nil && *cmd.UID != "":
 		dashFolder, err = s.getFolderByUID(ctx, cmd.OrgID, *cmd.UID)
 		if err != nil {
 			return nil, err
@@ -246,6 +248,85 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	return filtered, nil
 }
 
+// GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
+func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders to which the user has explicit access: %w", err)
+	}
+	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: cmd.OrgID, SignedInUser: cmd.SignedInUser})
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
+	}
+	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
+	return availableNonRootFolders, nil
+}
+
+func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
+	permissions := user.GetPermissions()
+	folderPermissions := permissions["folders:read"]
+	folderPermissions = append(folderPermissions, permissions["dashboards:read"]...)
+	nonRootFolders := make([]*folder.Folder, 0)
+	folderUids := make([]string, 0)
+	for _, p := range folderPermissions {
+		if folderUid, found := strings.CutPrefix(p, "folders:uid:"); found {
+			if !slices.Contains(folderUids, folderUid) {
+				folderUids = append(folderUids, folderUid)
+			}
+		}
+	}
+
+	if len(folderUids) == 0 {
+		return nonRootFolders, nil
+	}
+
+	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
+	}
+
+	for _, f := range dashFolders {
+		if f.ParentUID != "" {
+			nonRootFolders = append(nonRootFolders, f)
+		}
+	}
+
+	return nonRootFolders, nil
+}
+
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.Folder) []*folder.Folder {
+	allFolders := append(folders, rootFolders...)
+	foldersDedup := make([]*folder.Folder, 0)
+	for _, f := range folders {
+		isSubfolder := slices.ContainsFunc(allFolders, func(folder *folder.Folder) bool {
+			return f.ParentUID == folder.UID
+		})
+
+		if !isSubfolder {
+			parents, err := s.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+			if err != nil {
+				s.log.Error("failed to fetch folder parents", "uid", f.UID, "error", err)
+				continue
+			}
+
+			for _, parent := range parents {
+				contains := slices.ContainsFunc(allFolders, func(f *folder.Folder) bool {
+					return f.UID == parent.UID
+				})
+				if contains {
+					isSubfolder = true
+					break
+				}
+			}
+		}
+
+		if !isSubfolder {
+			foldersDedup = append(foldersDedup, f)
+		}
+	}
+	return foldersDedup
+}
+
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		return nil, nil
@@ -276,6 +357,9 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
+	dashFolder.OrgID = cmd.OrgID
+
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
@@ -286,10 +370,8 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		if !hasAccess {
 			return nil, dashboards.ErrFolderAccessDenied
 		}
+		dashFolder.FolderUID = cmd.ParentUID
 	}
-
-	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
-	dashFolder.OrgID = cmd.OrgID
 
 	trimmedUID := strings.TrimSpace(cmd.UID)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
@@ -325,7 +407,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		User:      user,
 	}
 
-	saveDashboardCmd, err := s.BuildSaveDashboardCommand(ctx, dto)
+	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -419,6 +501,10 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	dashFolder := queryResult
+	if cmd.NewParentUID != nil {
+		dashFolder.FolderUID = *cmd.NewParentUID
+	}
+
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
@@ -447,7 +533,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 		Overwrite: cmd.Overwrite,
 	}
 
-	saveDashboardCmd, err := s.BuildSaveDashboardCommand(ctx, dto)
+	saveDashboardCmd, err := s.buildSaveDashboardCommand(ctx, dto)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
@@ -621,7 +707,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	// if the current folder is already a parent of newparent, we should return error
 	for _, parent := range parents {
 		if parent.UID == cmd.UID {
-			return nil, folder.ErrCircularReference
+			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
 		}
 	}
 
@@ -629,12 +715,34 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	if cmd.NewParentUID != "" {
 		newParentUID = cmd.NewParentUID
 	}
-	return s.store.Update(ctx, folder.UpdateFolderCommand{
-		UID:          cmd.UID,
-		OrgID:        cmd.OrgID,
-		NewParentUID: &newParentUID,
-		SignedInUser: cmd.SignedInUser,
-	})
+
+	var f *folder.Folder
+	if err := s.db.InTransaction(ctx, func(ctx context.Context) error {
+		if f, err = s.store.Update(ctx, folder.UpdateFolderCommand{
+			UID:          cmd.UID,
+			OrgID:        cmd.OrgID,
+			NewParentUID: &newParentUID,
+			SignedInUser: cmd.SignedInUser,
+		}); err != nil {
+			return folder.ErrInternal.Errorf("failed to move folder: %w", err)
+		}
+
+		if _, err := s.legacyUpdate(ctx, &folder.UpdateFolderCommand{
+			UID:          cmd.UID,
+			OrgID:        cmd.OrgID,
+			NewParentUID: &newParentUID,
+			SignedInUser: cmd.SignedInUser,
+			// bypass optimistic locking used for dashboards
+			Overwrite: true,
+		}); err != nil {
+			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return f, nil
 }
 
 // nestedFolderDelete inspects the folder referenced by the cmd argument, deletes all the entries for
@@ -735,9 +843,9 @@ func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string)
 	return result, nil
 }
 
-// BuildSaveDashboardCommand is a simplified version on DashboardServiceImpl.BuildSaveDashboardCommand
+// buildSaveDashboardCommand is a simplified version on DashboardServiceImpl.buildSaveDashboardCommand
 // keeping only the meaningful functionality for folders
-func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.SaveDashboardCommand, error) {
+func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
 	dash.OrgID = dto.OrgID
@@ -807,6 +915,7 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
 		FolderID:  dash.FolderID,
+		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
 	}
