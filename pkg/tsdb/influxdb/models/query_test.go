@@ -255,6 +255,31 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = false`)
 		})
 
+		t.Run("can use strings with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "A string", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 'A string'`)
+		})
+
+		t.Run("can use integers with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "123", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 123`)
+		})
+
+		t.Run("can use negative integers with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "-123", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = -123`)
+		})
+
+		t.Run("can use floats with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "1.23", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 1.23`)
+		})
+
+		t.Run("can use negative floats with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "-1.23", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = -1.23`)
+		})
+
 		t.Run("can render string tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "=", Value: "value", Key: "key"}}}
 
