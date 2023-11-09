@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -163,12 +164,6 @@ func getNamespaceAndID(user *user.SignedInUser) (string, string) {
 	return namespace, id
 }
 
-var namespaceToHeader = map[string]string{
-	"user":            "User",
-	"api-key":         "Api-Key",
-	"service-account": "Service-Account",
-}
-
 func (h *ContextHandler) addIDHeaderEndOfRequestFunc(namespace, id string) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		if w.Written() {
@@ -183,8 +178,8 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(namespace, id string) web.B
 			return
 		}
 
-		headerName := h.Cfg.IDResponseHeaderPrefix + namespaceToHeader[namespace] + "-Id"
-		w.Header().Add(headerName, id)
+		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
+		w.Header().Add(headerName, fmt.Sprintf("%s:%s", namespace, id))
 	}
 }
 
