@@ -34,33 +34,10 @@ func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, saSvc *extsvcac
 	}
 }
 
-// SaveExternalService creates or updates an external service in the database. Based on the requested auth provider,
-// it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
-// associated service account has the correct permissions.
-func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
-	// Record provider in case of removal
-	r.lock.Lock()
-	r.extSvcProvider[cmd.Name] = cmd.AuthProvider
-	r.lock.Unlock()
-
-	switch cmd.AuthProvider {
-	case extsvcauth.ServiceAccounts:
-		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
-			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
-			return nil, nil
-		}
-		r.logger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
-		return r.saSvc.SaveExternalService(ctx, cmd)
-	case extsvcauth.OAuth2Server:
-		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAuth)
-			return nil, nil
-		}
-		r.logger.Debug("Routing the External Service registration to the OAuth2Server", "service", cmd.Name)
-		return r.oauthServer.SaveExternalService(ctx, cmd)
-	default:
-		return nil, extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", cmd.AuthProvider)
-	}
+// HasExternalService returns whether an external service has been saved with that name.
+func (r *Registry) HasExternalService(ctx context.Context, name string) bool {
+	_, ok := r.extSvcProvider[name]
+	return ok
 }
 
 // RemoveExternalService removes an external service and its associated resources from the database (ex: service account, token).
@@ -88,5 +65,34 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 		return r.oauthServer.RemoveExternalService(ctx, name)
 	default:
 		return extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", provider)
+	}
+}
+
+// SaveExternalService creates or updates an external service in the database. Based on the requested auth provider,
+// it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
+// associated service account has the correct permissions.
+func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
+	// Record provider in case of removal
+	r.lock.Lock()
+	r.extSvcProvider[cmd.Name] = cmd.AuthProvider
+	r.lock.Unlock()
+
+	switch cmd.AuthProvider {
+	case extsvcauth.ServiceAccounts:
+		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
+			return nil, nil
+		}
+		r.logger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
+		return r.saSvc.SaveExternalService(ctx, cmd)
+	case extsvcauth.OAuth2Server:
+		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAuth)
+			return nil, nil
+		}
+		r.logger.Debug("Routing the External Service registration to the OAuth2Server", "service", cmd.Name)
+		return r.oauthServer.SaveExternalService(ctx, cmd)
+	default:
+		return nil, extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", cmd.AuthProvider)
 	}
 }

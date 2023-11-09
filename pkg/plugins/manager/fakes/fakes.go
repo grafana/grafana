@@ -437,6 +437,10 @@ type FakeAuthService struct {
 	Result *auth.ExternalService
 }
 
+func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID string) bool {
+	return f.Result != nil
+}
+
 func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
 	return f.Result, nil
 }

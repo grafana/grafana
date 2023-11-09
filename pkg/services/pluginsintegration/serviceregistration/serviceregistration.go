@@ -31,6 +31,15 @@ func ProvideService(cfg *config.Cfg, reg extsvcauth.ExternalServiceRegistry, set
 	return s
 }
 
+func (s *Service) HasExternalService(ctx context.Context, pluginID string) bool {
+	if !s.featureEnabled {
+		s.log.Debug("Skipping HasExternalService call. The feature is behind a feature toggle and needs to be enabled.")
+		return false
+	}
+
+	return s.reg.HasExternalService(ctx, pluginID)
+}
+
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
 func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
 	if !s.featureEnabled {
