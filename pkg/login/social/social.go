@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -30,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -45,35 +48,56 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
-	ApiUrl                  string   `toml:"api_url"`
-	AuthUrl                 string   `toml:"auth_url"`
-	ClientId                string   `toml:"client_id"`
-	ClientSecret            string   `toml:"-"`
-	EmailAttributeName      string   `toml:"email_attribute_name"`
-	EmailAttributePath      string   `toml:"email_attribute_path"`
-	GroupsAttributePath     string   `toml:"groups_attribute_path"`
-	HostedDomain            string   `toml:"hosted_domain"`
-	Icon                    string   `toml:"icon"`
-	Name                    string   `toml:"name"`
-	RoleAttributePath       string   `toml:"role_attribute_path"`
-	TeamIdsAttributePath    string   `toml:"team_ids_attribute_path"`
-	TeamsUrl                string   `toml:"teams_url"`
-	TlsClientCa             string   `toml:"tls_client_ca"`
-	TlsClientCert           string   `toml:"tls_client_cert"`
-	TlsClientKey            string   `toml:"tls_client_key"`
-	TokenUrl                string   `toml:"token_url"`
-	AllowedDomains          []string `toml:"allowed_domains"`
-	AllowedGroups           []string `toml:"allowed_groups"`
-	Scopes                  []string `toml:"scopes"`
-	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin"`
-	AllowSignup             bool     `toml:"allow_signup"`
-	AutoLogin               bool     `toml:"auto_login"`
-	Enabled                 bool     `toml:"enabled"`
-	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
-	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
-	UsePKCE                 bool     `toml:"use_pkce"`
-	UseRefreshToken         bool     `toml:"use_refresh_token"`
+	ApiUrl                  string                 `mapstructure:"api_url"`
+	AuthUrl                 string                 `mapstructure:"auth_url"`
+	AuthStyle               string                 `mapstructure:"auth_style"`
+	ClientId                string                 `mapstructure:"client_id"`
+	ClientSecret            string                 `mapstructure:"client_secret"`
+	EmailAttributeName      string                 `mapstructure:"email_attribute_name"`
+	EmailAttributePath      string                 `mapstructure:"email_attribute_path"`
+	EmptyScopes             bool                   `mapstructure:"empty_scopes"`
+	GroupsAttributePath     string                 `mapstructure:"groups_attribute_path"`
+	HostedDomain            string                 `mapstructure:"hosted_domain"`
+	Icon                    string                 `mapstructure:"icon"`
+	Name                    string                 `mapstructure:"name"`
+	RoleAttributePath       string                 `mapstructure:"role_attribute_path"`
+	SkipOrgRoleSync         bool                   `mapstructure:"skip_org_role_sync"`
+	TeamIdsAttributePath    string                 `mapstructure:"team_ids_attribute_path"`
+	TeamsUrl                string                 `mapstructure:"teams_url"`
+	TlsClientCa             string                 `mapstructure:"tls_client_ca"`
+	TlsClientCert           string                 `mapstructure:"tls_client_cert"`
+	TlsClientKey            string                 `mapstructure:"tls_client_key"`
+	TokenUrl                string                 `mapstructure:"token_url"`
+	AllowedDomains          []string               `mapstructure:"allowed_domains"`
+	AllowedGroups           []string               `mapstructure:"allowed_groups"`
+	Scopes                  []string               `mapstructure:"scopes"`
+	AllowAssignGrafanaAdmin bool                   `mapstructure:"allow_assign_grafana_admin"`
+	AllowSignup             bool                   `mapstructure:"allow_sign_up"`
+	AutoLogin               bool                   `mapstructure:"auto_login"`
+	Enabled                 bool                   `mapstructure:"enabled"`
+	RoleAttributeStrict     bool                   `mapstructure:"role_attribute_strict"`
+	TlsSkipVerify           bool                   `mapstructure:"tls_skip_verify_insecure"`
+	UsePKCE                 bool                   `mapstructure:"use_pkce"`
+	UseRefreshToken         bool                   `mapstructure:"use_refresh_token"`
+	Extra                   map[string]interface{} `mapstructure:",remain"`
 }
+
+// func (info *OAuthInfo) ToMap() map[string]interface{} {
+// 	// iterate through info's fields with reflection and return a map[string]interface{} representation
+// 	v := reflect.ValueOf(*info)
+// 	typ := v.Type()
+
+// 	settings := make(map[string]interface{}, typ.NumField())
+// 	for i := 0; i < typ.NumField(); i++ {
+// 		field := typ.Field(i)
+// 		fieldName := field.Tag.Get("toml")
+// 		if fieldName != "" {
+// 			settings[fieldName] = v.Field(i).Interface()
+// 		}
+// 	}
+
+// 	return settings
+// }
 
 func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
@@ -163,7 +187,13 @@ func ProvideService(cfg *setting.Cfg,
 
 		// AzureAD.
 		if name == "azuread" {
-			ss.socialMap["azuread"] = NewAzureADProvider(cfg, features, cache)
+			settingsKV := mapIniSectionToKeyValueMap(sec)
+			azAd, err := NewAzureADProvider(settingsKV, cfg, features, cache)
+			if err != nil {
+				ss.log.Error("Failed to create AzureAD provider", "error", err)
+				continue
+			}
+			ss.socialMap["azuread"] = azAd
 		}
 
 		// Okta
@@ -610,4 +640,50 @@ func appendUniqueScope(config *oauth2.Config, scope string) {
 	if !slices.Contains(config.Scopes, OfflineAccessScope) {
 		config.Scopes = append(config.Scopes, OfflineAccessScope)
 	}
+}
+
+func mapIniSectionToKeyValueMap(sec *ini.Section) map[string]interface{} {
+	mappedSettings := make(map[string]interface{})
+	for _, k := range sec.Keys() {
+		mappedSettings[k.Name()] = k.Value()
+	}
+	return mappedSettings
+}
+
+func constructOAuthInfoFromIniSection(sec *ini.Section) (*OAuthInfo, error) {
+	settingsKV := mapIniSectionToKeyValueMap(sec)
+	return createOAuthInfoFromKeyValues(settingsKV)
+}
+
+func createOAuthInfoFromKeyValues(settingsKV map[string]interface{}) (*OAuthInfo, error) {
+	var oauthInfo OAuthInfo
+
+	emptyStrToSliceDecodeHook := mapstructure.ComposeDecodeHookFunc(func(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {
+		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
+			strData, ok := data.(string)
+			if !ok {
+				return nil, fmt.Errorf("failed to convert %v to string", data)
+			}
+			if strData == "" {
+				return []string{}, nil
+			}
+			return util.SplitString(strData), nil
+		}
+		return data, nil
+	})
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		DecodeHook:       emptyStrToSliceDecodeHook,
+		Result:           &oauthInfo,
+		WeaklyTypedInput: true,
+	})
+
+	err = decoder.Decode(settingsKV)
+	if err != nil {
+		return nil, err
+	}
+
+	if oauthInfo.EmptyScopes {
+		oauthInfo.Scopes = []string{}
+	}
+	return &oauthInfo, err
 }

@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const sectionName = "auth.azuread"
+
 var _ SocialConnector = (*SocialAzureAD)(nil)
 
 type SocialAzureAD struct {
@@ -62,24 +64,26 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func NewAzureADProvider(cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) *SocialAzureAD {
-	sectionName := "auth.azuread"
-	section := cfg.Raw.Section(sectionName)
-	info := loadOAuthInfo(section, sectionName)
-	config := createOAuthConfig(section, info, cfg, "azuread")
+func NewAzureADProvider(settings map[string]interface{}, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
+	info, err := createOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+	config := createOAuthConfig(info, cfg, "azuread")
 	provider := &SocialAzureAD{
 		SocialBase:           newSocialBase(info.Name, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		cache:                cache,
-		allowedOrganizations: util.SplitString(section.Key("allowed_organizations").String()),
-		forceUseGraphAPI:     section.Key("force_use_graph_api").MustBool(false),
-		skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
+		allowedOrganizations: util.SplitString(mustString(info.Extra["allowed_organizations"])),
+		forceUseGraphAPI:     mustBool(info.Extra["force_use_graph_api"], false),
+		//skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
+		skipOrgRoleSync: info.SkipOrgRoleSync,
 	}
 
 	if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
 		appendUniqueScope(config, OfflineAccessScope)
 	}
 
-	return provider
+	return provider, nil
 }
 
 func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
