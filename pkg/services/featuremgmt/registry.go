@@ -135,6 +135,14 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:           "newVizTooltips",
+			Description:    "New visualizations tooltips UX",
+			Stage:          FeatureStageGeneralAvailability,
+			FrontendOnly:   true,
+			Owner:          grafanaDatavizSquad,
+			AllowSelfServe: falsePtr,
+		},
+		{
 			Name:         "scenes",
 			Description:  "Experimental framework to build interactive dashboards",
 			Stage:        FeatureStageExperimental,
@@ -490,13 +498,6 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
-			Name:         "dataSourcePageHeader",
-			Description:  "Apply new pageHeader UI in data source edit page",
-			FrontendOnly: true,
-			Stage:        FeatureStagePublicPreview,
-			Owner:        enterpriseDatasourcesSquad,
-		},
-		{
 			Name:         "extraThemes",
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
@@ -668,14 +669,6 @@ var (
 			FrontendOnly:    false,
 			Owner:           identityAccessTeam,
 			RequiresRestart: true,
-		},
-		{
-			Name:           "azureMonitorDataplane",
-			Description:    "Adds dataplane compliant frame metadata in the Azure Monitor datasource",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaPartnerPluginsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: falsePtr,
 		},
 		{
 			Name:         "traceToProfiles",
@@ -880,15 +873,8 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
-			Name:         "kubernetesPlaylists",
-			Description:  "Use the kubernetes API in the frontend for playlists",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAppPlatformSquad,
-		},
-		{
-			Name:            "kubernetesPlaylistsAPI",
-			Description:     "Route /api/playlist API to k8s handlers",
+			Name:            "kubernetesPlaylists",
+			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
@@ -1023,6 +1009,21 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
+		},
+		{
+			Name:         "pdfTables",
+			Description:  "Enables generating table data as PDF in reporting",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaSharingSquad,
+		},
+		{
+			Name:            "ssoSettingsApi",
+			Description:     "Enables the SSO settings API",
+			RequiresDevMode: true,
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           identityAccessTeam,
 		},
 	}
 )

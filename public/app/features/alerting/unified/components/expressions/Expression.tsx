@@ -4,8 +4,7 @@ import React, { FC, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -310,7 +309,7 @@ const Header: FC<HeaderProps> = ({
   return (
     <header className={styles.header.wrapper}>
       <Stack direction="row" gap={0.5} alignItems="center">
-        <Stack direction="row" gap={1} alignItems="center" wrap={false}>
+        <Stack direction="row" gap={1} alignItems="center">
           {!editingRefId && (
             <button type="button" className={cx(clearButton, styles.editable)} onClick={() => setEditMode('refId')}>
               <div className={styles.expression.refId}>{refId}</div>

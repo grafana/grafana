@@ -129,7 +129,7 @@ export class TimeSrvStub {
     };
   }
 
-  setTime(time: any) {
+  setTime(time: RawTimeRange) {
     this.time = time;
   }
 }
@@ -161,7 +161,7 @@ export function TemplateSrvStub(this: any) {
     return template(text, this.templateSettings)(this.data);
   };
   this.init = () => {};
-  this.getAdhocFilters = (): any => {
+  this.getAdhocFilters = () => {
     return [];
   };
   this.fillVariableValuesForUrl = () => {};

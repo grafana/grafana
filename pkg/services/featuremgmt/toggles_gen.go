@@ -79,6 +79,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagNewVizTooltips
+	// New visualizations tooltips UX
+	FlagNewVizTooltips = "newVizTooltips"
+
 	// FlagScenes
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
@@ -275,10 +279,6 @@ const (
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
 
-	// FlagDataSourcePageHeader
-	// Apply new pageHeader UI in data source edit page
-	FlagDataSourcePageHeader = "dataSourcePageHeader"
-
 	// FlagExtraThemes
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
@@ -374,10 +374,6 @@ const (
 	// FlagSplitScopes
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
-
-	// FlagAzureMonitorDataplane
-	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
-	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 
 	// FlagTraceToProfiles
 	// Enables linking between traces and profiles
@@ -488,12 +484,8 @@ const (
 	FlagTransformationsVariableSupport = "transformationsVariableSupport"
 
 	// FlagKubernetesPlaylists
-	// Use the kubernetes API in the frontend for playlists
+	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
-
-	// FlagKubernetesPlaylistsAPI
-	// Route /api/playlist API to k8s handlers
-	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -570,4 +562,12 @@ const (
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
+
+	// FlagPdfTables
+	// Enables generating table data as PDF in reporting
+	FlagPdfTables = "pdfTables"
+
+	// FlagSsoSettingsApi
+	// Enables the SSO settings API
+	FlagSsoSettingsApi = "ssoSettingsApi"
 )
