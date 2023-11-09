@@ -59,7 +59,7 @@ const FlameGraphTooltip = ({ data, item, totalTicks, position, collapseConfig }:
         <div className={styles.tooltipContent}>
           <p className={styles.tooltipName}>
             {data.getLabel(item.itemIndexes[0])}
-            {collapseConfig ? (
+            {collapseConfig && collapseConfig.collapsed ? (
               <span>
                 <br />
                 and {collapseConfig.items.length} similar items

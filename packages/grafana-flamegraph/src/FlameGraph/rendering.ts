@@ -16,7 +16,7 @@ import {
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
-import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { CollapseConfig, CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 const ufuzzy = new uFuzzy();
 
@@ -139,38 +139,20 @@ function useRenderFunc(
         ctx.fill();
 
         if (collapsedItemConfig) {
-          const groupStripX = x + 8;
-          const groupStripWidth = 6;
-
           if (width >= LABEL_THRESHOLD) {
-            renderLabel(ctx, data, label, item, width, textAlign === 'left' ? groupStripX + 4 : x, y, textAlign);
+            renderLabel(
+              ctx,
+              data,
+              label,
+              item,
+              width,
+              textAlign === 'left' ? x + groupStripMarginLeft + 4 : x,
+              y,
+              textAlign
+            );
+
+            renderGroupingStrip(ctx, x, y, height, item, collapsedItemConfig);
           }
-
-          // This is to mask the label in case we align it right to left.
-          ctx.beginPath();
-          ctx.rect(x, y, groupStripX - x + groupStripWidth + 6, height);
-          ctx.fill();
-
-          // For item in a group that can be collapsed, we draw a small strip to mark them. On the items that are at the
-          // start or and end of a group we draw just half the strip so 2 groups next to each other are separated
-          // visually.
-          ctx.beginPath();
-          if (collapsedItemConfig.collapsed) {
-            ctx.rect(groupStripX, y + height / 4, groupStripWidth, height / 2);
-          } else {
-            if (collapsedItemConfig.items[0] === item) {
-              // Top item
-              ctx.rect(groupStripX, y + height / 2, groupStripWidth, height / 2);
-            } else if (collapsedItemConfig.items[collapsedItemConfig.items.length - 1] === item) {
-              // Bottom item
-              ctx.rect(groupStripX, y, groupStripWidth, height / 2);
-            } else {
-              ctx.rect(groupStripX, y, groupStripWidth, height);
-            }
-          }
-
-          ctx.fillStyle = '#666';
-          ctx.fill();
         } else {
           if (width >= LABEL_THRESHOLD) {
             renderLabel(ctx, data, label, item, width, x, y, textAlign);
@@ -179,6 +161,55 @@ function useRenderFunc(
       }
     };
   }, [ctx, getBarColor, textAlign, data, collapsedMap]);
+}
+
+const groupStripMarginLeft = 8;
+
+/**
+ * Render small strip on the left side of the bar to indicate that this item is part of a group that can be collapsed.
+ * @param ctx
+ * @param x
+ * @param y
+ * @param height
+ * @param item
+ * @param collapsedItemConfig
+ */
+function renderGroupingStrip(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  height: number,
+  item: LevelItem,
+  collapsedItemConfig: CollapseConfig
+) {
+  const groupStripX = x + groupStripMarginLeft;
+  const groupStripWidth = 6;
+
+  // This is to mask the label in case we align it right to left.
+  ctx.beginPath();
+  ctx.rect(x, y, groupStripX - x + groupStripWidth + 6, height);
+  ctx.fill();
+
+  // For item in a group that can be collapsed, we draw a small strip to mark them. On the items that are at the
+  // start or and end of a group we draw just half the strip so 2 groups next to each other are separated
+  // visually.
+  ctx.beginPath();
+  if (collapsedItemConfig.collapsed) {
+    ctx.rect(groupStripX, y + height / 4, groupStripWidth, height / 2);
+  } else {
+    if (collapsedItemConfig.items[0] === item) {
+      // Top item
+      ctx.rect(groupStripX, y + height / 2, groupStripWidth, height / 2);
+    } else if (collapsedItemConfig.items[collapsedItemConfig.items.length - 1] === item) {
+      // Bottom item
+      ctx.rect(groupStripX, y, groupStripWidth, height / 2);
+    } else {
+      ctx.rect(groupStripX, y, groupStripWidth, height);
+    }
+  }
+
+  ctx.fillStyle = '#666';
+  ctx.fill();
 }
 
 /**
