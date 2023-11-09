@@ -13,7 +13,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -22,7 +21,6 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -32,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -187,13 +184,13 @@ func ProvideService(cfg *setting.Cfg,
 
 		// AzureAD.
 		if name == "azuread" {
-			settingsKV := mapIniSectionToKeyValueMap(sec)
-			azAd, err := NewAzureADProvider(settingsKV, cfg, features, cache)
+			settingsKV := ConvertIniSectionToMap(sec)
+			azureADConnector, err := NewAzureADProvider(settingsKV, cfg, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create AzureAD provider", "error", err)
 				continue
 			}
-			ss.socialMap["azuread"] = azAd
+			ss.socialMap["azuread"] = azureADConnector
 		}
 
 		// Okta
@@ -640,50 +637,4 @@ func appendUniqueScope(config *oauth2.Config, scope string) {
 	if !slices.Contains(config.Scopes, OfflineAccessScope) {
 		config.Scopes = append(config.Scopes, OfflineAccessScope)
 	}
-}
-
-func mapIniSectionToKeyValueMap(sec *ini.Section) map[string]interface{} {
-	mappedSettings := make(map[string]interface{})
-	for _, k := range sec.Keys() {
-		mappedSettings[k.Name()] = k.Value()
-	}
-	return mappedSettings
-}
-
-func constructOAuthInfoFromIniSection(sec *ini.Section) (*OAuthInfo, error) {
-	settingsKV := mapIniSectionToKeyValueMap(sec)
-	return createOAuthInfoFromKeyValues(settingsKV)
-}
-
-func createOAuthInfoFromKeyValues(settingsKV map[string]interface{}) (*OAuthInfo, error) {
-	var oauthInfo OAuthInfo
-
-	emptyStrToSliceDecodeHook := mapstructure.ComposeDecodeHookFunc(func(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {
-		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
-			strData, ok := data.(string)
-			if !ok {
-				return nil, fmt.Errorf("failed to convert %v to string", data)
-			}
-			if strData == "" {
-				return []string{}, nil
-			}
-			return util.SplitString(strData), nil
-		}
-		return data, nil
-	})
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		DecodeHook:       emptyStrToSliceDecodeHook,
-		Result:           &oauthInfo,
-		WeaklyTypedInput: true,
-	})
-
-	err = decoder.Decode(settingsKV)
-	if err != nil {
-		return nil, err
-	}
-
-	if oauthInfo.EmptyScopes {
-		oauthInfo.Scopes = []string{}
-	}
-	return &oauthInfo, err
 }

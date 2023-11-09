@@ -32,6 +32,7 @@ func (s *OAuthStrategy) IsMatch(provider string) bool {
 func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context) (map[string]interface{}, error) {
 	section := s.cfg.SectionWithEnvOverrides("auth." + s.provider)
 
+	// TODO: load the provider specific keys separately
 	result := map[string]interface{}{
 		"client_id":                  section.Key("client_id").Value(),
 		"client_secret":              section.Key("client_secret").Value(),
@@ -52,6 +53,7 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context) (map[string]int
 		"allow_sign_up":              section.Key("allow_sign_up").MustBool(true),
 		"name":                       section.Key("name").MustString("default name"), // TODO: change this default value
 		"icon":                       section.Key("icon").Value(),
+		"skip_org_role_sync":         section.Key("skip_org_role_sync").MustBool(false),
 		"tls_client_cert":            section.Key("tls_client_cert").Value(),
 		"tls_client_key":             section.Key("tls_client_key").Value(),
 		"tls_client_ca":              section.Key("tls_client_ca").Value(),
