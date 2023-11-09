@@ -1,8 +1,7 @@
 import React, { HTMLAttributes } from 'react';
 
 import { textUtil } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Icon, Text } from '@grafana/ui';
+import { Icon, Stack, Text } from '@grafana/ui';
 
 interface Props extends HTMLAttributes<HTMLAnchorElement> {
   href: string;

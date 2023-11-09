@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { ComponentSize, useStyles2 } from '@grafana/ui';
+import { ComponentSize, Stack, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 const AlertStateDot = (props: DotStylesProps) => {
