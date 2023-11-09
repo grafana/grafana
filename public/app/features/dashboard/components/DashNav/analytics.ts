@@ -6,6 +6,22 @@ export const shareAnalyticsEventNames: {
   dashboardsToolbarActionsClicked: 'dashboards_toolbar_actions_clicked',
 };
 
-export function trackDashboardsToolbarActionsClicked(toolbarActionType: string) {
-  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: toolbarActionType });
+export function trackToolbarFavoritesClicked() {
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'favorites' });
+}
+
+export function trackToolbarSettingsClicked() {
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'settings' });
+}
+
+export function trackToolbarRefreshClicked() {
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'refresh' });
+}
+
+export function trackToolbarTimePickerClicked() {
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'time_picker' });
+}
+
+export function trackToolbarZoomClicked() {
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'zoom_out_time_range' });
 }

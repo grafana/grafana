@@ -44,7 +44,7 @@ export interface TimeRangePickerProps {
   hideQuickRanges?: boolean;
   widthOverride?: number;
   isOnCanvas?: boolean;
-  onTimePickerClick?: () => void;
+  onToolbarTimePickerClick?: () => void;
 }
 
 export interface State {
@@ -77,8 +77,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   };
 
   const onToolbarButtonSwitch = () => {
-    if (!isOpen && props.onTimePickerClick) {
-      props.onTimePickerClick();
+    if (!isOpen && props.onToolbarTimePickerClick) {
+      props.onToolbarTimePickerClick();
     }
     setOpen((prevState) => !prevState);
   };
