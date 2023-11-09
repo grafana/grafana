@@ -41,7 +41,7 @@ func main() {
 				SkipFlagParsing: true,
 				Action: func(context *cli.Context) error {
 					// exit here because apiserver handles its own error output
-					os.Exit(apiserver.RunMain())
+					os.Exit(apiserver.RunCLI())
 					return nil
 				},
 			},
