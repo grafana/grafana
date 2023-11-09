@@ -25,11 +25,11 @@ type Registry struct {
 
 func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, saSvc *extsvcaccounts.ExtSvcAccountsService, features featuremgmt.FeatureToggles) *Registry {
 	return &Registry{
+		extSvcProvider: map[string]extsvcauth.AuthProvider{},
 		features:       features,
 		logger:         log.New("extsvcauth.registry"),
 		oauthServer:    oauthServer,
 		saSvc:          saSvc,
-		extSvcProvider: map[string]extsvcauth.AuthProvider{},
 	}
 }
 
