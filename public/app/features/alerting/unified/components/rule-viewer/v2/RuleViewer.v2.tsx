@@ -91,7 +91,10 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   /**
    * TODO refactor this, very confusing right now
    */
-  const { isEditable, isRemovable } = useIsRuleEditable(identifier.ruleSourceName, rule?.rulerRule);
+  const { isEditable: allowedToEdit, isRemovable: allowedToRemove } = useIsRuleEditable(
+    identifier.ruleSourceName,
+    rule?.rulerRule
+  );
   const rulesPermissions = getRulesPermissions(identifier.ruleSourceName);
   const hasCreateRulePermission = contextSrv.hasPermission(rulesPermissions.create);
   const canSilence = useCanSilence(rule);
@@ -119,6 +122,9 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
     const isFederatedRule = isFederatedRuleGroup(rule.group);
     const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+
+    const isEditable = allowedToEdit && !isProvisioned && !isFederatedRule;
+    const isRemovable = allowedToRemove && !isProvisioned && !isFederatedRule;
 
     /**
      * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
@@ -177,7 +183,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                             <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
                           ]}
                         />
-                        {isRemovable && !isFederatedRule && !isProvisioned && (
+                        {isRemovable && (
                           <>
                             <Menu.Divider />
                             <Menu.Item
@@ -196,7 +202,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                 </Stack>
               </Stack>
               {summary && <Summary text={summary} />}
-              {!summary && isEditable && !isProvisioned && !isFederatedRule && (
+              {!summary && isEditable && (
                 <Button size="sm" fill="text" variant="secondary" style={{ alignSelf: 'start' }}>
                   <Text variant="bodySmall" color="secondary" italic>
                     Click to add a summary <Icon name="pen" />
