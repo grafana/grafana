@@ -1,11 +1,14 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneDebugger } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
@@ -14,14 +17,20 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const { controls, viewPanelKey: viewPanelId, overlay } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
-  const pageNav = model.getPageNav(location);
+  const navIndex = useSelector((state) => state.navIndex);
+  const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender(viewPanelId);
 
+  const navProps = config.featureToggles.dashboardSceneForViewers
+    ? { navModel: getNavModel(navIndex, 'dashboards/browse') }
+    : { navId: 'scenes' };
+
   return (
-    <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <Page {...navProps} pageNav={pageNav} layout={PageLayoutType.Custom}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className={styles.canvasContent}>
           <NavToolbarActions dashboard={model} />
+
           {controls && (
             <div className={styles.controls}>
               {controls.map((control) => (
@@ -30,7 +39,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               <SceneDebugger scene={model} key={'scene-debugger'} />
             </div>
           )}
-          <div className={styles.body}>
+          <div className={cx(styles.body)}>
             <bodyToRender.Component model={bodyToRender} />
           </div>
         </div>
@@ -57,6 +66,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: '8px',
       marginBottom: theme.spacing(2),
     }),
+
     controls: css({
       display: 'flex',
       flexWrap: 'wrap',
