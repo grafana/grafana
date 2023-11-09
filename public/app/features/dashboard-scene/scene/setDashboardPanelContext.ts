@@ -123,7 +123,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 
   // Backward compatibility with id
   context.instanceState = {
-    id: getPanelIdForVizPanel(vizPanel),
+    legacyPanelId: getPanelIdForVizPanel(vizPanel),
   };
 }
 

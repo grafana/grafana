@@ -1018,6 +1018,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "dashboardScene",
+			Description:  "Enables dashboard rendering using scenes for all roles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
