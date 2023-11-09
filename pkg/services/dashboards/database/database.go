@@ -1068,6 +1068,7 @@ func (d *dashboardStore) CountDashboardsInFolder(
 	var count int64
 	var err error
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		// nolint:staticcheck
 		session := sess.In("folder_id", req.FolderID).In("org_id", req.OrgID).
 			In("is_folder", d.store.GetDialect().BooleanStr(false))
 		count, err = session.Count(&dashboards.Dashboard{})
