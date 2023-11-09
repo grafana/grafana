@@ -85,7 +85,7 @@ export function createSpanLinkFactory({
           profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
         }
         const hasConfiguredPyroscopeDS = profilesDataSourceSettings?.type === 'grafana-pyroscope-datasource';
-        const hasPyroscopeProfile = span.tags.some((tag) => tag.key === pyroscopeProfileTag);
+        const hasPyroscopeProfile = span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey);
         const shouldCreatePyroscopeLink = hasConfiguredPyroscopeDS && hasPyroscopeProfile;
 
         let links: ExploreFieldLinkModel[] = [];
@@ -135,7 +135,7 @@ const formatDefaultKeys = (keys: string[]) => {
 };
 const defaultKeys = formatDefaultKeys(['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace']);
 const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
-export const pyroscopeProfileTag = 'pyroscope.profile.id';
+export const pyroscopeProfileIdTagKey = 'pyroscope.profile.id';
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,

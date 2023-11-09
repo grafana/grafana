@@ -23,6 +23,7 @@ import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
+import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
@@ -392,13 +393,15 @@ export default function SpanDetail(props: SpanDetailProps) {
             createFocusSpanLink={createFocusSpanLink}
           />
         )}
-        <SpanFlameGraph
-          span={span}
-          timeZone={timeZone}
-          traceFlameGraphs={traceFlameGraphs}
-          setTraceFlameGraphs={setTraceFlameGraphs}
-          traceToProfilesOptions={traceToProfilesOptions}
-        />
+        {span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey) && (
+          <SpanFlameGraph
+            span={span}
+            timeZone={timeZone}
+            traceFlameGraphs={traceFlameGraphs}
+            setTraceFlameGraphs={setTraceFlameGraphs}
+            traceToProfilesOptions={traceToProfilesOptions}
+          />
+        )}
         {topOfViewRefType === TopOfViewRefType.Explore && (
           <small className={styles.debugInfo}>
             {/* TODO: fix keyboard a11y */}

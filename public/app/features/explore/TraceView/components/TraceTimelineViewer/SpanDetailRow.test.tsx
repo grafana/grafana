@@ -25,6 +25,7 @@ const testSpan = {
   spanID: 'testSpanID',
   traceID: 'testTraceID',
   depth: 3,
+  tags: [],
   process: {
     serviceName: 'some-service',
     tags: [{ key: 'tag-key', value: 'tag-value' }],
