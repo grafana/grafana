@@ -109,7 +109,12 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 				MetricNamespace:     azJSONModel.MetricNamespace,
 				ResourceName:        resourceName,
 			}
-			azureURL = ub.BuildMetricsURL()
+			azureURLPtr, err := ub.BuildMetricsURL()
+			if err != nil {
+				return nil, err
+			}
+			azureURL = *azureURLPtr
+
 			// POST requests are only supported at the subscription level
 			filterInBody = false
 			resourceUri, err := ub.buildResourceURI()
@@ -128,7 +133,11 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 					MetricNamespace:     azJSONModel.MetricNamespace,
 					ResourceName:        r.ResourceName,
 				}
-				resourceUri, _ := ub.buildResourceURI()
+				resourceUri, err := ub.buildResourceURI()
+				if err != nil {
+					return nil, err
+				}
+
 				if resourceUri != nil {
 					resourceMap[*resourceUri] = r
 				}
