@@ -41,6 +41,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
               group,
               ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
               namespace: namespace,
+              namespace_uid: (isGrafanaRulerRule(rule) && rule.grafana_alert.namespace_uid) || undefined,
               rule,
             };
           }
@@ -81,19 +82,15 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
   };
 
   const deleteRule = async (ruleWithLocation: RuleWithLocation): Promise<void> => {
-    let { namespace, group, rule } = ruleWithLocation;
-
-    if (isGrafanaRulerRule(rule)) {
-      namespace = rule.grafana_alert.namespace_uid;
-    }
+    const { namespace, group, rule, namespace_uid } = ruleWithLocation;
 
     // it was the last rule, delete the entire group
     if (group.rules.length === 1) {
-      await deleteRulerRulesGroup(rulerConfig, namespace, group.name);
+      await deleteRulerRulesGroup(rulerConfig, namespace_uid || namespace, group.name);
       return;
     }
     // post the group with rule removed
-    await setRulerRuleGroup(rulerConfig, namespace, {
+    await setRulerRuleGroup(rulerConfig, namespace_uid || namespace, {
       ...group,
       rules: group.rules.filter((r) => r !== rule),
     });

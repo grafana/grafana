@@ -21,7 +21,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
-import { formatRuleName } from '../expressions/util';
+import { formatFolderName } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditRuleGroupModal';
@@ -207,9 +207,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // ungrouped rules are rules that are in the "default" group name
   const groupName = isListView ? (
-    <RuleLocation namespace={formatRuleName(namespace)} />
+    <RuleLocation namespace={formatFolderName(namespace)} />
   ) : (
-    <RuleLocation namespace={formatRuleName(namespace)} group={group.name} />
+    <RuleLocation namespace={formatFolderName(namespace)} group={group.name} />
   );
 
   const closeEditModal = (saved = false) => {

@@ -4,7 +4,7 @@ import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { mockDataSource } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { getSeriesName, formatLabels, formatRuleName, getSeriesValue, isEmptySeries, getSeriesLabels } from './util';
+import { getSeriesName, formatLabels, formatFolderName, getSeriesValue, isEmptySeries, getSeriesLabels } from './util';
 
 const EMPTY_FRAME: DataFrame = toDataFrame([]);
 const NAMED_FRAME: DataFrame = {
@@ -38,7 +38,7 @@ describe('formatLabels', () => {
   });
 });
 
-describe('formatRuleName', () => {
+describe('formatFolderName', () => {
   it('should work for Grafana namespaces', () => {
     const grafanaNamespace: CombinedRuleNamespace = {
       name: '/my_rule_namespace',
@@ -52,7 +52,7 @@ describe('formatRuleName', () => {
       ],
     };
 
-    expect(formatRuleName(grafanaNamespace)).toBe('my_rule_namespace');
+    expect(formatFolderName(grafanaNamespace)).toBe('my_rule_namespace');
   });
 
   it('should not change output for cloud namespaces', () => {
@@ -68,7 +68,7 @@ describe('formatRuleName', () => {
       ],
     };
 
-    expect(formatRuleName(cloudNamespace)).toBe('/etc/prometheus/rules');
+    expect(formatFolderName(cloudNamespace)).toBe('/etc/prometheus/rules');
   });
 
   it('should work when there is more than one separator', () => {
@@ -83,7 +83,7 @@ describe('formatRuleName', () => {
         },
       ],
     };
-    expect(formatRuleName(grafanaNamespace)).toBe('my_rule_namespace/with/slashes');
+    expect(formatFolderName(grafanaNamespace)).toBe('my_rule_namespace/with/slashes');
   });
 });
 

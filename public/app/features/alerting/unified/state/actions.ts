@@ -895,7 +895,7 @@ export const updateRulesOrder = createAsyncThunk(
             rules: newRules,
           };
 
-          await setRulerRuleGroup(rulerConfig, folderUid, payload);
+          await setRulerRuleGroup(rulerConfig, folderUid ?? namespaceName, payload);
 
           await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));
         })()

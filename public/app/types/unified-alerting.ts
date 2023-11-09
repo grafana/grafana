@@ -136,6 +136,7 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   namespace: string;
   group: RulerRuleGroupDTO;
   rule: T;
+  namespace_uid?: string;
 }
 
 export interface CombinedRuleWithLocation extends CombinedRule {

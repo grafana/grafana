@@ -40,7 +40,7 @@ const formatLabels = (labels: Labels): string => {
     .join(', ');
 };
 
-const formatRuleName = (namespace: CombinedRuleNamespace): string => {
+const formatFolderName = (namespace: CombinedRuleNamespace): string => {
   const ruleName = namespace.name;
 
   if (isCloudRulesSource(namespace.rulesSource)) {
@@ -56,4 +56,4 @@ const isEmptySeries = (series: DataFrame[]): boolean => {
   return isEmpty;
 };
 
-export { getSeriesName, getSeriesValue, getSeriesLabels, formatLabels, formatRuleName, isEmptySeries };
+export { getSeriesName, getSeriesValue, getSeriesLabels, formatLabels, formatFolderName, isEmptySeries };
