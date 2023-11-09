@@ -73,7 +73,7 @@ func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	return fam.remote.TestTemplate(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CleanUp() {}
