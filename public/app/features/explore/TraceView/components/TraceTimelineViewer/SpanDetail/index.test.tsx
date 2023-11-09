@@ -47,6 +47,7 @@ describe('<SpanDetail>', () => {
     createFocusSpanLink: jest.fn().mockReturnValue({}),
   };
 
+  span.spanID = 'test-spanID';
   span.kind = 'test-kind';
   span.statusCode = 2;
   span.statusMessage = 'test-message';
@@ -194,6 +195,6 @@ describe('<SpanDetail>', () => {
 
   it('renders deep link URL', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    expect(document.getElementsByTagName('a').length).toBeGreaterThan(1);
+    expect(screen.getByText('test-spanID')).toBeInTheDocument();
   });
 });
