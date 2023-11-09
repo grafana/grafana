@@ -156,21 +156,19 @@ export const MenuItem = React.memo(
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
-        role="presentation"
+        role={url === undefined ? role : undefined}
+        data-role="menuitem"
+        ref={localRef}
       >
         <ItemElement
           tabIndex={-1}
-          onClick={onClick}
           target={target}
           rel={target === '_blank' ? 'noopener noreferrer' : undefined}
           href={url}
-          ref={localRef}
           data-testid={testId}
           aria-label={ariaLabel}
           aria-checked={ariaChecked}
           className={itemStyle}
-          role={url === undefined ? role : undefined}
-          data-role="menuitem"
           {...disabledProps}
         >
           <>
@@ -233,7 +231,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.primary,
         textDecoration: 'none',
       },
-      '&:focus-within': getFocusStyles(theme),
+      '&:focus-visible': getFocusStyles(theme),
     }),
     item: css({
       label: 'menu-item',
@@ -246,6 +244,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
       border: 'none',
       padding: 0,
+      width: '100%',
 
       // wrapper is handling the focus styles
       '&:focus-visible': {
