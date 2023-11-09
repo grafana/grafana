@@ -176,7 +176,9 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        contents: _isHovering ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss) : null,
+        contents: _isHovering
+          ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss)
+          : null,
         dismiss,
       };
 
@@ -238,8 +240,8 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
       // const isMultiSeries = u.series.length > 2;
 
       // if (hoverModeRef.current === TooltipHoverMode.xAll && closestSeriesIdx !== seriesIdx) {
-        closestSeriesIdx = seriesIdx;
-        scheduleRender();
+      closestSeriesIdx = seriesIdx;
+      scheduleRender();
       // }
     });
 
