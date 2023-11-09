@@ -35,22 +35,19 @@ func main() {
 			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
 			{
 				// The kubernetes standalone apiserver service runner
-				// The command line is actually managed by cobra
 				Name:  "apiserver",
 				Usage: "run a standalone api service (experimental)",
+				// Skip parsing flags because the command line is actually managed by cobra
+				SkipFlagParsing: true,
 				Action: func(context *cli.Context) error {
-					return nil // not actually used
+					// exit here because apiserver handles its own error output
+					os.Exit(apiserver.RunMain())
+					return nil
 				},
 			},
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,
-	}
-
-	// This is required so that k8s cobra cli flags are used rather than urfave/cli
-	if len(os.Args) > 1 && os.Args[1] == "apiserver" {
-		apiserver.RunMain()
-		return
 	}
 
 	if err := app.Run(os.Args); err != nil {

@@ -39,7 +39,7 @@ func newCommandStartExampleAPIServer(defaults *ExampleServerOptions, stopCh <-ch
 	return cmd
 }
 
-func RunMain() {
+func RunMain() int {
 	stopCh := genericapiserver.SetupSignalHandler()
 
 	// Load the API services
@@ -55,6 +55,5 @@ func RunMain() {
 
 	cmd := newCommandStartExampleAPIServer(options, stopCh)
 
-	code := cli.Run(cmd)
-	os.Exit(code)
+	return cli.Run(cmd)
 }
