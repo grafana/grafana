@@ -3520,18 +3520,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@headlessui/react@npm:^1.5.0":
-  version: 1.7.11
-  resolution: "@headlessui/react@npm:1.7.11"
-  dependencies:
-    client-only: "npm:^0.0.1"
-  peerDependencies:
-    react: ^16 || ^17 || ^18
-    react-dom: ^16 || ^17 || ^18
-  checksum: 683cb302cbcd07bf0b3aa2afbfbf7fd80aac542531b6624788ac1d28b80c66c319f8f29407a83377139e8321454de879fdb48418fe2f7622bf5983e471d06555
-  languageName: node
-  linkType: hard
-
 "@humanwhocodes/config-array@npm:^0.11.10, @humanwhocodes/config-array@npm:^0.11.13":
   version: 0.11.13
   resolution: "@humanwhocodes/config-array@npm:0.11.13"
@@ -10272,25 +10260,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@xstate/react@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "@xstate/react@npm:3.2.1"
-  dependencies:
-    use-isomorphic-layout-effect: "npm:^1.0.0"
-    use-sync-external-store: "npm:^1.0.0"
-  peerDependencies:
-    "@xstate/fsm": ^2.0.0
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    xstate: ^4.36.0
-  peerDependenciesMeta:
-    "@xstate/fsm":
-      optional: true
-    xstate:
-      optional: true
-  checksum: a7b2538459ecf2bf94065c1c074b9d8db31cdb2f7b72cb1bf93fb0796191e07e15ebe3b971c038e85853c8ee9516a9eb18f08530ea2635803c832d58d056e847
-  languageName: node
-  linkType: hard
-
 "@xtuc/ieee754@npm:^1.2.0":
   version: 1.2.0
   resolution: "@xtuc/ieee754@npm:1.2.0"
@@ -12328,13 +12297,6 @@ __metadata:
   version: 3.0.0
   resolution: "cli-width@npm:3.0.0"
   checksum: 8730848b04fb189666ab037a35888d191c8f05b630b1d770b0b0e4c920b47bb5cc14bddf6b8ffe5bfc66cee97c8211d4d18e756c1ffcc75d7dbe7e1186cd7826
-  languageName: node
-  linkType: hard
-
-"client-only@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "client-only@npm:0.0.1"
-  checksum: 0c16bf660dadb90610553c1d8946a7fdfb81d624adea073b8440b7d795d5b5b08beb3c950c6a2cf16279365a3265158a236876d92bce16423c485c322d7dfaf8
   languageName: node
   linkType: hard
 
@@ -17484,7 +17446,6 @@ __metadata:
     babel-plugin-angularjs-annotate: "npm:0.10.0"
     babel-plugin-macros: "npm:3.1.0"
     baron: "npm:3.0.3"
-    blink-diff: "npm:1.0.13"
     blob-polyfill: "npm:7.0.20220408"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
@@ -17601,7 +17562,6 @@ __metadata:
     react-dom: "npm:18.2.0"
     react-draggable: "npm:4.4.5"
     react-dropzone: "npm:^14.2.3"
-    react-enable: "npm:^3.1.0"
     react-grid-layout: "npm:1.4.2"
     react-highlight-words: "npm:0.20.0"
     react-hook-form: "npm:7.5.3"
@@ -25442,21 +25402,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-enable@npm:^3.1.0":
-  version: 3.1.1
-  resolution: "react-enable@npm:3.1.1"
-  dependencies:
-    "@headlessui/react": "npm:^1.5.0"
-    "@xstate/react": "npm:^3.2.1"
-    tslib: "npm:^1.14.1"
-    xstate: "npm:^4.37.0"
-  peerDependencies:
-    react: ^17 || ^18
-    react-dom: ^17 || ^18
-  checksum: 58321c06a9255ed3308d8211a50907e47fccf2f7f2c21ef387e7d83fec6920eea5e82a3c20c656dece922935c5d54bc3d69b08a978afe938bc981b1198622c3b
-  languageName: node
-  linkType: hard
-
 "react-error-boundary@npm:^3.1.0":
   version: 3.1.4
   resolution: "react-error-boundary@npm:3.1.4"
@@ -29378,7 +29323,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^1.10.0, tslib@npm:^1.13.0, tslib@npm:^1.14.1, tslib@npm:^1.8.1":
+"tslib@npm:^1.10.0, tslib@npm:^1.13.0, tslib@npm:^1.8.1":
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
   checksum: 7dbf34e6f55c6492637adb81b555af5e3b4f9cc6b998fb440dac82d3b42bdc91560a35a5fb75e20e24a076c651438234da6743d139e4feabf0783f3cdfe1dddb
@@ -29935,7 +29880,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-isomorphic-layout-effect@npm:^1.0.0, use-isomorphic-layout-effect@npm:^1.1.2":
+"use-isomorphic-layout-effect@npm:^1.1.2":
   version: 1.1.2
   resolution: "use-isomorphic-layout-effect@npm:1.1.2"
   peerDependencies:
@@ -31037,13 +30982,6 @@ __metadata:
   bin:
     xss: bin/xss
   checksum: dc97acaee35e5ed453fe5628841daf7b4aba5ed26b31ff4eadf831f42cded1ddebc218ff0db1d6a73e301bfada8a5236fec0c234233d66a20ecc319da542b357
-  languageName: node
-  linkType: hard
-
-"xstate@npm:^4.37.0":
-  version: 4.37.0
-  resolution: "xstate@npm:4.37.0"
-  checksum: e302846c99596185cbb72250d21070c05d0f0f171155cbdeb7762c580f5e467725ab4bb4c79feacbf0788e25a6d7da6e219e85fc01b1d7dad2730b8b38eb918e
   languageName: node
   linkType: hard
 
