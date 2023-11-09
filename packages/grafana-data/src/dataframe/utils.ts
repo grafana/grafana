@@ -32,7 +32,7 @@ export function isTimeSeriesFrame(frame: DataFrame, timeField?: Field | undefine
       const time = timeField.values[i];
 
       // Check to see if the current time is greater than
-      // the great time. If we get to the end then we
+      // the last time. If we get to the end then we
       // have a time series otherwise we return false
       if (greatestTime === null || (time !== null && time > greatestTime)) {
         greatestTime = time;
