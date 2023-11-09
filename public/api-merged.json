@@ -18652,7 +18652,7 @@
           "type": "boolean",
           "example": false
         },
-        "isManaged": {
+        "isExternal": {
           "type": "boolean",
           "example": false
         },
@@ -18707,7 +18707,7 @@
           "type": "boolean",
           "example": false
         },
-        "isManaged": {
+        "isExternal": {
           "type": "boolean",
           "example": false
         },
