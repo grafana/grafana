@@ -50,6 +50,7 @@ func TestPatchLibraryElement(t *testing.T) {
 					ID:          1,
 					OrgID:       1,
 					FolderID:    newFolder.ID, // nolint:staticcheck
+					FolderUID:   newFolder.UID,
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Panel - New name",
 					Kind:        int64(model.PanelElement),
@@ -91,9 +92,9 @@ func TestPatchLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolder(t, sc, "NewFolder")
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: newFolder.ID, // nolint:staticcheck
-				Kind:     int64(model.PanelElement),
-				Version:  1,
+				FolderUID: &newFolder.UID,
+				Kind:      int64(model.PanelElement),
+				Version:   1,
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.reqContext.Req.Body = mockRequestBody(cmd)
@@ -102,6 +103,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			var result = validateAndUnMarshalResponse(t, resp)
 			// nolint:staticcheck
 			sc.initialResult.Result.FolderID = newFolder.ID
+			sc.initialResult.Result.FolderUID = newFolder.UID
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
