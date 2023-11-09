@@ -217,7 +217,7 @@ export class AlertStatesDataLayer
   };
 }
 
-function promAlertStateToAlertState(state: PromAlertingRuleState): AlertState {
+export function promAlertStateToAlertState(state: PromAlertingRuleState): AlertState {
   if (state === PromAlertingRuleState.Firing) {
     return AlertState.Alerting;
   } else if (state === PromAlertingRuleState.Pending) {
