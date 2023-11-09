@@ -32,6 +32,9 @@ export const Components = {
     rolePicker: 'Built-in role picker',
     permissionLevel: 'Permission Level',
   },
+  DateTimePicker: {
+    input: 'data-testid date-time-input',
+  },
   DataSource: {
     TestData: {
       QueryTab: {

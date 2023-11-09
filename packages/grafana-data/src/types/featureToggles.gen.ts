@@ -159,4 +159,5 @@ export interface FeatureToggles {
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
+  logsInfiniteScrolling?: boolean;
 }

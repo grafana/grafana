@@ -17484,7 +17484,6 @@ __metadata:
     babel-plugin-angularjs-annotate: "npm:0.10.0"
     babel-plugin-macros: "npm:3.1.0"
     baron: "npm:3.0.3"
-    blink-diff: "npm:1.0.13"
     blob-polyfill: "npm:7.0.20220408"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
