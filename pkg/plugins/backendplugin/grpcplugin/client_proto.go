@@ -79,21 +79,13 @@ func (r *protoClient) Logger() log.Logger {
 func (r *protoClient) Start(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	err := r.plugin.Start(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
+	return r.plugin.Start(ctx)
 }
 
 func (r *protoClient) Stop(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	err := r.plugin.Stop(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
+	return r.plugin.Stop(ctx)
 }
 
 func (r *protoClient) client() (*ClientV2, bool) {
