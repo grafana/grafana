@@ -47,7 +47,7 @@ func main() {
 		EnableBashCompletion: true,
 	}
 
-	//
+	// This is required so that k8s cobra cli flags are used rather than urfave/cli
 	if len(os.Args) > 1 && os.Args[1] == "apiserver" {
 		apiserver.RunMain()
 		return
