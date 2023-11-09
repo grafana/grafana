@@ -3,7 +3,16 @@ import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useLocation, useRouteMatch } from 'react-router-dom';
 
-import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, OrgRole, PluginType } from '@grafana/data';
+import {
+  AppEvents,
+  AppPlugin,
+  AppPluginMeta,
+  NavModel,
+  NavModelItem,
+  OrgRole,
+  PluginType,
+  PluginContextProvider,
+} from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -76,13 +85,15 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   }
 
   const pluginRoot = plugin.root && (
-    <plugin.root
-      meta={plugin.meta}
-      basename={match.url}
-      onNavChanged={onNavChanged}
-      query={queryParams}
-      path={location.pathname}
-    />
+    <PluginContextProvider meta={plugin.meta}>
+      <plugin.root
+        meta={plugin.meta}
+        basename={match.url}
+        onNavChanged={onNavChanged}
+        query={queryParams}
+        path={location.pathname}
+      />
+    </PluginContextProvider>
   );
 
   // Because of the fallback at plugin routes, we need to check
