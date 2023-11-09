@@ -85,7 +85,7 @@ export const PromQail = (props: PromQailProps) => {
             <div className={styles.dataList}>
               <ol>
                 <li className={styles.textPadding}>
-                  Query Advisor suggests queries based on a metric and an user-generated request.
+                  Query Advisor suggests queries based on a metric and requests you type in.
                 </li>
                 <li className={styles.textPadding}>
                   Query Advisor sends Prometheus metrics, labels and metadata to the LLM provider you&#39;ve configured.
