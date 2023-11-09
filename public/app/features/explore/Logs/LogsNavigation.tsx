@@ -95,12 +95,12 @@ function LogsNavigation({
     }
     const delta = 5;
     function handleScroll(e: Event) {
+      return;
       if (!e.target || !loadMoreLogs) {
         return;
       }
       const target: HTMLDivElement = e.target as HTMLDivElement;
       const diff = (target.scrollHeight - target.scrollTop) - target.clientHeight;
-      console.log(diff)
       if (diff > delta) {
         return;
       }
@@ -223,7 +223,7 @@ function LogsNavigation({
   );
 
   return (
-    <div className={styles.navContainer}>
+    <div className={styles.navContainer} style={{ display: 'none' }}>
       {oldestLogsFirst ? olderLogsButton : newerLogsButton}
       <LogsNavigationPages
         pages={pages}

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { capitalize } from 'lodash';
+import { capitalize, throttle } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
 
@@ -129,8 +129,9 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
+  logRowsHeight: number;
 }
-
+config.featureToggles.exploreScrollableLogsContainer = true;
 const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
 
 // we need to define the order of these explicitly
@@ -171,6 +172,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     tableFrame: undefined,
     visualisationType: this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType(),
     logsContainer: undefined,
+    logRowsHeight: 0,
   };
 
   constructor(props: Props) {
@@ -203,6 +205,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
         })
       );
     }
+
+    window.removeEventListener('resize', this.handleResize);
+  }
+
+  componentDidMount() {
+    window.addEventListener('resize', this.handleResize);
   }
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
@@ -254,8 +262,24 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
+  handleResize = throttle(() => {
+    if (!this.state.logsContainer || !scrollableLogsContainer) {
+      return;
+    }
+    this.setState({ logRowsHeight: this.calculateLogRowsHeight(this.state.logsContainer) });
+  }, 100);
+
+  calculateLogRowsHeight = (node: HTMLDivElement) => {
+    const rect = node.getBoundingClientRect();
+    return window.innerHeight - rect.y; 
+  }
+
   onLogsContainerRef = (node: HTMLDivElement) => {
-    this.setState({ logsContainer: node });
+    const newState = { logsContainer: node, logRowsHeight: this.state.logRowsHeight };
+    if (scrollableLogsContainer) {
+      newState.logRowsHeight = this.calculateLogRowsHeight(node); 
+    }
+    this.setState(newState);
   };
 
   onChangeLogsSortOrder = () => {
@@ -786,7 +810,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </div>
             )}
             {this.state.visualisationType === 'logs' && hasData && (
-              <div className={styles.logRows} data-testid="logRows" ref={this.onLogsContainerRef}>
+              <div className={scrollableLogsContainer ? styles.scrollableLogRows : styles.logRows} data-testid="logRows" ref={this.onLogsContainerRef} style={{ height: scrollableLogsContainer ? this.state.logRowsHeight : 'auto' }}>
                 <LogRows
                   logRows={logRows}
                   deduplicatedRows={dedupedRows}
@@ -903,11 +927,15 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     logsTable: css({
       maxHeight: `${tableHeight}px`,
     }),
-    logRows: css`
-      overflow-x: ${scrollableLogsContainer ? 'scroll;' : `${wrapLogMessage ? 'unset' : 'scroll'};`}
+    scrollableLogRows: css`
+      overflow-x: scroll;
       overflow-y: visible;
       width: 100%;
-      ${scrollableLogsContainer && 'max-height: calc(100vh - 170px);'}
+    `,
+    logRows: css`
+      overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
+      overflow-y: visible;
+      width: 100%;
     `,
     visualisationType: css`
       display: flex;
@@ -918,7 +946,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       margin: 0 0 0 ${theme.spacing(1)};
     `,
     stickyNavigation: css`
-      ${scrollableLogsContainer && 'margin-bottom: 0px'}
+      ${scrollableLogsContainer && 'margin-bottom: 0px;'}
       overflow: visible;
     `,
   };
