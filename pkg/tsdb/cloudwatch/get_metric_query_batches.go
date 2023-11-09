@@ -30,21 +30,13 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 	for _, query := range queries {
 		// if a query is not referenced, then it is a "root" query
 		if _, ok := referencedQueries[query.Id]; !ok {
-			connectedIds := getConnectedIds(query.Id, mathQueryIdToReferences)
-
-			batch := make([]*models.CloudWatchQuery, 0, len(connectedIds))
-			// TODO: try passing around full queries
-			// map query ids to the actual queries
-			for _, id := range connectedIds {
-				batch = append(batch, idToQuery[id])
-			}
-			batches = append(batches, batch)
+			batches = append(batches, getConnectedQueries(query, mathQueryIdToReferences))
 		}
 	}
 	return batches
 }
 
-func getIdsReferencedByMathQueries(idToQuery map[string]*models.CloudWatchQuery) (map[string][]string, map[string]bool) {
+func getIdsReferencedByMathQueries(idToQuery map[string]*models.CloudWatchQuery) (map[string][]*models.CloudWatchQuery, map[string]bool) {
 	var mathQueries []*models.CloudWatchQuery
 	for _, query := range idToQuery {
 		if query.GetGetMetricDataAPIMode() == models.GMDApiModeMathExpression {
@@ -52,14 +44,14 @@ func getIdsReferencedByMathQueries(idToQuery map[string]*models.CloudWatchQuery)
 		}
 	}
 
-	mathQueryIdToReferences := make(map[string][]string)
+	mathQueryIdToReferences := make(map[string][]*models.CloudWatchQuery)
 	referencedQueries := make(map[string]bool)
 	for _, mathQuery := range mathQueries {
 		substrings := nonWordRegex.Split(mathQuery.Expression, -1)
 		for _, id := range substrings {
-			_, found := idToQuery[id]
+			query, found := idToQuery[id]
 			if found {
-				mathQueryIdToReferences[mathQuery.Id] = append(mathQueryIdToReferences[mathQuery.Id], id)
+				mathQueryIdToReferences[mathQuery.Id] = append(mathQueryIdToReferences[mathQuery.Id], query)
 				referencedQueries[id] = true
 			}
 		}
@@ -67,19 +59,19 @@ func getIdsReferencedByMathQueries(idToQuery map[string]*models.CloudWatchQuery)
 	return mathQueryIdToReferences, referencedQueries
 }
 
-// getConnectedIds does a breadth-first search to find all the query ids connected to the root id by references. The root id is also returned in the response.
-func getConnectedIds(rootId string, queryReferences map[string][]string) []string {
-	visited := map[string]bool{rootId: true}
-	queriesToReturn := []string{}
+// getConnectedQueries does a breadth-first search to find all the query ids connected to the root id by references. The root id is also returned in the response.
+func getConnectedQueries(root *models.CloudWatchQuery, queryReferences map[string][]*models.CloudWatchQuery) []*models.CloudWatchQuery {
+	visited := map[string]bool{root.Id: true}
+	queriesToReturn := []*models.CloudWatchQuery{}
 
-	queriesToVisit := []string{rootId}
+	queriesToVisit := []*models.CloudWatchQuery{root}
 	for i := 0; i < len(queriesToVisit); i++ {
-		currentId := queriesToVisit[i]
-		queriesToReturn = append(queriesToReturn, currentId)
-		for _, queryRefId := range queryReferences[currentId] {
-			if !visited[queryRefId] {
-				visited[queryRefId] = true
-				queriesToVisit = append(queriesToVisit, queryRefId)
+		currentQuery := queriesToVisit[i]
+		queriesToReturn = append(queriesToReturn, currentQuery)
+		for _, queryRef := range queryReferences[currentQuery.Id] {
+			if !visited[queryRef.Id] {
+				visited[queryRef.Id] = true
+				queriesToVisit = append(queriesToVisit, queryRef)
 			}
 		}
 	}
