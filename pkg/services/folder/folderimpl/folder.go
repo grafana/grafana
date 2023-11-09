@@ -412,41 +412,33 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, toFolderError(err)
 	}
 
-	dash, err := s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd)
-	if err != nil {
-		return nil, toFolderError(err)
-	}
+	var nestedFolder *folder.Folder
+	var dash *dashboards.Dashboard
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+		if dash, err = s.dashboardStore.SaveDashboard(ctx, *saveDashboardCmd); err != nil {
+			return toFolderError(err)
+		}
 
-	var createdFolder *folder.Folder
-	createdFolder, err = s.dashboardFolderStore.GetFolderByID(ctx, cmd.OrgID, dash.ID)
+		cmd = &folder.CreateFolderCommand{
+			// TODO: Today, if a UID isn't specified, the dashboard store
+			// generates a new UID. The new folder store will need to do this as
+			// well, but for now we take the UID from the newly created folder.
+			UID:         dash.UID,
+			OrgID:       cmd.OrgID,
+			Title:       cmd.Title,
+			Description: cmd.Description,
+			ParentUID:   cmd.ParentUID,
+		}
+
+		if nestedFolder, err = s.nestedFolderCreate(ctx, cmd); err != nil {
+			logger.Error("error saving folder to nested folder store", "error", err)
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	var nestedFolder *folder.Folder
-	cmd = &folder.CreateFolderCommand{
-		// TODO: Today, if a UID isn't specified, the dashboard store
-		// generates a new UID. The new folder store will need to do this as
-		// well, but for now we take the UID from the newly created folder.
-		UID:         dash.UID,
-		OrgID:       cmd.OrgID,
-		Title:       cmd.Title,
-		Description: cmd.Description,
-		ParentUID:   cmd.ParentUID,
-	}
-	nestedFolder, err = s.nestedFolderCreate(ctx, cmd)
-	if err != nil {
-		// We'll log the error and also roll back the previously-created
-		// (legacy) folder.
-		logger.Error("error saving folder to nested folder store", "error", err)
-		// do not shallow create error if the legacy folder delete fails
-		if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
-			ID:    createdFolder.ID,
-			OrgID: createdFolder.OrgID,
-		}); deleteErr != nil {
-			logger.Error("error deleting folder after failed save to nested folder store", "error", err)
-		}
-		return dashboards.FromDashboard(dash), err
 	}
 
 	f := dashboards.FromDashboard(dash)
@@ -464,25 +456,33 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 	}
 	user := cmd.SignedInUser
 
-	dashFolder, err := s.legacyUpdate(ctx, cmd)
+	var dashFolder, foldr *folder.Folder
+	var err error
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+		if dashFolder, err = s.legacyUpdate(ctx, cmd); err != nil {
+			return err
+		}
+
+		if foldr, err = s.store.Update(ctx, folder.UpdateFolderCommand{
+			UID:            cmd.UID,
+			OrgID:          cmd.OrgID,
+			NewTitle:       cmd.NewTitle,
+			NewDescription: cmd.NewDescription,
+			SignedInUser:   user,
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
+		logger.Error("folder update failed", "folderUID", cmd.UID, "error", err)
 		return nil, err
 	}
 
-	foldr, err := s.store.Update(ctx, folder.UpdateFolderCommand{
-		UID:            cmd.UID,
-		OrgID:          cmd.OrgID,
-		NewTitle:       cmd.NewTitle,
-		NewDescription: cmd.NewDescription,
-		SignedInUser:   user,
-	})
-	if err != nil {
-		if errors.Is(err, folder.ErrFolderNotFound) {
-			logger.Warn("attempt to update folder that does not exist in the folders table", "folderUID", cmd.UID)
-			return dashFolder, nil
-		}
-
-		return nil, err
+	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return dashFolder, nil
 	}
 
 	// always expose the dashboard store sequential ID
@@ -625,10 +625,10 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			return folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
 		}
 
-		for _, folder := range result {
-			dashFolder, ok := dashFolders[folder]
+		for _, foldr := range result {
+			dashFolder, ok := dashFolders[foldr]
 			if !ok {
-				return err
+				return folder.ErrInternal.Errorf("folder does not exist in dashboard store")
 			}
 
 			if cmd.ForceDeleteRules {
@@ -637,8 +637,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				}
 			}
 
-			err = s.legacyDelete(ctx, cmd, dashFolder)
-			if err != nil {
+			if err = s.legacyDelete(ctx, cmd, dashFolder); err != nil {
 				return err
 			}
 		}

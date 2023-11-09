@@ -189,7 +189,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dash, nil).Once()
-				folderStore.On("GetFolderByID", mock.Anything, orgID, dash.ID).Return(f, nil)
+				//folderStore.On("GetFolderByID", mock.Anything, orgID, dash.ID).Return(f, nil)
 
 				actualFolder, err := service.Create(context.Background(), &folder.CreateFolderCommand{
 					OrgID:        orgID,
