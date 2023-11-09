@@ -200,14 +200,15 @@ func (s *OAuth2ServiceImpl) RemoveExternalService(ctx context.Context, name stri
 	// Since we will delete the service, clear cache entry
 	s.cache.Delete(client.ClientID)
 
-	// Delete the external service in store
+	// Delete the OAuth client info in store
 	if err := s.sqlstore.DeleteExternalService(ctx, client.ClientID); err != nil {
 		s.logger.Error("Error deleting external service", "name", name, "error", err.Error())
 		return err
 	}
 	s.logger.Debug("Deleted external service", "name", name, "client_id", client.ClientID)
 
-	return s.saService.RemoveExtSvcAccount(ctx, oauthserver.TmpOrgID, slugify.Slugify(name))
+	// Remove the associated service account
+	return s.saService.RemoveExtSvcAccount(ctx, oauthserver.TmpOrgID, slug)
 }
 
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
