@@ -69,8 +69,7 @@ export function InstallControlsButton({
     if (!errorInstalling && !('error' in result)) {
       let successMessage = `Installed ${plugin.name}`;
       if (config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall) {
-        successMessage =
-          'Install requested, this may take a few minutes.';
+        successMessage = 'Install requested, this may take a few minutes.';
       }
 
       appEvents.emit(AppEvents.alertSuccess, [successMessage]);
