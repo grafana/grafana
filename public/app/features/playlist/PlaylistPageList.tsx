@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, LinkButton, ModalsController, useStyles2 } from '@grafana/ui';
+import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
@@ -67,6 +68,48 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
     </ul>
   );
 };
+
+const PlaylistPageListSkeleton = () => {
+  const styles = useStyles2(getStyles);
+  const skeletonStyles = useStyles2(getSkeletonStyles);
+  return (
+    <div className={styles.list}>
+      {new Array(3).fill(null).map((_item, index) => (
+        <Card className={skeletonStyles.card} key={index}>
+          <Card.Heading>
+            <Skeleton width={140} />
+          </Card.Heading>
+          <Card.Actions>
+            <Stack direction="row">
+              <Skeleton containerClassName={skeletonStyles.button} width={142} height={32} />
+              {contextSrv.isEditor && (
+                <>
+                  <Skeleton containerClassName={skeletonStyles.button} width={135} height={32} />
+                  <Skeleton containerClassName={skeletonStyles.button} width={153} height={32} />
+                </>
+              )}
+            </Stack>
+          </Card.Actions>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+PlaylistPageList.Skeleton = PlaylistPageListSkeleton;
+
+function getSkeletonStyles(theme: GrafanaTheme2) {
+  return {
+    button: css({
+      lineHeight: 1,
+    }),
+    card: css({
+      backgroundColor: theme.colors.background.primary,
+      outline: `1px solid ${theme.colors.background.secondary}`,
+      outlineOffset: '-1px',
+    }),
+  };
+}
 
 function getStyles(theme: GrafanaTheme2) {
   return {

@@ -50,11 +50,11 @@ export const PlaylistPage = () => {
     />
   );
 
-  const showSearch = playlists.length > 0 || searchQuery.length > 0;
+  const showSearch = allPlaylists.loading || playlists.length > 0 || searchQuery.length > 0;
 
   return (
     <Page navId="dashboards/playlists">
-      <Page.Contents isLoading={allPlaylists.loading}>
+      <Page.Contents>
         {showSearch && (
           <PageActionBar
             searchQuery={searchQuery}
@@ -67,29 +67,35 @@ export const PlaylistPage = () => {
           />
         )}
 
-        {!hasPlaylists && searchQuery ? (
-          <EmptyQueryListBanner />
+        {allPlaylists.loading ? (
+          <PlaylistPageList.Skeleton />
         ) : (
-          <PlaylistPageList
-            playlists={playlists}
-            setStartPlaylist={setStartPlaylist}
-            setPlaylistToDelete={setPlaylistToDelete}
-          />
+          <>
+            {!hasPlaylists && searchQuery ? (
+              <EmptyQueryListBanner />
+            ) : (
+              <PlaylistPageList
+                playlists={playlists}
+                setStartPlaylist={setStartPlaylist}
+                setPlaylistToDelete={setPlaylistToDelete}
+              />
+            )}
+            {!showSearch && emptyListBanner}
+            {playlistToDelete && (
+              <ConfirmModal
+                title={playlistToDelete.name}
+                confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
+                body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
+                  name: playlistToDelete.name,
+                })}
+                onConfirm={onDeletePlaylist}
+                isOpen={Boolean(playlistToDelete)}
+                onDismiss={onDismissDelete}
+              />
+            )}
+            {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
+          </>
         )}
-        {!showSearch && emptyListBanner}
-        {playlistToDelete && (
-          <ConfirmModal
-            title={playlistToDelete.name}
-            confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
-            body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
-              name: playlistToDelete.name,
-            })}
-            onConfirm={onDeletePlaylist}
-            isOpen={Boolean(playlistToDelete)}
-            onDismiss={onDismissDelete}
-          />
-        )}
-        {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
       </Page.Contents>
     </Page>
   );
