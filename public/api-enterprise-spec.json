@@ -4294,7 +4294,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "isManaged": {
+        "isExternal": {
           "type": "boolean"
         },
         "permission": {
@@ -6813,7 +6813,7 @@
           "type": "boolean",
           "example": false
         },
-        "isManaged": {
+        "isExternal": {
           "type": "boolean",
           "example": false
         },
@@ -6868,7 +6868,7 @@
           "type": "boolean",
           "example": false
         },
-        "isManaged": {
+        "isExternal": {
           "type": "boolean",
           "example": false
         },
