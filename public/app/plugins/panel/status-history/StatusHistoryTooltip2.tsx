@@ -3,7 +3,6 @@ import React from 'react';
 
 import {
   DataFrame,
-  FALLBACK_COLOR,
   Field,
   formattedValueToString,
   getDisplayProcessor,
@@ -79,7 +78,7 @@ export const StatusHistoryTooltip2 = ({
     return {
       label: getFieldDisplayName(field),
       value: fmt(field, field.values[datapointIdx]),
-      color: display.color || (FALLBACK_COLOR as string),
+      color: display.color,
     };
   };
 
