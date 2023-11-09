@@ -150,7 +150,7 @@ const ServiceAccountListItem = memo(
                 disabled={true}
                 name="lock"
                 size="md"
-                tooltip={`This is a managed Service account and cannot be modified.`}
+                tooltip={`This is a managed service account and cannot be modified.`}
               />
             </HorizontalGroup>
           )}
