@@ -86,13 +86,6 @@ func RunCmd() int {
 				return 1
 			}
 
-		case "build-example-apiserver":
-			clean(opts)
-			if err := doBuild("grafana-example-apiserver", "./pkg/cmd/grafana-example-apiserver", opts); err != nil {
-				log.Println(err)
-				return 1
-			}
-
 		case "build-cli":
 			clean(opts)
 			if err := doBuild("grafana-cli", "./pkg/cmd/grafana-cli", opts); err != nil {
