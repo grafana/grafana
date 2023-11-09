@@ -1,11 +1,19 @@
-import { layoutGraphWithSugiayma, GeomGraph } from '@msagl/core';
+import {
+  GeomGraph,
+  GeomEdge,
+  GeomNode,
+  Point,
+  CurveFactory,
+  SugiyamaLayoutSettings,
+  LayerDirectionEnum,
+  layoutGeomGraph,
+} from '@msagl/core';
 import { parseDot } from '@msagl/parser';
 
 addEventListener('message', async (event) => {
   const { nodes, edges, config } = event.data;
-  layout(nodes, edges, config);
-  // const [newNodes, newEdges] = layout(nodes, edges, config);
-  // postMessage({ nodes: newNodes, edges: newEdges });
+  const [newNodes, newEdges] = layout(nodes, edges, config);
+  postMessage({ nodes: newNodes, edges: newEdges });
 });
 
 /**
@@ -36,42 +44,49 @@ export function layout(nodes, edges) {
   const dot = edgesToDOT(mappedEdges);
   const graph = parseDot(dot);
   const geomGraph = new GeomGraph(graph);
-  for (const e of geomGraph.deepEdges) {
-    console.log(e);
-  }
-  layoutGraphWithSugiayma(geomGraph, null, false);
-  for (const node of geomGraph.nodesBreadthFirst) {
-    console.log(node);
+  for (const e of graph.deepEdges) {
+    const gbc = new GeomEdge(e);
   }
 
-  // const nodesMap = dotLayout.objects.reduce((acc, obj) => {
-  //     acc[DOTToIdMap[obj.name]] = {
-  //         obj,
-  //     };
-  //     return acc;
-  // }, {});
-  //
-  // for (const node of nodes) {
-  //     nodesMap[node.id] = {
-  //         ...nodesMap[node.id],
-  //         datum: {
-  //             ...node,
-  //             x: parseFloat(nodesMap[node.id].obj.pos.split(',')[0]),
-  //             y: parseFloat(nodesMap[node.id].obj.pos.split(',')[1]),
-  //         },
-  //     };
-  // }
-  // const edgesMapped = edges.map((e) => {
-  //     return {
-  //         ...e,
-  //         source: nodesMap[e.source].datum,
-  //         target: nodesMap[e.target].datum,
-  //     };
-  // });
-  //
-  // const finalNodes = Object.values(nodesMap).map((v) => v.datum);
-  // centerNodes(finalNodes);
-  // return [finalNodes, edgesMapped];
+  for (const n of graph.nodesBreadthFirst) {
+    const gn = new GeomNode(n);
+    gn.boundaryCurve = CurveFactory.mkCircle(50, new Point(0, 0));
+  }
+  geomGraph.layoutSettings = new SugiyamaLayoutSettings();
+  geomGraph.layoutSettings.layerDirection = LayerDirectionEnum.BT;
+  geomGraph.layoutSettings.LayerSeparation = 60;
+  geomGraph.layoutSettings.commonSettings.NodeSeparation = 40;
+  layoutGeomGraph(geomGraph);
+
+  const nodesMap = {};
+  for (const node of geomGraph.nodesBreadthFirst) {
+    nodesMap[DOTToIdMap[node.id]] = {
+      obj: node,
+    };
+  }
+
+  for (const node of nodes) {
+    nodesMap[node.id] = {
+      ...nodesMap[node.id],
+      datum: {
+        ...node,
+        x: nodesMap[node.id].obj.center.x,
+        y: nodesMap[node.id].obj.center.y,
+      },
+    };
+  }
+  const edgesMapped = edges.map((e) => {
+    return {
+      ...e,
+      source: nodesMap[e.source].datum,
+      target: nodesMap[e.target].datum,
+    };
+  });
+
+  const finalNodes = Object.values(nodesMap).map((v) => v.datum);
+  centerNodes(finalNodes);
+  console.log({ finalNodes, edgesMapped });
+  return [finalNodes, edgesMapped];
 }
 
 function toDOT(edges, graphAttr = '', edgeAttr = '') {

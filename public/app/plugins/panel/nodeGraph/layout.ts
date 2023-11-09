@@ -161,6 +161,7 @@ function layout(
 ) {
   // const worker = engine === 'default' ? createWorker() : createDOTWorker();
   const worker = createMsaglWorker();
+  // const worker = createDOTWorker();
 
   worker.onmessage = (event: MessageEvent<{ nodes: NodeDatum[]; edges: EdgeDatumLayout[] }>) => {
     for (let i = 0; i < nodes.length; i++) {
