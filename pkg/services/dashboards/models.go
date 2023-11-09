@@ -483,7 +483,7 @@ type FindPersistedDashboardsQuery struct {
 	DashboardIds  []int64
 	DashboardUIDs []string
 	Type          string
-	// Deprecated: use FolderUID instead
+	// Deprecated: use FolderUIDs instead
 	FolderIds  []int64
 	FolderUIDs []string
 	Tags       []string
