@@ -70,8 +70,6 @@ enum ActiveTab {
   Details = 'details',
 }
 
-// @TODO
-// figure out why we needed <AlertingPageWrapper>
 const RuleViewer = ({ match }: RuleViewerProps) => {
   const [activeTab, setActiveTab] = useActiveTab();
   const [deleteModal, showDeleteModal] = useDeleteModal();
@@ -91,7 +89,6 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   useRuleViewerPageTitle(rule);
 
   /**
-   * Figure out if edit / create / delete is supported and allowed
    * TODO refactor this, very confusing right now
    */
   const { isEditable, isRemovable } = useIsRuleEditable(identifier.ruleSourceName, rule?.rulerRule);
@@ -113,7 +110,6 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   }
 
   if (rule) {
-    // should fit in a tweet
     const summary = rule.annotations[Annotation.summary];
     const promRule = rule.promRule;
 
