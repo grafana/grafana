@@ -92,7 +92,7 @@ func getConnectedQueriesIds(startQueryId string, queryReferences map[string][]st
 		for _, queryRefId := range queryReferences[currentQueryId] {
 			if !visited[queryRefId] {
 				visited[queryRefId] = true
-				queriesToVisit = append(queriesToVisit, queryRefId) // commenting out this line doesn't break any tests, TODO: write a test
+				queriesToVisit = append(queriesToVisit, queryRefId)
 			}
 		}
 	}
