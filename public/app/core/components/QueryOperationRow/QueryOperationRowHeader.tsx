@@ -81,7 +81,7 @@ export const QueryOperationRowHeader = ({
         {actionsElement}
         {draggable && (
           <div onMouseMove={reportDragMousePosition} {...dragHandleProps}>
-            <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+            <Icon title={dragAndDropLabel} name="draggabledots" size="lg" className={styles.dragIcon} />
           </div>
         )}
       </Stack>
