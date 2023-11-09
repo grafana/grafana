@@ -477,6 +477,12 @@ func (d *dashboardStore) saveDashboard(sess *db.Session, cmd *dashboards.SaveDas
 		dash.SetUID(util.GenerateShortUID())
 	}
 
+	if d.features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && !dash.IsFolder {
+		if err := d.savePanels(sess, dash); err != nil {
+			return nil, err
+		}
+	}
+
 	parentVersion := dash.Version
 	var affectedRows int64
 	var err error
@@ -551,6 +557,21 @@ func (d *dashboardStore) saveDashboard(sess *db.Session, cmd *dashboards.SaveDas
 		}
 	}
 	return dash, nil
+}
+
+func (d *dashboardStore) savePanels(sess *db.Session, dash *dashboards.Dashboard) error {
+	if _, err := sess.Exec(fmt.Sprintf("DELETE FROM panel WHERE dashid = %d", dash.ID)); err != nil {
+		return err
+	}
+
+	for _, p := range getPanelTitles(dash) {
+		// #TODO make sure this is the correct syntax for all three DBs
+		_, err := sess.Exec("INSERT INTO panel (dashid, title) VALUES (?, ?)", dash.ID, p)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func saveProvisionedData(sess *db.Session, provisioning *dashboards.DashboardProvisioning, dashboard *dashboards.Dashboard) error {
