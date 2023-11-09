@@ -136,7 +136,7 @@ func (m *service) RegisterModule(name string, fn initFn) {
 }
 
 // RegisterInvisibleModule registers an invisible module with the dskit module manager.
-// Invisible modules are not visible to the user, and are intendent to be used as dependencies.
+// Invisible modules are not visible to the user, and are intended to be used as dependencies.
 func (m *service) RegisterInvisibleModule(name string, fn initFn) {
 	m.moduleManager.RegisterModule(name, fn, modules.UserInvisibleModule)
 }

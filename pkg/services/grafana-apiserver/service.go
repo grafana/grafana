@@ -51,9 +51,10 @@ import (
 type StorageType string
 
 const (
-	StorageTypeFile   StorageType = "file"
-	StorageTypeEtcd   StorageType = "etcd"
-	StorageTypeLegacy StorageType = "legacy"
+	StorageTypeFile    StorageType = "file"
+	StorageTypeEtcd    StorageType = "etcd"
+	StorageTypeLegacy  StorageType = "legacy"
+	StorageTypeUnified StorageType = "unified"
 )
 
 var (
@@ -260,7 +261,8 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	if s.config.storageType == StorageTypeEtcd {
+	switch s.config.storageType {
+	case StorageTypeEtcd:
 		o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
 		if err := o.Etcd.Validate(); len(err) > 0 {
 			return err[0]
@@ -268,9 +270,8 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
-	}
 
-	if s.config.storageType == "unified" {
+	case StorageTypeUnified:
 		eDB, err := entityDB.ProvideEntityDB(nil, s.cfg, s.features)
 		if err != nil {
 			return err
@@ -282,10 +283,12 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
-	}
 
-	if s.config.storageType == StorageTypeFile {
+	case StorageTypeFile:
 		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)
+
+	case StorageTypeLegacy:
+		// do nothing?
 	}
 
 	serverConfig.Authorization.Authorizer = s.authorizer
