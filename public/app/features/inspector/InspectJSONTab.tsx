@@ -146,7 +146,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
               height={height}
               language="json"
               showLineNumbers={true}
-              showMiniMap={(text && text.length) > 100}
+              showMiniMap={text.length > 100}
               value={text || ''}
               readOnly={!isPanelJSON}
               onBlur={setText}

@@ -674,7 +674,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ItemDTO"
+              "$ref": "#/components/schemas/Annotation"
             }
           }
         },
@@ -695,7 +695,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/ItemDTO"
+                "$ref": "#/components/schemas/Annotation"
               },
               "type": "array"
             }
@@ -744,19 +744,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/OrgDetailsDTO"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getCustomPermissionsReportResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/CustomPermissionsRecordDTO"
-              },
-              "type": "array"
             }
           }
         },
@@ -1855,16 +1842,6 @@
         },
         "description": "(empty)"
       },
-      "trimDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/TrimDashboardFullWithMeta"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "unauthorisedError": {
         "content": {
           "application/json": {
@@ -2945,6 +2922,80 @@
             "type": "string"
           },
           "numExternalAlertmanagers": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "Annotation": {
+        "properties": {
+          "alertId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "alertName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "created": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardUID": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Json"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "login": {
+            "type": "string"
+          },
+          "newState": {
+            "type": "string"
+          },
+          "panelId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "prevState": {
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "text": {
+            "type": "string"
+          },
+          "time": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "timeEnd": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "updated": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
             "format": "int64",
             "type": "integer"
           }
@@ -4167,53 +4218,6 @@
         },
         "type": "object"
       },
-      "CustomPermissionsRecordDTO": {
-        "properties": {
-          "customPermissions": {
-            "type": "string"
-          },
-          "granteeName": {
-            "type": "string"
-          },
-          "granteeType": {
-            "type": "string"
-          },
-          "granteeUrl": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isFolder": {
-            "type": "boolean"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "orgRole": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          },
-          "usersCount": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "DashboardACLInfoDTO": {
         "properties": {
           "created": {
@@ -4379,6 +4383,7 @@
             "type": "string"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -4478,27 +4483,15 @@
           "externalUrl": {
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "key": {
             "type": "string"
           },
           "name": {
             "type": "string"
           },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
           "updated": {
             "format": "date-time",
             "type": "string"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -6138,6 +6131,7 @@
       "Hit": {
         "properties": {
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -6257,6 +6251,7 @@
             "$ref": "#/components/schemas/Json"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -6292,6 +6287,7 @@
             "type": "string"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -6398,80 +6394,6 @@
               "$ref": "#/components/schemas/LinkTransformationConfig"
             },
             "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "ItemDTO": {
-        "properties": {
-          "alertId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "alertName": {
-            "type": "string"
-          },
-          "avatarUrl": {
-            "type": "string"
-          },
-          "created": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardUID": {
-            "type": "string"
-          },
-          "data": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "email": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "login": {
-            "type": "string"
-          },
-          "newState": {
-            "type": "string"
-          },
-          "panelId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "prevState": {
-            "type": "string"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "text": {
-            "type": "string"
-          },
-          "time": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "timeEnd": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "updated": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -6695,6 +6617,7 @@
             "type": "string"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -7526,7 +7449,7 @@
         "description": "PatchLibraryElementCommand is the command for patching a LibraryElement",
         "properties": {
           "folderId": {
-            "description": "ID of the folder where the library element is stored.",
+            "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -9631,7 +9554,7 @@
             "example": false,
             "type": "boolean"
           },
-          "isExternal": {
+          "isManaged": {
             "example": false,
             "type": "boolean"
           },
@@ -9686,7 +9609,7 @@
             "example": false,
             "type": "boolean"
           },
-          "isExternal": {
+          "isManaged": {
             "example": false,
             "type": "boolean"
           },
@@ -10764,28 +10687,6 @@
           "$ref": "#/components/schemas/Transformation"
         },
         "type": "array"
-      },
-      "TrimDashboardCommand": {
-        "properties": {
-          "dashboard": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/Json"
-          }
-        },
-        "type": "object"
-      },
-      "TrimDashboardFullWithMeta": {
-        "properties": {
-          "dashboard": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/Json"
-          }
-        },
-        "type": "object"
       },
       "Type": {
         "type": "string"
@@ -19271,12 +19172,10 @@
     },
     "/licensing/custom-permissions": {
       "get": {
+        "deprecated": true,
         "description": "You need to have a permission with action `licensing.reports:read`.",
         "operationId": "getCustomPermissionsReport",
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -19290,12 +19189,10 @@
     },
     "/licensing/custom-permissions-csv": {
       "get": {
+        "deprecated": true,
         "description": "You need to have a permission with action `licensing.reports:read`.",
         "operationId": "getCustomPermissionsCSV",
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }

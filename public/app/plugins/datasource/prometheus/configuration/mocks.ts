@@ -9,7 +9,6 @@ export function createDefaultConfigOptions(): DataSourceSettings<PromOptions> {
       timeInterval: '1m',
       queryTimeout: '1m',
       httpMethod: 'GET',
-      directUrl: 'url',
     },
   });
 }
