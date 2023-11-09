@@ -191,7 +191,7 @@ export class ElasticDatasource
    * @param url the url to query the index on, for example `/_mapping`.
    */
 
-  private requestAllIndices(url: string, range = getDefaultTimeRange()): Observable<any> {
+  private requestAllIndices(url: string, range = getDefaultTimeRange()) {
     let indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (!Array.isArray(indexList)) {
       indexList = [this.indexPattern.getIndexForToday()];
