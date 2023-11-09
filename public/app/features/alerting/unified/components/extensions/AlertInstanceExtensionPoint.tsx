@@ -4,21 +4,23 @@ import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { getPluginLinkExtensions } from '@grafana/runtime';
 import { Dropdown, IconButton } from '@grafana/ui';
 import { ConfirmNavigationModal } from 'app/features/explore/extensions/ConfirmNavigationModal';
-import { Alert } from 'app/types/unified-alerting';
+import { Alert, CombinedRule } from 'app/types/unified-alerting';
 
 import { AlertExtensionPointMenu } from './AlertInstanceExtensionPointMenu';
 
 interface AlertInstanceExtensionPointProps {
+  rule?: CombinedRule;
   instance: Alert;
   extensionPointId: PluginExtensionPoints;
 }
 
 export const AlertInstanceExtensionPoint = ({
+  rule,
   instance,
   extensionPointId,
 }: AlertInstanceExtensionPointProps): ReactElement | null => {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
-  const context = { instance };
+  const context = { instance, rule };
   const extensions = useExtensionLinks(context, extensionPointId);
 
   const menu = <AlertExtensionPointMenu extensions={extensions} onSelect={setSelectedExtension} />;
@@ -41,6 +43,7 @@ export const AlertInstanceExtensionPoint = ({
 };
 
 export type PluginExtensionAlertInstanceContext = {
+  rule?: CombinedRule;
   instance: Alert;
 };
 
