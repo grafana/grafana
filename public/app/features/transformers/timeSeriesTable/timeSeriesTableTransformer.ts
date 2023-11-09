@@ -145,13 +145,6 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     for (let i = 0; i < framesForRef.length; i++) {
       const frame = framesForRef[i];
 
-      // If it's not a time series frame we add
-      // it unmodified to the result
-      if (!isTimeSeriesFrame(frame)) {
-        result.push(frame);
-        continue;
-      }
-
       // Retrieve the time field that's been configured
       // If one isn't configured then use the first found
       let timeField = null;
@@ -159,6 +152,13 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         timeField = frame.fields.find((field) => field.name === options[refId]?.timeField);
       } else {
         timeField = frame.fields.find((field) => field.type === FieldType.time);
+      }
+
+      // If it's not a time series frame we add
+      // it unmodified to the result
+      if (!isTimeSeriesFrame(frame, timeField)) {
+        result.push(frame);
+        continue;
       }
 
       for (const field of frame.fields) {

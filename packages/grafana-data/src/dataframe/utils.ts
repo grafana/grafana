@@ -1,16 +1,23 @@
-import { DataFrame, FieldType } from '../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../types/dataFrame';
 
 import { getTimeField } from './processDataFrame';
 
-export function isTimeSeriesFrame(frame: DataFrame) {
+const MAX_TIME_COMPARISONS = 100;
+
+export function isTimeSeriesFrame(frame: DataFrame, timeField?: Field | undefined) {
   // If we have less than two frames we can't have a timeseries
   if (frame.fields.length < 2) {
     return false;
   }
 
   // In order to have a time series we need a time field
-  // and at least one number field
-  const timeField = frame.fields.find((field) => field.type === FieldType.time);
+  // Optionally, we see if there's a field that's been configured for time
+  // and we use that
+  if (timeField === undefined) {
+    timeField = frame.fields.find((field) => field.type === FieldType.time);
+  }
+
+  // Find a number field, as long as we have any number field this should work
   const numberField = frame.fields.find((field) => field.type === FieldType.number);
 
   // There are certain query types in which we will
@@ -19,14 +26,15 @@ export function isTimeSeriesFrame(frame: DataFrame) {
   // times need to be ordered from past to present
   if (timeField !== undefined) {
     let greatestTime: number | null = null;
+    let testWindow = timeField.values.length > MAX_TIME_COMPARISONS ? MAX_TIME_COMPARISONS : timeField.values.length;
 
-    for (let i = 0; i < timeField.values.length; i++) {
+    for (let i = 0; i < testWindow; i++) {
       const time = timeField.values[i];
 
       // Check to see if the current time is greater than
       // the great time. If we get to the end then we
       // have a time series otherwise we return false
-      if (greatestTime === null || time > greatestTime) {
+      if (greatestTime === null || (time !== null && time > greatestTime)) {
         greatestTime = time;
       } else {
         return false;
