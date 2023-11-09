@@ -7,6 +7,7 @@ import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { SubMenu } from './SubMenu';
 
@@ -98,19 +99,15 @@ export const MenuItem = React.memo(
 
     const hasSubMenu = childItems && childItems.length > 0;
     const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
-    const itemWrapperStyle = cx(
+    const itemStyle = cx(
       {
-        [styles.menuItemWrapper]: true,
+        [styles.item]: true,
         [styles.active]: isActive,
+        [styles.disabled]: disabled,
         [styles.destructive]: destructive && !disabled,
       },
       className
     );
-
-    const itemStyle = cx({
-      [styles.item]: true,
-      [styles.disabled]: disabled,
-    });
 
     const disabledProps = {
       [ItemElement === 'button' ? 'disabled' : 'aria-disabled']: disabled,
@@ -149,51 +146,46 @@ export const MenuItem = React.memo(
     const hasShortcut = Boolean(shortcut && shortcut.length > 0);
 
     return (
-      <div
-        tabIndex={tabIndex}
-        className={itemWrapperStyle}
+      <ItemElement
+        target={target}
+        className={itemStyle}
+        rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+        href={url}
         onClick={onClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
+        role={url === undefined ? role : undefined}
+        data-role="menuitem" // used to identify menuitem in Menu.tsx
         ref={localRef}
+        data-testid={testId}
+        aria-label={ariaLabel}
+        aria-checked={ariaChecked}
+        tabIndex={tabIndex}
+        {...disabledProps}
       >
-        <ItemElement
-          tabIndex={-1}
-          target={target}
-          rel={target === '_blank' ? 'noopener noreferrer' : undefined}
-          href={url}
-          data-testid={testId}
-          aria-label={ariaLabel}
-          aria-checked={ariaChecked}
-          className={itemStyle}
-          data-role="menuitem"
-          role={url === undefined ? role : undefined}
-          {...disabledProps}
-        >
-          <>
-            {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
-            {label}
-            <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
-              {hasShortcut && (
-                <div className={styles.shortcut}>
-                  <Icon name="keyboard" title="keyboard shortcut" />
-                  {shortcut}
-                </div>
-              )}
-              {hasSubMenu && (
-                <SubMenu
-                  items={childItems}
-                  isOpen={isSubMenuOpen}
-                  openedWithArrow={openedWithArrow}
-                  setOpenedWithArrow={setOpenedWithArrow}
-                  close={closeSubMenu}
-                  customStyle={customSubMenuContainerStyles}
-                />
-              )}
-            </div>
-          </>
-        </ItemElement>
+        <Stack direction="row" justifyContent="flex-start" alignItems="center">
+          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+          {label}
+          <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
+            {hasShortcut && (
+              <div className={styles.shortcut}>
+                <Icon name="keyboard" title="keyboard shortcut" />
+                {shortcut}
+              </div>
+            )}
+            {hasSubMenu && (
+              <SubMenu
+                items={childItems}
+                isOpen={isSubMenuOpen}
+                openedWithArrow={openedWithArrow}
+                setOpenedWithArrow={setOpenedWithArrow}
+                close={closeSubMenu}
+                customStyle={customSubMenuContainerStyles}
+              />
+            )}
+          </div>
+        </Stack>
         {description && (
           <div
             className={cx(styles.description, {
@@ -203,7 +195,7 @@ export const MenuItem = React.memo(
             {description}
           </div>
         )}
-      </div>
+      </ItemElement>
     );
   })
 );
@@ -212,45 +204,28 @@ MenuItem.displayName = 'MenuItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    menuItemWrapper: css({
-      label: 'menu-item-wrapper',
+    item: css({
       background: 'none',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      color: theme.colors.text.primary,
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'flex-start',
+      alignItems: 'stretch',
       padding: theme.spacing(0.5, 2),
       minHeight: theme.spacing(4),
       margin: 0,
       border: 'none',
       width: '100%',
       position: 'relative',
-      flexWrap: 'wrap',
-      cursor: 'pointer',
+
       '&:hover, &:focus, &:focus-visible': {
         background: theme.colors.action.hover,
         color: theme.colors.text.primary,
         textDecoration: 'none',
       },
-      '&:focus-visible': getFocusStyles(theme),
-    }),
-    item: css({
-      label: 'menu-item',
-      background: 'none',
-      whiteSpace: 'nowrap',
-      color: theme.colors.text.primary,
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      margin: 0,
-      border: 'none',
-      padding: 0,
-      width: '100%',
 
-      // wrapper is handling the focus styles
-      '&:focus-visible': {
-        outline: 'none',
-        boxShadow: 'none',
-      },
+      '&:focus-visible': getFocusStyles(theme),
     }),
     active: css({
       background: theme.colors.action.hover,
@@ -282,17 +257,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     icon: css({
       opacity: 0.7,
-      marginRight: '10px',
-      marginLeft: '-4px',
       color: theme.colors.text.secondary,
     }),
     rightWrapper: css({
       display: 'flex',
       alignItems: 'center',
       marginLeft: 'auto',
-    }),
-    shortcutIcon: css({
-      marginRight: theme.spacing(1),
     }),
     withShortcut: css({
       minWidth: theme.spacing(10.5),
@@ -306,8 +276,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       opacity: 0.7,
     }),
     description: css({
-      fontSize: theme.typography.bodySmall.fontSize,
+      ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
+      textAlign: 'start',
     }),
     descriptionWithIcon: css({
       marginLeft: theme.spacing(3),
