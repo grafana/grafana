@@ -13,7 +13,6 @@ import {
   getFieldDisplayName,
   GrafanaTheme2,
   LinkModel,
-  TimeZone,
 } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import { SeriesTableRowProps, useStyles2, useTheme2 } from '@grafana/ui';
@@ -30,7 +29,6 @@ interface TrendTooltipProps {
   mode?: TooltipDisplayMode;
   sortOrder?: SortOrder;
   sync?: () => DashboardCursorSync;
-  timeZone: TimeZone;
 
   // hovered points
   dataIdxs: Array<number | null>;
@@ -45,7 +43,6 @@ export const TrendTooltip = ({
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
   sync,
-  timeZone,
   dataIdxs,
   seriesIdx,
   isPinned,
@@ -58,7 +55,7 @@ export const TrendTooltip = ({
     return null;
   }
 
-  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
+  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, theme });
   let xVal = xFieldFmt(xField!.values[dataIdxs[0]!]).text;
   let tooltip: React.ReactNode = null;
 
@@ -75,7 +72,7 @@ export const TrendTooltip = ({
 
     const dataIdx = dataIdxs[seriesIdx!]!;
     xVal = xFieldFmt(xField!.values[dataIdx]).text;
-    const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
+    const fieldFmt = field.display || getDisplayProcessor({ field, theme });
     const display = fieldFmt(field.values[dataIdx]);
 
     if (field.getLinks) {

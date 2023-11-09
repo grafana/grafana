@@ -4,6 +4,7 @@ import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRa
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin, TooltipPlugin2 } from '@grafana/ui';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
@@ -126,6 +127,9 @@ export const TrendPanel = ({
                 {config.featureToggles.newVizTooltips ? (
                   <TooltipPlugin2
                     config={uPlotConfig}
+                    hoverMode={
+                      options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                    }
                     render={(u, dataIdxs, seriesIdx, isPinned = false) => {
                       return (
                         <TrendTooltip
@@ -134,7 +138,6 @@ export const TrendPanel = ({
                           mode={options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           sync={sync}
-                          timeZone={timeZone}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
                           isPinned={isPinned}
