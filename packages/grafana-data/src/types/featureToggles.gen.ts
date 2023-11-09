@@ -160,4 +160,5 @@ export interface FeatureToggles {
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
   logsInfiniteScrolling?: boolean;
+  flameGraphItemCollapsing?: boolean;
 }

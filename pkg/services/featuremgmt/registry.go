@@ -1032,6 +1032,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
+		{
+			Name:         "flameGraphItemCollapsing",
+			Description:  "Allow collapsing of flame graph items",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
 	}
 )
 

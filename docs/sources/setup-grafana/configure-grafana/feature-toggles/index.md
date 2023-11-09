@@ -163,6 +163,7 @@ Experimental features might be changed or removed without prior notice.
 | `extractFieldsNameDeduplication`            | Make sure extracted field names are unique in the dataframe                                                                                                                                                                                                                       |
 | `dashboardSceneForViewers`                  | Enables dashboard rendering using Scenes for viewer roles                                                                                                                                                                                                                         |
 | `logsInfiniteScrolling`                     | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                                                                                                                                                                           |
+| `flameGraphItemCollapsing`                  | Allow collapsing of flame graph items                                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 
