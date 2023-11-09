@@ -69,6 +69,7 @@
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
+/pkg/cmd/grafana-example-apiserver @grafana/grafana-app-platform-squad
 /pkg/components/apikeygen/ @grafana/identity-access-team
 /pkg/components/satokengen/ @grafana/identity-access-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
@@ -114,7 +115,6 @@
 /pkg/services/notifications/ @grafana/backend-platform
 /pkg/services/org/ @grafana/backend-platform
 /pkg/services/playlist/ @grafana/grafana-app-platform-squad
-/pkg/services/plugindashboards/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
 /pkg/services/query/ @grafana/backend-platform
@@ -127,6 +127,7 @@
 /pkg/services/secrets/ @grafana/backend-platform
 /pkg/services/shorturls/ @grafana/backend-platform
 /pkg/services/sqlstore/ @grafana/backend-platform
+/pkg/services/ssosettings/ @grafana/identity-access-team
 /pkg/services/star/ @grafana/backend-platform
 /pkg/services/stats/ @grafana/backend-platform
 /pkg/services/tag/ @grafana/backend-platform
@@ -147,7 +148,6 @@
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
 
-/pkg/services/grpcserver/ @grafana/backend-platform
 /pkg/infra/kvstore/ @grafana/backend-platform
 /pkg/infra/fs/ @grafana/backend-platform
 /pkg/infra/x/ @grafana/backend-platform
@@ -270,6 +270,7 @@
 /pkg/util/converter/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/kindsysreport/ @grafana/grafana-app-platform-squad
+/pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend-product
@@ -293,6 +294,7 @@
 /pkg/tsdb/grafana-testdata-datasource/ @grafana/plugins-platform-backend
 /pkg/tsdb/Magefile.go @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
+/pkg/services/plugindashboards/ @grafana/plugins-platform-backend
 
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform

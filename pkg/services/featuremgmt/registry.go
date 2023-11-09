@@ -498,13 +498,6 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
-			Name:         "dataSourcePageHeader",
-			Description:  "Apply new pageHeader UI in data source edit page",
-			FrontendOnly: true,
-			Stage:        FeatureStagePublicPreview,
-			Owner:        enterpriseDatasourcesSquad,
-		},
-		{
 			Name:         "extraThemes",
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
@@ -676,14 +669,6 @@ var (
 			FrontendOnly:    false,
 			Owner:           identityAccessTeam,
 			RequiresRestart: true,
-		},
-		{
-			Name:           "azureMonitorDataplane",
-			Description:    "Adds dataplane compliant frame metadata in the Azure Monitor datasource",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaPartnerPluginsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: falsePtr,
 		},
 		{
 			Name:         "traceToProfiles",
@@ -888,15 +873,8 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
-			Name:         "kubernetesPlaylists",
-			Description:  "Use the kubernetes API in the frontend for playlists",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAppPlatformSquad,
-		},
-		{
-			Name:            "kubernetesPlaylistsAPI",
-			Description:     "Route /api/playlist API to k8s handlers",
+			Name:            "kubernetesPlaylists",
+			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
@@ -1038,6 +1016,28 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaSharingSquad,
+		},
+		{
+			Name:            "ssoSettingsApi",
+			Description:     "Enables the SSO settings API",
+			RequiresDevMode: true,
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           identityAccessTeam,
+		},
+		{
+			Name:         "logsInfiniteScrolling",
+			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "flameGraphItemCollapsing",
+			Description:  "Allow collapsing of flame graph items",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 	}
 )
