@@ -1,66 +1,15 @@
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { ClassicCondition } from '../types';
+import { ClassicCondition, ExpressionQueryType, ThresholdExpressionQuery } from '../types';
 
-import { getUnloadEvaluatorTypeFromCondition, isInvalid, updateEvaluatorConditions } from './Threshold';
-
-describe('getUnloadEvaluatorTypeFromCondition', () => {
-  it('should return IsBelow when given IsAbove', () => {
-    const condition: ClassicCondition = {
-      evaluator: {
-        type: EvalFunction.IsAbove,
-        params: [10],
-      },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
-    };
-
-    expect(getUnloadEvaluatorTypeFromCondition(condition)).toBe(EvalFunction.IsBelow);
-  });
-
-  it('should return IsAbove when given IsBelow', () => {
-    const condition: ClassicCondition = {
-      evaluator: {
-        type: EvalFunction.IsBelow,
-        params: [10],
-      },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
-    };
-
-    expect(getUnloadEvaluatorTypeFromCondition(condition)).toBe(EvalFunction.IsAbove);
-  });
-
-  it('should return IsOutsideRange when given IsWithinRange', () => {
-    const condition: ClassicCondition = {
-      evaluator: {
-        type: EvalFunction.IsWithinRange,
-        params: [10, 20],
-      },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
-    };
-
-    expect(getUnloadEvaluatorTypeFromCondition(condition)).toBe(EvalFunction.IsOutsideRange);
-  });
-
-  it('should return IsWithinRange when given IsOutsideRange', () => {
-    const condition: ClassicCondition = {
-      evaluator: {
-        type: EvalFunction.IsOutsideRange,
-        params: [10, 20],
-      },
-      query: { params: ['A', 'B'] },
-      reducer: { type: 'avg', params: [] },
-      type: 'query',
-    };
-
-    expect(getUnloadEvaluatorTypeFromCondition(condition)).toBe(EvalFunction.IsWithinRange);
-  });
-});
+import {
+  isInvalid,
+  thresholdReducer,
+  updateHysteresisChecked,
+  updateRefId,
+  updateThresholdType,
+  updateUnloadParams,
+} from './thresholdReducer';
 
 describe('isInvalid', () => {
   it('returns an error message if unloadEvaluator.params[0] is undefined', () => {
@@ -159,157 +108,110 @@ describe('isInvalid', () => {
   });
 });
 
-describe('updateEvaluatorConditions', () => {
+describe('thresholdReducer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-
-  it('should update only the evaluator when type is not changed', () => {
-    const conditions: ClassicCondition[] = [
-      {
-        evaluator: {
-          type: EvalFunction.IsAbove,
-          params: [1, 2],
-        },
-        unloadEvaluator: {
-          type: EvalFunction.IsBelow,
-          params: [3, 4],
-        },
-        query: { params: ['A', 'B'] },
-        reducer: { type: 'avg', params: [] },
-        type: 'query',
-      },
-    ];
-    const update = {
-      params: [5, 6],
-    };
-    const onError = jest.fn();
-
-    const result = updateEvaluatorConditions(conditions, update, onError);
-
-    expect(result).toEqual([
-      {
-        evaluator: {
-          type: EvalFunction.IsAbove,
-          params: [5, 6],
-        },
-        unloadEvaluator: {
-          type: EvalFunction.IsBelow,
-          params: [3, 4],
-        },
-        query: { params: ['A', 'B'] },
-        reducer: { type: 'avg', params: [] },
-        type: 'query',
-      },
-    ]);
-    expect(onError).not.toHaveBeenCalled();
-  });
-  it('should update only the evaluator when type is not changed and unload evaluator is not defined', () => {
-    const conditions: ClassicCondition[] = [
-      {
-        evaluator: {
-          type: EvalFunction.IsAbove,
-          params: [1, 2],
-        },
-        query: { params: ['A', 'B'] },
-        reducer: { type: 'avg', params: [] },
-        type: 'query',
-      },
-    ];
-    const update = {
-      params: [5, 6],
-    };
-    const onError = jest.fn();
-
-    const result = updateEvaluatorConditions(conditions, update, onError);
-
-    expect(result).toEqual([
-      {
-        evaluator: {
-          type: EvalFunction.IsAbove,
-          params: [5, 6],
-        },
-        query: { params: ['A', 'B'] },
-        reducer: { type: 'avg', params: [] },
-        type: 'query',
-      },
-    ]);
-    expect(onError).not.toHaveBeenCalled();
-  });
-  it('should update the evaluator when type is changed and hysteresis is not checked', () => {
-    const conditions: ClassicCondition[] = [
-      {
-        evaluator: {
-          type: EvalFunction.IsAbove,
-          params: [1, 2],
-        },
-        query: { params: ['A', 'B'] },
-        reducer: { type: 'avg', params: [] },
-        type: 'query',
-      },
-    ];
-    const update = {
+  const onError = jest.fn();
+  const thresholdCondition: ClassicCondition = {
+    evaluator: { type: EvalFunction.IsAbove, params: [10, 0] },
+    unloadEvaluator: {
       type: EvalFunction.IsBelow,
-      params: [5, 6],
-    };
-    const onError = jest.fn();
+      params: [10, 0],
+    },
+    query: { params: ['A', 'B'] },
+    reducer: { type: 'avg', params: [] },
+    type: 'query',
+  };
 
-    const result = updateEvaluatorConditions(conditions, update, onError);
-
-    expect(result).toEqual([
-      {
-        evaluator: {
-          type: EvalFunction.IsBelow,
-          params: [5, 6],
-        },
-        query: { params: ['A', 'B'] },
-        reducer: { type: 'avg', params: [] },
-        type: 'query',
-      },
-    ]);
-    expect(onError).not.toHaveBeenCalled();
+  it('should return initial state', () => {
+    expect(thresholdReducer(undefined, { type: undefined })).toEqual({
+      type: ExpressionQueryType.threshold,
+      conditions: [],
+      refId: '',
+    });
   });
-
-  it('should update the unload evaluator when type is changed and hysteresis is checked', () => {
-    const conditions: ClassicCondition[] = [
-      {
-        evaluator: {
-          type: EvalFunction.IsAbove,
-          params: [1],
-        },
-        unloadEvaluator: {
-          type: EvalFunction.IsBelow,
-          params: [0],
-        },
-        query: { params: ['A', 'B'] },
-        reducer: { type: 'avg', params: [] },
-        type: 'query',
-      },
-    ];
-    const update = {
-      type: EvalFunction.IsBelow,
-      params: [1],
+  it('should update expression with RefId', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [thresholdCondition],
     };
-    const onError = jest.fn();
 
-    const result = updateEvaluatorConditions(conditions, update, onError);
+    const newState = thresholdReducer(initialState, updateRefId('B'));
 
-    expect(result).toEqual([
-      {
-        evaluator: {
-          type: EvalFunction.IsBelow,
-          params: [1],
-        },
-        unloadEvaluator: {
-          type: EvalFunction.IsAbove,
-          params: [1],
-        },
-        query: { params: ['A', 'B'] },
-        reducer: { type: 'avg', params: [] },
-        type: 'query',
-      },
-    ]);
-    // we set the call on error but with undefined
+    expect(newState).toMatchSnapshot();
+    expect(newState.expression).toEqual('B');
+  });
+  it('should update Threshold Type, and unloadEvaluator params and type ', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [thresholdCondition],
+    };
+
+    const newState = thresholdReducer(
+      initialState,
+      updateThresholdType({ evalFunction: EvalFunction.IsBelow, onError })
+    );
+
+    expect(newState).toMatchSnapshot();
+    expect(newState.conditions[0].evaluator.type).toEqual(EvalFunction.IsBelow);
+    expect(newState.conditions[0].unloadEvaluator?.type).toEqual(EvalFunction.IsAbove);
     expect(onError).toHaveBeenCalledWith(undefined);
+    expect(newState.conditions[0].unloadEvaluator?.params[0]).toEqual(10);
+  });
+  it('Should update unlooadEvaluator when checking hysteresis', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [thresholdCondition],
+    };
+
+    const newState = thresholdReducer(initialState, updateHysteresisChecked({ hysteresisChecked: true, onError }));
+
+    expect(newState).toMatchSnapshot();
+    expect(newState.conditions[0].unloadEvaluator?.type).toEqual(EvalFunction.IsBelow);
+    expect(newState.conditions[0].unloadEvaluator?.params[0]).toEqual(10);
+  });
+  it('Should update unlooadEvaluator when unchecking hysteresis', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [thresholdCondition],
+    };
+
+    const newState = thresholdReducer(initialState, updateHysteresisChecked({ hysteresisChecked: false, onError }));
+
+    expect(newState).toMatchSnapshot();
+    expect(newState.conditions[0].unloadEvaluator).toEqual(undefined);
+    expect(onError).toHaveBeenCalledWith(undefined);
+  });
+
+  it('should update unloadParams with no error when are valid', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [thresholdCondition],
+    };
+
+    const newState = thresholdReducer(initialState, updateUnloadParams({ param: 9, index: 0, onError }));
+
+    expect(newState).toMatchSnapshot();
+    expect(newState.conditions[0].unloadEvaluator?.params[0]).toEqual(9);
+    expect(onError).toHaveBeenCalledWith(undefined);
+  });
+  it('should update unloadParams no error when are invalid', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [thresholdCondition],
+    };
+
+    const newState = thresholdReducer(initialState, updateUnloadParams({ param: 20, index: 0, onError }));
+
+    expect(newState).toMatchSnapshot();
+    expect(newState.conditions[0].unloadEvaluator?.params[0]).toEqual(20);
+    expect(onError).toHaveBeenCalledWith('Enter a number less than or equal to 10');
   });
 });
