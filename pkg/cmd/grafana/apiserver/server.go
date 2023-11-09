@@ -5,7 +5,6 @@ import (
 	"io"
 	"net"
 
-	exampleAPI "github.com/grafana/grafana/pkg/registry/apis/example"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,19 +50,25 @@ type ExampleServerOptions struct {
 	StdErr io.Writer
 }
 
-func NewExampleServerOptions(out, errOut io.Writer) (*ExampleServerOptions, error) {
-	builder := &exampleAPI.TestingAPIBuilder{}
+func NewExampleServerOptions(
+	builders []grafanaAPIServer.APIGroupBuilder,
+	out io.Writer,
+	errOut io.Writer) (*ExampleServerOptions, error) {
 
-	// Install schema
-	if err := builder.InstallSchema(Scheme); err != nil {
-		return nil, err
+	// Install schemas
+	groupVersions := make([]schema.GroupVersion, 0, len(builders))
+	for _, b := range builders {
+		groupVersions = append(groupVersions, b.GetGroupVersion())
+		if err := b.InstallSchema(Scheme); err != nil {
+			return nil, err
+		}
 	}
 
 	return &ExampleServerOptions{
-		Builders: []grafanaAPIServer.APIGroupBuilder{builder},
+		Builders: builders,
 		RecommendedOptions: options.NewRecommendedOptions(
 			defaultEtcdPathPrefix,
-			Codecs.LegacyCodec(builder.GetGroupVersion()),
+			Codecs.LegacyCodec(groupVersions...),
 		),
 		StdOut: out,
 		StdErr: errOut,

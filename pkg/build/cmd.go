@@ -17,13 +17,12 @@ const (
 	GoOSWindows = "windows"
 	GoOSLinux   = "linux"
 
-	BackendBinary          = "grafana"
-	ExampleAPIServerBinary = "grafana-example-apiserver"
-	ServerBinary           = "grafana-server"
-	CLIBinary              = "grafana-cli"
+	BackendBinary = "grafana"
+	ServerBinary  = "grafana-server"
+	CLIBinary     = "grafana-cli"
 )
 
-var binaries = []string{BackendBinary, ExampleAPIServerBinary, ServerBinary, CLIBinary}
+var binaries = []string{BackendBinary, ServerBinary, CLIBinary}
 
 func logError(message string, err error) int {
 	log.Println(message, err)

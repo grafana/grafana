@@ -6,6 +6,9 @@ import (
 	"github.com/spf13/cobra"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/cli"
+
+	"github.com/grafana/grafana/pkg/registry/apis/example"
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
 func newCommandStartExampleAPIServer(defaults *ExampleServerOptions, stopCh <-chan struct{}) *cobra.Command {
@@ -38,7 +41,14 @@ func newCommandStartExampleAPIServer(defaults *ExampleServerOptions, stopCh <-ch
 
 func RunMain() {
 	stopCh := genericapiserver.SetupSignalHandler()
-	options, err := NewExampleServerOptions(os.Stdout, os.Stderr)
+
+	// Load the API services
+	builders := []grafanaAPIServer.APIGroupBuilder{
+		&example.TestingAPIBuilder{}, // hardcoded example apiserver (for now)
+	}
+
+	// Configure the server
+	options, err := NewExampleServerOptions(builders, os.Stdout, os.Stderr)
 	if err != nil {
 		panic(err)
 	}
