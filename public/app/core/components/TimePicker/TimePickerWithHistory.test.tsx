@@ -113,7 +113,6 @@ describe('TimePickerWithHistory', () => {
 
     const timeRange = getDefaultTimeRange();
     render(<TimePickerWithHistory value={timeRange} {...props} />);
-    await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     for (const [inputFrom, inputTo] of inputRanges) {
       await userEvent.click(screen.getByLabelText(/Time range selected/));

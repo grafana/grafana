@@ -99,7 +99,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
 			{Name: "Created At", Type: "date"},
 		},
-		func(obj runtime.Object) ([]interface{}, error) {
+		func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*playlist.Playlist)
 			if !ok {
 				return nil, fmt.Errorf("expected playlist")

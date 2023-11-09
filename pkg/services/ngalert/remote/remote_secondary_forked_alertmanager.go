@@ -21,7 +21,11 @@ func NewRemoteSecondaryForkedAlertmanager(internal, remote notifier.Alertmanager
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	return nil
+	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+		return err
+	}
+
+	return fam.internal.ApplyConfig(ctx, config)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
@@ -65,15 +69,15 @@ func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, ale
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	return []apimodels.Receiver{}, nil
+	return fam.internal.GetReceivers(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return &notifier.TestReceiversResult{}, nil
+	return fam.internal.TestReceivers(ctx, c)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	return fam.internal.TestTemplate(ctx, c)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {}
