@@ -99,18 +99,14 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
           label="Custom recovery threshold"
           value={hasHysteresis}
           onChange={onHysteresisCheckChange}
-          // transparent={true}
           className={styles.switch}
         />
 
         {hasHysteresis && (
           <RecoveryThresholdRow
             isRange={isRange}
-            conditions={queryState.conditions}
             condition={conditionInState}
             labelWidth={labelWidth}
-            onChange={onChange}
-            query={query}
             onError={onError}
             dispatch={dispatch}
           />
@@ -165,11 +161,8 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
 
 interface RecoveryThresholdRowProps {
   isRange: boolean;
-  conditions: ClassicCondition[];
   condition: ClassicCondition;
   labelWidth: number | 'auto';
-  onChange: (query: ExpressionQuery) => void;
-  query: ExpressionQuery;
   onError?: (error: string | undefined) => void;
   dispatch: React.Dispatch<AnyAction>;
 }
@@ -198,7 +191,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
                   <Input
                     type="number"
                     width={10}
-                    onChange={(event) => onUnloadValueChange(event, 0)}
+                    onBlur={(event) => onUnloadValueChange(event, 0)}
                     defaultValue={condition.unloadEvaluator?.params[0]}
                   />
                 </InlineField>
@@ -209,7 +202,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
                   <Input
                     type="number"
                     width={10}
-                    onChange={(event) => onUnloadValueChange(event, 1)}
+                    onBlur={(event) => onUnloadValueChange(event, 1)}
                     defaultValue={condition.unloadEvaluator?.params[1]}
                   />
                 </InlineField>
@@ -228,7 +221,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
                   <Input
                     type="number"
                     width={10}
-                    onChange={(event) => onUnloadValueChange(event, 0)}
+                    onBlur={(event) => onUnloadValueChange(event, 0)}
                     defaultValue={condition.unloadEvaluator?.params[0]}
                   />
                 </InlineField>
@@ -240,7 +233,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
                   <Input
                     type="number"
                     width={10}
-                    onChange={(event) => onUnloadValueChange(event, 1)}
+                    onBlur={(event) => onUnloadValueChange(event, 1)}
                     defaultValue={condition.unloadEvaluator?.params[1]}
                   />
                 </InlineField>
@@ -263,7 +256,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
             <Input
               type="number"
               width={10}
-              onChange={(event) => onUnloadValueChange(event, 0)}
+              onBlur={(event) => onUnloadValueChange(event, 0)}
               defaultValue={condition.unloadEvaluator?.params[0]}
             />
           </InlineField>
@@ -281,7 +274,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
             <Input
               type="number"
               width={10}
-              onChange={(event) => onUnloadValueChange(event, 0)}
+              onBlur={(event) => onUnloadValueChange(event, 0)}
               defaultValue={condition.unloadEvaluator?.params[0]}
             />
           </InlineField>
