@@ -8,6 +8,7 @@ import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '
 import { t, Trans } from 'app/core/internationalization';
 import { trackDashboardSharingActionPerType } from 'app/features/dashboard/components/ShareModal/analytics';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
@@ -39,12 +40,6 @@ const getExpireOptions = () => {
   ];
 };
 
-type SnapshotSharingOptions = {
-  externalEnabled: boolean;
-  externalSnapshotName: string;
-  externalSnapshotURL: string;
-  snapshotEnabled: boolean;
-};
 export interface ShareSnapshotTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -70,9 +65,9 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
   }
 
   private _onActivate() {
-    getBackendSrv()
-      .get('/api/snapshot/shared-options')
-      .then((shareOptions: SnapshotSharingOptions) => {
+    getDashboardSnapshotSrv()
+      .getSharingOptions()
+      .then((shareOptions) => {
         if (this.isActive) {
           this.setState({
             snapshotSharingOptions: shareOptions,

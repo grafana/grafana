@@ -120,5 +120,5 @@ export function toggleVizPanelLegend(vizPanel: VizPanel) {
 }
 
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
-  return optionsWithLegend != null && 'legend' in optionsWithLegend;
+  return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
 }
