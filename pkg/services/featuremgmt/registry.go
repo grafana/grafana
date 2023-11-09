@@ -1025,6 +1025,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           identityAccessTeam,
 		},
+		{
+			Name:         "logsInfiniteScrolling",
+			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
 	}
 )
 

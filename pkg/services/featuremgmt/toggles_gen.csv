@@ -140,3 +140,4 @@ dashboardSceneForViewers,experimental,@grafana/dashboards-squad,false,false,fals
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,false,true
 pdfTables,privatePreview,@grafana/sharing-squad,false,false,false,false
 ssoSettingsApi,experimental,@grafana/identity-access-team,true,false,false,false
+logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,false,true
