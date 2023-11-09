@@ -46,18 +46,18 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 
 	pluginURIs := src.PluginURIs(ctx)
 	pluginJSONPaths := make([]string, 0, len(pluginURIs))
-	for _, path := range pluginURIs {
-		exists, err := fs.Exists(path)
+	for _, rootPath := range pluginURIs {
+		exists, err := fs.Exists(rootPath)
 		if err != nil {
-			l.log.Warn("Skipping finding plugins as an error occurred", "path", path, "error", err)
+			l.log.Warn("Skipping finding plugins as an error occurred", "path", rootPath, "error", err)
 			continue
 		}
 		if !exists {
-			l.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
+			l.log.Warn("Skipping finding plugins as directory does not exist", "path", rootPath)
 			continue
 		}
 
-		paths, err := l.getAbsPluginJSONPaths(path, src.PluginClass(ctx))
+		paths, err := l.getAbsPluginJSONPaths(rootPath, src.PluginClass(ctx))
 		if err != nil {
 			return nil, err
 		}
@@ -154,11 +154,11 @@ func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) 
 	return plugin, nil
 }
 
-func (l *Local) getAbsPluginJSONPaths(path string, class plugins.Class) ([]string, error) {
+func (l *Local) getAbsPluginJSONPaths(rootPath string, class plugins.Class) ([]string, error) {
 	pluginJSONPaths := map[string]struct{}{}
 
 	var err error
-	path, err = filepath.Abs(path)
+	rootPath, err = filepath.Abs(rootPath)
 	if err != nil {
 		return []string{}, err
 	}
@@ -168,15 +168,15 @@ func (l *Local) getAbsPluginJSONPaths(path string, class plugins.Class) ([]strin
 		followDistFolder = false
 	}
 
-	if err = walk(path, true, true,
+	if err = walk(rootPath, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
-					l.log.Error("Couldn't scan directory since it doesn't exist", "pluginDir", path, "error", err)
+					l.log.Error("Couldn't scan directory since it doesn't exist", "pluginDir", rootPath, "error", err)
 					return nil
 				}
 				if errors.Is(err, os.ErrPermission) {
-					l.log.Error("Couldn't scan directory due to lack of permissions", "pluginDir", path, "error", err)
+					l.log.Error("Couldn't scan directory due to lack of permissions", "pluginDir", rootPath, "error", err)
 					return nil
 				}
 
@@ -200,15 +200,23 @@ func (l *Local) getAbsPluginJSONPaths(path string, class plugins.Class) ([]strin
 		return []string{}, err
 	}
 
-	// For external plugins, if we found a plugin directory that contains a "dist" directory, we want to ignore the
-	// plugin.json file found in the parent folder if it exists.
-	// For example, if we found encountered /path/to/plugin/dist/plugin.json, we want to ignore the path
-	// /path/to/plugin/plugin.json in order to prioritize the built version and avoid loading the plugin twice.
+	// For external plugins, if we found a plugin directory that contains a "dist" directory, we want to ignore duplicate
+	// plugin.json files found in the parent folder if they exist.
+	// For example, if we found encountered /path/to/plugin/dist/plugin.json, we want to ignore the paths
+	// /path/to/plugin/plugin.json and /path/to/plugin/src/plugin.json in order to prioritize the built
+	// version and avoid loading the plugin twice.
 	if class == plugins.ClassExternal {
 		for pluginJSONPath := range pluginJSONPaths {
 			pluginDir := filepath.Dir(pluginJSONPath)
+
+			// If we found a plugin folder named "dist" at the root level, there should not be any duplicates to remove
+			if filepath.Join(rootPath, "dist") == pluginDir {
+				continue
+			}
+
 			if filepath.Base(pluginDir) == "dist" {
 				delete(pluginJSONPaths, filepath.Join(filepath.Dir(pluginDir), "plugin.json"))
+				delete(pluginJSONPaths, filepath.Join(filepath.Dir(pluginDir), "src", "plugin.json"))
 			}
 		}
 	}
