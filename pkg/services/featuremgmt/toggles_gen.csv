@@ -17,6 +17,7 @@ newDBLibrary,preview,@grafana/backend-platform,false,false,false,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,false,true
+newVizTooltips,GA,@grafana/dataviz-squad,false,false,false,true
 scenes,experimental,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false,false
@@ -54,7 +55,6 @@ lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false,fal
 dataplaneFrontendFallback,GA,@grafana/observability-metrics,false,false,false,true
 disableSSEDataplane,experimental,@grafana/observability-metrics,false,false,false,false
 alertStateHistoryLokiSecondary,experimental,@grafana/alerting-squad,false,false,false,false
-alertingNotificationsPoliciesMatchingInstances,GA,@grafana/alerting-squad,false,false,false,true
 alertStateHistoryLokiPrimary,experimental,@grafana/alerting-squad,false,false,false,false
 alertStateHistoryLokiOnly,experimental,@grafana/alerting-squad,false,false,false,false
 unifiedRequestLog,experimental,@grafana/backend-platform,false,false,false,false
@@ -66,7 +66,6 @@ enableElasticsearchBackendQuerying,GA,@grafana/observability-logs,false,false,fa
 advancedDataSourcePicker,GA,@grafana/dashboards-squad,false,false,false,true
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,preview,@grafana/grafana-bi-squad,false,false,false,true
-dataSourcePageHeader,preview,@grafana/enterprise-datasources,false,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,false,true
 pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false,true
@@ -91,7 +90,6 @@ grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
 awsAsyncQueryCaching,preview,@grafana/aws-datasources,false,false,false,false
 splitScopes,preview,@grafana/identity-access-team,false,false,true,false
-azureMonitorDataplane,GA,@grafana/partner-datasources,false,false,false,false
 traceToProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,false,false,false,false
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,false,false,false,false
@@ -119,8 +117,7 @@ panelMonitoring,experimental,@grafana/dataviz-squad,false,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false,false
 formatString,experimental,@grafana/grafana-bi-squad,false,false,false,true
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
-kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,false,true
-kubernetesPlaylistsAPI,experimental,@grafana/grafana-app-platform-squad,false,false,true,false
+kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,true,false
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false,false
 navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
 recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
@@ -140,3 +137,8 @@ annotationPermissionUpdate,experimental,@grafana/identity-access-team,false,fals
 extractFieldsNameDeduplication,experimental,@grafana/grafana-bi-squad,false,false,false,true
 dashboardSceneForViewers,experimental,@grafana/dashboards-squad,false,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,false,true
+pdfTables,privatePreview,@grafana/sharing-squad,false,false,false,false
+ssoSettingsApi,experimental,@grafana/identity-access-team,true,false,false,false
+logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,false,true
+flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
+alertingDetailsViewV2,experimental,@grafana/alerting-squad,false,false,false,true

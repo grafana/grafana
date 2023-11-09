@@ -36,6 +36,7 @@ export interface FeatureToggles {
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
+  newVizTooltips?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -73,7 +74,6 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
-  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
@@ -85,7 +85,6 @@ export interface FeatureToggles {
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
-  dataSourcePageHeader?: boolean;
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
@@ -110,7 +109,6 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
-  azureMonitorDataplane?: boolean;
   traceToProfiles?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
@@ -139,7 +137,6 @@ export interface FeatureToggles {
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
-  kubernetesPlaylistsAPI?: boolean;
   cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
@@ -159,4 +156,9 @@ export interface FeatureToggles {
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
   panelFilterVariable?: boolean;
+  pdfTables?: boolean;
+  ssoSettingsApi?: boolean;
+  logsInfiniteScrolling?: boolean;
+  flameGraphItemCollapsing?: boolean;
+  alertingDetailsViewV2?: boolean;
 }
