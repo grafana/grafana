@@ -2,9 +2,9 @@ package publicdashboards
 
 import (
 	"context"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -63,4 +63,10 @@ type Store interface {
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 	GetMetrics(ctx context.Context) (*Metrics, error)
+}
+
+type Middleware interface {
+	HandleApi(c *contextmodel.ReqContext)
+	HandleGet(c *contextmodel.ReqContext)
+	HandleRequestOrConfirmAccess(c *contextmodel.ReqContext)
 }

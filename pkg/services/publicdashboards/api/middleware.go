@@ -67,3 +67,18 @@ func CountPublicDashboardRequest() func(c *contextmodel.ReqContext) {
 		metrics.MPublicDashboardRequestCount.Inc()
 	}
 }
+
+type Middleware struct {
+}
+
+var _ publicdashboards.Middleware = (*Middleware)(nil)
+
+func ProvideMiddleware() *Middleware {
+	return &Middleware{}
+}
+func (m *Middleware) HandleApi(c *contextmodel.ReqContext) {
+}
+func (m *Middleware) HandleGet(c *contextmodel.ReqContext) {
+}
+func (m *Middleware) HandleRequestOrConfirmAccess(c *contextmodel.ReqContext) {
+}
