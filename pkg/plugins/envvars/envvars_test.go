@@ -181,12 +181,15 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
-				assert.Len(t, envVars, 5)
+				assert.Len(t, envVars, 8)
 				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[0])
 				assert.Equal(t, "GF_VERSION=", envVars[1])
 				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[2])
 				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[3])
-				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[4])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_TYPE=", envVars[4])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=0.000000", envVars[5])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[6])
+				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[7])
 			},
 		},
 		{
@@ -204,12 +207,15 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
-				assert.Len(t, envVars, 5)
+				assert.Len(t, envVars, 8)
 				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[0])
 				assert.Equal(t, "GF_VERSION=", envVars[1])
 				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[2])
 				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c,jaeger", envVars[3])
-				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[4])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_TYPE=", envVars[4])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=0.000000", envVars[5])
+				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[6])
+				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[7])
 			},
 		},
 		{
@@ -298,27 +304,24 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			exp:    expGfPluginVersionNotPresent,
 		},
 		{
-			name: "no sampling",
+			name: "no sampling (neversample)",
 			cfg: &config.Cfg{
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{
-						Address:     "127.0.0.1:4317",
-						Propagation: "jaeger",
+						Address:          "127.0.0.1:4317",
+						Propagation:      "jaeger",
+						Sampler:          "",
+						SamplerParam:     0.0,
+						SamplerRemoteURL: "",
 					},
 				},
 				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
-				var ok bool
-				for _, v := range []string{
-					"GF_INSTANCE_OTLP_SAMPLER_TYPE",
-					"GF_INSTANCE_OTLP_SAMPLER_PARAM",
-					"GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL",
-				} {
-					_, ok = getEnvVarWithExists(envVars, v)
-					require.False(t, ok)
-				}
+				require.Empty(t, getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_TYPE"))
+				require.Equal(t, "0.000000", getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_PARAM"))
+				require.Empty(t, getEnvVar(envVars, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL"))
 			},
 		},
 		{
