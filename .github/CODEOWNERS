@@ -127,6 +127,7 @@
 /pkg/services/secrets/ @grafana/backend-platform
 /pkg/services/shorturls/ @grafana/backend-platform
 /pkg/services/sqlstore/ @grafana/backend-platform
+/pkg/services/ssosettings/ @grafana/identity-access-team
 /pkg/services/star/ @grafana/backend-platform
 /pkg/services/stats/ @grafana/backend-platform
 /pkg/services/tag/ @grafana/backend-platform
