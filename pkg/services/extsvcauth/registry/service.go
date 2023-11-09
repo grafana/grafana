@@ -27,6 +27,7 @@ func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, saSvc *extsvcac
 	return &Registry{
 		extSvcProvider: map[string]extsvcauth.AuthProvider{},
 		features:       features,
+		lock:           sync.Mutex{},
 		logger:         log.New("extsvcauth.registry"),
 		oauthServer:    oauthServer,
 		saSvc:          saSvc,
