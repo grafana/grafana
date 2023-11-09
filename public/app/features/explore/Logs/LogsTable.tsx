@@ -48,6 +48,9 @@ export function LogsTable(props: Props) {
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
+      if (!frame.length) {
+        return frame;
+      }
       // Parse the dataframe to a logFrame
       const logsFrame = parseLogsFrame(frame);
       const timeIndex = logsFrame?.timeField.index;
