@@ -1279,6 +1279,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 
 		var labels []byte
 		var errors []byte
+		var fields []byte
 
 		args := []any{
 			&token, &result.Guid, &result.Key,
@@ -1294,7 +1295,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 			args = append(args, &labels)
 		}
 		if r.WithFields {
-			args = append(args, &result.Fields)
+			args = append(args, &fields)
 		}
 
 		err = rows.Scan(args...)
@@ -1311,6 +1312,13 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 
 		if labels != nil {
 			err = json.Unmarshal(labels, &result.Labels)
+			if err != nil {
+				return rsp, err
+			}
+		}
+
+		if fields != nil {
+			err = json.Unmarshal(fields, &result.Fields)
 			if err != nil {
 				return rsp, err
 			}
