@@ -164,7 +164,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 			}
 
 			var cmd = model.CreateLibraryElementCommand{
-				FolderID: folderID,
+				FolderID: folderID, // nolint:staticcheck
 				Name:     name,
 				Model:    Model,
 				Kind:     int64(model.PanelElement),
