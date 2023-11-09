@@ -854,7 +854,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               addResultsToCache={addResultsToCache}
               clearCache={clearCache}
               loadMoreLogs={loadMoreLogs}
-              scrollElement={this.props.scrollElement}
+              scrollElement={this.state.logsContainer}
             />
           </div>
         </PanelChrome>

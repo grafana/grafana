@@ -102,7 +102,6 @@ function LogsNavigation({
     }
     const delta = 5;
     function handleScroll(e: Event) {
-      return;
       if (!e.target || !loadMoreLogs) {
         return;
       }
