@@ -172,16 +172,6 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/ayoungprogrammer/grafana-finance) in the past 6 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [Prometheus AlertManager](https://grafana.com/grafana/plugins/camptocamp-prometheus-alertmanager-datasource/)
-
-Latest Version: 1.2.1 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/camptocamp/grafana-prometheus-alertmanager-datasource) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** Grafana includes an AlertManager data source as a Core plugin.
-
 ### [Chaos Mesh](https://grafana.com/grafana/plugins/chaosmeshorg-datasource/)
 
 Latest Version: 2.2.3 | Signature: Community | Last Updated: 2022
