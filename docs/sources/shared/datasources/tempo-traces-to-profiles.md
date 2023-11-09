@@ -28,7 +28,7 @@ There are two ways to configure the trace to profiles feature:
 - Use a simplified configuration with default query, or
 - Configure a custom query where you can use a template language to interpolate variables from the trace or span.
 
-To use trace to profile, navigate to **Explore** and query a trace. Each span now links to your queries. Clicking a link runs the query in a split panel. If tags are configured, Grafana dynamically inserts the span attribute values into the query. The query runs over the time range currently selected in **Explore**.
+To use trace to profiles, navigate to **Explore** and query a trace. Each span now links to your queries. Clicking a link runs the query in a split panel. If tags are configured, Grafana dynamically inserts the span attribute values into the query. The query runs over the time range of the (span start time - 60) to (span end time + 60 seconds).
 
 ![Selecting a link in the span queries the profile data source](/static/img/docs/tempo/profiles/tempo-profiles-Span-link-profile-data-source.png)
 
