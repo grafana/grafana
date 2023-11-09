@@ -189,7 +189,6 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dash, nil).Once()
-				dashStore.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("*dashboards.DeleteDashboardCommand")).Return(nil).Once()
 				folderStore.On("GetFolderByID", mock.Anything, orgID, dash.ID).Return(f, nil)
 
 				actualFolder, err := service.Create(context.Background(), &folder.CreateFolderCommand{
@@ -246,11 +245,9 @@ func TestIntegrationFolderService(t *testing.T) {
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 
 				var actualCmd *dashboards.DeleteDashboardCommand
-				dashStore := &dashboards.FakeDashboardStore{}
-				dashStore.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("*dashboards.DeleteDashboardCommand")).Run(func(args mock.Arguments) {
+				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 				}).Return(nil).Once()
-				service.dashboardStore = dashStore
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
 				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
