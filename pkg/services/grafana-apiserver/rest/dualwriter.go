@@ -42,7 +42,8 @@ type LegacyStorage interface {
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
 // If writing to LegacyStorage fails, the write to Storage is skipped and the error is returned.
-// Storage is used for all read operations.
+// Storage is used for all read operations.  This is useful as a migration step from SQL based
+// legacy storage to a more standard kubernetes backed storage interface.
 //
 // The LegacyStorage implementation must implement the following interfaces:
 // - rest.Storage
