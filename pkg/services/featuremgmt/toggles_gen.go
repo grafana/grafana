@@ -375,10 +375,6 @@ const (
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
 
-	// FlagAzureMonitorDataplane
-	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
-	FlagAzureMonitorDataplane = "azureMonitorDataplane"
-
 	// FlagTraceToProfiles
 	// Enables linking between traces and profiles
 	FlagTraceToProfiles = "traceToProfiles"
@@ -488,12 +484,8 @@ const (
 	FlagTransformationsVariableSupport = "transformationsVariableSupport"
 
 	// FlagKubernetesPlaylists
-	// Use the kubernetes API in the frontend for playlists
+	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
-
-	// FlagKubernetesPlaylistsAPI
-	// Route /api/playlist API to k8s handlers
-	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -582,4 +574,8 @@ const (
 	// FlagSsoSettingsApi
 	// Enables the SSO settings API
 	FlagSsoSettingsApi = "ssoSettingsApi"
+
+	// FlagLogsInfiniteScrolling
+	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
+	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 )

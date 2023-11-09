@@ -9,18 +9,16 @@ import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
+import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
 
 import { getDashboardSrv } from './DashboardSrv';
+import { getDashboardSnapshotSrv } from './SnapshotSrv';
 
 export class DashboardLoaderSrv {
   constructor() {}
-  _dashboardLoadFailed(
-    title: string,
-    snapshot?: boolean
-  ): { meta: DashboardMeta; dashboard: Partial<DashboardDataDTO> } {
+  _dashboardLoadFailed(title: string, snapshot?: boolean): DashboardDTO {
     snapshot = snapshot || false;
     return {
       meta: {
@@ -29,9 +27,10 @@ export class DashboardLoaderSrv {
         canDelete: false,
         canSave: false,
         canEdit: false,
+        canShare: false,
         dashboardNotFound: true,
       },
-      dashboard: { title },
+      dashboard: { title, uid: title, schemaVersion: 0 },
     };
   }
 
@@ -42,9 +41,11 @@ export class DashboardLoaderSrv {
     if (type === 'script' && slug) {
       promise = this._loadScriptedDashboard(slug);
     } else if (type === 'snapshot' && slug) {
-      promise = backendSrv.get('/api/snapshots/' + slug).catch(() => {
-        return this._dashboardLoadFailed('Snapshot not found', true);
-      });
+      promise = getDashboardSnapshotSrv()
+        .getSnapshot(slug)
+        .catch(() => {
+          return this._dashboardLoadFailed('Snapshot not found', true);
+        });
     } else if (type === 'ds' && slug) {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else if (type === 'public' && uid) {

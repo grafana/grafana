@@ -80,6 +80,7 @@ func (o ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, err
 
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.CoreAPI = nil
+	o.RecommendedOptions.Etcd = nil
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 
@@ -91,6 +92,8 @@ func (o ExampleServerOptions) Config() (*genericapiserver.RecommendedConfig, err
 }
 
 // Validate validates ExampleServerOptions
+// NOTE: we don't call validate on the top level recommended options as it doesn't like skipping etcd-servers
+// the function is left here for troubleshooting any other config issues
 func (o ExampleServerOptions) Validate(args []string) error {
 	errors := []error{}
 	errors = append(errors, o.RecommendedOptions.Validate()...)
