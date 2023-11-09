@@ -53,27 +53,27 @@ func (fam *RemotePrimaryForkedAlertmanager) ListSilences(ctx context.Context, fi
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
-	return apimodels.GettableAlerts{}, nil
+	return fam.remote.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
-	return apimodels.AlertGroups{}, nil
+	return fam.remote.GetAlertGroups(ctx, active, silenced, inhibited, filter, receiver)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
-	return nil
+	return fam.remote.PutAlerts(ctx, alerts)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	return []apimodels.Receiver{}, nil
+	return fam.remote.GetReceivers(ctx)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return &notifier.TestReceiversResult{}, nil
+	return fam.remote.TestReceivers(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	return fam.remote.TestTemplate(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CleanUp() {}
