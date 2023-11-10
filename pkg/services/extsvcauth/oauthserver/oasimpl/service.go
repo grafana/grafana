@@ -439,8 +439,7 @@ func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event 
 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	// Retrieve client associated to the plugin
-	slug := slugify.Slugify(event.PluginId)
-	client, err := s.sqlstore.GetExternalServiceByName(ctx, slug)
+	client, err := s.sqlstore.GetExternalServiceByName(ctx, event.PluginId)
 	if err != nil {
 		if errors.Is(err, oauthserver.ErrClientNotFound) {
 			s.logger.Debug("No external service linked to this plugin", "pluginId", event.PluginId)
