@@ -596,11 +596,6 @@ export interface ValueMappingResult {
   text?: string;
 }
 
-export enum DataFramesSource {
-  Annotations = 'annotations',
-  Series = 'series',
-}
-
 /**
  * Transformations allow to manipulate data returned by a query before the system applies a visualization.
  * Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
@@ -627,7 +622,7 @@ export interface DataTransformerConfig {
   /**
    * Where to pull DataFrames from as input to transformation
    */
-  source?: DataFramesSource;
+  topic?: ('series' | 'annotations'); // replaced with common.DataTopic
 }
 
 /**

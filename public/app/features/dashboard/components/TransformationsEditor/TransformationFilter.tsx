@@ -8,7 +8,7 @@ import {
   StandardEditorContext,
   StandardEditorsRegistryItem,
 } from '@grafana/data';
-import { DataFramesSource } from '@grafana/schema';
+import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
 import { FrameSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
@@ -21,9 +21,9 @@ interface TransformationFilterProps {
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
-const dataFramesSourceOpts: Array<SelectableValue<DataFramesSource>> = [
-  { value: DataFramesSource.Series, label: 'Series' },
-  { value: DataFramesSource.Annotations, label: 'Annotations' },
+const dataFramesSourceOpts: Array<SelectableValue<DataTopic>> = [
+  { value: DataTopic.Series, label: 'Series' },
+  { value: DataTopic.Annotations, label: 'Annotations' },
 ];
 
 export const TransformationFilter = ({ index, data, config, onChange }: TransformationFilterProps) => {
@@ -38,15 +38,15 @@ export const TransformationFilter = ({ index, data, config, onChange }: Transfor
       <div>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <div className="gf-form-label width-8">Source</div>
+            <div className="gf-form-label width-8">Topic</div>
             <Select
               className="width-18"
               options={dataFramesSourceOpts}
-              value={dataFramesSourceOpts.find((v) => v.value === config.source)}
+              value={dataFramesSourceOpts.find((v) => v.value === config.topic)}
               onChange={(option) => {
                 onChange(index, {
                   ...config,
-                  source: option.value,
+                  topic: option.value,
                 });
               }}
             />
