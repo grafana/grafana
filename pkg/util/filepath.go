@@ -144,7 +144,6 @@ func (w *walker) containsDistFolder(subFiles []subFile) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
