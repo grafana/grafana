@@ -538,7 +538,7 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	})
 }
 
-func genTestAlertmanagers(t *testing.T, mode Mode) (*alertmanager_mock.AlertmanagerMock, *alertmanager_mock.AlertmanagerMock, notifier.Alertmanager) {
+func genTestAlertmanagers(t *testing.T, mode int) (*alertmanager_mock.AlertmanagerMock, *alertmanager_mock.AlertmanagerMock, notifier.Alertmanager) {
 	t.Helper()
 	internal := alertmanager_mock.NewAlertmanagerMock(t)
 	remote := alertmanager_mock.NewAlertmanagerMock(t)

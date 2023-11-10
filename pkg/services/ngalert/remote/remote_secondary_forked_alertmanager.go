@@ -37,7 +37,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Con
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	// TODO: do we have to use this method in the remote AM?
+	// TODO: do we have to use this method in the remote AM? We can pull config and apply internally.
 	// TODO: send to different endpoint.
 	if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
 		return err

@@ -197,13 +197,6 @@ func (ng *AlertNG) init() error {
 		} else {
 			// If we're using either RemotePrimary or RemoteSecondary, we need the forked Alertmanager.
 			override = notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-				var mode remote.Mode
-				if remotePrimary {
-					mode = remote.ModeRemotePrimary
-				} else {
-					mode = remote.ModeRemoteSecondary
-				}
-
 				external, err := remote.NewAlertmanager(externalAMCfg, orgID)
 				if err != nil {
 					return nil, err
@@ -215,7 +208,10 @@ func (ng *AlertNG) init() error {
 					return nil, err
 				}
 
-				return remote.NewForkedAlertmanager(internal, external, mode), nil
+				if remotePrimary {
+					return remote.NewRemotePrimaryForkedAlertmanager(internal, external), nil
+				}
+				return remote.NewRemoteSecondaryForkedAlertmanager(internal, external), nil
 			})
 		}
 
