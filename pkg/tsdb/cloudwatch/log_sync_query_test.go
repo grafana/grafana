@@ -160,6 +160,9 @@ func Test_executeSyncLogQuery(t *testing.T) {
 			syncCalled = true
 			return nil, nil
 		}
+		t.Cleanup(func() {
+			executeSyncLogQuery = origExecuteSyncLogQuery
+		})
 
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -184,7 +187,6 @@ func Test_executeSyncLogQuery(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, syncCalled)
-		executeSyncLogQuery = origExecuteSyncLogQuery
 	})
 }
 func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
