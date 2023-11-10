@@ -21,19 +21,28 @@ func NewRemoteSecondaryForkedAlertmanager(internal, remote notifier.Alertmanager
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	// TODO: send to different endpoint.
 	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
 		return err
 	}
-
 	return fam.internal.ApplyConfig(ctx, config)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	return nil
+	// TODO: send to different endpoint.
+	if err := fam.remote.SaveAndApplyConfig(ctx, config); err != nil {
+		return err
+	}
+	return fam.internal.SaveAndApplyConfig(ctx, config)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return nil
+	// TODO: do we have to use this method in the remote AM?
+	// TODO: send to different endpoint.
+	if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
+		return err
+	}
+	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {

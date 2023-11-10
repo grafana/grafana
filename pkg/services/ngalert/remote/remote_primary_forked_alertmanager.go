@@ -21,15 +21,25 @@ func NewRemotePrimaryForkedAlertmanager(internal, remote notifier.Alertmanager) 
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	return nil
+	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+		return err
+	}
+	return fam.internal.ApplyConfig(ctx, config)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	return nil
+	if err := fam.remote.SaveAndApplyConfig(ctx, config); err != nil {
+		return err
+	}
+	return fam.internal.SaveAndApplyConfig(ctx, config)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return nil
+	// TODO: do we have to use this method in the remote AM?
+	if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
+		return err
+	}
+	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {

@@ -22,26 +22,29 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 	expErr := errors.New("test error")
 
 	t.Run("ApplyConfig", func(tt *testing.T) {
-		// ApplyConfig should be called in both Alertmanagers.
+		// ApplyConfig should be called first in the remote Alertmanager
+		// and then in the internal Alertmanager.
 		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		remote.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Once()
-		internal.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Once()
+		remoteCall := remote.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Once()
+		internal.EXPECT().ApplyConfig(mock.Anything, mock.Anything).Return(nil).Once().NotBefore(remoteCall)
 		require.NoError(tt, forked.ApplyConfig(ctx, nil))
 	})
 
 	t.Run("SaveAndApplyConfig", func(tt *testing.T) {
-		// SaveAndApplyConfig should not be called in the remote Alertmanager.
-		// We should send configuration only on startup and shutdown.
-		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().SaveAndApplyConfig(mock.Anything, mock.Anything).Return(nil).Once()
+		// SaveAndApplyConfig should be called first in the remote Alertmanager
+		// and then in the internal Alertmanager.
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		remoteCall := remote.EXPECT().SaveAndApplyConfig(mock.Anything, mock.Anything).Return(nil).Once()
+		internal.EXPECT().SaveAndApplyConfig(mock.Anything, mock.Anything).Return(nil).Once().NotBefore(remoteCall)
 		require.NoError(tt, forked.SaveAndApplyConfig(ctx, nil))
 	})
 
 	t.Run("SaveAndApplyDefaultConfig", func(tt *testing.T) {
-		// SaveAndApplyDefaultConfig should not be called in the remote Alertmanager.
-		// We should send configuration only on startup and shutdown.
-		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
-		internal.EXPECT().SaveAndApplyDefaultConfig(mock.Anything).Return(nil).Once()
+		// SaveAndApplyDefaultConfig should be called first in the remote Alertmanager
+		// and then in the internal Alertmanager.
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
+		remoteCall := remote.EXPECT().SaveAndApplyDefaultConfig(mock.Anything).Return(nil).Once()
+		internal.EXPECT().SaveAndApplyDefaultConfig(mock.Anything).Return(nil).Once().NotBefore(remoteCall)
 		require.NoError(tt, forked.SaveAndApplyDefaultConfig(ctx))
 	})
 
