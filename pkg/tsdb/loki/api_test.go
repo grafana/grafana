@@ -28,8 +28,8 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "Source=logvolhist", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
-		require.NoError(t, err)
+		res := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.Equal(t, nil, res.Error)
 		require.True(t, called)
 	})
 
@@ -40,8 +40,8 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "Source=logsample", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange}, ResponseOpts{})
-		require.NoError(t, err)
+		res := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.Equal(t, nil, res.Error)
 		require.True(t, called)
 	})
 
@@ -52,8 +52,8 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "Source=datasample", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryDataSample, QueryType: QueryTypeRange}, ResponseOpts{})
-		require.NoError(t, err)
+		res := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryDataSample, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.Equal(t, nil, res.Error)
 		require.True(t, called)
 	})
 
@@ -64,8 +64,8 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryNone, QueryType: QueryTypeRange}, ResponseOpts{})
-		require.NoError(t, err)
+		res := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryNone, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.Equal(t, nil, res.Error)
 		require.True(t, called)
 	})
 }
@@ -133,8 +133,8 @@ func TestApiUrlHandling(t *testing.T) {
 				QueryType: QueryTypeRange,
 			}
 
-			_, err := api.DataQuery(context.Background(), query, ResponseOpts{})
-			require.NoError(t, err)
+			res := api.DataQuery(context.Background(), query, ResponseOpts{})
+			require.Equal(t, nil, res.Error)
 			require.True(t, called)
 		})
 	}
@@ -154,8 +154,8 @@ func TestApiUrlHandling(t *testing.T) {
 				QueryType: QueryTypeInstant,
 			}
 
-			_, err := api.DataQuery(context.Background(), query, ResponseOpts{})
-			require.NoError(t, err)
+			res := api.DataQuery(context.Background(), query, ResponseOpts{})
+			require.Equal(t, nil, res.Error)
 			require.True(t, called)
 		})
 	}

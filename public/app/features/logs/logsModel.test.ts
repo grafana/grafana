@@ -436,9 +436,6 @@ describe('dataFrameToLogsModel', () => {
         ],
         meta: {
           limit: 1000,
-          custom: {
-            frameType: 'LabeledTimeValues',
-          },
         },
         refId: 'A',
       }),
@@ -516,25 +513,15 @@ describe('dataFrameToLogsModel', () => {
       type: FieldType.string,
       values: ['line1'],
     };
-
-    const meta = {
-      custom: {
-        frameType: 'LabeledTimeValues',
-      },
-    };
-
     const frame1 = new MutableDataFrame({
-      meta,
       fields: [labels, time, line],
     });
 
     const frame2 = new MutableDataFrame({
-      meta,
       fields: [time, labels, line],
     });
 
     const frame3 = new MutableDataFrame({
-      meta,
       fields: [time, line, labels],
     });
 
