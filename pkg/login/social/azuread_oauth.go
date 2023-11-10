@@ -75,8 +75,9 @@ func NewAzureADProvider(settings map[string]interface{}, cfg *setting.Cfg, featu
 		cache:                cache,
 		allowedOrganizations: util.SplitString(mustString(info.Extra["allowed_organizations"])),
 		forceUseGraphAPI:     mustBool(info.Extra["force_use_graph_api"], false),
-		//skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
-		skipOrgRoleSync: info.SkipOrgRoleSync,
+		skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
 	if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
