@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { ConfirmModal } from '@grafana/ui';
+import { ConfirmModal, LinkButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
@@ -53,19 +53,18 @@ export const PlaylistPage = () => {
   const showSearch = allPlaylists.loading || playlists.length > 0 || searchQuery.length > 0;
 
   return (
-    <Page navId="dashboards/playlists">
+    <Page
+      actions={
+        contextSrv.isEditor ? (
+          <LinkButton href="/playlists/new">
+            <Trans i18nKey="playlist-page.create-button.title">New playlist</Trans>
+          </LinkButton>
+        ) : undefined
+      }
+      navId="dashboards/playlists"
+    >
       <Page.Contents>
-        {showSearch && (
-          <PageActionBar
-            searchQuery={searchQuery}
-            linkButton={
-              contextSrv.isEditor
-                ? { title: t('playlist-page.create-button.title', 'New playlist'), href: '/playlists/new' }
-                : undefined
-            }
-            setSearchQuery={setSearchQuery}
-          />
-        )}
+        {showSearch && <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
 
         {allPlaylists.loading ? (
           <PlaylistPageList.Skeleton />

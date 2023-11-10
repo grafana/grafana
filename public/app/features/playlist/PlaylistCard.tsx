@@ -65,7 +65,7 @@ export const PlaylistCard = ({ playlist, setStartPlaylist, setPlaylistToDelete }
 const PlaylistCardSkeleton = () => {
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
-    <Card className={skeletonStyles.card}>
+    <Card>
       <Card.Heading>
         <Skeleton width={140} />
       </Card.Heading>
@@ -90,11 +90,6 @@ function getSkeletonStyles(theme: GrafanaTheme2) {
   return {
     button: css({
       lineHeight: 1,
-    }),
-    card: css({
-      backgroundColor: theme.colors.background.primary,
-      outline: `1px solid ${theme.colors.background.secondary}`,
-      outlineOffset: '-1px',
     }),
   };
 }
