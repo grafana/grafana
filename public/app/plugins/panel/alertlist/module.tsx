@@ -262,7 +262,6 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
               noDefault
               current={props.value}
               onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}
-              onClear={() => props.onChange(null)}
             />
             <Button variant="secondary" onClick={() => props.onChange(null)}>
               Clear
