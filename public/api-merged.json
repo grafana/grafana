@@ -18656,6 +18656,10 @@
           "type": "boolean",
           "example": false
         },
+        "requiredBy": {
+          "type": "string",
+          "example": "grafana-app"
+        },
         "login": {
           "type": "string",
           "example": "sa-grafana"
@@ -18710,6 +18714,10 @@
         "isExternal": {
           "type": "boolean",
           "example": false
+        },
+        "requiredBy": {
+          "type": "string",
+          "example": "grafana-app"
         },
         "login": {
           "type": "string",

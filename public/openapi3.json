@@ -9558,6 +9558,10 @@
             "example": false,
             "type": "boolean"
           },
+          "requiredBy": {
+            "type": "string",
+            "example": "grafana-app"
+          },
           "login": {
             "example": "sa-grafana",
             "type": "string"
@@ -9612,6 +9616,10 @@
           "isExternal": {
             "example": false,
             "type": "boolean"
+          },
+          "requiredBy": {
+            "type": "string",
+            "example": "grafana-app"
           },
           "login": {
             "example": "sa-grafana",
