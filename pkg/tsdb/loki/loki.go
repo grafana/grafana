@@ -13,8 +13,10 @@ import (
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -95,6 +97,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
+		opts.Middlewares = append(sdkhttpclient.DefaultMiddlewares(), errorsource.Middleware("errorsource"))
 		client, err := httpClientProvider.New(opts)
 		if err != nil {
 			return nil, err
@@ -239,37 +242,28 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 
 	defer span.End()
 
-	frames, err := runQuery(ctx, api, query, responseOpts, plog)
-	queryRes := backend.DataResponse{}
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		queryRes.Error = err
-	} else {
-		queryRes.Frames = frames
-	}
-
-	return queryRes
+	res := runQuery(ctx, api, query, responseOpts, plog)
+	return res
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
-func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts, plog log.Logger) (data.Frames, error) {
-	frames, err := api.DataQuery(ctx, *query, responseOpts)
-	if err != nil {
-		plog.Error("Error querying loki", "error", err)
-		return data.Frames{}, err
+func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts, plog log.Logger) backend.DataResponse {
+	dataResponse := api.DataQuery(ctx, *query, responseOpts)
+	if dataResponse.Error != nil {
+		plog.Error("Error querying loki", "error", dataResponse.Error)
+		return dataResponse
 	}
 
-	for _, frame := range frames {
-		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
+	for _, frame := range dataResponse.Frames {
+		err := adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
 			plog.Error("Error adjusting frame", "error", err)
-			return data.Frames{}, err
+			return errorsource.Response(errorsource.PluginError(err, false))
 		}
 	}
 
-	return frames, nil
+	return dataResponse
 }
 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {

@@ -144,6 +144,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   reporting = {
     enabled: true,
   };
+  analytics = {
+    enabled: true,
+  };
   googleAnalyticsId: undefined;
   googleAnalytics4Id: undefined;
   googleAnalytics4SendManualPageViews = false;

@@ -63,6 +63,10 @@ export const language: languages.IMonarchLanguage = {
 
   tokenizer: {
     root: [
+      // comments
+      [/\/\/.*/, 'comment'], // line comment
+      [/\/\*.*\*\//, 'comment'], // block comment
+
       // durations
       [/[0-9]+(.[0-9]+)?(us|µs|ns|ms|s|m|h)/, 'number'],
 
@@ -138,7 +142,7 @@ export const languageDefinition = {
 
 export const traceqlGrammar: Grammar = {
   comment: {
-    pattern: /#.*/,
+    pattern: /\/\/.*/,
   },
   'span-set': {
     pattern: /\{[^}]*}/,
