@@ -75,17 +75,17 @@ export const StatusHistoryTooltip2 = ({
 
   const getHeaderLabel = (): LabelValue => {
     return {
-      label: getFieldDisplayName(field),
-      value: fmt(field, field.values[datapointIdx]),
-      color: display.color,
+      label: '',
+      value: fmt(xField, xField.values[datapointIdx]),
     };
   };
 
-  const getContentLabelValue = (): LabelValue[] => {
+  const getContentLabelValue = () => {
     return [
       {
-        label: 'Time',
-        value: fmt(xField, xField.values[datapointIdx]),
+        label: getFieldDisplayName(field),
+        value: fmt(field, field.values[datapointIdx]),
+        color: display.color,
       },
     ];
   };

@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { HorizontalGroup } from '..';
 import { useStyles2 } from '../../themes';
 
+import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { LabelValue } from './types';
 
 interface Props {
@@ -22,7 +23,12 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
           return (
             <HorizontalGroup justify="space-between" spacing="lg" key={i}>
               <div className={styles.label}>{labelValue.label}</div>
-              <div className={styles.value}>{labelValue.value}</div>
+              <>
+                {labelValue.color && (
+                  <VizTooltipColorIndicator color={labelValue.color} colorIndicator={labelValue.colorIndicator!} />
+                )}
+                <div className={styles.value}>{labelValue.value}</div>
+              </>
             </HorizontalGroup>
           );
         })}
