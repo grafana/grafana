@@ -137,3 +137,7 @@ func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
 	}
 	return nil
 }
+
+func (r *Registry) Run(ctx context.Context) error {
+	return r.CleanUpOrphanedExternalServices(ctx)
+}

@@ -85,8 +85,9 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 func (esa *ExtSvcAccountsService) GetExternalServiceNames(ctx context.Context) ([]string, error) {
 	esa.logger.Debug("Get external service names from store")
 	sas, err := esa.saSvc.SearchOrgServiceAccounts(ctx, &sa.SearchOrgServiceAccountsQuery{
-		OrgID:  extsvcauth.TmpOrgID,
-		Filter: sa.FilterOnlyExternal,
+		OrgID:        extsvcauth.TmpOrgID,
+		Filter:       sa.FilterOnlyExternal,
+		SignedInUser: extsvcuser,
 	})
 	if err != nil {
 		esa.logger.Error("Could not fetch external service accounts from store", "error", err.Error())
