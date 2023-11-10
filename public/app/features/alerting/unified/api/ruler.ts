@@ -160,7 +160,7 @@ function isResponseError(error: unknown): error is FetchResponse<ErrorResponseMe
     return false;
   }
 
-  const hasErrorMessage = 'data' in error && error.data !== null;
+  const hasErrorMessage = 'data' in error && error.data !== null && error.data !== undefined;
   const hasErrorCode = 'status' in error && Number.isFinite(error.status);
 
   return hasErrorCode && hasErrorMessage;
