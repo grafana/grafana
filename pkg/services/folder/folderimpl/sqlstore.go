@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/concurrency"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -139,7 +140,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			return folder.ErrInternal.Errorf("failed to get affected row: %w", err)
 		}
 		if affected == 0 {
-			return folder.ErrInternal.Errorf("no folders are updated")
+			return folder.ErrInternal.Errorf("no folders are updated: %w", folder.ErrFolderNotFound)
 		}
 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
@@ -166,15 +167,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		case q.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:
-			args := []any{*q.Title, q.OrgID}
-			s := "SELECT * FROM folder WHERE title = ? AND org_id = ?"
-			if q.ParentUID != nil {
-				s = s + " AND parent_uid = ?"
-				args = append(args, *q.ParentUID)
-			} else {
-				s = s + " AND parent_uid IS NULL"
-			}
-			exists, err = sess.SQL(s, args...).Get(foldr)
+			exists, err = sess.SQL("SELECT * FROM folder WHERE title = ? AND org_id = ?", q.Title, q.OrgID).Get(foldr)
 		default:
 			return folder.ErrBadRequest.Errorf("one of ID, UID, or Title must be included in the command")
 		}
@@ -332,4 +325,29 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
 	}
 	return height, nil
+}
+
+func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
+	if len(uids) == 0 {
+		return []*folder.Folder{}, nil
+	}
+	var folders []*folder.Folder
+	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		b := strings.Builder{}
+		b.WriteString(`SELECT * FROM folder WHERE org_id=? AND uid IN (?` + strings.Repeat(", ?", len(uids)-1) + `)`)
+		args := []any{orgID}
+		for _, uid := range uids {
+			args = append(args, uid)
+		}
+		return sess.SQL(b.String(), args...).Find(&folders)
+	}); err != nil {
+		return nil, err
+	}
+
+	// Add URLs
+	for i, f := range folders {
+		folders[i] = f.WithURL()
+	}
+
+	return folders, nil
 }

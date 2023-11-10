@@ -41,7 +41,8 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
-	FolderID  int64 `xorm:"folder_id"`
+	FolderID  int64  `xorm:"folder_id"`
+	FolderUID string `xorm:"folder_uid"`
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
 
@@ -186,6 +187,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
 	dash.FolderID = cmd.FolderID
+	dash.FolderUID = cmd.FolderUID
 	dash.UpdateSlug()
 	return dash
 }
@@ -246,9 +248,10 @@ type SaveDashboardCommand struct {
 	OrgID        int64            `json:"-" xorm:"org_id"`
 	RestoredFrom int              `json:"-"`
 	PluginID     string           `json:"-" xorm:"plugin_id"`
-	FolderID     int64            `json:"folderId" xorm:"folder_id"`
-	FolderUID    string           `json:"folderUid" xorm:"folder_uid"`
-	IsFolder     bool             `json:"isFolder"`
+	// Deprecated: use FolderUID instead
+	FolderID  int64  `json:"folderId" xorm:"folder_id"`
+	FolderUID string `json:"folderUid" xorm:"folder_uid"`
+	IsFolder  bool   `json:"isFolder"`
 
 	UpdatedAt time.Time
 }
@@ -299,9 +302,10 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 //
 // Multiple constraints can be combined.
 type GetDashboardQuery struct {
-	ID       int64
-	UID      string
-	Title    *string
+	ID    int64
+	UID   string
+	Title *string
+	// Deprecated: use FolderUID instead
 	FolderID *int64
 	OrgID    int64
 }
@@ -345,12 +349,13 @@ type SaveDashboardDTO struct {
 }
 
 type DashboardSearchProjection struct {
-	ID          int64  `xorm:"id"`
-	UID         string `xorm:"uid"`
-	Title       string
-	Slug        string
-	Term        string
-	IsFolder    bool
+	ID       int64  `xorm:"id"`
+	UID      string `xorm:"uid"`
+	Title    string
+	Slug     string
+	Term     string
+	IsFolder bool
+	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	FolderUID   string `xorm:"folder_uid"`
 	FolderSlug  string
@@ -372,6 +377,7 @@ type CountDashboardsInFolderQuery struct {
 // to the store layer. The FolderID will be replaced with FolderUID when
 // dashboards are updated with parent folder UIDs.
 type CountDashboardsInFolderRequest struct {
+	// Deprecated: use FolderUID instead
 	FolderID int64
 	OrgID    int64
 }
@@ -480,13 +486,14 @@ type FindPersistedDashboardsQuery struct {
 	DashboardIds  []int64
 	DashboardUIDs []string
 	Type          string
-	FolderIds     []int64
-	FolderUIDs    []string
-	Tags          []string
-	Limit         int64
-	Page          int64
-	Permission    PermissionType
-	Sort          model.SortOption
+	// Deprecated: use FolderUIDs instead
+	FolderIds  []int64
+	FolderUIDs []string
+	Tags       []string
+	Limit      int64
+	Page       int64
+	Permission PermissionType
+	Sort       model.SortOption
 
 	Filters []any
 }

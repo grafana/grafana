@@ -25,6 +25,7 @@ import (
 	trace "go.opentelemetry.io/otel/trace"
 
 	"github.com/go-kit/log/level"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -49,9 +50,9 @@ type TracingService struct {
 	Propagation   string
 	customAttribs []attribute.KeyValue
 
-	sampler          string
-	samplerParam     float64
-	samplerRemoteURL string
+	Sampler          string
+	SamplerParam     float64
+	SamplerRemoteURL string
 
 	log log.Logger
 
@@ -110,6 +111,10 @@ func ParseSettings(cfg *setting.Cfg) (*TracingService, error) {
 	return ots, err
 }
 
+func (ots *TracingService) GetTracerProvider() tracerProvider {
+	return ots.tracerProvider
+}
+
 func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	spanCtx := trace.SpanContextFromContext(ctx)
 	if !spanCtx.HasTraceID() || !spanCtx.IsValid() || (requireSampled && !spanCtx.IsSampled()) {
@@ -138,9 +143,9 @@ func (ots *TracingService) parseSettings() error {
 			}
 		}
 		legacyTags = section.Key("always_included_tag").MustString("")
-		ots.sampler = section.Key("sampler_type").MustString("")
-		ots.samplerParam = section.Key("sampler_param").MustFloat64(1)
-		ots.samplerRemoteURL = section.Key("sampling_server_url").MustString("")
+		ots.Sampler = section.Key("sampler_type").MustString("")
+		ots.SamplerParam = section.Key("sampler_param").MustFloat64(1)
+		ots.SamplerRemoteURL = section.Key("sampling_server_url").MustString("")
 	}
 	section := ots.Cfg.Raw.Section("tracing.opentelemetry")
 	var err error
@@ -153,17 +158,17 @@ func (ots *TracingService) parseSettings() error {
 	// if sampler_type is set in tracing.opentelemetry, we ignore the config in tracing.jaeger
 	sampler := section.Key("sampler_type").MustString("")
 	if sampler != "" {
-		ots.sampler = sampler
+		ots.Sampler = sampler
 	}
 
 	samplerParam := section.Key("sampler_param").MustFloat64(0)
 	if samplerParam != 0 {
-		ots.samplerParam = samplerParam
+		ots.SamplerParam = samplerParam
 	}
 
 	samplerRemoteURL := section.Key("sampling_server_url").MustString("")
 	if samplerRemoteURL != "" {
-		ots.samplerRemoteURL = samplerRemoteURL
+		ots.SamplerRemoteURL = samplerRemoteURL
 	}
 
 	section = ots.Cfg.Raw.Section("tracing.opentelemetry.jaeger")
@@ -267,26 +272,26 @@ func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, e
 }
 
 func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
-	switch ots.sampler {
+	switch ots.Sampler {
 	case "const", "":
-		if ots.samplerParam >= 1 {
+		if ots.SamplerParam >= 1 {
 			return tracesdk.AlwaysSample(), nil
-		} else if ots.samplerParam <= 0 {
+		} else if ots.SamplerParam <= 0 {
 			return tracesdk.NeverSample(), nil
 		}
 
-		return nil, fmt.Errorf("invalid param for const sampler - must be 0 or 1: %f", ots.samplerParam)
+		return nil, fmt.Errorf("invalid param for const sampler - must be 0 or 1: %f", ots.SamplerParam)
 	case "probabilistic":
-		return tracesdk.TraceIDRatioBased(ots.samplerParam), nil
+		return tracesdk.TraceIDRatioBased(ots.SamplerParam), nil
 	case "rateLimiting":
-		return newRateLimiter(ots.samplerParam), nil
+		return newRateLimiter(ots.SamplerParam), nil
 	case "remote":
 		return jaegerremote.New("grafana",
-			jaegerremote.WithSamplingServerURL(ots.samplerRemoteURL),
-			jaegerremote.WithInitialSampler(tracesdk.TraceIDRatioBased(ots.samplerParam)),
+			jaegerremote.WithSamplingServerURL(ots.SamplerRemoteURL),
+			jaegerremote.WithInitialSampler(tracesdk.TraceIDRatioBased(ots.SamplerParam)),
 		), nil
 	default:
-		return nil, fmt.Errorf("invalid sampler type: %s", ots.sampler)
+		return nil, fmt.Errorf("invalid sampler type: %s", ots.Sampler)
 	}
 }
 

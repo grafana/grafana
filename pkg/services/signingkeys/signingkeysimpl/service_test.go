@@ -13,13 +13,15 @@ import (
 	"time"
 
 	"github.com/go-jose/go-jose/v3"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/services/signingkeys"
+	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -32,28 +34,29 @@ ielIkb6/Ys51o7KjHxtANhPesw==
 -----END PRIVATE KEY-----`
 )
 
-func getPrivateKey(t *testing.T) *ecdsa.PrivateKey {
+func getPrivateKey(t *testing.T, svc *Service) []byte {
 	pemBlock, _ := pem.Decode([]byte(privateKeyPem))
 	privateKey, err := x509.ParsePKCS8PrivateKey(pemBlock.Bytes)
 	require.NoError(t, err)
-	return privateKey.(*ecdsa.PrivateKey)
+
+	bytes, err := svc.encodePrivateKey(context.Background(), privateKey.(*ecdsa.PrivateKey))
+	require.NoError(t, err)
+	return bytes
 }
 
 func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
-	mockStore := signingkeystore.NewFakeStore()
-	cacheStorage := remotecache.NewFakeCacheStorage()
-
-	_, err := mockStore.AddPrivateKey(context.Background(), signingkeys.ServerPrivateKeyID, jose.ES256, getPrivateKey(t), nil, false)
-	require.NoError(t, err)
-
-	_, err = mockStore.AddPrivateKey(context.Background(), "other", jose.ES256, getPrivateKey(t), nil, false)
-	require.NoError(t, err)
-
 	svc := &Service{
-		log:         log.NewNopLogger(),
-		store:       mockStore,
-		remoteCache: cacheStorage,
+		log:            log.NewNopLogger(),
+		store:          signingkeystore.NewFakeStore(),
+		secretsService: secretstest.NewFakeSecretsService(),
+		remoteCache:    remotecache.NewFakeCacheStorage(),
+		localCache:     localcache.New(privateKeyTTL, 10*time.Hour),
 	}
+
+	_, _, err := svc.GetOrCreatePrivateKey(context.Background(), "key-1", jose.ES256)
+	require.NoError(t, err)
+	_, _, err = svc.GetOrCreatePrivateKey(context.Background(), "key-2", jose.ES256)
+	require.NoError(t, err)
 	jwks, err := svc.GetJWKS(context.Background())
 	require.NoError(t, err)
 
@@ -80,13 +83,13 @@ func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
 }
 
 func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
-	mockStore := signingkeystore.NewFakeStore()
-
 	cacheStorage := remotecache.NewFakeCacheStorage()
 	svc := &Service{
-		log:         log.NewNopLogger(),
-		store:       mockStore,
-		remoteCache: cacheStorage,
+		log:            log.NewNopLogger(),
+		store:          signingkeystore.NewFakeStore(),
+		secretsService: secretstest.NewFakeSecretsService(),
+		remoteCache:    cacheStorage,
+		localCache:     localcache.New(privateKeyTTL, 10*time.Hour),
 	}
 
 	wantedKeyID := keyMonthScopedID("test", jose.ES256)
@@ -110,7 +113,6 @@ func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
 
 	// new key is generated, so jwks cache should be voided
 	require.Len(t, cacheStorage.Storage, 0)
-	assert.Contains(t, mockStore.PrivateKeys, wantedKeyID)
 
 	err = cacheStorage.Set(context.Background(), jwksCacheKey, []byte("invalid"), 0)
 	require.NoError(t, err)
@@ -122,7 +124,6 @@ func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
 	require.Equal(t, key, key2)
 	require.Equal(t, wantedKeyID, id)
 
-	assert.Len(t, mockStore.PrivateKeys, 1)
 	// no new key is generated, so jwks cache should not be voided
 	require.Len(t, cacheStorage.Storage, 1)
 }
@@ -132,9 +133,11 @@ func TestExposeJWKS(t *testing.T) {
 	mockStore := signingkeystore.NewFakeStore()
 	cacheStorage := remotecache.NewFakeCacheStorage()
 	svc := &Service{
-		log:         log.NewNopLogger(),
-		store:       mockStore,
-		remoteCache: cacheStorage,
+		log:            log.NewNopLogger(),
+		store:          mockStore,
+		remoteCache:    cacheStorage,
+		secretsService: secretstest.NewFakeSecretsService(),
+		localCache:     localcache.New(privateKeyTTL, 10*time.Hour),
 	}
 
 	routerRegister := routing.NewRouteRegister()
@@ -142,8 +145,13 @@ func TestExposeJWKS(t *testing.T) {
 	svc.registerAPIEndpoints(routerRegister)
 
 	server := webtest.NewServer(t, routerRegister)
+	_, err := mockStore.Add(context.Background(), &signingkeys.SigningKey{
+		KeyID:      "test-key",
+		PrivateKey: getPrivateKey(t, svc),
+		AddedAt:    time.Now(),
+		Alg:        jose.ES256,
+	}, false)
 
-	_, err := mockStore.AddPrivateKey(context.Background(), "test-key", jose.ES256, getPrivateKey(t), nil, false)
 	require.NoError(t, err)
 
 	// create a new request context

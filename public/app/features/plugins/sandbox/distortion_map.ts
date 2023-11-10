@@ -1,3 +1,4 @@
+import { ProxyTarget } from '@locker/near-membrane-shared';
 import { cloneDeep, isFunction } from 'lodash';
 
 import { PluginMeta } from '@grafana/data';
@@ -520,13 +521,12 @@ async function distortPostMessage(distortions: DistortionMap) {
 }
 
 /**
- * We define "live" APIs as APIs that can only be distorted in runtime on-the-fly and not at initialization
- * time like other distortions do.
- *
- * This could be because the objects we want to patch only become available after specific states are reached
- * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions
- *
+ * "Live" APIs are APIs that can only be distorted at runtime.
+ * This could be because the objects we want to patch only become available after specific states are reached,
+ * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions.
+ * We put here only distortions that can't be static because they are dynamicly loaded
  */
-export async function distortLiveApis() {
+export function distortLiveApis(originalValue: ProxyTarget): ProxyTarget | undefined {
   distortMonacoEditor(generalDistortionMap);
+  return;
 }

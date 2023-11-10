@@ -25,19 +25,20 @@ type store struct {
 }
 
 type flatResourcePermission struct {
-	ID          int64 `xorm:"id"`
-	RoleName    string
-	Action      string
-	Scope       string
-	UserId      int64
-	UserLogin   string
-	UserEmail   string
-	TeamId      int64
-	TeamEmail   string
-	Team        string
-	BuiltInRole string
-	Created     time.Time
-	Updated     time.Time
+	ID               int64 `xorm:"id"`
+	RoleName         string
+	Action           string
+	Scope            string
+	UserId           int64
+	UserLogin        string
+	UserEmail        string
+	TeamId           int64
+	TeamEmail        string
+	Team             string
+	BuiltInRole      string
+	IsServiceAccount bool `xorm:"is_service_account"`
+	Created          time.Time
+	Updated          time.Time
 }
 
 func (p *flatResourcePermission) IsManaged(scope string) bool {
@@ -307,6 +308,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	userSelect := rawSelect + `
 		ur.user_id AS user_id,
 		u.login AS user_login,
+		u.is_service_account AS is_service_account,
 		u.email AS user_email,
 		0 AS team_id,
 		'' AS team,
@@ -317,6 +319,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	teamSelect := rawSelect + `
 		0 AS user_id,
 		'' AS user_login,
+		` + s.sql.GetDialect().BooleanStr(false) + ` AS is_service_account,
 		'' AS user_email,
 		tr.team_id AS team_id,
 		t.name AS team,
@@ -327,6 +330,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	builtinSelect := rawSelect + `
 		0 AS user_id,
 		'' AS user_login,
+		` + s.sql.GetDialect().BooleanStr(false) + ` AS is_service_account,
 		'' AS user_email,
 		0 as team_id,
 		'' AS team,
@@ -480,21 +484,22 @@ func flatPermissionsToResourcePermission(scope string, permissions []flatResourc
 
 	first := permissions[0]
 	return &accesscontrol.ResourcePermission{
-		ID:          first.ID,
-		RoleName:    first.RoleName,
-		Actions:     actions,
-		Scope:       first.Scope,
-		UserId:      first.UserId,
-		UserLogin:   first.UserLogin,
-		UserEmail:   first.UserEmail,
-		TeamId:      first.TeamId,
-		TeamEmail:   first.TeamEmail,
-		Team:        first.Team,
-		BuiltInRole: first.BuiltInRole,
-		Created:     first.Created,
-		Updated:     first.Updated,
-		IsManaged:   first.IsManaged(scope),
-		IsInherited: first.IsInherited(scope),
+		ID:               first.ID,
+		RoleName:         first.RoleName,
+		Actions:          actions,
+		Scope:            first.Scope,
+		UserId:           first.UserId,
+		UserLogin:        first.UserLogin,
+		UserEmail:        first.UserEmail,
+		TeamId:           first.TeamId,
+		TeamEmail:        first.TeamEmail,
+		Team:             first.Team,
+		BuiltInRole:      first.BuiltInRole,
+		Created:          first.Created,
+		Updated:          first.Updated,
+		IsManaged:        first.IsManaged(scope),
+		IsInherited:      first.IsInherited(scope),
+		IsServiceAccount: first.IsServiceAccount,
 	}
 }
 

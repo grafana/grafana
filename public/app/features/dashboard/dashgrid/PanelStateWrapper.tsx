@@ -30,6 +30,7 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
+import config from 'app/core/config';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -47,8 +48,10 @@ import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelLoadTimeMonitor } from './PanelLoadTimeMonitor';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
+import { PanelOptionsLogger } from './panelOptionsLogger';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -71,7 +74,6 @@ export interface State {
   isFirstLoad: boolean;
   renderCounter: number;
   errorMessage?: string;
-  refreshWhenInView: boolean;
   context: PanelContext;
   data: PanelData;
   liveTime?: TimeRange;
@@ -81,6 +83,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
+  private panelOptionsLogger: PanelOptionsLogger | undefined = undefined;
 
   constructor(props: Props) {
     super(props);
@@ -91,7 +94,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.state = {
       isFirstLoad: true,
       renderCounter: 0,
-      refreshWhenInView: false,
       context: {
         eventsScope: '__global_',
         eventBus,
@@ -112,6 +114,16 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       },
       data: this.getInitialPanelDataState(),
     };
+
+    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+      const panelInfo = {
+        panelId: String(props.panel.id),
+        panelType: props.panel.type,
+        panelTitle: props.panel.title,
+      };
+
+      this.panelOptionsLogger = new PanelOptionsLogger(props.panel.getOptions(), props.panel.fieldConfig, panelInfo);
+    }
   }
 
   // Due to a mutable panel model we get the sync settings via function that proactively reads from the model
@@ -244,7 +256,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView, width } = this.props;
+    const { isInView, width, panel } = this.props;
     const { context } = this.state;
 
     const app = this.getPanelContextApp();
@@ -262,7 +274,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     if (isInView !== prevProps.isInView) {
       if (isInView) {
         // Check if we need a delayed refresh
-        if (this.state.refreshWhenInView) {
+        if (panel.refreshWhenInView) {
           this.onRefresh();
         }
       }
@@ -329,7 +341,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { dashboard, panel, isInView, width } = this.props;
 
     if (!isInView) {
-      this.setState({ refreshWhenInView: true });
+      panel.refreshWhenInView = true;
       return;
     }
 
@@ -341,9 +353,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         return;
       }
 
-      if (this.state.refreshWhenInView) {
-        this.setState({ refreshWhenInView: false });
-      }
+      panel.refreshWhenInView = false;
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
@@ -373,8 +383,17 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.props.panel.updateFieldConfig(config);
   };
 
+  logPanelChangesOnError() {
+    this.panelOptionsLogger!.logChanges(this.props.panel.getOptions(), this.props.panel.fieldConfig);
+  }
+
   onPanelError = (error: Error) => {
+    if (config.featureToggles.panelMonitoring && this.getPanelContextApp() === CoreApp.PanelEditor) {
+      this.logPanelChangesOnError();
+    }
+
     const errorMessage = error.message || DEFAULT_PLUGIN_ERROR;
+
     if (this.state.errorMessage !== errorMessage) {
       this.setState({ errorMessage });
     }
@@ -512,6 +531,9 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             onChangeTimeRange={this.onChangeTimeRange}
             eventBus={dashboard.events}
           />
+          {config.featureToggles.panelMonitoring && this.state.errorMessage === undefined && (
+            <PanelLoadTimeMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
+          )}
         </PanelContextProvider>
       </>
     );

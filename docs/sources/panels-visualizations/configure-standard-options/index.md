@@ -82,11 +82,15 @@ Grafana can sometimes be too aggressive in parsing strings and displaying them a
 
 ### Min
 
-Lets you set the minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+Lets you set the minimum value used in percentage threshold calculations. Leave blank to automatically calculate the minimum.
 
 ### Max
 
-Lets you set the maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+Lets you set the maximum value used in percentage threshold calculations. Leave blank to automatically calculate the maximum.
+
+### Field min/max
+
+By default the calculated min and max will be based on the minimum and maximum, in all series and fields. Turning field min/max on, will calculate the min or max on each field individually, based on the minimum or maximum value of the field.
 
 ### Decimals
 

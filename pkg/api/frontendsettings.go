@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -19,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/exp/slices"
 )
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
@@ -34,7 +34,7 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
-	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.OrgID)
+	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
@@ -71,18 +71,18 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			AliasIDs:        panel.AliasIDs,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
-			HideFromList:    panel.HideFromList,
-			ReleaseState:    string(panel.State),
-			Signature:       string(panel.Signature),
-			Sort:            getPanelSort(panel.ID),
-			AngularDetected: panel.AngularDetected,
+			ID:            panel.ID,
+			Name:          panel.Name,
+			AliasIDs:      panel.AliasIDs,
+			Info:          panel.Info,
+			Module:        panel.Module,
+			BaseURL:       panel.BaseURL,
+			SkipDataQuery: panel.SkipDataQuery,
+			HideFromList:  panel.HideFromList,
+			ReleaseState:  string(panel.State),
+			Signature:     string(panel.Signature),
+			Sort:          getPanelSort(panel.ID),
+			Angular:       panel.Angular,
 		}
 	}
 
@@ -135,6 +135,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackDataPlaneUrl:             hs.Cfg.RudderstackDataPlaneURL,
 		RudderstackSdkUrl:                   hs.Cfg.RudderstackSDKURL,
 		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
+		RudderstackIntegrationsUrl:          hs.Cfg.RudderstackIntegrationsURL,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
@@ -222,6 +223,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		Reporting: dtos.FrontendSettingsReportingDTO{
 			Enabled: hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
+		Analytics: dtos.FrontendSettingsAnalyticsDTO{
+			Enabled: hs.Cfg.SectionWithEnvOverrides("analytics").Key("enabled").MustBool(true),
+		},
 
 		UnifiedAlerting: dtos.FrontendSettingsUnifiedAlertingDTO{
 			MinInterval: hs.Cfg.UnifiedAlerting.MinInterval.String(),
@@ -279,8 +283,8 @@ func isSupportBundlesEnabled(hs *HTTPServer) bool {
 
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
-	if c.OrgID != 0 {
-		query := datasources.GetDataSourcesQuery{OrgID: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
+	if c.SignedInUser.GetOrgID() != 0 {
+		query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
 		dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err
@@ -332,8 +336,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Signature: plugin.Signature,
 			Module:    plugin.Module,
 			BaseURL:   plugin.BaseURL,
+			Angular:   plugin.Angular,
 		}
-		dsDTO.AngularDetected = plugin.AngularDetected
 
 		if ds.JsonData == nil {
 			dsDTO.JSONData = make(map[string]any)
@@ -415,8 +419,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					Signature: ds.Signature,
 					Module:    ds.Module,
 					BaseURL:   ds.BaseURL,
+					Angular:   ds.Angular,
 				},
-				AngularDetected: ds.AngularDetected,
 			}
 			if ds.Name == grafanads.DatasourceName {
 				dto.ID = grafanads.DatasourceID
@@ -431,11 +435,11 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 func newAppDTO(plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
 	app := &plugins.AppDTO{
-		ID:              plugin.ID,
-		Version:         plugin.Info.Version,
-		Path:            plugin.Module,
-		Preload:         false,
-		AngularDetected: plugin.AngularDetected,
+		ID:      plugin.ID,
+		Version: plugin.Info.Version,
+		Path:    plugin.Module,
+		Preload: false,
+		Angular: plugin.Angular,
 	}
 
 	if settings.Enabled {

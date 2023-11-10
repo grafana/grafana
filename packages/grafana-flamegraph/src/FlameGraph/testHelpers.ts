@@ -43,6 +43,7 @@ export function textToDataContainer(text: string) {
         itemIndexes: [dfValues.length - 1],
         start: match.index - leftMargin,
         children: [],
+        level: i,
       };
 
       itemLevels[i] = itemLevels[i] || [];
@@ -79,7 +80,7 @@ export function textToDataContainer(text: string) {
   const df = arrayToDataFrame(dfSorted);
   const labelField = df.fields.find((f) => f.name === 'label')!;
   labelField.type = FieldType.string;
-  return new FlameGraphDataContainer(df);
+  return new FlameGraphDataContainer(df, { collapsing: true });
 }
 
 export function trimLevelsString(s: string) {

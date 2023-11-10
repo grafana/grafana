@@ -57,13 +57,6 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 		OrgID:    form.OrgId,
 	}
 
-	if len(cmd.Login) == 0 {
-		cmd.Login = cmd.Email
-		if len(cmd.Login) == 0 {
-			return response.Error(400, "Validation error, need specify either username or email", nil)
-		}
-	}
-
 	if len(cmd.Password) < 4 {
 		return response.Error(400, "Password is missing or too short", nil)
 	}
@@ -78,7 +71,7 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "failed to create user", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create user", err)
 	}
 
 	metrics.MApiAdminUserCreate.Inc()

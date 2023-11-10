@@ -27,8 +27,8 @@ type ConfigSrv struct {
 }
 
 func (srv ConfigSrv) RouteGetAlertmanagers(c *contextmodel.ReqContext) response.Response {
-	urls := srv.alertmanagerProvider.AlertmanagersFor(c.OrgID)
-	droppedURLs := srv.alertmanagerProvider.DroppedAlertmanagersFor(c.OrgID)
+	urls := srv.alertmanagerProvider.AlertmanagersFor(c.SignedInUser.GetOrgID())
+	droppedURLs := srv.alertmanagerProvider.DroppedAlertmanagersFor(c.SignedInUser.GetOrgID())
 	ams := v1.AlertManagersResult{Active: make([]v1.AlertManager, len(urls)), Dropped: make([]v1.AlertManager, len(droppedURLs))}
 	for i, url := range urls {
 		ams.Active[i].URL = url.String()
@@ -48,7 +48,7 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 		return accessForbiddenResp()
 	}
 
-	cfg, err := srv.store.GetAdminConfiguration(c.OrgID)
+	cfg, err := srv.store.GetAdminConfiguration(c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, store.ErrNoAdminConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -75,7 +75,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		return response.Error(400, "Invalid alertmanager choice specified", err)
 	}
 
-	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgID)
+	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return response.Error(500, "Couldn't fetch the external Alertmanagers from datasources", err)
 	}
@@ -86,7 +86,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 
 	cfg := &ngmodels.AdminConfiguration{
 		SendAlertsTo: sendAlertsTo,
-		OrgID:        c.OrgID,
+		OrgID:        c.SignedInUser.GetOrgID(),
 	}
 
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: cfg}
@@ -104,7 +104,7 @@ func (srv ConfigSrv) RouteDeleteNGalertConfig(c *contextmodel.ReqContext) respon
 		return accessForbiddenResp()
 	}
 
-	err := srv.store.DeleteAdminConfiguration(c.OrgID)
+	err := srv.store.DeleteAdminConfiguration(c.SignedInUser.GetOrgID())
 	if err != nil {
 		srv.log.Error("Unable to delete configuration", "error", err)
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -138,7 +138,7 @@ func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]
 func (srv ConfigSrv) RouteGetAlertingStatus(c *contextmodel.ReqContext) response.Response {
 	sendsAlertsTo := ngmodels.InternalAlertmanager
 
-	cfg, err := srv.store.GetAdminConfiguration(c.OrgID)
+	cfg, err := srv.store.GetAdminConfiguration(c.SignedInUser.GetOrgID())
 	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
 		msg := "failed to fetch configuration from the database"
 		srv.log.Error(msg, "error", err)
@@ -149,7 +149,7 @@ func (srv ConfigSrv) RouteGetAlertingStatus(c *contextmodel.ReqContext) response
 	}
 
 	// handle errors
-	externalAlertManagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgID)
+	externalAlertManagers, err := srv.externalAlertmanagers(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

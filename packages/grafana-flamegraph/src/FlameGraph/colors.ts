@@ -112,9 +112,9 @@ export function getBarColorByDiff(
 // the language from the backend and use the right regex but right now we just try all of them from most to least
 // specific.
 const matchers = [
-  ['phpspy', /^(?<packageName>(.*\/)*)(?<filename>.*\.php+)(?<line_info>.*)$/],
-  ['pyspy', /^(?<packageName>(.*\/)*)(?<filename>.*\.py+)(?<line_info>.*)$/],
-  ['rbspy', /^(?<packageName>(.*\/)*)(?<filename>.*\.rb+)(?<line_info>.*)$/],
+  ['phpspy', /^(?<packageName>([^\/]*\/)*)(?<filename>.*\.php+)(?<line_info>.*)$/],
+  ['pyspy', /^(?<packageName>([^\/]*\/)*)(?<filename>.*\.py+)(?<line_info>.*)$/],
+  ['rbspy', /^(?<packageName>([^\/]*\/)*)(?<filename>.*\.rb+)(?<line_info>.*)$/],
   [
     'nodespy',
     /^(\.\/node_modules\/)?(?<packageName>[^/]*)(?<filename>.*\.?(jsx?|tsx?)?):(?<functionName>.*):(?<line_info>.*)$/,

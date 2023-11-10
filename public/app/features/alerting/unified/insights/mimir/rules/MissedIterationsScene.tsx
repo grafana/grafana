@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
 import { InsightsRatingModal } from '../../RatingModal';
 
-export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getMissedIterationsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -17,14 +17,13 @@ export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: 
         legendFormat: 'missed',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The number of evaluations missed')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })

@@ -15,6 +15,7 @@ export const Components = {
   },
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
+    overlayContent: 'data-testid TimePicker Overlay Content',
     fromField: 'Time Range from field',
     toField: 'Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
@@ -30,6 +31,9 @@ export const Components = {
     roleType: 'Role to add new permission to',
     rolePicker: 'Built-in role picker',
     permissionLevel: 'Permission Level',
+  },
+  DateTimePicker: {
+    input: 'data-testid date-time-input',
   },
   DataSource: {
     TestData: {
@@ -257,13 +261,14 @@ export const Components = {
       button: 'Configuration',
     },
     Toggle: {
-      button: 'Toggle menu',
+      button: 'data-testid Toggle menu',
     },
     Reporting: {
       button: 'Reporting',
     },
   },
   NavMenu: {
+    Menu: 'data-testid navigation mega-menu',
     item: 'data-testid Nav menu item',
   },
   NavToolbar: {
@@ -386,7 +391,7 @@ export const Components = {
     singleLink: 'Data link',
   },
   CodeEditor: {
-    container: 'Code editor container',
+    container: 'data-testid Code editor container',
   },
   DashboardImportPage: {
     textarea: 'data-testid-import-dashboard-textarea',

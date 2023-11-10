@@ -15,6 +15,7 @@ import {
   isLiveTarget,
   markDomElementStyleAsALiveTarget,
   patchObjectAsLiveTarget,
+  patchWebAPIs,
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
@@ -30,6 +31,7 @@ const pluginImportCache = new Map<string, Promise<System.Module>>();
 const pluginLogCache: Record<string, boolean> = {};
 
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
+  patchWebAPIs();
   try {
     const pluginMeta = await getPluginSettings(pluginId);
     if (!pluginImportCache.has(pluginId)) {
@@ -63,10 +65,17 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
       } else {
         patchObjectAsLiveTarget(originalValue);
       }
-      distortLiveApis();
-      const distortion = generalDistortionMap.get(originalValue);
-      if (distortion) {
-        return distortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
+
+      // static distortions are faster distortions with direct object descriptors checks
+      const staticDistortion = generalDistortionMap.get(originalValue);
+      if (staticDistortion) {
+        return staticDistortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
+      }
+
+      // live distortions are slower and have to do runtime checks
+      const liveDistortion = distortLiveApis(originalValue);
+      if (liveDistortion) {
+        return liveDistortion;
       }
       return originalValue;
     }

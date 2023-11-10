@@ -639,6 +639,31 @@
         }
       }
     },
+    "/admin/ldap-sync-status": {
+      "get": {
+        "description": "You need to have a permission with action `ldap.status:read`.",
+        "tags": [
+          "ldap_debug",
+          "enterprise"
+        ],
+        "summary": "Returns the current state of the LDAP background sync integration.",
+        "operationId": "getSyncStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getSyncStatusResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/admin/provisioning/access-control/reload": {
       "post": {
         "tags": [
@@ -894,10 +919,8 @@
         ],
         "summary": "Get custom permissions report.",
         "operationId": "getCustomPermissionsReport",
+        "deprecated": true,
         "responses": {
-          "200": {
-            "$ref": "#/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -916,10 +939,8 @@
         ],
         "summary": "Get custom permissions report in CSV format.",
         "operationId": "getCustomPermissionsCSV",
+        "deprecated": true,
         "responses": {
-          "200": {
-            "$ref": "#/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -2026,52 +2047,6 @@
           }
         }
       }
-    },
-    "/teams/{teamId}/groups/{groupId}": {
-      "delete": {
-        "tags": [
-          "sync_team_groups",
-          "enterprise"
-        ],
-        "summary": "Remove External Group.",
-        "operationId": "removeTeamGroupApi",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "string",
-            "name": "groupId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -2642,6 +2617,80 @@
         }
       }
     },
+    "Annotation": {
+      "type": "object",
+      "properties": {
+        "alertId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "alertName": {
+          "type": "string"
+        },
+        "avatarUrl": {
+          "type": "string"
+        },
+        "created": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
+        "email": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "login": {
+          "type": "string"
+        },
+        "newState": {
+          "type": "string"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "prevState": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeEnd": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AnnotationActions": {
       "type": "object",
       "properties": {
@@ -2656,6 +2705,67 @@
         }
       }
     },
+    "AnnotationEvent": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isRegion": {
+          "type": "boolean"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "source": {
+          "$ref": "#/definitions/AnnotationQuery"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeEnd": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "AnnotationPanelFilter": {
+      "type": "object",
+      "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
+      "properties": {
+        "exclude": {
+          "description": "Should the specified panels be included or excluded",
+          "type": "boolean"
+        },
+        "ids": {
+          "description": "Panel IDs that should be included or excluded",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "AnnotationPermission": {
       "type": "object",
       "properties": {
@@ -2664,6 +2774,72 @@
         },
         "organization": {
           "$ref": "#/definitions/AnnotationActions"
+        }
+      }
+    },
+    "AnnotationQuery": {
+      "description": "TODO docs\nFROM: AnnotationQuery in grafana-data/src/types/annotations.ts",
+      "type": "object",
+      "properties": {
+        "builtIn": {
+          "description": "Set to 1 for the standard annotation query all dashboards have by default.",
+          "type": "number",
+          "format": "float"
+        },
+        "datasource": {
+          "$ref": "#/definitions/DataSourceRef"
+        },
+        "enable": {
+          "description": "When enabled the annotation query is issued with every dashboard refresh",
+          "type": "boolean"
+        },
+        "filter": {
+          "$ref": "#/definitions/AnnotationPanelFilter"
+        },
+        "hide": {
+          "description": "Annotation queries can be toggled on or off at the top of the dashboard.\nWhen hide is true, the toggle is not shown in the dashboard.",
+          "type": "boolean"
+        },
+        "iconColor": {
+          "description": "Color to use for the annotation event markers",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of annotation.",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/definitions/AnnotationTarget"
+        },
+        "type": {
+          "description": "TODO -- this should not exist here, it is based on the --grafana-- datasource",
+          "type": "string"
+        }
+      }
+    },
+    "AnnotationTarget": {
+      "description": "TODO: this should be a regular DataQuery that depends on the selected dashboard\nthese match the properties of the \"grafana\" datasouce that is default in most dashboards",
+      "type": "object",
+      "properties": {
+        "limit": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "integer",
+          "format": "int64"
+        },
+        "matchAny": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "string"
         }
       }
     },
@@ -2699,6 +2875,16 @@
         }
       }
     },
+    "AttributeTypeAndValue": {
+      "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
+      "type": "object",
+      "properties": {
+        "Type": {
+          "$ref": "#/definitions/ObjectIdentifier"
+        },
+        "Value": {}
+      }
+    },
     "BrandingOptionsDTO": {
       "type": "object",
       "properties": {
@@ -2730,6 +2916,247 @@
           "$ref": "#/definitions/Json"
         },
         "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "Certificate": {
+      "type": "object",
+      "title": "A Certificate represents an X.509 certificate.",
+      "properties": {
+        "AuthorityKeyId": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "BasicConstraintsValid": {
+          "description": "BasicConstraintsValid indicates whether IsCA, MaxPathLen,\nand MaxPathLenZero are valid.",
+          "type": "boolean"
+        },
+        "CRLDistributionPoints": {
+          "description": "CRL Distribution Points",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "DNSNames": {
+          "description": "Subject Alternate Name values. (Note that these values may not be valid\nif invalid values were contained within a parsed certificate. For\nexample, an element of DNSNames may not be a valid DNS domain name.)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "EmailAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExcludedDNSDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExcludedEmailAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExcludedIPRanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IPNet"
+          }
+        },
+        "ExcludedURIDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExtKeyUsage": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtKeyUsage"
+          }
+        },
+        "Extensions": {
+          "description": "Extensions contains raw X.509 extensions. When parsing certificates,\nthis can be used to extract non-critical extensions that are not\nparsed by this package. When marshaling certificates, the Extensions\nfield is ignored, see ExtraExtensions.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Extension"
+          }
+        },
+        "ExtraExtensions": {
+          "description": "ExtraExtensions contains extensions to be copied, raw, into any\nmarshaled certificates. Values override any extensions that would\notherwise be produced based on the other fields. The ExtraExtensions\nfield is not populated when parsing certificates, see Extensions.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Extension"
+          }
+        },
+        "IPAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "IsCA": {
+          "type": "boolean"
+        },
+        "Issuer": {
+          "$ref": "#/definitions/Name"
+        },
+        "IssuingCertificateURL": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "KeyUsage": {
+          "$ref": "#/definitions/KeyUsage"
+        },
+        "MaxPathLen": {
+          "description": "MaxPathLen and MaxPathLenZero indicate the presence and\nvalue of the BasicConstraints' \"pathLenConstraint\".\n\nWhen parsing a certificate, a positive non-zero MaxPathLen\nmeans that the field was specified, -1 means it was unset,\nand MaxPathLenZero being true mean that the field was\nexplicitly set to zero. The case of MaxPathLen==0 with MaxPathLenZero==false\nshould be treated equivalent to -1 (unset).\n\nWhen generating a certificate, an unset pathLenConstraint\ncan be requested with either MaxPathLen == -1 or using the\nzero value for both MaxPathLen and MaxPathLenZero.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "MaxPathLenZero": {
+          "description": "MaxPathLenZero indicates that BasicConstraintsValid==true\nand MaxPathLen==0 should be interpreted as an actual\nmaximum path length of zero. Otherwise, that combination is\ninterpreted as MaxPathLen not being set.",
+          "type": "boolean"
+        },
+        "NotBefore": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "OCSPServer": {
+          "description": "RFC 5280, 4.2.2.1 (Authority Information Access)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "PermittedDNSDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "PermittedDNSDomainsCritical": {
+          "description": "Name constraints",
+          "type": "boolean"
+        },
+        "PermittedEmailAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "PermittedIPRanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IPNet"
+          }
+        },
+        "PermittedURIDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "PolicyIdentifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ObjectIdentifier"
+          }
+        },
+        "PublicKey": {},
+        "PublicKeyAlgorithm": {
+          "$ref": "#/definitions/PublicKeyAlgorithm"
+        },
+        "Raw": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "RawIssuer": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "RawSubject": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "RawSubjectPublicKeyInfo": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "RawTBSCertificate": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "SerialNumber": {
+          "type": "string"
+        },
+        "Signature": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "SignatureAlgorithm": {
+          "$ref": "#/definitions/SignatureAlgorithm"
+        },
+        "Subject": {
+          "$ref": "#/definitions/Name"
+        },
+        "SubjectKeyId": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "URIs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/URL"
+          }
+        },
+        "UnhandledCriticalExtensions": {
+          "description": "UnhandledCriticalExtensions contains a list of extension IDs that\nwere not (fully) processed when parsing. Verify will fail if this\nslice is non-empty, unless verification is delegated to an OS\nlibrary which understands all the critical extensions.\n\nUsers can access these extensions using Extensions and can remove\nelements from this slice if they believe that they have been\nhandled.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ObjectIdentifier"
+          }
+        },
+        "UnknownExtKeyUsage": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ObjectIdentifier"
+          }
+        },
+        "Version": {
           "type": "integer",
           "format": "int64"
         }
@@ -3103,7 +3530,7 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "ID of the folder where the library element is stored.",
+          "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -3303,53 +3730,6 @@
         }
       }
     },
-    "CustomPermissionsRecordDTO": {
-      "type": "object",
-      "properties": {
-        "customPermissions": {
-          "type": "string"
-        },
-        "granteeName": {
-          "type": "string"
-        },
-        "granteeType": {
-          "type": "string"
-        },
-        "granteeUrl": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isFolder": {
-          "type": "boolean"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "orgRole": {
-          "type": "string"
-        },
-        "slug": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "usersCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DashboardACLInfoDTO": {
       "type": "object",
       "properties": {
@@ -3516,6 +3896,7 @@
           "format": "date-time"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -3615,27 +3996,15 @@
         "externalUrl": {
           "type": "string"
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "key": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
         "updated": {
           "type": "string",
           "format": "date-time"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -3719,6 +4088,9 @@
         "Error": {
           "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
+        },
+        "ErrorSource": {
+          "$ref": "#/definitions/ErrorSource"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -3931,6 +4303,20 @@
         }
       }
     },
+    "DataSourceRef": {
+      "description": "Ref to a DataSource instance",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The plugin type-id",
+          "type": "string"
+        },
+        "uid": {
+          "description": "Specific datasource instance",
+          "type": "string"
+        }
+      }
+    },
     "DataTopic": {
       "description": "nolint:revive",
       "type": "string",
@@ -3972,6 +4358,17 @@
       "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
       "format": "int64"
+    },
+    "EmailDTO": {
+      "type": "object",
+      "properties": {
+        "recipient": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
     "EnumFieldConfig": {
       "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
@@ -4027,6 +4424,10 @@
         }
       }
     },
+    "ErrorSource": {
+      "description": "ErrorSource type defines the source of the error",
+      "type": "string"
+    },
     "EvalMatch": {
       "type": "object",
       "properties": {
@@ -4046,6 +4447,31 @@
     },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
+    },
+    "ExtKeyUsage": {
+      "description": "Each of the ExtKeyUsage* constants define a unique action.",
+      "type": "integer",
+      "format": "int64",
+      "title": "ExtKeyUsage represents an extended set of actions that are valid for a given key."
+    },
+    "Extension": {
+      "description": "Extension represents the ASN.1 structure of the same name. See RFC\n5280, section 4.2.",
+      "type": "object",
+      "properties": {
+        "Critical": {
+          "type": "boolean"
+        },
+        "Id": {
+          "$ref": "#/definitions/ObjectIdentifier"
+        },
+        "Value": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        }
+      }
     },
     "FailedUser": {
       "description": "FailedUser holds the information of an user that failed",
@@ -4404,6 +4830,7 @@
       "type": "object",
       "properties": {
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4465,6 +4892,27 @@
     "HitType": {
       "type": "string"
     },
+    "IPMask": {
+      "description": "See type IPNet and func ParseCIDR for details.",
+      "type": "array",
+      "title": "An IPMask is a bitmask that can be used to manipulate\nIP addresses for IP addressing and routing.",
+      "items": {
+        "type": "integer",
+        "format": "uint8"
+      }
+    },
+    "IPNet": {
+      "type": "object",
+      "title": "An IPNet represents an IP network.",
+      "properties": {
+        "IP": {
+          "type": "string"
+        },
+        "Mask": {
+          "$ref": "#/definitions/IPMask"
+        }
+      }
+    },
     "ImportDashboardInput": {
       "type": "object",
       "title": "ImportDashboardInput definition of input parameters when importing a dashboard.",
@@ -4491,6 +4939,7 @@
           "$ref": "#/definitions/Json"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4526,6 +4975,7 @@
           "type": "string"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4599,103 +5049,60 @@
         }
       }
     },
-    "Item": {
+    "JSONWebKey": {
       "type": "object",
-      "title": "Item defines model for Item.",
+      "title": "JSONWebKey represents a public or private key in JWK format.",
       "properties": {
-        "title": {
-          "description": "Title is an unused property -- it will be removed in the future",
+        "Algorithm": {
+          "description": "Key algorithm, parsed from `alg` header.",
           "type": "string"
         },
-        "type": {
-          "$ref": "#/definitions/ItemType"
-        },
-        "value": {
-          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
-          "type": "string"
-        }
-      }
-    },
-    "ItemDTO": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "alertName": {
-          "type": "string"
-        },
-        "avatarUrl": {
-          "type": "string"
-        },
-        "created": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUID": {
-          "type": "string"
-        },
-        "data": {
-          "$ref": "#/definitions/Json"
-        },
-        "email": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "login": {
-          "type": "string"
-        },
-        "newState": {
-          "type": "string"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "prevState": {
-          "type": "string"
-        },
-        "tags": {
+        "CertificateThumbprintSHA1": {
+          "description": "X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.",
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "integer",
+            "format": "uint8"
           }
         },
-        "text": {
+        "CertificateThumbprintSHA256": {
+          "description": "X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint8"
+          }
+        },
+        "Certificates": {
+          "description": "X.509 certificate chain, parsed from `x5c` header.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Certificate"
+          }
+        },
+        "CertificatesURL": {
+          "$ref": "#/definitions/URL"
+        },
+        "Key": {
+          "description": "Cryptographic key, can be a symmetric or asymmetric key."
+        },
+        "KeyID": {
+          "description": "Key identifier, parsed from `kid` header.",
           "type": "string"
         },
-        "time": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "timeEnd": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updated": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
+        "Use": {
+          "description": "Key use, parsed from `use` header.",
+          "type": "string"
         }
       }
-    },
-    "ItemType": {
-      "type": "string",
-      "title": "Type of the item."
     },
     "Json": {
       "type": "object"
+    },
+    "KeyUsage": {
+      "description": "KeyUsage represents the set of actions that are valid for a given key. It's\na bitmap of the KeyUsage* constants.",
+      "type": "integer",
+      "format": "int64"
     },
     "LegacyAlert": {
       "type": "object",
@@ -4825,6 +5232,7 @@
           "type": "string"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -5051,6 +5459,47 @@
         }
       }
     },
+    "Name": {
+      "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an RDNSequence.",
+      "type": "object",
+      "properties": {
+        "Country": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ExtraNames": {
+          "description": "ExtraNames contains attributes to be copied, raw, into any marshaled\ndistinguished names. Values override any attributes with the same OID.\nThe ExtraNames field is not populated when parsing, see Names.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AttributeTypeAndValue"
+          }
+        },
+        "Locality": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "Names": {
+          "description": "Names contains all parsed attributes. When parsing distinguished names,\nthis can be used to extract non-standard attributes that are not parsed\nby this package. When marshaling to RDNSequences, the Names field is\nignored, see ExtraNames.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AttributeTypeAndValue"
+          }
+        },
+        "SerialNumber": {
+          "type": "string"
+        },
+        "StreetAddress": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "NewApiKeyResult": {
       "type": "object",
       "properties": {
@@ -5125,6 +5574,14 @@
         "type": {
           "type": "string"
         }
+      }
+    },
+    "ObjectIdentifier": {
+      "type": "array",
+      "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
+      "items": {
+        "type": "integer",
+        "format": "int64"
       }
     },
     "OrgDTO": {
@@ -5241,7 +5698,7 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "ID of the folder where the library element is stored.",
+          "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -5392,6 +5849,30 @@
         }
       }
     },
+    "PlaylistDTO": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "description": "Interval sets the time between switching views in a playlist.",
+          "type": "string"
+        },
+        "items": {
+          "description": "The ordered list of items that the playlist will iterate over.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlaylistItemDTO"
+          }
+        },
+        "name": {
+          "description": "Name of the playlist.",
+          "type": "string"
+        },
+        "uid": {
+          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
+          "type": "string"
+        }
+      }
+    },
     "PlaylistDashboard": {
       "type": "object",
       "properties": {
@@ -5445,6 +5926,23 @@
           "type": "string"
         },
         "value": {
+          "type": "string"
+        }
+      }
+    },
+    "PlaylistItemDTO": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "description": "Title is an unused property -- it will be removed in the future",
+          "type": "string"
+        },
+        "type": {
+          "description": "Type of the item.",
+          "type": "string"
+        },
+        "value": {
+          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
           "type": "string"
         }
       }
@@ -5523,6 +6021,124 @@
           "type": "string"
         }
       }
+    },
+    "PublicDashboard": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "annotationsEnabled": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailDTO"
+          }
+        },
+        "share": {
+          "$ref": "#/definitions/ShareType"
+        },
+        "timeSelectionEnabled": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "PublicDashboardDTO": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "annotationsEnabled": {
+          "type": "boolean"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/definitions/ShareType"
+        },
+        "timeSelectionEnabled": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PublicDashboardListResponse": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PublicDashboardListResponseWithPagination": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "publicDashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PublicDashboardListResponse"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "PublicKeyAlgorithm": {
+      "type": "integer",
+      "format": "int64"
     },
     "QueryDataResponse": {
       "description": "It is the return type of a QueryData call.",
@@ -5921,6 +6537,7 @@
           "$ref": "#/definitions/Json"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -6150,6 +6767,10 @@
           "type": "boolean",
           "example": false
         },
+        "isExternal": {
+          "type": "boolean",
+          "example": false
+        },
         "login": {
           "type": "string",
           "example": "sa-grafana"
@@ -6198,6 +6819,10 @@
           "example": 2
         },
         "isDisabled": {
+          "type": "boolean",
+          "example": false
+        },
+        "isExternal": {
           "type": "boolean",
           "example": false
         },
@@ -6307,6 +6932,13 @@
           "format": "int64"
         }
       }
+    },
+    "ShareType": {
+      "type": "string"
+    },
+    "SignatureAlgorithm": {
+      "type": "integer",
+      "format": "int64"
     },
     "Spec": {
       "type": "object",
@@ -6790,30 +7422,48 @@
         "$ref": "#/definitions/Transformation"
       }
     },
-    "TrimDashboardCommand": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        }
-      }
-    },
-    "TrimDashboardFullWithMeta": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        }
-      }
-    },
     "Type": {
       "type": "string"
+    },
+    "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
+      "type": "object",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "properties": {
+        "ForceQuery": {
+          "type": "boolean"
+        },
+        "Fragment": {
+          "type": "string"
+        },
+        "Host": {
+          "type": "string"
+        },
+        "OmitHost": {
+          "type": "boolean"
+        },
+        "Opaque": {
+          "type": "string"
+        },
+        "Path": {
+          "type": "string"
+        },
+        "RawFragment": {
+          "type": "string"
+        },
+        "RawPath": {
+          "type": "string"
+        },
+        "RawQuery": {
+          "type": "string"
+        },
+        "Scheme": {
+          "type": "string"
+        },
+        "User": {
+          "$ref": "#/definitions/Userinfo"
+        }
+      }
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -7444,6 +8094,10 @@
         }
       }
     },
+    "Userinfo": {
+      "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+      "type": "object"
+    },
     "ValueMapping": {
       "description": "ValueMapping allows mapping input values to text and color",
       "type": "object"
@@ -7457,6 +8111,34 @@
     "VisType": {
       "type": "string",
       "title": "VisType is used to indicate how the data should be visualized in explore."
+    },
+    "publicError": {
+      "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+      "type": "object",
+      "required": [
+        "statusCode",
+        "messageId"
+      ],
+      "properties": {
+        "extra": {
+          "description": "Extra Additional information about the error",
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "message": {
+          "description": "Message A human readable message",
+          "type": "string"
+        },
+        "messageId": {
+          "description": "MessageID A unique identifier for the error",
+          "type": "string"
+        },
+        "statusCode": {
+          "description": "StatusCode The HTTP status code returned",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     }
   },
   "responses": {
@@ -7515,6 +8197,12 @@
       "description": "BadRequestError is returned when the request is invalid and it cannot be processed.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "badRequestPublicError": {
+      "description": "BadRequestPublicError is returned when the request is invalid and it cannot be processed.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "calculateDashboardDiffResponse": {
@@ -7636,6 +8324,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/Playlist"
+      }
+    },
+    "createPublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
       }
     },
     "createReportResponse": {
@@ -7828,6 +8522,12 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "forbiddenPublicError": {
+      "description": "ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "genericError": {
       "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures.",
       "schema": {
@@ -7906,7 +8606,7 @@
     "getAnnotationByIDResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/ItemDTO"
+        "$ref": "#/definitions/Annotation"
       }
     },
     "getAnnotationTagsResponse": {
@@ -7920,7 +8620,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/ItemDTO"
+          "$ref": "#/definitions/Annotation"
         }
       }
     },
@@ -7952,15 +8652,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/OrgDetailsDTO"
-      }
-    },
-    "getCustomPermissionsReportResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/CustomPermissionsRecordDTO"
-        }
       }
     },
     "getDashboardPermissionsListResponse": {
@@ -8135,20 +8826,35 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/Item"
+          "$ref": "#/definitions/PlaylistItemDTO"
         }
       }
     },
     "getPlaylistResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Spec"
+        "$ref": "#/definitions/PlaylistDTO"
       }
     },
     "getPreferencesResponse": {
       "description": "",
       "schema": {
         "$ref": "#/definitions/Spec"
+      }
+    },
+    "getPublicAnnotationsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AnnotationEvent"
+        }
+      }
+    },
+    "getPublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
       }
     },
     "getQueryHistoryDeleteQueryResponse": {
@@ -8333,6 +9039,26 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "internalServerPublicError": {
+      "description": "InternalServerPublicError is a general error indicating something went wrong internally.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "jwksResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/JSONWebKey"
+            }
+          }
+        }
+      }
+    },
     "listBuiltinRolesResponse": {
       "description": "",
       "schema": {
@@ -8343,6 +9069,12 @@
             "$ref": "#/definitions/RoleDTO"
           }
         }
+      }
+    },
+    "listPublicDashboardsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboardListResponseWithPagination"
       }
     },
     "listRecordingRulesResponse": {
@@ -8393,6 +9125,12 @@
       "description": "NotFoundError is returned when the requested resource was not found.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "notFoundPublicError": {
+      "description": "NotFoundPublicError is returned when the requested resource was not found.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "okResponse": {
@@ -8489,10 +9227,15 @@
           "url"
         ],
         "properties": {
+          "folderUid": {
+            "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
+            "type": "string"
+          },
           "id": {
             "description": "ID The unique identifier (id) of the created/updated dashboard.",
-            "type": "string",
-            "example": "1"
+            "type": "integer",
+            "format": "int64",
+            "example": 1
           },
           "status": {
             "description": "Status status of the response.",
@@ -8532,7 +9275,19 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "publicErrorResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "queryMetricsWithExpressionsRespons": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryDataResponse"
+      }
+    },
+    "queryPublicDashboardResponse": {
       "description": "",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
@@ -8643,16 +9398,16 @@
         "$ref": "#/definitions/AlertTestResult"
       }
     },
-    "trimDashboardResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/TrimDashboardFullWithMeta"
-      }
-    },
     "unauthorisedError": {
       "description": "UnauthorizedError is returned when the request is not authenticated.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "unauthorisedPublicError": {
+      "description": "UnauthorisedPublicError is returned when the request is not authenticated.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "unprocessableEntityError": {
@@ -8670,7 +9425,13 @@
     "updatePlaylistResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Spec"
+        "$ref": "#/definitions/PlaylistDTO"
+      }
+    },
+    "updatePublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
       }
     },
     "updateServiceAccountResponse": {
@@ -8709,6 +9470,12 @@
         "message": {
           "type": "string"
         }
+      }
+    },
+    "viewPublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
       }
     }
   },

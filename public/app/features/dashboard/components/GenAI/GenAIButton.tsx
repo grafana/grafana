@@ -7,13 +7,11 @@ import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/
 import { GenAIHistory } from './GenAIHistory';
 import { StreamStatus, useOpenAIStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { OPEN_AI_MODEL, Message } from './utils';
+import { OAI_MODEL, DEFAULT_OAI_MODEL, Message, sanitizeReply } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text
   text?: string;
-  // Button label text when loading
-  loadingText?: string;
   toggleTipTitle?: string;
   // Button click handler
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -24,43 +22,55 @@ export interface GenAIButtonProps {
   // Temperature for the LLM plugin. Default is 1.
   // Closer to 0 means more conservative, closer to 1 means more creative.
   temperature?: number;
+  model?: OAI_MODEL;
   // Event tracking source. Send as `src` to Rudderstack event
   eventTrackingSrc: EventTrackingSrc;
+  // Whether the button should be disabled
+  disabled?: boolean;
 }
+export const STOP_GENERATION_TEXT = 'Stop generating';
 
 export const GenAIButton = ({
   text = 'Auto-generate',
-  loadingText = 'Generating',
   toggleTipTitle = '',
   onClick: onClickProp,
+  model = DEFAULT_OAI_MODEL,
   messages,
   onGenerate,
   temperature = 1,
   eventTrackingSrc,
+  disabled,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  const { setMessages, reply, value, error, streamStatus } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, setStopGeneration, reply, value, error, streamStatus } = useOpenAIStream(model, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(true);
 
   const hasHistory = history.length > 0;
   const isFirstHistoryEntry = streamStatus === StreamStatus.GENERATING && !hasHistory;
-  const isButtonDisabled = isFirstHistoryEntry || (value && !value.enabled && !error);
+  const isButtonDisabled = disabled || (value && !value.enabled && !error);
   const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!hasHistory) {
-      onClickProp?.(e);
-      setMessages(messages);
+    if (streamStatus === StreamStatus.GENERATING) {
+      setStopGeneration(true);
     } else {
-      if (setShowHistory) {
-        setShowHistory(true);
+      if (!hasHistory) {
+        onClickProp?.(e);
+        setMessages(messages);
+      } else {
+        if (setShowHistory) {
+          setShowHistory(true);
+        }
       }
     }
+
     const buttonItem = error
       ? AutoGenerateItem.erroredRetryButton
+      : isFirstHistoryEntry
+      ? AutoGenerateItem.stopGenerationButton
       : hasHistory
       ? AutoGenerateItem.improveButton
       : AutoGenerateItem.autoGenerateButton;
@@ -79,13 +89,13 @@ export const GenAIButton = ({
   useEffect(() => {
     // Todo: Consider other options for `"` sanitation
     if (isFirstHistoryEntry && reply) {
-      onGenerate(reply.replace(/^"|"$/g, ''));
+      onGenerate(sanitizeReply(reply));
     }
   }, [streamStatus, reply, onGenerate, isFirstHistoryEntry]);
 
   useEffect(() => {
     if (streamStatus === StreamStatus.COMPLETED) {
-      pushHistoryEntry(reply.replace(/^"|"$/g, ''));
+      pushHistoryEntry(sanitizeReply(reply));
     }
   }, [history, streamStatus, reply, pushHistoryEntry]);
 
@@ -118,7 +128,7 @@ export const GenAIButton = ({
     }
 
     if (isFirstHistoryEntry) {
-      buttonText = loadingText;
+      buttonText = STOP_GENERATION_TEXT;
     }
 
     if (hasHistory) {
@@ -171,9 +181,15 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isFirstHistoryEntry && <Spinner size={14} />}
+      {isFirstHistoryEntry && <Spinner size="sm" className={styles.spinner} />}
       {!hasHistory && (
-        <Tooltip show={error ? undefined : false} interactive content={`OpenAI error: ${error?.message}`}>
+        <Tooltip
+          show={error ? undefined : false}
+          interactive
+          content={
+            'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
+          }
+        >
           {button}
         </Tooltip>
       )}
@@ -185,5 +201,8 @@ export const GenAIButton = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
+  }),
+  spinner: css({
+    color: theme.colors.text.link,
   }),
 });

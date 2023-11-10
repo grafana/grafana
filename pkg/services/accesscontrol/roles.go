@@ -1,12 +1,33 @@
 package accesscontrol
 
 import (
+	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
+	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	BasicRolePrefix    = "basic:"
+	BasicRoleUIDPrefix = "basic_"
+
+	ExternalServiceRolePrefix    = "extsvc:"
+	ExternalServiceRoleUIDPrefix = "extsvc_"
+
+	FixedRolePrefix    = "fixed:"
+	FixedRoleUIDPrefix = "fixed_"
+
+	ManagedRolePrefix = "managed:"
+
+	PluginRolePrefix = "plugins:"
+
+	BasicRoleNoneUID  = "basic_none"
+	BasicRoleNoneName = "basic:none"
 )
 
 // Roles definition
@@ -181,11 +202,11 @@ var (
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
-				Scope:  ScopeSettingsSAML,
+				Scope:  ScopeSettingsAuth,
 			},
 			{
 				Action: ActionSettingsWrite,
-				Scope:  ScopeSettingsSAML,
+				Scope:  ScopeSettingsAuth,
 			},
 		},
 	}
@@ -251,6 +272,18 @@ func ConcatPermissions(permissions ...[]Permission) []Permission {
 		perms = append(perms, p...)
 	}
 	return perms
+}
+
+// PrefixedRoleUID generates a uid from name with the same prefix.
+// Generated uid is 28 bytes + length of prefix: <prefix>_base64(sha1(roleName))
+func PrefixedRoleUID(roleName string) string {
+	prefix := strings.Split(roleName, ":")[0] + "_"
+
+	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
+	hasher := sha1.New()
+	hasher.Write([]byte(roleName))
+
+	return fmt.Sprintf("%s%s", prefix, base64.RawURLEncoding.EncodeToString(hasher.Sum(nil)))
 }
 
 // ValidateFixedRole errors when a fixed role does not match expected pattern

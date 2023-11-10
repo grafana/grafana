@@ -3921,6 +3921,32 @@
    "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
+  "UpdateRuleGroupResponse": {
+   "properties": {
+    "created": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "deleted": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "message": {
+     "type": "string"
+    },
+    "updated": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
    "type": "object"

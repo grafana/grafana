@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
@@ -59,8 +60,10 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 			fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
 			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", p.ExternalService.ClientID),
 			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", p.ExternalService.ClientSecret),
-			fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", p.ExternalService.PrivateKey),
 		)
+		if p.ExternalService.PrivateKey != "" {
+			hostEnv = append(hostEnv, fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", p.ExternalService.PrivateKey))
+		}
 	}
 
 	hostEnv = append(hostEnv, s.featureToggleEnableVar(ctx)...)
@@ -76,6 +79,10 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
 func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
+
+	if s.cfg.GrafanaAppURL != "" {
+		m[backend.AppURL] = s.cfg.GrafanaAppURL
+	}
 
 	// TODO add support via plugin SDK
 	//if externalService != nil {
@@ -172,6 +179,10 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 	vars := []string{
 		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", s.cfg.Tracing.OpenTelemetry.Address),
 		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", s.cfg.Tracing.OpenTelemetry.Propagation),
+
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_TYPE=%s", s.cfg.Tracing.OpenTelemetry.Sampler),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%.6f", s.cfg.Tracing.OpenTelemetry.SamplerParam),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=%s", s.cfg.Tracing.OpenTelemetry.SamplerRemoteURL),
 	}
 	if plugin.Info.Version != "" {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))

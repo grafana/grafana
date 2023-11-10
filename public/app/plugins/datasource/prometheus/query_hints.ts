@@ -25,7 +25,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
           type: 'ADD_HISTOGRAM_QUANTILE',
           query,
         },
-      } as QueryFix,
+      },
     });
   }
 
@@ -110,7 +110,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
             query,
             options: mappingForQuery,
           },
-        } as unknown as QueryFix,
+        },
       });
     }
   }
@@ -128,7 +128,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
             query: query,
             preventSubmit: true,
           },
-        } as QueryFix,
+        },
       });
     }
   }
@@ -138,13 +138,6 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
 
 export function getInitHints(datasource: PrometheusDatasource): QueryHint[] {
   const hints = [];
-  // Hint if using Loki as Prometheus data source
-  if (datasource.directUrl.includes('/loki') && !datasource.languageProvider.metrics.length) {
-    hints.push({
-      label: `Using Loki as a Prometheus data source is no longer supported. You must use the Loki data source for your Loki instance.`,
-      type: 'INFO',
-    });
-  }
 
   // Hint for big disabled lookups
   if (datasource.lookupsDisabled) {

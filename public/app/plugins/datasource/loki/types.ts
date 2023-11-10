@@ -85,7 +85,7 @@ export interface ContextFilter {
   description?: string;
 }
 
-export interface ExtractedLabelKeys {
+export interface ParserAndLabelKeysResult {
   extractedLabelKeys: string[];
   hasJSON: boolean;
   hasLogfmt: boolean;

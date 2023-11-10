@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { ComponentType } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Button, Checkbox, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Button, Checkbox, Select, useStyles2, Stack } from '@grafana/ui';
 
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from '../shared/types';
 
@@ -53,7 +52,7 @@ function BoolInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
   return (
     <Checkbox
       id={getOperationParamId(props.operationId, props.index)}
-      value={props.value as boolean}
+      value={Boolean(props.value)}
       onChange={(evt) => props.onChange(props.index, evt.currentTarget.checked)}
     />
   );
@@ -67,12 +66,12 @@ function SelectInputParamEditor({
   onChange,
 }: QueryBuilderOperationParamEditorProps) {
   const styles = useStyles2(getStyles);
-  let selectOptions = paramDef.options as Array<SelectableValue<any>>;
+  let selectOptions = paramDef.options as SelectableValue[];
 
   if (!selectOptions[0]?.label) {
     selectOptions = paramDef.options!.map((option) => ({
       label: option.toString(),
-      value: option as string,
+      value: option,
     }));
   }
 
@@ -97,7 +96,7 @@ function SelectInputParamEditor({
   }
 
   return (
-    <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
+    <Stack gap={0.5} direction="row" alignItems="center">
       <Select
         id={getOperationParamId(operationId, index)}
         value={valueOption}

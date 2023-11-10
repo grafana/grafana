@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import {
   DataQuery,
   DataSourceInstanceSettings,
@@ -543,4 +545,19 @@ function isPromQuery(model: AlertDataQuery): model is PromQuery {
 
 export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQuery {
   return 'expr' in model;
+}
+
+// the backend will always execute "hidden" queries, so we have no choice but to remove the property in the front-end
+// to avoid confusion. The query editor shows them as "disabled" and that's a different semantic meaning.
+// furthermore the "AlertingQueryRunner" calls `filterQuery` on each data source and those will skip running queries that are "hidden"."
+// It seems like we have no choice but to act like "hidden" queries don't exist in alerting.
+export const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
+  return {
+    ...ruleDefinition,
+    queries: ruleDefinition.queries?.map((query) => omit(query, 'model.hide')),
+  };
+};
+
+export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
+  return ignoreHiddenQueries(rulerRuleToFormValues(rule));
 }

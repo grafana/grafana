@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash';
 import React, { ComponentType, FC } from 'react';
 
-import { PluginConfigPage, PluginExtensionConfig, PluginMeta, PluginType } from '@grafana/data';
+import { GrafanaPlugin, PluginExtensionConfig, PluginMeta, PluginType } from '@grafana/data';
 
 import { SandboxedPluginObject } from './types';
 import { isSandboxedPluginObject } from './utils';
@@ -70,7 +70,8 @@ export async function sandboxPluginComponents(
 
   // config pages
   if (Reflect.has(pluginObject, 'configPages')) {
-    const configPages: Record<string, PluginConfigPage<any>> = Reflect.get(pluginObject, 'configPages');
+    const configPages: NonNullable<GrafanaPlugin['configPages']> = Reflect.get(pluginObject, 'configPages') ?? [];
+
     for (const [key, value] of Object.entries(configPages)) {
       if (!value.body || !isFunction(value.body)) {
         continue;

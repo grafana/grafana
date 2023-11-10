@@ -5,14 +5,24 @@ import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
+// todo: barchart? histogram?
+export const enum TooltipHoverMode {
+  // Single mode in TimeSeries, Candlestick, Trend, StateTimeline, Heatmap?
+  xOne,
+  // All mode in TimeSeries, Candlestick, Trend, StateTimeline, Heatmap?
+  xAll,
+  // Single mode in XYChart, Heatmap?
+  xyOne,
+}
+
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
-  // or via .children() render prop callback?
+  hoverMode: TooltipHoverMode;
   render: (
     u: uPlot,
     dataIdxs: Array<number | null>,
@@ -60,14 +70,17 @@ const INITIAL_STATE: TooltipContainerState = {
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  const className = useStyles2(getStyles).tooltipWrapper;
+  const styles = useStyles2(getStyles);
+
+  const renderRef = useRef(render);
+  renderRef.current = render;
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -108,8 +121,9 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     let closestSeriesIdx: number | null = null;
 
     let pendingRender = false;
+    let pendingPinned = false;
 
-    const scheduleRender = () => {
+    const scheduleRender = (setPinned = false) => {
       if (!pendingRender) {
         // defer unrender for 100ms to reduce flickering in small gaps
         if (!_isHovering) {
@@ -120,16 +134,51 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
         pendingRender = true;
       }
+
+      if (setPinned) {
+        pendingPinned = true;
+      }
+    };
+
+    // in some ways this is similar to ClickOutsideWrapper.tsx
+    const downEventOutside = (e: Event) => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      let isOutside = (e.target as HTMLDivElement).closest(`.${styles.tooltipWrapper}`) !== domRef.current;
+
+      if (isOutside) {
+        dismiss();
+      }
     };
 
     const _render = () => {
       pendingRender = false;
 
+      if (pendingPinned) {
+        _style = { pointerEvents: _isPinned ? 'all' : 'none' };
+
+        domRef.current!.closest<HTMLDivElement>('.react-grid-item')?.classList.toggle('context-menu-open', _isPinned);
+
+        // @ts-ignore
+        _plot!.cursor._lock = _isPinned;
+
+        if (_isPinned) {
+          document.addEventListener('mousedown', downEventOutside, true);
+          document.addEventListener('keydown', downEventOutside, true);
+        } else {
+          document.removeEventListener('mousedown', downEventOutside, true);
+          document.removeEventListener('keydown', downEventOutside, true);
+        }
+
+        pendingPinned = false;
+      }
+
       let state: TooltipContainerState = {
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        contents: _isHovering ? render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss) : null,
+        contents: _isHovering
+          ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss)
+          : null,
         dismiss,
       };
 
@@ -139,42 +188,34 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     const dismiss = () => {
       _isPinned = false;
       _isHovering = false;
-      _style = { pointerEvents: 'none' };
-
-      // @ts-ignore
-      _plot!.cursor._lock = _isPinned;
-
-      scheduleRender();
+      _plot!.setCursor({ left: -10, top: -10 });
+      scheduleRender(true);
     };
 
     config.addHook('init', (u) => {
       setState({ plot: (_plot = u) });
 
-      // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
+      // this handles pinning
       u.over.addEventListener('click', (e) => {
-        if (_isHovering) {
-          if (e.target === u.over) {
-            _isPinned = !_isPinned;
-            _style = { pointerEvents: _isPinned ? 'all' : 'none' };
-            scheduleRender();
-          }
-
-          // @ts-ignore
-          u.cursor._lock = _isPinned;
-
-          // hack to trigger cursor to new position after unlock
-          // (should not be necessary after using the cursor.lock API)
-          if (!_isPinned) {
-            u.setCursor({ left: e.clientX - u.rect.left, top: e.clientY - u.rect.top });
-            _isHovering = false;
-          }
+        // only pinnable tooltip is visible *and* is within proximity to series/point
+        if (_isHovering && closestSeriesIdx != null && !_isPinned && e.target === u.over) {
+          _isPinned = true;
+          scheduleRender(true);
         }
       });
     });
 
     // fires on data value hovers/unhovers (before setSeries)
     config.addHook('setLegend', (u) => {
-      let _isHoveringNow = _plot!.cursor.idxs!.some((v) => v != null);
+      let hoveredSeriesIdx = _plot!.cursor.idxs!.findIndex((v, i) => i > 0 && v != null);
+      let _isHoveringNow = hoveredSeriesIdx !== -1;
+
+      // in mode: 2 uPlot won't fire the proximity-based setSeries (below)
+      // so we set closestSeriesIdx here instead
+      // TODO: setSeries only fires for TimeSeries & Trend...not state timeline or statsus history
+      if (hoverMode === TooltipHoverMode.xyOne) {
+        closestSeriesIdx = hoveredSeriesIdx;
+      }
 
       if (_isHoveringNow) {
         // create
@@ -196,12 +237,12 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
       // don't jiggle focused series styling when there's only one series
-      const isMultiSeries = u.series.length > 2;
+      // const isMultiSeries = u.series.length > 2;
 
-      if (isMultiSeries && closestSeriesIdx !== seriesIdx) {
-        closestSeriesIdx = seriesIdx;
-        scheduleRender();
-      }
+      // if (hoverModeRef.current === TooltipHoverMode.xAll && closestSeriesIdx !== seriesIdx) {
+      closestSeriesIdx = seriesIdx;
+      scheduleRender();
+      // }
     });
 
     // fires on mousemoves
@@ -268,8 +309,8 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
   if (plot && isHovering) {
     return createPortal(
-      <div className={className} style={style} ref={domRef}>
-        {isPinned && <CloseButton onClick={dismiss} style={{ top: '16px' }} />}
+      <div className={styles.tooltipWrapper} style={style} ref={domRef}>
+        {isPinned && <CloseButton onClick={dismiss} />}
         {contents}
       </div>,
       plot.over
@@ -284,11 +325,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: 0,
     left: 0,
     zIndex: theme.zIndex.tooltip,
-    padding: '8px',
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'absolute',
-    background: theme.colors.background.secondary,
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+    userSelect: 'text',
   }),
 });

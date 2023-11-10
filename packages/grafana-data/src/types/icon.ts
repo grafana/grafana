@@ -93,6 +93,7 @@ export const availableIconsIndex = {
   eye: true,
   'eye-slash': true,
   'ellipsis-h': true,
+  /* @deprecated, use 'spinner' instead */
   'fa fa-spinner': true,
   favorite: true,
   'file-alt': true,
@@ -198,6 +199,7 @@ export const availableIconsIndex = {
   sitemap: true,
   slack: true,
   'sliders-v-alt': true,
+  spinner: true,
   'sort-amount-down': true,
   'sort-amount-up': true,
   'square-shape': true,
@@ -225,6 +227,7 @@ export const availableIconsIndex = {
   'vertical-align-bottom': true,
   'vertical-align-center': true,
   'vertical-align-top': true,
+  'web-section-alt': true,
   'wrap-text': true,
   rss: true,
   x: true,

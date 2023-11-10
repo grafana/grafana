@@ -52,9 +52,8 @@ jest.mock('../helpers.ts', () => ({
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
-    hasAccess: (action: string, fallBack: boolean) => true,
     hasPermission: (action: string) => true,
-    hasAccessInMetadata: (action: string, object: WithAccessControlMetadata, fallBack: boolean) => true,
+    hasPermissionInMetadata: (action: string, object: WithAccessControlMetadata) => true,
   },
 }));
 

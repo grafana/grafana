@@ -1,26 +1,26 @@
 import { CoreApp } from '@grafana/data';
-import { sceneGraph, SceneGridItem, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneQueryRunner,
+  SceneVariableSet,
+  TestVariable,
+  VizPanel,
+} from '@grafana/scenes';
+import appEvents from 'app/core/app_events';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { VariablesChanged } from 'app/features/variables/types';
 
-import { DashboardScene } from './DashboardScene';
+import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 describe('DashboardScene', () => {
-  describe('Given a standard scene', () => {
-    it('Should set inspectPanelKey when url has inspect key', () => {
+  describe('DashboardSrv.getCurrent compatibility', () => {
+    it('Should set to compatibility wrapper', () => {
       const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ inspect: '2' });
-      expect(scene.state.inspectPanelKey).toBe('2');
-    });
+      scene.activate();
 
-    it('Should handle inspect key that is not found', () => {
-      const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ inspect: '12321' });
-      expect(scene.state.inspectPanelKey).toBe(undefined);
-    });
-
-    it('Should set viewPanelKey when url has viewPanel', () => {
-      const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ viewPanel: '2' });
-      expect(scene.state.viewPanelKey).toBe('2');
+      expect(getDashboardSrv().getCurrent()?.uid).toBe('dash-1');
     });
   });
 
@@ -69,9 +69,27 @@ describe('DashboardScene', () => {
       });
     });
   });
+
+  describe('When variables change', () => {
+    it('A change to griditem pos should set isDirty true', () => {
+      const varA = new TestVariable({ name: 'A', query: 'A.*', value: 'A.AA', text: '', options: [], delayMs: 0 });
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [varA] }),
+      });
+
+      scene.activate();
+
+      const eventHandler = jest.fn();
+      appEvents.subscribe(VariablesChanged, eventHandler);
+
+      varA.changeValueTo('A.AB');
+
+      expect(eventHandler).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
-function buildTestScene() {
+function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
@@ -96,6 +114,7 @@ function buildTestScene() {
         }),
       ],
     }),
+    ...overrides,
   });
 
   return scene;

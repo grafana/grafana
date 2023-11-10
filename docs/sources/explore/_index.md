@@ -33,6 +33,10 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
 
+{{% admonition type="note" %}}
+If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to enable the `viewers_can_edit` option
+{{% /admonition %}}
+
 To access Explore:
 
 1. Click on the Explore icon on the menu bar.
@@ -66,6 +70,18 @@ It is possible to select another data source for the new query which for example
 In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync. It ensures that you’re looking at the same time interval in both split panels.
 
 To close the newly created query, click on the Close Split button.
+
+## Content outline
+
+The content outline is a side navigation bar that keeps track of the queries and visualization panels you created in Explore. It allows you to navigate between them quickly.
+
+The content outline also works in a split view. When you are in split view, the content outline is generated for each pane.
+
+To open the content outline:
+
+1. Click the Outline button in the top left corner of the Explore screen.
+
+You can then click on any panel icon in the content outline to navigate to that panel.
 
 ## Share Explore URLs
 
