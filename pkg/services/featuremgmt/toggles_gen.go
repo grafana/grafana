@@ -514,4 +514,8 @@ const (
 	// FlagPluginsInstrumentationStatusSource
 	// Include a status source label for plugin request metrics and logs
 	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
+
+	// FlagPanelFilterVariable
+	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
+	FlagPanelFilterVariable = "panelFilterVariable"
 )
