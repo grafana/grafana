@@ -112,7 +112,7 @@ func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlin
 			subFiles = append(subFiles, subFile{path: path2, resolvedPath: resolvedPath2, fileInfo: fileInfo})
 		}
 
-		if followDistFolder && w.validDistPath(subFiles) {
+		if followDistFolder && w.containsDistFolder(subFiles) {
 			err := w.walk(
 				filepath.Join(path, "dist"),
 				info,
@@ -120,31 +120,31 @@ func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlin
 				symlinkPathsFollowed,
 				followDistFolder,
 				walkFn)
-
 			if err != nil {
 				return err
 			}
 		} else {
 			for _, p := range subFiles {
 				inRootDir := filepath.Join(w.rootDir, "dist") == p.path
+				// We only want to skip a dist directory if it is not in the root directory, and we are explicitly
+				// told not to follow it.
 				if p.isDistDir() && !inRootDir && !followDistFolder {
 					continue
 				}
 
 				err = w.walk(p.path, p.fileInfo, p.resolvedPath, symlinkPathsFollowed, followDistFolder, walkFn)
-
 				if err != nil {
 					return err
 				}
 			}
 		}
-
 		return nil
 	}
 	return nil
 }
 
-func (w *walker) validDistPath(subFiles []subFile) bool {
+// containsDistFolder returns true if the provided subFiles contains a dist folder that is not in the root directory.
+func (w *walker) containsDistFolder(subFiles []subFile) bool {
 	for _, p := range subFiles {
 		distInRoot := filepath.Join(w.rootDir, "dist") == p.path
 		if p.fileInfo.IsDir() && p.fileInfo.Name() == "dist" && !distInRoot {
@@ -164,18 +164,8 @@ func (s subFile) isDistDir() bool {
 	return s.fileInfo.IsDir() && s.fileInfo.Name() == "dist"
 }
 
-func containsDistFolder(subFiles []subFile) bool {
-	for _, p := range subFiles {
-		if p.fileInfo.IsDir() && p.fileInfo.Name() == "dist" {
-			return true
-		}
-	}
-
-	return false
-}
-
 // CleanRelativePath returns the shortest path name equivalent to path
-// by purely lexical processing. It make sure the provided path is rooted
+// by purely lexical processing. It makes sure the provided path is rooted
 // and then uses filepath.Clean and filepath.Rel to make sure the path
 // doesn't include any separators or elements that shouldn't be there
 // like ., .., //.
