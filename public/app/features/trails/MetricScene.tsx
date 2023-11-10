@@ -10,6 +10,7 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
   PanelBuilders,
+  sceneGraph,
 } from '@grafana/scenes';
 import { ToolbarButton, Box, Stack } from '@grafana/ui';
 
@@ -25,7 +26,7 @@ import {
   MakeOptional,
   OpenEmbeddedTrailEvent,
 } from './shared';
-import { getParentOfType, getTrailFor } from './utils';
+import { getTrailFor } from './utils';
 
 export interface MetricSceneState extends SceneObjectState {
   body: SceneFlexLayout;
@@ -101,7 +102,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
-    const metricScene = getParentOfType(model, MetricScene);
+    const metricScene = sceneGraph.getAncestor(model, MetricScene);
     const trail = getTrailFor(model);
     const { actionView } = metricScene.useState();
 

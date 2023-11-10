@@ -9,7 +9,6 @@ import {
   getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
-  sceneGraph,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
@@ -25,10 +24,9 @@ import { useStyles2 } from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
-import { LogsScene, LogsSearch } from './LogsScene';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
-import { MetricSelectedEvent, trailDS, VAR_FILTERS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
+import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -56,7 +54,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       $variables: state.$variables ?? getVariableSet(state.initialDS, state.metric, state.initialFilters),
       controls: state.controls ?? [
         new VariableValueSelectors({ layout: 'vertical' }),
-        new LogsSearch({}),
         new SceneControlsSpacer(),
         new SceneTimePicker({}),
         new SceneRefreshPicker({}),
@@ -114,20 +111,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     const stateUpdate: Partial<DataTrailState> = {};
     stateUpdate.metric = metric;
     stateUpdate.topScene = getTopSceneFor(metric);
-
-    // Switching to logs from metrics requires some scene changes
-    if (metric === LOGS_METRIC) {
-      stateUpdate.initialDS = 'gdev-loki';
-
-      const filters = sceneGraph.lookupVariable(VAR_FILTERS, this);
-      if (filters instanceof AdHocFiltersVariable) {
-        const initialFilters = filters.state.set.state.filters;
-        stateUpdate.$variables = getVariableSet(stateUpdate.initialDS, stateUpdate.metric, initialFilters);
-        // Hack to trigger re-render of controls
-        stateUpdate.controls = this.state.controls.map((control) => control.clone());
-      }
-    }
-
     return stateUpdate;
   }
 
@@ -147,10 +130,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       stateUpdate.topScene = new MetricSelectScene({ showHeading: true });
     }
 
-    // Temp hack to workaround url sync not cancelling url update when url changes during url sync
-    setTimeout(() => {
-      this.setState(stateUpdate);
-    }, 1);
+    this.setState(stateUpdate);
   }
 
   public onToggleAdvanced = () => {
@@ -180,9 +160,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
 function getTopSceneFor(metric?: string) {
   if (metric) {
-    if (metric === LOGS_METRIC) {
-      return new LogsScene({});
-    }
     return new MetricScene({ metric: metric });
   } else {
     return new MetricSelectScene({ showHeading: true });

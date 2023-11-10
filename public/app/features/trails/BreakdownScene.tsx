@@ -29,7 +29,7 @@ import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
 import { MetricScene } from './MetricScene';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from './shared';
-import { getColorByIndex, getParentOfType } from './utils';
+import { getColorByIndex } from './utils';
 
 export interface BreakdownSceneState extends SceneObjectState {
   body?: SceneObject;
@@ -67,7 +67,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       }
     });
 
-    const metric = getParentOfType(this, MetricScene).state.metric;
+    const metric = sceneGraph.getAncestor(this, MetricScene).state.metric;
     this._query = getAutoQueriesForMetric(metric).breakdown;
 
     this.updateBody(variable);

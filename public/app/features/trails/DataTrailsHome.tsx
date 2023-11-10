@@ -2,14 +2,21 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+} from '@grafana/scenes';
 import { Button, useStyles2, Stack } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
-import { getParentOfType, newLogsTrail, newMetricsTrail } from './utils';
+import { newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {
   recent: Array<SceneObjectRef<DataTrail>>;
@@ -24,14 +31,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   public onNewMetricsTrail = () => {
     const app = getAppFor(this);
     const trail = newMetricsTrail();
-
-    this.setState({ recent: [app.state.trail.getRef(), ...this.state.recent] });
-    app.goToUrlForTrail(trail);
-  };
-
-  public onNewLogsTrail = () => {
-    const app = getAppFor(this);
-    const trail = newLogsTrail();
 
     this.setState({ recent: [app.state.trail.getRef(), ...this.state.recent] });
     app.goToUrlForTrail(trail);
@@ -65,9 +64,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           <Button icon="plus" size="lg" variant="secondary" onClick={model.onNewMetricsTrail}>
             New metric trail
           </Button>
-          <Button icon="plus" size="lg" variant="secondary" onClick={model.onNewLogsTrail}>
-            New logs trail
-          </Button>
         </Stack>
         <Stack gap={4}>
           <div className={styles.column}>
@@ -94,7 +90,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 }
 
 function getAppFor(model: SceneObject) {
-  return getParentOfType(model, DataTrailsApp);
+  return sceneGraph.getAncestor(model, DataTrailsApp);
 }
 
 function getStyles(theme: GrafanaTheme2) {
