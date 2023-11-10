@@ -33,7 +33,7 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
 const PlaylistPageListSkeleton = () => {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.list}>
+    <div data-testid="playlist-page-list-skeleton" className={styles.list}>
       <PlaylistCard.Skeleton />
       <PlaylistCard.Skeleton />
       <PlaylistCard.Skeleton />
