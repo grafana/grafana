@@ -93,7 +93,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:    util.Pointer("test dash 23"),
-			FolderID: &savedFolder.ID,
+			FolderID: &savedFolder.ID, // nolint:staticcheck
 			OrgID:    1,
 		}
 
@@ -122,7 +122,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:    util.Pointer("test dash 23"),
-			FolderID: util.Pointer(int64(0)),
+			FolderID: util.Pointer(int64(0)), // nolint:staticcheck
 			OrgID:    1,
 		}
 
@@ -276,7 +276,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:        1,
-			FolderIds:    []int64{savedFolder.ID},
+			FolderIds:    []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{},
 		}
 
@@ -435,7 +435,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:     1,
-			FolderIds: []int64{savedFolder.ID},
+			FolderIds: []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{
 				OrgID:   1,
 				OrgRole: org.RoleEditor,
@@ -517,12 +517,14 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		// setup() saves one dashboard in the general folder and two in the "savedFolder".
 		count, err := dashboardStore.CountDashboardsInFolder(
 			context.Background(),
+			// nolint:staticcheck
 			&dashboards.CountDashboardsInFolderRequest{FolderID: 0, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 
 		count, err = dashboardStore.CountDashboardsInFolder(
 			context.Background(),
+			// nolint:staticcheck
 			&dashboards.CountDashboardsInFolderRequest{FolderID: savedFolder.ID, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
@@ -542,6 +544,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			})
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		count, err := dashboardStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 2, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, count, int64(0))
@@ -1239,6 +1242,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				Tags:        []string{},
 			}
 
+			// nolint:staticcheck
 			if item.FolderID > 0 {
 				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
 			}
