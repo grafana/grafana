@@ -1,36 +1,25 @@
-# grafana-example-apiserver
+# grafana apiserver (standalone)
 
 The example-apiserver closely resembles the 
 [sample-apiserver](https://github.com/kubernetes/sample-apiserver/tree/master) project in code and thus
 allows the same
-[CLI flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/) as kube-apiserver
+[CLI flags](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/) as kube-apiserver.
 It is currently used for testing our deployment pipelines for aggregated servers.
 
 ## Prerequisites:
-1. etcd
-  ```shell
-  brew install etcd
-  ```
-2. kind: you will need kind (or another local K8s setup) if you want to test aggregation.
+1. kind: you will need kind (or another local K8s setup) if you want to test aggregation.
   ```
   go install sigs.k8s.io/kind@v0.20.0 && kind create cluster
   ```
 
 ## Usage
 
-Have `etcd` running in your environment:
-
-```shell
-etcd &
-```
-
-With etcd running, you can now start the example-apiserver. The Authn / Authz flags are set up so that the kind cluster
+You can start the example-apiserver with an invocation as shown below. The Authn / Authz flags are set up so that the kind cluster
 can be used as a root server for this example-apiserver (in aggregated mode). Here, it's assumed that you have a local
 kind cluster and that you can provide its kubeconfig in the parameters to the example-apiserver.
 
 ```shell
-go run ./pkg/cmd/grafana-example-apiserver \
-  --etcd-servers=http://127.0.0.1:2379 \
+go run ./pkg/cmd/grafana apiserver example.grafana.app\
   --authentication-kubeconfig ~/.kube/config \
   --authorization-kubeconfig ~/.kube/config \
   --kubeconfig ~/.kube/config \

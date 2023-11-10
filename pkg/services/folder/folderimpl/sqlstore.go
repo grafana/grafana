@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
 	"github.com/grafana/dskit/concurrency"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -342,44 +342,26 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 	return height, nil
 }
 
-func (ss *sqlStore) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]*folder.Folder, error) {
+func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
+	if len(uids) == 0 {
+		return []*folder.Folder{}, nil
+	}
 	var folders []*folder.Folder
 	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		b := strings.Builder{}
-		args := make([]any, 0, len(q.UIDs)+1)
-
-		b.WriteString("SELECT * FROM folder WHERE org_id=? ")
-		args = append(args, q.OrgID)
-		for i, uid := range q.UIDs {
-			if i == 0 {
-				b.WriteString("  AND (")
-			}
-
-			if i > 0 {
-				b.WriteString(" OR ")
-			}
-			b.WriteString(" uid=? ")
+		b.WriteString(`SELECT * FROM folder WHERE org_id=? AND uid IN (?` + strings.Repeat(", ?", len(uids)-1) + `)`)
+		args := []any{orgID}
+		for _, uid := range uids {
 			args = append(args, uid)
-
-			if i == len(q.UIDs)-1 {
-				b.WriteString(")")
-			}
 		}
 		return sess.SQL(b.String(), args...).Find(&folders)
 	}); err != nil {
 		return nil, err
 	}
 
-	if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, i int) error {
-		fullpath, err := ss.getFullpath(ctx, folders[i])
-		if err != nil {
-			return err
-		}
-		folders[i].Fullpath = fullpath
-		return nil
-	}); err != nil {
-		ss.log.Error("failed to fetch folders from folder store", "error", err)
-		return nil, err
+	// Add URLs
+	for i, f := range folders {
+		folders[i] = f.WithURL()
 	}
 
 	return folders, nil

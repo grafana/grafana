@@ -9,8 +9,8 @@ import (
 type fakeStore struct {
 	ExpectedChildFolders  []*folder.Folder
 	ExpectedParentFolders []*folder.Folder
-	ExpectedFolder        *folder.Folder
 	ExpectedFolders       []*folder.Folder
+	ExpectedFolder        *folder.Folder
 	ExpectedError         error
 	ExpectedFolderHeight  int
 	CreateCalled          bool
@@ -57,6 +57,6 @@ func (f *fakeStore) GetHeight(ctx context.Context, folderUID string, orgID int64
 	return f.ExpectedFolderHeight, f.ExpectedError
 }
 
-func (f *fakeStore) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]*folder.Folder, error) {
+func (f *fakeStore) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }
