@@ -8,6 +8,10 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 
+/**
+ * A topic is attached to DataFrame metadata in query results.
+ * This specifies where the data should be used.
+ */
 export enum DataTopic {
   Annotations = 'annotations',
   Series = 'series',
