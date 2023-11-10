@@ -27,6 +27,7 @@ export interface RuleFormValues {
   evaluateEvery: string;
   evaluateFor: string;
   isPaused?: boolean;
+  contactPoint?: string;
 
   // cortex / loki rules
   namespace: string;
