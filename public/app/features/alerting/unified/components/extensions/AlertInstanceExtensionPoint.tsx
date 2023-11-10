@@ -27,7 +27,7 @@ export const AlertInstanceExtensionPoint = ({
   return (
     <>
       <Dropdown placement="bottom-start" overlay={menu}>
-        <IconButton name="bars" aria-label="Actions" disabled={extensions.length === 0} variant="secondary" />
+        <IconButton name="ellipsis-v" aria-label="Actions" disabled={extensions.length === 0} variant="secondary" />
       </Dropdown>
       {!!selectedExtension && !!selectedExtension.path && (
         <ConfirmNavigationModal
