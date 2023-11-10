@@ -52,7 +52,7 @@ func BenchmarkPanelTitleSearch(b *testing.B) {
 		},
 		{
 			desc:        "search specific panel with panel title feature enabled",
-			url:         "/api/search?type=dash-db&panelTitle=" + panelQuery,
+			url:         "/api/search?type=dash-panel&panelTitle=" + panelQuery,
 			expectedLen: 1,
 			features: featuremgmt.WithFeatures(
 				featuremgmt.FlagPanelTitleSearchInV1,

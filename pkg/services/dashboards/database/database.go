@@ -1030,7 +1030,12 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	var res []dashboards.DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
+	sb := &searchstore.Builder{
+		Dialect:    d.store.GetDialect(),
+		Filters:    filters,
+		Features:   d.features,
+		SearchType: query.Type,
+	}
 
 	limit := query.Limit
 	if limit < 1 {
