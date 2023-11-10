@@ -53,7 +53,15 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		logParams = append(logParams, "status_source", pluginrequestmeta.StatusSourceFromContext(ctx))
 	}
-	m.logger.FromContext(ctx).Info("Plugin Request Completed", logParams...)
+
+	ctxLogger := m.logger.FromContext(ctx)
+	logFunc := ctxLogger.Info
+	if status > requestStatusOK {
+		logFunc = ctxLogger.Error
+	}
+
+	logFunc("Plugin Request Completed", logParams...)
+
 	return err
 }
 
