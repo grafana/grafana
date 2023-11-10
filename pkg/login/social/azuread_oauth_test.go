@@ -742,12 +742,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 
 func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 	type fields struct {
-		SocialBase       *SocialBase
-		providerCfg      map[string]interface{}
-		cfg              *setting.Cfg
-		allowedGroups    []string
-		forceUseGraphAPI bool
-		skipOrgRoleSync  bool
+		SocialBase  *SocialBase
+		providerCfg map[string]interface{}
+		cfg         *setting.Cfg
 	}
 	type args struct {
 		client *http.Client

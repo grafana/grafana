@@ -40,6 +40,10 @@ func CreateOAuthInfoFromKeyValues(settingsKV map[string]interface{}) (*OAuthInfo
 		WeaklyTypedInput: true,
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	err = decoder.Decode(settingsKV)
 	if err != nil {
 		return nil, err
@@ -50,9 +54,4 @@ func CreateOAuthInfoFromKeyValues(settingsKV map[string]interface{}) (*OAuthInfo
 	}
 
 	return &oauthInfo, err
-}
-
-func constructOAuthInfoFromIniSection(sec *ini.Section) (*OAuthInfo, error) {
-	settingsKV := ConvertIniSectionToMap(sec)
-	return CreateOAuthInfoFromKeyValues(settingsKV)
 }

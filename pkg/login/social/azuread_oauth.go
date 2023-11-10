@@ -22,8 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const sectionName = "auth.azuread"
-
 var _ SocialConnector = (*SocialAzureAD)(nil)
 
 type SocialAzureAD struct {

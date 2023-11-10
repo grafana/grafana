@@ -230,7 +230,7 @@ func ProvideService(cfg *setting.Cfg,
 			}
 		}
 
-		ss.oAuthProvider[name] = ss.socialMap[name].(SocialConnector).GetOAuthInfo()
+		ss.oAuthProvider[name] = ss.socialMap[name].GetOAuthInfo()
 	}
 
 	ss.registerSupportBundleCollectors(bundleRegistry)
