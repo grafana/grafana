@@ -512,7 +512,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 	for groupKey, rules := range groups {
 		fullpath, ok := folderUidToFullpath[groupKey.NamespaceUID]
 		if !ok {
-			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
+			return nil, fmt.Errorf("cannot find fullpath for folder with uid '%s'", groupKey.NamespaceUID)
 		}
 		result = append(result, models.NewAlertRuleGroupWithFolderFullpath(groupKey, rules, fullpath))
 	}

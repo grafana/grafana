@@ -17,22 +17,30 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -1413,6 +1421,7 @@ type testEnvironment struct {
 	prov             provisioning.ProvisioningStore
 	ac               *recordingAccessControlFake
 	folderService    folder.Service
+	user             *user.SignedInUser
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1466,24 +1475,41 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
-	folderService := foldertest.NewFakeService()
-	folderService.ExpectedFolder = &folder.Folder{
-		UID:   "folder-uid",
-		Title: "Folder Title",
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+	require.NoError(t, err)
+
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderService := folderimpl.ProvideService(actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, featuremgmt.WithFeatures())
+	user := &user.SignedInUser{
 		OrgID: 1,
+		/*
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+			},
+		*/
 	}
-	folderService.ExpectedFolders = []*folder.Folder{
-		{
-			UID:   "folder-uid",
-			Title: "Folder Title",
-			OrgID: 1,
-		},
-		{
-			UID:   "folder-uid2",
-			Title: "Folder Title2",
-			OrgID: 1,
-		},
-	}
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+
+	parent, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        1,
+		UID:          "folder-uid",
+		Title:        "Folder Title",
+		SignedInUser: user,
+	})
+	require.NoError(t, err)
+
+	_, err = folderService.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        1,
+		UID:          "folder-uid2",
+		Title:        "Folder Title2",
+		ParentUID:    parent.UID,
+		SignedInUser: user,
+	})
+	require.NoError(t, err)
 
 	return testEnvironment{
 		secrets:          secretsService,
@@ -1496,6 +1522,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		quotas:           quotas,
 		ac:               ac,
 		folderService:    folderService,
+		user:             user,
 	}
 }
 
@@ -1530,6 +1557,9 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		},
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+			},
 		},
 		Logger: &logtest.Fake{},
 	}

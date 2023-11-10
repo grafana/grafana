@@ -2,7 +2,6 @@ package folderimpl
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -186,14 +185,6 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		return nil
 	})
 
-	if q.IncludeFullpath {
-		fullpath, err := ss.getFullpath(ctx, foldr)
-		if err != nil {
-			ss.log.Debug("failed to get fullpath", "error", err, "uid", foldr.UID, "orgID", foldr.OrgID)
-		}
-		foldr.Fullpath = fullpath
-	}
-
 	return foldr.WithURL(), err
 }
 
@@ -365,33 +356,6 @@ func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) 
 	}
 
 	return folders, nil
-}
-
-func (ss *sqlStore) getFullpath(ctx context.Context, f *folder.Folder) (string, error) {
-	ancestors, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
-	if err != nil {
-		return "", err
-	}
-
-	escapedTitle := func(title string) string {
-		return strings.ReplaceAll(title, FULLPATH_SEPARATOR, "\\"+FULLPATH_SEPARATOR)
-	}
-
-	fullpath := ""
-	for _, ancestor := range ancestors {
-		if fullpath != "" {
-			fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, escapedTitle(ancestor.Title))
-		} else {
-			fullpath += ancestor.Title
-		}
-	}
-
-	if fullpath != "" {
-		fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, escapedTitle(f.Title))
-	} else {
-		fullpath += f.Title
-	}
-	return fullpath, nil
 }
 
 func SplitFullpath(s string) []string {

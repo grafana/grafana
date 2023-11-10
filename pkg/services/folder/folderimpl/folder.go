@@ -157,7 +157,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	}
 
 	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		return dashFolder, nil
+		return s.withFullpath(ctx, dashFolder, q.IncludeFullpath)
 	}
 
 	if q.ID != nil {
@@ -174,7 +174,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
-	return f, err
+	return s.withFullpath(ctx, f, q.IncludeFullpath)
 }
 
 func (s *Service) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]*folder.Folder, error) {
@@ -182,7 +182,10 @@ func (s *Service) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	folders, err := s.store.GetFolders(ctx, q.OrgID, q.UIDs)
+	// contrary to the nested folders store that returns empty array if no UIDs are provided,
+	// this one returns all folders if no UIDs are provided
+	// therefore any callers that do not provide UIDs are assumed to want all folders
+	folders, err := s.dashboardFolderStore.GetFolders(ctx, q.OrgID, q.UIDs)
 	if err != nil {
 		s.log.Error("failed to fetch folders from folder store", "error", err)
 		return nil, err
@@ -199,6 +202,10 @@ func (s *Service) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]
 			return nil, err
 		}
 		if canView {
+			f, err := s.withFullpath(ctx, f, q.IncludeFullpath)
+			if err != nil {
+				s.log.Error("failed to fetch folder full path", "error", err)
+			}
 			filtered = append(filtered, f)
 		}
 	}
@@ -954,6 +961,50 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	}
 
 	return cmd, nil
+}
+
+func (s *Service) withFullpath(ctx context.Context, f *folder.Folder, includeFullpath bool) (*folder.Folder, error) {
+	if !includeFullpath {
+		return f, nil
+	}
+
+	if f.Fullpath != "" {
+		return f, nil
+	}
+
+	withEscapedTitle := func(title string) string {
+		return strings.ReplaceAll(title, FULLPATH_SEPARATOR, "\\"+FULLPATH_SEPARATOR)
+	}
+
+	escapedTitle := withEscapedTitle(f.Title)
+
+	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		f.Fullpath = escapedTitle
+		return f, nil
+	}
+
+	ancestors, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+	if err != nil {
+		return f, err
+	}
+
+	fullpath := ""
+	for _, ancestor := range ancestors {
+		if fullpath != "" {
+			fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, withEscapedTitle(ancestor.Title))
+		} else {
+			fullpath += ancestor.Title
+		}
+	}
+
+	if fullpath != "" {
+		fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, escapedTitle)
+	} else {
+		fullpath += escapedTitle
+	}
+
+	f.Fullpath = fullpath
+	return f, nil
 }
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
