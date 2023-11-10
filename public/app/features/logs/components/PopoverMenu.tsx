@@ -82,7 +82,7 @@ export const PopoverMenu = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   menu: css({
-    position: 'fixed',
+    position: 'absolute',
     zIndex: theme.zIndex.modal,
   }),
 });

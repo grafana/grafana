@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, MouseEvent } from 'react';
+import React, { PureComponent, MouseEvent, createRef } from 'react';
 
 import {
   TimeZone,
@@ -73,6 +73,7 @@ interface State {
 
 class UnThemedLogRows extends PureComponent<Props, State> {
   renderAllTimer: number | null = null;
+  logRowsRef = createRef<HTMLDivElement>();
 
   static defaultProps = {
     previewLimit: PREVIEW_LIMIT,
@@ -107,9 +108,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (!selection) {
       return false;
     }
+    if (!this.logRowsRef.current) {
+      return false;
+    }
+    const parentBounds = this.logRowsRef.current?.getBoundingClientRect();
     this.setState({
       selection,
-      popoverMenuCoordinates: { x: e.clientX, y: e.clientY },
+      popoverMenuCoordinates: { x: e.clientX - parentBounds.left, y: e.clientY - parentBounds.top },
       selectedRow: row,
     });
     return true;
@@ -185,7 +190,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const keyMaker = new UniqueKeyMaker();
 
     return (
-      <>
+      <div class={styles.logRows} ref={this.logRowsRef}>
         {this.state.selection && this.state.selectedRow && (
           <PopoverMenu
             close={this.closePopoverMenu}
@@ -248,7 +253,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             )}
           </tbody>
         </table>
-      </>
+      </div>
     );
   }
 }
