@@ -183,6 +183,17 @@ func (s *OAuth2ServiceImpl) setClientUser(ctx context.Context, client *oauthserv
 	return nil
 }
 
+// GetExternalServiceNames get the names of External Service in store
+func (s *OAuth2ServiceImpl) GetExternalServiceNames(ctx context.Context) ([]string, error) {
+	s.logger.Debug("Get external service names from store")
+	res, err := s.sqlstore.GetExternalServiceNames(ctx)
+	if err != nil {
+		s.logger.Error("Could not fetch clients from store", "error", err.Error())
+		return nil, err
+	}
+	return res, nil
+}
+
 func (s *OAuth2ServiceImpl) RemoveExternalService(ctx context.Context, name string) error {
 	s.logger.Info("Remove external service", "service", name)
 
