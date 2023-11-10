@@ -68,7 +68,7 @@ interface State {
   renderAll: boolean;
   selection: string;
   selectedRow: LogRowModel | null;
-  menuCoordinates: { x: number; y: number };
+  popoverMenuCoordinates: { x: number; y: number };
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -82,7 +82,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     renderAll: false,
     selection: '',
     selectedRow: null,
-    menuCoordinates: { x: 0, y: 0 },
+    popoverMenuCoordinates: { x: 0, y: 0 },
   };
 
   /**
@@ -109,7 +109,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     }
     this.setState({
       selection,
-      menuCoordinates: { x: e.clientX, y: e.clientY },
+      popoverMenuCoordinates: { x: e.clientX, y: e.clientY },
       selectedRow: row,
     });
     return true;
@@ -129,7 +129,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   closePopoverMenu = () => {
     this.setState({
       selection: '',
-      menuCoordinates: { x: 0, y: 0 },
+      popoverMenuCoordinates: { x: 0, y: 0 },
       selectedRow: null,
     });
   };
@@ -191,7 +191,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             close={this.closePopoverMenu}
             row={this.state.selectedRow}
             selection={this.state.selection}
-            {...this.state.menuCoordinates}
+            {...this.state.popoverMenuCoordinates}
             onClickFilterValue={rest.onClickFilterValue}
             onClickFilterOutValue={rest.onClickFilterOutValue}
           />
