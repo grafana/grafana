@@ -1038,6 +1038,14 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 		},
+		{
+			Name:         "alertingSimplifiedRouting",
+			Description:  "Enables the simplified routing for alerting",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+		},
 	}
 )
 
