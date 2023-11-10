@@ -12,6 +12,8 @@ import {
 } from '@grafana/data';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
+
 import {
   timeSeriesTableTransformer,
   TimeSeriesTableTransformerOptions,
@@ -117,5 +119,5 @@ export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeS
   name: timeSeriesTableTransformer.name,
   description: timeSeriesTableTransformer.description,
   state: PluginState.beta,
-  help: ``,
+  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
 };

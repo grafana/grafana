@@ -444,7 +444,7 @@ func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folde
 	searchQuery := search.Query{
 		SignedInUser: c.SignedInUser,
 		DashboardIds: make([]int64, 0),
-		FolderIds:    make([]int64, 0),
+		FolderIds:    make([]int64, 0), // nolint:staticcheck
 		Limit:        c.QueryInt64("limit"),
 		OrgId:        c.SignedInUser.GetOrgID(),
 		Type:         "dash-folder",
