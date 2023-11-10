@@ -21,7 +21,7 @@ export async function listFolders(
 
   const backendSrv = getBackendSrv();
 
-  let folders = <NestedFolderDTO[]>{};
+  let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
     folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
       parentUid: parentUID,
