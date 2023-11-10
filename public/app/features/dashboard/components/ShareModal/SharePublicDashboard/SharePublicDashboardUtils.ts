@@ -1,7 +1,7 @@
+import { TypedVariableModel } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { VariableModel } from 'app/features/variables/types';
 
 import { PanelModel } from '../../../state';
 import { shareDashboardType } from '../utils';
@@ -42,7 +42,7 @@ export interface SessionUser {
 }
 
 // Instance methods
-export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
+export const dashboardHasTemplateVariables = (variables: TypedVariableModel[]): boolean => {
   return variables.length > 0;
 };
 
