@@ -412,15 +412,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:           "alertingNotificationsPoliciesMatchingInstances",
-			Description:    "Enables the preview of matching instances for notification policies",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			Owner:          grafanaAlertingSquad,
-			AllowSelfServe: falsePtr,
-		},
-		{
 			Name:        "alertStateHistoryLokiPrimary",
 			Description: "Enable a remote Loki instance as the primary source for state history reads.",
 			Stage:       FeatureStageExperimental,
@@ -1031,6 +1022,21 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "flameGraphItemCollapsing",
+			Description:  "Allow collapsing of flame graph items",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:         "alertingDetailsViewV2",
+			Description:  "Enables the preview of the new alert details view",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
 		},
 	}
 )
