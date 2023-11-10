@@ -102,14 +102,14 @@ func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts Co
 		return nil, err
 	}
 
-	u.Path = path.Join(u.Path, "repo", pluginID)
+	u.Path = path.Join(u.Path, pluginID, "versions")
 
 	body, err := m.client.SendReq(u, compatOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	var v PluginRepo
+	var v PluginVersions
 	err = json.Unmarshal(body, &v)
 	if err != nil {
 		m.log.Error("Failed to unmarshal plugin repo response", err)
