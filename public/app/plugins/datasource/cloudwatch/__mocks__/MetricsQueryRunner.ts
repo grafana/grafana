@@ -51,5 +51,5 @@ export function setupMockedMetricsQueryRunner({
     startTime: 0,
   };
 
-  return { runner, queryMock: queryMock, templateService, instanceSettings, request, timeRange: TimeRangeMock };
+  return { runner, queryMock, templateService, instanceSettings, request, timeRange: TimeRangeMock };
 }
