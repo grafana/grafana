@@ -56,7 +56,7 @@ export const PopoverMenu = ({
           onClick={() => {
             copyText(selection, containerRef);
             close();
-            track('copy_selection_clicked', selection.length);
+            track('copy_selection_clicked', selection.length, row.datasourceType);
           }}
         />
         {onClickFilterValue && (
@@ -65,7 +65,7 @@ export const PopoverMenu = ({
             onClick={() => {
               onClickFilterValue(selection, row.dataFrame.refId);
               close();
-              track('line_filter_clicked', selection.length);
+              track('line_filter_clicked', selection.length, row.datasourceType);
             }}
           />
         )}
@@ -75,7 +75,7 @@ export const PopoverMenu = ({
             onClick={() => {
               onClickFilterOutValue(selection, row.dataFrame.refId);
               close();
-              track('line_filter_out_clicked', selection.length);
+              track('line_filter_out_clicked', selection.length, row.datasourceType);
             }}
           />
         )}
@@ -84,9 +84,10 @@ export const PopoverMenu = ({
   );
 };
 
-function track(event: string, selectionLength: number) {
+function track(event: string, selectionLength: number, dataSourceType: string | undefined) {
   reportInteraction(`grafana_explore_logs_${event}`, {
-    selectionLength,
+    selection_length: selectionLength,
+    ds_type: dataSourceType || 'unknown',
   });
 }
 
