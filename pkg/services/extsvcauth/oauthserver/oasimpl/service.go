@@ -186,8 +186,7 @@ func (s *OAuth2ServiceImpl) setClientUser(ctx context.Context, client *oauthserv
 func (s *OAuth2ServiceImpl) RemoveExternalService(ctx context.Context, name string) error {
 	s.logger.Info("Remove external service", "service", name)
 
-	slug := slugify.Slugify(name)
-	client, err := s.sqlstore.GetExternalServiceByName(ctx, slug)
+	client, err := s.sqlstore.GetExternalServiceByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, oauthserver.ErrClientNotFound) {
 			s.logger.Debug("No external service linked to this name", "name", name)
@@ -208,7 +207,7 @@ func (s *OAuth2ServiceImpl) RemoveExternalService(ctx context.Context, name stri
 	s.logger.Debug("Deleted external service", "name", name, "client_id", client.ClientID)
 
 	// Remove the associated service account
-	return s.saService.RemoveExtSvcAccount(ctx, oauthserver.TmpOrgID, slug)
+	return s.saService.RemoveExtSvcAccount(ctx, oauthserver.TmpOrgID, slugify.Slugify(name))
 }
 
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
