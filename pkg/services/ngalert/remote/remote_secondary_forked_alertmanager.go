@@ -37,7 +37,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx cont
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
-	return apimodels.GettableStatus{}
+	return fam.internal.GetStatus()
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
@@ -80,10 +80,20 @@ func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, 
 	return fam.internal.TestTemplate(ctx, c)
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {}
+func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
+	// No cleanup to do in the remote Alertmanager.
+	fam.internal.CleanUp()
+}
 
-func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {}
+func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
+	fam.internal.StopAndWait()
+	fam.remote.StopAndWait()
+}
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
-	return false
+	// Both Alertmanagers must be ready.
+	if ready := fam.remote.Ready(); !ready {
+		return false
+	}
+	return fam.internal.Ready()
 }
