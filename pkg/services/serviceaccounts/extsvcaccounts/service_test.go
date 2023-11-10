@@ -393,7 +393,7 @@ func TestExtSvcAccountsService_RemoveExtSvcAccount(t *testing.T) {
 		want   *extsvcauth.ExternalService
 	}{
 		{
-			name: "should do nothing",
+			name: "should not fail if the service account does not exist",
 			init: func(env *TestEnv) {
 				// No previous service account was attached to this slug
 				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, tmpOrgID, sa.ExtSvcPrefix+extSvcSlug).

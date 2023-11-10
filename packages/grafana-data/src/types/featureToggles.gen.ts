@@ -74,7 +74,6 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
-  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
@@ -160,4 +159,7 @@ export interface FeatureToggles {
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
   logsInfiniteScrolling?: boolean;
+  flameGraphItemCollapsing?: boolean;
+  alertingDetailsViewV2?: boolean;
+  alertingSimplifiedRouting?: boolean;
 }
