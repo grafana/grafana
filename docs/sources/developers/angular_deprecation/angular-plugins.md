@@ -572,14 +572,6 @@ Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 Migration to React is planned - [issue](https://github.com/briangann/grafana-datatable-panel/issues/174).
 {{% /admonition %}}
 
-### [D3 Gauge](https://grafana.com/grafana/plugins/briangann-gauge-panel/)
-
-Latest Version: 0.0.9 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="note" %}}
-Migration to React is a planned [update](https://github.com/briangann/grafana-gauge-panel/issues/740).
-{{% /admonition %}}
-
 ### [GeoLoop](https://grafana.com/grafana/plugins/citilogics-geoloop-panel/)
 
 Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021

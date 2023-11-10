@@ -184,7 +184,7 @@ export function getVariableTypes(): Array<{ label: string; value: VariableType }
     }));
 }
 
-function getUrlValueForComparison(value: any): any {
+function getUrlValueForComparison(value: unknown) {
   if (isArray(value)) {
     if (value.length === 0) {
       value = undefined;
