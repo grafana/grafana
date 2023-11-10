@@ -14,12 +14,12 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, viewPanelKey: viewPanelId, overlay } = model.useState();
+  const { controls, viewPanelKey, overlay } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
-  const bodyToRender = model.getBodyToRender(viewPanelId);
+  const bodyToRender = model.getBodyToRender(viewPanelKey);
 
   const navProps = config.featureToggles.dashboardSceneForViewers
     ? { navModel: getNavModel(navIndex, 'dashboards/browse') }

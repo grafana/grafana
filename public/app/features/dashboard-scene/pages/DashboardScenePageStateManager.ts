@@ -97,6 +97,24 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
+  public async loadSoloPanel(uid: string, panelId: string, timezone?: string) {
+    try {
+      const dashboard = await this.loadScene(uid);
+      dashboard.startUrlSync();
+
+      if (timezone) {
+        dashboard.state.$timeRange!.onTimeZoneChange(timezone);
+      }
+
+      // This is to re-use some complex logic for viewPanel in DashboardSceneUrlSync manager that waits for repeat clones to be added
+      dashboard?.urlSync?.updateFromUrl({ viewPanel: String(panelId) });
+
+      this.setState({ dashboard: dashboard, isLoading: false });
+    } catch (err) {
+      this.setState({ isLoading: false, loadError: String(err) });
+    }
+  }
+
   public async loadPanelEdit(uid: string, panelId: string) {
     try {
       const dashboard = await this.loadScene(uid);
