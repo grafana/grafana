@@ -37,17 +37,18 @@ export class ElasticQueryBuilder {
   }
 
   getRangeFilter() {
-    const filter: any = {};
-    filter[this.timeField] = {
-      gte: '$timeFrom',
-      lte: '$timeTo',
-      format: 'epoch_millis',
+    const filter = {
+      [this.timeField]: {
+        gte: '$timeFrom',
+        lte: '$timeTo',
+        format: 'epoch_millis',
+      },
     };
 
     return filter;
   }
 
-  buildTermsAgg(aggDef: Terms, queryNode: { terms?: any; aggs?: any }, target: ElasticsearchQuery) {
+  buildTermsAgg(aggDef: Terms, queryNode: { terms?: any; aggs?: Record<string, unknown> }, target: ElasticsearchQuery) {
     queryNode.terms = { field: aggDef.field };
 
     if (!aggDef.settings) {
@@ -101,7 +102,7 @@ export class ElasticQueryBuilder {
   }
 
   getDateHistogramAgg(aggDef: DateHistogram) {
-    const esAgg: any = {};
+    const esAgg: Record<string, unknown> = {};
     const settings = aggDef.settings || {};
 
     esAgg.field = aggDef.field || this.timeField;
@@ -128,11 +129,11 @@ export class ElasticQueryBuilder {
   }
 
   getHistogramAgg(aggDef: Histogram) {
-    const esAgg: any = {};
-    const settings = aggDef.settings || {};
-    esAgg.interval = settings.interval;
-    esAgg.field = aggDef.field;
-    esAgg.min_doc_count = settings.min_doc_count || 0;
+    const esAgg = {
+      interval: aggDef.settings?.interval,
+      field: aggDef.field,
+      min_doc_count: aggDef.settings?.min_doc_count || 0,
+    };
 
     return esAgg;
   }
