@@ -955,6 +955,19 @@
       "passwords-must-match": ""
     }
   },
+  "query-operation": {
+    "header": {
+      "collapse-row": "",
+      "datasource-help": "",
+      "disable-query": "",
+      "drag-and-drop": "",
+      "duplicate-query": "",
+      "expand-row": "",
+      "remove-query": "",
+      "toggle-edit-mode": ""
+    },
+    "query-editor-not-exported": ""
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "自动刷新已关闭。选择刷新时间间隔",

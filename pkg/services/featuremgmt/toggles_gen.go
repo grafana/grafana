@@ -231,10 +231,6 @@ const (
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
 
-	// FlagAlertingNotificationsPoliciesMatchingInstances
-	// Enables the preview of matching instances for notification policies
-	FlagAlertingNotificationsPoliciesMatchingInstances = "alertingNotificationsPoliciesMatchingInstances"
-
 	// FlagAlertStateHistoryLokiPrimary
 	// Enable a remote Loki instance as the primary source for state history reads.
 	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
@@ -570,4 +566,20 @@ const (
 	// FlagSsoSettingsApi
 	// Enables the SSO settings API
 	FlagSsoSettingsApi = "ssoSettingsApi"
+
+	// FlagLogsInfiniteScrolling
+	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
+	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
+
+	// FlagFlameGraphItemCollapsing
+	// Allow collapsing of flame graph items
+	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
+
+	// FlagAlertingDetailsViewV2
+	// Enables the preview of the new alert details view
+	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
+
+	// FlagAlertingSimplifiedRouting
+	// Enables the simplified routing for alerting
+	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 )
