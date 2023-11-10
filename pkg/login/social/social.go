@@ -79,23 +79,6 @@ type OAuthInfo struct {
 	Extra                   map[string]interface{} `mapstructure:",remain"`
 }
 
-// func (info *OAuthInfo) ToMap() map[string]interface{} {
-// 	// iterate through info's fields with reflection and return a map[string]interface{} representation
-// 	v := reflect.ValueOf(*info)
-// 	typ := v.Type()
-
-// 	settings := make(map[string]interface{}, typ.NumField())
-// 	for i := 0; i < typ.NumField(); i++ {
-// 		field := typ.Field(i)
-// 		fieldName := field.Tag.Get("toml")
-// 		if fieldName != "" {
-// 			settings[fieldName] = v.Field(i).Interface()
-// 		}
-// 	}
-
-// 	return settings
-// }
-
 func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service,

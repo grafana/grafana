@@ -207,56 +207,6 @@ func loadOAuthInfo(sec *ini.Section, name string) *OAuthInfo {
 	return info
 }
 
-func loadOAuthInfoWithDefaults(settings map[string]interface{}, name string) *OAuthInfo {
-	if settings["name"] == nil {
-		settings["name"] = name
-	}
-
-	info := &OAuthInfo{
-		ClientId:                mustString(settings["client_id"]),
-		ClientSecret:            mustString(settings["client_secret"]),
-		AuthUrl:                 mustString(settings["auth_url"]),
-		TokenUrl:                mustString(settings["token_url"]),
-		ApiUrl:                  mustString(settings["api_url"]),
-		TeamsUrl:                mustString(settings["teams_url"]),
-		Enabled:                 mustBool(settings["enabled"], false),
-		EmailAttributeName:      mustString(settings["email_attribute_name"]),
-		EmailAttributePath:      mustString(settings["email_attribute_path"]),
-		RoleAttributePath:       mustString(settings["role_attribute_path"]),
-		RoleAttributeStrict:     mustBool(settings["role_attribute_strict"], false),
-		GroupsAttributePath:     mustString(settings["groups_attribute_path"]),
-		TeamIdsAttributePath:    mustString(settings["team_ids_attribute_path"]),
-		AllowedDomains:          util.SplitString(mustString(settings["allowed_domains"])),
-		HostedDomain:            mustString(settings["hosted_domain"]),
-		AllowSignup:             mustBool(settings["allow_sign_up"], true),
-		Name:                    mustString(settings["name"]),
-		Icon:                    mustString(settings["icon"]),
-		TlsClientCert:           mustString(settings["tls_client_cert"]),
-		TlsClientKey:            mustString(settings["tls_client_key"]),
-		TlsClientCa:             mustString(settings["tls_client_ca"]),
-		TlsSkipVerify:           mustBool(settings["tls_skip_verify_insecure"], false),
-		UsePKCE:                 mustBool(settings["use_pkce"], true),
-		UseRefreshToken:         mustBool(settings["use_refresh_token"], false),
-		AllowAssignGrafanaAdmin: mustBool(settings["allow_assign_grafana_admin"], false),
-		AutoLogin:               mustBool(settings["auto_login"], false),
-		AllowedGroups:           util.SplitString(mustString(settings["allowed_groups"])),
-	}
-
-	switch settings["scopes"].(type) {
-	case []string:
-		info.Scopes = settings["scopes"].([]string)
-	case string:
-		info.Scopes = util.SplitString(mustString(settings["scopes"]))
-	}
-
-	// when empty_scopes parameter exists and is true, overwrite scope with empty value
-	if mustBool(settings["empty_scopes"], false) {
-		info.Scopes = []string{}
-	}
-
-	return info
-}
-
 func mustBool(value interface{}, defaultValue bool) bool {
 	if value == nil {
 		return defaultValue
