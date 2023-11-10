@@ -102,15 +102,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       return of({
         data: frames,
         key: 'test-key',
-        state: frames.every((dataFrame) =>
-          [
-            CloudWatchLogsQueryStatus.Complete,
-            CloudWatchLogsQueryStatus.Cancelled,
-            CloudWatchLogsQueryStatus.Failed,
-          ].includes(dataFrame.meta?.custom?.['Status'])
-        )
-          ? LoadingState.Done
-          : LoadingState.Loading,
+        state: LoadingState.Done,
       });
     }
 
