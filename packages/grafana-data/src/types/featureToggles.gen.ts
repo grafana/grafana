@@ -74,7 +74,6 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
-  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
@@ -110,7 +109,6 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
-  azureMonitorDataplane?: boolean;
   traceToProfiles?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
@@ -139,7 +137,6 @@ export interface FeatureToggles {
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
-  kubernetesPlaylistsAPI?: boolean;
   cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
@@ -160,4 +157,9 @@ export interface FeatureToggles {
   dashboardSceneForViewers?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
+  ssoSettingsApi?: boolean;
+  logsInfiniteScrolling?: boolean;
+  flameGraphItemCollapsing?: boolean;
+  alertingDetailsViewV2?: boolean;
+  alertingSimplifiedRouting?: boolean;
 }

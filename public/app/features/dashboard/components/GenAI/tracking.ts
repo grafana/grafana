@@ -16,6 +16,7 @@ export enum EventTrackingSrc {
 export enum AutoGenerateItem {
   autoGenerateButton = 'auto-generate-button',
   erroredRetryButton = 'errored-retry-button',
+  stopGenerationButton = 'stop-generating-button',
   improveButton = 'improve-button',
   backHistoryItem = 'back-history-item',
   forwardHistoryItem = 'forward-history-item',

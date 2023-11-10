@@ -59,6 +59,9 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   details?: CatalogPluginDetails;
   error?: PluginErrorCode;
   angularDetected?: boolean;
+  // instance plugins may not be fully installed, which means a new instance
+  // running the plugin didn't started yet
+  isFullyInstalled?: boolean;
 }
 
 export interface CatalogPluginDetails {
@@ -293,4 +296,8 @@ export type PluginVersion = {
   links: Array<{ rel: string; href: string }>;
   isCompatible: boolean;
   grafanaDependency: string | null;
+};
+
+export type InstancePlugin = {
+  pluginSlug: string;
 };

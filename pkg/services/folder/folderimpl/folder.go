@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -246,6 +248,85 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	return filtered, nil
 }
 
+// GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
+func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders to which the user has explicit access: %w", err)
+	}
+	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: cmd.OrgID, SignedInUser: cmd.SignedInUser})
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
+	}
+	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
+	return availableNonRootFolders, nil
+}
+
+func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
+	permissions := user.GetPermissions()
+	folderPermissions := permissions["folders:read"]
+	folderPermissions = append(folderPermissions, permissions["dashboards:read"]...)
+	nonRootFolders := make([]*folder.Folder, 0)
+	folderUids := make([]string, 0)
+	for _, p := range folderPermissions {
+		if folderUid, found := strings.CutPrefix(p, "folders:uid:"); found {
+			if !slices.Contains(folderUids, folderUid) {
+				folderUids = append(folderUids, folderUid)
+			}
+		}
+	}
+
+	if len(folderUids) == 0 {
+		return nonRootFolders, nil
+	}
+
+	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
+	}
+
+	for _, f := range dashFolders {
+		if f.ParentUID != "" {
+			nonRootFolders = append(nonRootFolders, f)
+		}
+	}
+
+	return nonRootFolders, nil
+}
+
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.Folder) []*folder.Folder {
+	allFolders := append(folders, rootFolders...)
+	foldersDedup := make([]*folder.Folder, 0)
+	for _, f := range folders {
+		isSubfolder := slices.ContainsFunc(allFolders, func(folder *folder.Folder) bool {
+			return f.ParentUID == folder.UID
+		})
+
+		if !isSubfolder {
+			parents, err := s.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+			if err != nil {
+				s.log.Error("failed to fetch folder parents", "uid", f.UID, "error", err)
+				continue
+			}
+
+			for _, parent := range parents {
+				contains := slices.ContainsFunc(allFolders, func(f *folder.Folder) bool {
+					return f.UID == parent.UID
+				})
+				if contains {
+					isSubfolder = true
+					break
+				}
+			}
+		}
+
+		if !isSubfolder {
+			foldersDedup = append(foldersDedup, f)
+		}
+	}
+	return foldersDedup
+}
+
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		return nil, nil
@@ -343,31 +424,29 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 
 	var nestedFolder *folder.Folder
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		cmd := &folder.CreateFolderCommand{
-			// TODO: Today, if a UID isn't specified, the dashboard store
-			// generates a new UID. The new folder store will need to do this as
-			// well, but for now we take the UID from the newly created folder.
-			UID:         dash.UID,
-			OrgID:       cmd.OrgID,
-			Title:       cmd.Title,
-			Description: cmd.Description,
-			ParentUID:   cmd.ParentUID,
+	cmd = &folder.CreateFolderCommand{
+		// TODO: Today, if a UID isn't specified, the dashboard store
+		// generates a new UID. The new folder store will need to do this as
+		// well, but for now we take the UID from the newly created folder.
+		UID:         dash.UID,
+		OrgID:       cmd.OrgID,
+		Title:       cmd.Title,
+		Description: cmd.Description,
+		ParentUID:   cmd.ParentUID,
+	}
+	nestedFolder, err = s.nestedFolderCreate(ctx, cmd)
+	if err != nil {
+		// We'll log the error and also roll back the previously-created
+		// (legacy) folder.
+		logger.Error("error saving folder to nested folder store", "error", err)
+		// do not shallow create error if the legacy folder delete fails
+		if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
+			ID:    createdFolder.ID,
+			OrgID: createdFolder.OrgID,
+		}); deleteErr != nil {
+			logger.Error("error deleting folder after failed save to nested folder store", "error", err)
 		}
-		nestedFolder, err = s.nestedFolderCreate(ctx, cmd)
-		if err != nil {
-			// We'll log the error and also roll back the previously-created
-			// (legacy) folder.
-			logger.Error("error saving folder to nested folder store", "error", err)
-			// do not shallow create error if the legacy folder delete fails
-			if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
-				ID:    createdFolder.ID,
-				OrgID: createdFolder.OrgID,
-			}); deleteErr != nil {
-				logger.Error("error deleting folder after failed save to nested folder store", "error", err)
-			}
-			return dashboards.FromDashboard(dash), err
-		}
+		return dashboards.FromDashboard(dash), err
 	}
 
 	f := dashboards.FromDashboard(dash)
@@ -378,6 +457,8 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	logger := s.log.FromContext(ctx)
+
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -388,10 +469,6 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return nil, err
 	}
 
-	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		return dashFolder, nil
-	}
-
 	foldr, err := s.store.Update(ctx, folder.UpdateFolderCommand{
 		UID:            cmd.UID,
 		OrgID:          cmd.OrgID,
@@ -400,6 +477,11 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		SignedInUser:   user,
 	})
 	if err != nil {
+		if errors.Is(err, folder.ErrFolderNotFound) {
+			logger.Warn("attempt to update folder that does not exist in the folders table", "folderUID", cmd.UID)
+			return dashFolder, nil
+		}
+
 		return nil, err
 	}
 
@@ -530,15 +612,13 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 
 	result := []string{cmd.UID}
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
-		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-			subfolders, err := s.nestedFolderDelete(ctx, cmd)
+		subfolders, err := s.nestedFolderDelete(ctx, cmd)
 
-			if err != nil {
-				logger.Error("the delete folder on folder table failed with err: ", "error", err)
-				return err
-			}
-			result = append(result, subfolders...)
+		if err != nil {
+			logger.Error("the delete folder on folder table failed with err: ", "error", err)
+			return err
 		}
+		result = append(result, subfolders...)
 
 		dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, result)
 		if err != nil {

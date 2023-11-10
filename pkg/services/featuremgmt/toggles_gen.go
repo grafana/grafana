@@ -231,10 +231,6 @@ const (
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
 
-	// FlagAlertingNotificationsPoliciesMatchingInstances
-	// Enables the preview of matching instances for notification policies
-	FlagAlertingNotificationsPoliciesMatchingInstances = "alertingNotificationsPoliciesMatchingInstances"
-
 	// FlagAlertStateHistoryLokiPrimary
 	// Enable a remote Loki instance as the primary source for state history reads.
 	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
@@ -375,10 +371,6 @@ const (
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
 
-	// FlagAzureMonitorDataplane
-	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
-	FlagAzureMonitorDataplane = "azureMonitorDataplane"
-
 	// FlagTraceToProfiles
 	// Enables linking between traces and profiles
 	FlagTraceToProfiles = "traceToProfiles"
@@ -488,12 +480,8 @@ const (
 	FlagTransformationsVariableSupport = "transformationsVariableSupport"
 
 	// FlagKubernetesPlaylists
-	// Use the kubernetes API in the frontend for playlists
+	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
-
-	// FlagKubernetesPlaylistsAPI
-	// Route /api/playlist API to k8s handlers
-	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -574,4 +562,24 @@ const (
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
+
+	// FlagSsoSettingsApi
+	// Enables the SSO settings API
+	FlagSsoSettingsApi = "ssoSettingsApi"
+
+	// FlagLogsInfiniteScrolling
+	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
+	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
+
+	// FlagFlameGraphItemCollapsing
+	// Allow collapsing of flame graph items
+	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
+
+	// FlagAlertingDetailsViewV2
+	// Enables the preview of the new alert details view
+	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
+
+	// FlagAlertingSimplifiedRouting
+	// Enables the simplified routing for alerting
+	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 )
