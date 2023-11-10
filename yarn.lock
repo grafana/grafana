@@ -3153,7 +3153,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:1.2.1, @grafana/faro-core@npm:^1.2.1":
+"@grafana/faro-core@npm:^1.2.1":
   version: 1.2.1
   resolution: "@grafana/faro-core@npm:1.2.1"
   dependencies:
@@ -3165,6 +3165,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/faro-core@npm:^1.2.5":
+  version: 1.2.5
+  resolution: "@grafana/faro-core@npm:1.2.5"
+  dependencies:
+    "@opentelemetry/api": "npm:^1.4.1"
+    "@opentelemetry/api-metrics": "npm:^0.33.0"
+    "@opentelemetry/otlp-transformer": "npm:^0.41.2"
+    murmurhash-js: "npm:^1.0.0"
+  checksum: ff7d9a96fc588518b1a71ed55225334b1dcd21d2acef82b07c94849efc5da8eb6339791ad2e56a45b578f37ae2c0e8aba67b92f7855bbdcd45e246cbc662bd93
+  languageName: node
+  linkType: hard
+
 "@grafana/faro-web-sdk@npm:1.2.1":
   version: 1.2.1
   resolution: "@grafana/faro-web-sdk@npm:1.2.1"
@@ -3173,6 +3185,17 @@ __metadata:
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^3.1.1"
   checksum: 2b8eeec1cae0647ff87f9142fb2a65016f557474d4a6ff62a3cf128a729c833118715c441a9ce5dfb8746ffcf0b897bf26dbc4a95829558b3d5b9033443f68a6
+  languageName: node
+  linkType: hard
+
+"@grafana/faro-web-sdk@npm:1.2.5":
+  version: 1.2.5
+  resolution: "@grafana/faro-web-sdk@npm:1.2.5"
+  dependencies:
+    "@grafana/faro-core": "npm:^1.2.5"
+    ua-parser-js: "npm:^1.0.32"
+    web-vitals: "npm:^3.1.1"
+  checksum: 693d5fec9cf111da251d5cfda85d30be49461b8e3693d0520d94f9688452d08a9a906ab7d16716dea4ffcb21495b150d49d805a6e28bc6f3df971976c62cef94
   languageName: node
   linkType: hard
 
@@ -17317,8 +17340,7 @@ __metadata:
     "@grafana/eslint-config": "npm:6.0.1"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": "npm:1.7.4"
-    "@grafana/faro-core": "npm:1.2.1"
-    "@grafana/faro-web-sdk": "npm:1.2.1"
+    "@grafana/faro-web-sdk": "npm:1.2.5"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.1"
     "@grafana/lezer-logql": "npm:0.2.1"

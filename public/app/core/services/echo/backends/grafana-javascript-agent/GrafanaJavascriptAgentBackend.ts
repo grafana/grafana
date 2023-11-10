@@ -57,6 +57,10 @@ export class GrafanaJavascriptAgentBackend
         version: options.buildInfo.version,
         environment: options.buildInfo.env,
       },
+      sessionTracking: {
+        enabled: true,
+        persistent: true,
+      },
       instrumentations,
       transports: [new EchoSrvTransport()],
       ignoreErrors: [
