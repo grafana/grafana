@@ -27,13 +27,22 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
     thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/pending` });
     thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/pending` });
 
-    const local$ = from(getLocalPlugins());
-    const remote$ = from(getRemotePlugins());
     const instance$ =
       config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
         ? from(getInstancePlugins())
         : of(undefined);
+    const TIMEOUT = 500;
     const pluginErrors$ = from(getPluginErrors());
+    const local$ = from(getLocalPlugins());
+    // Unknown error while fetching remote plugins from GCOM.
+    // (In this case we still operate, but only with locally available plugins.)
+    const remote$ = from(getRemotePlugins()).pipe(
+      catchError((err) => {
+        thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/rejected` });
+        console.error(err);
+        return of([]);
+      })
+    );
 
     forkJoin({
       local: local$,
@@ -42,20 +51,14 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
       pluginErrors: pluginErrors$,
     })
       .pipe(
-        // Fetching the list of plugins from GCOM is slow / errors out
+        // Fetching the list of plugins from GCOM is slow / times out
+        // (We are waiting for TIMEOUT, and if there is still no response from GCOM we continue with locally
+        // installed plugins only by returning a new observable. We also still wait for the remote request to finish or
+        // time out, but we don't block the main execution flow.)
         timeout({
-          each: 500,
+          each: TIMEOUT,
           with: () => {
             remote$
-              // The request to fetch remote plugins from GCOM failed
-              .pipe(
-                catchError((err) => {
-                  thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/rejected` });
-                  return throwError(
-                    () => new Error('Failed to fetch plugins from catalog (default https://grafana.com/api/plugins)')
-                  );
-                })
-              )
               // Remote plugins loaded after a timeout, updating the store
               .subscribe(async (remote: RemotePlugin[]) => {
                 thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/fulfilled` });
@@ -69,7 +72,7 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
                 }
               });
 
-            return forkJoin({ local: local$, pluginErrors: pluginErrors$ });
+            return forkJoin({ local: local$, instance: instance$, pluginErrors: pluginErrors$ });
           },
         })
       )
@@ -85,16 +88,23 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
           instance?: InstancePlugin[];
           pluginErrors: PluginError[];
         }) => {
-          thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/fulfilled` });
-
           // Both local and remote plugins are loaded
           if (local && remote) {
+            thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/fulfilled` });
+            thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/fulfilled` });
             thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({ local, remote, instance, pluginErrors })));
 
             // Only remote plugins are loaded (remote timed out)
           } else if (local) {
+            thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/fulfilled` });
             thunkApi.dispatch(addPlugins(mergeLocalsAndRemotes({ local, pluginErrors })));
           }
+        },
+        (error) => {
+          console.log(error);
+          thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/rejected` });
+          thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/rejected` });
+          return thunkApi.rejectWithValue('Unknown error.');
         }
       );
 
