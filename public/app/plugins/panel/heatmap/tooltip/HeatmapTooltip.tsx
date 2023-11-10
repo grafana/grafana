@@ -42,11 +42,10 @@ interface Props {
 }
 
 export const HeatmapTooltip = (props: Props) => {
-  const seriesIdx = props.dataIdxs.findIndex((idx) => idx != null);
   const styles = useStyles2(getStyles);
 
   // exemplars
-  if (seriesIdx === 2) {
+  if (props.seriesIdx === 2) {
     return (
       <div className={styles.exemplarsWrapper}>
         <DataHoverView data={props.dataRef.current!.exemplars} rowIndex={props.dataIdxs[2]} header={'Exemplar'} />

@@ -25,6 +25,7 @@ import {
   VizLayout,
   VizTooltipContainer,
 } from '@grafana/ui';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
@@ -235,6 +236,7 @@ export const HeatmapPanel = ({
             {config.featureToggles.newVizTooltips && options.tooltip.show && (
               <TooltipPlugin2
                 config={builder}
+                hoverMode={TooltipHoverMode.xyOne}
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                   return (
                     <HeatmapTooltip
