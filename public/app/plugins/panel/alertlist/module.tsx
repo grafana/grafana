@@ -250,7 +250,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addCustomEditor({
       path: 'datasource',
       name: 'Datasource',
-      description: 'Filter alerts from selected datasource',
+      description: 'Filter alerts from rule datasource',
       id: 'datasource',
       defaultValue: null,
       editor: function RenderDatasourcePicker(props) {
