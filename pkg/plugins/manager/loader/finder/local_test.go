@@ -336,6 +336,44 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 	})
 }
 
+func TestFinder_getAbsPluginJSONPaths_PluginClass(t *testing.T) {
+	t.Run("When a dist folder exists as a direct child of the plugins path, it will always be resolved", func(t *testing.T) {
+		dir, err := filepath.Abs("../../testdata/pluginRootWithDist")
+		require.NoError(t, err)
+
+		tcs := []struct {
+			name       string
+			followDist bool
+			expected   []string
+		}{
+			{
+				name:       "When followDistFolder is enabled, a nested dist folder will also be resolved",
+				followDist: true,
+				expected: []string{
+					filepath.Join(dir, "datasource/plugin.json"),
+					filepath.Join(dir, "dist/plugin.json"),
+					filepath.Join(dir, "panel/dist/plugin.json"),
+				},
+			},
+			{
+				name:       "When followDistFolder is disabled, a nested dist folder will not be resolved",
+				followDist: false,
+				expected: []string{
+					filepath.Join(dir, "datasource/plugin.json"),
+					filepath.Join(dir, "dist/plugin.json"),
+				},
+			},
+		}
+		for _, tc := range tcs {
+			pluginBundles, err := NewLocalFinder(false).getAbsPluginJSONPaths(dir, tc.followDist)
+			require.NoError(t, err)
+
+			sort.Strings(pluginBundles)
+			require.Equal(t, tc.expected, pluginBundles)
+		}
+	})
+}
+
 var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 	fs1Files, err := fs1.Files()
 	if err != nil {
