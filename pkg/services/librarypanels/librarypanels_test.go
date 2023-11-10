@@ -714,10 +714,10 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 		Overwrite: false,
 	}
 
-	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	features := featuremgmt.WithFeatures()
+	cfg := setting.NewCfgWithFeatures(features)
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
@@ -739,12 +739,11 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder {
 	t.Helper()
 
-	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	features := featuremgmt.WithFeatures()
+	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
+	cfg := setting.NewCfgWithFeatures(features)
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sc.sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
 	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sc.sqlStore, features)
@@ -825,7 +824,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashService)
 
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		features := featuremgmt.WithFeatures()
 		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sqlStore, features)

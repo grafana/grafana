@@ -121,8 +121,8 @@ func TestGetHomeDashboard(t *testing.T) {
 
 func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
-	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg := setting.NewCfgWithFeatures(features)
+	cfg.AppURL = "http://localhost:3000/"
 	gLive, err := live.ProvideService(nil, cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil, nil,
@@ -897,11 +897,12 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		provisioningService = provisioning.NewProvisioningServiceMock(context.Background())
 	}
 
+	features := featuremgmt.WithFeatures()
 	var err error
 	if dashboardStore == nil {
 		sql := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, features, tagimpl.ProvideService(sql), quotaService)
 		require.NoError(t, err)
 	}
 
@@ -911,10 +912,9 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	ac := accesscontrolmock.New()
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
-	features := featuremgmt.WithFeatures()
 
 	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
+		cfg, dashboardStore, folderStore, db.InitTestDB(t), features)
 
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(

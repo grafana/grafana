@@ -145,6 +145,10 @@ var (
 	ImageUploadProvider string
 )
 
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
+
 // TODO move all global vars to this struct
 type Cfg struct {
 	Target []string
@@ -980,7 +984,24 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 		Azure:  &azsettings.AzureSettings{},
+
+		// Avoid nil pointer
+		IsFeatureToggleEnabled: func(_ string) bool {
+			return false
+		},
 	}
+}
+
+func NewCfgWithFeatures(features FeatureToggles) *Cfg {
+	cfg := NewCfg()
+	if features == nil {
+		cfg.IsFeatureToggleEnabled = func(_ string) bool {
+			return false
+		}
+	} else {
+		cfg.IsFeatureToggleEnabled = features.IsEnabled
+	}
+	return cfg
 }
 
 func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {

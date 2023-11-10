@@ -227,8 +227,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	if features == nil {
 		features = featuremgmt.WithFeatures()
 	}
-	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg := setting.NewCfgWithFeatures(features)
 
 	return &HTTPServer{
 		Cfg:             cfg,
