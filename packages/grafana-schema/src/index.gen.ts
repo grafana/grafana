@@ -55,7 +55,6 @@ export {
   defaultThresholdsConfig,
   MappingType,
   SpecialValueMatch,
-  DataFramesSource,
   DashboardCursorSync,
   defaultDashboardCursorSync
 } from './raw/dashboard/x/dashboard_types.gen';

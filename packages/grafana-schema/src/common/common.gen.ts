@@ -8,6 +8,11 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 
+export enum DataTopic {
+  Annotations = 'annotations',
+  Series = 'series',
+}
+
 /**
  * TODO docs
  */

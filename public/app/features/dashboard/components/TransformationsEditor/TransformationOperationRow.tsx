@@ -1,9 +1,8 @@
 import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
-import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
+import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID, DataTopic } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { DataFramesSource } from '@grafana/schema';
 import { ConfirmModal } from '@grafana/ui';
 import {
   QueryOperationAction,
@@ -42,8 +41,8 @@ export const TransformationOperationRow = ({
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);
   const disabled = !!configs[index].transformation.disabled;
-  const source = configs[index].transformation.source;
-  const showFilterEditor = configs[index].transformation.filter != null || source != null;
+  const topic = configs[index].transformation.topic;
+  const showFilterEditor = configs[index].transformation.filter != null || topic != null;
   const showFilterToggle = showFilterEditor || data.series.length > 1 || (data.annotations?.length ?? 0) > 0;
 
   const onDisableToggle = useCallback(
@@ -166,7 +165,7 @@ export const TransformationOperationRow = ({
         <TransformationEditor
           debugMode={showDebug}
           index={index}
-          data={source === DataFramesSource.Annotations ? data.annotations ?? [] : data.series}
+          data={topic === DataTopic.Annotations ? data.annotations ?? [] : data.series}
           configs={configs}
           uiConfig={uiConfig}
           onChange={onChange}

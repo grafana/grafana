@@ -32,7 +32,6 @@ import {
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { DataFramesSource } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
@@ -223,8 +222,8 @@ export class PanelQueryRunner {
       interpolate: (v: string) => this.templateSrv.replace(v, data?.request?.scopedVars),
     };
 
-    let seriesTransformations = transformations.filter((t) => t.source == null || t.source === DataFramesSource.Series);
-    let annotationsTransformations = transformations.filter((t) => t.source === DataFramesSource.Annotations);
+    let seriesTransformations = transformations.filter((t) => t.topic == null || t.topic === DataTopic.Series);
+    let annotationsTransformations = transformations.filter((t) => t.topic === DataTopic.Annotations);
 
     let seriesStream = transformDataFrame(seriesTransformations, data.series, ctx);
     let annotationsStream = transformDataFrame(annotationsTransformations, data.annotations ?? [], ctx);
