@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
@@ -331,6 +332,11 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
+		// set dashboard folderUid if given
+		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
+			return 0, "", dashboards.ErrFolderInvalidUID
+		}
+
 		createCmd := &folder.CreateFolderCommand{
 			OrgID: cfg.OrgID,
 			UID:   cfg.FolderUID,
