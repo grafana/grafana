@@ -190,7 +190,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const keyMaker = new UniqueKeyMaker();
 
     return (
-      <div class={styles.logRows} ref={this.logRowsRef}>
+      <div className={styles.logRows} ref={this.logRowsRef}>
         {this.state.selection && this.state.selectedRow && (
           <PopoverMenu
             close={this.closePopoverMenu}
