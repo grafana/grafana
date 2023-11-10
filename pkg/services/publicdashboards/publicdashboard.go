@@ -65,6 +65,7 @@ type Store interface {
 	GetMetrics(ctx context.Context) (*Metrics, error)
 }
 
+//go:generate mockery --name Middleware --structname FakePublicDashboardMiddleware --inpackage --filename public_dashboard_middleware_mock.go
 type Middleware interface {
 	HandleApi(c *contextmodel.ReqContext)
 	HandleGet(c *contextmodel.ReqContext)
