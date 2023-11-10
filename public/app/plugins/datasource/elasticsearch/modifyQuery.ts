@@ -241,6 +241,6 @@ function parseQuery(query: string) {
 }
 
 export function addStringFilterToQuery(query: string, filter: string, contains = true) {
-  const expression = `"${filter}"`;
+  const expression = `"${escapeFilterValue(filter)}"`;
   return query.trim() ? `${query} ${contains ? 'AND' : 'NOT'} ${expression}` : `${contains ? '' : 'NOT '}${expression}`;
 }

@@ -121,4 +121,9 @@ describe('addStringFilterToQuery', () => {
     expect(addStringFilterToQuery('', 'filter', false)).toBe('NOT "filter"');
     expect(addStringFilterToQuery(' ', 'filter', false)).toBe('NOT "filter"');
   });
+
+  it('should escape filter values', () => {
+    expect(addStringFilterToQuery('label:"value"', '"filter"')).toBe('label:"value" AND "\\"filter\\""');
+    expect(addStringFilterToQuery('label:"value"', '"filter"', false)).toBe('label:"value" NOT "\\"filter\\""');
+  });
 });
