@@ -172,16 +172,6 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/ayoungprogrammer/grafana-finance) in the past 6 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [Prometheus AlertManager](https://grafana.com/grafana/plugins/camptocamp-prometheus-alertmanager-datasource/)
-
-Latest Version: 1.2.1 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/camptocamp/grafana-prometheus-alertmanager-datasource) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** Grafana includes an AlertManager data source as a Core plugin.
-
 ### [Chaos Mesh](https://grafana.com/grafana/plugins/chaosmeshorg-datasource/)
 
 Latest Version: 2.2.3 | Signature: Community | Last Updated: 2022
@@ -499,7 +489,7 @@ The [migration issue](https://github.com/Altinity/clickhouse-grafana/issues/475)
 Latest Version: 0.2.2 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/skydive-project/skydive-grafana-datasource) in the past year suggests project _may_ not be actively maintained.
+Lack of recent activity in the [project repository](https://github.com/xginn8/grafana-pagerduty) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
 {{% admonition type="warning" %}}
@@ -580,14 +570,6 @@ Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="note" %}}
 Migration to React is planned - [issue](https://github.com/briangann/grafana-datatable-panel/issues/174).
-{{% /admonition %}}
-
-### [D3 Gauge](https://grafana.com/grafana/plugins/briangann-gauge-panel/)
-
-Latest Version: 0.0.9 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="note" %}}
-Migration to React is a planned [update](https://github.com/briangann/grafana-gauge-panel/issues/740).
 {{% /admonition %}}
 
 ### [GeoLoop](https://grafana.com/grafana/plugins/citilogics-geoloop-panel/)

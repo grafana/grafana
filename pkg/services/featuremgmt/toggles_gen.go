@@ -79,6 +79,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagNewVizTooltips
+	// New visualizations tooltips UX
+	FlagNewVizTooltips = "newVizTooltips"
+
 	// FlagScenes
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
@@ -227,10 +231,6 @@ const (
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
 
-	// FlagAlertingNotificationsPoliciesMatchingInstances
-	// Enables the preview of matching instances for notification policies
-	FlagAlertingNotificationsPoliciesMatchingInstances = "alertingNotificationsPoliciesMatchingInstances"
-
 	// FlagAlertStateHistoryLokiPrimary
 	// Enable a remote Loki instance as the primary source for state history reads.
 	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
@@ -274,10 +274,6 @@ const (
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
-
-	// FlagDataSourcePageHeader
-	// Apply new pageHeader UI in data source edit page
-	FlagDataSourcePageHeader = "dataSourcePageHeader"
 
 	// FlagExtraThemes
 	// Enables extra themes
@@ -374,10 +370,6 @@ const (
 	// FlagSplitScopes
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
-
-	// FlagAzureMonitorDataplane
-	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
-	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 
 	// FlagTraceToProfiles
 	// Enables linking between traces and profiles
@@ -488,12 +480,8 @@ const (
 	FlagTransformationsVariableSupport = "transformationsVariableSupport"
 
 	// FlagKubernetesPlaylists
-	// Use the kubernetes API in the frontend for playlists
+	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
-
-	// FlagKubernetesPlaylistsAPI
-	// Route /api/playlist API to k8s handlers
-	FlagKubernetesPlaylistsAPI = "kubernetesPlaylistsAPI"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -539,6 +527,10 @@ const (
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 
+	// FlagAddFieldFromCalculationStatFunctions
+	// Add cumulative and window functions to the add field from calculation transformation
+	FlagAddFieldFromCalculationStatFunctions = "addFieldFromCalculationStatFunctions"
+
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
 	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
@@ -562,4 +554,28 @@ const (
 	// FlagDashboardSceneForViewers
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
+
+	// FlagPanelFilterVariable
+	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
+	FlagPanelFilterVariable = "panelFilterVariable"
+
+	// FlagPdfTables
+	// Enables generating table data as PDF in reporting
+	FlagPdfTables = "pdfTables"
+
+	// FlagSsoSettingsApi
+	// Enables the SSO settings API
+	FlagSsoSettingsApi = "ssoSettingsApi"
+
+	// FlagLogsInfiniteScrolling
+	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
+	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
+
+	// FlagFlameGraphItemCollapsing
+	// Allow collapsing of flame graph items
+	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
+
+	// FlagAlertingDetailsViewV2
+	// Enables the preview of the new alert details view
+	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
 )

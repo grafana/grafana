@@ -10,8 +10,19 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
+// todo: barchart? histogram?
+export const enum TooltipHoverMode {
+  // Single mode in TimeSeries, Candlestick, Trend, StateTimeline, Heatmap?
+  xOne,
+  // All mode in TimeSeries, Candlestick, Trend, StateTimeline, Heatmap?
+  xAll,
+  // Single mode in XYChart, Heatmap?
+  xyOne,
+}
+
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
+  hoverMode: TooltipHoverMode;
   render: (
     u: uPlot,
     dataIdxs: Array<number | null>,
@@ -59,7 +70,7 @@ const INITIAL_STATE: TooltipContainerState = {
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
@@ -67,6 +78,9 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
   const sizeRef = useRef<TooltipContainerSize>();
 
   const styles = useStyles2(getStyles);
+
+  const renderRef = useRef(render);
+  renderRef.current = render;
 
   useLayoutEffect(() => {
     sizeRef.current = {
@@ -162,7 +176,9 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        contents: _isHovering ? render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss) : null,
+        contents: _isHovering
+          ? renderRef.current(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss)
+          : null,
         dismiss,
       };
 
@@ -181,7 +197,8 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
       // this handles pinning
       u.over.addEventListener('click', (e) => {
-        if (_isHovering && !_isPinned && e.target === u.over) {
+        // only pinnable tooltip is visible *and* is within proximity to series/point
+        if (_isHovering && closestSeriesIdx != null && !_isPinned && e.target === u.over) {
           _isPinned = true;
           scheduleRender(true);
         }
@@ -190,7 +207,15 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
     // fires on data value hovers/unhovers (before setSeries)
     config.addHook('setLegend', (u) => {
-      let _isHoveringNow = _plot!.cursor.idxs!.some((v) => v != null);
+      let hoveredSeriesIdx = _plot!.cursor.idxs!.findIndex((v, i) => i > 0 && v != null);
+      let _isHoveringNow = hoveredSeriesIdx !== -1;
+
+      // in mode: 2 uPlot won't fire the proximity-based setSeries (below)
+      // so we set closestSeriesIdx here instead
+      // TODO: setSeries only fires for TimeSeries & Trend...not state timeline or statsus history
+      if (hoverMode === TooltipHoverMode.xyOne) {
+        closestSeriesIdx = hoveredSeriesIdx;
+      }
 
       if (_isHoveringNow) {
         // create
@@ -212,12 +237,12 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
     // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
       // don't jiggle focused series styling when there's only one series
-      const isMultiSeries = u.series.length > 2;
+      // const isMultiSeries = u.series.length > 2;
 
-      if (isMultiSeries && closestSeriesIdx !== seriesIdx) {
-        closestSeriesIdx = seriesIdx;
-        scheduleRender();
-      }
+      // if (hoverModeRef.current === TooltipHoverMode.xAll && closestSeriesIdx !== seriesIdx) {
+      closestSeriesIdx = seriesIdx;
+      scheduleRender();
+      // }
     });
 
     // fires on mousemoves
@@ -303,7 +328,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'absolute',
-    background: theme.colors.background.secondary,
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
     userSelect: 'text',
   }),

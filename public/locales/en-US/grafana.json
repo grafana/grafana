@@ -863,12 +863,12 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "dock": "Dock menu",
-      "undock": "Undock menu"
+      "dock": "Dock menu"
     },
     "toolbar": {
+      "close-menu": "Close menu",
       "enable-kiosk": "Enable kiosk mode",
-      "toggle-menu": "Toggle menu",
+      "open-menu": "Open menu",
       "toggle-search-bar": "Toggle top search bar"
     }
   },
@@ -960,6 +960,19 @@
       "old-password-required": "Old password is required",
       "passwords-must-match": "Passwords must match"
     }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "Collapse query row",
+      "datasource-help": "Show data source help",
+      "disable-query": "Disable query",
+      "drag-and-drop": "Drag and drop to reorder",
+      "duplicate-query": "Duplicate query",
+      "expand-row": "Expand query row",
+      "remove-query": "Remove query",
+      "toggle-edit-mode": "Toggle text edit mode"
+    },
+    "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
   "refresh-picker": {
     "aria-label": {
@@ -1090,6 +1103,7 @@
       "export": "Export",
       "library-panel": "Library panel",
       "link": "Link",
+      "panel-embed": "Embed",
       "snapshot": "Snapshot"
     },
     "theme-picker": {

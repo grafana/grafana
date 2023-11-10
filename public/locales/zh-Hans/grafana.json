@@ -857,12 +857,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "启用 kiosk 模式",
-      "toggle-menu": "切换菜单",
+      "open-menu": "",
       "toggle-search-bar": "切换顶部搜索栏"
     }
   },
@@ -954,6 +954,19 @@
       "old-password-required": "",
       "passwords-must-match": ""
     }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "",
+      "datasource-help": "",
+      "disable-query": "",
+      "drag-and-drop": "",
+      "duplicate-query": "",
+      "expand-row": "",
+      "remove-query": "",
+      "toggle-edit-mode": ""
+    },
+    "query-editor-not-exported": ""
   },
   "refresh-picker": {
     "aria-label": {
@@ -1084,6 +1097,7 @@
       "export": "导出",
       "library-panel": "库面板",
       "link": "链接",
+      "panel-embed": "",
       "snapshot": "快照"
     },
     "theme-picker": {

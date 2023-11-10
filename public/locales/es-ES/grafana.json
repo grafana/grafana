@@ -869,12 +869,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "Activar el modo de quiosco",
-      "toggle-menu": "Activar o desactivar menú",
+      "open-menu": "",
       "toggle-search-bar": "Activar o desactivar la barra de búsqueda superior"
     }
   },
@@ -966,6 +966,19 @@
       "old-password-required": "",
       "passwords-must-match": ""
     }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "",
+      "datasource-help": "",
+      "disable-query": "",
+      "drag-and-drop": "",
+      "duplicate-query": "",
+      "expand-row": "",
+      "remove-query": "",
+      "toggle-edit-mode": ""
+    },
+    "query-editor-not-exported": ""
   },
   "refresh-picker": {
     "aria-label": {
@@ -1096,6 +1109,7 @@
       "export": "Exportar",
       "library-panel": "Panel de librería",
       "link": "Enlace",
+      "panel-embed": "",
       "snapshot": "Instantánea"
     },
     "theme-picker": {

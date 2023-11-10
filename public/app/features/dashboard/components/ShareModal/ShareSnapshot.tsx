@@ -8,6 +8,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { VariableRefresh } from '../../../variables/types';
+import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { trackDashboardSharingActionPerType } from './analytics';
 import { ShareModalTabProps } from './types';
@@ -74,10 +75,10 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   }
 
   async getSnaphotShareOptions() {
-    const shareOptions = await getBackendSrv().get('/api/snapshot/shared-options');
+    const shareOptions = await getDashboardSnapshotSrv().getSharingOptions();
     this.setState({
-      sharingButtonText: shareOptions['externalSnapshotName'],
-      externalEnabled: shareOptions['externalEnabled'],
+      sharingButtonText: shareOptions.externalSnapshotName,
+      externalEnabled: shareOptions.externalEnabled,
     });
   }
 

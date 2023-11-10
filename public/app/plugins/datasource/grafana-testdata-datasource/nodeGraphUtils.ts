@@ -11,6 +11,7 @@ import { nodes, edges } from './testData/serviceMapResponse';
 
 export function generateRandomNodes(count = 10) {
   const nodes = [];
+  const edges: string[] = [];
 
   const root = {
     id: 'root',
@@ -20,7 +21,7 @@ export function generateRandomNodes(count = 10) {
     error: 0,
     stat1: Math.random(),
     stat2: Math.random(),
-    edges: [] as any[],
+    edges,
   };
   nodes.push(root);
   const nodesWithoutMaxEdges = [root];
