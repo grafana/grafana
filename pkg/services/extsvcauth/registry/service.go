@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -19,30 +20,30 @@ type Registry struct {
 	oauthServer oauthserver.OAuth2Server
 	saSvc       *extsvcaccounts.ExtSvcAccountsService
 
-	extSvcProvider map[string]extsvcauth.AuthProvider
-	lock           sync.Mutex
+	extSvcProviders map[string]extsvcauth.AuthProvider
+	lock            sync.Mutex
 }
 
 func ProvideExtSvcRegistry(oauthServer oauthserver.OAuth2Server, saSvc *extsvcaccounts.ExtSvcAccountsService, features featuremgmt.FeatureToggles) *Registry {
 	return &Registry{
-		extSvcProvider: map[string]extsvcauth.AuthProvider{},
-		features:       features,
-		lock:           sync.Mutex{},
-		logger:         log.New("extsvcauth.registry"),
-		oauthServer:    oauthServer,
-		saSvc:          saSvc,
+		extSvcProviders: map[string]extsvcauth.AuthProvider{},
+		features:        features,
+		lock:            sync.Mutex{},
+		logger:          log.New("extsvcauth.registry"),
+		oauthServer:     oauthServer,
+		saSvc:           saSvc,
 	}
 }
 
 // HasExternalService returns whether an external service has been saved with that name.
 func (r *Registry) HasExternalService(ctx context.Context, name string) bool {
-	_, ok := r.extSvcProvider[name]
+	_, ok := r.extSvcProviders[slugify.Slugify(name)]
 	return ok
 }
 
 // RemoveExternalService removes an external service and its associated resources from the database (ex: service account, token).
 func (r *Registry) RemoveExternalService(ctx context.Context, name string) error {
-	provider, ok := r.extSvcProvider[name]
+	provider, ok := r.extSvcProviders[slugify.Slugify(name)]
 	if !ok {
 		r.logger.Debug("external service not found", "service", name)
 		return nil
@@ -74,7 +75,7 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	// Record provider in case of removal
 	r.lock.Lock()
-	r.extSvcProvider[cmd.Name] = cmd.AuthProvider
+	r.extSvcProviders[slugify.Slugify(cmd.Name)] = cmd.AuthProvider
 	r.lock.Unlock()
 
 	switch cmd.AuthProvider {
