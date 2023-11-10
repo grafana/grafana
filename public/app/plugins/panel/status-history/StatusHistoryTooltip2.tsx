@@ -46,14 +46,13 @@ export const StatusHistoryTooltip2 = ({
 
   // @todo: check other dataIdx, it can be undefined or null in array
   const datapointIdx = dataIdxs.find((idx) => idx !== undefined);
-  const seriesIndex = dataIdxs.findIndex((idx) => idx != null);
 
   if (!data || datapointIdx == null) {
     return null;
   }
 
   const xField = alignedData.fields[0];
-  const field = alignedData.fields[seriesIndex!];
+  const field = alignedData.fields[seriesIdx!];
 
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();

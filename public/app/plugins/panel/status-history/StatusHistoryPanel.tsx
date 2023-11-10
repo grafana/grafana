@@ -1,9 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-// import { PanelProps } from '@grafana/data';
 import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-// import { useTheme2, TooltipDisplayMode, TooltipPlugin2, ZoomPlugin } from '@grafana/ui';
 import {
   Portal,
   TooltipDisplayMode,
@@ -15,6 +13,7 @@ import {
   ZoomPlugin,
 } from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
@@ -230,6 +229,7 @@ export const StatusHistoryPanel = ({
               {options.tooltip.mode !== TooltipDisplayMode.None && (
                 <TooltipPlugin2
                   config={builder}
+                  hoverMode={TooltipHoverMode.xyOne}
                   render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                     return (
                       <StatusHistoryTooltip2
