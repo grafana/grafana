@@ -48,7 +48,7 @@ interface Props extends Themeable2 {
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
   containerRendered?: boolean;
-  handleTextSelection: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
+  handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
 }
 
 interface State {
@@ -90,7 +90,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   onRowClick = (e: MouseEvent<HTMLTableRowElement>) => {
-    if (this.props.handleTextSelection(e, this.props.row)) {
+    if (this.props.handleTextSelection?.(e, this.props.row)) {
       // Event handled by the parent.
       return;
     }
@@ -128,6 +128,10 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   onMouseMove = (e: MouseEvent) => {
+    // No need to worry about text selection.
+    if (!this.props.handleTextSelection) {
+      return;
+    }
     // The user is selecting text, so hide the log row menu so it doesn't interfere.
     if (document.getSelection()?.toString() && e.buttons > 0) {
       this.setState({ mouseIsOver: false });

@@ -94,9 +94,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     }
   };
 
+  popoverMenuSupported() {
+    return Boolean(this.props.onClickFilterOutValue || this.props.onClickFilterValue);
+  }
+
   handleSelection = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel): boolean => {
     // Selection is ignored if the filter functions are not defined.
-    if (!this.props.onClickFilterOutValue && !this.props.onClickFilterValue) {
+    if (this.popoverMenuSupported() === false) {
       return false;
     }
     const selection = document.getSelection()?.toString();
@@ -211,7 +215,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onUnpinLine={this.props.onUnpinLine}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.handleSelection}
+                  handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   {...rest}
                 />
               ))}
@@ -233,7 +237,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onUnpinLine={this.props.onUnpinLine}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.handleSelection}
+                  handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
                   {...rest}
                 />
               ))}
