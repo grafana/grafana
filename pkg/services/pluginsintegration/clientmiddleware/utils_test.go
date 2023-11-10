@@ -124,7 +124,7 @@ func TestRequestStatusFromQueryDataResponse(t *testing.T) {
 		{
 			desc:           "response with multiple error should pick the highest status cancelled",
 			resp:           responseWithMultipleErrors,
-			expectedStatus: requestStatusCancelled,
+			expectedStatus: requestStatusError,
 		},
 	}
 

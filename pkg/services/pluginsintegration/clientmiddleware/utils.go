@@ -11,13 +11,13 @@ type requestStatus int
 
 const (
 	requestStatusOK requestStatus = iota
-	requestStatusError
 	requestStatusCancelled
+	requestStatusError
 )
 
 func (status requestStatus) String() string {
-	names := [...]string{"ok", "error", "cancelled"}
-	if status < requestStatusOK || status > requestStatusCancelled {
+	names := [...]string{"ok", "cancelled", "error"}
+	if status < requestStatusOK || status > requestStatusError {
 		return ""
 	}
 
@@ -65,6 +65,10 @@ func requestStatusFromQueryDataResponse(res *backend.QueryDataResponse, err erro
 				s := requestStatusFromError(dr.Error)
 				if s > status {
 					status = s
+				}
+
+				if status == requestStatusError {
+					break
 				}
 			}
 		}
