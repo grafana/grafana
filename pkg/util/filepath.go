@@ -112,23 +112,17 @@ func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlin
 			subFiles = append(subFiles, subFile{path: path2, resolvedPath: resolvedPath2, fileInfo: fileInfo})
 		}
 
-		if followDistFolder && w.containsDistFolder(subFiles) {
-			err := w.walk(
-				filepath.Join(path, "dist"),
-				info,
-				filepath.Join(resolvedPath, "dist"),
-				symlinkPathsFollowed,
-				followDistFolder,
-				walkFn)
-			if err != nil {
-				return err
-			}
+		// If we have found a dist directory in a subdirectory (IE not at root path), and followDistFolder is true,
+		// then we want to follow only the dist directory and ignore all other subdirectories.
+		atRootDir := w.rootDir == path
+		if followDistFolder && w.containsDistFolder(subFiles) && !atRootDir {
+			return w.walk(filepath.Join(path, "dist"), info, filepath.Join(resolvedPath, "dist"), symlinkPathsFollowed,
+				followDistFolder, walkFn)
 		} else {
+			// Follow all subdirectories, with special handling for dist directories.
 			for _, p := range subFiles {
-				inRootDir := filepath.Join(w.rootDir, "dist") == p.path
-				// We only want to skip a dist directory if it is not in the root directory, and we are explicitly
-				// told not to follow it.
-				if p.isDistDir() && !inRootDir && !followDistFolder {
+				// We only want to skip a dist directory if it is not in the root directory, and followDistFolder is false.
+				if p.isDistDir() && !atRootDir && !followDistFolder {
 					continue
 				}
 
@@ -143,11 +137,10 @@ func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlin
 	return nil
 }
 
-// containsDistFolder returns true if the provided subFiles contains a dist folder that is not in the root directory.
+// containsDistFolder returns true if the provided subFiles contains a dist folder.
 func (w *walker) containsDistFolder(subFiles []subFile) bool {
 	for _, p := range subFiles {
-		distInRoot := filepath.Join(w.rootDir, "dist") == p.path
-		if p.fileInfo.IsDir() && p.fileInfo.Name() == "dist" && !distInRoot {
+		if p.fileInfo.IsDir() && p.fileInfo.Name() == "dist" {
 			return true
 		}
 	}

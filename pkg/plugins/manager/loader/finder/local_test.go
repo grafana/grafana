@@ -361,6 +361,7 @@ func TestFinder_getAbsPluginJSONPaths_PluginClass(t *testing.T) {
 				expected: []string{
 					filepath.Join(dir, "datasource/plugin.json"),
 					filepath.Join(dir, "dist/plugin.json"),
+					filepath.Join(dir, "panel/src/plugin.json"),
 				},
 			},
 		}
