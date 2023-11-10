@@ -163,7 +163,7 @@ func (m *MetricsMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	var resp *backend.QueryDataResponse
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (status requestStatus, innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
-		return requestStatusFromQueryDataResponse(resp, innerErr)
+		return requestStatusFromQueryDataResponse(resp, innerErr), innerErr
 	})
 
 	return resp, err
@@ -175,7 +175,7 @@ func (m *MetricsMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	}
 	return m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) (requestStatus, error) {
 		innerErr := m.next.CallResource(ctx, req, sender)
-		return requestStatusFromError(innerErr)
+		return requestStatusFromError(innerErr), innerErr
 	})
 }
 
@@ -183,7 +183,7 @@ func (m *MetricsMiddleware) CheckHealth(ctx context.Context, req *backend.CheckH
 	var result *backend.CheckHealthResult
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCheckHealth, func(ctx context.Context) (status requestStatus, innerErr error) {
 		result, innerErr = m.next.CheckHealth(ctx, req)
-		return requestStatusFromError(innerErr)
+		return requestStatusFromError(innerErr), innerErr
 	})
 
 	return result, err
@@ -193,7 +193,7 @@ func (m *MetricsMiddleware) CollectMetrics(ctx context.Context, req *backend.Col
 	var result *backend.CollectMetricsResult
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCollectMetrics, func(ctx context.Context) (status requestStatus, innerErr error) {
 		result, innerErr = m.next.CollectMetrics(ctx, req)
-		return requestStatusFromError(innerErr)
+		return requestStatusFromError(innerErr), innerErr
 	})
 	return result, err
 }

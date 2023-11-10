@@ -67,7 +67,7 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 		resp, innerErr = m.next.QueryData(ctx, req)
 
 		if innerErr != nil {
-			return requestStatusFromError(innerErr)
+			return requestStatusFromError(innerErr), innerErr
 		}
 
 		ctxLogger := m.logger.FromContext(ctx)
@@ -77,7 +77,7 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 			}
 		}
 
-		return requestStatusFromQueryDataResponse(resp, innerErr)
+		return requestStatusFromQueryDataResponse(resp, innerErr), innerErr
 	})
 
 	return resp, err
@@ -90,7 +90,7 @@ func (m *LoggerMiddleware) CallResource(ctx context.Context, req *backend.CallRe
 
 	err := m.logRequest(ctx, func(ctx context.Context) (status requestStatus, innerErr error) {
 		innerErr = m.next.CallResource(ctx, req, sender)
-		return requestStatusFromError(innerErr)
+		return requestStatusFromError(innerErr), innerErr
 	})
 
 	return err
@@ -104,7 +104,7 @@ func (m *LoggerMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHe
 	var resp *backend.CheckHealthResult
 	err := m.logRequest(ctx, func(ctx context.Context) (status requestStatus, innerErr error) {
 		resp, innerErr = m.next.CheckHealth(ctx, req)
-		return requestStatusFromError(innerErr)
+		return requestStatusFromError(innerErr), innerErr
 	})
 
 	return resp, err
@@ -118,7 +118,7 @@ func (m *LoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.Coll
 	var resp *backend.CollectMetricsResult
 	err := m.logRequest(ctx, func(ctx context.Context) (status requestStatus, innerErr error) {
 		resp, innerErr = m.next.CollectMetrics(ctx, req)
-		return requestStatusFromError(innerErr)
+		return requestStatusFromError(innerErr), innerErr
 	})
 
 	return resp, err

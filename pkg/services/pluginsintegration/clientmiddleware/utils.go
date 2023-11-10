@@ -40,7 +40,7 @@ func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse)
 	return fn(res)
 }
 
-func requestStatusFromError(err error) (requestStatus, error) {
+func requestStatusFromError(err error) requestStatus {
 	status := requestStatusOK
 	if err != nil {
 		status = requestStatusError
@@ -49,10 +49,10 @@ func requestStatusFromError(err error) (requestStatus, error) {
 		}
 	}
 
-	return status, err
+	return status
 }
 
-func requestStatusFromQueryDataResponse(res *backend.QueryDataResponse, err error) (requestStatus, error) {
+func requestStatusFromQueryDataResponse(res *backend.QueryDataResponse, err error) requestStatus {
 	if err != nil {
 		return requestStatusFromError(err)
 	}
@@ -62,7 +62,7 @@ func requestStatusFromQueryDataResponse(res *backend.QueryDataResponse, err erro
 	if res != nil {
 		for _, dr := range res.Responses {
 			if dr.Error != nil {
-				s, _ := requestStatusFromError(dr.Error)
+				s := requestStatusFromError(dr.Error)
 				if s > status {
 					status = s
 				}
@@ -70,5 +70,5 @@ func requestStatusFromQueryDataResponse(res *backend.QueryDataResponse, err erro
 		}
 	}
 
-	return status, err
+	return status
 }

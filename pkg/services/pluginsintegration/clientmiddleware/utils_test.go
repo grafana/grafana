@@ -63,8 +63,7 @@ func TestRequestStatusFromError(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
-			status, err := requestStatusFromError(tc.err)
-			require.Equal(t, err, tc.err)
+			status := requestStatusFromError(tc.err)
 			require.Equal(t, tc.expectedStatus, status)
 		})
 	}
@@ -82,13 +81,13 @@ func TestRequestStatusFromQueryDataResponse(t *testing.T) {
 	}
 	responseWithMultipleErrors := backend.NewQueryDataResponse()
 	responseWithMultipleErrors.Responses["A"] = backend.DataResponse{
-		Error: errors.New("boom"),
+		Error: context.Canceled,
 	}
 	responseWithMultipleErrors.Responses["B"] = backend.DataResponse{
-		Error: errors.New("boom"),
+		Frames: data.Frames{data.NewFrame("test")},
 	}
 	responseWithMultipleErrors.Responses["C"] = backend.DataResponse{
-		Error: context.Canceled,
+		Error: errors.New("boom"),
 	}
 
 	tcs := []struct {
@@ -131,8 +130,7 @@ func TestRequestStatusFromQueryDataResponse(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
-			status, err := requestStatusFromQueryDataResponse(tc.resp, tc.err)
-			require.Equal(t, err, tc.err)
+			status := requestStatusFromQueryDataResponse(tc.resp, tc.err)
 			require.Equal(t, tc.expectedStatus, status)
 		})
 	}
