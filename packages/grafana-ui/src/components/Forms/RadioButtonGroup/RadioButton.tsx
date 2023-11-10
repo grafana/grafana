@@ -6,6 +6,7 @@ import { StringSelector } from '@grafana/e2e-selectors';
 
 import { useTheme2, stylesFactory } from '../../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
+import { Tooltip } from '../../Tooltip/Tooltip';
 import { getPropertiesForButtonSize } from '../commonStyles';
 
 export type RadioButtonSize = 'sm' | 'md';
@@ -44,7 +45,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
     const theme = useTheme2();
     const styles = getRadioButtonStyles(theme, size, fullWidth);
 
-    return (
+    const radioButton = (
       <div className={styles.radioOption}>
         <input
           type="radio"
@@ -55,13 +56,20 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
           id={id}
           checked={active}
           name={name}
-          aria-label={ariaLabel || description}
+          aria-label={ariaLabel}
           ref={ref}
         />
         <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
           {children}
         </label>
       </div>
+    );
+    return description ? (
+      <Tooltip content={description} placement="auto">
+        {radioButton}
+      </Tooltip>
+    ) : (
+      radioButton
     );
   }
 );
