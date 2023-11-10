@@ -34,9 +34,9 @@ const PlaylistPageListSkeleton = () => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.list}>
-      {new Array(3).fill(null).map((_item, index) => (
-        <PlaylistCard.Skeleton key={index} />
-      ))}
+      <PlaylistCard.Skeleton />
+      <PlaylistCard.Skeleton />
+      <PlaylistCard.Skeleton />
     </div>
   );
 };
