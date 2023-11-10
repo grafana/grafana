@@ -14,9 +14,10 @@ func addPanelMigrations(mg *migrator.Migrator) {
 		Postgres(`ALTER TABLE panel ADD COLUMN title tsvector;`).
 		Mysql("ALTER TABLE panel ADD title TEXT;"))
 
-	// #TODO: look into adding an index for sqlite as well
+	// #TODO: sqlite index doesn't seem to help. Remove?
 	mg.AddMigration("Add title index in panel", migrator.NewRawSQLMigration("").
-		// #TODO: rename the index
+		// #TODO: rename the indexes
+		SQLite("CREATE INDEX title_index ON panel (title);").
 		Mysql(`CREATE INDEX title_index ON panel (title(255));`))
 }
 
