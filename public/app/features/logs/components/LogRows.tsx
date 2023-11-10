@@ -125,6 +125,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       // Delegate closing the menu to the popover component.
       return;
     }
+    if (targetIsElement(e.target) && !this.logRowsRef.current?.contains(e.target)) {
+      // The mouseup event comes from outside the log rows, close the menu.
+      this.closePopoverMenu();
+      return;
+    }
     if (document.getSelection()?.toString()) {
       return;
     }
@@ -150,7 +155,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     } else {
       this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
-    document.addEventListener('mouseup', this.handleDeselection, {});
+    document.addEventListener('mouseup', this.handleDeselection);
   }
 
   componentWillUnmount() {
