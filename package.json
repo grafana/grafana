@@ -246,6 +246,7 @@
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "1.7.4",
+    "@grafana/faro-core": "1.2.5",
     "@grafana/faro-web-sdk": "1.2.5",
     "@grafana/flamegraph": "workspace:*",
     "@grafana/google-sdk": "0.1.1",

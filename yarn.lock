@@ -3153,6 +3153,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/faro-core@npm:1.2.5, @grafana/faro-core@npm:^1.2.5":
+  version: 1.2.5
+  resolution: "@grafana/faro-core@npm:1.2.5"
+  dependencies:
+    "@opentelemetry/api": "npm:^1.4.1"
+    "@opentelemetry/api-metrics": "npm:^0.33.0"
+    "@opentelemetry/otlp-transformer": "npm:^0.41.2"
+    murmurhash-js: "npm:^1.0.0"
+  checksum: ff7d9a96fc588518b1a71ed55225334b1dcd21d2acef82b07c94849efc5da8eb6339791ad2e56a45b578f37ae2c0e8aba67b92f7855bbdcd45e246cbc662bd93
+  languageName: node
+  linkType: hard
+
 "@grafana/faro-core@npm:^1.2.1":
   version: 1.2.1
   resolution: "@grafana/faro-core@npm:1.2.1"
@@ -3162,18 +3174,6 @@ __metadata:
     "@opentelemetry/otlp-transformer": "npm:^0.41.2"
     murmurhash-js: "npm:^1.0.0"
   checksum: aa5f2a950465695caca5e796604dac1a9d0b6c01036cbfd55e29d676c45d2996ce0715a1a38b70b2325258d4c717b9affafd0e4bd7f6a8b6b3b53d76cf8b4f8b
-  languageName: node
-  linkType: hard
-
-"@grafana/faro-core@npm:^1.2.5":
-  version: 1.2.5
-  resolution: "@grafana/faro-core@npm:1.2.5"
-  dependencies:
-    "@opentelemetry/api": "npm:^1.4.1"
-    "@opentelemetry/api-metrics": "npm:^0.33.0"
-    "@opentelemetry/otlp-transformer": "npm:^0.41.2"
-    murmurhash-js: "npm:^1.0.0"
-  checksum: ff7d9a96fc588518b1a71ed55225334b1dcd21d2acef82b07c94849efc5da8eb6339791ad2e56a45b578f37ae2c0e8aba67b92f7855bbdcd45e246cbc662bd93
   languageName: node
   linkType: hard
 
@@ -17340,6 +17340,7 @@ __metadata:
     "@grafana/eslint-config": "npm:6.0.1"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": "npm:1.7.4"
+    "@grafana/faro-core": "npm:1.2.5"
     "@grafana/faro-web-sdk": "npm:1.2.5"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.1"
