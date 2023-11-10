@@ -1,3 +1,6 @@
-import { CalculateFieldTransformerEditor } from './CalculateFieldTransformerEditor';
+import {
+  CalculateFieldTransformerEditor,
+  calculateFieldTransformRegistryItem,
+} from './CalculateFieldTransformerEditor';
 
-export { CalculateFieldTransformerEditor };
+export { CalculateFieldTransformerEditor, calculateFieldTransformRegistryItem };
