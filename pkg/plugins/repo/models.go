@@ -12,7 +12,7 @@ type PluginArchiveInfo struct {
 	Checksum string
 }
 
-// PluginVersions is (a subset of) the JSON response from /api/plugins/$pluginID/versions
+// PluginVersions is the JSON response from /api/plugins/$pluginID/versions
 type PluginVersions struct {
 	Versions []Version `json:"items"`
 }
