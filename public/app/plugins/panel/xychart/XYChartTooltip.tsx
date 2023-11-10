@@ -27,10 +27,9 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
   const styles = useStyles2(getStyles);
 
   const rowIndex = dataIdxs.find((idx) => idx !== null);
-  const seriesIndex = dataIdxs.findIndex((idx) => idx != null);
   // @todo: remove -1 when uPlot v2 arrive
   // context: first value in dataIdxs always null and represent X series
-  const hoveredPointIndex = seriesIndex - 1;
+  const hoveredPointIndex = seriesIdx! - 1;
 
   if (!allSeries || rowIndex == null) {
     return null;

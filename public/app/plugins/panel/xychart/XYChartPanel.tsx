@@ -23,6 +23,7 @@ import {
   VizLegendItem,
   VizTooltipContainer,
 } from '@grafana/ui';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
@@ -221,6 +222,7 @@ export const XYChartPanel = (props: Props) => {
             {config.featureToggles.newVizTooltips && props.options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={builder}
+                hoverMode={TooltipHoverMode.xyOne}
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                   return (
                     <XYChartTooltip
