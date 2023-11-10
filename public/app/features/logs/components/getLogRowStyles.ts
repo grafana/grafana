@@ -67,9 +67,9 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       color: ${theme.components.textHighlight.text}
       background-color: ${theme.components.textHighlight};
     `,
-    logRows: {
+    logRows: css({
       position: 'relative',
-    },
+    }),
     logsRowsTable: css`
       label: logs-rows;
       font-family: ${theme.typography.fontFamilyMonospace};
