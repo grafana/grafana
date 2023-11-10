@@ -139,7 +139,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			SignatureType:   pluginDef.SignatureType,
 			SignatureOrg:    pluginDef.SignatureOrg,
 			AccessControl:   pluginsMetadata[pluginDef.ID],
-			AngularDetected: pluginDef.AngularDetected,
+			AngularDetected: pluginDef.Angular.Detected,
 		}
 
 		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
@@ -196,7 +196,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		SignatureType:    plugin.SignatureType,
 		SignatureOrg:     plugin.SignatureOrg,
 		SecureJsonFields: map[string]bool{},
-		AngularDetected:  plugin.AngularDetected,
+		AngularDetected:  plugin.Angular.Detected,
 	}
 
 	if plugin.IsApp() {
