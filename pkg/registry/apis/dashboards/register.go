@@ -30,23 +30,26 @@ var _ grafanaapiserver.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService dashboardssvc.DashboardService
-	namespacer       request.NamespaceMapper
-	gv               schema.GroupVersion
+	dashboardService    dashboardssvc.DashboardService
+	provisioningService dashboardssvc.DashboardProvisioningService
+	namespacer          request.NamespaceMapper
+	gv                  schema.GroupVersion
 }
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration grafanaapiserver.APIRegistrar,
 	dashboardService dashboardssvc.DashboardService,
+	provisioningService dashboardssvc.DashboardProvisioningService,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 
 	builder := &DashboardsAPIBuilder{
-		dashboardService: dashboardService,
-		namespacer:       request.GetNamespaceMapper(cfg),
-		gv:               schema.GroupVersion{Group: GroupName, Version: VersionID},
+		dashboardService:    dashboardService,
+		provisioningService: provisioningService,
+		namespacer:          request.GetNamespaceMapper(cfg),
+		gv:                  schema.GroupVersion{Group: GroupName, Version: VersionID},
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -93,6 +96,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 
 	legacyStore := &legacyStorage{
 		service:                   b.dashboardService,
+		provisioningService:       b.provisioningService,
 		namespacer:                b.namespacer,
 		DefaultQualifiedResource:  b.gv.WithResource("dashboards").GroupResource(),
 		SingularQualifiedResource: b.gv.WithResource("dashboard").GroupResource(),

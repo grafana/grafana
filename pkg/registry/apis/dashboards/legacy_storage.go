@@ -28,9 +28,10 @@ var (
 )
 
 type legacyStorage struct {
-	service        dashboardssvc.DashboardService
-	namespacer     request.NamespaceMapper
-	tableConverter rest.TableConvertor
+	service             dashboardssvc.DashboardService
+	provisioningService dashboardssvc.DashboardProvisioningService
+	namespacer          request.NamespaceMapper
+	tableConverter      rest.TableConvertor
 
 	DefaultQualifiedResource  schema.GroupResource
 	SingularQualifiedResource schema.GroupResource
@@ -115,5 +116,17 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	return convertToK8sResource(dto, s.namespacer), nil
+	// The resource needs both
+	provisioningData, err := s.provisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, info.OrgID, name)
+	if err != nil {
+		return nil, err
+	}
+	if provisioningData != nil {
+		// TODO? shorten the path based on the full provisioning source
+		// id, err := filepath.Rel(
+		// 	s.provisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
+		// 	provisioningData.ExternalID,
+		// )
+	}
+	return convertToK8sResource(dto, provisioningData, s.namespacer), nil
 }

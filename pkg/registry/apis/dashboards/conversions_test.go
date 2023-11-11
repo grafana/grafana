@@ -29,7 +29,7 @@ func TestResourceConversion(t *testing.T) {
 	dash.FolderUID = "FABC"
 	dash.SetID(12345) // should be removed in resource version
 
-	dst := convertToK8sResource(dash, request.GetNamespaceMapper(nil))
+	dst := convertToK8sResource(dash, nil, request.GetNamespaceMapper(nil))
 	require.Equal(t, int64(12345), dash.ID)
 	require.Equal(t, int64(12345), dash.Data.Get("id").MustInt64(0))
 
