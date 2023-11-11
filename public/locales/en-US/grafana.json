@@ -1026,6 +1026,17 @@
       "passwords-must-match": "Passwords must match"
     }
   },
+  "public-dashboard-list-table": {
+    "public-dashboard": {
+      "config-tooltip": "Configure public dashboard",
+      "not-orphaned-title": "<0>{{title}}</0>",
+      "orphaned-title": "<0>Orphaned public dashboard</0>",
+      "orphaned-tooltip": "The linked dashboard has already been deleted",
+      "pause-sharing-label": "Pause sharing",
+      "revoke-tooltip": "Revoke public dashboard URL",
+      "view-tooltip": "View public dashboard"
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
@@ -1038,17 +1049,6 @@
       "toggle-edit-mode": "Toggle text edit mode"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
-  },
-  "public-dashboard-list-table": {
-    "public-dashboard": {
-      "config-tooltip": "Configure public dashboard",
-      "not-orphaned-title": "<0>{{title}}</0>",
-      "orphaned-title": "<0>Orphaned public dashboard</0>",
-      "orphaned-tooltip": "The linked dashboard has already been deleted",
-      "pause-sharing-label": "Pause sharing",
-      "revoke-tooltip": "Revoke public dashboard URL",
-      "view-tooltip": "View public dashboard"
-    }
   },
   "refresh-picker": {
     "aria-label": {
@@ -1343,6 +1343,7 @@
       "activated": "Activated",
       "earliest-active-user-time-desc": "Earliest time user has been an active user to a dashboard",
       "email": "Email",
+      "last-active": "Last active",
       "origin": "Origin",
       "role": "Role"
     }

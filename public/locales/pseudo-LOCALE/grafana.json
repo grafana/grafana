@@ -1026,6 +1026,17 @@
       "passwords-must-match": "Päşşŵőřđş mūşŧ mäŧčĥ"
     }
   },
+  "public-dashboard-list-table": {
+    "public-dashboard": {
+      "config-tooltip": "Cőŉƒįģūřę pūþľįč đäşĥþőäřđ",
+      "not-orphaned-title": "<0>{{title}}</0>",
+      "orphaned-title": "<0>Øřpĥäŉęđ pūþľįč đäşĥþőäřđ</0>",
+      "orphaned-tooltip": "Ŧĥę ľįŉĸęđ đäşĥþőäřđ ĥäş äľřęäđy þęęŉ đęľęŧęđ",
+      "pause-sharing-label": "Päūşę şĥäřįŉģ",
+      "revoke-tooltip": "Ŗęvőĸę pūþľįč đäşĥþőäřđ ŮŖĿ",
+      "view-tooltip": "Vįęŵ pūþľįč đäşĥþőäřđ"
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Cőľľäpşę qūęřy řőŵ",
@@ -1038,17 +1049,6 @@
       "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
     },
     "query-editor-not-exported": "Đäŧä şőūřčę pľūģįŉ đőęş ŉőŧ ęχpőřŧ äŉy Qūęřy Ēđįŧőř čőmpőŉęŉŧ"
-  },
-  "public-dashboard-list-table": {
-    "public-dashboard": {
-      "config-tooltip": "Cőŉƒįģūřę pūþľįč đäşĥþőäřđ",
-      "not-orphaned-title": "<0>{{title}}</0>",
-      "orphaned-title": "<0>Øřpĥäŉęđ pūþľįč đäşĥþőäřđ</0>",
-      "orphaned-tooltip": "Ŧĥę ľįŉĸęđ đäşĥþőäřđ ĥäş äľřęäđy þęęŉ đęľęŧęđ",
-      "pause-sharing-label": "Päūşę şĥäřįŉģ",
-      "revoke-tooltip": "Ŗęvőĸę pūþľįč đäşĥþőäřđ ŮŖĿ",
-      "view-tooltip": "Vįęŵ pūþľįč đäşĥþőäřđ"
-    }
   },
   "refresh-picker": {
     "aria-label": {
@@ -1343,6 +1343,7 @@
       "activated": "Åčŧįväŧęđ",
       "earliest-active-user-time-desc": "Ēäřľįęşŧ ŧįmę ūşęř ĥäş þęęŉ äŉ äčŧįvę ūşęř ŧő ä đäşĥþőäřđ",
       "email": "Ēmäįľ",
+      "last-active": "Ŀäşŧ äčŧįvę",
       "origin": "Øřįģįŉ",
       "role": "Ŗőľę"
     }

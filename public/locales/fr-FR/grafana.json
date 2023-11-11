@@ -1032,6 +1032,17 @@
       "passwords-must-match": ""
     }
   },
+  "public-dashboard-list-table": {
+    "public-dashboard": {
+      "config-tooltip": "",
+      "not-orphaned-title": "",
+      "orphaned-title": "",
+      "orphaned-tooltip": "",
+      "pause-sharing-label": "",
+      "revoke-tooltip": "",
+      "view-tooltip": ""
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "",
@@ -1044,17 +1055,6 @@
       "toggle-edit-mode": ""
     },
     "query-editor-not-exported": ""
-  },
-  "public-dashboard-list-table": {
-    "public-dashboard": {
-      "config-tooltip": "",
-      "not-orphaned-title": "",
-      "orphaned-title": "",
-      "orphaned-tooltip": "",
-      "pause-sharing-label": "",
-      "revoke-tooltip": "",
-      "view-tooltip": ""
-    }
   },
   "refresh-picker": {
     "aria-label": {
@@ -1349,6 +1349,7 @@
       "activated": "",
       "earliest-active-user-time-desc": "",
       "email": "",
+      "last-active": "",
       "origin": "",
       "role": ""
     }
