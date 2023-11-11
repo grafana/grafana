@@ -4,15 +4,15 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Field, Icon, InputControl, RadioButtonGroup, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { mapSelectValueToString } from '../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import LabelsField from './LabelsField';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
+import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/SimplifiedRouting';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
 type NotificationsStepProps = {
@@ -89,26 +89,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         </Stack>
 
         {routingOption === RoutingOptions['contact point'] ? (
-          <Field label="Contact point">
-            <InputControl
-              render={({ field: { onChange, ref, ...field } }) => (
-                <Select
-                  aria-label="Contact point"
-                  {...field}
-                  onChange={(value) => onChange(mapSelectValueToString(value))}
-                  options={[
-                    { label: 'Email', value: 'email' },
-                    { label: 'Slack', value: 'slack' },
-                    { label: 'PagerDuty', value: 'pagerduty' },
-                    { label: 'Webhook', value: 'webhook' },
-                  ]}
-                  isClearable
-                  width={50}
-                />
-              )}
-              name="receiver"
-            />
-          </Field>
+          <SimplifiedRouting />
         ) : (
           shouldRenderPreview && (
             <NotificationPreview
