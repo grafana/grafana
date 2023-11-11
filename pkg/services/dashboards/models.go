@@ -6,8 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -16,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const RootFolderName = "General"
@@ -63,54 +60,6 @@ func (d *Dashboard) SetUID(uid string) {
 func (d *Dashboard) SetVersion(version int) {
 	d.Version = version
 	d.Data.Set("version", version)
-}
-
-func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, any] {
-	parent := dashboard.NewK8sResource(d.UID, nil)
-	res := kinds.GrafanaResource[simplejson.Json, any]{
-		Kind:       parent.Kind,
-		APIVersion: parent.APIVersion,
-		Metadata: kinds.GrafanaResourceMetadata{
-			Name:              d.UID,
-			Annotations:       make(map[string]string),
-			Labels:            make(map[string]string),
-			CreationTimestamp: v1.NewTime(d.Created),
-			ResourceVersion:   fmt.Sprintf("%d", d.Version),
-		},
-	}
-	if d.Data != nil {
-		copy := &simplejson.Json{}
-		db, _ := d.Data.ToDB()
-		_ = copy.FromDB(db)
-
-		copy.Del("id")
-		copy.Del("version") // ???
-		copy.Del("uid")     // duplicated to name
-		res.Spec = copy
-	}
-
-	d.UpdateSlug()
-	res.Metadata.SetUpdatedTimestamp(&d.Updated)
-	res.Metadata.SetSlug(d.Slug)
-	if d.CreatedBy > 0 {
-		res.Metadata.SetCreatedBy(fmt.Sprintf("user:%d", d.CreatedBy))
-	}
-	if d.UpdatedBy > 0 {
-		res.Metadata.SetUpdatedBy(fmt.Sprintf("user:%d", d.UpdatedBy))
-	}
-	if d.PluginID != "" {
-		res.Metadata.SetOriginInfo(&kinds.ResourceOriginInfo{
-			Name: "plugin",
-			Key:  d.PluginID,
-		})
-	}
-	if d.FolderID > 0 {
-		res.Metadata.SetFolder(fmt.Sprintf("folder:%d", d.FolderID))
-	}
-	if d.IsFolder {
-		res.Kind = "Folder"
-	}
-	return res
 }
 
 // NewDashboard creates a new dashboard
