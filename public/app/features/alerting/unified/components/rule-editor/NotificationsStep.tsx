@@ -3,6 +3,7 @@ import React, { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Field, Icon, InputControl, RadioButtonGroup, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -54,8 +55,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
     [setRoutingOption]
   );
 
-  const simplifiedRoutingToggleEnabled = true; // wait for feature toggle PR to be merged
-  //config.featureToggles?.simplifiedRoutingToggle;
+  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
 
   const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
 
@@ -75,55 +75,54 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           )}
         </>
       );
-    } else {
-      return (
-        <Stack direction="column">
-          <Stack direction="column">
-            <RadioButtonGroup
-              options={routingOptions}
-              value={routingOption}
-              onChange={onRoutingOptionChange}
-              className={styles.routingOptions}
-            />
-          </Stack>
-
-          {routingOption === RoutingOptions['contact point'] ? (
-            <Field label="Contact point">
-              <InputControl
-                render={({ field: { onChange, ref, ...field } }) => (
-                  <Select
-                    aria-label="Contact point"
-                    {...field}
-                    // className={formStyles.input}
-                    onChange={(value) => onChange(mapSelectValueToString(value))}
-                    options={[
-                      { label: 'Email', value: 'email' },
-                      { label: 'Slack', value: 'slack' },
-                      { label: 'PagerDuty', value: 'pagerduty' },
-                      { label: 'Webhook', value: 'webhook' },
-                    ]}
-                    isClearable
-                    width={50}
-                  />
-                )}
-                name="receiver"
-              />
-            </Field>
-          ) : (
-            shouldRenderPreview && (
-              <NotificationPreview
-                alertQueries={queries}
-                customLabels={labels}
-                condition={condition}
-                folder={folder}
-                alertName={alertName}
-                alertUid={alertUid}
-              />
-            )
-          )}
-        </Stack>
-      );
     }
+
+    return (
+      <Stack direction="column">
+        <Stack direction="column">
+          <RadioButtonGroup
+            options={routingOptions}
+            value={routingOption}
+            onChange={onRoutingOptionChange}
+            className={styles.routingOptions}
+          />
+        </Stack>
+
+        {routingOption === RoutingOptions['contact point'] ? (
+          <Field label="Contact point">
+            <InputControl
+              render={({ field: { onChange, ref, ...field } }) => (
+                <Select
+                  aria-label="Contact point"
+                  {...field}
+                  onChange={(value) => onChange(mapSelectValueToString(value))}
+                  options={[
+                    { label: 'Email', value: 'email' },
+                    { label: 'Slack', value: 'slack' },
+                    { label: 'PagerDuty', value: 'pagerduty' },
+                    { label: 'Webhook', value: 'webhook' },
+                  ]}
+                  isClearable
+                  width={50}
+                />
+              )}
+              name="receiver"
+            />
+          </Field>
+        ) : (
+          shouldRenderPreview && (
+            <NotificationPreview
+              alertQueries={queries}
+              customLabels={labels}
+              condition={condition}
+              folder={folder}
+              alertName={alertName}
+              alertUid={alertUid}
+            />
+          )
+        )}
+      </Stack>
+    );
   }
 
   return (
