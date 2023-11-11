@@ -570,7 +570,7 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 	}
 
 	for idx, cp := range body.Policies {
-		policy := cp.Policy
+		policy := cp.RouteExport
 		resources = append(resources, hcl.Resource{
 			Type: "grafana_notification_policy",
 			Name: fmt.Sprintf("notification_policy_%d", idx+1),
