@@ -362,6 +362,18 @@
       "label": ""
     }
   },
+  "delete-public-dashboard-button": {
+    "public-dashboard": {
+      "revoke-button-label": ""
+    }
+  },
+  "delete-public-dashboard-modal": {
+    "public-dashboard": {
+      "ask-for-revoke-nonorphaned": "",
+      "ask-for-revoke-orphaned": "",
+      "confirm-revocation-title": ""
+    }
+  },
   "delete-user-modal-button": {
     "public-dashboard": {
       "delete-user-close-button": "",

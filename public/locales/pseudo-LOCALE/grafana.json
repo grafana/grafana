@@ -367,6 +367,18 @@
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
     }
   },
+  "delete-public-dashboard-button": {
+    "public-dashboard": {
+      "revoke-button-label": "Ŗęvőĸę pūþľįč ŮŖĿ"
+    }
+  },
+  "delete-public-dashboard-modal": {
+    "public-dashboard": {
+      "ask-for-revoke-nonorphaned": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş ŮŖĿ? Ŧĥę đäşĥþőäřđ ŵįľľ ŉő ľőŉģęř þę pūþľįč.",
+      "ask-for-revoke-orphaned": "Øřpĥäŉęđ pūþľįč đäşĥþőäřđ ŵįľľ ŉő ľőŉģęř þę pūþľįč.",
+      "confirm-revocation-title": "Ŗęvőĸę pūþľįč ŮŖĿ"
+    }
+  },
   "delete-user-modal-button": {
     "public-dashboard": {
       "delete-user-close-button": "Cľőşę",
