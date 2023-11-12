@@ -16,6 +16,7 @@ import (
 
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -32,15 +33,17 @@ var _ grafanaapiserver.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService    dashboardssvc.DashboardService
-	provisioningService dashboardssvc.DashboardProvisioningService
-	namespacer          request.NamespaceMapper
-	gv                  schema.GroupVersion
+	dashboardService        dashboardssvc.DashboardService
+	provisioningService     dashboardssvc.DashboardProvisioningService
+	dashboardVersionService dashver.Service
+	namespacer              request.NamespaceMapper
+	gv                      schema.GroupVersion
 }
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration grafanaapiserver.APIRegistrar,
 	dashboardService dashboardssvc.DashboardService,
+	dashboardVersionService dashver.Service,
 	provisioningService dashboardssvc.DashboardProvisioningService,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -48,10 +51,11 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	}
 
 	builder := &DashboardsAPIBuilder{
-		dashboardService:    dashboardService,
-		provisioningService: provisioningService,
-		namespacer:          request.GetNamespaceMapper(cfg),
-		gv:                  schema.GroupVersion{Group: GroupName, Version: VersionID},
+		dashboardService:        dashboardService,
+		provisioningService:     provisioningService,
+		dashboardVersionService: dashboardVersionService,
+		namespacer:              request.GetNamespaceMapper(cfg),
+		gv:                      schema.GroupVersion{Group: GroupName, Version: VersionID},
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -150,7 +154,8 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 	storage["dashboards"] = legacyStore
 	storage["dashboards/versions"] = &VersionsREST{
-		Store: store,
+		Store:                   store,
+		dashboardVersionService: b.dashboardVersionService,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage

@@ -46,12 +46,21 @@ type DashboardInfo struct {
 	Tags []string `json:"tags,omitempty"`
 }
 
-type DashboardVersionMeta struct {
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DashboardVersionsInfo struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []DashboardVersionInfo `json:"items,omitempty"`
+}
+
+type DashboardVersionInfo struct {
 	Version       int    `json:"version"`
-	ParentVersion int    `json:"parentVersion"`
+	ParentVersion int    `json:"parentVersion,omitempty"`
 	Created       int64  `json:"created"`
-	Message       string `json:"message"`
-	CreatedBy     string `json:"createdBy"`
+	Message       string `json:"message,omitempty"`
+	CreatedBy     string `json:"createdBy,omitempty"`
 }
 
 // +k8s:conversion-gen:explicit-from=net/url.Values
