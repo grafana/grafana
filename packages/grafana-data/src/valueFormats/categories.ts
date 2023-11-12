@@ -47,7 +47,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       },
       {
         name: 'SI prefix',
-        id: 'siprefixed',
+        id: 'siprefix',
         fn: SIPrefix(''),
       },
       { name: 'Percent (0-100)', id: 'percent', fn: toPercent },
