@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -397,7 +398,22 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	}
 }
 
-func (c K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
+func (c *K8sTestHelper) NewDiscoveryClient(gv *schema.GroupVersion) *discovery.DiscoveryClient {
+	c.t.Helper()
+
+	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
+	conf := &rest.Config{
+		Host:     baseUrl,
+		Username: c.Org1.Admin.Identity.GetLogin(),
+		Password: c.Org1.Admin.password,
+	}
+	conf.GroupVersion = gv
+	client, err := discovery.NewDiscoveryClientForConfig(conf)
+	require.NoError(c.t, err)
+	return client
+}
+
+func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
 	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
