@@ -398,7 +398,7 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	}
 }
 
-func (c *K8sTestHelper) NewDiscoveryClient(gv *schema.GroupVersion) *discovery.DiscoveryClient {
+func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
 	c.t.Helper()
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
@@ -407,7 +407,6 @@ func (c *K8sTestHelper) NewDiscoveryClient(gv *schema.GroupVersion) *discovery.D
 		Username: c.Org1.Admin.Identity.GetLogin(),
 		Password: c.Org1.Admin.password,
 	}
-	conf.GroupVersion = gv
 	client, err := discovery.NewDiscoveryClientForConfig(conf)
 	require.NoError(c.t, err)
 	return client

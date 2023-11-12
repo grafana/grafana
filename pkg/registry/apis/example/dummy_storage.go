@@ -95,7 +95,7 @@ func (s *dummyStorage) Get(ctx context.Context, name string, options *metav1.Get
 			CreationTimestamp: s.creationTimestamp,
 			ResourceVersion:   "1",
 		},
-		Spec: fmt.Sprintf("dummy: %d", idx),
+		Spec: fmt.Sprintf("dummy: %s", name),
 	}, nil
 }
 
@@ -106,7 +106,7 @@ func (s *dummyStorage) List(ctx context.Context, options *internalversion.ListOp
 	}
 
 	res := &example.DummyResourceList{}
-	for idx, name := range s.names {
+	for _, name := range s.names {
 		res.Items = append(res.Items, example.DummyResource{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              name,
@@ -114,7 +114,7 @@ func (s *dummyStorage) List(ctx context.Context, options *internalversion.ListOp
 				CreationTimestamp: s.creationTimestamp,
 				ResourceVersion:   "1",
 			},
-			Spec: fmt.Sprintf("dummy: %d", idx),
+			Spec: fmt.Sprintf("dummy: %s", name),
 		})
 	}
 	return res, nil
