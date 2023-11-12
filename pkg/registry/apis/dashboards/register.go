@@ -15,6 +15,8 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -36,8 +38,11 @@ type DashboardsAPIBuilder struct {
 	dashboardService        dashboardssvc.DashboardService
 	provisioningService     dashboardssvc.DashboardProvisioningService
 	dashboardVersionService dashver.Service
+	accessControl           accesscontrol.AccessControl
 	namespacer              request.NamespaceMapper
 	gv                      schema.GroupVersion
+
+	log log.Logger
 }
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
@@ -45,6 +50,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	dashboardService dashboardssvc.DashboardService,
 	dashboardVersionService dashver.Service,
 	provisioningService dashboardssvc.DashboardProvisioningService,
+	accessControl accesscontrol.AccessControl,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -54,8 +60,10 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardService:        dashboardService,
 		provisioningService:     provisioningService,
 		dashboardVersionService: dashboardVersionService,
+		accessControl:           accessControl,
 		namespacer:              request.GetNamespaceMapper(cfg),
 		gv:                      schema.GroupVersion{Group: GroupName, Version: VersionID},
+		log:                     log.New("grafana-apiserver.dashbaords"),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -149,21 +157,20 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	// }
 
 	legacyStore := &legacyStorage{
-		Store:               store,
-		service:             b.dashboardService,
-		provisioningService: b.provisioningService,
-		namespacer:          b.namespacer,
+		Store:      store,
+		namespacer: b.namespacer,
+		builder:    b,
 	}
 
 	storage := map[string]rest.Storage{}
 	storage["dashboards"] = legacyStore
 	storage["dashboards/access"] = &AccessREST{
-		Store:                   store,
-		dashboardVersionService: b.dashboardVersionService,
+		Store:   store,
+		builder: b,
 	}
 	storage["dashboards/versions"] = &VersionsREST{
-		Store:                   store,
-		dashboardVersionService: b.dashboardVersionService,
+		Store:   store,
+		builder: b,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage

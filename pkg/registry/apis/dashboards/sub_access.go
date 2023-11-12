@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -9,13 +10,17 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
-	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
 type AccessREST struct {
-	Store                   *genericregistry.Store
-	dashboardVersionService dashver.Service
+	Store   *genericregistry.Store
+	builder *DashboardsAPIBuilder
 }
 
 var _ = rest.Connecter(&AccessREST{})
@@ -35,17 +40,67 @@ func (r *AccessREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return &dashboards.VersionsQueryOptions{}, false, ""
 }
 
-func (r *AccessREST) Connect(ctx context.Context, id string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	_, err := request.NamespaceInfoFrom(ctx, true)
+func (r *AccessREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	access := &dashboards.DashboardAccessInfo{
-		CanStar: true,
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	dto, err := r.builder.dashboardService.GetDashboard(ctx, &dashboardssvc.GetDashboardQuery{
+		UID:   name,
+		OrgID: info.OrgID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)
+	if err != nil {
+		return nil, err
+	}
+	canView, err := guardian.CanView()
+	if err != nil || !canView {
+		return nil, fmt.Errorf("not allowed to view")
+	}
+
+	access := &dashboards.DashboardAccessInfo{}
+	access.CanEdit, _ = guardian.CanEdit()
+	access.CanSave, _ = guardian.CanSave()
+	access.CanAdmin, _ = guardian.CanAdmin()
+	access.CanDelete, _ = guardian.CanDelete()
+	access.CanStar = user.IsRealUser() && !user.IsAnonymous
+
+	access.AnnotationsPermissions = &dashboards.AnnotationPermission{}
+	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		responder.Object(http.StatusOK, access)
 	}), nil
+}
+
+func (r *AccessREST) getAnnotationPermissionsByScope(ctx context.Context, user identity.Requester, actions *dashboards.AnnotationActions, scope string) {
+	var err error
+
+	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)
+	actions.CanAdd, err = r.builder.accessControl.Evaluate(ctx, user, evaluate)
+	if err != nil {
+		r.builder.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsCreate, "scope", scope)
+	}
+
+	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, scope)
+	actions.CanDelete, err = r.builder.accessControl.Evaluate(ctx, user, evaluate)
+	if err != nil {
+		r.builder.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsDelete, "scope", scope)
+	}
+
+	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, scope)
+	actions.CanEdit, err = r.builder.accessControl.Evaluate(ctx, user, evaluate)
+	if err != nil {
+		r.builder.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsWrite, "scope", scope)
+	}
 }

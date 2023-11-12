@@ -15,8 +15,8 @@ import (
 )
 
 type VersionsREST struct {
-	Store                   *genericregistry.Store
-	dashboardVersionService dashver.Service
+	Store   *genericregistry.Store
+	builder *DashboardsAPIBuilder
 }
 
 var _ = rest.Connecter(&VersionsREST{})
@@ -42,7 +42,7 @@ func (r *VersionsREST) Connect(ctx context.Context, id string, opts runtime.Obje
 		return nil, err
 	}
 
-	rsp, err := r.dashboardVersionService.List(ctx, &dashver.ListDashboardVersionsQuery{
+	rsp, err := r.builder.dashboardVersionService.List(ctx, &dashver.ListDashboardVersionsQuery{
 		DashboardUID: id,
 		OrgID:        info.OrgID,
 	})

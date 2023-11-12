@@ -28,10 +28,9 @@ var (
 )
 
 type legacyStorage struct {
-	Store               *genericregistry.Store
-	service             dashboardssvc.DashboardService
-	provisioningService dashboardssvc.DashboardProvisioningService
-	namespacer          request.NamespaceMapper
+	Store      *genericregistry.Store
+	builder    *DashboardsAPIBuilder
+	namespacer request.NamespaceMapper
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -69,7 +68,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if options.Limit > 0 {
 		limit = options.Limit
 	}
-	res, err := s.service.SearchDashboards(ctx, &dashboardssvc.FindPersistedDashboardsQuery{
+	res, err := s.builder.dashboardService.SearchDashboards(ctx, &dashboardssvc.FindPersistedDashboardsQuery{
 		SignedInUser: user,
 		OrgId:        info.OrgID,
 		Limit:        limit,
@@ -102,7 +101,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	dto, err := s.service.GetDashboard(ctx, &dashboardssvc.GetDashboardQuery{
+	dto, err := s.builder.dashboardService.GetDashboard(ctx, &dashboardssvc.GetDashboardQuery{
 		UID:   name,
 		OrgID: info.OrgID,
 	})
@@ -114,7 +113,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	}
 
 	// The resource needs both
-	provisioningData, err := s.provisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, info.OrgID, name)
+	provisioningData, err := s.builder.provisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, info.OrgID, name)
 	if err != nil {
 		return nil, err
 	}
