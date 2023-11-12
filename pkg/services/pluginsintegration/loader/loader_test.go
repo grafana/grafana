@@ -1221,9 +1221,9 @@ func TestLoader_AngularClass(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, p, 1, "should load 1 plugin")
 			if tc.expAngularDetectionRun {
-				require.True(t, p[0].AngularDetected, "angular detection should run")
+				require.True(t, p[0].Angular.Detected, "angular detection should run")
 			} else {
-				require.False(t, p[0].AngularDetected, "angular detection should not run")
+				require.False(t, p[0].Angular.Detected, "angular detection should not run")
 			}
 		})
 	}
@@ -1275,6 +1275,49 @@ func TestLoader_Load_Angular(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+}
+
+func TestLoader_HideAngularDeprecation(t *testing.T) {
+	fakePluginSource := &fakes.FakePluginSource{
+		PluginClassFunc: func(ctx context.Context) plugins.Class {
+			return plugins.ClassExternal
+		},
+		PluginURIsFunc: func(ctx context.Context) []string {
+			return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
+		},
+	}
+	for _, tc := range []struct {
+		name                      string
+		cfg                       *config.Cfg
+		expHideAngularDeprecation bool
+	}{
+		{name: `without "hide_angular_deprecation" setting`, cfg: &config.Cfg{
+			AngularSupportEnabled: true,
+			PluginSettings:        setting.PluginSettings{},
+		}},
+		{name: `with "hide_angular_deprecation" = true`, cfg: &config.Cfg{
+			AngularSupportEnabled: true,
+			PluginSettings: setting.PluginSettings{
+				"plugin-id": map[string]string{"hide_angular_deprecation": "true"},
+			}},
+		},
+		{name: `with "hide_angular_deprecation" = false`, cfg: &config.Cfg{
+			AngularSupportEnabled: true,
+			PluginSettings: setting.PluginSettings{
+				"plugin-id": map[string]string{"hide_angular_deprecation": "false"},
+			}},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
+				angularInspector: angularinspector.AlwaysAngularFakeInspector,
+			})
+			p, err := l.Load(context.Background(), fakePluginSource)
+			require.NoError(t, err)
+			require.Len(t, p, 1, "should load 1 plugin")
+			require.Equal(t, tc.expHideAngularDeprecation, p[0].Angular.HideDeprecation)
 		})
 	}
 }
