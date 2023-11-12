@@ -318,14 +318,14 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = server.Handler
 	s.restConfig = server.LoopbackClientConfig
 
-	// only write kubeconfig in dev mode
-	if s.config.devMode {
-		if err := s.ensureKubeConfig(); err != nil {
-			return err
-		}
-	} else {
-		// skip starting an independent server in prod mode
+	// When running in production, do not start a standalone https server
+	if !s.config.devMode {
 		return nil
+	}
+
+	// only write kubeconfig in dev mode
+	if err := s.ensureKubeConfig(); err != nil {
+		return err
 	}
 
 	prepared := server.PrepareRun()
