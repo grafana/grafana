@@ -88,40 +88,6 @@ func TestExampleApp(t *testing.T) {
 			]
 		  }`, string(v1Disco))
 
-		// Show the fancy nested discovery
-		req := disco.RESTClient().Get().
-			Prefix("apis").
-			SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json")
-
-		result := req.Do(context.Background())
-		require.NoError(t, result.Error())
-
-		type DiscoItem struct {
-			Metadata struct {
-				Name string `json:"name"`
-			} `json:"metadata"`
-			Versions []any `json:"versions,omitempty"`
-		}
-
-		type DiscoList struct {
-			Items []DiscoItem `json:"items"`
-		}
-
-		raw, err := result.Raw()
-		require.NoError(t, err)
-		all := &DiscoList{}
-		err = json.Unmarshal(raw, all)
-		require.NoError(t, err)
-
-		example := DiscoItem{}
-		for _, item := range all.Items {
-			if item.Metadata.Name == "example.grafana.app" {
-				example = item
-			}
-		}
-		require.Equal(t, "example.grafana.app", example.Metadata.Name)
-		v1Disco, err = json.MarshalIndent(example.Versions, "", "  ")
-		require.NoError(t, err)
 		//fmt.Printf("%s", string(v1Disco))
 		require.JSONEq(t, `[
 			{
@@ -170,7 +136,7 @@ func TestExampleApp(t *testing.T) {
 				}
 			  ]
 			}
-		  ]`, string(v1Disco))
+		  ]`, helper.GetGroupVersionInfoJSON("example.grafana.app"))
 	})
 
 	t.Run("Check dummy with subresource", func(t *testing.T) {
