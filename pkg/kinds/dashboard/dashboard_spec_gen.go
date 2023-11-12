@@ -152,6 +152,8 @@ const (
 	VariableSortN4 VariableSort = 4
 	VariableSortN5 VariableSort = 5
 	VariableSortN6 VariableSort = 6
+	VariableSortN7 VariableSort = 7
+	VariableSortN8 VariableSort = 8
 )
 
 // Defines values for VariableType.
@@ -960,6 +962,8 @@ type VariableModel struct {
 	// `4`: Numerical DESC
 	// `5`: Alphabetical Case Insensitive ASC
 	// `6`: Alphabetical Case Insensitive DESC
+	// `7`: Natural ASC
+	// `8`: Natural DESC
 	Sort *VariableSort `json:"sort,omitempty"`
 
 	// Dashboard variable type
@@ -1001,6 +1005,8 @@ type VariableRefresh int
 // `4`: Numerical DESC
 // `5`: Alphabetical Case Insensitive ASC
 // `6`: Alphabetical Case Insensitive DESC
+// `7`: Natural ASC
+// `8`: Natural DESC
 type VariableSort int
 
 // Dashboard variable type
