@@ -9,7 +9,6 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/api/response"
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -22,17 +21,15 @@ type VersionsREST struct {
 
 var _ = rest.Connecter(&VersionsREST{})
 
-var methods = []string{"GET"}
-
 func (r *VersionsREST) New() runtime.Object {
-	return &dashboards.VersionsQueryOptions{}
+	return &dashboards.DashboardVersionsInfo{}
 }
 
 func (r *VersionsREST) Destroy() {
 }
 
 func (r *VersionsREST) ConnectMethods() []string {
-	return methods
+	return []string{"GET"}
 }
 
 func (r *VersionsREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -40,10 +37,6 @@ func (r *VersionsREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *VersionsREST) Connect(ctx context.Context, id string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	queryOpts, ok := opts.(*dashboards.VersionsQueryOptions)
-	if !ok {
-		return nil, fmt.Errorf("invalid options object: %#v", opts)
-	}
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -56,7 +49,7 @@ func (r *VersionsREST) Connect(ctx context.Context, id string, opts runtime.Obje
 	if err != nil {
 		return nil, err
 	}
-	versions := dashboards.DashboardVersionsInfo{}
+	versions := &dashboards.DashboardVersionsInfo{}
 	for _, v := range rsp {
 		info := dashboards.DashboardVersionInfo{
 			Version: v.Version,
@@ -72,21 +65,7 @@ func (r *VersionsREST) Connect(ctx context.Context, id string, opts runtime.Obje
 		versions.Items = append(versions.Items, info)
 	}
 
-	fmt.Println("VersionsREST.Connect() called with id:", id, "and opts:", queryOpts)
-	return &fakeHandler{opts: queryOpts, versions: versions}, nil
-}
-
-type fakeHandler struct {
-	versions dashboards.DashboardVersionsInfo
-	opts     *dashboards.VersionsQueryOptions
-}
-
-func (f *fakeHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// rsp := map[string]any{
-	// 	"url":      req.URL.Path,
-	// 	"opts":     f.opts,
-	// 	"versions": f.versions,
-	// }
-	w.WriteHeader(http.StatusOK)
-	w.Write(response.JSON(http.StatusOK, f.versions).Body())
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		responder.Object(http.StatusOK, versions)
+	}), nil
 }

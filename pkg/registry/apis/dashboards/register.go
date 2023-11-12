@@ -70,6 +70,8 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&dashboards.DashboardResource{},
 		&dashboards.DashboardInfo{},
 		&dashboards.DashboardInfoList{},
+		&dashboards.DashboardAccessInfo{},
+		&dashboards.DashboardVersionsInfo{},
 		&dashboards.VersionsQueryOptions{},
 	)
 
@@ -83,6 +85,8 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&dashboards.DashboardResource{},
 		&dashboards.DashboardInfo{},
 		&dashboards.DashboardInfoList{},
+		&dashboards.DashboardAccessInfo{},
+		&dashboards.DashboardVersionsInfo{},
 		&dashboards.VersionsQueryOptions{},
 	)
 
@@ -153,6 +157,10 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 
 	storage := map[string]rest.Storage{}
 	storage["dashboards"] = legacyStore
+	storage["dashboards/access"] = &AccessREST{
+		Store:                   store,
+		dashboardVersionService: b.dashboardVersionService,
+	}
 	storage["dashboards/versions"] = &VersionsREST{
 		Store:                   store,
 		dashboardVersionService: b.dashboardVersionService,

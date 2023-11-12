@@ -16,12 +16,146 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.AnnotationActions":     schema_pkg_apis_dashboards_v0alpha1_AnnotationActions(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.AnnotationPermission":  schema_pkg_apis_dashboards_v0alpha1_AnnotationPermission(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardAccessInfo":   schema_pkg_apis_dashboards_v0alpha1_DashboardAccessInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardInfo":         schema_pkg_apis_dashboards_v0alpha1_DashboardInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardInfoList":     schema_pkg_apis_dashboards_v0alpha1_DashboardInfoList(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardResource":     schema_pkg_apis_dashboards_v0alpha1_DashboardResource(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardVersionInfo":  schema_pkg_apis_dashboards_v0alpha1_DashboardVersionInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.DashboardVersionsInfo": schema_pkg_apis_dashboards_v0alpha1_DashboardVersionsInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.VersionsQueryOptions":  schema_pkg_apis_dashboards_v0alpha1_VersionsQueryOptions(ref),
+	}
+}
+
+func schema_pkg_apis_dashboards_v0alpha1_AnnotationActions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"canAdd": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"canEdit": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"canDelete": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"canAdd", "canEdit", "canDelete"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboards_v0alpha1_AnnotationPermission(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dashboard": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.AnnotationActions"),
+						},
+					},
+					"organization": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.AnnotationActions"),
+						},
+					},
+				},
+				Required: []string{"dashboard", "organization"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.AnnotationActions"},
+	}
+}
+
+func schema_pkg_apis_dashboards_v0alpha1_DashboardAccessInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Information about how the requesting user can use a given dashboard",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"canSave": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"canEdit": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"canAdmin": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"canStar": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"canDelete": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"annotationsPermissions": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.AnnotationPermission"),
+						},
+					},
+				},
+				Required: []string{"canSave", "canEdit", "canAdmin", "canStar", "canDelete", "annotationsPermissions"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1.AnnotationPermission"},
 	}
 }
 
@@ -162,6 +296,8 @@ func schema_pkg_apis_dashboards_v0alpha1_DashboardResource(ref common.ReferenceC
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The dashboard body",
+							Default:     map[string]interface{}{},
+							Type:        []string{"object"},
 						},
 					},
 				},
@@ -186,9 +322,8 @@ func schema_pkg_apis_dashboards_v0alpha1_DashboardVersionInfo(ref common.Referen
 					},
 					"parentVersion": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int32",
+							Type:   []string{"integer"},
+							Format: "int32",
 						},
 					},
 					"created": {
@@ -200,20 +335,18 @@ func schema_pkg_apis_dashboards_v0alpha1_DashboardVersionInfo(ref common.Referen
 					},
 					"message": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"createdBy": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
-				Required: []string{"version", "parentVersion", "created", "message", "createdBy"},
+				Required: []string{"version", "created"},
 			},
 		},
 	}

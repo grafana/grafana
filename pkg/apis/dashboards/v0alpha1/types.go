@@ -76,3 +76,27 @@ type VersionsQueryOptions struct {
 	// +optional
 	Version int64 `json:"version,omitempty"`
 }
+
+// Information about how the requesting user can use a given dashboard
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DashboardAccessInfo struct {
+	metav1.TypeMeta `json:",inline"`
+
+	CanSave                bool                  `json:"canSave"`
+	CanEdit                bool                  `json:"canEdit"`
+	CanAdmin               bool                  `json:"canAdmin"`
+	CanStar                bool                  `json:"canStar"`
+	CanDelete              bool                  `json:"canDelete"`
+	AnnotationsPermissions *AnnotationPermission `json:"annotationsPermissions"`
+}
+
+type AnnotationPermission struct {
+	Dashboard    AnnotationActions `json:"dashboard"`
+	Organization AnnotationActions `json:"organization"`
+}
+
+type AnnotationActions struct {
+	CanAdd    bool `json:"canAdd"`
+	CanEdit   bool `json:"canEdit"`
+	CanDelete bool `json:"canDelete"`
+}
