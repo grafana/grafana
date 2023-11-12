@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/registry/generic"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -64,6 +66,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&dashboards.DashboardResource{},
 		&dashboards.DashboardInfo{},
 		&dashboards.DashboardInfoList{},
+		&dashboards.VersionsQueryOptions{},
 	)
 
 	// Link this version to the internal representation.
@@ -76,6 +79,7 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&dashboards.DashboardResource{},
 		&dashboards.DashboardInfo{},
 		&dashboards.DashboardInfoList{},
+		&dashboards.VersionsQueryOptions{},
 	)
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
@@ -92,17 +96,20 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
-	storage := map[string]rest.Storage{}
 
-	legacyStore := &legacyStorage{
-		service:                   b.dashboardService,
-		provisioningService:       b.provisioningService,
-		namespacer:                b.namespacer,
+	strategy := grafanaregistry.NewStrategy(scheme)
+	store := &genericregistry.Store{
+		NewFunc:                   func() runtime.Object { return &dashboards.DashboardResource{} },
+		NewListFunc:               func() runtime.Object { return &dashboards.DashboardInfoList{} },
+		PredicateFunc:             grafanaregistry.Matcher,
 		DefaultQualifiedResource:  b.gv.WithResource("dashboards").GroupResource(),
 		SingularQualifiedResource: b.gv.WithResource("dashboard").GroupResource(),
+		CreateStrategy:            strategy,
+		UpdateStrategy:            strategy,
+		DeleteStrategy:            strategy,
 	}
-	legacyStore.tableConverter = utils.NewTableConverter(
-		legacyStore.DefaultQualifiedResource,
+	store.TableConvertor = utils.NewTableConverter(
+		store.DefaultQualifiedResource,
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Title", Type: "string", Format: "string", Description: "The dashboard name"},
@@ -126,9 +133,25 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 				}, nil
 			}
 			return nil, fmt.Errorf("expected resource or info")
-		},
-	)
+		})
+
+	// options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
+	// if err := store.CompleteWithOptions(options); err != nil {
+	// 	return nil, err
+	// }
+
+	legacyStore := &legacyStorage{
+		Store:               store,
+		service:             b.dashboardService,
+		provisioningService: b.provisioningService,
+		namespacer:          b.namespacer,
+	}
+
+	storage := map[string]rest.Storage{}
 	storage["dashboards"] = legacyStore
+	storage["dashboards/versions"] = &VersionsREST{
+		Store: store,
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil

@@ -45,3 +45,25 @@ type DashboardInfo struct {
 	// Tags
 	Tags []string `json:"tags,omitempty"`
 }
+
+type DashboardVersionMeta struct {
+	Version       int    `json:"version"`
+	ParentVersion int    `json:"parentVersion"`
+	Created       int64  `json:"created"`
+	Message       string `json:"message"`
+	CreatedBy     string `json:"createdBy"`
+}
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type VersionsQueryOptions struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Path is the URL path
+	// +optional
+	Path string `json:"path,omitempty"`
+
+	// +optional
+	Version int64 `json:"version,omitempty"`
+}

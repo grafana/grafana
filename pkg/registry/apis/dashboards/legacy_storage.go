@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
@@ -17,24 +17,21 @@ import (
 )
 
 var (
+	_ rest.Storage              = (*legacyStorage)(nil)
 	_ rest.Scoper               = (*legacyStorage)(nil)
 	_ rest.SingularNameProvider = (*legacyStorage)(nil)
 	_ rest.Getter               = (*legacyStorage)(nil)
 	_ rest.Lister               = (*legacyStorage)(nil)
-	// _ rest.Storage              = (*legacyStorage)(nil)
 	// _ rest.Creater              = (*legacyStorage)(nil)
 	// _ rest.Updater              = (*legacyStorage)(nil)
 	// _ rest.GracefulDeleter      = (*legacyStorage)(nil)
 )
 
 type legacyStorage struct {
+	Store               *genericregistry.Store
 	service             dashboardssvc.DashboardService
 	provisioningService dashboardssvc.DashboardProvisioningService
 	namespacer          request.NamespaceMapper
-	tableConverter      rest.TableConvertor
-
-	DefaultQualifiedResource  schema.GroupResource
-	SingularQualifiedResource schema.GroupResource
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -56,7 +53,7 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
+	return s.Store.TableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -111,7 +108,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	})
 	if err != nil || dto == nil {
 		if true { // errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
-			err = k8serrors.NewNotFound(s.SingularQualifiedResource, name)
+			err = k8serrors.NewNotFound(s.Store.SingularQualifiedResource, name)
 		}
 		return nil, err
 	}
@@ -121,12 +118,12 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	if err != nil {
 		return nil, err
 	}
-	if provisioningData != nil {
-		// TODO? shorten the path based on the full provisioning source
-		// id, err := filepath.Rel(
-		// 	s.provisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
-		// 	provisioningData.ExternalID,
-		// )
-	}
+	//if provisioningData != nil {
+	// TODO? shorten the path based on the full provisioning source
+	// id, err := filepath.Rel(
+	// 	s.provisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
+	// 	provisioningData.ExternalID,
+	// )
+	//}
 	return convertToK8sResource(dto, provisioningData, s.namespacer), nil
 }
