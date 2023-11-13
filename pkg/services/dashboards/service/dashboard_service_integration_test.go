@@ -481,7 +481,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
-						assert.Equal(t, dashboards.ErrDashboardFolderNotFound, err)
+						assert.Equal(t, dashboards.ErrFolderNotFound, err)
 					})
 
 				permissionScenario(t, "When updating an existing dashboard by id without current version", canSave,
