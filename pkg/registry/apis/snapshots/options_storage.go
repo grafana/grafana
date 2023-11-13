@@ -2,7 +2,6 @@ package snapshots
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,8 +18,6 @@ var (
 	_ rest.Getter               = (*optionsStorage)(nil)
 	_ rest.Lister               = (*optionsStorage)(nil)
 	_ rest.Storage              = (*optionsStorage)(nil)
-	_ rest.Creater              = (*optionsStorage)(nil)
-	_ rest.GracefulDeleter      = (*optionsStorage)(nil)
 )
 
 type sharingOptionsGetter = func(namespace string) (*snapshots.SnapshotSharingConfig, error)
@@ -54,7 +51,7 @@ func (s *optionsStorage) New() runtime.Object {
 func (s *optionsStorage) Destroy() {}
 
 func (s *optionsStorage) NamespaceScoped() bool {
-	return true // name == namespace/tenant??
+	return false // name == namespace/tenant??
 }
 
 func (s *optionsStorage) GetSingularName() string {
@@ -75,17 +72,4 @@ func (s *optionsStorage) List(ctx context.Context, options *internalversion.List
 
 func (s *optionsStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return s.getter(name)
-}
-
-func (s *optionsStorage) Create(ctx context.Context,
-	obj runtime.Object,
-	createValidation rest.ValidateObjectFunc,
-	options *metav1.CreateOptions,
-) (runtime.Object, error) {
-	return nil, fmt.Errorf("not implemented yet")
-}
-
-// GracefulDeleter
-func (s *optionsStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("not implemented yet")
 }
