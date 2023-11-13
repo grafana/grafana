@@ -47,7 +47,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			sqlStore = db.InitTestDB(t)
 			quotaService := quotatest.New(false, nil)
 			var err error
-			dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 			require.NoError(t, err)
 			flder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod", "webapp")
@@ -145,7 +145,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				quotaService := quotatest.New(false, nil)
 				var err error
-				dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+				dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 				require.NoError(t, err)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, "", true, "prod")
@@ -252,7 +252,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
 		var err error
-		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 
 		usr := createUser(t, sqlStore, "viewer", "Viewer", false)
@@ -412,7 +412,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			dashboardReadStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, tc.features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+			dashboardReadStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, tc.features, tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 			require.NoError(t, err)
 
 			viewer.Permissions = map[int64]map[string][]string{viewer.OrgID: tc.permissions}

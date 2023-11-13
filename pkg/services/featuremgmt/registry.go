@@ -338,13 +338,6 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:           "gcomOnlyExternalOrgRoleSync",
-			Description:    "Prohibits a user from changing organization roles synced with Grafana Cloud auth provider",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          identityAccessTeam,
-			AllowSelfServe: falsePtr,
-		},
-		{
 			Name:           "prometheusMetricEncyclopedia",
 			Description:    "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
 			Expression:     "true",
@@ -995,6 +988,13 @@ var (
 		{
 			Name:         "dashboardSceneForViewers",
 			Description:  "Enables dashboard rendering using Scenes for viewer roles",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "dashboardScene",
+			Description:  "Enables dashboard rendering using scenes for all roles",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,

@@ -191,10 +191,6 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagGcomOnlyExternalOrgRoleSync
-	// Prohibits a user from changing organization roles synced with Grafana Cloud auth provider
-	FlagGcomOnlyExternalOrgRoleSync = "gcomOnlyExternalOrgRoleSync"
-
 	// FlagPrometheusMetricEncyclopedia
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
@@ -558,6 +554,10 @@ const (
 	// FlagDashboardSceneForViewers
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
+
+	// FlagDashboardScene
+	// Enables dashboard rendering using scenes for all roles
+	FlagDashboardScene = "dashboardScene"
 
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
