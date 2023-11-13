@@ -157,7 +157,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	}
 
 	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		return s.withFullpath(ctx, dashFolder, q.IncludeFullpath)
+		return s.WithFullpath(ctx, dashFolder, q.IncludeFullpath)
 	}
 
 	if q.ID != nil {
@@ -174,7 +174,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
-	return s.withFullpath(ctx, f, q.IncludeFullpath)
+	return s.WithFullpath(ctx, f, q.IncludeFullpath)
 }
 
 func (s *Service) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]*folder.Folder, error) {
@@ -202,7 +202,7 @@ func (s *Service) GetFolders(ctx context.Context, q *folder.GetFoldersQuery) ([]
 			return nil, err
 		}
 		if canView {
-			f, err := s.withFullpath(ctx, f, q.IncludeFullpath)
+			f, err := s.WithFullpath(ctx, f, q.IncludeFullpath)
 			if err != nil {
 				s.log.Error("failed to fetch folder full path", "error", err)
 			}
@@ -962,7 +962,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	return cmd, nil
 }
 
-func (s *Service) withFullpath(ctx context.Context, f *folder.Folder, includeFullpath bool) (*folder.Folder, error) {
+func (s *Service) WithFullpath(ctx context.Context, f *folder.Folder, includeFullpath bool) (*folder.Folder, error) {
 	if !includeFullpath {
 		return f, nil
 	}
