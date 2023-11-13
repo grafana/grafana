@@ -2,7 +2,6 @@ package grafanaapiserver
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +25,6 @@ import (
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/util/openapi"
 	"k8s.io/client-go/kubernetes/scheme"
-	k8sversion "k8s.io/client-go/pkg/version"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -299,10 +297,6 @@ func (s *service) start(ctx context.Context) error {
 		}
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
-
-	xxx := k8sversion.Get()
-	jjj, _ := json.MarshalIndent(xxx, "", "  ")
-	fmt.Printf(">>> %s\n%v\n", string(jjj), setting.BuildStamp)
 
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 	before, after, _ := strings.Cut(setting.BuildVersion, ".")
