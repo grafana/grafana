@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSocialOkta_UserInfo(t *testing.T) {
@@ -95,14 +96,22 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 				}
 			}))
 			defer server.Close()
-			provider := &SocialOkta{
-				SocialBase: newSocialBase("okta", &oauth2.Config{},
-					&OAuthInfo{RoleAttributePath: tt.RoleAttributePath}, tt.autoAssignOrgRole, false, *featuremgmt.WithFeatures()),
-				apiUrl:          server.URL + "/user",
-				skipOrgRoleSync: tt.settingSkipOrgRoleSync,
-			}
-			provider.allowAssignGrafanaAdmin = tt.allowAssignGrafanaAdmin
-			provider.roleAttributePath = tt.RoleAttributePath
+
+			provider, err := NewOktaProvider(
+				map[string]interface{}{
+					"api_url":                    server.URL + "/user",
+					"role_attribute_path":        tt.RoleAttributePath,
+					"allow_assign_grafana_admin": tt.allowAssignGrafanaAdmin,
+					"skip_org_role_sync":         tt.settingSkipOrgRoleSync,
+				},
+				&setting.Cfg{
+					OktaSkipOrgRoleSync:        tt.settingSkipOrgRoleSync,
+					AutoAssignOrgRole:          tt.autoAssignOrgRole,
+					OAuthSkipOrgRoleUpdateSync: false,
+				},
+				featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
 			// create a oauth2 token with a id_token
 			staticToken := oauth2.Token{
 				AccessToken:  "",
