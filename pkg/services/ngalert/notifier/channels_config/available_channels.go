@@ -131,6 +131,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "msgType",
 					SelectOptions: []SelectOption{
 						{
+							Value: "text",
+							Label: "Text",
+						},
+						{
+							Value: "markdown",
+							Label: "Markdown",
+						},
+						{
 							Value: "link",
 							Label: "Link"},
 						{
@@ -143,16 +151,23 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Title",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Description:  "Templated title of the message",
+					Description:  "title of the message, eg.  {{template \"plusai.title\" .}} ",
 					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 					PropertyName: "title",
 				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Description:  "Custom DingDing message. You can use template variables.",
+					Description:  "Custom DingDing message. You can use template variables. eg.  {{template \"plusai.message\" .}}",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
+				},
+				{
+					Label:        "To User",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "'all' or phone numbers by ',' ",
+					PropertyName: "touser",
 				},
 			},
 		},
