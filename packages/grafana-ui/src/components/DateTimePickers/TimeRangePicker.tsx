@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { memo, createRef, useState } from 'react';
+import React, { memo, createRef, useState, useEffect } from 'react';
 
 import {
   isDateTime,
@@ -76,13 +76,14 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     setOpen(false);
   };
 
-  const onToolbarButtonSwitch = () => {
-  setOpen((prevState) => {
-    if (prevState && props.onToolbarTimePickerClick) {
+  useEffect(() => {
+    if (isOpen && props.onToolbarTimePickerClick) {
       props.onToolbarTimePickerClick();
     }
-    return !prevState;
-  });
+  }, [isOpen, props.onToolbarTimePickerClick]);
+
+  const onToolbarButtonSwitch = () => {
+    setOpen((prevState) => !prevState);
   };
 
   const onClose = () => {
