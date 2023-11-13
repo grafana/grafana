@@ -4,7 +4,6 @@ import React from 'react';
 import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { HorizontalGroup } from '../Layout/Layout';
 
 import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { ColorIndicator } from './types';
@@ -44,13 +43,11 @@ const SingleSeries = ({ label, value, color, colorIndicator = ColorIndicator.ser
   const styles = useStyles2(getStyles);
 
   return (
-    <HorizontalGroup justify="space-between" spacing="md" className={styles.hgContainer}>
-      <>
-        {color && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />}
-        {label && <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>}
-      </>
-      {value && <div className={cx(isActive && styles.activeSeries)}>{value}</div>}
-    </HorizontalGroup>
+    <div className={styles.contentWrapper}>
+      {color && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
+      <span className={cx(styles.label, isActive && styles.activeSeries)}>{label}</span>
+      <span className={cx(isActive && styles.value)}>{value}</span>
+    </div>
   );
 };
 
@@ -65,5 +62,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     color: theme.colors.text.secondary,
     fontWeight: 400,
+    marginRight: 'auto',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    minWidth: '48px',
+  }),
+  value: css({
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+  }),
+  contentWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   }),
 });

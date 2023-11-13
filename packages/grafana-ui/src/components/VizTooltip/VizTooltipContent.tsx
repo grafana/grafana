@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
+import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { LabelValue } from './types';
 
 interface Props {
@@ -21,6 +22,9 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
           return (
             <div className={styles.contentWrapper} key={i}>
               <div className={styles.label}>{labelValue.label}</div>
+              {labelValue.color && (
+                <VizTooltipColorIndicator color={labelValue.color} colorIndicator={labelValue.colorIndicator!} />
+              )}
               <div className={styles.value}>{labelValue.value}</div>
             </div>
           );
@@ -42,6 +46,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   contentWrapper: css({
     display: 'flex',
+    alignItems: 'center',
     justifyContent: 'space-between',
   }),
   customContentPadding: css({
@@ -50,6 +55,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     color: theme.colors.text.secondary,
     fontWeight: 400,
+    marginRight: 'auto',
     textOverflow: 'ellipsis',
     overflow: 'hidden',
     minWidth: '48px',

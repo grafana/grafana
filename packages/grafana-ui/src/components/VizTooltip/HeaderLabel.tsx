@@ -20,7 +20,7 @@ export const HeaderLabel = ({ headerLabel }: Props) => {
   return (
     <div className={styles.wrapper}>
       {color && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
-      <span className={styles.label}>{label}</span>
+      {label && <span className={styles.label}>{label}</span>}
       <span className={styles.labelValue}>{value}</span>
     </div>
   );
