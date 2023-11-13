@@ -41,7 +41,6 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }:
     <GenAIButton
       messages={messages}
       onGenerate={onGenerate}
-      loadingText={'Generating changes summary'}
       temperature={0}
       model={'gpt-3.5-turbo-16k'}
       eventTrackingSrc={EventTrackingSrc.dashboardChanges}

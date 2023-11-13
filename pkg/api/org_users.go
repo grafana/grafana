@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -325,7 +324,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	// Get accesscontrol metadata and IPD labels for users in the target org
 	accessControlMetadata := map[string]accesscontrol.Metadata{}
 	if c.QueryBool("accesscontrol") && c.SignedInUser.Permissions != nil {
-		// TODO https://github.com/grafana/grafana-authnz-team/issues/268 - user access control service for fetching permissions from another organization
+		// TODO https://github.com/grafana/identity-access-team/issues/268 - user access control service for fetching permissions from another organization
 		permissions, ok := c.SignedInUser.Permissions[query.OrgID]
 		if ok {
 			accessControlMetadata = accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "users:id:", userIDs)
@@ -423,11 +422,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 		}
 	}
 	if authInfo != nil && authInfo.AuthModule != "" && login.IsExternallySynced(hs.Cfg, authInfo.AuthModule) {
-		// A GCom specific feature toggle for role locking has been introduced, as the previous implementation had a bug with locking down external users synced through GCom (https://github.com/grafana/grafana/pull/72044)
-		// Remove this conditional once FlagGcomOnlyExternalOrgRoleSync feature toggle has been removed
-		if authInfo.AuthModule != login.GrafanaComAuthModule || hs.Features.IsEnabled(featuremgmt.FlagGcomOnlyExternalOrgRoleSync) {
-			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
-		}
+		return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
 	}
 
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {

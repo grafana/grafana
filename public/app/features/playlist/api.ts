@@ -57,15 +57,10 @@ interface K8sPlaylist {
 class K8sAPI implements PlaylistAPI {
   readonly apiVersion = 'playlist.grafana.app/v0alpha1';
   readonly url: string;
-  readonly legacy: PlaylistAPI | undefined;
 
   constructor() {
     const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
     this.url = `/apis/${this.apiVersion}/namespaces/${ns}/playlists`;
-
-    // When undefined, this will use k8s for all CRUD features
-    // if (!config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
-    this.legacy = new LegacyAPI();
   }
 
   async getAllPlaylist(): Promise<Playlist[]> {
@@ -81,25 +76,16 @@ class K8sAPI implements PlaylistAPI {
   }
 
   async createPlaylist(playlist: Playlist): Promise<void> {
-    if (this.legacy) {
-      return this.legacy.createPlaylist(playlist);
-    }
     const body = this.playlistAsK8sResource(playlist);
     await withErrorHandling(() => getBackendSrv().post(this.url, body));
   }
 
   async updatePlaylist(playlist: Playlist): Promise<void> {
-    if (this.legacy) {
-      return this.legacy.updatePlaylist(playlist);
-    }
     const body = this.playlistAsK8sResource(playlist);
     await withErrorHandling(() => getBackendSrv().put(`${this.url}/${playlist.uid}`, body));
   }
 
   async deletePlaylist(uid: string): Promise<void> {
-    if (this.legacy) {
-      return this.legacy.deletePlaylist(uid);
-    }
     await withErrorHandling(() => getBackendSrv().delete(`${this.url}/${uid}`), 'Playlist deleted');
   }
 

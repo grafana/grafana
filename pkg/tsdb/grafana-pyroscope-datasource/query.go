@@ -98,18 +98,32 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
 		g.Go(func() error {
-			logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
-			prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
-			if err != nil {
-				span.RecordError(err)
-				span.SetStatus(codes.Error, err.Error())
-				logger.Error("Error GetProfile()", "err", err, "function", logEntrypoint())
-				return err
+			var profileResp *ProfileResponse
+			if len(qm.SpanSelector) > 0 {
+				logger.Debug("Calling GetSpanProfile", "queryModel", qm, "function", logEntrypoint())
+				prof, err := d.client.GetSpanProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, err.Error())
+					logger.Error("Error GetSpanProfile()", "err", err, "function", logEntrypoint())
+					return err
+				}
+				profileResp = prof
+			} else {
+				logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
+				prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, err.Error())
+					logger.Error("Error GetProfile()", "err", err, "function", logEntrypoint())
+					return err
+				}
+				profileResp = prof
 			}
 
 			var frame *data.Frame
-			if prof != nil {
-				frame = responseToDataFrames(prof)
+			if profileResp != nil {
+				frame = responseToDataFrames(profileResp)
 
 				// If query called with streaming on then return a channel
 				// to subscribe on a client-side and consume updates from a plugin.
