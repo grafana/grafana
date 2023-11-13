@@ -16,7 +16,6 @@ export interface TooltipProps {
   placement?: TooltipPlacement;
   content: PopoverContent;
   children: JSX.Element;
-  tabIndex?: number;
   /**
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
@@ -24,7 +23,7 @@ export interface TooltipProps {
 }
 
 export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
-  ({ children, theme, interactive, show, placement, content, tabIndex }, forwardedRef) => {
+  ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const [controlledVisible, setControlledVisible] = useState(show);
     const tooltipId = useId();
 
@@ -89,7 +88,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
       <>
         {React.cloneElement(children, {
           ref: handleRef,
-          tabIndex: tabIndex || 0, // tooltip trigger should be keyboard focusable
+          tabIndex: 0, // tooltip trigger should be keyboard focusable
           'aria-describedby': !childHasAriaLabel && visible ? tooltipId : undefined,
         })}
         {visible && (
