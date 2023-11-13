@@ -4,13 +4,7 @@ import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import {
-  getUrlSyncManager,
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneTimeRange,
-} from '@grafana/scenes';
+import { getUrlSyncManager, SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -90,46 +84,8 @@ export function getDataTrailsApp() {
     dataTrailsApp = new DataTrailsApp({
       trail: newMetricsTrail(),
       home: new DataTrailsHome({
-        recent: [
-          new DataTrail({
-            initialDS: 'gdev-prometheus',
-            metric: 'grafana_http_request_duration_seconds_count',
-            initialFilters: [{ key: 'job', operator: '=', value: 'grafana' }],
-          }).getRef(),
-          new DataTrail({
-            initialDS: 'gdev-prometheus',
-            metric: 'go_memstats_alloc_bytes_total',
-            initialFilters: [{ key: 'job', operator: '=', value: 'node_exporter' }],
-          }).getRef(),
-        ],
-        bookmarks: [
-          new DataTrail({
-            initialDS: 'kCLEK-Cnk',
-            $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-            initialFilters: [
-              { key: 'job', operator: '=', value: 'production/grafana' },
-              { key: 'endpoint', operator: '=', value: 'queryData' },
-            ],
-          }).getRef(),
-          new DataTrail({
-            initialDS: 'kCLEK-Cnk',
-            metric: 'grafana_plugin_request_duration_seconds_count',
-            initialFilters: [
-              { key: 'job', operator: '=', value: 'production/grafana' },
-              { key: 'cluster', operator: '=', value: 'se-demo-cluster' },
-              { key: 'namespace', operator: '=', value: 'production' },
-            ],
-          }).getRef(),
-          new DataTrail({
-            initialDS: 'kCLEK-Cnk',
-            metric: 'access_evaluation_duration_bucket',
-            initialFilters: [
-              { key: 'job', operator: '=', value: 'production/grafana' },
-              { key: 'cluster', operator: '=', value: 'se-demo-cluster' },
-              { key: 'namespace', operator: '=', value: 'production' },
-            ],
-          }).getRef(),
-        ],
+        recent: [],
+        bookmarks: [],
       }),
     });
   }
