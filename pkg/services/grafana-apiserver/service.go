@@ -251,9 +251,6 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.Etcd.Validate(); len(err) > 0 {
 			return err[0]
 		}
-		if err := o.Etcd.Complete(serverConfig.Config.StorageObjectCountTracker, serverConfig.Config.DrainedNotify(), serverConfig.Config.AddPostStartHook); err != nil {
-			return err
-		}
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
@@ -307,7 +304,7 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if g == nil {
+		if g == nil || len(g.PrioritizedVersions) < 1 {
 			continue
 		}
 		err = server.InstallAPIGroup(g)

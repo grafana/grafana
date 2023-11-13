@@ -14,20 +14,49 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestPlaylist(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	helper := apis.NewK8sTestHelper(t)
+
+	t.Run("default setup", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: true, // do not start extra port 6443
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServer,
+			},
+		}))
+	})
+
+	t.Run("with k8s api flag", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: true, // do not start extra port 6443
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServer,
+				featuremgmt.FlagKubernetesPlaylists, // <<< The change we are testing!
+			},
+		}))
+	})
+}
+
+func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) {
 	gvr := schema.GroupVersionResource{
 		Group:    "playlist.grafana.app",
 		Version:  "v0alpha1",
 		Resource: "playlists",
 	}
+
+	defer func() {
+		helper.Shutdown()
+	}()
 
 	t.Run("Check direct List permissions from different org users", func(t *testing.T) {
 		// Check view permissions
@@ -38,13 +67,13 @@ func TestPlaylist(t *testing.T) {
 		require.Nil(t, rsp.Status)
 
 		// Check view permissions
-		rsp = helper.List(helper.Org2.Viewer, "default", gvr)
-		require.Equal(t, 403, rsp.Response.StatusCode) // Org2 can not see default namespace
+		rsp = helper.List(helper.OrgB.Viewer, "default", gvr)
+		require.Equal(t, 403, rsp.Response.StatusCode) // OrgB can not see default namespace
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 
 		// Check view permissions
-		rsp = helper.List(helper.Org2.Viewer, "org-22", gvr)
+		rsp = helper.List(helper.OrgB.Viewer, "org-22", gvr)
 		require.Equal(t, 403, rsp.Response.StatusCode) // Unknown/not a member
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
@@ -63,7 +92,7 @@ func TestPlaylist(t *testing.T) {
 
 		// Check org2 viewer can not see org1 (default namespace)
 		client = helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org2.Viewer,
+			User:      helper.OrgB.Viewer,
 			Namespace: "default", // actually org1
 			GVR:       gvr,
 		})
@@ -74,7 +103,7 @@ func TestPlaylist(t *testing.T) {
 
 		// Check invalid namespace
 		client = helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org2.Viewer,
+			User:      helper.OrgB.Viewer,
 			Namespace: "org-22", // org 22 does not exist
 			GVR:       gvr,
 		})

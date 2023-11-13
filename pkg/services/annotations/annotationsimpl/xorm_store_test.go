@@ -41,7 +41,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
 
-	store := NewXormStore(cfg, log.New("annotation.test"), sql, tagimpl.ProvideService(sql, sql.Cfg))
+	store := NewXormStore(cfg, log.New("annotation.test"), sql, tagimpl.ProvideService(sql))
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -593,7 +593,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	sql := db.InitTestDB(b)
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
-	store := xormRepositoryImpl{db: sql, cfg: cfg, log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg)}
+	store := xormRepositoryImpl{db: sql, cfg: cfg, log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
 
 	type annotationTag struct {
 		ID           int64 `xorm:"pk autoincr 'id'"`

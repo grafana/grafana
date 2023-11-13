@@ -72,7 +72,7 @@ describe('valueFormats', () => {
     ${'dtdurationms'}     | ${undefined} | ${100000}                                   | ${'1 minute'}
     ${'dtdurationms'}     | ${undefined} | ${150000}                                   | ${'2 minutes'}
   `(
-    'With format=$format decimals=$decimals and value=$value then result shoudl be = $expected',
+    'With format=$format decimals=$decimals and value=$value then result should be = $expected',
     async ({ format, value, decimals, expected }) => {
       const result = getValueFormat(format)(value, decimals, undefined, undefined);
       const full = formattedValueToString(result);

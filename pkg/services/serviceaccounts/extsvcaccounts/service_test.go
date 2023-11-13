@@ -380,3 +380,64 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 		})
 	}
 }
+
+func TestExtSvcAccountsService_RemoveExtSvcAccount(t *testing.T) {
+	extSvcSlug := "grafana-test-app"
+	tmpOrgID := int64(1)
+	extSvcAccID := int64(10)
+	tests := []struct {
+		name   string
+		init   func(env *TestEnv)
+		slug   string
+		checks func(t *testing.T, env *TestEnv)
+		want   *extsvcauth.ExternalService
+	}{
+		{
+			name: "should not fail if the service account does not exist",
+			init: func(env *TestEnv) {
+				// No previous service account was attached to this slug
+				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, tmpOrgID, sa.ExtSvcPrefix+extSvcSlug).
+					Return(int64(0), sa.ErrServiceAccountNotFound.Errorf("not found"))
+			},
+			slug: extSvcSlug,
+			want: nil,
+		},
+		{
+			name: "should remove service account",
+			init: func(env *TestEnv) {
+				// A previous service account was attached to this slug
+				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, tmpOrgID, sa.ExtSvcPrefix+extSvcSlug).
+					Return(extSvcAccID, nil)
+				env.SaSvc.On("DeleteServiceAccount", mock.Anything, tmpOrgID, extSvcAccID).Return(nil)
+				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, extSvcSlug).Return(nil)
+				// A token was previously stored in the secret store
+				_ = env.SkvStore.Set(context.Background(), tmpOrgID, extSvcSlug, kvStoreType, "ExtSvcSecretToken")
+			},
+			slug: extSvcSlug,
+			checks: func(t *testing.T, env *TestEnv) {
+				_, ok, _ := env.SkvStore.Get(context.Background(), tmpOrgID, extSvcSlug, kvStoreType)
+				require.False(t, ok, "secret should have been removed from store")
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			env := setupTestEnv(t)
+			if tt.init != nil {
+				tt.init(env)
+			}
+
+			err := env.S.RemoveExtSvcAccount(ctx, tmpOrgID, tt.slug)
+			require.NoError(t, err)
+
+			if tt.checks != nil {
+				tt.checks(t, env)
+			}
+			env.SaSvc.AssertExpectations(t)
+			env.AcStore.AssertExpectations(t)
+		})
+	}
+}

@@ -35,7 +35,7 @@ function mapStateToProps(state: StoreState, { exploreId }: RawPrometheusContaine
   const { tableResult, rawPrometheusResult, range } = item;
   const loadingInState = selectIsWaitingForData(exploreId)(state);
   const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
-  const result = (tableResult?.length ?? false) > 0 && rawPrometheusResult ? tableResult : rawPrometheusFrame;
+  const result = (tableResult?.length ?? 0) > 0 && rawPrometheusResult ? tableResult : rawPrometheusFrame;
   const loading = result && result.length > 0 ? false : loadingInState;
 
   return { loading, tableResult: result, range };
