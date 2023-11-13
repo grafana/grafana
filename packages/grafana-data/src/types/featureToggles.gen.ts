@@ -155,6 +155,7 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
+  dashboardScene?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
@@ -162,4 +163,5 @@ export interface FeatureToggles {
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
   datatrails?: boolean;
+  alertingSimplifiedRouting?: boolean;
 }
