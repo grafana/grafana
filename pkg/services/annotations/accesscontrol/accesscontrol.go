@@ -2,7 +2,6 @@ package accesscontrol
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -12,9 +11,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrMissingPermissions = errors.New("missing permissions")
+var (
+	ErrReadForbidden = errutil.NewBase(
+		errutil.StatusForbidden,
+		"annotations.accesscontrol.read",
+		errutil.WithPublicMessage("User missing permissions"),
+	)
+	ErrAccessControlInternal = errutil.NewBase(
+		errutil.StatusInternal,
+		"annotations.accesscontrol.internal",
+		errutil.WithPublicMessage("Internal error while checking permissions"),
+	)
+)
 
 type AuthService struct {
 	db       db.DB
@@ -31,12 +42,12 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles) *AuthService 
 // Authorize checks if the user has permission to read annotations, then returns a struct containing dashboards and scope types that the user has access to.
 func (authz *AuthService) Authorize(ctx context.Context, orgID int64, user identity.Requester) (*AccessResources, error) {
 	if user == nil || user.IsNil() {
-		return nil, ErrMissingPermissions
+		return nil, ErrReadForbidden.Errorf("missing user")
 	}
 
 	scopes, has := user.GetPermissions()[ac.ActionAnnotationsRead]
 	if !has {
-		return nil, ErrMissingPermissions
+		return nil, ErrReadForbidden.Errorf("user does not have permission to read annotations")
 	}
 
 	scopeTypes := annotationScopeTypes(scopes)
@@ -46,7 +57,7 @@ func (authz *AuthService) Authorize(ctx context.Context, orgID int64, user ident
 	if _, ok := scopeTypes[annotations.Dashboard.String()]; ok {
 		visibleDashboards, err = authz.userVisibleDashboards(ctx, user, orgID)
 		if err != nil {
-			return nil, err
+			return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
 		}
 	}
 
