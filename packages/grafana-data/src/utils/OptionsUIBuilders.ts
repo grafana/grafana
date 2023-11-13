@@ -226,7 +226,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('number').editor as any,
+      editor: standardEditorsRegistry.get('number').editor,
     });
   }
 
@@ -234,7 +234,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('slider').editor as any,
+      editor: standardEditorsRegistry.get('slider').editor,
     });
   }
 
@@ -242,7 +242,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('text').editor as any,
+      editor: standardEditorsRegistry.get('text').editor,
     });
   }
 
@@ -252,7 +252,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('strings').editor as any,
+      editor: standardEditorsRegistry.get('strings').editor,
     });
   }
 
@@ -262,7 +262,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('select').editor as any,
+      editor: standardEditorsRegistry.get('select').editor,
     });
   }
 
@@ -272,7 +272,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('multi-select').editor as any,
+      editor: standardEditorsRegistry.get('multi-select').editor,
     });
   }
 
@@ -282,7 +282,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('radio').editor as any,
+      editor: standardEditorsRegistry.get('radio').editor,
     });
   }
 
@@ -290,7 +290,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('boolean').editor as any,
+      editor: standardEditorsRegistry.get('boolean').editor,
     });
   }
 
@@ -298,7 +298,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('color').editor as any,
+      editor: standardEditorsRegistry.get('color').editor,
       settings: config.settings || {},
     });
   }
@@ -307,7 +307,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('timezone').editor as any,
+      editor: standardEditorsRegistry.get('timezone').editor,
       settings: config.settings || {},
     });
   }
@@ -318,7 +318,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('unit').editor as any,
+      editor: standardEditorsRegistry.get('unit').editor,
     });
   }
 
@@ -328,7 +328,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('field-name').editor as any,
+      editor: standardEditorsRegistry.get('field-name').editor,
     });
   }
 
@@ -338,7 +338,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('dashboard-uid').editor as any, // added at runtime
+      editor: standardEditorsRegistry.get('dashboard-uid').editor, // added at runtime
     });
   }
 }
