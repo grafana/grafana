@@ -1,16 +1,16 @@
 import {
-  SceneVariableSet,
   QueryVariable,
   CustomVariable,
   DataSourceVariable,
   ConstantVariable,
   IntervalVariable,
+  SceneVariables,
 } from '@grafana/scenes';
 import { VariableModel, VariableHide, VariableRefresh, VariableSort } from '@grafana/schema';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-export function sceneVariablesSetToVariables(set: SceneVariableSet) {
+export function sceneVariablesSetToVariables(set: SceneVariables) {
   const variables: VariableModel[] = [];
   for (const variable of set.state.variables) {
     const commonProperties = {
