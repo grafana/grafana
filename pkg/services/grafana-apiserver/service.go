@@ -281,6 +281,10 @@ func (s *service) start(ctx context.Context) error {
 	// Add the custom routes to service discovery
 	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
 
+	// Set the swagger build versions
+	serverConfig.OpenAPIConfig.Info.Version = setting.BuildVersion
+	serverConfig.OpenAPIV3Config.Info.Version = setting.BuildVersion
+
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
@@ -313,7 +317,7 @@ func (s *service) start(ctx context.Context) error {
 		BuildDate:    time.Unix(setting.BuildStamp, 0).UTC().Format(time.DateTime),
 
 		// This is used by kubectl to check compatibility.
-		GitVersion: "v1.27.1", // ???? how do we get this programmatically
+		GitVersion: "v1.28.3", // ???? how do we get this programmatically
 	}
 
 	// Create the server
