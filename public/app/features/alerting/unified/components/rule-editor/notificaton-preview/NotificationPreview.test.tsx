@@ -19,23 +19,18 @@ import { Folder } from '../RuleFolderPicker';
 import { NotificationPreview } from './NotificationPreview';
 import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
 import * as notificationPreview from './useGetAlertManagersSourceNamesAndImage';
-import { useGetAlertManagersSourceNamesAndImage } from './useGetAlertManagersSourceNamesAndImage';
+import { useGetAlertManagersMetadata } from './useGetAlertManagersSourceNamesAndImage';
 
 jest.mock('../../../useRouteGroupsMatcher');
 
 jest
-  .spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage')
-  .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }]);
-
-jest.spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage').mockReturnValue([
-  { name: GRAFANA_RULES_SOURCE_NAME, img: '' },
-  { name: GRAFANA_RULES_SOURCE_NAME, img: '' },
-]);
+  .spyOn(notificationPreview, 'useGetAlertManagersMetadata')
+  .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, img: '', postable: true }]);
 
 jest.spyOn(dataSource, 'getDatasourceAPIUid').mockImplementation((ds: string) => ds);
 
-const useGetAlertManagersSourceNamesAndImageMock = useGetAlertManagersSourceNamesAndImage as jest.MockedFunction<
-  typeof useGetAlertManagersSourceNamesAndImage
+const useGetAlertManagersMetaDataMock = useGetAlertManagersMetadata as jest.MockedFunction<
+  typeof useGetAlertManagersMetadata
 >;
 
 const ui = {
@@ -62,8 +57,14 @@ beforeEach(() => {
 
 const alertQuery = mockAlertQuery({ datasourceUid: 'whatever', refId: 'A' });
 
+const grafanaAlertManagerMetaData = {
+  name: GRAFANA_RULES_SOURCE_NAME,
+  img: '',
+  postable: true,
+};
+
 function mockOneAlertManager() {
-  useGetAlertManagersSourceNamesAndImageMock.mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }]);
+  useGetAlertManagersMetaDataMock.mockReturnValue([grafanaAlertManagerMetaData]);
   mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
     amConfigBuilder
       .withRoute((routeBuilder) =>
@@ -79,9 +80,9 @@ function mockOneAlertManager() {
 }
 
 function mockTwoAlertManagers() {
-  useGetAlertManagersSourceNamesAndImageMock.mockReturnValue([
-    { name: GRAFANA_RULES_SOURCE_NAME, img: '' },
-    { name: 'OTHER_AM', img: '' },
+  useGetAlertManagersMetaDataMock.mockReturnValue([
+    grafanaAlertManagerMetaData,
+    { name: 'OTHER_AM', img: '', postable: true },
   ]);
   mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
     amConfigBuilder
@@ -272,7 +273,7 @@ describe('NotificationPreviewByAlertmanager', () => {
 
     render(
       <NotificationPreviewByAlertManager
-        alertManagerSource={{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }}
+        alertManagerSource={grafanaAlertManagerMetaData}
         potentialInstances={potentialInstances}
         onlyOneAM={true}
       />,
@@ -327,7 +328,7 @@ describe('NotificationPreviewByAlertmanager', () => {
 
     render(
       <NotificationPreviewByAlertManager
-        alertManagerSource={{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }}
+        alertManagerSource={grafanaAlertManagerMetaData}
         potentialInstances={potentialInstances}
         onlyOneAM={true}
       />,
@@ -382,7 +383,7 @@ describe('NotificationPreviewByAlertmanager', () => {
 
     render(
       <NotificationPreviewByAlertManager
-        alertManagerSource={{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }}
+        alertManagerSource={grafanaAlertManagerMetaData}
         potentialInstances={potentialInstances}
         onlyOneAM={true}
       />,

@@ -9,14 +9,14 @@ import { Labels } from '../../../../../../types/unified-alerting-dto';
 
 import { NotificationRoute } from './NotificationRoute';
 import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
-import { AlertManagerNameWithImage } from './useGetAlertManagersSourceNamesAndImage';
+import { AlertManagerMetaData } from './useGetAlertManagersSourceNamesAndImage';
 
 function NotificationPreviewByAlertManager({
   alertManagerSource,
   potentialInstances,
   onlyOneAM,
 }: {
-  alertManagerSource: AlertManagerNameWithImage;
+  alertManagerSource: AlertManagerMetaData;
   potentialInstances: Labels[];
   onlyOneAM: boolean;
 }) {

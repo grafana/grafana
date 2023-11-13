@@ -3,14 +3,14 @@ import { compact } from 'lodash';
 import React, { lazy, Suspense } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, LoadingPlaceholder, useStyles2, Text } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { Folder } from '../RuleFolderPicker';
 
-import { useGetAlertManagersSourceNamesAndImage } from './useGetAlertManagersSourceNamesAndImage';
+import { useGetAlertManagersMetadata } from './useGetAlertManagersSourceNamesAndImage';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 
@@ -64,9 +64,9 @@ export const NotificationPreview = ({
   };
 
   // Get list of alert managers source name + image
-  const alertManagerSourceNamesAndImage = useGetAlertManagersSourceNamesAndImage();
+  const alertManagerMetaData = useGetAlertManagersMetadata();
 
-  const onlyOneAM = alertManagerSourceNamesAndImage.length === 1;
+  const onlyOneAM = alertManagerMetaData.length === 1;
 
   return (
     <Stack direction="column">
@@ -98,7 +98,7 @@ export const NotificationPreview = ({
       </div>
       {!isLoading && !previewUninitialized && potentialInstances.length > 0 && (
         <Suspense fallback={<LoadingPlaceholder text="Loading preview..." />}>
-          {alertManagerSourceNamesAndImage.map((alertManagerSource) => (
+          {alertManagerMetaData.map((alertManagerSource) => (
             <NotificationPreviewByAlertManager
               alertManagerSource={alertManagerSource}
               potentialInstances={potentialInstances}

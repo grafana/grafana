@@ -1,3 +1,4 @@
+import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
@@ -6,6 +7,10 @@ export enum RuleFormType {
   grafana = 'grafana',
   cloudAlerting = 'cloud-alerting',
   cloudRecording = 'cloud-recording',
+}
+export interface AMContactPoint {
+  alertManagerName: string;
+  selectedContactPoint?: Receiver;
 }
 
 export interface RuleFormValues {
@@ -27,7 +32,7 @@ export interface RuleFormValues {
   evaluateEvery: string;
   evaluateFor: string;
   isPaused?: boolean;
-  contactPoint?: string;
+  contactPoints?: AMContactPoint[];
 
   // cortex / loki rules
   namespace: string;

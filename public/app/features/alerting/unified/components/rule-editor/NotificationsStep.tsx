@@ -89,7 +89,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         </Stack>
 
         {routingOption === RoutingOptions['contact point'] ? (
-          <SimplifiedRouting />
+          <div className={styles.simplifiedRouting}>
+            <SimplifiedRouting />
+          </div>
         ) : (
           shouldRenderPreview && (
             <NotificationPreview
@@ -231,5 +233,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   routingOptions: css({
     marginTop: theme.spacing(2),
     width: 'fit-content',
+  }),
+  simplifiedRouting: css({
+    display: 'flex',
+    flexDirection: 'column',
+    marginTop: theme.spacing(2),
   }),
 });
