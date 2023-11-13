@@ -16,9 +16,9 @@ export function getTrailSettings(model: SceneObject): DataTrailSettings {
 
 export function newMetricsTrail(): DataTrail {
   return new DataTrail({
-    initialDS: 'gdev-prometheus',
+    //initialDS: 'gdev-prometheus',
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    initialFilters: [{ key: 'job', operator: '=', value: 'grafana' }],
+    //initialFilters: [{ key: 'job', operator: '=', value: 'grafana' }],
     embedded: false,
   });
 }

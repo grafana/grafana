@@ -363,7 +363,9 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Url:  s.cfg.AppSubURL + "/scenes",
 			Icon: "apps",
 		})
+	}
 
+	if s.features.IsEnabled(featuremgmt.FlagDatatrails) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "Data trails",
 			Id:   "data-trails",

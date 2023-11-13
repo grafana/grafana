@@ -86,6 +86,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
 const actionViewsDefinitions: ActionViewDefinition[] = [
   { displayName: 'Breakdown', value: 'breakdown', getScene: buildBreakdownActionScene },
+  { displayName: 'Logs', value: 'logs', getScene: buildLogsScene },
   { displayName: 'Related metrics', value: 'related', getScene: buildRelatedMetricsScene },
 ];
 

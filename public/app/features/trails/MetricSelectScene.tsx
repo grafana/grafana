@@ -21,7 +21,7 @@ import { Input, Text, useStyles2, InlineSwitch } from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { SelectMetricAction } from './SelectMetricAction';
-import { getVariablesWithMetricConstant, trailDS, VAR_FILTERS, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
+import { getVariablesWithMetricConstant, trailDS, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
 import { getColorByIndex } from './utils';
 
 export interface MetricSelectSceneState extends SceneObjectState {
@@ -53,21 +53,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_FILTERS, VAR_METRIC_NAMES],
+    variableNames: [VAR_METRIC_NAMES],
     onVariableUpdatesCompleted: this._onVariableChanged.bind(this),
   });
 
   private _onVariableChanged(changedVariables: Set<SceneVariable>, dependencyChanged: boolean): void {
-    for (const variable of changedVariables) {
-      if (variable.state.name === VAR_FILTERS) {
-        const variable = sceneGraph.lookupVariable(VAR_FILTERS, this)!;
-        // Temp hack
-        (this.state.$variables as any)._handleVariableValueChanged(variable);
-      }
-
-      if (variable.state.name === VAR_METRIC_NAMES) {
-        this.buildLayout();
-      }
+    if (dependencyChanged) {
+      this.buildLayout();
     }
   }
 

@@ -1038,6 +1038,14 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 		},
+		{
+			Name:         "datatrails",
+			Description:  "Enables the new core app datatrails",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+		},
 	}
 )
 
