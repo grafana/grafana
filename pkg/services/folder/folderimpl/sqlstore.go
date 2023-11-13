@@ -2,7 +2,6 @@ package folderimpl
 
 import (
 	"context"
-	"regexp"
 	"strings"
 	"time"
 
@@ -16,8 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-const FULLPATH_SEPARATOR = "/"
 
 type sqlStore struct {
 	db  db.DB
@@ -356,30 +353,4 @@ func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) 
 	}
 
 	return folders, nil
-}
-
-func SplitFullpath(s string) []string {
-	re := regexp.MustCompile(`[^\\]/`)
-	splitStrings := re.Split(s, -1)
-
-	result := make([]string, 0)
-	escaped := false
-	current := ""
-
-	for _, str := range splitStrings {
-		if escaped {
-			current += "\\" + str
-			escaped = false
-		} else {
-			if str == "\\" {
-				escaped = true
-			} else {
-				current += str
-				result = append(result, current)
-				current = ""
-			}
-		}
-	}
-
-	return result
 }

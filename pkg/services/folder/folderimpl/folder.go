@@ -26,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const FULLPATH_SEPARATOR = "/"
+
 type Service struct {
 	store                store
 	db                   db.DB
@@ -962,6 +964,11 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	return cmd, nil
 }
 
+// WithFullpath returns the folder with its full path. If includeFullpath is false, it returns the folder as is.
+// If the folder already has a full path, it returns the folder as is. Otherwise, it constructs the full path
+// by getting the folder's ancestors and concatenating their titles with the folder's title.
+// If the feature flag for nested folders is not enabled, it only uses the folder's title to construct the full path.
+// if the folder title contains the FULLPATH_SEPARATOR, it will be escaped with a backslash.
 func (s *Service) WithFullpath(ctx context.Context, f *folder.Folder, includeFullpath bool) (*folder.Folder, error) {
 	if !includeFullpath {
 		return f, nil
@@ -989,10 +996,11 @@ func (s *Service) WithFullpath(ctx context.Context, f *folder.Folder, includeFul
 
 	fullpath := ""
 	for _, ancestor := range ancestors {
+		t := withEscapedTitle(ancestor.Title)
 		if fullpath != "" {
-			fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, withEscapedTitle(ancestor.Title))
+			fullpath += fmt.Sprintf("%s%s", FULLPATH_SEPARATOR, t)
 		} else {
-			fullpath += ancestor.Title
+			fullpath += t
 		}
 	}
 
@@ -1004,6 +1012,36 @@ func (s *Service) WithFullpath(ctx context.Context, f *folder.Folder, includeFul
 
 	f.Fullpath = fullpath
 	return f, nil
+}
+
+// SplitFullpath splits a string into an array of strings using the FULLPATH_SEPARATOR as the delimiter.
+// It handles escape characters by appending the separator and the new string if the current string ends with an escape character.
+// The resulting array does not contain empty strings.
+func SplitFullpath(s string) []string {
+	splitStrings := strings.Split(s, FULLPATH_SEPARATOR)
+
+	result := make([]string, 0)
+	current := ""
+
+	for _, str := range splitStrings {
+		if strings.HasSuffix(current, "\\") {
+			// If the current string ends with an escape character, append the separator and the new string
+			current = current[:len(current)-1] + FULLPATH_SEPARATOR + str
+		} else {
+			// If the current string does not end with an escape character, append the current string to the result and start a new current string
+			if current != "" {
+				result = append(result, current)
+			}
+			current = str
+		}
+	}
+
+	// Append the last string to the result
+	if current != "" {
+		result = append(result, current)
+	}
+
+	return result
 }
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard

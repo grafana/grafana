@@ -459,12 +459,12 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			folderWithFullpath, err := st.FolderService.WithFullpath(ctx, &folder.Folder{
-				ID:    hit.ID,
+				OrgID: orgID,
 				UID:   hit.UID,
 				Title: hit.Title,
 			}, true)
 			if err != nil {
-				st.Logger.Error("Failed to get folder fullpath", "error", err)
+				st.Logger.Error("Failed to get folder fullpath", "error", err, "id", hit.ID, "uid", hit.UID, "title", hit.Title)
 				return nil, err
 			}
 			namespaceMap[hit.UID] = folderWithFullpath
