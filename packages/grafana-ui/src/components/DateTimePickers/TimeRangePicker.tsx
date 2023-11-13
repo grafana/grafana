@@ -80,7 +80,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     if (isOpen && props.onToolbarTimePickerClick) {
       props.onToolbarTimePickerClick();
     }
-  }, [isOpen, props.onToolbarTimePickerClick]);
+  }, [isOpen]);
 
   const onToolbarButtonSwitch = () => {
     setOpen((prevState) => !prevState);
