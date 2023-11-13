@@ -69,6 +69,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     hideQuickRanges,
     widthOverride,
     isOnCanvas,
+    onToolbarTimePickerClick,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -77,8 +78,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   };
 
   useEffect(() => {
-    if (isOpen && props.onToolbarTimePickerClick) {
-      props.onToolbarTimePickerClick();
+    if (isOpen && onToolbarTimePickerClick) {
+      onToolbarTimePickerClick();
     }
   }, [isOpen]);
 
