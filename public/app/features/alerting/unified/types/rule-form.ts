@@ -2,6 +2,7 @@ import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
+import { AlertManagerMetaData } from '../components/rule-editor/notificaton-preview/useGetAlertManagersSourceNamesAndImage';
 
 export enum RuleFormType {
   grafana = 'grafana',
@@ -9,7 +10,7 @@ export enum RuleFormType {
   cloudRecording = 'cloud-recording',
 }
 export interface AMContactPoint {
-  alertManagerName: string;
+  alertManager: AlertManagerMetaData;
   selectedContactPoint?: Receiver;
 }
 

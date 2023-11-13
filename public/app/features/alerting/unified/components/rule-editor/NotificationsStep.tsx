@@ -44,8 +44,8 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const [routingOption, setRoutingOption] = React.useState<RoutingOptions>(RoutingOptions['contact point']);
 
   const routingOptions = [
-    { label: 'Contact point', value: RoutingOptions['contact point'] },
-    { label: 'Notification policy', value: RoutingOptions['notification policy'] },
+    { label: 'Manually selected contact point', value: RoutingOptions['contact point'] },
+    { label: 'Auto-select contact point', value: RoutingOptions['notification policy'] },
   ];
 
   const onRoutingOptionChange = useCallback(
