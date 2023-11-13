@@ -77,7 +77,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
-        config.featureToggles.dashboardSceneSolo
+        config.featureToggles.dashboardScene || config.featureToggles.dashboardSceneSolo
           ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/pages/SoloPanelPage')
           : import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
       ),

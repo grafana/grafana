@@ -7,7 +7,7 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-backend build-example-apiserver build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
@@ -131,10 +131,6 @@ build-backend: ## Build Grafana backend.
 build-server: ## Build Grafana server.
 	@echo "build server"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
-
-build-example-apiserver: ## Build Grafana example-apiserver application.
-	@echo "build grafana-cli"
-	$(GO) run build.go $(GO_BUILD_FLAGS) build-example-apiserver
 
 build-cli: ## Build Grafana CLI application.
 	@echo "build grafana-cli"
