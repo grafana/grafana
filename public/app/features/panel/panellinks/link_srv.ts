@@ -22,9 +22,6 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
-import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 
 const timeRangeVars = [
   {
