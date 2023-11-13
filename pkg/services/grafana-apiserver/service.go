@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path"
+	goruntime "runtime"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
@@ -14,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
@@ -21,6 +25,7 @@ import (
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/util/openapi"
 	"k8s.io/client-go/kubernetes/scheme"
+	k8sversion "k8s.io/client-go/pkg/version"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -293,7 +298,24 @@ func (s *service) start(ctx context.Context) error {
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
 
+	xxx := k8sversion.Get()
+	fmt.Printf(">>> %+v\n", xxx)
+
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
+	before, after, _ := strings.Cut(setting.BuildVersion, ".")
+	serverConfig.Version = &version.Info{
+		Major:        before,
+		Minor:        after,
+		GoVersion:    goruntime.Version(),
+		Platform:     fmt.Sprintf("%s/%s", goruntime.GOOS, goruntime.GOARCH),
+		Compiler:     goruntime.Compiler,
+		GitTreeState: setting.BuildBranch,
+		GitCommit:    setting.BuildCommit,
+		BuildDate:    time.UnixMilli(setting.BuildStamp).Format("1970-01-01T00:00:00Z"),
+
+		// This is used by kubectl to check compatibility.
+		GitVersion: "v1.27.1", // ???? how do we get this programmatically
+	}
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
