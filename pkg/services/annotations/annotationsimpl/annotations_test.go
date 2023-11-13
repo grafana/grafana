@@ -40,7 +40,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	cfg.AnnotationMaximumTagsLength = 60
 
 	features := featuremgmt.WithFeatures()
-	tagService := tagimpl.ProvideService(sql, sql.Cfg)
+	tagService := tagimpl.ProvideService(sql)
 
 	repo := ProvideService(sql, cfg, features, tagService)
 
@@ -208,7 +208,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		// enable nested folders so that the folder table is populated for all the tests
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
-		tagService := tagimpl.ProvideService(sql, sql.Cfg)
+		tagService := tagimpl.ProvideService(sql)
 
 		dashStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, features, tagService, quotatest.New(false, nil))
 		require.NoError(t, err)
@@ -312,7 +312,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationMaximumTagsLength = 60
 
-			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql, sql.Cfg))
+			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql))
 
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			testutil.SetupRBACPermission(t, sql, role, usr)

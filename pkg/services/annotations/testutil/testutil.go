@@ -83,7 +83,7 @@ func CreateDashboard(t *testing.T, sql *sqlstore.SQLStore, features featuremgmt.
 		sql,
 		sql.Cfg,
 		features,
-		tagimpl.ProvideService(sql, sql.Cfg),
+		tagimpl.ProvideService(sql),
 		quotatest.New(false, nil),
 	)
 	require.NoError(t, err)
