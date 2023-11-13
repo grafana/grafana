@@ -70,6 +70,8 @@ function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption
  * This is exported and not used directly in the ProfileTypesCascader component because in some case we need to know
  * the profileTypes before rendering the cascader.
  * @param datasource
+ * @param start The start of the time range.
+ * @param end The end of the time range.
  */
 export function useProfileTypes(datasource: PyroscopeDataSource, start: number, end: number) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>();

@@ -55,6 +55,10 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
     });
   }
 
+  async getAllProfileTypes(): Promise<ProfileTypeMessage[]> {
+    return await this.getProfileTypes(0, 0);
+  }
+
   async getLabelNames(query: string, start: number, end: number): Promise<string[]> {
     return await this.getResource('labelNames', { query: this.templateSrv.replace(query), start, end });
   }
