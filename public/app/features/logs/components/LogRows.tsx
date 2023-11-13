@@ -113,12 +113,13 @@ class UnThemedLogRows extends Component<Props, State> {
   );
 
   /**
-   * This method is used to prevent unnecessary re-renders of the component.
-   * If the log rows don't change, the component won't re-render
    * @param nextProps
    */
   shouldComponentUpdate(nextProps: Readonly<Props>): boolean {
     if (nextProps.logRows !== this.props.logRows || nextProps.deduplicatedRows !== this.props.deduplicatedRows) {
+      return true;
+    }
+    if (nextProps.containerRendered !== this.props.containerRendered) {
       return true;
     }
     return false;

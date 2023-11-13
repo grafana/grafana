@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
@@ -385,9 +385,11 @@ describe('Logs', () => {
     await userEvent.click(oldestFirstSelection);
     const logsSection = screen.getByTestId('logRows');
     let logRows = logsSection.querySelectorAll('tr');
-    expect(logRows.length).toBe(3);
-    expect(logRows[0].textContent).toContain('log message 1');
-    expect(logRows[2].textContent).toContain('log message 3');
+    waitFor(() => {
+      expect(logRows.length).toBe(3);
+      expect(logRows[0].textContent).toContain('log message 1');
+      expect(logRows[2].textContent).toContain('log message 3');
+    });
   });
 
   describe('for permalinking', () => {
