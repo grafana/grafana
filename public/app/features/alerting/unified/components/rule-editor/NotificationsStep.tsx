@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -41,7 +41,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   const shouldRenderPreview = type === RuleFormType.grafana;
 
-  const [routingOption, setRoutingOption] = React.useState<RoutingOptions>(RoutingOptions['contact point']);
+  const [routingOption, setRoutingOption] = useState<RoutingOptions>(RoutingOptions['contact point']);
 
   const routingOptions = [
     { label: 'Manually selected contact point', value: RoutingOptions['contact point'] },
@@ -88,6 +88,8 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           />
         </Stack>
 
+        <NotificationsOptionDescription routingOption={routingOption} routingOptionEnabled={true} />
+
         {routingOption === RoutingOptions['contact point'] ? (
           <div className={styles.simplifiedRouting}>
             <SimplifiedRouting />
@@ -111,7 +113,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   return (
     <RuleEditorSection
       stepNo={type === RuleFormType.cloudRecording ? 4 : 5}
-      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure notifications'}
+      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Labels and notifications'}
       description={
         <Stack direction="row" gap={0.5} alignItems="baseline">
           {type === RuleFormType.cloudRecording ? (
@@ -119,16 +121,25 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
               Add labels to help you better manage your recording rules
             </Text>
           ) : (
-            <NotificationsStepDescription
-              routingOption={routingOption}
-              routingOptionEnabled={shouldAllowSimplifiedRouting}
-            />
+            shouldAllowSimplifiedRouting && (
+              <Text variant="bodySmall" color="secondary">
+                Select who should receive a notification when an alert rule fires.
+              </Text>
+            )
           )}
         </Stack>
       }
       fullWidth
     >
       <LabelsField dataSourceName={dataSourceName} />
+      {shouldAllowSimplifiedRouting && (
+        <div className={styles.configureNotifications}>
+          <Text element="h5">Configure notifications</Text>
+          <Text variant="bodySmall" color="secondary">
+            Select who should receive a notification when an alert rule fires.
+          </Text>
+        </div>
+      )}
       <RuleEditorSectionBody />
     </RuleEditorSection>
   );
@@ -211,7 +222,11 @@ interface NotificationsStepDescriptionProps {
   routingOptionEnabled: boolean;
 }
 
-const NotificationsStepDescription = ({ routingOption, routingOptionEnabled }: NotificationsStepDescriptionProps) => {
+export const NotificationsOptionDescription = ({
+  routingOption,
+  routingOptionEnabled,
+}: NotificationsStepDescriptionProps) => {
+  const styles = useStyles2(getStyles);
   const getRoutingOptionHeader = useCallback((routingOptionEnabled: boolean, routingOption: RoutingOptions) => {
     if (!routingOptionEnabled || routingOption === 'notification policy') {
       return 'Notifications for firing alerts are routed to contact points based on matching labels.';
@@ -219,13 +234,13 @@ const NotificationsStepDescription = ({ routingOption, routingOptionEnabled }: N
     return 'Notifications for firing alerts are routed a selected contact point.';
   }, []);
   return (
-    <Stack direction="row" gap={0.5} alignItems="baseline">
+    <div className={styles.notificationsOptionDescription}>
       <Text variant="bodySmall" color="secondary">
         {getRoutingOptionHeader(routingOptionEnabled, routingOption)}
       </Text>
       {routingOption === RoutingOptions['notification policy'] && <NeedHelpInfoForNotificationPolicy />}
       {routingOption === RoutingOptions['contact point'] && <NeedHelpInfoForContactpoint />}
-    </Stack>
+    </div>
   );
 };
 
@@ -238,5 +253,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     marginTop: theme.spacing(2),
+  }),
+  configureNotifications: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(2),
+  }),
+  notificationsOptionDescription: css({
+    marginTop: theme.spacing(1),
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: theme.spacing(0.5),
   }),
 });
