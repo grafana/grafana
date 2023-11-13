@@ -122,6 +122,18 @@ class UnThemedLogRows extends Component<Props, State> {
     if (nextProps.containerRendered !== this.props.containerRendered) {
       return true;
     }
+    if (nextProps.showTime !== this.props.showTime) {
+      return true;
+    }
+    if (nextProps.showLabels !== this.props.showLabels) {
+      return true;
+    }
+    if (nextProps.wrapLogMessage !== this.props.wrapLogMessage) {
+      return true;
+    }
+    if (nextProps.prettifyLogMessage !== this.props.prettifyLogMessage) {
+      return true;
+    }
     return false;
   }
 
