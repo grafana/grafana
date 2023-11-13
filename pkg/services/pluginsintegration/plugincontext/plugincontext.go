@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -38,7 +39,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, plu
 		pluginStore:           pluginStore,
 		dataSourceService:     dataSourceService,
 		pluginSettingsService: pluginSettingsService,
-		pluginEnvVars:         envvars.NewProvider(pCfg, licensing),
+		pluginEnvVars:         envvars.NewProvider(pCfg, licensing, featuremgmt.WithFeatures()),
 		logger:                log.New("plugin.context"),
 	}
 }
