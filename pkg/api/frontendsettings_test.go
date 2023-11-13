@@ -33,6 +33,7 @@ import (
 func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
+	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	{
