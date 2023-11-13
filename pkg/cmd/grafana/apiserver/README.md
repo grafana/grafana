@@ -1,4 +1,4 @@
-# grafana-example-apiserver
+# grafana apiserver (standalone)
 
 The example-apiserver closely resembles the 
 [sample-apiserver](https://github.com/kubernetes/sample-apiserver/tree/master) project in code and thus
@@ -19,7 +19,7 @@ can be used as a root server for this example-apiserver (in aggregated mode). He
 kind cluster and that you can provide its kubeconfig in the parameters to the example-apiserver.
 
 ```shell
-go run ./pkg/cmd/grafana-example-apiserver \
+go run ./pkg/cmd/grafana apiserver example.grafana.app\
   --authentication-kubeconfig ~/.kube/config \
   --authorization-kubeconfig ~/.kube/config \
   --kubeconfig ~/.kube/config \
