@@ -176,7 +176,7 @@ func (r *DeleteKeyREST) ConnectMethods() []string {
 }
 
 func (r *DeleteKeyREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, true, "path" // will pass the full URL to connection
+	return nil, true, ""
 }
 
 func (r *DeleteKeyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
