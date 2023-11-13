@@ -47,19 +47,19 @@ describe('getDashboardChanges', () => {
         '   "graphTooltip": 0,\n' +
         '-  "schemaVersion": 37,\n' +
         '+  "schemaVersion": 38,\n' +
+        '   "version": 1,\n' +
         '   "timezone": "",\n' +
         '   "panels": [\n' +
         '     {\n' +
-        '       "type": "timeseries",\n' +
-        '       "title": "Panel 1",\n'
+        '       "type": "timeseries",\n'
     );
     expect(result.userChanges).toEqual(
       '===================================================================\n' +
         '--- Before user changes\t\n' +
         '+++ After user changes\t\n' +
-        '@@ -3,16 +3,17 @@\n' +
-        '   "graphTooltip": 0,\n' +
+        '@@ -4,16 +4,17 @@\n' +
         '   "schemaVersion": 38,\n' +
+        '   "version": 1,\n' +
         '   "timezone": "",\n' +
         '   "panels": [\n' +
         '     {\n' +
