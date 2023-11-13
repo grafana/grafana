@@ -119,9 +119,9 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
             </ToolbarButton>
           ))}
           <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
-          <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore" />
-          <ToolbarButton variant={'canvas'} icon="star" tooltip="Bookmark" />
-          <ToolbarButton variant={'canvas'} icon="share-alt" />
+          <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore (todo)" disabled />
+          <ToolbarButton variant={'canvas'} icon="star" tooltip="Bookmark (todo)" disabled />
+          <ToolbarButton variant={'canvas'} icon="share-alt" tooltip="Copy url (todo)" disabled />
           {trail.state.embedded && (
             <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
               Open
