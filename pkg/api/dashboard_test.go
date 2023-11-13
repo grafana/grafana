@@ -121,7 +121,7 @@ func TestGetHomeDashboard(t *testing.T) {
 
 func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
-	cfg := setting.NewCfgWithFeatures(features)
+	cfg := setting.NewCfg()
 	cfg.AppURL = "http://localhost:3000/"
 	gLive, err := live.ProvideService(nil, cfg,
 		routing.NewRouteRegister(),

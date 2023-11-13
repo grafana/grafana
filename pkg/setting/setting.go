@@ -145,13 +145,6 @@ var (
 	ImageUploadProvider string
 )
 
-// Deprecated: Use pkg/services/featuremgmt/models.go#L8
-// This is here to avoid a circular dependency in featuremgmt as access to feature flags
-// through settings is removed from tests and moved to the featuremgmt class
-type FeatureToggles interface {
-	IsEnabled(flag string) bool
-}
-
 // TODO move all global vars to this struct
 type Cfg struct {
 	Target []string
@@ -997,15 +990,9 @@ func NewCfg() *Cfg {
 
 // Deprecated: Avoid using IsFeatureToggleEnabled from settings.  If you need to access
 // feature flags, read them from the FeatureToggle (or FeatureManager) interface
-func NewCfgWithFeatures(features FeatureToggles) *Cfg {
+func NewCfgWithFeatures(features func(string) bool) *Cfg {
 	cfg := NewCfg()
-	if features == nil {
-		cfg.IsFeatureToggleEnabled = func(_ string) bool {
-			return false
-		}
-	} else {
-		cfg.IsFeatureToggleEnabled = features.IsEnabled
-	}
+	cfg.IsFeatureToggleEnabled = features
 	return cfg
 }
 

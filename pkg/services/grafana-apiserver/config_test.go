@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewConfig(t *testing.T) {
-	cfg := setting.NewCfgWithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServer))
+	cfg := setting.NewCfgWithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServer).IsEnabled)
 	cfg.Env = setting.Prod
 	cfg.DataPath = "/tmp/grafana"
 	cfg.HTTPAddr = "10.0.0.1"

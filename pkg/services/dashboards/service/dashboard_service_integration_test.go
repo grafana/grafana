@@ -876,7 +876,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 
 	t.Run(desc, func(t *testing.T) {
 		features := featuremgmt.WithFeatures()
-		cfg := setting.NewCfgWithFeatures(features)
+		cfg := setting.NewCfg()
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
@@ -942,7 +942,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 
 	features := featuremgmt.WithFeatures()
 	dto := toSaveDashboardDto(cmd)
-	cfg := setting.NewCfgWithFeatures(features)
+	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -970,7 +970,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.DB) error {
 	features := featuremgmt.WithFeatures()
 	dto := toSaveDashboardDto(cmd)
-	cfg := setting.NewCfgWithFeatures(features)
+	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -1011,7 +1011,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, folder
 		},
 	}
 	features := featuremgmt.WithFeatures()
-	cfg := setting.NewCfgWithFeatures(features)
+	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -1061,7 +1061,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 	}
 
 	features := featuremgmt.WithFeatures()
-	cfg := setting.NewCfgWithFeatures(features)
+	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)

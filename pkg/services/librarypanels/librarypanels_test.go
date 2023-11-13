@@ -715,7 +715,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	}
 
 	features := featuremgmt.WithFeatures()
-	cfg := setting.NewCfgWithFeatures(features)
+	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -741,7 +741,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 
 	features := featuremgmt.WithFeatures()
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-	cfg := setting.NewCfgWithFeatures(features)
+	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)

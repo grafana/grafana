@@ -182,7 +182,7 @@ func TestMigrations(t *testing.T) {
 		},
 		{
 			desc:   "without editors can admin",
-			config: setting.NewCfgWithFeatures(featuremgmt.WithFeatures("accesscontrol")),
+			config: setting.NewCfgWithFeatures(featuremgmt.WithFeatures("accesscontrol").IsEnabled),
 			expectedRolePerms: map[string][]rawPermission{
 				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
 				"managed:users:2:permissions": {{Action: "teams:read", Scope: team1Scope}},

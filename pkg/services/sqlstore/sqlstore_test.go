@@ -180,7 +180,10 @@ func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
 func makeSQLStoreTestConfig(t *testing.T, tc sqlStoreTest) *setting.Cfg {
 	t.Helper()
 
-	cfg := setting.NewCfgWithFeatures(tc.features)
+	if tc.features == nil {
+		tc.features = featuremgmt.WithFeatures()
+	}
+	cfg := setting.NewCfgWithFeatures(tc.features.IsEnabled)
 
 	sec, err := cfg.Raw.NewSection("database")
 	require.NoError(t, err)
