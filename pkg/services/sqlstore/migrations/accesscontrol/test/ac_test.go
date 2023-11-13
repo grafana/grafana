@@ -153,7 +153,8 @@ func TestMigrations(t *testing.T) {
 		{
 			desc: "with editors can admin",
 			config: &setting.Cfg{
-				EditorsCanAdmin:        true,
+				EditorsCanAdmin: true,
+				// nolint:staticcheck
 				IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
 				Raw:                    ini.Empty(),
 			},
