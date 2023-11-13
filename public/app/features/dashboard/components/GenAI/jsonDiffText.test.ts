@@ -1,3 +1,5 @@
+import { Diff } from 'app/features/dashboard/components/VersionHistory/utils';
+
 import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
@@ -8,6 +10,8 @@ import {
   isObject,
   getDashboardStringDiff,
   removeEmptyFields,
+  reorganizeDiffs,
+  separateRootAndNonRootDiffs,
 } from './jsonDiffText';
 
 describe('orderProperties', () => {
@@ -268,14 +272,8 @@ describe('getDashboardStringDiff', () => {
     const result = getDashboardStringDiff(dashboardModel);
 
     expect(result).toEqual({
-      migrationDiff:
-        '===================================================================\n' +
-        '--- Before migration changes\t\n' +
-        '+++ After migration changes\t\n',
-      userDiff:
-        '===================================================================\n' +
-        '--- Before user changes\t\n' +
-        '+++ After user changes\t\n',
+      migrationDiff: '',
+      userDiff: '',
     });
   });
 
@@ -287,6 +285,38 @@ describe('getDashboardStringDiff', () => {
 
     expect(result.userDiff).toContain(`-  \"title\": \"Original Title\"`);
     expect(result.userDiff).toContain(`+  \"title\": \"New Title\",`);
+  });
+
+  it('should return a diff when a panel is moved', () => {
+    const dashboardModel = createDashboardModelFixture(dashboard);
+
+    // Move the panel with id 2 to a new position
+    dashboardModel.panels[1].gridPos = { x: 1, y: 1, w: 2, h: 2 };
+
+    const result = getDashboardStringDiff(dashboardModel);
+
+    const panelToBeMovedDiff: string = [
+      '- "type": "timeseries",',
+      '- "gridPos": {',
+      '-   "x": 2,',
+      '-   "y": 0,',
+      '-   "w": 2,',
+      '-   "h": 2',
+      '- },',
+      '+ "gridPos": {',
+      '+   "h": 2,',
+      '+   "w": 2,',
+      '+   "x": 1,',
+      '+   "y": 1',
+      '+ },',
+      '+ "type": "timeseries"',
+    ].join('\n');
+
+    // Replace newlines in the string with the actual newline character
+    const panelToBeMovedDiffForComparison = panelToBeMovedDiff.replace(/\\n/g, '\n');
+
+    // Check that the userDiff contains information about the panel move
+    expect(result.userDiff).toContain(panelToBeMovedDiffForComparison);
   });
 });
 
@@ -434,6 +464,114 @@ describe('removeEmptyFields', () => {
         },
       ],
       schemaVersion: 38,
+    });
+  });
+});
+
+describe('reorganizeDiffs', () => {
+  it('reorganizes diffs with path of length 1', () => {
+    const diffRecord: Record<string, Diff[]> = {
+      tags: [
+        {
+          op: 'add',
+          originalValue: undefined,
+          path: ['tags'],
+          startLineNumber: 27,
+          value: 'the tag',
+        },
+      ],
+      timepicker: [
+        {
+          op: 'add',
+          originalValue: undefined,
+          path: ['timepicker'],
+          startLineNumber: 37,
+          value: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
+        },
+      ],
+    };
+
+    const reorganizedDiffs = reorganizeDiffs(diffRecord);
+
+    expect(reorganizedDiffs).toEqual({
+      tags: [diffRecord.tags[0]],
+      timepicker: [diffRecord.timepicker[0]],
+    });
+  });
+
+  it('reorganizes diffs with path of length greater than 1', () => {
+    const diffRecord: Record<string, Diff[]> = {
+      dashboard: [
+        {
+          op: 'add',
+          originalValue: undefined,
+          path: ['dashboard', 'annotations', 'list', '0'],
+          startLineNumber: 27,
+          value: 'the tag',
+        },
+        {
+          op: 'add',
+          originalValue: undefined,
+          path: ['dashboard', 'timepicker', 'refresh_intervals'],
+          startLineNumber: 37,
+          value: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
+        },
+      ],
+    };
+
+    const reorganizedDiffs = reorganizeDiffs(diffRecord);
+
+    expect(reorganizedDiffs).toEqual({
+      'dashboard/annotations/list': [diffRecord['dashboard'][0]],
+      'dashboard/timepicker': [diffRecord['dashboard'][1]],
+    });
+  });
+
+  it('reorganizes an empty object of diffs', () => {
+    const reorganizedDiffs = reorganizeDiffs({});
+    expect(reorganizedDiffs).toEqual({});
+  });
+});
+
+describe('separateRootAndNonRootDiffs', () => {
+  it('separates root and non-root diffs', () => {
+    const diffRecord: Record<string, Diff[]> = {
+      tags: [
+        {
+          op: 'add',
+          originalValue: undefined,
+          path: ['tags'],
+          startLineNumber: 27,
+          value: 'the tag',
+        },
+      ],
+      dashboard: [
+        {
+          op: 'add',
+          originalValue: undefined,
+          path: ['dashboard', 'annotations', 'list', '0'],
+          startLineNumber: 27,
+          value: 'the tag',
+        },
+        {
+          op: 'add',
+          originalValue: undefined,
+          path: ['dashboard', 'timepicker', 'refresh_intervals'],
+          startLineNumber: 37,
+          value: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
+        },
+      ],
+    };
+
+    const { rootDiffs, nonRootDiffs } = separateRootAndNonRootDiffs(diffRecord);
+
+    expect(rootDiffs).toEqual({
+      tags: [diffRecord.tags[0]],
+    });
+
+    expect(nonRootDiffs).toEqual({
+      'dashboard/annotations/list': [diffRecord.dashboard[0]],
+      'dashboard/timepicker': [diffRecord.dashboard[1]],
     });
   });
 });

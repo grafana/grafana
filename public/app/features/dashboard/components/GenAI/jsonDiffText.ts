@@ -1,6 +1,8 @@
-import { createTwoFilesPatch } from 'diff';
+import { get } from 'lodash';
+import { title } from 'process';
 
 import { Dashboard } from '@grafana/schema';
+import { Diff, jsonDiff } from 'app/features/dashboard/components/VersionHistory/utils';
 
 import { DashboardModel } from '../../state';
 
@@ -88,7 +90,7 @@ export function orderArrayProperties(obj1: JSONArray, obj2: JSONArray) {
 }
 
 // Compare all pairings by similarity and match greedily from highest to lowest
-// Similarity is simply measured by number of k:v pairs in fair
+// Similarity is simply measured by number of k:v pairs that are identical
 // O(n^2), which is more or less unavoidable
 // Can be made a better match by using levenshtein distance and Hungarian matching
 export function fillBySimilarity(
@@ -172,23 +174,7 @@ export function fillBySimilarity(
   }
 }
 
-function shortenDiff(diffS: string) {
-  const diffLines = diffS.split('\n');
-  let headerEnd = diffS[0].startsWith('Index') ? 4 : 3;
-  let ret = diffLines.slice(0, headerEnd);
-
-  const titleOrBracket = /("title"|Title|\{|\}|\[|\])/i;
-  for (let i = headerEnd; i < diffLines.length; i++) {
-    let line = diffLines[i];
-    if (titleOrBracket.test(line)) {
-      ret.push(line);
-    } else if (line.startsWith('+') || line.startsWith('-')) {
-      ret.push(line);
-    }
-  }
-  return ret.join('\n') + '\n';
-}
-
+// Function for removing empty fields from JSON objects
 export function removeEmptyFields(input: JSONValue): JSONValue {
   if (input === null || input === '') {
     return null;
@@ -230,6 +216,81 @@ export function removeEmptyFields(input: JSONValue): JSONValue {
   return Object.keys(result).length > 0 ? result : null;
 }
 
+// Function for reorganizing diffs by path
+export function reorganizeDiffs(diffRecord: Record<string, Diff[]>): Record<string, Diff[]> {
+  const reorganized: Record<string, Diff[]> = {};
+
+  for (const key in diffRecord) {
+    const changes = diffRecord[key];
+    for (const change of changes) {
+      const newKey = change.path.length === 1 ? key : change.path.slice(0, -1).join('/');
+      if (!Object.hasOwn(reorganized, newKey)) {
+        reorganized[newKey] = [];
+      }
+      reorganized[newKey].push(change);
+    }
+  }
+
+  return reorganized;
+}
+
+// Function for separating root and non-root diffs
+export function separateRootAndNonRootDiffs(diffRecord: Record<string, Diff[]>): {
+  rootDiffs: Record<string, Diff[]>;
+  nonRootDiffs: Record<string, Diff[]>;
+} {
+  const reorganizedDiffs = reorganizeDiffs(diffRecord);
+
+  const rootDiffs: Record<string, Diff[]> = { dashboard: [] };
+  const nonRootDiffs: Record<string, Diff[]> = {};
+
+  for (const key in reorganizedDiffs) {
+    if (reorganizedDiffs[key][0].path.length === 1) {
+      rootDiffs['dashboard'].push(...reorganizedDiffs[key]);
+    } else {
+      nonRootDiffs[key] = reorganizedDiffs[key];
+    }
+  }
+
+  return { rootDiffs, nonRootDiffs };
+}
+
+// Function for taking a diff and returning human-readable string
+export function getDiffString(diff: Diff): string {
+  let diffString = '';
+  const key: string = diff.path[diff.path.length - 1];
+  if (diff.op === 'add') {
+    diffString = `+\t"${key}": ${JSON.stringify(diff.value)}`;
+  } else if (diff.op === 'remove') {
+    diffString = `-\t"${key}": ${JSON.stringify(diff.originalValue)}`;
+  } else if (diff.op === 'replace') {
+    let minusString = `-\t"${key}": ${JSON.stringify(diff.originalValue)}`;
+    let plusString = `+\t"${key}": ${JSON.stringify(diff.value)}`;
+    diffString = minusString + '\n' + plusString;
+  }
+  return diffString;
+}
+
+// Function for taking a diff record and returning human-readable string
+// Extremely specific to panels, to ensure they have displayed titles
+function formatDiffsAsString(lhs: unknown, diffRecord: Record<string, Diff[]>): string[] {
+  return Object.entries(diffRecord).map(([key, diffs]) => {
+    if (diffs.length === 0) {
+      return '';
+    }
+    const diffStrings = diffs.map(getDiffString);
+    let titleString = '';
+    if (key.includes('panels')) {
+      const path = [...diffs[0].path.slice(0, diffs[0].path.indexOf('panels') + 2), 'title'];
+      const title = get(lhs, path);
+      if (title !== undefined) {
+        titleString = ` with title: ${title}`;
+      }
+    }
+    return `Changes for path ${key}${titleString}:\n${diffStrings.join('\n')}`;
+  });
+}
+
 function jsonSanitize(obj: Dashboard | DashboardModel | null) {
   return JSON.parse(JSON.stringify(obj, null, 2));
 }
@@ -243,28 +304,21 @@ export function getDashboardStringDiff(dashboard: DashboardModel): { migrationDi
   currentDashboard = removeEmptyFields(orderProperties(dashboardAfterMigration, currentDashboard));
   originalDashboard = removeEmptyFields(originalDashboard);
 
-  let migrationDiff: string = createTwoFilesPatch(
-    'Before migration changes',
-    'After migration changes',
-    JSON.stringify(originalDashboard, null, 2),
-    JSON.stringify(dashboardAfterMigration, null, 2),
-    '',
-    '',
-    { context: 20 }
-  );
+  let jsonMigrationDiff = jsonDiff(originalDashboard, dashboardAfterMigration);
+  let jsonUserDiff = jsonDiff(dashboardAfterMigration, currentDashboard);
 
-  let userDiff: string = createTwoFilesPatch(
-    'Before user changes',
-    'After user changes',
-    JSON.stringify(dashboardAfterMigration, null, 2),
-    JSON.stringify(currentDashboard, null, 2),
-    '',
-    '',
-    { context: 20 }
-  );
+  const { rootDiffs: rootDiffsMigration, nonRootDiffs: nonRootDiffsMigration } =
+    separateRootAndNonRootDiffs(jsonMigrationDiff);
+  const { rootDiffs: rootDiffsUser, nonRootDiffs: nonRootDiffsUser } = separateRootAndNonRootDiffs(jsonUserDiff);
 
-  migrationDiff = shortenDiff(migrationDiff);
-  userDiff = shortenDiff(userDiff);
+  const migrationDiff = `${formatDiffsAsString(originalDashboard, rootDiffsMigration)}\n${formatDiffsAsString(
+    originalDashboard,
+    nonRootDiffsMigration
+  )}`.trim();
+  const userDiff = `${formatDiffsAsString(dashboardAfterMigration, rootDiffsUser)}\n${formatDiffsAsString(
+    dashboardAfterMigration,
+    nonRootDiffsUser
+  )}`.trim();
 
   return { migrationDiff, userDiff };
 }
