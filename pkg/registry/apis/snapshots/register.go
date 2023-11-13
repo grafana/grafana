@@ -64,6 +64,7 @@ func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&snapshots.DashboardSnapshot{},
 		&snapshots.DashboardSnapshotList{},
 		&snapshots.SnapshotSharingConfig{},
+		&metav1.Status{},
 	)
 
 	// Link this version to the internal representation.
@@ -76,6 +77,7 @@ func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&snapshots.DashboardSnapshot{},
 		&snapshots.DashboardSnapshotList{},
 		&snapshots.SnapshotSharingConfig{},
+		&metav1.Status{},
 	)
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
@@ -128,11 +130,8 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 		},
 	)
 	storage["dashboards"] = legacyStore
-
-	// Dummy resource that only supports delete
-	storage["dashboards-delete"] = &deleteKeyStorage{
-		service:        b.service,
-		tableConverter: legacyStore.tableConverter,
+	storage["dashboards/delete"] = &DeleteKeyREST{
+		service: b.service,
 	}
 
 	storage["options"] = &optionsStorage{
