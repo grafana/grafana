@@ -46,7 +46,7 @@ const SingleSeries = ({ label, value, color, colorIndicator = ColorIndicator.ser
     <div className={styles.contentWrapper}>
       {color && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
       <span className={cx(styles.label, isActive && styles.activeSeries)}>{label}</span>
-      <span className={cx(isActive && styles.value)}>{value}</span>
+      <span className={cx(styles.value, isActive)}>{value}</span>
     </div>
   );
 };
