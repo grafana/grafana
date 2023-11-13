@@ -41,7 +41,7 @@ func ProvideServiceAccountsProxy(
 		isProxyEnabled: features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabled(featuremgmt.FlagExternalServiceAuth),
 	}
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService, features)
 	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	return s, nil
@@ -138,7 +138,7 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID
 	}
 
 	if s.isProxyEnabled {
-		sa.IsManaged = isExternalServiceAccount(sa.Login)
+		sa.IsExternal = isExternalServiceAccount(sa.Login)
 	}
 
 	return sa, nil
@@ -175,7 +175,7 @@ func (s *ServiceAccountsProxy) SearchOrgServiceAccounts(ctx context.Context, que
 
 	if s.isProxyEnabled {
 		for i := range sa.ServiceAccounts {
-			sa.ServiceAccounts[i].IsManaged = isExternalServiceAccount(sa.ServiceAccounts[i].Login)
+			sa.ServiceAccounts[i].IsExternal = isExternalServiceAccount(sa.ServiceAccounts[i].Login)
 		}
 	}
 	return sa, nil
