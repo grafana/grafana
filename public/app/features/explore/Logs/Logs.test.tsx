@@ -429,10 +429,13 @@ describe('Logs', () => {
       const linkButton = screen.getByLabelText('Copy shortlink');
       await userEvent.click(linkButton);
 
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_logs_permalink_clicked', {
-        datasourceType: 'unknown',
-        logRowUid: '1',
-        logRowLevel: 'debug',
+      // Events fired by other tests can throw this one off, let's wait for the expected result in case this function has been already called
+      waitFor(() => {
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_logs_permalink_clicked', {
+          datasourceType: 'unknown',
+          logRowUid: '1',
+          logRowLevel: 'debug',
+        });
       });
     });
 
