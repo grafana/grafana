@@ -181,7 +181,8 @@ func TestMigrations(t *testing.T) {
 			},
 		},
 		{
-			desc:   "without editors can admin",
+			desc: "without editors can admin",
+			// nolint:staticcheck
 			config: setting.NewCfgWithFeatures(featuremgmt.WithFeatures("accesscontrol").IsEnabled),
 			expectedRolePerms: map[string][]rawPermission{
 				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},

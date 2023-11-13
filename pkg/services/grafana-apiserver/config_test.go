@@ -11,6 +11,7 @@ import (
 )
 
 func TestNewConfig(t *testing.T) {
+	// nolint:staticcheck
 	cfg := setting.NewCfgWithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServer).IsEnabled)
 	cfg.Env = setting.Prod
 	cfg.DataPath = "/tmp/grafana"

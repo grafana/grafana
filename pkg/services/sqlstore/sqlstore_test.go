@@ -183,6 +183,7 @@ func makeSQLStoreTestConfig(t *testing.T, tc sqlStoreTest) *setting.Cfg {
 	if tc.features == nil {
 		tc.features = featuremgmt.WithFeatures()
 	}
+	// nolint:staticcheck
 	cfg := setting.NewCfgWithFeatures(tc.features.IsEnabled)
 
 	sec, err := cfg.Raw.NewSection("database")
