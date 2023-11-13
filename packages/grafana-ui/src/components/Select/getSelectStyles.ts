@@ -27,6 +27,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
 
       '&:hover': {
         background: theme.colors.action.hover,
+        '@media (forced-colors: active), (prefers-contrast: more)': {
+          border: `1px solid ${theme.colors.primary.border}`,
+        },
       },
     }),
     optionIcon: css({
@@ -55,6 +58,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     optionFocused: css({
       label: 'grafana-select-option-focused',
       background: theme.colors.action.focus,
+      '@media (forced-colors: active), (prefers-contrast: more)': {
+        border: `1px solid ${theme.colors.primary.border}`,
+      },
     }),
     optionSelected: css({
       background: theme.colors.action.selected,

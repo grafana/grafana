@@ -164,7 +164,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		Version:                dash.Version,
 		HasACL:                 dash.HasACL,
 		IsFolder:               dash.IsFolder,
-		FolderId:               dash.FolderID,
+		FolderId:               dash.FolderID, // nolint:staticcheck
 		Url:                    dash.GetURL(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,

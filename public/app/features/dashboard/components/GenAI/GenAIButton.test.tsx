@@ -47,6 +47,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
         setMessages: jest.fn(),
+        setStopGeneration: jest.fn(),
         value: {
           enabled: false,
           stream: new Observable().subscribe(),
@@ -63,12 +64,14 @@ describe('GenAIButton', () => {
 
   describe('when LLM plugin is properly configured, so it is enabled', () => {
     const setMessagesMock = jest.fn();
+    const setShouldStopMock = jest.fn();
     beforeEach(() => {
       jest.mocked(useOpenAIStream).mockReturnValue({
         error: undefined,
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
         setMessages: setMessagesMock,
+        setStopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -114,12 +117,15 @@ describe('GenAIButton', () => {
   });
 
   describe('when it is generating data', () => {
+    const setShouldStopMock = jest.fn();
+
     beforeEach(() => {
       jest.mocked(useOpenAIStream).mockReturnValue({
         error: undefined,
         streamStatus: StreamStatus.GENERATING,
         reply: 'Some incomplete generated text',
         setMessages: jest.fn(),
+        setStopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -138,13 +144,12 @@ describe('GenAIButton', () => {
       waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
     });
 
-    it('disables the button while generating', async () => {
+    it('shows the stop button while generating', async () => {
       const { getByText, getByRole } = setup();
-      const generateButton = getByText('Generating');
+      const generateButton = getByText('Stop generating');
 
-      // The loading text should be visible and the button disabled
       expect(generateButton).toBeVisible();
-      await waitFor(() => expect(getByRole('button')).toBeDisabled());
+      await waitFor(() => expect(getByRole('button')).toBeEnabled());
     });
 
     it('should call onGenerate when the text is generating', async () => {
@@ -155,16 +160,29 @@ describe('GenAIButton', () => {
 
       expect(onGenerate).toHaveBeenCalledWith('Some incomplete generated text');
     });
+
+    it('should stop generating when clicking the button', async () => {
+      const onGenerate = jest.fn();
+      const { getByText } = setup({ onGenerate, messages: [], eventTrackingSrc: eventTrackingSrc });
+      const generateButton = getByText('Stop generating');
+
+      await fireEvent.click(generateButton);
+
+      expect(setShouldStopMock).toHaveBeenCalledTimes(1);
+      expect(setShouldStopMock).toHaveBeenCalledWith(true);
+    });
   });
 
   describe('when there is an error generating data', () => {
     const setMessagesMock = jest.fn();
+    const setShouldStopMock = jest.fn();
     beforeEach(() => {
       jest.mocked(useOpenAIStream).mockReturnValue({
         error: new Error('Something went wrong'),
         streamStatus: StreamStatus.IDLE,
         reply: '',
         setMessages: setMessagesMock,
+        setStopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),

@@ -192,6 +192,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&example.RuntimeInfo{},
 	)
+
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-	return nil
+	return scheme.SetVersionPriority(SchemeGroupVersion)
 }
