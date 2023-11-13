@@ -31,16 +31,6 @@ func StatusSourceFromContext(ctx context.Context) StatusSource {
 	return DefaultStatusSource
 }
 
-// StatusSourceFromPluginErrorSource takes an error source returned by a plugin and returns the corresponding
-// StatusSource. If the provided value is a zero-value (i.e.: the plugin did not set it), the function returns
-// DefaultStatusSource.
-func StatusSourceFromPluginErrorSource(pluginErrorSource backend.ErrorSource) StatusSource {
-	if pluginErrorSource == "" {
-		return DefaultStatusSource
-	}
-	return StatusSource(pluginErrorSource)
-}
-
 // WithStatusSource sets the plugin request status source for the context.
 func WithStatusSource(ctx context.Context, s StatusSource) context.Context {
 	return context.WithValue(ctx, statusSourceCtxKey{}, &s)
@@ -56,4 +46,14 @@ func WithDownstreamStatusSource(ctx context.Context) error {
 	}
 	*v = StatusSourceDownstream
 	return nil
+}
+
+// StatusSourceFromPluginErrorSource takes an error source returned by a plugin and returns the corresponding
+// StatusSource. If the provided value is a zero-value (i.e.: the plugin did not set it), the function returns
+// DefaultStatusSource.
+func StatusSourceFromPluginErrorSource(pluginErrorSource backend.ErrorSource) StatusSource {
+	if pluginErrorSource == "" {
+		return DefaultStatusSource
+	}
+	return StatusSource(pluginErrorSource)
 }
