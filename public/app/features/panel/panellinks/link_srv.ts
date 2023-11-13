@@ -20,7 +20,7 @@ import {
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { VariableFormatID } from '@grafana/schema';
+import { DashboardLink, VariableFormatID } from '@grafana/schema';
 import { getConfig } from 'app/core/config';
 
 const timeRangeVars = [
@@ -251,7 +251,7 @@ export interface LinkService {
 }
 
 export class LinkSrv implements LinkService {
-  getLinkUrl(link: any) {
+  getLinkUrl(link: DashboardLink) {
     let params: { [key: string]: any } = {};
 
     if (link.keepTime) {
@@ -262,7 +262,7 @@ export class LinkSrv implements LinkService {
       params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
     }
 
-    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url, urlUtil.toUrlParams(params)));
+    let url = locationUtil.assureBaseUrl(urlUtil.appendQueryToUrl(link.url || '', urlUtil.toUrlParams(params)));
     url = getTemplateSrv().replace(url);
 
     return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);

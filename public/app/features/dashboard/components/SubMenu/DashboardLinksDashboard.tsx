@@ -5,13 +5,13 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
+import { DashboardLink } from '@grafana/schema';
 import { CustomScrollbar, Dropdown, Icon, LinkButton, Menu, useStyles2 } from '@grafana/ui';
 import { ButtonLinkProps } from '@grafana/ui/src/components/Button';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem } from 'app/features/search/types';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
-import { DashboardLink } from '../../state/DashboardModel';
 
 interface Props {
   link: DashboardLink;

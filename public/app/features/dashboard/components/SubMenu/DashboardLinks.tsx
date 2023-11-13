@@ -4,11 +4,11 @@ import { useEffectOnce } from 'react-use';
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { DashboardLink } from '@grafana/schema';
 import { Tooltip, useForceUpdate } from '@grafana/ui';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardModel } from '../../state';
-import { DashboardLink } from '../../state/DashboardModel';
 import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
 
 import { DashboardLinkButton, DashboardLinksDashboard } from './DashboardLinksDashboard';
