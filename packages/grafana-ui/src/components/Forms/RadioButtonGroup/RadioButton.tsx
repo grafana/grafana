@@ -58,6 +58,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
           name={name}
           aria-label={ariaLabel}
           ref={ref}
+          tabIndex={active ? (description ? -1 : 0) : -1}
         />
         <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
           {children}
@@ -65,7 +66,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
       </div>
     );
     return description ? (
-      <Tooltip content={description} placement="auto">
+      <Tooltip content={description} placement="auto" tabIndex={active ? 0 : -1}>
         {radioButton}
       </Tooltip>
     ) : (
