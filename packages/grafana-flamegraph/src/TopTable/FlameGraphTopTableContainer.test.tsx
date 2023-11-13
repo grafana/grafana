@@ -12,7 +12,7 @@ import FlameGraphTopTableContainer from './FlameGraphTopTableContainer';
 describe('FlameGraphTopTableContainer', () => {
   const setup = () => {
     const flameGraphData = createDataFrame(data);
-    const container = new FlameGraphDataContainer(flameGraphData);
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSearch = jest.fn();
     const onSandwich = jest.fn();
 
