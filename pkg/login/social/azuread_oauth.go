@@ -63,7 +63,7 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(settings map[string]interface{}, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
-	info, err := CreateOAuthInfoFromKeyValues(settings)
+	info, err := createOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err
 	}

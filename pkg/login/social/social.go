@@ -167,7 +167,7 @@ func ProvideService(cfg *setting.Cfg,
 
 		// AzureAD.
 		if name == "azuread" {
-			settingsKV := ConvertIniSectionToMap(sec)
+			settingsKV := convertIniSectionToMap(sec)
 			azureADConnector, err := NewAzureADProvider(settingsKV, cfg, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create AzureAD provider", "error", err)
@@ -178,7 +178,7 @@ func ProvideService(cfg *setting.Cfg,
 
 		// Okta
 		if name == "okta" {
-			settingsKV := ConvertIniSectionToMap(sec)
+			settingsKV := convertIniSectionToMap(sec)
 			oktaConnector, err := NewOktaProvider(settingsKV, cfg, features)
 			if err != nil {
 				ss.log.Error("Failed to create Okta provider", "error", err)
