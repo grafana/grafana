@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, TimeZone } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, LoadingState, TimeZone } from '@grafana/data';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { Collapse, RadioButtonGroup, Table, AdHocFilterItem } from '@grafana/ui';
+import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
@@ -86,7 +86,6 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
 
     return (
       <div className={spacing}>
-        {this.state.resultsStyle === TABLE_RESULTS_STYLE.raw ? 'Raw' : 'Table'}
         <RadioButtonGroup
           onClick={() => {
             const props = {
@@ -133,13 +132,14 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
       (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
     );
 
+    const title = this.state.resultsStyle === TABLE_RESULTS_STYLE.raw ? 'Raw' : 'Table';
     const label = this.state?.resultsStyle !== undefined ? this.renderLabel() : 'Table';
 
     // Render table as default if resultsStyle is not set.
     const renderTable = !this.state?.resultsStyle || this.state?.resultsStyle === TABLE_RESULTS_STYLE.table;
 
     return (
-      <Collapse label={label} loading={loading} isOpen>
+      <PanelChrome title={title} actions={label} loadingState={loading ? LoadingState.Loading : LoadingState.Done}>
         {frames?.length && (
           <>
             {renderTable && (
@@ -155,7 +155,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
           </>
         )}
         {!frames?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
-      </Collapse>
+      </PanelChrome>
     );
   }
 }
