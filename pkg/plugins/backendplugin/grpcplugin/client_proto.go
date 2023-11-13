@@ -89,10 +89,14 @@ func (r *protoClient) Stop(ctx context.Context) error {
 }
 
 func (r *protoClient) client() (*ClientV2, bool) {
+	r.mu.RLock()
 	if r.plugin.pluginClient == nil {
+		r.mu.RUnlock()
 		return nil, false
 	}
-	return r.plugin.pluginClient, true
+	pc := r.plugin.pluginClient
+	r.mu.RUnlock()
+	return pc, true
 }
 
 func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
