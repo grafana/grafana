@@ -64,7 +64,6 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
-  gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
@@ -74,7 +73,6 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
-  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
@@ -156,9 +154,12 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
+  dashboardScene?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
+  alertingDetailsViewV2?: boolean;
+  alertingSimplifiedRouting?: boolean;
 }

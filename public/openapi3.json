@@ -9554,7 +9554,7 @@
             "example": false,
             "type": "boolean"
           },
-          "isManaged": {
+          "isExternal": {
             "example": false,
             "type": "boolean"
           },
@@ -9609,7 +9609,7 @@
             "example": false,
             "type": "boolean"
           },
-          "isManaged": {
+          "isExternal": {
             "example": false,
             "type": "boolean"
           },
