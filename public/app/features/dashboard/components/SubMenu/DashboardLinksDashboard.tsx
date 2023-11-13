@@ -42,7 +42,7 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
                 url={resolvedLink.url}
                 target={link.targetBlank ? '_blank' : undefined}
                 key={`dashlinks-dropdown-item-${resolvedLink.uid}-${index}`}
-                label={<div className={styles.label}>{resolvedLink.title}</div>}
+                label={resolvedLink.title}
                 data-testid={selectors.components.DashboardLinks.link}
                 aria-label={`${resolvedLink.title} dashboard`}
               />
@@ -156,11 +156,6 @@ function getStyles(theme: GrafanaTheme2) {
       maxWidth: 'max(30vw, 300px)',
       maxHeight: '70vh',
       overflowY: 'auto',
-    }),
-    label: css({
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
     }),
     button: css({
       color: theme.colors.text.primary,
