@@ -3,6 +3,8 @@ package pluginrequestmeta
 import (
 	"context"
 	"errors"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // StatusSource is an enum-like string value representing the source of a
@@ -27,6 +29,16 @@ func StatusSourceFromContext(ctx context.Context) StatusSource {
 		return *value
 	}
 	return DefaultStatusSource
+}
+
+// StatusSourceFromPluginErrorSource takes an error source returned by a plugin and returns the corresponding
+// StatusSource. If the provided value is a zero-value (i.e.: the plugin did not set it), the function returns
+// DefaultStatusSource.
+func StatusSourceFromPluginErrorSource(pluginErrorSource backend.ErrorSource) StatusSource {
+	if pluginErrorSource == "" {
+		return DefaultStatusSource
+	}
+	return StatusSource(pluginErrorSource)
 }
 
 // WithStatusSource sets the plugin request status source for the context.
