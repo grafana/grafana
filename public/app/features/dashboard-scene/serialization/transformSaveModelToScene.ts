@@ -200,8 +200,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
 
   let shouldUseAlertStatesLayer = config.unifiedAlertingEnabled;
   if (!shouldUseAlertStatesLayer) {
-    if (!oldModel.panels.find((panel) => !!panel.alert)) {
-      shouldUseAlertStatesLayer = false;
+    if (oldModel.panels.find((panel) => Boolean(panel.alert))) {
+      shouldUseAlertStatesLayer = true;
     }
   }
 
