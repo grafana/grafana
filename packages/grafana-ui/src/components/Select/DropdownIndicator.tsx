@@ -9,9 +9,3 @@ export function DropdownIndicator({ selectProps }: DropdownIndicatorProps) {
   const size = isOpen ? 'sm' : 'md';
   return <Icon name={icon} size={size} />;
 }
-
-// Exported from @grafana ui for backwards compatibility
-export function DropdownIndicatorLegacy(props: { isOpen: boolean }) {
-  // @ts-expect-error
-  return <DropdownIndicator selectProps={{ menuIsOpen: props.isOpen }} />;
-}
