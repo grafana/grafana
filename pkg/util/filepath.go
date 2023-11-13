@@ -137,7 +137,7 @@ func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlin
 	return nil
 }
 
-// containsDistFolder returns true if the provided subFiles contains a dist folder.
+// containsDistFolder returns true if the provided subFiles is a folder named "dist".
 func (w *walker) containsDistFolder(subFiles []subFile) bool {
 	for _, p := range subFiles {
 		if p.fileInfo.IsDir() && p.fileInfo.Name() == "dist" {
