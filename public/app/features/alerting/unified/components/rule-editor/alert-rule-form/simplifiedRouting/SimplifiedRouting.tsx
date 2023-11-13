@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { AnyAction, createAction, createReducer } from '@reduxjs/toolkit';
-import React, { useReducer } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -38,9 +38,9 @@ export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) =>
 });
 
 export function SimplifiedRouting() {
-  const { watch } = useFormContext<RuleFormValues & { location?: string }>();
+  const { getValues, setValue } = useFormContext<RuleFormValues & { location?: string }>();
   const styles = useStyles2(getStyles);
-  const contactPointsInAlert = watch('contactPoints');
+  const contactPointsInAlert = getValues('contactPoints');
 
   const alertManagerMetaData = useGetAlertManagersMetadata();
 
@@ -56,6 +56,11 @@ export function SimplifiedRouting() {
 
   // use reducer to keep the list of receivers
   const [receiversState, dispatch] = useReducer(receiversReducer, alertManagersWithSelectedContactPoints);
+
+  // whenever we update the receiversState we have to update the form too
+  useEffect(() => {
+    setValue('contactPoints', receiversState, { shouldValidate: false });
+  }, [receiversState, setValue]);
 
   //const shouldShowAM = alertManagerMetaDataPostable.length > 1;
   const shouldShowAM = true;
@@ -104,10 +109,6 @@ function ContactPointSelector({ selectedReceiver, alertManager, dispatch }: Cont
   const receivers = config?.receivers ?? [];
   const receiversMetadata = useReceiversMetadata(config?.receivers ?? []);
   const options = receivers.map((receiver) => ({ label: receiver.name, value: receiver }));
-
-  const onClearContactPoint = () => {
-    dispatch(selectContactPoint({ receiver: undefined, alertManager })); // todo add remove action
-  };
   const metadataForSelected = selectedReceiver ? receiversMetadata.get(selectedReceiver) : undefined;
 
   return (
@@ -120,7 +121,6 @@ function ContactPointSelector({ selectedReceiver, alertManager, dispatch }: Cont
             options={options}
             isClearable
             width={50}
-            onClear={onClearContactPoint}
             defaultValue={selectedReceiver}
             getOptionLabel={(option: SelectableValue<Receiver>) => {
               const receiver = option?.value;

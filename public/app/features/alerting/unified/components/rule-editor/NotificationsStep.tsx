@@ -25,7 +25,7 @@ enum RoutingOptions {
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const { watch } = useFormContext<RuleFormValues & { location?: string }>();
+  const { watch, setValue } = useFormContext<RuleFormValues & { location?: string }>();
   const styles = useStyles2(getStyles);
 
   const [type, labels, queries, condition, folder, alertName] = watch([
@@ -51,8 +51,11 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const onRoutingOptionChange = useCallback(
     (option: RoutingOptions) => {
       setRoutingOption(option);
+      if (option === RoutingOptions['notification policy']) {
+        setValue('contactPoints', []);
+      }
     },
-    [setRoutingOption]
+    [setRoutingOption, setValue]
   );
 
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
