@@ -3,7 +3,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Use variables and transformations in a correlation
+title: 'Example: Use variables and transformations in a correlation'
 weight: 60
 ---
 

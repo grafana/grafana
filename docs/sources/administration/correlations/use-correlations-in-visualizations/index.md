@@ -3,7 +3,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Use correlations in visualizations
+title: 'Example: Use correlations in visualizations'
 weight: 70
 ---
 
