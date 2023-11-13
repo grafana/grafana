@@ -87,14 +87,10 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	b.codecs = codecs
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
 
-	runtimeStorage := newDeploymentInfoStorage(b.gv, scheme)
-	dummyStorage := newDummyStorage(b.gv, scheme,
-		"test1", "test2", "test3")
-
 	storage := map[string]rest.Storage{}
-	storage["runtime"] = runtimeStorage
-	storage["dummy"] = dummyStorage
-	storage["dummy/sub"] = dummyStorage.Sub
+	storage["runtime"] = newDeploymentInfoStorage(b.gv, scheme)
+	storage["dummy"] = newDummyStorage(b.gv, scheme, "test1", "test2", "test3")
+	storage["dummy/sub"] = &dummySubresourceREST{}
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
 }

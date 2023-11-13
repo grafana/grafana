@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
@@ -14,28 +13,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
-type DummySubresourceREST struct {
-	Store *genericregistry.Store
-}
+type dummySubresourceREST struct{}
 
-var _ = rest.Connecter(&DummySubresourceREST{})
+var _ = rest.Connecter(&dummySubresourceREST{})
 
-func (r *DummySubresourceREST) New() runtime.Object {
+func (r *dummySubresourceREST) New() runtime.Object {
 	return &example.DummySubresource{}
 }
 
-func (r *DummySubresourceREST) Destroy() {
+func (r *dummySubresourceREST) Destroy() {
 }
 
-func (r *DummySubresourceREST) ConnectMethods() []string {
+func (r *dummySubresourceREST) ConnectMethods() []string {
 	return []string{"GET"}
 }
 
-func (r *DummySubresourceREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, ""
+func (r *dummySubresourceREST) NewConnectOptions() (runtime.Object, bool, string) {
+	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
-func (r *DummySubresourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *dummySubresourceREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err

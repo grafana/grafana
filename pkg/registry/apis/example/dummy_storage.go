@@ -26,11 +26,9 @@ var (
 )
 
 type dummyStorage struct {
-	Store             *genericregistry.Store
+	store             *genericregistry.Store
 	names             []string
 	creationTimestamp metav1.Time
-
-	Sub *DummySubresourceREST
 }
 
 func newDummyStorage(gv schema.GroupVersion, scheme *runtime.Scheme, names ...string) *dummyStorage {
@@ -48,15 +46,14 @@ func newDummyStorage(gv schema.GroupVersion, scheme *runtime.Scheme, names ...st
 	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 
 	return &dummyStorage{
-		Store:             store,
+		store:             store,
 		names:             names,
 		creationTimestamp: metav1.Now(),
-		Sub:               &DummySubresourceREST{Store: store}, // same store instance
 	}
 }
 
 func (s *dummyStorage) New() runtime.Object {
-	return s.Store.New()
+	return s.store.New()
 }
 
 func (s *dummyStorage) Destroy() {}
@@ -70,11 +67,11 @@ func (s *dummyStorage) GetSingularName() string {
 }
 
 func (s *dummyStorage) NewList() runtime.Object {
-	return s.Store.NewListFunc()
+	return s.store.NewListFunc()
 }
 
 func (s *dummyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.Store.TableConvertor.ConvertToTable(ctx, object, tableOptions)
+	return s.store.TableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *dummyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
