@@ -104,7 +104,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
       return true;
     }
 
-    const pluginInclude = plugin.meta?.includes.find((include) => include.path === pluginRoot.props.path);
+    const pluginInclude = plugin.meta?.includes.find((include) => include.path === location.pathname);
     // Check if include configuration contains current path
     if (!pluginInclude) {
       return true;
