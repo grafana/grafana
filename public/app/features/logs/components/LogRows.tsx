@@ -134,6 +134,10 @@ class UnThemedLogRows extends Component<Props, State> {
     if (nextProps.prettifyLogMessage !== this.props.prettifyLogMessage) {
       return true;
     }
+    if (nextProps.displayedFields !== this.props.displayedFields) {
+      return true;
+    }
+
     return false;
   }
 

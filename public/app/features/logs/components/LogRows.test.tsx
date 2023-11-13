@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { range } from 'lodash';
 import React from 'react';
 
@@ -28,10 +28,12 @@ describe('LogRows', () => {
       />
     );
 
-    expect(screen.queryAllByRole('row')).toHaveLength(3);
-    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
-    expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
-    expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 3');
+    waitFor(() => {
+      expect(screen.queryAllByRole('row')).toHaveLength(3);
+      expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
+      expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
+      expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 3');
+    });
   });
 
   it('renders rows only limited number of rows first', () => {
@@ -106,9 +108,11 @@ describe('LogRows', () => {
         onClickShowField={() => {}}
       />
     );
-    expect(screen.queryAllByRole('row')).toHaveLength(2);
-    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 4');
-    expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 5');
+    waitFor(() => {
+      expect(screen.queryAllByRole('row')).toHaveLength(2);
+      expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 4');
+      expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 5');
+    });
   });
 
   it('renders with default preview limit', () => {
