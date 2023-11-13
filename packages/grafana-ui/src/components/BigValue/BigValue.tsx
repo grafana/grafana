@@ -76,9 +76,11 @@ export interface Props extends Themeable2 {
   count?: number;
 
   /**
-   * Disable the wide layout for the BigValue
+   * Enable / disable wide layout for the BigValue
+   * When wide layout is enabled, the value and name are displayed side-by-side with the value on the right, if the panel is wide enough.
+   * When wide layout is disabled, the value is always rendered underneath the name.
    */
-  disableWideLayout?: boolean;
+  wideLayout?: boolean;
 }
 
 export class BigValue extends PureComponent<Props> {

@@ -96,7 +96,7 @@ Set whether wide layout is enabled or not. Wide layout is enabled by default.
 - **Off -** Wide layout is disabled.
 
 {{% admonition type="note" %}}
-This option is only applicable when **Text mode** is set to **Value and name**. When wide layout is enabled, the value and name are displayed side-by-side with the value on the right, if the panel is wide enough. When wide layout is disabled, the value is always rendered underneath the name.
+This option is only applicable when **Text mode** is set to **Auto** or **Value and name**. When wide layout is enabled, the value and name are displayed side-by-side with the value on the right, if the panel is wide enough. When wide layout is disabled, the value is always rendered underneath the name.
 {{% /admonition %}}
 
 ### Color mode

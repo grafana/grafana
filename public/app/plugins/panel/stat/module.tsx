@@ -45,7 +45,8 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
           ],
         },
         defaultValue: defaultOptions.wideLayout,
-        showIf: (config) => config.textMode === BigValueTextMode.ValueAndName,
+        showIf: (config) =>
+          config.textMode === BigValueTextMode.Auto || config.textMode === BigValueTextMode.ValueAndName,
       });
 
     builder
