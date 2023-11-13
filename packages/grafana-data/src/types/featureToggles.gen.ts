@@ -64,7 +64,6 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
-  gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
