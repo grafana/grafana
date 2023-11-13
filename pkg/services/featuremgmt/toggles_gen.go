@@ -191,10 +191,6 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagGcomOnlyExternalOrgRoleSync
-	// Prohibits a user from changing organization roles synced with Grafana Cloud auth provider
-	FlagGcomOnlyExternalOrgRoleSync = "gcomOnlyExternalOrgRoleSync"
-
 	// FlagPrometheusMetricEncyclopedia
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
