@@ -69,8 +69,6 @@ export function LogsTableWrap(props: Props) {
     [props.panelState?.columns]
   );
   const logsFrame = parseLogsFrame(dataFrame);
-  if (logsFrame?.timeField.name && logsFrame?.bodyField.name) {
-  }
 
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
@@ -263,8 +261,6 @@ export function LogsTableWrap(props: Props) {
       };
       setFilteredColumnsWithMeta(pendingFilteredLabelState);
     }
-
-    const logsFrame = parseLogsFrame(dataFrame);
 
     const newColumns: Record<number, string> = Object.assign(
       {},
