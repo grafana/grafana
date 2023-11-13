@@ -2,6 +2,7 @@ package grafanaapiserver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -299,7 +300,8 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	xxx := k8sversion.Get()
-	fmt.Printf(">>> %+v\n", xxx)
+	jjj, _ := json.MarshalIndent(xxx, "", "  ")
+	fmt.Printf(">>> %s\n%v\n", string(jjj), setting.BuildStamp)
 
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 	before, after, _ := strings.Cut(setting.BuildVersion, ".")
@@ -311,7 +313,7 @@ func (s *service) start(ctx context.Context) error {
 		Compiler:     goruntime.Compiler,
 		GitTreeState: setting.BuildBranch,
 		GitCommit:    setting.BuildCommit,
-		BuildDate:    time.UnixMilli(setting.BuildStamp).Format("1970-01-01T00:00:00Z"),
+		BuildDate:    time.Unix(setting.BuildStamp, 0).UTC().Format(time.DateTime),
 
 		// This is used by kubectl to check compatibility.
 		GitVersion: "v1.27.1", // ???? how do we get this programmatically
