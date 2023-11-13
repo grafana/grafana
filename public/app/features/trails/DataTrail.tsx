@@ -35,7 +35,6 @@ export interface DataTrailState extends SceneObjectState {
   controls: SceneObject[];
   history: DataTrailHistory;
   settings: DataTrailSettings;
-  advancedMode?: boolean;
 
   // just for for the starting data source
   initialDS?: string;
@@ -132,10 +131,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     this.setState(stateUpdate);
   }
-
-  public onToggleAdvanced = () => {
-    this.setState({ advancedMode: !this.state.advancedMode });
-  };
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     const { controls, topScene, history, settings } = model.useState();
