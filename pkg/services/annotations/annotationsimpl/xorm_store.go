@@ -369,11 +369,11 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, error) {
 	var filters []string
 
-	if _, ok := accessResources.ScopeTypes[annotations.Organization.String()]; ok {
+	if _, has := accessResources.ScopeTypes[annotations.Organization.String()]; has {
 		filters = append(filters, "a.dashboard_id = 0")
 	}
 
-	if _, ok := accessResources.ScopeTypes[annotations.Dashboard.String()]; ok {
+	if _, has := accessResources.ScopeTypes[annotations.Dashboard.String()]; has {
 		var dashboardIDs []int64
 		for _, id := range accessResources.Dashboards {
 			dashboardIDs = append(dashboardIDs, id)
