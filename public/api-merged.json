@@ -18656,10 +18656,6 @@
           "type": "boolean",
           "example": false
         },
-        "requiredBy": {
-          "type": "string",
-          "example": "grafana-app"
-        },
         "login": {
           "type": "string",
           "example": "sa-grafana"
@@ -18672,6 +18668,10 @@
           "type": "integer",
           "format": "int64",
           "example": 1
+        },
+        "requiredBy": {
+          "type": "string",
+          "example": "grafana-app"
         },
         "role": {
           "type": "string",
