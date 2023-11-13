@@ -855,7 +855,7 @@ Output:
 
 The extra labels can now be used in the field display name provide more complete field names.
 
-If you want to extract config from one query and appply it to another you should use the config from query results transformation.
+If you want to extract config from one query and apply it to another you should use the config from query results transformation.
 
 #### Example
 
