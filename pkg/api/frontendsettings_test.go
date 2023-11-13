@@ -33,6 +33,7 @@ import (
 func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
+	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	{
@@ -295,7 +296,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							AngularDetected: true,
+							Angular: plugins.AngularMeta{Detected: true},
 						},
 					},
 				}
@@ -308,11 +309,11 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
-						ID:              "test-app",
-						Preload:         true,
-						Path:            "/test-app/module.js",
-						Version:         "0.5.0",
-						AngularDetected: true,
+						ID:      "test-app",
+						Preload: true,
+						Path:    "/test-app/module.js",
+						Version: "0.5.0",
+						Angular: plugins.AngularMeta{Detected: true},
 					},
 				},
 			},

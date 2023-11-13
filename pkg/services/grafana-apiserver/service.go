@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -113,12 +114,13 @@ type service struct {
 
 func ProvideService(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
 	authz authorizer.Authorizer,
 	tracing *tracing.TracingService,
 ) (*service, error) {
 	s := &service{
-		config:     newConfig(cfg),
+		config:     newConfig(cfg, features),
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
@@ -250,9 +252,6 @@ func (s *service) start(ctx context.Context) error {
 		o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
 		if err := o.Etcd.Validate(); len(err) > 0 {
 			return err[0]
-		}
-		if err := o.Etcd.Complete(serverConfig.Config.StorageObjectCountTracker, serverConfig.Config.DrainedNotify(), serverConfig.Config.AddPostStartHook); err != nil {
-			return err
 		}
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err

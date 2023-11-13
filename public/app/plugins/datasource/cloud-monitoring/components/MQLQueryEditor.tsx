@@ -9,7 +9,7 @@ export interface Props {
 }
 
 export function MQLQueryEditor({ query, onChange, onRunQuery }: React.PropsWithChildren<Props>) {
-  const onKeyDown = (event: any) => {
+  const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && (event.shiftKey || event.ctrlKey)) {
       event.preventDefault();
       onRunQuery();

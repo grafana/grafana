@@ -37,7 +37,7 @@ describe('Plugins/Helpers', () => {
     ];
 
     test('adds all available plugins only once', () => {
-      const merged = mergeLocalsAndRemotes(localPlugins, remotePlugins);
+      const merged = mergeLocalsAndRemotes({ local: localPlugins, remote: remotePlugins });
       const mergedIds = merged.map(({ id }) => id);
 
       expect(merged.length).toBe(4);
@@ -48,7 +48,7 @@ describe('Plugins/Helpers', () => {
     });
 
     test('merges all plugins with their counterpart (if available)', () => {
-      const merged = mergeLocalsAndRemotes(localPlugins, remotePlugins);
+      const merged = mergeLocalsAndRemotes({ local: localPlugins, remote: remotePlugins });
       const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
 
       // Both local & remote counterparts
@@ -67,10 +67,10 @@ describe('Plugins/Helpers', () => {
     });
 
     test('skips deprecated plugins unless they have a local - installed - counterpart', () => {
-      const merged = mergeLocalsAndRemotes(localPlugins, [
-        ...remotePlugins,
-        getRemotePluginMock({ slug: 'plugin-5', status: RemotePluginStatus.Deprecated }),
-      ]);
+      const merged = mergeLocalsAndRemotes({
+        local: localPlugins,
+        remote: [...remotePlugins, getRemotePluginMock({ slug: 'plugin-5', status: RemotePluginStatus.Deprecated })],
+      });
       const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
 
       expect(merged).toHaveLength(4);
@@ -78,10 +78,10 @@ describe('Plugins/Helpers', () => {
     });
 
     test('keeps deprecated plugins in case they have a local counterpart', () => {
-      const merged = mergeLocalsAndRemotes(
-        [...localPlugins, getLocalPluginMock({ id: 'plugin-5' })],
-        [...remotePlugins, getRemotePluginMock({ slug: 'plugin-5', status: RemotePluginStatus.Deprecated })]
-      );
+      const merged = mergeLocalsAndRemotes({
+        local: [...localPlugins, getLocalPluginMock({ id: 'plugin-5' })],
+        remote: [...remotePlugins, getRemotePluginMock({ slug: 'plugin-5', status: RemotePluginStatus.Deprecated })],
+      });
       const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
 
       expect(merged).toHaveLength(5);
@@ -132,6 +132,7 @@ describe('Plugins/Helpers', () => {
         signature: 'valid',
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
+        isFullyInstalled: false,
       });
     });
 
@@ -210,6 +211,7 @@ describe('Plugins/Helpers', () => {
         type: 'app',
         updatedAt: '2021-08-25',
         installedVersion: '4.2.2',
+        isFullyInstalled: true,
       });
     });
 
@@ -259,6 +261,7 @@ describe('Plugins/Helpers', () => {
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
         installedVersion: '4.2.2',
+        isFullyInstalled: true,
       });
     });
 

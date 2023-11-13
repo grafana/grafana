@@ -1,6 +1,7 @@
 import { AnyAction } from 'redux';
 
 import { llms } from '@grafana/experimental';
+import { reportInteraction } from '@grafana/runtime';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
@@ -110,6 +111,7 @@ export async function promQailExplain(
     .streamChatCompletions({
       model: OPENAI_MODEL_NAME,
       messages: promptMessages,
+      temperature: 0,
     })
     .pipe(llms.openai.accumulateContent())
     .subscribe((response) => {
@@ -137,6 +139,129 @@ export async function promQailExplain(
 }
 
 /**
+ * Check if sublist is fully contained in the superlist
+ *
+ * @param sublist
+ * @param superlist
+ * @returns true if fully contained, else false
+ */
+function isContainedIn(sublist: string[], superlist: string[]): boolean {
+  for (const item of sublist) {
+    if (!superlist.includes(item)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Guess the type of a metric, based on its name and its relation to other metrics available
+ *
+ * @param metric     - name of metric whose type to guess
+ * @param allMetrics - list of all available metrics
+ * @returns          - the guess of the type (string): counter,gauge,summary,histogram,'histogram,summary'
+ */
+export function guessMetricType(metric: string, allMetrics: string[]): string {
+  const synthetic_metrics = new Set<string>([
+    'up',
+    'scrape_duration_seconds',
+    'scrape_samples_post_metric_relabeling',
+    'scrape_series_added',
+    'scrape_samples_scraped',
+    'ALERTS',
+    'ALERTS_FOR_STATE',
+  ]);
+
+  if (synthetic_metrics.has(metric)) {
+    // these are all known to be counters
+    return 'counter';
+  }
+  if (metric.startsWith(':')) {
+    // probably recording rule
+    return 'gauge';
+  }
+  if (metric.endsWith('_info')) {
+    // typically series of 1s only, the labels are the useful part. TODO: add 'info' type
+    return 'counter';
+  }
+
+  if (metric.endsWith('_created') || metric.endsWith('_total')) {
+    // prometheus naming style recommends counters to have these suffixes.
+    return 'counter';
+  }
+
+  const underscoreIndex = metric.lastIndexOf('_');
+  if (underscoreIndex < 0) {
+    // No underscores in the name at all, very little info to go on. Guess
+    return 'gauge';
+  }
+
+  // See if the suffix is histogram-y or summary-y
+  const [root, suffix] = [metric.slice(0, underscoreIndex), metric.slice(underscoreIndex + 1)];
+
+  if (['bucket', 'count', 'sum'].includes(suffix)) {
+    // Might be histogram + summary
+    let familyMetrics = [`${root}_bucket`, `${root}_count`, `${root}_sum`, root];
+    if (isContainedIn(familyMetrics, allMetrics)) {
+      return 'histogram,summary';
+    }
+
+    // Might be a histogram, if so all these metrics should exist too:
+    familyMetrics = [`${root}_bucket`, `${root}_count`, `${root}_sum`];
+    if (isContainedIn(familyMetrics, allMetrics)) {
+      return 'histogram';
+    }
+
+    // Or might be a summary
+    familyMetrics = [`${root}_sum`, `${root}_count`, root];
+    if (isContainedIn(familyMetrics, allMetrics)) {
+      return 'summary';
+    }
+
+    // Otherwise it's probably just a counter!
+    return 'counter';
+  }
+
+  // One case above doesn't catch: summary or histogram,summary where the non-suffixed metric is chosen
+  const familyMetrics = [`${metric}_sum`, `${metric}_count`, metric];
+  if (isContainedIn(familyMetrics, allMetrics)) {
+    if (allMetrics.includes(`${metric}_bucket`)) {
+      return 'histogram,summary';
+    } else {
+      return 'summary';
+    }
+  }
+
+  // All else fails, guess gauge
+  return 'gauge';
+}
+
+/**
+ * Generate a suitable filter structure for the VectorDB call
+ * @param types: list of metric types to include in the result
+ * @returns the structure to pass to the vectorDB call.
+ */
+function generateMetricTypeFilters(types: string[]) {
+  return types.map((type) => ({
+    metric_type: {
+      $eq: type,
+    },
+  }));
+}
+
+/**
+ * Taking in a metric name, try to guess its corresponding metric _family_ name
+ * @param metric name
+ * @returns metric family name
+ */
+function guessMetricFamily(metric: string): string {
+  if (metric.endsWith('_bucket') || metric.endsWith('_count') || metric.endsWith('_sum')) {
+    return metric.slice(0, metric.lastIndexOf('_'));
+  }
+  return metric;
+}
+
+/**
  * Calls the API and adds suggestions to the interaction
  *
  * @param dispatch
@@ -158,10 +283,30 @@ export async function promQailSuggest(
 
   const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
+  // Decide metric type
+  let metricType = '';
+  // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the
+  // provider but we only need the metadata here.
+  if (!datasource.languageProvider.metricsMetadata) {
+    await datasource.languageProvider.loadMetricsMetadata();
+  }
+  if (datasource.languageProvider.metricsMetadata) {
+    // `datasource.languageProvider.metricsMetadata` is a list of metric family names (with desired type)
+    // from the datasource metadata endoint, but unfortunately the expanded _sum, _count, _bucket raw
+    // metric names are also generated and populating this list (all of type counter). We want the metric
+    // family type, so need to guess the metric family name from the chosen metric name, and test if that
+    // metric family has a type specified.
+    const metricFamilyGuess = guessMetricFamily(query.metric);
+    metricType = getMetadataType(metricFamilyGuess, datasource.languageProvider.metricsMetadata) ?? '';
+  }
+  if (metricType === '') {
+    // fallback to heuristic guess
+    metricType = guessMetricType(query.metric, datasource.languageProvider.metrics);
+  }
+
   if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
-        let metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata!) ?? '';
         const suggestions = getTemplateSuggestions(
           query.metric,
           metricType,
@@ -193,12 +338,19 @@ export async function promQailSuggest(
     if (interaction?.suggestionType === SuggestionType.AI) {
       feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
 
-      // TODO: filter by metric type
       // @ts-ignore llms types issue
       results = await llms.vector.search<TemplateSearchResult>({
         query: interaction.prompt,
         collection: promQLTemplatesCollection,
         topK: 5,
+        filter: {
+          $or: generateMetricTypeFilters(metricType.split(',').concat(['*'])),
+        },
+      });
+      reportInteraction('grafana_prometheus_promqail_vector_results', {
+        metric: query.metric,
+        prompt: interaction.prompt,
+        results: results,
       });
       // TODO: handle errors from vector search
     }
@@ -220,6 +372,7 @@ export async function promQailSuggest(
       .streamChatCompletions({
         model: OPENAI_MODEL_NAME,
         messages: promptMessages,
+        temperature: 0,
       })
       .pipe(llms.openai.accumulateContent())
       .subscribe((response) => {
