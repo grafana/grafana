@@ -353,19 +353,20 @@ function defaultFormatCreateLabel(input: string) {
   );
 }
 
-function CustomIndicatorsContainer(props: IndicatorsContainerProps) {
-  const { showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = props.selectProps as SelectPropsWithExtras;
+type CustomIndicatorsContainerProps = IndicatorsContainerProps & {
+  selectProps: SelectPropsWithExtras;
+  children: React.ReactNode;
+};
+
+function CustomIndicatorsContainer(props: CustomIndicatorsContainerProps) {
+  const { showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = props.selectProps;
 
   const value = props.getValue();
 
   if (maxVisibleValues !== undefined && Array.isArray(props.children)) {
     const selectedValuesCount = value.length;
 
-    if (
-      maxVisibleValues !== undefined &&
-      selectedValuesCount > maxVisibleValues &&
-      !(showAllSelectedWhenOpen && menuIsOpen)
-    ) {
+    if (selectedValuesCount > maxVisibleValues && !(showAllSelectedWhenOpen && menuIsOpen)) {
       const indicatorChildren = [...props.children];
       indicatorChildren.splice(
         -1,
