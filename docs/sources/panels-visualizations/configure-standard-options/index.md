@@ -9,7 +9,7 @@ aliases:
   - ../panels/working-with-panels/format-standard-fields/
 keywords:
   - panel
-  - dasboard
+  - dashboard
   - standard
   - option
 menuTitle: Configure standard options

@@ -49,7 +49,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `disableAngular`                          | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
 | `accessControlOnCall`                     | Access control primitives for OnCall                                                                                                                                                         |
 | `alertingNoNormalState`                   | Stop maintaining state of alerts that are not firing                                                                                                                                         |
-| `disableElasticsearchBackendExploreQuery` | Disable executing of Elasticsearch Explore queries trough backend                                                                                                                            |
+| `disableElasticsearchBackendExploreQuery` | Disable executing of Elasticsearch Explore queries through backend                                                                                                                           |
 | `renderAuthJWT`                           | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 
 ## Alpha feature toggles

@@ -59,7 +59,7 @@ If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth
 
 ## Iframe Embedding
 
-If you want to embed Grafana in an iframe while maintaning user identity and role checks,
+If you want to embed Grafana in an iframe while maintaining user identity and role checks,
 you can use JWT authentication to authenticate the iframe.
 
 > **Note**: For Grafana Cloud, or scenarios where verifying viewer identity is not required,
