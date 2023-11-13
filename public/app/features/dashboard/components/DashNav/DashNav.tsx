@@ -254,10 +254,6 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    buttons.push(renderTimeControls());
-
-    buttons.push(<NavToolbarSeparator key="toolbar-separator" />);
-
     if (canStar) {
       let desc = isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
@@ -326,6 +322,9 @@ export const DashNav = React.memo<Props>((props) => {
     if (canShare) {
       buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
     }
+
+    buttons.push(renderTimeControls());
+
     return buttons;
   };
 

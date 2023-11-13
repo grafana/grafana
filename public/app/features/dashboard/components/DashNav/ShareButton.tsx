@@ -27,7 +27,7 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   return (
     <Button
       data-testid={e2eSelectors.pages.Dashboard.DashNav.shareButton}
-      variant="secondary"
+      variant="primary"
       size="sm"
       onClick={() => {
         showModal(ShareModal, {
