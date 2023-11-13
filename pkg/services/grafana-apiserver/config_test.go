@@ -12,7 +12,7 @@ import (
 
 func TestNewConfig(t *testing.T) {
 	// nolint:staticcheck
-	cfg := setting.NewCfgWithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServer).IsEnabled)
+	cfg := setting.NewCfgWithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServer).IsEnabledGlobally)
 	cfg.Env = setting.Prod
 	cfg.DataPath = "/tmp/grafana"
 	cfg.HTTPAddr = "10.0.0.1"

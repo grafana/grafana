@@ -33,7 +33,7 @@ import (
 func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	{
 		oldVersion := setting.BuildVersion

@@ -73,7 +73,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 		StaticRootPath:         staticRootPath,
 		BundledPluginsPath:     bundledPluginsPath,
 		Azure:                  &azsettings.AzureSettings{},
-		IsFeatureToggleEnabled: features.IsEnabled,
+		IsFeatureToggleEnabled: features.IsEnabledGlobally,
 	}
 
 	tracer := tracing.InitializeTracerForTest()

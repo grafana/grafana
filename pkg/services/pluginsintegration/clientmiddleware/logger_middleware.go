@@ -50,7 +50,7 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 	if err != nil {
 		logParams = append(logParams, "error", err)
 	}
-	if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+	if m.features.IsEnabled(ctx, featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		logParams = append(logParams, "status_source", pluginrequestmeta.StatusSourceFromContext(ctx))
 	}
 

@@ -44,7 +44,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	tb.Helper()
 
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabledGlobally
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval: setting.SchedulerBaseInterval,
 	}

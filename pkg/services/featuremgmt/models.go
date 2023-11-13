@@ -2,11 +2,13 @@ package featuremgmt
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 )
 
 type FeatureToggles interface {
-	IsEnabled(flag string) bool
+	IsEnabled(ctx context.Context, flag string) bool
+	IsEnabledGlobally(flag string) bool
 }
 
 // FeatureFlagStage indicates the quality level

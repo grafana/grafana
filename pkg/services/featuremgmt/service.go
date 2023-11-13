@@ -73,7 +73,7 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 	mgmt.update()
 
 	// Minimum approach to avoid circular dependency
-	cfg.IsFeatureToggleEnabled = mgmt.IsEnabled
+	cfg.IsFeatureToggleEnabled = mgmt.IsEnabledGlobally
 	return mgmt, nil
 }
 
