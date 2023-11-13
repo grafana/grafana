@@ -7,7 +7,15 @@ import (
 )
 
 type FeatureToggles interface {
+	// Check if a feature is enabled for a given request.
+	// The settings may be per user, tenant, or globally set in the cloud
 	IsEnabled(ctx context.Context, flag string) bool
+
+	// Check if a flag is configured globally.  For now, this is the same
+	// as the function above, however it will move to only checking flags that
+	// are configured by the operator and shared across all tenants.
+	// Use of global feature flags should be limited and careful as they require
+	// a full server restart for a change to take place.
 	IsEnabledGlobally(flag string) bool
 }
 
