@@ -1,5 +1,5 @@
 import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
-import { from, forkJoin, timeout, lastValueFrom, catchError, throwError, of } from 'rxjs';
+import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
 import { PanelPlugin, PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
