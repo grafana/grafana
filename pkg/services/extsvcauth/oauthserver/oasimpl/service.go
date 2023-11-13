@@ -183,6 +183,33 @@ func (s *OAuth2ServiceImpl) setClientUser(ctx context.Context, client *oauthserv
 	return nil
 }
 
+func (s *OAuth2ServiceImpl) RemoveExternalService(ctx context.Context, name string) error {
+	s.logger.Info("Remove external service", "service", name)
+
+	client, err := s.sqlstore.GetExternalServiceByName(ctx, name)
+	if err != nil {
+		if errors.Is(err, oauthserver.ErrClientNotFound) {
+			s.logger.Debug("No external service linked to this name", "name", name)
+			return nil
+		}
+		s.logger.Error("Error fetching external service", "name", name, "error", err.Error())
+		return err
+	}
+
+	// Since we will delete the service, clear cache entry
+	s.cache.Delete(client.ClientID)
+
+	// Delete the OAuth client info in store
+	if err := s.sqlstore.DeleteExternalService(ctx, client.ClientID); err != nil {
+		s.logger.Error("Error deleting external service", "name", name, "error", err.Error())
+		return err
+	}
+	s.logger.Debug("Deleted external service", "name", name, "client_id", client.ClientID)
+
+	// Remove the associated service account
+	return s.saService.RemoveExtSvcAccount(ctx, oauthserver.TmpOrgID, slugify.Slugify(name))
+}
+
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
 // it ensures that the associated service account has the correct permissions.
 // Database consistency is not guaranteed, consider changing this in the future.
@@ -412,14 +439,13 @@ func (s *OAuth2ServiceImpl) handlePluginStateChanged(ctx context.Context, event 
 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	// Retrieve client associated to the plugin
-	slug := slugify.Slugify(event.PluginId)
-	client, err := s.sqlstore.GetExternalServiceByName(ctx, slug)
+	client, err := s.sqlstore.GetExternalServiceByName(ctx, event.PluginId)
 	if err != nil {
 		if errors.Is(err, oauthserver.ErrClientNotFound) {
 			s.logger.Debug("No external service linked to this plugin", "pluginId", event.PluginId)
 			return nil
 		}
-		s.logger.Error("Error fetching service", "pluginId", event.PluginId, "error", err)
+		s.logger.Error("Error fetching service", "pluginId", event.PluginId, "error", err.Error())
 		return err
 	}
 
