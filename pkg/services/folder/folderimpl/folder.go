@@ -856,12 +856,14 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
-	if dash.IsFolder && dash.FolderID > 0 {
-		return nil, dashboards.ErrDashboardFolderCannotHaveParent
+	if strings.EqualFold(dash.Title, dashboards.RootFolderName) {
+		return nil, dashboards.ErrDashboardFolderNameExists
 	}
 
-	if dash.IsFolder && strings.EqualFold(dash.Title, dashboards.RootFolderName) {
-		return nil, dashboards.ErrDashboardFolderNameExists
+	if dash.FolderUID != "" {
+		if _, err := s.dashboardFolderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID); err != nil {
+			return nil, err
+		}
 	}
 
 	if !util.IsValidShortUID(dash.UID) {
