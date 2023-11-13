@@ -186,17 +186,6 @@ func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]str
 				return util.ErrWalkSkipDir
 			}
 
-			//if fi.Name() == "dist" {
-			//	if filepath.Join(path, "dist") == currentPath {
-			//		l.log.Info("Found dist at root so will follow it", "path", currentPath)
-			//		return nil
-			//	}
-			//	if !followDistFolder {
-			//		l.log.Info("Skipping dist as I'm told not to follow it", "path", currentPath)
-			//		return util.ErrWalkSkipDir
-			//	}
-			//}
-
 			if fi.IsDir() {
 				return nil
 			}
