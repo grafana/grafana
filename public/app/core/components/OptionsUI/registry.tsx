@@ -50,19 +50,19 @@ import { UnitValueEditor } from './units';
 /**
  * Returns collection of standard option editors definitions
  */
-export const getAllOptionEditors = () => {
+export function getAllOptionEditors(): StandardEditorsRegistryItem[] {
   const number: StandardEditorsRegistryItem<number> = {
     id: 'number',
     name: 'Number',
     description: 'Allows numeric values input',
-    editor: NumberValueEditor as any,
+    editor: NumberValueEditor,
   };
 
   const slider: StandardEditorsRegistryItem<number> = {
     id: 'slider',
     name: 'Slider',
     description: 'Allows numeric values input',
-    editor: SliderValueEditor as any,
+    editor: SliderValueEditor,
   };
 
   const text: StandardEditorsRegistryItem<string> = {
@@ -76,7 +76,7 @@ export const getAllOptionEditors = () => {
     id: 'strings',
     name: 'String array',
     description: 'An array of strings',
-    editor: StringArrayEditor as any,
+    editor: StringArrayEditor,
   };
 
   const boolean: StandardEditorsRegistryItem<boolean> = {
@@ -93,14 +93,14 @@ export const getAllOptionEditors = () => {
     id: 'select',
     name: 'Select',
     description: 'Allows option selection',
-    editor: SelectValueEditor as any,
+    editor: SelectValueEditor,
   };
 
   const multiSelect: StandardEditorsRegistryItem = {
     id: 'multi-select',
     name: 'Multi select',
     description: 'Allows for multiple option selection',
-    editor: MultiSelectValueEditor as any,
+    editor: MultiSelectValueEditor,
   };
 
   const radio: StandardEditorsRegistryItem = {
@@ -116,7 +116,7 @@ export const getAllOptionEditors = () => {
     id: 'unit',
     name: 'Unit',
     description: 'Allows unit input',
-    editor: UnitValueEditor as any,
+    editor: UnitValueEditor,
   };
 
   const color: StandardEditorsRegistryItem<string, ColorValueEditorSettings> = {
@@ -130,24 +130,24 @@ export const getAllOptionEditors = () => {
     },
   };
 
-  const fieldColor: StandardEditorsRegistryItem<FieldColor> = {
+  const fieldColor: StandardEditorsRegistryItem<FieldColor | undefined> = {
     id: 'fieldColor',
     name: 'Field Color',
     description: 'Field color selection',
-    editor: FieldColorEditor as any,
+    editor: FieldColorEditor,
   };
 
   const links: StandardEditorsRegistryItem<DataLink[]> = {
     id: 'links',
     name: 'Links',
     description: 'Allows defining data links',
-    editor: DataLinksValueEditor as any,
+    editor: DataLinksValueEditor,
   };
 
   const statsPicker: StandardEditorsRegistryItem<string[], StatsPickerConfigSettings> = {
     id: 'stats-picker',
     name: 'Stats Picker',
-    editor: StatsPickerEditor as any,
+    editor: StatsPickerEditor,
     description: '',
   };
 
@@ -183,7 +183,7 @@ export const getAllOptionEditors = () => {
     id: 'thresholds',
     name: 'Thresholds',
     description: 'Allows defining thresholds',
-    editor: ThresholdsValueEditor as any,
+    editor: ThresholdsValueEditor,
   };
 
   return [
@@ -206,12 +206,12 @@ export const getAllOptionEditors = () => {
     mappings,
     thresholds,
   ];
-};
+}
 
 /**
  * Returns collection of common field config properties definitions
  */
-export const getAllStandardFieldConfigs = () => {
+export function getAllStandardFieldConfigs() {
   const category = ['Standard options'];
   const displayName: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'displayName',
@@ -417,4 +417,4 @@ export const getAllStandardFieldConfigs = () => {
   };
 
   return [unit, min, max, fieldMinMax, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
-};
+}
