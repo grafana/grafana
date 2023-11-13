@@ -17,6 +17,12 @@ const (
 type AuthProvider string
 
 type ExternalServiceRegistry interface {
+	// HasExternalService returns whether an external service has been saved with that name.
+	HasExternalService(ctx context.Context, name string) bool
+
+	// RemoveExternalService removes an external service and its associated resources from the database (ex: service account, token).
+	RemoveExternalService(ctx context.Context, name string) error
+
 	// SaveExternalService creates or updates an external service in the database. Based on the requested auth provider,
 	// it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
 	// associated service account has the correct permissions.
