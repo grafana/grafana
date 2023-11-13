@@ -3,6 +3,7 @@ package pluginaccesscontrol
 import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -67,7 +68,8 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
-	if !cfg.PluginAdminEnabled || cfg.PluginAdminExternalManageEnabled {
+	if !cfg.PluginAdminEnabled ||
+		(cfg.PluginAdminExternalManageEnabled && !cfg.IsFeatureToggleEnabled(featuremgmt.FlagManagedPluginsInstall)) {
 		PluginsMaintainer.Grants = []string{}
 	}
 

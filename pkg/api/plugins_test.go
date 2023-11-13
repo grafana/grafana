@@ -67,6 +67,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.Cfg = &setting.Cfg{
 				PluginAdminEnabled:               tc.pluginAdminEnabled,
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled}
+			hs.Cfg.IsFeatureToggleEnabled = func(_ string) bool { return false }
+
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.pluginInstaller = NewFakePluginInstaller()
 			hs.pluginFileStore = &fakes.FakePluginFileStore{}
