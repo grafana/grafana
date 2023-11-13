@@ -14,16 +14,19 @@ const (
 	StatusSourceDownstream StatusSource = "downstream"
 )
 
+// DefaultStatusSource is the default StatusSource that should be used when it is not explicitly set by the plugin.
+const DefaultStatusSource StatusSource = StatusSourcePlugin
+
 type statusSourceCtxKey struct{}
 
 // StatusSourceFromContext returns the plugin request status source stored in the context.
-// If no plugin request status source is stored in the context, [StatusSourcePlugin] is returned.
+// If no plugin request status source is stored in the context, [DefaultStatusSource] is returned.
 func StatusSourceFromContext(ctx context.Context) StatusSource {
 	value, ok := ctx.Value(statusSourceCtxKey{}).(*StatusSource)
 	if ok {
 		return *value
 	}
-	return StatusSourcePlugin
+	return DefaultStatusSource
 }
 
 // WithStatusSource sets the plugin request status source for the context.

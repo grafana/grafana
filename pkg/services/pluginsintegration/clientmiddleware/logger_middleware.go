@@ -82,8 +82,12 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 		for refID, dr := range resp.Responses {
 			if dr.Error != nil {
 				logParams := []any{"refID", refID, "error", dr.Error}
-				if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) && dr.ErrorSource != "" {
-					logParams = append(logParams, "statusSource", dr.ErrorSource)
+				if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+					statusSource := pluginrequestmeta.DefaultStatusSource
+					if dr.ErrorSource != "" {
+						statusSource = pluginrequestmeta.StatusSource(dr.ErrorSource)
+					}
+					logParams = append(logParams, "statusSource", statusSource)
 				}
 				ctxLogger.Error("Partial data response error", logParams...)
 			}
