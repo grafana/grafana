@@ -25,8 +25,8 @@ replace (
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
 
 // Includes https://github.com/kubernetes/kube-openapi/pull/420
-// This will not be required in the next k8s release
-replace k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f => github.com/ryantxu/kube-openapi v0.0.0-20230824154605-fe0f3703fd8d // @grafana/grafana-app-platform-squad
+// This will not be required in the next k8s release @v28-with-hook
+replace k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 => github.com/ryantxu/kube-openapi v0.0.0-20231113051506-80b8e1dfdde6 // @grafana/grafana-app-platform-squad
 
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
@@ -65,10 +65,10 @@ require (
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
-	github.com/grafana/grafana-plugin-sdk-go v0.187.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.191.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
-	github.com/hashicorp/go-plugin v1.4.9 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-plugin v1.5.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/backend-platform
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-squad-backend
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3 // @grafana/observability-metrics
@@ -109,7 +109,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.19.0 // @grafana/backend-platform
 	golang.org/x/crypto v0.14.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // @grafana/alerting-squad-backend
-	golang.org/x/net v0.17.0 // @grafana/grafana-bi-squad
+	golang.org/x/net v0.17.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.13.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.4.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.3.0 // @grafana/backend-platform
@@ -123,7 +123,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/backend-platform
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-squad-backend
-	xorm.io/builder v0.3.6 // indirect; @grafana/backend-platform
+	xorm.io/builder v0.3.6 // @grafana/backend-platform
 	xorm.io/core v0.7.3 // @grafana/backend-platform
 	xorm.io/xorm v0.8.2 // @grafana/alerting-squad-backend
 )
@@ -175,7 +175,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect; @grafana/alerting-squad
+	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
@@ -275,13 +275,14 @@ require (
 )
 
 require (
+	github.com/spf13/cobra v1.7.0 // @grafana/grafana-app-platform-squad
 	go.opentelemetry.io/otel v1.19.0 // @grafana/backend-platform
-	k8s.io/apimachinery v0.27.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.27.1 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.27.1 // @grafana/grafana-app-platform-squad
-	k8s.io/klog/v2 v2.90.1 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.28.3 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.28.3 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.28.3 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.28.3 // @grafana/grafana-app-platform-squad
+	k8s.io/klog/v2 v2.100.1 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // @grafana/grafana-app-platform-squad
 )
 
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
@@ -383,7 +384,6 @@ require (
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
@@ -410,8 +410,8 @@ require (
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	k8s.io/api v0.27.1 // indirect
-	k8s.io/kms v0.27.1 // indirect
+	k8s.io/api v0.28.3 // indirect
+	k8s.io/kms v0.28.3 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
@@ -482,7 +482,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
-require github.com/google/gnostic v0.6.9 // indirect
+require github.com/google/gnostic-models v0.6.8 // indirect
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c
@@ -496,7 +496,8 @@ replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 // happen, for example, during a read when the sqlite db is under heavy write load.
 // This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
 // This has also been patched to support the azuresql driver that is a thin wrapper for the mssql driver with azure authentication support.
-replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20230627081928-d04aa38aa209
+//replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20230627081928-d04aa38aa209
+replace xorm.io/xorm => ./pkg/util/xorm
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.

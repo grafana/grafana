@@ -178,12 +178,13 @@ func TestIntegrationFolderService(t *testing.T) {
 
 		t.Run("Given user has permission to save", func(t *testing.T) {
 			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 			service.features = featuremgmt.WithFeatures()
 
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
 				dash := dashboards.NewDashboardFolder("Test-Folder")
 				dash.ID = rand.Int63()
+				dash.UID = util.GenerateShortUID()
 				f := dashboards.FromDashboard(dash)
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
@@ -193,7 +194,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				actualFolder, err := service.Create(context.Background(), &folder.CreateFolderCommand{
 					OrgID:        orgID,
 					Title:        dash.Title,
-					UID:          "someuid",
+					UID:          dash.UID,
 					SignedInUser: usr,
 				})
 				require.NoError(t, err)
@@ -241,6 +242,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				f.ID = rand.Int63()
 				f.UID = util.GenerateShortUID()
 				folderStore.On("GetFolders", mock.Anything, orgID, []string{f.UID}).Return(map[string]*folder.Folder{f.UID: f}, nil)
+				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 
 				var actualCmd *dashboards.DeleteDashboardCommand
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -341,7 +343,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	cfg := setting.NewCfg()
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
-	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db), quotaService)
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
 
@@ -403,7 +405,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
 			require.NoError(t, err)
 
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, ac, dashSrv)
+			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv)
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn, ac)
@@ -452,7 +454,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		})
 		t.Run("With nested folder feature flag off", func(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
-			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
+			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
 			require.NoError(t, err)
 			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
 
@@ -480,7 +482,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff)
 			require.NoError(t, err)
 
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, ac, dashSrv)
+			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv)
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff, ac)
@@ -582,6 +584,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				depth:             1,
 				forceDelete:       true,
 				dashboardErr:      dashboards.ErrFolderNotFound,
+				folderErr:         folder.ErrFolderNotFound,
 				libPanelParentErr: model.ErrLibraryElementNotFound,
 				desc:              "With nested folder feature flag off and force deletion of rules",
 			},
@@ -610,7 +613,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, tc.service)
 				require.NoError(t, err)
 
-				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, tc.featuresFlag, tagimpl.ProvideService(db, db.Cfg), quotaService)
+				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, tc.featuresFlag, tagimpl.ProvideService(db), quotaService)
 				require.NoError(t, err)
 				nestedFolderStore := ProvideStore(db, db.Cfg, tc.featuresFlag)
 				tc.service.dashboardStore = dashStore
@@ -618,7 +621,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 				dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service)
 				require.NoError(t, err)
-				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, ac, dashSrv)
+				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv)
 				require.NoError(t, err)
 
 				ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, tc.depth, tc.prefix, createCmd)
@@ -723,7 +726,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 
 func TestNestedFolderService(t *testing.T) {
 	t.Run("with feature flag unset", func(t *testing.T) {
-		t.Run("When create folder, no create in folder table done", func(t *testing.T) {
+		t.Run("Should create a folder in both dashboard and folders tables", func(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 			t.Cleanup(func() {
@@ -748,8 +751,7 @@ func TestNestedFolderService(t *testing.T) {
 				SignedInUser: usr,
 			})
 			require.NoError(t, err)
-			// CreateFolder should not call the folder store create if the feature toggle is not enabled.
-			require.False(t, nestedFolderStore.CreateCalled)
+			require.True(t, nestedFolderStore.CreateCalled)
 		})
 	})
 

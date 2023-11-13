@@ -839,7 +839,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	db := sqlstore.InitTestDB(t)
 
 	// dashboard store commands that should be called.
-	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)

@@ -361,7 +361,7 @@ type Cfg struct {
 	ApiKeyMaxSecondsToLive int64
 
 	// Check if a feature toggle is enabled
-	// @deprecated
+	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
 	AnonymousEnabled     bool
@@ -980,7 +980,20 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 		Azure:  &azsettings.AzureSettings{},
+
+		// Avoid nil pointer
+		IsFeatureToggleEnabled: func(_ string) bool {
+			return false
+		},
 	}
+}
+
+// Deprecated: Avoid using IsFeatureToggleEnabled from settings.  If you need to access
+// feature flags, read them from the FeatureToggle (or FeatureManager) interface
+func NewCfgWithFeatures(features func(string) bool) *Cfg {
+	cfg := NewCfg()
+	cfg.IsFeatureToggleEnabled = features
+	return cfg
 }
 
 func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
@@ -1155,6 +1168,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
+	// nolint:staticcheck
 	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
 	}

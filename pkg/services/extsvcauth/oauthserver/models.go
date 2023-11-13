@@ -33,6 +33,8 @@ type OAuth2Server interface {
 	// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 	// SignedInUser from the associated service account.
 	GetExternalService(ctx context.Context, id string) (*OAuthExternalService, error)
+	// RemoveExternalService removes an external service and its associated resources from the store.
+	RemoveExternalService(ctx context.Context, name string) error
 
 	// HandleTokenRequest handles the client's OAuth2 query to obtain an access_token by presenting its authorization
 	// grant (ex: client_credentials, jwtbearer).
@@ -45,6 +47,7 @@ type OAuth2Server interface {
 //go:generate mockery --name Store --structname MockStore --outpkg oastest --filename store_mock.go --output ./oastest/
 
 type Store interface {
+	DeleteExternalService(ctx context.Context, id string) error
 	GetExternalService(ctx context.Context, id string) (*OAuthExternalService, error)
 	GetExternalServiceByName(ctx context.Context, name string) (*OAuthExternalService, error)
 	GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error)
