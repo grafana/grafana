@@ -167,7 +167,7 @@ func ProvideService(cfg *setting.Cfg,
 
 		// AzureAD.
 		if name == "azuread" {
-			settingsKV := ConvertIniSectionToMap(sec)
+			settingsKV := convertIniSectionToMap(sec)
 			azureADConnector, err := NewAzureADProvider(settingsKV, cfg, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create AzureAD provider", "error", err)

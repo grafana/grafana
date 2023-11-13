@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const azureADProviderName = "azuread"
+
 var _ SocialConnector = (*SocialAzureAD)(nil)
 
 type SocialAzureAD struct {
@@ -63,13 +65,13 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(settings map[string]interface{}, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
-	info, err := CreateOAuthInfoFromKeyValues(settings)
+	info, err := createOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err
 	}
-	config := createOAuthConfig(info, cfg, "azuread")
+	config := createOAuthConfig(info, cfg, azureADProviderName)
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(info.Name, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		SocialBase:           newSocialBase(azureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(mustString(info.Extra["allowed_organizations"])),
 		forceUseGraphAPI:     mustBool(info.Extra["force_use_graph_api"], false),

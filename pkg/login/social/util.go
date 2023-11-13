@@ -9,8 +9,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-// ConvertIniSectionToMap converts key value pairs from an ini section to a map[string]interface{}
-func ConvertIniSectionToMap(sec *ini.Section) map[string]interface{} {
+// convertIniSectionToMap converts key value pairs from an ini section to a map[string]interface{}
+func convertIniSectionToMap(sec *ini.Section) map[string]interface{} {
 	mappedSettings := make(map[string]interface{})
 	for k, v := range sec.KeysHash() {
 		mappedSettings[k] = v
@@ -18,7 +18,7 @@ func ConvertIniSectionToMap(sec *ini.Section) map[string]interface{} {
 	return mappedSettings
 }
 
-func CreateOAuthInfoFromKeyValues(settingsKV map[string]interface{}) (*OAuthInfo, error) {
+func createOAuthInfoFromKeyValues(settingsKV map[string]interface{}) (*OAuthInfo, error) {
 	emptyStrToSliceDecodeHook := func(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {
 		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
 			strData, ok := data.(string)

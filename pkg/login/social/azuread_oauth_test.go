@@ -746,15 +746,11 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		providerCfg map[string]interface{}
 		cfg         *setting.Cfg
 	}
-	type args struct {
-		client *http.Client
-	}
 
 	tests := []struct {
 		name                     string
 		fields                   fields
 		claims                   *azureClaims
-		args                     args
 		settingAutoAssignOrgRole string
 		want                     *BasicUserInfo
 		wantErr                  bool
@@ -903,11 +899,9 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				token = token.WithExtra(map[string]any{"id_token": raw})
 			}
 
-			if tt.fields.SocialBase != nil {
-				tt.args.client = s.Client(context.Background(), token)
-			}
+			provClient := s.Client(context.Background(), token)
 
-			got, err := s.UserInfo(context.Background(), tt.args.client, token)
+			got, err := s.UserInfo(context.Background(), provClient, token)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return
