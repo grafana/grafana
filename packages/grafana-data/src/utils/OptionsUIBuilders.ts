@@ -16,6 +16,7 @@ import {
   StandardEditorContext,
 } from '../field';
 import { PanelOptionsSupplier } from '../panel/PanelPlugin';
+import { isObject } from '../types';
 import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
 import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
@@ -204,8 +205,8 @@ export class NestedPanelOptionsBuilder<TSub = any> implements OptionsEditorItem<
   };
 }
 
-export function isNestedPanelOptions(item: any): item is NestedPanelOptionsBuilder {
-  return item.id === 'nested-panel-options';
+export function isNestedPanelOptions(item: unknown): item is NestedPanelOptionsBuilder {
+  return isObject(item) && 'id' in item && item.id === 'nested-panel-options';
 }
 
 /**
