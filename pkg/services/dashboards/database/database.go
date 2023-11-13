@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/fts"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -29,11 +30,12 @@ import (
 )
 
 type dashboardStore struct {
-	store      db.DB
-	cfg        *setting.Cfg
-	log        log.Logger
-	features   featuremgmt.FeatureToggles
-	tagService tag.Service
+	store       db.DB
+	cfg         *setting.Cfg
+	log         log.Logger
+	features    featuremgmt.FeatureToggles
+	tagService  tag.Service
+	searchIndex fts.Index
 }
 
 // SQL bean helper to save tags
@@ -46,8 +48,12 @@ type dashboardTag struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*dashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (dashboards.Store, error) {
-	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service, fts fts.Service) (dashboards.Store, error) {
+	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService, searchIndex: fts.Index("fts")}
+
+	if err := s.searchIndex.Init(); err != nil {
+		return nil, err
+	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
@@ -967,7 +973,11 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
+		if false {
+			filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
+		} else {
+			filters = append(filters, d.searchIndex.Filter(query.Title))
+		}
 	}
 
 	if len(query.Type) > 0 {
@@ -1004,6 +1014,11 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	sql, params := sb.ToSQL(limit, page)
 
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		start := time.Now()
+		defer func() {
+			fmt.Printf("query %s took %v\n", query.Title, time.Since(start))
+			fmt.Println(sql, params)
+		}()
 		return sess.SQL(sql, params...).Find(&res)
 	})
 
