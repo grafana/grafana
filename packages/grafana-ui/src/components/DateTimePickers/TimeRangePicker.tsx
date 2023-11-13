@@ -77,10 +77,12 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   };
 
   const onToolbarButtonSwitch = () => {
-    if (!isOpen && props.onToolbarTimePickerClick) {
+  setOpen((prevState) => {
+    if (prevState && props.onToolbarTimePickerClick) {
       props.onToolbarTimePickerClick();
     }
-    setOpen((prevState) => !prevState);
+    return !prevState;
+  });
   };
 
   const onClose = () => {
