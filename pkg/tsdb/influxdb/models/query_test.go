@@ -228,6 +228,17 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" > 10001`)
 		})
 
+		t.Run("can render number greater than or equal to condition tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: ">=", Value: "10001", Key: "key"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" >= 10001`)
+		})
+		t.Run("can render number less than or equal to condition tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "<=", Value: "10001", Key: "key"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" <= 10001`)
+		})
+
 		t.Run("can render string tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "=", Value: "value", Key: "key"}}}
 
