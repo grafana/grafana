@@ -43,7 +43,8 @@ type fieldName = string;
 type fieldNameMetaStore = Record<fieldName, fieldNameMeta>;
 
 export function LogsTableWrap(props: Props) {
-  const { logsFrames } = props;
+  const { logsFrames, updatePanelState, panelState } = props;
+  const propsColumns = panelState?.columns;
   // Save the normalized cardinality of each label
   const [columnsWithMeta, setColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
@@ -67,6 +68,20 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
+  const logsFrame = parseLogsFrame(dataFrame);
+  if (logsFrame?.timeField.name && logsFrame?.bodyField.name) {
+  }
+
+  useEffect(() => {
+    if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
+      const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
+      updatePanelState({
+        columns: Object.values(defaultColumns),
+        visualisationType: 'table',
+        labelName: logsFrame?.getLabelFieldName() ?? undefined,
+      });
+    }
+  }, [logsFrame, propsColumns, updatePanelState]);
 
   /**
    * Keeps the filteredColumnsWithMeta state in sync with the columnsWithMeta state,
@@ -251,22 +266,25 @@ export function LogsTableWrap(props: Props) {
 
     const logsFrame = parseLogsFrame(dataFrame);
 
+    const newColumns: Record<number, string> = Object.assign(
+      {},
+      // Get the keys of the object as an array
+      Object.keys(pendingLabelState)
+        // Only include active filters
+        .filter((key) => pendingLabelState[key]?.active)
+    );
+
+    const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
     const newPanelState: ExploreLogsPanelState = {
       ...props.panelState,
       // URL format requires our array of values be an object, so we convert it using object.assign
-      columns: Object.assign(
-        {},
-        // Get the keys of the object as an array
-        Object.keys(pendingLabelState)
-          // Only include active filters
-          .filter((key) => pendingLabelState[key]?.active)
-      ),
+      columns: Object.keys(newColumns).length ? newColumns : defaultColumns,
       visualisationType: 'table',
       labelName: logsFrame?.getLabelFieldName() ?? undefined,
     };
 
     // Update url state
-    props.updatePanelState(newPanelState);
+    updatePanelState(newPanelState);
   };
 
   // uFuzzy search dispatcher, adds any matches to the local state
