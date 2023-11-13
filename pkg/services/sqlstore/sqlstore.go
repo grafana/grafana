@@ -68,6 +68,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 		return nil, err
 	}
 
+	// nolint:staticcheck
 	if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
 		return nil, err
 	}
@@ -306,6 +307,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
 		}
 
+		// nolint:staticcheck
 		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
 		}
@@ -634,6 +636,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 
 		// set test db config
 		cfg := setting.NewCfg()
+		// nolint:staticcheck
 		cfg.IsFeatureToggleEnabled = func(key string) bool {
 			for _, enabledFeature := range features {
 				if enabledFeature == key {
@@ -728,6 +731,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		return testSQLStore, nil
 	}
 
+	// nolint:staticcheck
 	testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
 		for _, enabledFeature := range features {
 			if enabledFeature == key {
