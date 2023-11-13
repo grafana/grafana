@@ -193,7 +193,7 @@ func (l *Local) getAbsPluginJSONPaths(path string, followDistFolder bool) ([]str
 			//	}
 			//	if !followDistFolder {
 			//		l.log.Info("Skipping dist as I'm told not to follow it", "path", currentPath)
-			//		return store.ErrWalkSkipDir
+			//		return util.ErrWalkSkipDir
 			//	}
 			//}
 
