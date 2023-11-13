@@ -13,10 +13,14 @@ import {
   SceneObjectState,
   SceneObjectStateChangedEvent,
   sceneUtils,
+  SceneVariable,
+  SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
+import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
@@ -62,6 +66,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * Handles url sync
    */
   protected _urlSync = new DashboardSceneUrlSync(this);
+  /**
+   * Get notified when variables change
+   */
+  protected _variableDependency = new DashboardVariableDependency();
+
   /**
    * State before editing started
    */
@@ -283,5 +292,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const { meta } = this.state;
 
     return Boolean(meta.canEdit || meta.canMakeEditable);
+  }
+}
+
+export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
+  private _emptySet = new Set<string>();
+
+  getNames(): Set<string> {
+    return this._emptySet;
+  }
+
+  public hasDependencyOn(): boolean {
+    return false;
+  }
+
+  public variableUpdatesCompleted(changedVars: Set<SceneVariable>) {
+    if (changedVars.size > 0) {
+      // Temp solution for some core panels (like dashlist) to know that variables have changed
+      appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
+    }
   }
 }
