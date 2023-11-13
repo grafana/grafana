@@ -1,5 +1,4 @@
 import { get } from 'lodash';
-import { title } from 'process';
 
 import { Dashboard } from '@grafana/schema';
 import { Diff, jsonDiff } from 'app/features/dashboard/components/VersionHistory/utils';

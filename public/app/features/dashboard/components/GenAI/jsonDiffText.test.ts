@@ -11,7 +11,6 @@ import {
   getDashboardStringDiff,
   removeEmptyFields,
   reorganizeDiffs,
-  separateRootAndNonRootDiffs,
 } from './jsonDiffText';
 
 describe('orderProperties', () => {
@@ -283,8 +282,8 @@ describe('getDashboardStringDiff', () => {
 
     const result = getDashboardStringDiff(dashboardModel);
 
-    expect(result.userDiff).toContain(`-  \"title\": \"Original Title\"`);
-    expect(result.userDiff).toContain(`+  \"title\": \"New Title\",`);
+    expect(result.userDiff).toContain('-\t"title": "Original Title"');
+    expect(result.userDiff).toContain('+\t"title": "New Title"');
   });
 
   it('should return a diff when a panel is moved', () => {
@@ -296,20 +295,11 @@ describe('getDashboardStringDiff', () => {
     const result = getDashboardStringDiff(dashboardModel);
 
     const panelToBeMovedDiff: string = [
-      '- "type": "timeseries",',
-      '- "gridPos": {',
-      '-   "x": 2,',
-      '-   "y": 0,',
-      '-   "w": 2,',
-      '-   "h": 2',
-      '- },',
-      '+ "gridPos": {',
-      '+   "h": 2,',
-      '+   "w": 2,',
-      '+   "x": 1,',
-      '+   "y": 1',
-      '+ },',
-      '+ "type": "timeseries"',
+      `Changes for path panels/1/gridPos with title: Panel to be moved:`,
+      `-\t\"x\": 2`,
+      `+\t\"x\": 1`,
+      `-\t\"y\": 0`,
+      `+\t\"y\": 1`,
     ].join('\n');
 
     // Replace newlines in the string with the actual newline character
@@ -530,48 +520,5 @@ describe('reorganizeDiffs', () => {
   it('reorganizes an empty object of diffs', () => {
     const reorganizedDiffs = reorganizeDiffs({});
     expect(reorganizedDiffs).toEqual({});
-  });
-});
-
-describe('separateRootAndNonRootDiffs', () => {
-  it('separates root and non-root diffs', () => {
-    const diffRecord: Record<string, Diff[]> = {
-      tags: [
-        {
-          op: 'add',
-          originalValue: undefined,
-          path: ['tags'],
-          startLineNumber: 27,
-          value: 'the tag',
-        },
-      ],
-      dashboard: [
-        {
-          op: 'add',
-          originalValue: undefined,
-          path: ['dashboard', 'annotations', 'list', '0'],
-          startLineNumber: 27,
-          value: 'the tag',
-        },
-        {
-          op: 'add',
-          originalValue: undefined,
-          path: ['dashboard', 'timepicker', 'refresh_intervals'],
-          startLineNumber: 37,
-          value: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
-        },
-      ],
-    };
-
-    const { rootDiffs, nonRootDiffs } = separateRootAndNonRootDiffs(diffRecord);
-
-    expect(rootDiffs).toEqual({
-      tags: [diffRecord.tags[0]],
-    });
-
-    expect(nonRootDiffs).toEqual({
-      'dashboard/annotations/list': [diffRecord.dashboard[0]],
-      'dashboard/timepicker': [diffRecord.dashboard[1]],
-    });
   });
 });
