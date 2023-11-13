@@ -111,8 +111,6 @@ export function LogsTable(props: Props) {
       // create extract JSON transformation for every field that is `json.RawMessage`
       const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFields(dataFrame);
 
-      // remove hidden fields
-      // transformations.push(...showVisibleFields(dataFrame));
       let labelFilters = buildLabelFilters(columnsWithMeta);
 
       // Add the label filters to the transformations
