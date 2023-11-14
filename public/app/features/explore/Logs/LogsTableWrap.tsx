@@ -49,6 +49,7 @@ export function LogsTableWrap(props: Props) {
 
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
+  const [searchValue, setSearchValue] = useState<string>('');
 
   const height = getTableHeight();
   const dataFrame = logsFrames[0];
@@ -222,6 +223,20 @@ export function LogsTableWrap(props: Props) {
     });
   }
 
+  const clearSelection = () => {
+    const pendingLabelState = { ...columnsWithMeta };
+    Object.keys(pendingLabelState).forEach((key) => {
+      if (pendingLabelState[key].type) {
+        pendingLabelState[key].active = true;
+      } else {
+        pendingLabelState[key].active = false;
+      }
+    });
+    setColumnsWithMeta(pendingLabelState);
+    setFilteredColumnsWithMeta(undefined);
+    setSearchValue('');
+  };
+
   // Toggle a column on or off when the user interacts with an element in the multi-select sidebar
   const toggleColumn = (columnName: fieldName) => {
     if (!columnsWithMeta || !(columnName in columnsWithMeta)) {
@@ -292,6 +307,7 @@ export function LogsTableWrap(props: Props) {
   // onChange handler for search input
   const onSearchInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget?.value;
+    setSearchValue(value);
     if (value) {
       debouncedSearch(value);
     } else {
@@ -308,11 +324,12 @@ export function LogsTableWrap(props: Props) {
   return (
     <div className={styles.wrapper}>
       <section className={styles.sidebar}>
-        <LogsColumnSearch onChange={onSearchInputChange} />
+        <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
         <LogsTableMultiSelect
           toggleColumn={toggleColumn}
           filteredColumnsWithMeta={filteredColumnsWithMeta}
           columnsWithMeta={columnsWithMeta}
+          clear={clearSelection}
         />
       </section>
       <LogsTable
