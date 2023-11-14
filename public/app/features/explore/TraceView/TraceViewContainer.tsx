@@ -5,7 +5,6 @@ import { PanelChrome } from '@grafana/ui/src/components/PanelChrome/PanelChrome'
 import { StoreState, useSelector } from 'app/types';
 
 import { TraceView } from './TraceView';
-import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { transformDataFrames } from './utils/transform';
 
 interface Props {
@@ -14,13 +13,12 @@ interface Props {
   exploreId: string;
   scrollElement?: Element;
   queryResponse: PanelData;
-  width: number;
 }
 
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
-  const { dataFrames, splitOpenFn, exploreId, scrollElement, queryResponse, width } = props;
+  const { dataFrames, splitOpenFn, exploreId, scrollElement, queryResponse } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const datasource = useSelector(
     (state: StoreState) => state.explore.panes[props.exploreId]?.datasourceInstance ?? undefined
@@ -40,8 +38,6 @@ export function TraceViewContainer(props: Props) {
         traceProp={traceProp}
         queryResponse={queryResponse}
         datasource={datasource}
-        topOfViewRefType={TopOfViewRefType.Explore}
-        width={width}
       />
     </PanelChrome>
   );

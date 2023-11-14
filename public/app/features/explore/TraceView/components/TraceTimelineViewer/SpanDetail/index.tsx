@@ -30,7 +30,6 @@ import { SpanLinkFunc, TNil } from '../../types';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
-import { TopOfViewRefType } from '../VirtualizedTraceView';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -124,7 +123,6 @@ export type SpanDetailProps = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
 };
 
@@ -144,7 +142,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     referenceItemToggle,
     createSpanLink,
     createFocusSpanLink,
-    topOfViewRefType,
     datasourceType,
   } = props;
   const {
@@ -297,31 +294,29 @@ export default function SpanDetail(props: SpanDetailProps) {
             createFocusSpanLink={createFocusSpanLink}
           />
         )}
-        {topOfViewRefType === TopOfViewRefType.Explore && (
-          <small className={styles.debugInfo}>
-            {/* TODO: fix keyboard a11y */}
-            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-            <a
-              {...focusSpanLink}
-              onClick={(e) => {
-                // click handling logic copied from react router:
-                // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
-                if (
-                  focusSpanLink.onClick &&
-                  e.button === 0 && // Ignore everything but left clicks
-                  (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
-                  !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
-                ) {
-                  e.preventDefault();
-                  focusSpanLink.onClick(e);
-                }
-              }}
-            >
-              <Icon name={'link'} className={cx(uAlignIcon, styles.LinkIcon)}></Icon>
-            </a>
-            <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
-          </small>
-        )}
+        <small className={styles.debugInfo}>
+          {/* TODO: fix keyboard a11y */}
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          <a
+            {...focusSpanLink}
+            onClick={(e) => {
+              // click handling logic copied from react router:
+              // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
+              if (
+                focusSpanLink.onClick &&
+                e.button === 0 && // Ignore everything but left clicks
+                (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
+                !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
+              ) {
+                e.preventDefault();
+                focusSpanLink.onClick(e);
+              }
+            }}
+          >
+            <Icon name={'link'} className={cx(uAlignIcon, styles.LinkIcon)}></Icon>
+          </a>
+          <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
+        </small>
       </div>
     </div>
   );

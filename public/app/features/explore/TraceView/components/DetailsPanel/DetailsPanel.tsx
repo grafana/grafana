@@ -9,7 +9,6 @@ import { autoColor, DetailState, TraceSpan } from '..';
 import { getOverviewItems } from '../TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from '../TraceTimelineViewer/SpanDetail/AccordianKeyValues';
 import TextList from '../TraceTimelineViewer/SpanDetail/TextList';
-import { TopOfViewRefType } from '../TraceTimelineViewer/VirtualizedTraceView';
 import LabeledList from '../common/LabeledList';
 import { SpanLinkFunc, SpanLinkType } from '../types/links';
 import { TraceSpanReference } from '../types/trace';
@@ -23,7 +22,6 @@ import { StackTraces } from './StackTraces';
 type Props = {
   span?: TraceSpan;
   timeZone: TimeZone;
-  width: number;
   clearSelectedSpan: () => void;
   detailState: DetailState | undefined;
   traceStartTime: number;
@@ -32,7 +30,7 @@ type Props = {
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   createSpanLink?: SpanLinkFunc;
   datasourceType: string;
-  topOfViewRefType?: TopOfViewRefType;
+  topOfViewRef: React.RefObject<HTMLDivElement> | undefined;
 };
 
 enum TabLabels {
@@ -47,7 +45,6 @@ export function DetailsPanel(props: Props) {
   const {
     span,
     timeZone,
-    width,
     clearSelectedSpan,
     detailState,
     traceStartTime,
@@ -56,7 +53,7 @@ export function DetailsPanel(props: Props) {
     createFocusSpanLink,
     createSpanLink,
     datasourceType,
-    topOfViewRefType,
+    topOfViewRef,
   } = props;
   const [activeTab, setActiveTab] = useState(TabLabels.Attributes);
   const styles = useStyles2(getStyles);
@@ -136,11 +133,9 @@ export function DetailsPanel(props: Props) {
     <div className={styles.container}>
       {/* The first child here needs to be the DetailsDrawer to we can get it's height via onDrawerResize. This is so we can set a paddingBottom in the TraceView according to this components height */}
       <DetailsDrawer
-        width={width}
-        defaultHeight={
-          theme.components.horizontalDrawer.defaultHeight - (topOfViewRefType === TopOfViewRefType.Explore ? 80 : 165)
-        }
-        minHeight={topOfViewRefType === TopOfViewRefType.Explore ? 200 : 150}
+        width={500}
+        defaultHeight={theme.components.horizontalDrawer.defaultHeight - (topOfViewRef ? 165 : 80)}
+        minHeight={topOfViewRef ? 150 : 200}
       >
         <div className={cx(styles.header, styles.flexSpaceBetween)}>
           <div className={cx(styles.flexSpaceBetween, css({ flex: '1 0 auto' }))}>
@@ -153,31 +148,29 @@ export function DetailsPanel(props: Props) {
         <div className={styles.linkContainer}>
           {logLinkButton}
 
-          {topOfViewRefType === TopOfViewRefType.Explore && (
-            <small className={styles.debugInfo}>
-              {/* TODO: fix keyboard a11y */}
-              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-              <a
-                {...focusSpanLink}
-                onClick={(e) => {
-                  // click handling logic copied from react router:
-                  // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
-                  if (
-                    focusSpanLink.onClick &&
-                    e.button === 0 && // Ignore everything but left clicks
-                    (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
-                    !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
-                  ) {
-                    e.preventDefault();
-                    focusSpanLink.onClick(e);
-                  }
-                }}
-              >
-                <Icon name={'link'} className={cx(uAlignIcon, styles.linkIcon)}></Icon>
-              </a>
-              SpanID: {span.spanID}
-            </small>
-          )}
+          <small className={styles.debugInfo}>
+            {/* TODO: fix keyboard a11y */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+            <a
+              {...focusSpanLink}
+              onClick={(e) => {
+                // click handling logic copied from react router:
+                // https://github.com/remix-run/react-router/blob/997b4d67e506d39ac6571cb369d6d2d6b3dda557/packages/react-router-dom/index.tsx#L392-L394s
+                if (
+                  focusSpanLink.onClick &&
+                  e.button === 0 && // Ignore everything but left clicks
+                  (!e.currentTarget.target || e.currentTarget.target === '_self') && // Let browser handle "target=_blank" etc.
+                  !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) // Ignore clicks with modifier keys
+                ) {
+                  e.preventDefault();
+                  focusSpanLink.onClick(e);
+                }
+              }}
+            >
+              <Icon name={'link'} className={cx(uAlignIcon, styles.linkIcon)}></Icon>
+            </a>
+            SpanID: {span.spanID}
+          </small>
         </div>
 
         <TabsBar>

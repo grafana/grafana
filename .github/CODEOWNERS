@@ -69,7 +69,7 @@
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
-/pkg/cmd/grafana-example-apiserver @grafana/grafana-app-platform-squad
+/pkg/cmd/grafana/apiserver @grafana/grafana-app-platform-squad
 /pkg/components/apikeygen/ @grafana/identity-access-team
 /pkg/components/satokengen/ @grafana/identity-access-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
@@ -138,6 +138,7 @@
 /pkg/services/validations/ @grafana/backend-platform
 /pkg/setting/ @grafana/backend-platform
 /pkg/tests/ @grafana/backend-platform
+/pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/correlations/ @grafana/explore-squad
 /pkg/tsdb/grafanads/ @grafana/backend-platform
 /pkg/tsdb/intervalv2/ @grafana/backend-platform
@@ -255,7 +256,7 @@
 
 # BI backend code
 /pkg/tsdb/mysql/ @grafana/oss-big-tent
-/pkg/tsdb/postgres/ @grafana/oss-big-tent
+/pkg/tsdb/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /pkg/tsdb/mssql/ @grafana/grafana-bi-squad
 
 # Database migrations
@@ -544,7 +545,7 @@ scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/graf
 /public/app/plugins/datasource/mssql/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/mysql/ @grafana/oss-big-tent
 /public/app/plugins/datasource/opentsdb/ @grafana/observability-metrics
-/public/app/plugins/datasource/postgres/ @grafana/oss-big-tent
+/public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
 /public/app/plugins/datasource/zipkin/ @grafana/observability-traces-and-profiling
@@ -603,6 +604,7 @@ embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
+/pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/corekind/ @grafana/grafana-as-code

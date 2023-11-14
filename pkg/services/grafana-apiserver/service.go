@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -113,12 +114,13 @@ type service struct {
 
 func ProvideService(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
 	authz authorizer.Authorizer,
 	tracing *tracing.TracingService,
 ) (*service, error) {
 	s := &service{
-		config:     newConfig(cfg),
+		config:     newConfig(cfg, features),
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
@@ -231,12 +233,10 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
 			return err
 		}
-	}
-
-	// override ExternalAddress and LoopbackClientConfig in prod mode.
-	// in dev mode we want to use the loopback client config
-	// and address provided by SecureServingOptions.
-	if !s.config.devMode {
+	} else {
+		// In production mode, override ExternalAddress and LoopbackClientConfig.
+		// In dev mode we want to use the loopback client config
+		// and address provided by SecureServingOptions.
 		serverConfig.ExternalAddress = s.config.host
 		serverConfig.LoopbackClientConfig = &clientrest.Config{
 			Host: s.config.apiURL,
@@ -250,9 +250,6 @@ func (s *service) start(ctx context.Context) error {
 		o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
 		if err := o.Etcd.Validate(); len(err) > 0 {
 			return err[0]
-		}
-		if err := o.Etcd.Complete(serverConfig.Config.StorageObjectCountTracker, serverConfig.Config.DrainedNotify(), serverConfig.Config.AddPostStartHook); err != nil {
-			return err
 		}
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
@@ -316,21 +313,18 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	s.restConfig = server.LoopbackClientConfig
-
-	// only write kubeconfig in dev mode
-	if s.config.devMode {
-		if err := s.ensureKubeConfig(); err != nil {
-			return err
-		}
-	}
-
 	// Used by the proxy wrapper registered in ProvideService
 	s.handler = server.Handler
+	s.restConfig = server.LoopbackClientConfig
 
-	// skip starting the server in prod mode
+	// When running in production, do not start a standalone https server
 	if !s.config.devMode {
 		return nil
+	}
+
+	// only write kubeconfig in dev mode
+	if err := s.ensureKubeConfig(); err != nil {
+		return err
 	}
 
 	prepared := server.PrepareRun()

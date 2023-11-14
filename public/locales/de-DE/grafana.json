@@ -138,6 +138,16 @@
       "error-message": "",
       "title": ""
     },
+    "basic-info-form": {
+      "description-description": "",
+      "description-label": "",
+      "label-description": "",
+      "label-label": "",
+      "label-placeholder": "",
+      "label-required": "",
+      "sub-text": "",
+      "title": ""
+    },
     "list": {
       "delete": "",
       "label": "",
@@ -146,9 +156,73 @@
       "source": "",
       "target": ""
     },
+    "navigation-form": {
+      "add-button": "",
+      "back-button": "",
+      "next-button": "",
+      "save-button": ""
+    },
     "page-content": "",
     "page-heading": "",
-    "sub-title": ""
+    "query-editor": {
+      "control-rules": "",
+      "data-source-text": "",
+      "data-source-title": "",
+      "error-text": "",
+      "error-title": "",
+      "loading": "",
+      "query-description": "",
+      "query-editor-title": "",
+      "query-label": ""
+    },
+    "source-form": {
+      "control-required": "",
+      "description": "",
+      "heading": "",
+      "results-description": "",
+      "results-label": "",
+      "results-required": "",
+      "source-description": "",
+      "source-label": "",
+      "sub-text": "",
+      "title": ""
+    },
+    "sub-title": "",
+    "target-form": {
+      "control-rules": "",
+      "sub-text": "",
+      "target-description": "",
+      "target-label": "",
+      "title": ""
+    },
+    "trans-details": {
+      "logfmt-description": "",
+      "logfmt-label": "",
+      "regex-description": "",
+      "regex-expression": "",
+      "regex-label": "",
+      "regex-map-values": ""
+    },
+    "transform": {
+      "add-button": "",
+      "heading": "",
+      "no-transform": ""
+    },
+    "transform-row": {
+      "expression-label": "",
+      "expression-required": "",
+      "expression-tooltip": "",
+      "field-input": "",
+      "field-label": "",
+      "field-tooltip": "",
+      "map-value-label": "",
+      "map-value-tooltip": "",
+      "remove-button": "",
+      "remove-tooltip": "",
+      "transform-required": "",
+      "type-label": "",
+      "type-tooltip": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -961,6 +1035,19 @@
       "passwords-must-match": ""
     }
   },
+  "query-operation": {
+    "header": {
+      "collapse-row": "",
+      "datasource-help": "",
+      "disable-query": "",
+      "drag-and-drop": "",
+      "duplicate-query": "",
+      "expand-row": "",
+      "remove-query": "",
+      "toggle-edit-mode": ""
+    },
+    "query-editor-not-exported": ""
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
@@ -1091,6 +1178,7 @@
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
       "panel-embed": "",
+      "public-dashboard": "",
       "snapshot": "Schnappschuss"
     },
     "theme-picker": {

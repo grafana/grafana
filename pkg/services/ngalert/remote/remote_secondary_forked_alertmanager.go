@@ -33,7 +33,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx cont
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
-	return apimodels.GettableStatus{}
+	return fam.internal.GetStatus()
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
@@ -65,21 +65,31 @@ func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, ale
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	return []apimodels.Receiver{}, nil
+	return fam.internal.GetReceivers(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return &notifier.TestReceiversResult{}, nil
+	return fam.internal.TestReceivers(ctx, c)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	return fam.internal.TestTemplate(ctx, c)
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {}
+func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
+	// No cleanup to do in the remote Alertmanager.
+	fam.internal.CleanUp()
+}
 
-func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {}
+func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
+	fam.internal.StopAndWait()
+	fam.remote.StopAndWait()
+}
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {
-	return false
+	// Both Alertmanagers must be ready.
+	if ready := fam.remote.Ready(); !ready {
+		return false
+	}
+	return fam.internal.Ready()
 }

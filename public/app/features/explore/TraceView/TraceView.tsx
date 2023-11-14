@@ -40,7 +40,6 @@ import {
 import memoizedTraceCriticalPath from './components/CriticalPath';
 import { DetailsPanel } from './components/DetailsPanel/DetailsPanel';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
-import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
@@ -69,21 +68,11 @@ type Props = {
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef?: RefObject<HTMLDivElement>;
-  topOfViewRefType?: TopOfViewRefType;
   createSpanLink?: SpanLinkFunc;
-  width: number;
 };
 
 export function TraceView(props: Props) {
-  const {
-    traceProp,
-    datasource,
-    topOfViewRef,
-    topOfViewRefType,
-    exploreId,
-    createSpanLink: createSpanLinkFromProps,
-    width,
-  } = props;
+  const { traceProp, datasource, topOfViewRef, exploreId, createSpanLink: createSpanLinkFromProps } = props;
 
   const {
     detailStates,
@@ -237,7 +226,6 @@ export function TraceView(props: Props) {
             showCriticalPathSpansOnly={showCriticalPathSpansOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
-            topOfViewRefType={topOfViewRefType}
             headerHeight={headerHeight}
             setSelectedSpan={setSelectedSpan}
             selectedSpanId={selectedSpan?.spanID}
@@ -247,7 +235,7 @@ export function TraceView(props: Props) {
             <DetailsPanel
               span={selectedSpan}
               timeZone={timeZone}
-              width={width}
+              // width={width}
               clearSelectedSpan={() => {
                 toggleDetail(selectedSpan?.spanID ?? '');
                 setSelectedSpan(undefined);
@@ -259,7 +247,7 @@ export function TraceView(props: Props) {
               createFocusSpanLink={createFocusSpanLink}
               createSpanLink={createSpanLink}
               datasourceType={datasourceType}
-              topOfViewRefType={topOfViewRefType}
+              topOfViewRef={topOfViewRef}
             />
           )}
         </>

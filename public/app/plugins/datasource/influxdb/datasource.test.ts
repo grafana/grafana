@@ -7,7 +7,7 @@ import config from 'app/core/config';
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
-import InfluxDatasource from './datasource';
+import InfluxDatasource, { influxSpecialRegexEscape } from './datasource';
 import {
   getMockDSInstanceSettings,
   getMockInfluxDS,
@@ -407,6 +407,22 @@ describe('InfluxDataSource Frontend Mode', () => {
         const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1 AND agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
         const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
         expect(qData).toBe(qe);
+      });
+    });
+
+    describe('influxSpecialRegexEscape', () => {
+      it('should escape the dot properly', () => {
+        const value = 'value.with-dot';
+        const expectation = `value\.with-dot`;
+        const result = influxSpecialRegexEscape(value);
+        expect(result).toBe(expectation);
+      });
+
+      it('should escape the url properly', () => {
+        const value = 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/jolokia';
+        const expectation = `https:\/\/aaaa-aa-aaa\.bbb\.ccc\.ddd:8443\/jolokia`;
+        const result = influxSpecialRegexEscape(value);
+        expect(result).toBe(expectation);
       });
     });
   });
