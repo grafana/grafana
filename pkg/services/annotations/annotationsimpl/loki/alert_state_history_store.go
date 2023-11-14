@@ -37,8 +37,12 @@ var (
 	ErrMissingRule          = errors.New("missing rule")
 )
 
+type lokiQueryClient interface {
+	RangeQuery(ctx context.Context, query string, from, to, limit int64) (historian.QueryRes, error)
+}
+
 type AlertStateHistoryStore struct {
-	client *historian.HttpLokiClient
+	client lokiQueryClient
 	db     db.DB
 	log    log.Logger
 }
