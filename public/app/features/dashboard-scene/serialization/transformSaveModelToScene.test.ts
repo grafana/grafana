@@ -757,7 +757,9 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+        SceneDataLayerControls
+      );
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(5);
@@ -771,7 +773,9 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+        SceneDataLayerControls
+      );
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(5);
