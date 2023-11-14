@@ -23,11 +23,11 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('getDerivedFields', () => {
   beforeAll(() => {
-    config.featureToggles.lokiEnableNameMatcherOption = true;
+    config.featureToggles.lokiDerivedFieldsFromLabels = true;
   });
 
   afterAll(() => {
-    config.featureToggles.lokiEnableNameMatcherOption = false;
+    config.featureToggles.lokiDerivedFieldsFromLabels = false;
   });
 
   it('adds links to fields', () => {

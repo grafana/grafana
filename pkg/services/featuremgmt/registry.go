@@ -1047,8 +1047,8 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "lokiEnableNameMatcherOption",
-			Description:  "Provide an option to match Loki's derived fields using the field names from parsed logs",
+			Name:         "lokiDerivedFieldsFromLabels",
+			Description:  "Provide an option to match Loki's derived fields using labels",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityLogsSquad,

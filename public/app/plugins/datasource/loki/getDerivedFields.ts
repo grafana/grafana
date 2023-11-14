@@ -27,7 +27,7 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
   for (let i = 0; i < lineField.values.length; i++) {
     for (const field of newFields) {
       if (
-        config.featureToggles.lokiEnableNameMatcherOption &&
+        config.featureToggles.lokiDerivedFieldsFromLabels &&
         derivedFieldsGrouped[field.name][0].labelMatcher &&
         labelFields
       ) {

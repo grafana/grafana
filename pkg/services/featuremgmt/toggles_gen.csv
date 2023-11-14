@@ -143,4 +143,4 @@ logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,false
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 alertingDetailsViewV2,experimental,@grafana/alerting-squad,false,false,false,true
 alertingSimplifiedRouting,experimental,@grafana/alerting-squad,false,false,false,false
-lokiEnableNameMatcherOption,experimental,@grafana/observability-logs,false,false,false,true
+lokiDerivedFieldsFromLabels,experimental,@grafana/observability-logs,false,false,false,true

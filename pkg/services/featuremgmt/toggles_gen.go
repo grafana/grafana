@@ -583,7 +583,7 @@ const (
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 
-	// FlagLokiEnableNameMatcherOption
-	// Provide an option to match Loki&#39;s derived fields using the field names from parsed logs
-	FlagLokiEnableNameMatcherOption = "lokiEnableNameMatcherOption"
+	// FlagLokiDerivedFieldsFromLabels
+	// Provide an option to match Loki&#39;s derived fields using labels
+	FlagLokiDerivedFieldsFromLabels = "lokiDerivedFieldsFromLabels"
 )

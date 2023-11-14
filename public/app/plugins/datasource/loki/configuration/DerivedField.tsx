@@ -76,7 +76,7 @@ export const DerivedField = (props: Props) => {
   return (
     <div className={className} data-testid="derived-field">
       <div className="gf-form">
-        {config.featureToggles.lokiEnableNameMatcherOption && (
+        {config.featureToggles.lokiDerivedFieldsFromLabels && (
           <Field
             className={styles.nameMatcherField}
             label={
