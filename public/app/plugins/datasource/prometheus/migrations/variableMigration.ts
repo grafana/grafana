@@ -6,7 +6,6 @@ export const PrometheusLabelNamesRegex = /^label_names\(\)\s*$/;
 // Note that this regex is different from the one in metric_find_query.ts because this is used pre-interpolation
 export const PrometheusLabelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_$][a-zA-Z0-9_]*)\)\s*$/;
 export const PrometheusMetricNamesRegex = /^metrics\((.+)\)\s*$/;
-export const PrometheusMetricNames2Regex = /^metrics2\((.+)\)\s*$/;
 export const PrometheusQueryResultRegex = /^query_result\((.+)\)\s*$/;
 export const PrometheusLabelNamesRegexWithMatch = /^label_names\((.+)\)\s*$/;
 

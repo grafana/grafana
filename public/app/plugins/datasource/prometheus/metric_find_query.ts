@@ -7,7 +7,6 @@ import { getPrometheusTime } from './language_utils';
 import {
   PrometheusLabelNamesRegex,
   PrometheusLabelNamesRegexWithMatch,
-  PrometheusMetricNames2Regex,
   PrometheusMetricNamesRegex,
   PrometheusQueryResultRegex,
 } from './migrations/variableMigration';
@@ -54,11 +53,6 @@ export default class PrometheusMetricFindQuery {
       } else {
         return this.labelValuesQuery(labelValuesQuery[2]);
       }
-    }
-
-    const metricNames2Query = this.query.match(PrometheusMetricNames2Regex);
-    if (metricNames2Query) {
-      return this.metricName2Query(metricNames2Query[1]);
     }
 
     const metricNamesQuery = this.query.match(metricNamesRegex);
@@ -128,28 +122,6 @@ export default class PrometheusMetricFindQuery {
           const r = new RegExp(metricFilterPattern);
           return r.test(metricName);
         })
-        .map((matchedMetricName) => {
-          return {
-            text: matchedMetricName,
-            expandable: true,
-          };
-        })
-        .value();
-    });
-  }
-
-  metricName2Query(match: string) {
-    const start = getPrometheusTime(this.range.from, false);
-    const end = getPrometheusTime(this.range.to, true);
-    const params = {
-      start: start.toString(),
-      end: end.toString(),
-      'match[]': match.substring(0, match.length - 1),
-    };
-    const url = `/api/v1/label/__name__/values`;
-
-    return this.datasource.metadataRequest(url, params).then((result: any) => {
-      return chain(result.data.data)
         .map((matchedMetricName) => {
           return {
             text: matchedMetricName,
