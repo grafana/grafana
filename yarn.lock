@@ -9262,6 +9262,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/regression@npm:^2":
+  version: 2.0.5
+  resolution: "@types/regression@npm:2.0.5"
+  checksum: b8eac5c024838f7491d36fe277981ed56f2b4e31f9e228f1837d13e1346abc7f41ed5031eb876af462f4e05afb9a6b48c4a44b6cbabff97af64faae246313997
+  languageName: node
+  linkType: hard
+
 "@types/resolve@npm:1.20.2":
   version: 1.20.2
   resolution: "@types/resolve@npm:1.20.2"
@@ -17414,6 +17421,7 @@ __metadata:
     "@types/react-window": "npm:1.8.5"
     "@types/react-window-infinite-loader": "npm:^1"
     "@types/redux-mock-store": "npm:1.0.3"
+    "@types/regression": "npm:^2"
     "@types/semver": "npm:7.5.0"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.2"
@@ -17593,6 +17601,7 @@ __metadata:
     redux-mock-store: "npm:1.5.4"
     redux-thunk: "npm:2.4.2"
     regenerator-runtime: "npm:0.14.0"
+    regression: "npm:^2.0.1"
     reselect: "npm:4.1.8"
     rimraf: "npm:5.0.1"
     rudder-sdk-js: "npm:2.43.0"
@@ -26438,6 +26447,13 @@ __metadata:
   bin:
     regjsparser: bin/parser
   checksum: be7757ef76e1db10bf6996001d1021048b5fb12f5cb470a99b8cf7f3ff943f0f0e2291c0dcdbb418b458ddc4ac10e48680a822b69ef487a0284c8b6b77beddc3
+  languageName: node
+  linkType: hard
+
+"regression@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "regression@npm:2.0.1"
+  checksum: d8c902e29d2485dea72e89c39f21cf6e56ca89e556f0547ce73d5098e18817e32dcfa95e8999dfbcebd03c9e4a4d614ee90adaea8cd5204882926566b310b09f
   languageName: node
   linkType: hard
 
