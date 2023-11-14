@@ -57,58 +57,16 @@ function getStyles(theme: GrafanaTheme2) {
 
 function sortLabels(labels: Record<string, fieldNameMeta>) {
   return (a: string, b: string) => {
-    // First sort by active
-    if (labels[a].active && labels[b].active) {
-      // If both fields are active, sort time first
-      if (labels[a]?.type === 'TIME_FIELD') {
-        return -1;
-      }
-      if (labels[b]?.type === 'TIME_FIELD') {
-        return 1;
-      }
-      // And then line second
-      if (labels[a]?.type === 'BODY_FIELD') {
-        return -1;
-      }
-      // special fields are next
-      if (labels[b]?.type === 'BODY_FIELD') {
-        return 1;
-      }
-    }
+    const la = labels[a];
+    const lb = labels[b];
 
-    // If just one label is active, sort it first
-    if (labels[b].active) {
-      return 1;
+    if (la && lb) {
+      return (
+        +(lb.type === 'TIME_FIELD') - +(la.type === 'TIME_FIELD') ||
+        +(lb.type === 'BODY_FIELD') - +(la.type === 'BODY_FIELD') ||
+        +a - +b
+      );
     }
-    if (labels[a].active) {
-      return -1;
-    }
-
-    // If both fields are special, and not selected, sort time first
-    if (labels[a]?.type && labels[b]?.type) {
-      if (labels[a]?.type === 'TIME_FIELD') {
-        return -1;
-      }
-      return 0;
-    }
-
-    // If only one special field, stick to the top of inactive fields
-    if (labels[a]?.type && !labels[b]?.type) {
-      return -1;
-    }
-    // if the b field is special, sort it first
-    if (!labels[a]?.type && labels[b]?.type) {
-      return 1;
-    }
-
-    // Finally sort by percent enabled, this could have conflicts with the special fields above, except they are always on 100% of logs
-    if (a < b) {
-      return -1;
-    }
-    if (a > b) {
-      return 1;
-    }
-
     // otherwise do not sort
     return 0;
   };
@@ -116,13 +74,13 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
 
 export const LogsTableNavColumn = (props: {
   labels: Record<string, fieldNameMeta>;
-  valueFilter: (value: number) => boolean;
+  valueFilter: (value: string) => boolean;
   toggleColumn: (columnName: string) => void;
 }): JSX.Element => {
   const { labels, valueFilter, toggleColumn } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labels[labelName].percentOfLinesWithLabel));
+  const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
   if (labelKeys.length) {
     return (
       <div className={styles.columnWrapper}>
@@ -137,6 +95,7 @@ export const LogsTableNavColumn = (props: {
             <button
               title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
               className={styles.labelCount}
+              onClick={() => toggleColumn(labelName)}
             >
               {labels[labelName]?.percentOfLinesWithLabel}%
             </button>

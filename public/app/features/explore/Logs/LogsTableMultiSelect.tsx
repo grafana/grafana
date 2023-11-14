@@ -41,11 +41,18 @@ export const LogsTableMultiSelect = (props: {
     <div className={styles.sidebarWrap}>
       {/* Sidebar columns */}
       <>
+        <div className={styles.columnHeader}>Selected fields</div>
+        <LogsTableNavColumn
+          toggleColumn={props.toggleColumn}
+          labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
+          valueFilter={(value) => props.columnsWithMeta[value]?.active ?? false}
+        />
+
         <div className={styles.columnHeader}>Fields</div>
         <LogsTableNavColumn
           toggleColumn={props.toggleColumn}
           labels={props.filteredColumnsWithMeta ?? props.columnsWithMeta}
-          valueFilter={(value) => !!value}
+          valueFilter={(value) => !props.columnsWithMeta[value]?.active}
         />
       </>
     </div>
