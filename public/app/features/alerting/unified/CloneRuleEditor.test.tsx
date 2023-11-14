@@ -215,7 +215,6 @@ describe('CloneRuleEditor', function () {
       render(
         <CloneRuleEditor
           sourceRuleId={{
-            uid: 'prom-rule-1',
             ruleSourceName: 'my-prom-ds',
             namespace: 'namespace-one',
             groupName: 'group1',

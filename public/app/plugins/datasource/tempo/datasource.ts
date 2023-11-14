@@ -18,6 +18,7 @@ import {
   LoadingState,
   rangeUtil,
   ScopedVars,
+  TestDataSourceResponse,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -496,7 +497,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return merge(...subQueries);
   }
 
-  applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars) {
     return this.applyVariables(query, scopedVars);
   }
 
@@ -631,7 +632,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (response.error) {
           return response;
         }
-        return transformTrace(response, this.nodeGraph?.enabled);
+        return transformTrace(response, this.instanceSettings, this.nodeGraph?.enabled);
       })
     );
   }
@@ -685,7 +686,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return await lastValueFrom(this._request(url, params, { method: 'GET', hideFromInspector: true }));
   }
 
-  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
+  private _request(
+    apiUrl: string,
+    data?: unknown,
+    options?: Partial<BackendSrvRequest>
+  ): Observable<Record<string, any>> {
     const params = data ? serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
@@ -693,7 +698,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return getBackendSrv().fetch(req);
   }
 
-  async testDatasource(): Promise<any> {
+  async testDatasource(): Promise<TestDataSourceResponse> {
     const options: BackendSrvRequest = {
       headers: {},
       method: 'GET',
@@ -981,7 +986,7 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
         range: !instant,
         exemplar: !instant,
         instant: instant,
-      } as PromQuery,
+      },
       datasourceUid,
       datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
@@ -1297,7 +1302,7 @@ export function getRateAlignedValues(
   return values;
 }
 
-export function makeServiceGraphViewRequest(metrics: any[]) {
+export function makeServiceGraphViewRequest(metrics: string[]): PromQuery[] {
   return metrics.map((metric) => {
     return {
       refId: metric,

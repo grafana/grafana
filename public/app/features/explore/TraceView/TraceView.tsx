@@ -20,6 +20,7 @@ import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
+import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { TempoQuery } from 'app/plugins/datasource/tempo/types';
@@ -37,7 +38,6 @@ import {
 } from './components';
 import memoizedTraceCriticalPath from './components/CriticalPath';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
-import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
@@ -66,19 +66,11 @@ type Props = {
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef?: RefObject<HTMLDivElement>;
-  topOfViewRefType?: TopOfViewRefType;
   createSpanLink?: SpanLinkFunc;
 };
 
 export function TraceView(props: Props) {
-  const {
-    traceProp,
-    datasource,
-    topOfViewRef,
-    topOfViewRefType,
-    exploreId,
-    createSpanLink: createSpanLinkFromProps,
-  } = props;
+  const { traceProp, datasource, topOfViewRef, exploreId, createSpanLink: createSpanLinkFromProps } = props;
 
   const {
     detailStates,
@@ -132,6 +124,8 @@ export function TraceView(props: Props) {
   const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData);
   const traceToMetrics: TraceToMetricsData | undefined = instanceSettings?.jsonData;
   const traceToMetricsOptions = traceToMetrics?.tracesToMetrics;
+  const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
+  const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 
   const createSpanLink = useMemo(
@@ -141,6 +135,7 @@ export function TraceView(props: Props) {
         splitOpenFn: props.splitOpenFn!,
         traceToLogsOptions,
         traceToMetricsOptions,
+        traceToProfilesOptions,
         dataFrame: props.dataFrames[0],
         createFocusSpanLink,
         trace: traceProp,
@@ -149,6 +144,7 @@ export function TraceView(props: Props) {
       props.splitOpenFn,
       traceToLogsOptions,
       traceToMetricsOptions,
+      traceToProfilesOptions,
       props.dataFrames,
       createFocusSpanLink,
       traceProp,
@@ -227,7 +223,6 @@ export function TraceView(props: Props) {
             showCriticalPathSpansOnly={showCriticalPathSpansOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
-            topOfViewRefType={topOfViewRefType}
             headerHeight={headerHeight}
             criticalPath={criticalPath}
           />

@@ -283,22 +283,22 @@ const BaseActions = ({ children, disabled, variant, className }: ActionsProps) =
 
 const getActionStyles = (theme: GrafanaTheme2) => ({
   actions: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
     gridArea: 'Actions',
     marginTop: theme.spacing(2),
-    '& > *': {
-      marginRight: theme.spacing(1),
-    },
   }),
   secondaryActions: css({
-    display: 'flex',
-    gridArea: 'Secondary',
     alignSelf: 'center',
     color: theme.colors.text.secondary,
-    marginTtop: theme.spacing(2),
-
-    '& > *': {
-      marginRight: `${theme.spacing(1)} !important`,
-    },
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    gridArea: 'Secondary',
+    marginTop: theme.spacing(2),
   }),
 });
 

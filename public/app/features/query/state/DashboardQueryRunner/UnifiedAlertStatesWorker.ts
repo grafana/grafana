@@ -6,8 +6,9 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
+import { promAlertStateToAlertState } from 'app/features/dashboard-scene/scene/AlertStatesDataLayer';
 import { AccessControlAction } from 'app/types';
-import { PromAlertingRuleState, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult, handleDashboardQueryRunnerWorkerError } from './utils';
@@ -104,13 +105,4 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
       catchError(handleDashboardQueryRunnerWorkerError)
     );
   }
-}
-
-function promAlertStateToAlertState(state: PromAlertingRuleState): AlertState {
-  if (state === PromAlertingRuleState.Firing) {
-    return AlertState.Alerting;
-  } else if (state === PromAlertingRuleState.Pending) {
-    return AlertState.Pending;
-  }
-  return AlertState.OK;
 }

@@ -14,6 +14,7 @@ import {
   calculateLogsLabelStats,
   calculateStats,
   checkLogsError,
+  escapeUnescapedString,
   getLogLevel,
   getLogLevelFromKey,
   getLogsVolumeMaximumRange,
@@ -467,5 +468,14 @@ describe('getLogsVolumeDimensions', () => {
     ]);
 
     expect(maximumRange).toEqual({ from: 5, to: 25 });
+  });
+});
+
+describe('escapeUnescapedString', () => {
+  it('does not modify strings without unescaped characters', () => {
+    expect(escapeUnescapedString('a simple string')).toBe('a simple string');
+  });
+  it('escapes unescaped strings', () => {
+    expect(escapeUnescapedString(`\\r\\n|\\n|\\t|\\r`)).toBe(`\n|\n|\t|\n`);
   });
 });

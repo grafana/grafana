@@ -268,6 +268,26 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, queryResult.Teams[1].Name, team1.Name)
 			})
 
+			t.Run("Should be able to query teams by ids", func(t *testing.T) {
+				allTeamsQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "", SignedInUser: testUser}
+				allTeamsQueryResult, err := teamSvc.SearchTeams(context.Background(), allTeamsQuery)
+				require.NoError(t, err)
+				require.Equal(t, len(allTeamsQueryResult.Teams), 2)
+
+				teamIds := make([]int64, 0)
+				for _, team := range allTeamsQueryResult.Teams {
+					teamIds = append(teamIds, team.ID)
+				}
+
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, TeamIds: teamIds}
+				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.Equal(t, len(queryResult.Teams), 2)
+				require.EqualValues(t, queryResult.TotalCount, 2)
+				require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
+				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
+			})
+
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				setup()

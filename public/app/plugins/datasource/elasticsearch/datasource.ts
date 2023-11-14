@@ -134,7 +134,7 @@ export class ElasticDatasource
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
     this.isProxyAccess = instanceSettings.access === 'proxy';
-    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    const settingsData = instanceSettings.jsonData || {};
 
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
@@ -191,7 +191,7 @@ export class ElasticDatasource
    * @param url the url to query the index on, for example `/_mapping`.
    */
 
-  private requestAllIndices(url: string, range = getDefaultTimeRange()): Observable<any> {
+  private requestAllIndices(url: string, range = getDefaultTimeRange()) {
     let indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (!Array.isArray(indexList)) {
       indexList = [this.indexPattern.getIndexForToday()];
@@ -499,10 +499,6 @@ export class ElasticDatasource
     }
 
     return text;
-  }
-
-  showContextToggle(): boolean {
-    return true;
   }
 
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
