@@ -256,7 +256,14 @@ export function separateRootAndNonRootDiffs(diffRecord: Record<string, Diff[]>):
 
 // Function for taking a diff and returning human-readable string
 export function getDiffString(diff: Diff): string {
+  if (diff.path.length >= 2 && diff.path[0] === 'templating' && diff.path[1] === 'list') {
+    return '';
+  }
+  if (diff.path.length >= 2 && 'thresholds' in diff.path) {
+    return '';
+  }
   let diffString = '';
+
   const key: string = diff.path[diff.path.length - 1];
   if (diff.op === 'add') {
     diffString = `+\t"${key}": ${JSON.stringify(diff.value)}`;
@@ -277,7 +284,7 @@ function formatDiffsAsString(lhs: unknown, diffRecord: Record<string, Diff[]>): 
     if (diffs.length === 0) {
       return '';
     }
-    const diffStrings = diffs.map(getDiffString);
+    const diffStrings = diffs.map(getDiffString).filter((diffString) => diffString !== '');
     let titleString = '';
     if (key.includes('panels')) {
       const path = [...diffs[0].path.slice(0, diffs[0].path.indexOf('panels') + 2), 'title'];
