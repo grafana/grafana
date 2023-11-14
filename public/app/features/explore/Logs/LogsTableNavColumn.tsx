@@ -72,6 +72,16 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
       }
     }
 
+    if (labels[b].active && labels[a].active) {
+      // Sort alphabetically
+      if (a < b) {
+        return -1;
+      }
+      if (a > b) {
+        return 1;
+      }
+    }
+
     // If just one label is active, sort it first
     if (labels[b].active) {
       return 1;
@@ -97,7 +107,7 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
       return 1;
     }
 
-    // Finally sort by percent enabled, this could have conflicts with the special fields above, except they are always on 100% of logs
+    // Finally sort by name
     if (a < b) {
       return -1;
     }
