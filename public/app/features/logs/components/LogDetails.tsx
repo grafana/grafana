@@ -60,12 +60,12 @@ class UnThemedLogDetails extends PureComponent<Props> {
       (displayedFieldsWithLinks && displayedFieldsWithLinks.length > 0) ||
       (fieldsWithLinksFromVariableMap && fieldsWithLinksFromVariableMap.length > 0);
 
-    // do not show the log message unless there is a link attached
     const fields =
       row.dataFrame.meta?.type === DataFrameType.LogLines
-        ? // for DataFrameType.LogLines frames we don't want to show any additional fields besides already extracted labels and links
+        ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
           []
-        : fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
+        : // for other frames, do not show the log message unless there is a link attached
+          fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
 
     // If logs with error, we are not showing the level color
