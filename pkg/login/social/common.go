@@ -145,10 +145,7 @@ func createOAuthConfig(info *OAuthInfo, cfg *setting.Cfg, defaultName string) *o
 		authStyle = oauth2.AuthStyleInParams
 	case "inheader":
 		authStyle = oauth2.AuthStyleInHeader
-	case "autodetect", "":
-		authStyle = oauth2.AuthStyleAutoDetect
 	default:
-		// ss.log.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.KeyValue("auth_style").Value())
 		authStyle = oauth2.AuthStyleAutoDetect
 	}
 
