@@ -10,7 +10,7 @@ import { DataSourceVariableModel, initialVariableModelState, VariableOption, Var
 export const initialDataSourceVariableModelState: DataSourceVariableModel = {
   ...initialVariableModelState,
   type: 'datasource',
-  current: {} as VariableOption,
+  current: {},
   regex: '',
   options: [],
   query: '',
