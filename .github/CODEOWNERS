@@ -414,6 +414,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/storage/ @grafana/grafana-app-platform-squad
 /public/app/features/teams/ @grafana/identity-access-team
 /public/app/features/templating/ @grafana/dashboards-squad
+/public/app/features/trails/ @torkelo
 /public/app/features/transformers/ @grafana/grafana-bi-squad
 /public/app/features/users/ @grafana/identity-access-team
 /public/app/features/variables/ @grafana/dashboards-squad
