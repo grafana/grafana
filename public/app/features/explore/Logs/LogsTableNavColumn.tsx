@@ -64,7 +64,7 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
       return (
         Number(lb.type === 'TIME_FIELD') - Number(la.type === 'TIME_FIELD') ||
         Number(lb.type === 'BODY_FIELD') - Number(la.type === 'BODY_FIELD') ||
-        Number(a.localeCompare(b))
+        a.localeCompare(b)
       );
     }
     // otherwise do not sort
