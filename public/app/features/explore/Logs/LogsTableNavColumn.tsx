@@ -55,9 +55,8 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
+const collator = new Intl.Collator('en', { sensitivity: 'base' });
 function sortLabels(labels: Record<string, fieldNameMeta>) {
-  const collator = new Intl.Collator('en', { sensitivity: 'base' });
-
   return (a: string, b: string) => {
     const la = labels[a];
     const lb = labels[b];
