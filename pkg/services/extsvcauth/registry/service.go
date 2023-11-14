@@ -39,6 +39,7 @@ func ProvideExtSvcRegistry(oauthServer *oasimpl.OAuth2ServiceImpl, saSvc *extsvc
 func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
 	extsvcs, err := r.retrieveExtSvcProviders(ctx)
 	if err != nil {
+		r.logger.Error("Could not retrieve external services from store", "error", err.Error())
 		return err
 	}
 	for name, provider := range extsvcs {
