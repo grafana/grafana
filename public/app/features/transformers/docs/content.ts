@@ -234,15 +234,15 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Extract fields',
     getHelperDocs: function () {
       return `
-  Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
+  Use this transformation to select a source of data and extract content from it in different formats. Set the following fields:
 
-  - **Source** - Select the field for the source of data.
-  - **Format** - Select one of the following:
-    - **JSON** - To parse JSON content from the source.
-    - **Key+value parse** - To parse content in the format 'a=b' or 'c:d' from the source.
-    - **Auto** - To discover fields automatically.
-  - **Replace all fields** - Optional: Select this option if you want to hide all other fields and display only your calculated field in the visualization.
-  - **Keep time** - Optional: Only available if **Replace all fields** is true. Keep the time field in the output.
+  - **Source:** Select the field for the source of data.
+  - **Format:** Choose one of the following:
+    - **JSON:** To parse JSON content from the source.
+    - **Key+Value Parse:** To parse content in the format 'a=b' or 'c:d' from the source.
+    - **Auto:** To discover fields automatically.
+  - **Replace All Fields:** *(Optional)* Select this option to hide all other fields and display only your calculated field in the visualization.
+  - **Keep Time:** *(Optional)* Available only if **Replace All Fields** is true. Keeps the time field in the output.
 
   Consider the following data set:
 
@@ -272,6 +272,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 1636678740000000000 | 1        |
   | 1636678680000000000 | 5        |
   | 1636678620000000000 | 12       |
+
+  This transformation allows you to extract and format data in various ways, enhancing your ability to visualize and analyze information. Customize the extraction format based on your specific data needs.
   `;
     },
     links: [
