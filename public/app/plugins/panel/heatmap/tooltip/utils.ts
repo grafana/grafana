@@ -30,21 +30,22 @@ export const getHoverCellColor = (data: HeatmapData, index: number) => {
   return { cellColor, colorPalette };
 };
 
+const conversions: Record<string, number> = {
+  year: 1000 * 60 * 60 * 24 * 365,
+  month: 1000 * 60 * 60 * 24 * 30,
+  week: 1000 * 60 * 60 * 24 * 7,
+  day: 1000 * 60 * 60 * 24,
+  hour: 1000 * 60 * 60,
+  minute: 1000 * 60,
+  second: 1000,
+  millisecond: 1,
+};
+
 // @TODO: display "~ 1 year/month"?
 export const formatMilliseconds = (milliseconds: number) => {
-  const conversions: TimeConversions = {
-    year: 1000 * 60 * 60 * 24 * 365,
-    month: 1000 * 60 * 60 * 24 * 30,
-    week: 1000 * 60 * 60 * 24 * 7,
-    day: 1000 * 60 * 60 * 24,
-    hour: 1000 * 60 * 60,
-    minute: 1000 * 60,
-    second: 1000,
-    millisecond: 1,
-  };
+  let value = 1;
+  let unit = 'millisecond';
 
-  let unit: keyof TimeConversions = 'millisecond',
-    value;
   for (unit in conversions) {
     if (milliseconds >= conversions[unit]) {
       value = Math.floor(milliseconds / conversions[unit]);
@@ -55,17 +56,6 @@ export const formatMilliseconds = (milliseconds: number) => {
   const unitString = value === 1 ? unit : unit + 's';
 
   return `${value} ${unitString}`;
-};
-
-type TimeConversions = {
-  year: number;
-  month: number;
-  week: number;
-  day: number;
-  hour: number;
-  minute: number;
-  second: number;
-  millisecond: number;
 };
 
 export enum SparseDataFieldNames {
