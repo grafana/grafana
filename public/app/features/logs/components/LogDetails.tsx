@@ -56,6 +56,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== row.entryFieldIndex).sort();
     const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === row.entryFieldIndex).sort();
     const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
+    const fieldsWithLinksAvailable =
+      (displayedFieldsWithLinks && displayedFieldsWithLinks.length > 0) ||
+      (fieldsWithLinksFromVariableMap && fieldsWithLinksFromVariableMap.length > 0);
 
     // do not show the log message unless there is a link attached
     const fields =
@@ -64,9 +67,6 @@ class UnThemedLogDetails extends PureComponent<Props> {
           []
         : fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
-    const fieldsWithLinksAvailable =
-      (displayedFieldsWithLinks && displayedFieldsWithLinks.length > 0) ||
-      (fieldsWithLinksFromVariableMap && fieldsWithLinksFromVariableMap.length > 0);
 
     // If logs with error, we are not showing the level color
     const levelClassName = hasError
