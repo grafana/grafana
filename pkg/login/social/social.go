@@ -150,11 +150,12 @@ func ProvideService(cfg *setting.Cfg,
 
 		// GitLab.
 		if name == "gitlab" {
-			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:          info.ApiUrl,
-				skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
+			gitlabConnector, err := NewGitLabProvider(settingsKVs, cfg, features)
+			if err != nil {
+				ss.log.Error("Failed to create GitLab provider", "error", err)
+				continue
 			}
+			ss.socialMap["gitlab"] = gitlabConnector
 		}
 
 		// Google.
