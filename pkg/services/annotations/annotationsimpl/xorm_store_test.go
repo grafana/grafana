@@ -39,7 +39,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	}
 	sql := db.InitTestDB(t)
 	var maximumTagsLength int64 = 60
-	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength,
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql), maximumTagsLength: maximumTagsLength,
 		features: featuremgmt.WithFeatures(),
 	}
 
@@ -67,7 +67,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+		dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql), quotaService)
 		require.NoError(t, err)
 
 		testDashboard1 := dashboards.SaveDashboardCommand{
@@ -534,9 +534,9 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	sql := db.InitTestDB(t)
 
 	var maximumTagsLength int64 = 60
-	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength, features: featuremgmt.WithFeatures()}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql), maximumTagsLength: maximumTagsLength, features: featuremgmt.WithFeatures()}
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+	dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql), quotaService)
 	require.NoError(t, err)
 
 	testDashboard1 := dashboards.SaveDashboardCommand{
@@ -707,13 +707,13 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		})
 
 		// dashboard store commands that should be called.
-		dashStore, err := dashboardstore.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
+		dashStore, err := dashboardstore.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db), quotatest.New(false, nil))
 		require.NoError(t, err)
 
 		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)
 
 		var maximumTagsLength int64 = 60
-		repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db, db.Cfg), maximumTagsLength: maximumTagsLength, features: features}
+		repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db), maximumTagsLength: maximumTagsLength, features: features}
 
 		parentUID := ""
 		for i := 0; ; i++ {
@@ -800,7 +800,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var maximumTagsLength int64 = 60
-			repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db, db.Cfg), maximumTagsLength: maximumTagsLength, features: tc.features}
+			repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db), maximumTagsLength: maximumTagsLength, features: tc.features}
 
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			setupRBACPermission(t, db, role, usr)
@@ -891,7 +891,7 @@ func BenchmarkFindTags_100k(b *testing.B) {
 func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	sql := db.InitTestDB(b)
 	var maximumTagsLength int64 = 60
-	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql), maximumTagsLength: maximumTagsLength}
 
 	type annotationTag struct {
 		ID           int64 `xorm:"pk autoincr 'id'"`
