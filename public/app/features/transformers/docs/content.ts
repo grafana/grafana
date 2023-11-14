@@ -1102,7 +1102,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Reduce',
     getHelperDocs: function () {
       return `
-  Use this transformation to apply a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
+  Use this transformation to apply a calculation to each field in the data frame and return a single value. This transformation is particularly useful for consolidating multiple time series data into a more compact, summarized format. Time fields are removed when applying this transformation.
 
   Consider the input:
 
@@ -1149,6 +1149,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | AQI | Errors |
   | --- | ------ |
   | 3.2 | 5      |
+
+  This flexible transformation simplifies the process of consolidating and summarizing data from multiple time series into a more manageable and organized format.
   `;
     },
   },
@@ -1175,6 +1177,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
     imageRenderType,
     'Rename by regex' + 2
   )}
+
+  This transformation empowers you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
   `;
     },
   },
