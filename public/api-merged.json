@@ -18724,6 +18724,10 @@
           "format": "int64",
           "example": 1
         },
+        "requiredBy": {
+          "type": "string",
+          "example": "grafana-app"
+        },
         "role": {
           "type": "string",
           "example": "Editor"

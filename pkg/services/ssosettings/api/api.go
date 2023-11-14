@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -60,32 +62,32 @@ func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Re
 		return response.Error(500, "Failed to get providers", err)
 	}
 
-	return response.JSON(200, providers)
+	return response.JSON(http.StatusOK, providers)
 }
 
 func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
-		return response.Error(400, "Missing key", nil)
+		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
 	settings, err := api.SSOSettingsService.GetForProvider(c.Req.Context(), key)
 	if err != nil {
-		return response.Error(404, "The provider was not found", err)
+		return response.Error(http.StatusNotFound, "The provider was not found", err)
 	}
 
-	return response.JSON(200, settings)
+	return response.JSON(http.StatusOK, settings)
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
-		return response.Error(400, "Missing key", nil)
+		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
 	var newSettings models.SSOSetting
 	if err := web.Bind(c.Req, &newSettings); err != nil {
-		return response.Error(400, "Failed to parse request body", err)
+		return response.Error(http.StatusBadRequest, "Failed to parse request body", err)
 	}
 
 	err := api.SSOSettingsService.Upsert(c.Req.Context(), key, newSettings.Settings)
@@ -93,22 +95,22 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 
 	// other error
 	if err != nil {
-		return response.Error(500, "Failed to update provider settings", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update provider settings", err)
 	}
 
-	return response.JSON(204, nil)
+	return response.JSON(http.StatusNoContent, nil)
 }
 
 func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
-		return response.Error(400, "Missing key", nil)
+		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
 	err := api.SSOSettingsService.Delete(c.Req.Context(), key)
 	if err != nil {
-		return response.Error(500, "Failed to delete provider settings", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete provider settings", err)
 	}
 
-	return response.JSON(204, nil)
+	return response.JSON(http.StatusNoContent, nil)
 }
