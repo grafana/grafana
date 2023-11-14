@@ -7,6 +7,7 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  VizPanel,
 } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
@@ -43,7 +44,7 @@ export class SoloPanelScene extends SceneObjectBase<SoloPanelSceneState> {
 
     const panel = findVizPanelByKey(dashboard, this.state.panelId);
     if (panel) {
-      this.setState({ panelRef: panel.getRef() });
+      this._foundPanel(panel);
     } else {
       if (this.state.panelId.indexOf('clone')) {
         this._handleRepeatClone(dashboard);
@@ -75,6 +76,12 @@ export class SoloPanelScene extends SceneObjectBase<SoloPanelSceneState> {
     });
   }
 
+  private _foundPanel(panel: VizPanel) {
+    // solo / embedded panels have no menu
+    panel.setState({ menu: undefined });
+    this.setState({ panelRef: panel.getRef() });
+  }
+
   /**
    * Activates all repeater objects and subscribes to the DashboardRepeatsProcessedEvent event
    */
@@ -82,7 +89,7 @@ export class SoloPanelScene extends SceneObjectBase<SoloPanelSceneState> {
     dashboard.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
       const panel = findVizPanelByKey(dashboard, this.state.panelId);
       if (panel) {
-        this.setState({ panelRef: panel.getRef() });
+        this._foundPanel(panel);
       } else {
         // If rows are repeated they could add new panel repeaters that needs to be activated
         this._activateAllRepeaters(dashboard.state.body);
