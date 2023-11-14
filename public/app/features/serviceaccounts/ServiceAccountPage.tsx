@@ -182,9 +182,11 @@ export const ServiceAccountPageUnconnected = ({
           )}
           <HorizontalGroup justify="space-between" height="auto">
             <h3>Tokens</h3>
-            <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
-              Add service account token
-            </Button>
+            {!serviceAccount.isExternal && (
+              <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
+                Add service account token
+              </Button>
+            )}
           </HorizontalGroup>
           {tokens && (
             <ServiceAccountTokensTable
