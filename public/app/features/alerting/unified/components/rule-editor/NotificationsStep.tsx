@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -47,67 +47,13 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
     { label: 'Auto-select contact point', value: RoutingOptions['notification policy'] },
   ];
 
-  const onRoutingOptionChange = useCallback(
-    (option: RoutingOptions) => {
-      setValue('manualRouting', option === RoutingOptions['contact point']);
-    },
-    [setValue]
-  );
+  const onRoutingOptionChange = (option: RoutingOptions) => {
+    setValue('manualRouting', option === RoutingOptions['contact point']);
+  };
 
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
 
   const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
-
-  function RuleEditorSectionBody() {
-    if (!shouldAllowSimplifiedRouting) {
-      return (
-        <>
-          {shouldRenderPreview && (
-            <NotificationPreview
-              alertQueries={queries}
-              customLabels={labels}
-              condition={condition}
-              folder={folder}
-              alertName={alertName}
-              alertUid={alertUid}
-            />
-          )}
-        </>
-      );
-    }
-
-    return (
-      <Stack direction="column">
-        <Stack direction="column">
-          <RadioButtonGroup
-            options={routingOptions}
-            value={manualRouting ? RoutingOptions['contact point'] : RoutingOptions['notification policy']}
-            onChange={onRoutingOptionChange}
-            className={styles.routingOptions}
-          />
-        </Stack>
-
-        <NotificationsOptionDescription manualRouting={manualRouting} routingOptionEnabled={true} />
-
-        {manualRouting ? (
-          <div className={styles.simplifiedRouting}>
-            <SimplifiedRouting />
-          </div>
-        ) : (
-          shouldRenderPreview && (
-            <NotificationPreview
-              alertQueries={queries}
-              customLabels={labels}
-              condition={condition}
-              folder={folder}
-              alertName={alertName}
-              alertUid={alertUid}
-            />
-          )
-        )}
-      </Stack>
-    );
-  }
 
   return (
     <RuleEditorSection
@@ -142,8 +88,65 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       <RuleEditorSectionBody />
     </RuleEditorSection>
   );
+
+  /**
+   * This component is used to render the section body of the NotificationsStep, depending on the routing option selected.
+   * If simplified routing is not enabled, it will render the NotificationPreview component.
+   * If simplified routing is enabled, it will render the switch between the manual routing and the notification policy routing.
+   *
+   */
+  function RuleEditorSectionBody() {
+    if (!shouldAllowSimplifiedRouting) {
+      return (
+        <>
+          {shouldRenderPreview && (
+            <NotificationPreview
+              alertQueries={queries}
+              customLabels={labels}
+              condition={condition}
+              folder={folder}
+              alertName={alertName}
+              alertUid={alertUid}
+            />
+          )}
+        </>
+      );
+    }
+    return (
+      <Stack direction="column">
+        <Stack direction="column">
+          <RadioButtonGroup
+            options={routingOptions}
+            value={manualRouting ? RoutingOptions['contact point'] : RoutingOptions['notification policy']}
+            onChange={onRoutingOptionChange}
+            className={styles.routingOptions}
+          />
+        </Stack>
+
+        <RoutingOptionDescription manualRouting={manualRouting} />
+
+        {manualRouting ? (
+          <div className={styles.simplifiedRouting}>
+            <SimplifiedRouting />
+          </div>
+        ) : (
+          shouldRenderPreview && (
+            <NotificationPreview
+              alertQueries={queries}
+              customLabels={labels}
+              condition={condition}
+              folder={folder}
+              alertName={alertName}
+              alertUid={alertUid}
+            />
+          )
+        )}
+      </Stack>
+    );
+  }
 };
 
+// Auxiliar components to build the texts and descriptions in the NotificationsStep
 function NeedHelpInfoForNotificationPolicy() {
   return (
     <NeedHelpInfo
@@ -218,20 +221,16 @@ function NeedHelpInfoForContactpoint() {
 }
 interface NotificationsStepDescriptionProps {
   manualRouting: boolean;
-  routingOptionEnabled: boolean;
 }
 
-export const NotificationsOptionDescription = ({
-  manualRouting,
-  routingOptionEnabled,
-}: NotificationsStepDescriptionProps) => {
+export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.notificationsOptionDescription}>
       <Text variant="bodySmall" color="secondary">
-        {!routingOptionEnabled || !manualRouting
-          ? 'Notifications for firing alerts are routed to contact points based on matching labels.'
-          : 'Notifications for firing alerts are routed a selected contact point.'}
+        {manualRouting
+          ? 'Notifications for firing alerts are routed a selected contact point.'
+          : 'Notifications for firing alerts are routed to contact points based on matching labels.'}
       </Text>
       {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}
     </div>

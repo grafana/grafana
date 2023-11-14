@@ -36,10 +36,10 @@ export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) =>
   builder.addCase(selectContactPoint, (state, action) => {
     const { receiver, alertManager } = action.payload;
     const newContactPoint: AMContactPoint = { selectedContactPoint: receiver, alertManager };
-    const existingContactPointIndex = state.findIndex((cp) => cp.alertManager.name === alertManager.name);
+    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManager.name);
 
-    if (existingContactPointIndex !== -1) {
-      state[existingContactPointIndex].selectedContactPoint = receiver;
+    if (existingContactPoint) {
+      existingContactPoint.selectedContactPoint = receiver;
     } else {
       state.push(newContactPoint);
     }
