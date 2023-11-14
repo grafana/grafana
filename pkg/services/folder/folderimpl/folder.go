@@ -473,6 +473,21 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 			return err
 		}
 
+		if cmd.NewTitle != nil {
+			namespace, id := cmd.SignedInUser.GetNamespacedID()
+
+			if err := s.bus.Publish(context.Background(), &events.FolderTitleUpdated{
+				Timestamp: foldr.Updated,
+				Title:     foldr.Title,
+				ID:        dashFolder.ID,
+				UID:       dashFolder.UID,
+				OrgID:     cmd.OrgID,
+			}); err != nil {
+				logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", id, "namespace", namespace, "error", err)
+				return err
+			}
+		}
+
 		return nil
 	})
 
@@ -505,8 +520,6 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	if cmd.NewParentUID != nil {
 		dashFolder.FolderUID = *cmd.NewParentUID
 	}
-
-	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
 		return nil, dashboards.ErrFolderNotFound
@@ -550,17 +563,6 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 		return nil, err
 	}
 
-	if currentTitle != foldr.Title {
-		if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
-			Timestamp: foldr.Updated,
-			Title:     foldr.Title,
-			ID:        dash.ID,
-			UID:       dash.UID,
-			OrgID:     cmd.OrgID,
-		}); err != nil {
-			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", id, "namespace", namespace, "error", err)
-		}
-	}
 	return foldr, nil
 }
 
