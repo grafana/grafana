@@ -477,7 +477,7 @@ func setup(t *testing.T) *testContext {
 				{JSONData: plugins.JSONData{ID: "mysql"}},
 			},
 		}, fakeDatasourceService,
-		pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{}, featuremgmt.WithFeatures(),
+		pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,
 		&featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest())
