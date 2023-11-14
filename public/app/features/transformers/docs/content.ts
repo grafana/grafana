@@ -632,22 +632,36 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Create heatmap',
     getHelperDocs: function () {
       return `
-  Use this transformation to prepare histogram data to be visualized over time. Similar to the Heatmap panel, this transformation allows you to convert histogram metrics to buckets over time.
+  Use this transformation to prepare histogram data for visualizing trends over time. Similar to the Heatmap panel, this transformation converts histogram metrics into temporal buckets.
 
   #### X Bucket
 
   This setting determines how the x-axis is split into buckets.
 
-  - **Size** - Specify a time interval in the input field. For example, a time range of '1h' makes the cells one hour wide on the x-axis.
-  - **Count** - For non-time related series, use this option to define the number of elements in a bucket.
+  - **Size:** Specify a time interval in the input field. For instance, a time range of '1h' creates cells one hour wide on the x-axis.
+  - **Count:** For non-time-related series, use this option to define the number of elements in a bucket.
 
   #### Y Bucket
 
   This setting determines how the y-axis is split into buckets.
 
   - **Linear**
-  - **Logarithmic** - Use a base 2 or base 10.
-  - **Symlog** - A symmetrical logarithmic scale. Use a base 2 or base 10; allows negative values.
+  - **Logarithmic:** Choose between base 2 or base 10.
+  - **Symlog:** Utilizes a symmetrical logarithmic scale. Opt for base 2 or base 10, allowing for negative values.
+
+  Assume you have the following dataset:
+
+  | Timestamp           | Value |
+  |-------------------- |-------|
+  | 2023-01-01 12:00:00 | 5     |
+  | 2023-01-01 12:15:00 | 10    |
+  | 2023-01-01 12:30:00 | 15    |
+  | 2023-01-01 12:45:00 | 8     |
+
+  - With X Bucket set to 'Size: 15m' and Y Bucket as 'Linear', the histogram would organize values into time intervals of 15 minutes on the x-axis and linearly on the y-axis.
+  - For X Bucket as 'Count: 2' and Y Bucket as 'Logarithmic (base 10)', the histogram would group values into buckets of two on the x-axis and use a logarithmic scale on the y-axis.
+
+  Enhance your data representation by leveraging histogram transformations for insightful visualizations over time.
   `;
     },
   },
