@@ -131,12 +131,12 @@ describe('getDerivedFields', () => {
         matcherRegex: '',
         name: 'trace3',
         url: 'http://localhost:8080/${__value.raw}',
-        enableNameMatcher: true,
+        labelMatcher: true,
       },
       {
         matcherRegex: '',
         name: 'trace4',
-        enableNameMatcher: false,
+        labelMatcher: false,
       },
     ]);
     expect(newFields.length).toBe(3);

@@ -13,8 +13,6 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
 
   const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 
-  const fieldsByName = new Map(newFields.map((field) => [field.name, field]));
-
   // line-field is the first string-field
   // NOTE: we should create some common log-frame-extra-string-field code somewhere
   const lineField = dataFrame.fields.find((f) => f.type === FieldType.string);
@@ -30,12 +28,14 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
     for (const field of newFields) {
       if (
         config.featureToggles.lokiEnableNameMatcherOption &&
-        derivedFieldsGrouped[field.name][0].enableNameMatcher &&
+        derivedFieldsGrouped[field.name][0].labelMatcher &&
         labelFields
       ) {
         const label = labelFields.values[i];
         if (label) {
-          const intersectingKey = Object.keys(label).find((key) => fieldsByName.has(key));
+          const intersectingKey = Object.keys(label).find(
+            (key) => derivedFieldsGrouped[field.name][0].matcherRegex === key
+          );
 
           if (intersectingKey) {
             field.values.push(label[intersectingKey]);
