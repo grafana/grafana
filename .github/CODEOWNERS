@@ -466,7 +466,6 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
 /public/test/helpers/alertingRuleEditor.tsx @grafana/alerting-frontend
 /public/views/ @grafana/grafana-frontend-platform
-/public/views/openapi3.html @grafana/backend-platform
 /public/views/swagger.html @grafana/backend-platform
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
