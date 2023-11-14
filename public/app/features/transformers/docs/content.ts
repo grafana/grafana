@@ -1296,7 +1296,11 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Sort by',
     getHelperDocs: function () {
       return `
-  Use this transformation to sort each frame by the configured field. When the **Reverse** switch is on, the values will return in the opposite order.
+  Use this transformation to enhance the organization and visual appeal of data frames within the platform. This transformation enables users to sort each frame within a query result based on a specified field, facilitating better comprehension and analysis of the data. By configuring the desired field for sorting, users can control the order in which the data is presented in the table or visualization.
+
+  One notable feature of the "Sort By" transformation is the option to activate the **Reverse** switch. When turned on, this switch inversely orders the values within the specified field, providing flexibility in how the data is arranged. This functionality is particularly useful when users want to quickly toggle between ascending and descending order to suit their analytical needs.
+  
+  In practical terms, consider a scenario where time-series data is retrieved from a data source. The "Sort By" transformation can be applied to arrange the data frames based on the timestamp, either in ascending or descending order, depending on the analytical requirements. This capability ensures that users can easily navigate and interpret time-series data, gaining valuable insights from the organized and visually coherent presentation.
   `;
     },
   },
@@ -1313,11 +1317,11 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Time series to table transform',
     getHelperDocs: function () {
       return `
-  Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+  Use this transformation to convert time series results into a table, transforming a time series data frame into a "Trend" field. The "Trend" field can then be rendered using the [sparkline cell type][], generating an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
-  For each generated "Trend" field value calculation function can be selected. Default is "last non null value". This value will be displayed next to the sparkline and used for sorting table rows.
-
-  > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file][] to use it.
+  For each generated "Trend" field value, a calculation function can be selected. The default is "last non-null value." This value will be displayed next to the sparkline and used for sorting table rows.
+  
+  > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
   `;
     },
     links: [
