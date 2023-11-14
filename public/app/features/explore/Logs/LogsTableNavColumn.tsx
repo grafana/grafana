@@ -60,7 +60,7 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
     const la = labels[a];
     const lb = labels[b];
 
-    if (la && lb) {
+    if (la != null && lb != null) {
       return (
         +(lb.type === 'TIME_FIELD') - +(la.type === 'TIME_FIELD') ||
         +(lb.type === 'BODY_FIELD') - +(la.type === 'BODY_FIELD') ||
