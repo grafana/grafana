@@ -9,9 +9,11 @@ import (
 )
 
 func registerSwaggerUI(r routing.RouteRegister) {
+	// Deprecated
 	r.Get("/swagger-ui", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "swagger", http.StatusMovedPermanently)
 	})
+	// Deprecated
 	r.Get("/openapi3", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "swagger?show=v3", http.StatusMovedPermanently)
 	})

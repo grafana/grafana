@@ -83,9 +83,8 @@
             }
           }
           urls.push({ name: 'Grafana apps (OpenAPI v2)', url: 'openapi/v2' });
-          console.warn('URLS', urls);
         } catch (err) {
-          console.warn('Error loading k8s apis', err);
+          // console.warn('Error loading k8s apis', err);
         }
 
         // Begin Swagger UI call region
