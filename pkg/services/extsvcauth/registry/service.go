@@ -57,7 +57,7 @@ func (r *Registry) GetExternalServiceNames(ctx context.Context) ([]string, error
 		for i := range names {
 			already[names[i]] = true
 		}
-		oauthNames, err := r.saReg.GetExternalServiceNames(ctx)
+		oauthNames, err := r.oauthReg.GetExternalServiceNames(ctx)
 		if err != nil {
 			return nil, err
 		}

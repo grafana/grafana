@@ -90,3 +90,33 @@ func TestRegistry_CleanUpOrphanedExternalServices(t *testing.T) {
 		})
 	}
 }
+
+func TestRegistry_GetExternalServiceNames(t *testing.T) {
+	tests := []struct {
+		name string
+		init func(*TestEnv)
+		want []string
+	}{
+		{
+			name: "should de-dup names",
+			init: func(te *TestEnv) {
+				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"Sa-Svc", "OAuth-Svc"}, nil)
+				te.oauthReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"OAuth-Svc"}, nil)
+			},
+			want: []string{"Sa-Svc", "OAuth-Svc"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env := setupTestEnv(t)
+			tt.init(env)
+
+			names, err := env.r.GetExternalServiceNames(context.Background())
+			require.NoError(t, err)
+			require.EqualValues(t, tt.want, names)
+
+			env.oauthReg.AssertExpectations(t)
+			env.saReg.AssertExpectations(t)
+		})
+	}
+}
