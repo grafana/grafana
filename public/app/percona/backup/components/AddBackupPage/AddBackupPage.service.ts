@@ -15,7 +15,7 @@ export const AddBackupPageService = {
     Object.keys(services).forEach((serviceName: Databases) => {
       const newServices = services[serviceName] ?? [];
 
-      if (supportedServices.includes(serviceName.toLowerCase())) {
+      if (supportedServices.includes(serviceName)) {
         result.push(
           ...newServices
             .filter((service) => service.name.toLowerCase().includes(query.toLowerCase()))
