@@ -47,7 +47,7 @@ func TestRegistry_CleanUpOrphanedExternalServices(t *testing.T) {
 
 				te.oauthReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"OAuth-Svc"}, nil)
 				// Also return the external service account attached to the OAuth Server
-				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"Sa-Svc", "OAuth-Svc"}, nil)
+				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"sa-svc", "oauth-svc"}, nil)
 			},
 		},
 		{
@@ -58,9 +58,9 @@ func TestRegistry_CleanUpOrphanedExternalServices(t *testing.T) {
 
 				te.oauthReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"OAuth-Svc"}, nil)
 				// Also return the external service account attached to the OAuth Server
-				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"Sa-Svc", "Orphaned-Sa-Svc", "OAuth-Svc"}, nil)
+				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"sa-svc", "orphaned-sa-svc", "oauth-svc"}, nil)
 
-				te.saReg.On("RemoveExternalService", mock.Anything, "Orphaned-Sa-Svc").Return(nil)
+				te.saReg.On("RemoveExternalService", mock.Anything, "orphaned-sa-svc").Return(nil)
 			},
 		},
 		{
@@ -71,7 +71,7 @@ func TestRegistry_CleanUpOrphanedExternalServices(t *testing.T) {
 
 				te.oauthReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"OAuth-Svc", "Orphaned-OAuth-Svc"}, nil)
 				// Also return the external service account attached to the OAuth Server
-				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"Sa-Svc", "Orphaned-OAuth-Svc", "OAuth-Svc"}, nil)
+				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"sa-svc", "orphaned-oauth-svc", "oauth-svc"}, nil)
 
 				te.oauthReg.On("RemoveExternalService", mock.Anything, "Orphaned-OAuth-Svc").Return(nil)
 			},
@@ -100,10 +100,10 @@ func TestRegistry_GetExternalServiceNames(t *testing.T) {
 		{
 			name: "should deduplicate names",
 			init: func(te *TestEnv) {
-				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"Sa-Svc", "OAuth-Svc"}, nil)
+				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"sa-svc", "oauth-svc"}, nil)
 				te.oauthReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"OAuth-Svc"}, nil)
 			},
-			want: []string{"Sa-Svc", "OAuth-Svc"},
+			want: []string{"sa-svc", "OAuth-Svc"},
 		},
 	}
 	for _, tt := range tests {

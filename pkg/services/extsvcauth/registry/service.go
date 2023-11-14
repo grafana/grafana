@@ -45,28 +45,12 @@ func (r *Registry) HasExternalService(ctx context.Context, name string) (bool, e
 func (r *Registry) GetExternalServiceNames(ctx context.Context) ([]string, error) {
 	// TODO (gamab) I think the saReg returns the slugs => think of what needs to be done (de-dup won't work here)
 	names := []string{}
-	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
-		var err error
-		names, err = r.saReg.GetExternalServiceNames(ctx)
-		if err != nil {
-			return nil, err
-		}
+	extSvcProviders, err := r.providersBySvcName(ctx)
+	if err != nil {
+		return nil, err
 	}
-	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		// Only add names that have not been added yet.
-		already := map[string]bool{}
-		for i := range names {
-			already[names[i]] = true
-		}
-		oauthNames, err := r.oauthReg.GetExternalServiceNames(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for i := range oauthNames {
-			if !already[oauthNames[i]] {
-				names = append(names, oauthNames[i])
-			}
-		}
+	for s := range extSvcProviders {
+		names = append(names, s)
 	}
 	return names, nil
 }
@@ -130,25 +114,9 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 
 func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
 	// TODO (gamab) I think the saReg returns the slugs => think of what needs to be done (de-dup won't work here)
-	extsvcs := map[string]extsvcauth.AuthProvider{}
-	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
-		names, err := r.saReg.GetExternalServiceNames(ctx)
-		if err != nil {
-			return err
-		}
-		for i := range names {
-			extsvcs[names[i]] = extsvcauth.ServiceAccounts
-		}
-	}
-	// Important to run this second as the OAuth server uses External Service Accounts as well.
-	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		names, err := r.oauthReg.GetExternalServiceNames(ctx)
-		if err != nil {
-			return err
-		}
-		for i := range names {
-			extsvcs[names[i]] = extsvcauth.OAuth2Server
-		}
+	extsvcs, err := r.providersBySvcName(ctx)
+	if err != nil {
+		return err
 	}
 	for name, provider := range extsvcs {
 		// The service did not register this time. Removed.
@@ -167,6 +135,33 @@ func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+func (r *Registry) providersBySvcName(ctx context.Context) (map[string]extsvcauth.AuthProvider, error) {
+	extsvcs := map[string]extsvcauth.AuthProvider{}
+	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+		slugs, err := r.saReg.GetExternalServiceNames(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for i := range slugs {
+			extsvcs[slugs[i]] = extsvcauth.ServiceAccounts
+		}
+	}
+	// Important to run this second as the OAuth server uses External Service Accounts as well.
+	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		names, err := r.oauthReg.GetExternalServiceNames(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for i := range names {
+			extsvcs[names[i]] = extsvcauth.OAuth2Server
+			// Remove the service account entry associated with the slug of this service
+			// as the OAuth2 Registry uses the External Service Account Registry
+			delete(extsvcs, slugify.Slugify(names[i]))
+		}
+	}
+	return extsvcs, nil
 }
 
 func (r *Registry) Run(ctx context.Context) error {
