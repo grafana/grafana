@@ -590,7 +590,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | server 2  | 88.6                   | 90                     | 2020-07-07 10:32:20 | Overload             |
   | server 3  | 59.6                   | 62                     | 2020-07-07 11:34:20 | OK                   |
 
-  This transformation enables you to extract key information from your time series and display it in a convenient way.
+  This transformation allows you to extract essential information from your time series and present it conveniently.
   `;
     },
     links: [
@@ -604,7 +604,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Grouping to matrix',
     getHelperDocs: function () {
       return `
-  Use this transformation to combine three fields-that will be used as input for the **Column**, **Row**, and **Cell value** fields-from the query output, and generate a matrix. This matrix will be calculated as follows:
+  Use this transformation to combine three fields, which will be used as input for the **Column**, **Row**, and **Cell value** fields from the query output, and generate a matrix. The matrix is calculated as follows:
 
   **Original data**
 
@@ -623,6 +623,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | server 1                | 82   |          |
   | server 2                | 88.6 |          |
   | server 3                |      | 59.6     |
+
+  Utilize this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. Elevate your data visualization by presenting complex relationships in a clear and structured matrix format.
   `;
     },
   },
