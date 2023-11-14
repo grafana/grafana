@@ -809,8 +809,9 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Join by labels',
     getHelperDocs: function () {
       return `
-  Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
-  time series results into a single wide table with a shared **Label** field.
+  Use this transformation to join multiple results into a single table.
+  
+  This is especially useful for converting multiple time series results into a single wide table with a shared **Label** field.
 
   - **Join** - Select the label to join by between the labels available or common across all time series.
   - **Value** - The name for the output result.
@@ -852,6 +853,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | A       | J1  | 200  |       |
   | B       | J1  | 10   | 22    |
   | B       | J1  | 200  | 77    |
+
+  Combine and organize time series data effectively with this transformation for comprehensive insights.
   `;
     },
   },
