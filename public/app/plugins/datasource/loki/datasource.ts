@@ -928,8 +928,14 @@ export class LokiDatasource
         expression = addFilterAsLabelFilter(expression, [lastPosition], filter);
         break;
       }
+      case 'ADD_STRING_FILTER':
       case 'ADD_LINE_FILTER': {
         expression = addLineFilter(expression, action.options?.value);
+        break;
+      }
+      case 'ADD_STRING_FILTER_OUT':
+      case 'ADD_LINE_FILTER_OUT': {
+        expression = addLineFilter(expression, action.options?.value, '!=');
         break;
       }
       default:
