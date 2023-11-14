@@ -7,12 +7,14 @@ import (
 	"net/http/httptest"
 	"path"
 	goruntime "runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -298,6 +300,11 @@ func (s *service) start(ctx context.Context) error {
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
 
+	gitVersion, err := GetK8sApiserverPkgSemver()
+	if err != nil {
+		panic(err)
+	}
+
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 	before, after, _ := strings.Cut(setting.BuildVersion, ".")
 	serverConfig.Version = &version.Info{
@@ -311,7 +318,7 @@ func (s *service) start(ctx context.Context) error {
 		BuildDate:    time.Unix(setting.BuildStamp, 0).UTC().Format(time.DateTime),
 
 		// This is used by kubectl to check compatibility.
-		GitVersion: "v1.28.3", // ???? how do we get this programmatically
+		GitVersion: gitVersion, //"v1.28.3", // ???? how do we get this programmatically
 	}
 
 	// Create the server
@@ -424,4 +431,33 @@ type roundTripperFunc struct {
 
 func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f.fn(req)
+}
+
+// gets the k8s version according to git
+func GetK8sApiserverPkgSemver() (string, error) {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
+	}
+
+	gitVersion := ""
+	for _, dep := range bi.Deps {
+		if dep.Path == "k8s.io/apiserver" {
+			if !semver.IsValid(dep.Version) {
+				return "", fmt.Errorf("invalid semantic version for k8s.io/apiserver")
+			}
+			// v0 => v1
+			majorVersion := strings.TrimPrefix(semver.Major(dep.Version), "v")
+			majorInt, err := strconv.Atoi(majorVersion)
+			if err != nil {
+				return "", fmt.Errorf("could not convert majorVersion to int. majorVersion: %s", majorVersion)
+			}
+			newMajor := fmt.Sprintf("v%d", majorInt+1)
+			// replace
+			gitVersion = strings.Replace(dep.Version, semver.Major(dep.Version), newMajor, 1)
+			return gitVersion, nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find k8s.io/apiserver in build info")
 }
