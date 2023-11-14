@@ -108,12 +108,6 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:        "newDBLibrary",
-			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaBackendPlatformSquad,
-		},
-		{
 			Name:         "autoMigrateOldPanels",
 			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
 			Stage:        FeatureStagePublicPreview,
