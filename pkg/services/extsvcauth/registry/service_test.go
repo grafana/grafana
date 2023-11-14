@@ -98,7 +98,7 @@ func TestRegistry_GetExternalServiceNames(t *testing.T) {
 		want []string
 	}{
 		{
-			name: "should de-dup names",
+			name: "should deduplicate names",
 			init: func(te *TestEnv) {
 				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"Sa-Svc", "OAuth-Svc"}, nil)
 				te.oauthReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"OAuth-Svc"}, nil)
