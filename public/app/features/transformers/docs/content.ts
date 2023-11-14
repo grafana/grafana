@@ -862,7 +862,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Labels to fields',
     getHelperDocs: function () {
       return `
-  Use this transformation to change time series results that include labels or tags into a table where each label's keys and values are included in the table result. The labels can be displayed as either columns or row values.
+  Use this transformation to convert time series results with labels or tags into a table, including each label's keys and values in the result. Display labels as either columns or row values for enhanced data visualization.
 
   Given a query result of two time series:
 
@@ -921,6 +921,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | ------------------- | ------- | ----- | ---------- |
   | 2020-07-07 11:34:20 | ServerA | 10    |            |
   | 2020-07-07 11:34:20 |         | 20    | EU         |
+
+  Convert your time series data into a structured table format for a clearer and more organized representation.
   `;
     },
   },
