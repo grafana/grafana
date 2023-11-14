@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { CoreApp, DataFrame, Field, LinkModel, LogRowModel } from '@grafana/data';
+import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
@@ -58,7 +58,11 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
 
     // do not show the log message unless there is a link attached
-    const fields = fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
+    const fields =
+      row.dataFrame.meta?.type === DataFrameType.LogLines
+        ? // for DataFrameType.LogLines frames we don't want to show any additional fields besides the labels
+          []
+        : fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
     const fieldsWithLinksAvailable =
       (displayedFieldsWithLinks && displayedFieldsWithLinks.length > 0) ||
