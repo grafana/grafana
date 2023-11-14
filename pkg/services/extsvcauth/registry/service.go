@@ -149,7 +149,7 @@ func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
 		}
 	}
 	for name, provider := range extsvcs {
-		// The service did not register this time. Removed?
+		// The service did not register this time. Removed.
 		if _, ok := r.extSvcProviders[slugify.Slugify(name)]; !ok {
 			r.logger.Info("Detected removed External Service", "service", name, "provider", provider)
 			switch provider {
