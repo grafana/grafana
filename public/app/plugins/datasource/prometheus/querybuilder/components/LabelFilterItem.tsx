@@ -65,6 +65,8 @@ export function LabelFilterItem({
     debounceDuration
   );
 
+  const itemValue = item?.value ? item?.value : '';
+
   return (
     <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
@@ -128,8 +130,8 @@ export function LabelFilterItem({
           width="auto"
           value={
             isMultiSelect()
-              ? getSelectOptionsFromString(item?.value).map(toOption)
-              : getSelectOptionsFromString(item?.value).map(toOption)[0]
+              ? getSelectOptionsFromString(itemValue).map(toOption)
+              : getSelectOptionsFromString(itemValue).map(toOption)[0]
           }
           allowCustomValue
           onOpenMenu={async () => {
