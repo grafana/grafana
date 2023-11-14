@@ -193,24 +193,13 @@ func ProvideService(cfg *setting.Cfg,
 			}
 		}
 
-		// Generic - Uses the same scheme as GitHub.
 		if name == "generic_oauth" {
-			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:               info.ApiUrl,
-				teamsUrl:             info.TeamsUrl,
-				emailAttributeName:   info.EmailAttributeName,
-				emailAttributePath:   info.EmailAttributePath,
-				nameAttributePath:    sec.Key("name_attribute_path").String(),
-				groupsAttributePath:  info.GroupsAttributePath,
-				loginAttributePath:   sec.Key("login_attribute_path").String(),
-				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
-				teamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
-				teamIds:              sec.Key("team_ids").Strings(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
-				skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
+			genericOAuthConnector, err := NewGenericOAuthProvider(settingsKVs, cfg, features)
+			if err != nil {
+				ss.log.Error("Failed to create Generic OAuth provider", "error", err)
+				continue
 			}
+			ss.socialMap["generic_oauth"] = genericOAuthConnector
 		}
 
 		if name == grafanaCom {

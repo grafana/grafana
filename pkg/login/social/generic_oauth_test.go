@@ -14,7 +14,10 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func newLogger(name string, lev string) log.Logger {
@@ -25,11 +28,8 @@ func newLogger(name string, lev string) log.Logger {
 
 func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
+		provider, err := NewGenericOAuthProvider(map[string]interface{}{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name                 string
@@ -113,11 +113,8 @@ func TestSearchJSONForEmail(t *testing.T) {
 
 func TestSearchJSONForGroups(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
+		provider, err := NewGenericOAuthProvider(map[string]interface{}{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name                 string
@@ -176,11 +173,8 @@ func TestSearchJSONForGroups(t *testing.T) {
 
 func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
+		provider, err := NewGenericOAuthProvider(map[string]interface{}{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name                 string
@@ -238,12 +232,10 @@ func TestSearchJSONForRole(t *testing.T) {
 }
 
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
-	provider := SocialGenericOAuth{
-		SocialBase: &SocialBase{
-			log: newLogger("generic_oauth_test", "debug"),
-		},
-		emailAttributePath: "email",
-	}
+	provider, err := NewGenericOAuthProvider(map[string]interface{}{
+		"email_attribute_path": "email",
+	}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	tests := []struct {
 		Name                    string
@@ -508,12 +500,10 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 func TestUserInfoSearchesForLogin(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-			loginAttributePath: "login",
-		}
+		provider, err := NewGenericOAuthProvider(map[string]interface{}{
+			"login_attribute_path": "login",
+		}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name               string
@@ -603,12 +593,10 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 
 func TestUserInfoSearchesForName(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-			nameAttributePath: "name",
-		}
+		provider, err := NewGenericOAuthProvider(map[string]interface{}{
+			"name_attribute_path": "name",
+		}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name              string
@@ -701,12 +689,6 @@ func TestUserInfoSearchesForName(t *testing.T) {
 
 func TestUserInfoSearchesForGroup(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
-
 		tests := []struct {
 			name                string
 			groupsAttributePath string
@@ -742,7 +724,6 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				provider.groupsAttributePath = test.groupsAttributePath
 				body, err := json.Marshal(test.responseBody)
 				require.NoError(t, err)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -752,7 +733,13 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 					_, err := w.Write(body)
 					require.NoError(t, err)
 				}))
-				provider.apiUrl = ts.URL
+
+				provider, err := NewGenericOAuthProvider(map[string]interface{}{
+					"groups_attribute_path": test.groupsAttributePath,
+					"api_url":               ts.URL,
+				}, &setting.Cfg{}, featuremgmt.WithFeatures())
+				require.NoError(t, err)
+
 				token := &oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
@@ -769,12 +756,10 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 }
 
 func TestPayloadCompression(t *testing.T) {
-	provider := SocialGenericOAuth{
-		SocialBase: &SocialBase{
-			log: newLogger("generic_oauth_test", "debug"),
-		},
-		emailAttributePath: "email",
-	}
+	provider, err := NewGenericOAuthProvider(map[string]interface{}{
+		"email_attribute_path": "email",
+	}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	tests := []struct {
 		Name          string

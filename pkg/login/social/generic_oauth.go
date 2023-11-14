@@ -10,8 +10,13 @@ import (
 	"net/mail"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2"
 )
+
+const genericOAuthProviderName = "generic_oauth"
 
 type SocialGenericOAuth struct {
 	*SocialBase
@@ -30,6 +35,32 @@ type SocialGenericOAuth struct {
 	skipOrgRoleSync      bool
 }
 
+func NewGenericOAuthProvider(settings map[string]interface{}, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGenericOAuth, error) {
+	info, err := createOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+	config := createOAuthConfig(info, cfg, genericOAuthProviderName)
+	provider := &SocialGenericOAuth{
+		SocialBase:           newSocialBase(genericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		apiUrl:               info.ApiUrl,
+		teamsUrl:             info.TeamsUrl,
+		emailAttributeName:   info.EmailAttributeName,
+		emailAttributePath:   info.EmailAttributePath,
+		nameAttributePath:    mustString(info.Extra["name_attribute_path"]),
+		groupsAttributePath:  info.GroupsAttributePath,
+		loginAttributePath:   mustString(info.Extra["login_attribute_path"]),
+		idTokenAttributeName: mustString(info.Extra["id_token_attribute_name"]),
+		teamIdsAttributePath: mustString(info.Extra["team_ids_attribute_path"]),
+		teamIds:              util.SplitString(mustString(info.Extra["team_ids"])),
+		allowedOrganizations: util.SplitString(mustString(info.Extra["allowed_organizations"])),
+		allowedGroups:        info.AllowedGroups,
+		skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+	return provider, nil
+}
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true
