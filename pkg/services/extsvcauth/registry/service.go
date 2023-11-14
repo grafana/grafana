@@ -129,6 +129,7 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 }
 
 func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
+	// TODO (gamab) I think the saReg returns the slugs => think of what needs to be done (de-dup won't work here)
 	extsvcs := map[string]extsvcauth.AuthProvider{}
 	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
 		names, err := r.saReg.GetExternalServiceNames(ctx)
