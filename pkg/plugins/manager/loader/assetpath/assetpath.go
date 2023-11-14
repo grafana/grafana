@@ -59,7 +59,7 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 func (s *Service) Module(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
 		if s.cfg.Features != nil &&
-			s.cfg.Features.IsEnabled(featuremgmt.FlagExternalCorePlugins) &&
+			s.cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) &&
 			filepath.Base(n.dir) == "dist" {
 			// The core plugin has been built externally, use the module from the dist folder
 		} else {
