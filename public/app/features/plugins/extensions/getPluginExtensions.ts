@@ -189,7 +189,7 @@ function getLinkExtensionOnClick(
         category: config.category,
       });
 
-      const result = onClick(event, getEventHelpers(context));
+      const result = onClick(event, getEventHelpers(pluginId, context));
 
       if (isPromise(result)) {
         result.catch((e) => {
