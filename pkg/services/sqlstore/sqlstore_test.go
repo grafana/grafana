@@ -104,13 +104,6 @@ var sqlStoreTestCases = []sqlStoreTest{
 		features:   featuremgmt.WithFeatures(featuremgmt.FlagMysqlAnsiQuotes),
 		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&sql_mode='ANSI_QUOTES'",
 	},
-	{
-		name:       "New DB library",
-		dbType:     "mysql",
-		dbHost:     "[::1]",
-		features:   featuremgmt.WithFeatures(featuremgmt.FlagNewDBLibrary),
-		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&sql_mode='ANSI_QUOTES'&parseTime=true",
-	},
 }
 
 func TestIntegrationSQLConnectionString(t *testing.T) {

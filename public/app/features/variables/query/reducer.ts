@@ -25,7 +25,7 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   includeAll: false,
   allValue: null,
   options: [],
-  current: {} as VariableOption,
+  current: {},
   definition: '',
 };
 
