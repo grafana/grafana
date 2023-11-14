@@ -11,6 +11,10 @@ function getStyles(theme: GrafanaTheme2) {
     labelCount: css({
       marginLeft: theme.spacing(0.5),
       marginRight: theme.spacing(0.5),
+      appearance: 'none',
+      background: 'none',
+      border: 'none',
+      fontSize: theme.typography.pxToRem(11),
     }),
     wrap: css({
       display: 'flex',
@@ -130,7 +134,12 @@ export const LogsTableNavColumn = (props: {
               onChange={() => toggleColumn(labelName)}
               checked={labels[labelName]?.active ?? false}
             />
-            <span className={styles.labelCount}>({labels[labelName]?.percentOfLinesWithLabel}%)</span>
+            <button
+              title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
+              className={styles.labelCount}
+            >
+              {labels[labelName]?.percentOfLinesWithLabel}%
+            </button>
           </div>
         ))}
       </div>
