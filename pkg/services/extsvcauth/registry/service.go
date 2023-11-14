@@ -45,7 +45,7 @@ func (r *Registry) HasExternalService(ctx context.Context, name string) (bool, e
 func (r *Registry) GetExternalServiceNames(ctx context.Context) ([]string, error) {
 	// TODO (gamab) I think the saReg returns the slugs => think of what needs to be done (de-dup won't work here)
 	names := []string{}
-	extSvcProviders, err := r.providersBySvcName(ctx)
+	extSvcProviders, err := r.retrieveExtSvcProviders(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 
 func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
 	// TODO (gamab) I think the saReg returns the slugs => think of what needs to be done (de-dup won't work here)
-	extsvcs, err := r.providersBySvcName(ctx)
+	extsvcs, err := r.retrieveExtSvcProviders(ctx)
 	if err != nil {
 		return err
 	}
@@ -137,9 +137,10 @@ func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
 	return nil
 }
 
-func (r *Registry) providersBySvcName(ctx context.Context) (map[string]extsvcauth.AuthProvider, error) {
+func (r *Registry) retrieveExtSvcProviders(ctx context.Context) (map[string]extsvcauth.AuthProvider, error) {
 	extsvcs := map[string]extsvcauth.AuthProvider{}
 	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+		// The external service accounts registry return the slugs of the services.
 		slugs, err := r.saReg.GetExternalServiceNames(ctx)
 		if err != nil {
 			return nil, err
@@ -157,7 +158,7 @@ func (r *Registry) providersBySvcName(ctx context.Context) (map[string]extsvcaut
 		for i := range names {
 			extsvcs[names[i]] = extsvcauth.OAuth2Server
 			// Remove the service account entry associated with the slug of this service
-			// as the OAuth2 Registry uses the External Service Account Registry
+			// because the OAuth2 registry uses the  external service accounts registry
 			delete(extsvcs, slugify.Slugify(names[i]))
 		}
 	}
