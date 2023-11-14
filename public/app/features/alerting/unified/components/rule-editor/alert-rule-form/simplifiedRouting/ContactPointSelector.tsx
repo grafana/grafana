@@ -11,7 +11,8 @@ import { extractReceivers } from 'app/features/alerting/unified/utils/receivers'
 import { ReceiverMetadataBadge } from '../../../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
 import { AlertManagerMetaData } from '../../notificaton-preview/useGetAlertManagersSourceNamesAndImage';
 
-import { selectContactPoint, useReceiversMetadataMapByName } from './SimplifiedRouting';
+import { selectContactPoint } from './SimplifiedRouting';
+import { useReceiversMetadataMapByName } from './useReceiverMetadataByName';
 
 export interface ContactPointSelectorProps {
   alertManager: AlertManagerMetaData;

@@ -1,19 +1,13 @@
 import { css } from '@emotion/css';
 import { createAction, createReducer } from '@reduxjs/toolkit';
-import React, { useEffect, useMemo, useReducer } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
-import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
-import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { ReceiverTypes } from '../../../receivers/grafanaAppReceivers/onCall/onCall';
-import { ReceiverPluginMetadata, getOnCallMetadata } from '../../../receivers/grafanaAppReceivers/useReceiversMetadata';
 import {
   AlertManagerMetaData,
   useGetAlertManagersMetadata,
@@ -78,7 +72,6 @@ export function SimplifiedRouting() {
   //todo: decide what to do when there some alert managers not postable
   //const shouldShowAM = alertManagerMetaDataPostable.length > 1;
   const shouldShowAM = true;
-  const hrefToContactPoints = '/alerting/notifications';
 
   return alertManagersWithCPState.map((alertManagerContactPoint, index) => {
     return (
@@ -102,19 +95,7 @@ export function SimplifiedRouting() {
               dispatch={dispatch}
               alertManager={alertManagerContactPoint.alertManager}
             />
-            <div className={styles.contactPointsLinkRow}>
-              <Text color="secondary">To browse contact points and create new ones go to</Text>
-              <a
-                href={createUrl(hrefToContactPoints)}
-                target="__blank"
-                className={styles.link}
-                rel="noopener"
-                aria-label="View alert rule"
-              >
-                Contact points
-                <Icon name={'external-link-alt'} size="sm" />
-              </a>
-            </div>
+            <LinkToContactPoints />
           </Stack>
         </Stack>
       </div>
@@ -122,31 +103,25 @@ export function SimplifiedRouting() {
   });
 }
 
-export const useReceiversMetadataMapByName = (receivers: Receiver[]): Map<string, ReceiverPluginMetadata> => {
-  const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
-  const { data: onCallIntegrations = [] } = onCallApi.useGrafanaOnCallIntegrationsQuery(undefined, {
-    skip: !isOnCallEnabled,
-  });
-
-  return useMemo(() => {
-    const result = new Map<string, ReceiverPluginMetadata>();
-
-    receivers.forEach((receiver) => {
-      const onCallReceiver = receiver.grafana_managed_receiver_configs?.find((c) => c.type === ReceiverTypes.OnCall);
-
-      if (onCallReceiver) {
-        if (!isOnCallEnabled) {
-          result.set(receiver.name, getOnCallMetadata(null, onCallReceiver));
-          return;
-        }
-
-        result.set(receiver.name, getOnCallMetadata(onCallIntegrations, onCallReceiver));
-      }
-    });
-
-    return result;
-  }, [receivers, isOnCallEnabled, onCallIntegrations]);
-};
+function LinkToContactPoints() {
+  const styles = useStyles2(getStyles);
+  const hrefToContactPoints = '/alerting/notifications';
+  return (
+    <div className={styles.contactPointsLinkRow}>
+      <Text color="secondary">To browse contact points and create new ones go to</Text>
+      <a
+        href={createUrl(hrefToContactPoints)}
+        target="__blank"
+        className={styles.link}
+        rel="noopener"
+        aria-label="View alert rule"
+      >
+        Contact points
+        <Icon name={'external-link-alt'} size="sm" />
+      </a>
+    </div>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   firstAlertManagerLine: css({
@@ -168,9 +143,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: theme.spacing(3),
     height: theme.spacing(3),
     marginRight: theme.spacing(1),
-  }),
-  contactPointsSelector: css({
-    marginTop: theme.spacing(1),
   }),
   link: css({
     color: theme.colors.primary.text,
