@@ -13,10 +13,12 @@ import { DashboardDTO, DashboardMeta, DashboardRoutes } from 'app/types';
 import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { SoloPanelScene } from '../solo/SoloPanelScene';
 import { getVizPanelKeyForPanelId, findVizPanelByKey } from '../utils/utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
+  soloPanel?: SoloPanelScene;
   panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
@@ -100,16 +102,14 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public async loadSoloPanel(uid: string, panelId: string, timezone?: string) {
     try {
       const dashboard = await this.loadScene(uid);
-      dashboard.startUrlSync();
 
-      if (timezone) {
-        dashboard.state.$timeRange!.onTimeZoneChange(timezone);
-      }
+      const soloScene = new SoloPanelScene({
+        dashboardRef: dashboard.getRef(),
+        panelId: panelId,
+        timezone: timezone,
+      });
 
-      // This is to re-use some complex logic for viewPanel in DashboardSceneUrlSync manager that waits for repeat clones to be added
-      dashboard?.urlSync?.updateFromUrl({ viewPanel: String(panelId) });
-
-      this.setState({ dashboard: dashboard, isLoading: false });
+      this.setState({ soloPanel: soloScene, isLoading: false });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
@@ -191,7 +191,14 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public clearState() {
     getDashboardSrv().setCurrent(undefined);
-    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false, panelEditor: undefined });
+
+    this.setState({
+      dashboard: undefined,
+      loadError: undefined,
+      isLoading: false,
+      panelEditor: undefined,
+      soloPanel: undefined,
+    });
   }
 
   public setDashboardCache(uid: string, dashboard: DashboardDTO) {

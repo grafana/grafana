@@ -78,7 +78,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       chromeless: true,
       component: SafeDynamicImport(() =>
         config.featureToggles.dashboardScene || config.featureToggles.dashboardSceneSolo
-          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/pages/SoloPanelPage')
+          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
           : import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
       ),
     },
