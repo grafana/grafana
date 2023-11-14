@@ -54,7 +54,7 @@ export type DerivedFieldConfig = {
   url?: string;
   urlDisplayLabel?: string;
   datasourceUid?: string;
-  enableNameMatcher?: boolean;
+  labelMatcher?: boolean;
 };
 
 export enum LokiVariableQueryType {

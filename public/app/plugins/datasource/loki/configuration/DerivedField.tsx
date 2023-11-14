@@ -4,7 +4,7 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Switch } from '@grafana/ui';
+import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Select, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DerivedFieldConfig } from '../types';
@@ -33,7 +33,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(1)};
   `,
   dataSource: css``,
-  nameMatcherField: css({}),
+  nameMatcherField: css({
+    flex: 0.5,
+    marginRight: theme.spacing(0.5),
+  }),
 });
 
 type Props = {
@@ -49,6 +52,7 @@ export const DerivedField = (props: Props) => {
   const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
   const previousUid = usePrevious(value.datasourceUid);
+  const [fieldType, setFieldType] = useState<'label' | 'regex'>(value.labelMatcher ? 'label' : 'regex');
 
   // Force internal link visibility change if uid changed outside of this component.
   useEffect(() => {
@@ -72,17 +76,50 @@ export const DerivedField = (props: Props) => {
   return (
     <div className={className} data-testid="derived-field">
       <div className="gf-form">
+        {config.featureToggles.lokiEnableNameMatcherOption && (
+          <Field
+            className={styles.nameMatcherField}
+            label={
+              <TooltipLabel
+                label="Type"
+                content="Derived fields can be based on a label or a regular expression base on the log message."
+              />
+            }
+          >
+            <Select
+              options={[
+                { label: 'Regex in log line', value: 'regex' },
+                { label: 'Label', value: 'label' },
+              ]}
+              value={fieldType}
+              onChange={(type) => {
+                if (type.value === 'label' || type.value === 'regex') {
+                  setFieldType(type.value);
+                  onChange({
+                    ...value,
+                    labelMatcher: type.value === 'label',
+                  });
+                }
+              }}
+            />
+          </Field>
+        )}
         <Field className={styles.nameField} label="Name" invalid={invalidName} error="The name is already in use">
           <Input value={value.name} onChange={handleChange('name')} placeholder="Field name" invalid={invalidName} />
         </Field>
         <Field
           className={styles.regexField}
-          hidden={config.featureToggles.lokiEnableNameMatcherOption && value.enableNameMatcher}
           label={
-            <TooltipLabel
-              label="Regex"
-              content="Use to parse and capture some part of the log message. You can use the captured groups in the template."
-            />
+            <>
+              {fieldType === 'regex' && (
+                <TooltipLabel
+                  label="Regex"
+                  content="Use to parse and capture some part of the log message. You can use the captured groups in the template."
+                />
+              )}
+
+              {fieldType === 'label' && <TooltipLabel label="Label" content="Use to derive the field from a label." />}
+            </>
           }
         >
           <Input value={value.matcherRegex} onChange={handleChange('matcherRegex')} />
@@ -160,31 +197,6 @@ export const DerivedField = (props: Props) => {
           </Field>
         )}
       </div>
-
-      {config.featureToggles.lokiEnableNameMatcherOption && (
-        <div className="gf-form">
-          <Field
-            className={styles.nameMatcherField}
-            label={
-              <TooltipLabel
-                label="Name matcher"
-                content="When enabled, any fields in the logs recognized using format operations like json, logfmt, unpack, etc., will be associated with this derived field if their names match."
-              />
-            }
-          >
-            <Switch
-              value={value.enableNameMatcher}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                const { checked } = e.currentTarget;
-                onChange({
-                  ...value,
-                  enableNameMatcher: checked,
-                });
-              }}
-            />
-          </Field>
-        </div>
-      )}
     </div>
   );
 };
