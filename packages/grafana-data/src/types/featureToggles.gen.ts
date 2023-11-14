@@ -18,7 +18,6 @@
  * @public
  */
 export interface FeatureToggles {
-  trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
@@ -30,12 +29,14 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
+  exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
+  newVizTooltips?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -63,9 +64,7 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
-  gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
-  timeSeriesTable?: boolean;
   influxdbBackendMigration?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
@@ -74,7 +73,6 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
-  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
@@ -86,7 +84,6 @@ export interface FeatureToggles {
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
-  dataSourcePageHeader?: boolean;
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
@@ -103,7 +100,6 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
-  toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
@@ -112,12 +108,11 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
-  azureMonitorDataplane?: boolean;
+  traceToProfiles?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
   influxdbSqlSupport?: boolean;
-  noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
@@ -125,20 +120,46 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
+  alertingContactPointsV2?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
   idForwarding?: boolean;
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
-  alertingModifiedExport?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
+  formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
+  cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  teamHttpHeaders?: boolean;
+  awsDatasourcesNewFormStyling?: boolean;
+  cachingOptimizeSerializationMemoryUsage?: boolean;
+  panelTitleSearchInV1?: boolean;
+  pluginsInstrumentationStatusSource?: boolean;
+  costManagementUi?: boolean;
+  managedPluginsInstall?: boolean;
+  prometheusPromQAIL?: boolean;
+  addFieldFromCalculationStatFunctions?: boolean;
+  alertmanagerRemoteSecondary?: boolean;
+  alertmanagerRemotePrimary?: boolean;
+  alertmanagerRemoteOnly?: boolean;
+  annotationPermissionUpdate?: boolean;
+  extractFieldsNameDeduplication?: boolean;
+  dashboardSceneForViewers?: boolean;
+  dashboardScene?: boolean;
+  panelFilterVariable?: boolean;
+  pdfTables?: boolean;
+  ssoSettingsApi?: boolean;
+  logsInfiniteScrolling?: boolean;
+  flameGraphItemCollapsing?: boolean;
+  alertingDetailsViewV2?: boolean;
+  alertingSimplifiedRouting?: boolean;
 }

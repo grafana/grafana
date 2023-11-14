@@ -14,7 +14,7 @@ type Service struct {
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg) team.Service {
-	return &Service{store: &xormStore{db: db, cfg: cfg}}
+	return &Service{store: &xormStore{db: db, cfg: cfg, deletes: []string{}}}
 }
 
 func (s *Service) CreateTeam(name, email string, orgID int64) (team.Team, error) {
@@ -67,4 +67,8 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	return s.store.GetMembers(ctx, query)
+}
+
+func (s *Service) RegisterDelete(query string) {
+	s.store.RegisterDelete(query)
 }

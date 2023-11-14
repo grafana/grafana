@@ -121,8 +121,8 @@ func TestGetHomeDashboard(t *testing.T) {
 
 func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
-	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg := setting.NewCfg()
+	cfg.AppURL = "http://localhost:3000/"
 	gLive, err := live.ProvideService(nil, cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil, nil,
@@ -394,6 +394,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		// This tests that a valid request returns correct response
 		t.Run("Given a correct request for creating a dashboard", func(t *testing.T) {
 			const folderID int64 = 3
+			folderUID := "Folder"
 			const dashID int64 = 2
 
 			cmd := dashboards.SaveDashboardCommand{
@@ -404,15 +405,19 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}),
 				Overwrite: true,
 				FolderID:  folderID,
+				FolderUID: folderUID,
 				IsFolder:  false,
 				Message:   "msg",
 			}
 
 			dashboardService := dashboards.NewFakeDashboardService(t)
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
-				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2}, nil)
+				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2, FolderUID: folderUID, FolderID: folderID}, nil)
+			mockFolderService := &foldertest.FakeService{
+				ExpectedFolder: &folder.Folder{ID: 1, UID: folderUID, Title: "Folder"},
+			}
 
-			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, nil, func(sc *scenarioContext) {
+			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolderService, func(sc *scenarioContext) {
 				callPostDashboardShouldReturnSuccess(sc)
 
 				result := sc.ToJSON()
@@ -664,6 +669,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				Data:        fakeDash.Data,
 			}}
 		mockSQLStore := dbtest.NewFakeDB()
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+		})
+
 		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
 			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				sc.dashboardVersionService = fakeDashboardVersionService
@@ -886,11 +897,12 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		provisioningService = provisioning.NewProvisioningServiceMock(context.Background())
 	}
 
+	features := featuremgmt.WithFeatures()
 	var err error
 	if dashboardStore == nil {
 		sql := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, features, tagimpl.ProvideService(sql), quotaService)
 		require.NoError(t, err)
 	}
 
@@ -900,10 +912,9 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	ac := accesscontrolmock.New()
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
-	features := featuremgmt.WithFeatures()
 
 	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
+		cfg, dashboardStore, folderStore, db.InitTestDB(t), features)
 
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
@@ -1084,6 +1095,9 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 	cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc, sqlStore db.DB) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
+		folderSvc := foldertest.NewFakeService()
+		folderSvc.ExpectedFolder = &folder.Folder{}
+
 		hs := HTTPServer{
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
@@ -1097,6 +1111,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			dashboardVersionService: fakeDashboardVersionService,
 			Kinds:                   corekind.NewBase(nil),
 			accesscontrolService:    actest.FakeService{},
+			folderService:           folderSvc,
 		}
 
 		sc := setupScenarioContext(t, url)

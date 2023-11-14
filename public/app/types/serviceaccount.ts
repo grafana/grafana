@@ -34,8 +34,10 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
   avatarUrl?: string;
   createdAt: string;
   isDisabled: boolean;
+  isExternal?: boolean;
   teams: string[];
   role: OrgRole;
+  roles?: Role[];
 }
 
 export interface ServiceAccountCreateApiResponse {
@@ -52,12 +54,14 @@ export interface ServiceAccountCreateApiResponse {
 export interface ServiceAccountProfileState {
   serviceAccount: ServiceAccountDTO;
   isLoading: boolean;
+  rolesLoading?: boolean;
   tokens: ApiKey[];
 }
 
 export enum ServiceAccountStateFilter {
   All = 'All',
   WithExpiredTokens = 'WithExpiredTokens',
+  External = 'External',
   Disabled = 'Disabled',
 }
 

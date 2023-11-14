@@ -91,7 +91,7 @@ func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}, err
 }
 
-func (am *alertmanager) GetReceivers(_ context.Context) []apimodels.Receiver {
+func (am *alertmanager) GetReceivers(_ context.Context) ([]apimodels.Receiver, error) {
 	apiReceivers := make([]apimodels.Receiver, 0, len(am.Base.GetReceivers()))
 	for _, rcv := range am.Base.GetReceivers() {
 		// Build integrations slice for each receiver.
@@ -123,5 +123,5 @@ func (am *alertmanager) GetReceivers(_ context.Context) []apimodels.Receiver {
 		})
 	}
 
-	return apiReceivers
+	return apiReceivers, nil
 }

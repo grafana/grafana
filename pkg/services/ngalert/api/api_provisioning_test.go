@@ -77,7 +77,7 @@ func TestProvisioningApi(t *testing.T) {
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
 				require.Equal(t, 400, response.Status())
-				expBody := `{"error":"invalid object specification: invalid policy tree","message":"invalid object specification: invalid policy tree"}`
+				expBody := `{"message":"invalid object specification: invalid policy tree"}`
 				require.Equal(t, expBody, string(response.Body()))
 			})
 		})
@@ -605,7 +605,7 @@ func TestProvisioningApi(t *testing.T) {
 
     no_data_state  = "Alerting"
     exec_err_state = "Error"
-    for            = 0
+    for            = "0s"
     annotations = {
       test = "annotation"
     }
@@ -632,7 +632,7 @@ func TestProvisioningApi(t *testing.T) {
 
     no_data_state  = "OK"
     exec_err_state = "OK"
-    for            = 0
+    for            = "0s"
     is_paused      = false
   }
 }
@@ -1131,6 +1131,21 @@ func TestProvisioningApi(t *testing.T) {
 
 				response := sut.RouteGetPolicyTreeExport(&rc)
 
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("hcl body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Add("format", "hcl")
+				expectedResponse := "resource \"grafana_notification_policy\" \"notification_policy_1\" {\n  contact_point = \"default-receiver\"\n  group_by      = [\"g1\", \"g2\"]\n\n  policy {\n    contact_point = \"nested-receiver\"\n    group_by      = [\"g3\", \"g4\"]\n\n    matcher {\n      label = \"foo\"\n      match = \"=\"\n      value = \"bar\"\n    }\n\n    mute_timings    = [\"interval\"]\n    continue        = true\n    group_wait      = \"5m\"\n    group_interval  = \"5m\"\n    repeat_interval = \"5m\"\n  }\n\n  group_wait      = \"30s\"\n  group_interval  = \"5m\"\n  repeat_interval = \"1h\"\n}\n"
+
+				response := sut.RouteGetPolicyTreeExport(&rc)
+
+				t.Log(string(response.Body()))
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})

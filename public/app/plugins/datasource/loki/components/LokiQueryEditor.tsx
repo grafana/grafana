@@ -176,7 +176,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             variant={dataIsStale ? 'primary' : 'secondary'}
             size="sm"
             onClick={onRunQuery}
-            icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+            icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
             disabled={data?.state === LoadingState.Loading}
           >
             {queries && queries.length > 1 ? `Run queries` : `Run query`}

@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { isArray, isObject } from 'lodash';
 import React from 'react';
 
@@ -7,9 +8,15 @@ import {
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
+  type PluginExtensionOpenModalOptions,
+  isDateTime,
+  dateTime,
+  PluginContextProvider,
+  PluginMeta,
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
 export function logWarning(message: string) {
@@ -41,31 +48,45 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
 }
 
 // Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
-export function getEventHelpers(context?: Readonly<object>): PluginExtensionEventHelpers {
-  const openModal: PluginExtensionEventHelpers['openModal'] = ({ title, body }) => {
-    appEvents.publish(new ShowModalReactEvent({ component: getModalWrapper({ title, body }) }));
+export function getEventHelpers(pluginId: string, context?: Readonly<object>): PluginExtensionEventHelpers {
+  const openModal: PluginExtensionEventHelpers['openModal'] = async (options) => {
+    const { title, body, width, height } = options;
+    const pluginMeta = await getPluginSettings(pluginId);
+
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: getModalWrapper({ title, body, width, height, pluginMeta }),
+      })
+    );
   };
 
   return { openModal, context };
 }
 
-export type ModalWrapperProps = {
+type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
 // Wraps a component with a modal.
 // This way we can make sure that the modal is closable, and we also make the usage simpler.
-export const getModalWrapper = ({
+const getModalWrapper = ({
   // The title of the modal (appears in the header)
   title,
   // A component that serves the body of the modal
   body: Body,
-}: Parameters<PluginExtensionEventHelpers['openModal']>[0]) => {
+  width,
+  height,
+  pluginMeta,
+}: { pluginMeta: PluginMeta } & PluginExtensionOpenModalOptions) => {
+  const className = css({ width, height });
+
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
     return (
-      <Modal title={title} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-        <Body onDismiss={onDismiss} />
-      </Modal>
+      <PluginContextProvider meta={pluginMeta}>
+        <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+          <Body onDismiss={onDismiss} />
+        </Modal>
+      </PluginContextProvider>
     );
   };
 
@@ -146,6 +167,13 @@ export function getReadOnlyProxy<T extends object>(obj: T): T {
       }
 
       const value = Reflect.get(target, prop, receiver);
+
+      // This will create a clone of the date time object
+      // instead of creating a proxy because the underlying
+      // momentjs object needs to be able to mutate itself.
+      if (isDateTime(value)) {
+        return dateTime(value);
+      }
 
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {

@@ -11,13 +11,13 @@ import { DataSourcesInfo } from './DataSourcesInfo';
 export function SectionSubheader({
   children,
   datasources,
-}: React.PropsWithChildren<{ datasources: DataSourceInformation[] }>) {
+}: React.PropsWithChildren<{ datasources?: DataSourceInformation[] }>) {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
-      <div>{children}</div>
-      <DataSourcesInfo datasources={datasources} />
+      {children}
+      {datasources && <DataSourcesInfo datasources={datasources} />}
     </div>
   );
 }

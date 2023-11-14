@@ -67,10 +67,18 @@ export function TraceQLEditor(props: Props) {
         }
         setupAutoSize(editor);
 
+        // Parse query that might already exist (e.g., after a page refresh)
+        const model = editor.getModel();
+        if (model) {
+          const errorNodes = getErrorNodes(model.getValue());
+          setErrorMarkers(monaco, model, errorNodes);
+        }
+
         // Register callback for query changes
         editor.onDidChangeModelContent((changeEvent) => {
           const model = editor.getModel();
-          if (!model || model.getValue() === '') {
+
+          if (!model) {
             return;
           }
 

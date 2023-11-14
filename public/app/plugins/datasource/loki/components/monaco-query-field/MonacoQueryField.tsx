@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { parser } from '@grafana/lezer-logql';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
@@ -40,6 +41,7 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
     verticalScrollbarSize: 8, // used as "padding-right"
     horizontal: 'hidden',
     horizontalScrollbarSize: 0,
+    alwaysConsumeMouseWheel: false,
   },
   scrollBeyondLastLine: false,
   suggest: getSuggestOptions(),
@@ -61,13 +63,20 @@ const LANG_ID = 'logql';
 // we must only run the lang-setup code once
 let LANGUAGE_SETUP_STARTED = false;
 
+export const defaultWordPattern = /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g;
+
 function ensureLogQL(monaco: Monaco) {
   if (LANGUAGE_SETUP_STARTED === false) {
     LANGUAGE_SETUP_STARTED = true;
     monaco.languages.register({ id: LANG_ID });
 
     monaco.languages.setMonarchTokensProvider(LANG_ID, monarchlanguage);
-    monaco.languages.setLanguageConfiguration(LANG_ID, languageConfiguration);
+    monaco.languages.setLanguageConfiguration(LANG_ID, {
+      ...languageConfiguration,
+      wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()+\[{\]}\\|;:',.<>\/?\s]+)/g,
+      // Default:  /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g
+      // Removed `"`, `=`, and `-`, from the exclusion list, so now the completion provider can decide to overwrite any matching words, or just insert text at the cursor
+    });
   }
 }
 
@@ -179,7 +188,8 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
               validateQuery(
                 query,
                 datasource.interpolateString(query, placeHolderScopedVars),
-                model.getLinesContent()
+                model.getLinesContent(),
+                parser
               ) || [];
 
             const markers = errors.map(({ error, ...boundary }) => ({

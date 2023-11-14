@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import React, { RefObject, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, config } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -43,25 +43,32 @@ import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntri
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
   rotateIcon: css({
     '> div > svg': {
       transform: 'rotate(180deg)',
     },
+  }),
+  toolbarButton: css({
+    display: 'flex',
+    justifyContent: 'center',
+    marginRight: theme.spacing(0.5),
+    width: splitted && theme.spacing(6),
   }),
 });
 
 interface Props {
   exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
-  topOfViewRef?: RefObject<HTMLDivElement>;
+  onContentOutlineToogle: () => void;
+  isContentOutlineOpen: boolean;
 }
 
-export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props) {
+export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
-
   const splitted = useSelector(isSplit);
+  const styles = useStyles2(getStyles, splitted);
+
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
   const { refreshInterval, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
@@ -101,7 +108,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     if (!isCorrelationsEditorMode) {
       dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
     } else {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // prompt will handle datasource change if needed
         dispatch(
           changeCorrelationEditorDetails({
@@ -110,6 +117,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
               changeDatasourceUid: dsSettings.uid,
+              isActionLeft: isLeftPane,
             },
           })
         );
@@ -148,7 +156,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
 
   const onCloseSplitView = () => {
     if (isCorrelationsEditorMode) {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // if dirty, prompt
         dispatch(
           changeCorrelationEditorDetails({
@@ -156,6 +164,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             postConfirmAction: {
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
+              isActionLeft: isLeftPane,
             },
           })
         );
@@ -209,14 +218,29 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   ];
 
   return (
-    <div ref={topOfViewRef}>
+    <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      <div ref={topOfViewRef}>
+      <div>
         <AppChromeUpdate actions={navBarActions} />
       </div>
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
+          config.featureToggles.exploreContentOutline && (
+            <ToolbarButton
+              key="content-outline"
+              variant="canvas"
+              tooltip="Content outline"
+              icon="list-ui-alt"
+              iconOnly={splitted}
+              onClick={onContentOutlineToogle}
+              aria-expanded={isContentOutlineOpen}
+              aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+              className={styles.toolbarButton}
+            >
+              Outline
+            </ToolbarButton>
+          ),
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
             mixed={!isCorrelationsEditorMode}
@@ -225,7 +249,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
-        ]}
+        ].filter(Boolean)}
         forceShowLeftItems
       >
         {[

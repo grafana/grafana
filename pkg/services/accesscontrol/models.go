@@ -319,22 +319,9 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 }
 
 const (
-	GlobalOrgID                  = 0
-	FixedRolePrefix              = "fixed:"
-	FixedRoleUIDPrefix           = "fixed_"
-	ManagedRolePrefix            = "managed:"
-	BasicRolePrefix              = "basic:"
-	PluginRolePrefix             = "plugins:"
-	ExternalServiceRolePrefix    = "externalservice:"
-	BasicRoleUIDPrefix           = "basic_"
-	ExternalServiceRoleUIDPrefix = "externalservice_"
-	RoleGrafanaAdmin             = "Grafana Admin"
-
+	GlobalOrgID      = 0
 	GeneralFolderUID = "general"
-
-	// Basic Role None
-	BasicRoleNoneUID  = "basic_none"
-	BasicRoleNoneName = "basic:none"
+	RoleGrafanaAdmin = "Grafana Admin"
 
 	// Permission actions
 
@@ -468,6 +455,12 @@ const (
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"
 	ActionFeatureManagementWrite = "featuremgmt.write"
+
+	// Library Panel actions
+	ActionLibraryPanelsCreate = "library.panels:create"
+	ActionLibraryPanelsRead   = "library.panels:read"
+	ActionLibraryPanelsWrite  = "library.panels:write"
+	ActionLibraryPanelsDelete = "library.panels:delete"
 )
 
 var (

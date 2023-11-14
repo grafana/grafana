@@ -15,6 +15,7 @@ import { createRoot } from 'react-dom/client';
 import {
   locationUtil,
   monacoLanguageRegistry,
+  OrgRole,
   setLocale,
   setTimeZoneResolver,
   setWeekStart,
@@ -52,6 +53,7 @@ import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType } from './core/context/GrafanaContext';
+import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
@@ -122,6 +124,7 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       initEchoSrv();
+      initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
       addClassIfNoOverlayScrollbar();
@@ -277,7 +280,7 @@ function initEchoSrv() {
     }
   });
 
-  if (contextSrv.user.orgRole !== '') {
+  if (contextSrv.user.orgRole !== OrgRole.None) {
     registerEchoBackend(new PerformanceBackend({}));
   }
 
@@ -323,6 +326,7 @@ function initEchoSrv() {
         user: config.bootData.user,
         sdkUrl: config.rudderstackSdkUrl,
         configUrl: config.rudderstackConfigUrl,
+        integrationsUrl: config.rudderstackIntegrationsUrl,
         buildInfo: config.buildInfo,
       })
     );

@@ -45,16 +45,23 @@ func NewAlertRuleService(ruleStore RuleStore,
 	}
 }
 
-func (service *AlertRuleService) GetAlertRules(ctx context.Context, orgID int64) ([]*models.AlertRule, error) {
+func (service *AlertRuleService) GetAlertRules(ctx context.Context, orgID int64) ([]*models.AlertRule, map[string]models.Provenance, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: orgID,
 	}
 	rules, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	// TODO: GET provenance
-	return rules, nil
+	provenances := make(map[string]models.Provenance)
+	if len(rules) > 0 {
+		resourceType := rules[0].ResourceType()
+		provenances, err = service.provenanceStore.GetProvenances(ctx, orgID, resourceType)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	return rules, provenances, nil
 }
 
 func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (models.AlertRule, models.Provenance, error) {
@@ -62,15 +69,15 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 		OrgID: orgID,
 		UID:   ruleUID,
 	}
-	rules, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	rule, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
 	if err != nil {
 		return models.AlertRule{}, models.ProvenanceNone, err
 	}
-	provenance, err := service.provenanceStore.GetProvenance(ctx, rules, orgID)
+	provenance, err := service.provenanceStore.GetProvenance(ctx, rule, orgID)
 	if err != nil {
 		return models.AlertRule{}, models.ProvenanceNone, err
 	}
-	return *rules, provenance, nil
+	return *rule, provenance, nil
 }
 
 type AlertRuleWithFolderTitle struct {

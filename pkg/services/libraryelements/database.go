@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -59,6 +60,10 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 		return err
 	}
 
+	if modelLibraryElement == nil {
+		modelLibraryElement = make(map[string]any)
+	}
+
 	if model.LibraryElementKind(libraryElement.Kind) == model.VariableElement {
 		modelLibraryElement["name"] = libraryElement.Name
 	}
@@ -82,7 +87,7 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 	return nil
 }
 
-func getLibraryElement(dialect migrator.Dialect, session *db.Session, uid string, orgID int64) (model.LibraryElementWithMeta, error) {
+func GetLibraryElement(dialect migrator.Dialect, session *db.Session, uid string, orgID int64) (model.LibraryElementWithMeta, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
 	sql := selectLibraryElementDTOWithMeta +
 		", coalesce(dashboard.title, 'General') AS folder_name" +
@@ -142,7 +147,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	element := model.LibraryElement{
 		OrgID:    signedInUser.GetOrgID(),
-		FolderID: cmd.FolderID,
+		FolderID: cmd.FolderID, // nolint:staticcheck
 		UID:      createUID,
 		Name:     cmd.Name,
 		Model:    updatedModel,
@@ -161,8 +166,19 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
-			return err
+		if l.features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
+			allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(*cmd.FolderUID)))
+			if !allowed {
+				return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", *cmd.FolderUID)
+			}
+			if err != nil {
+				return err
+			}
+		} else {
+			// nolint:staticcheck
+			if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
+				return err
+			}
 		}
 		if _, err := session.Insert(&element); err != nil {
 			if l.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
@@ -176,7 +192,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	dto := model.LibraryElementDTO{
 		ID:          element.ID,
 		OrgID:       element.OrgID,
-		FolderID:    element.FolderID,
+		FolderID:    element.FolderID, // nolint:staticcheck
 		UID:         element.UID,
 		Name:        element.Name,
 		Kind:        element.Kind,
@@ -208,10 +224,11 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
 	var elementID int64
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
+		element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
 		if err != nil {
 			return err
 		}
+		// nolint:staticcheck
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 			return err
 		}
@@ -262,6 +279,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(", ? as folder_name ", cmd.FolderName)
 		builder.Write(", '' as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
+		// nolint:staticcheck
 		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderID})...)
 		builder.Write(" UNION ")
 		builder.Write(selectLibraryElementDTOWithMeta)
@@ -298,7 +316,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		leDtos[i] = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
-			FolderID:    libraryElement.FolderID,
+			FolderID:    libraryElement.FolderID, // nolint:staticcheck
 			FolderUID:   libraryElement.FolderUID,
 			UID:         libraryElement.UID,
 			Name:        libraryElement.Name,
@@ -420,7 +438,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			retDTOs = append(retDTOs, model.LibraryElementDTO{
 				ID:          element.ID,
 				OrgID:       element.OrgID,
-				FolderID:    element.FolderID,
+				FolderID:    element.FolderID, // nolint:staticcheck
 				FolderUID:   element.FolderUID,
 				UID:         element.UID,
 				Name:        element.Name,
@@ -507,7 +525,7 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 	if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
 		return err
 	}
-
+	// nolint:staticcheck
 	elementToPatch.FolderID = toFolderID
 
 	return nil
@@ -520,7 +538,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		return model.LibraryElementDTO{}, err
 	}
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		elementInDB, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
+		elementInDB, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
 		if err != nil {
 			return err
 		}
@@ -537,7 +555,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				return model.ErrLibraryElementUIDTooLong
 			}
 
-			_, err := getLibraryElement(l.SQLStore.GetDialect(), session, updateUID, signedInUser.GetOrgID())
+			_, err := GetLibraryElement(l.SQLStore.GetDialect(), session, updateUID, signedInUser.GetOrgID())
 			if !errors.Is(err, model.ErrLibraryElementNotFound) {
 				return model.ErrLibraryElementAlreadyExists
 			}
@@ -557,7 +575,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		var libraryElement = model.LibraryElement{
 			ID:          elementInDB.ID,
 			OrgID:       signedInUser.GetOrgID(),
-			FolderID:    cmd.FolderID,
+			FolderID:    cmd.FolderID, // nolint:staticcheck
 			UID:         updateUID,
 			Name:        cmd.Name,
 			Kind:        elementInDB.Kind,
@@ -577,6 +595,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		if cmd.Model == nil {
 			libraryElement.Model = elementInDB.Model
 		}
+		// nolint:staticcheck
 		if err := l.handleFolderIDPatches(c, &libraryElement, elementInDB.FolderID, cmd.FolderID, signedInUser); err != nil {
 			return err
 		}
@@ -595,7 +614,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		dto = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
-			FolderID:    libraryElement.FolderID,
+			FolderID:    libraryElement.FolderID, // nolint:staticcheck
 			UID:         libraryElement.UID,
 			Name:        libraryElement.Name,
 			Kind:        libraryElement.Kind,
@@ -634,7 +653,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 	}
 
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
+		element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.GetOrgID())
 		if err != nil {
 			return err
 		}
@@ -695,7 +714,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 			libraryElementMap[element.UID] = model.LibraryElementDTO{
 				ID:          element.ID,
 				OrgID:       element.OrgID,
-				FolderID:    element.FolderID,
+				FolderID:    element.FolderID, // nolint:staticcheck
 				UID:         element.UID,
 				Name:        element.Name,
 				Kind:        element.Kind,
@@ -737,10 +756,11 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 			return err
 		}
 		for _, elementUID := range elementUIDs {
-			element, err := getLibraryElement(l.SQLStore.GetDialect(), session, elementUID, signedInUser.GetOrgID())
+			element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, elementUID, signedInUser.GetOrgID())
 			if err != nil {
 				return err
 			}
+			// nolint:staticcheck
 			if err := l.requireViewPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 				return err
 			}

@@ -23,7 +23,7 @@ export function getRuleGroupEvaluationDurationIntervalRatioScene(datasource: Dat
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
-      .setDescription(panelTitle)
+      .setDescription('The percentage of interval time spent evaluating')
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })

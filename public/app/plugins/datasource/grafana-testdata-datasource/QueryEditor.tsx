@@ -127,7 +127,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
   const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.currentTarget;
-    let newValue: any = value;
+    let newValue: string | number | boolean = value;
 
     if (type === 'number') {
       newValue = Number(value);
@@ -142,7 +142,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
   const onFieldChange = (field: string) => (e: { target: { name: string; value: string; type: string } }) => {
     const { name, value, type } = e.target;
-    let newValue: any = value;
+    let newValue: string | number = value;
 
     if (type === 'number') {
       newValue = Number(value);

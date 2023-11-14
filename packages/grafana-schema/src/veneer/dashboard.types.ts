@@ -7,7 +7,7 @@ export type { CommonDataSourceRef as DataSourceRef };
 
 export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>>
   extends Omit<raw.Panel, 'fieldConfig'> {
-  fieldConfig: FieldConfigSource<TCustomFieldConfig>;
+  fieldConfig?: FieldConfigSource<TCustomFieldConfig>;
 }
 
 export interface RowPanel extends Omit<raw.RowPanel, 'panels'> {
