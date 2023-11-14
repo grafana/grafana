@@ -56,6 +56,8 @@ function getStyles(theme: GrafanaTheme2) {
 }
 
 function sortLabels(labels: Record<string, fieldNameMeta>) {
+  const collator = new Intl.Collator('en', { sensitivity: 'base' });
+
   return (a: string, b: string) => {
     const la = labels[a];
     const lb = labels[b];
@@ -64,7 +66,7 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
       return (
         Number(lb.type === 'TIME_FIELD') - Number(la.type === 'TIME_FIELD') ||
         Number(lb.type === 'BODY_FIELD') - Number(la.type === 'BODY_FIELD') ||
-        a.localeCompare(b)
+        collator.compare(a, b)
       );
     }
     // otherwise do not sort
