@@ -7,7 +7,7 @@ import (
 )
 
 type FeatureToggles interface {
-	// Check if a feature is enabled for a given request.
+	// Check if a feature is enabled for a given context.
 	// The settings may be per user, tenant, or globally set in the cloud
 	IsEnabled(ctx context.Context, flag string) bool
 
