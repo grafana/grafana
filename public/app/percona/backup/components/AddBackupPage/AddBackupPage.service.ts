@@ -15,10 +15,10 @@ export const AddBackupPageService = {
     Object.keys(services).forEach((serviceName: Databases) => {
       const newServices = services[serviceName] ?? [];
 
-      if (supportedServices.includes(serviceName)) {
+      if (supportedServices.includes(serviceName.toLowerCase())) {
         result.push(
           ...newServices
-            .filter((service) => service.name.toLowerCase().includes(query))
+            .filter((service) => service.name.toLowerCase().includes(query.toLowerCase()))
             .map(
               ({ id, name, cluster }): SelectableValue<SelectableService> => ({
                 label: name,
