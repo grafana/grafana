@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, LoadingState, TimeZone } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, TimeZone } from '@grafana/data';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -12,7 +12,6 @@ import { ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/t
 
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';
-import { selectIsWaitingForData } from '../state/query';
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
 interface RawPrometheusContainerProps {
@@ -32,11 +31,10 @@ interface PrometheusContainerState {
 function mapStateToProps(state: StoreState, { exploreId }: RawPrometheusContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { tableResult, rawPrometheusResult, range } = item;
-  const loadingInState = selectIsWaitingForData(exploreId)(state);
+  const { tableResult, rawPrometheusResult, range, queryResponse } = item;
   const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
   const result = (tableResult?.length ?? 0) > 0 && rawPrometheusResult ? tableResult : rawPrometheusFrame;
-  const loading = result && result.length > 0 ? false : loadingInState;
+  const loading = queryResponse.state;
 
   return { loading, tableResult: result, range };
 }
@@ -139,7 +137,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
     const renderTable = !this.state?.resultsStyle || this.state?.resultsStyle === TABLE_RESULTS_STYLE.table;
 
     return (
-      <PanelChrome title={title} actions={label} loadingState={loading ? LoadingState.Loading : LoadingState.Done}>
+      <PanelChrome title={title} actions={label} loadingState={loading}>
         {frames?.length && (
           <>
             {renderTable && (
