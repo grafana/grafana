@@ -18,6 +18,9 @@ func ProvideAuthorizer(
 	cfg *setting.Cfg,
 ) authorizer.Authorizer {
 	authorizers := []authorizer.Authorizer{
+		// This will allow privileged uses to do anything.
+		// In development mode, a privileged user is configured and saved into:
+		// ${data}/grafana-apiserver/grafana.kubeconfig
 		authorizerfactory.NewPrivilegedGroups(user.SystemPrivilegedGroup),
 	}
 

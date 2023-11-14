@@ -134,7 +134,7 @@ export class ElasticDatasource
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
     this.isProxyAccess = instanceSettings.access === 'proxy';
-    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    const settingsData = instanceSettings.jsonData || {};
 
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
