@@ -930,9 +930,9 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Limit',
     getHelperDocs: function () {
       return `
-  Use this transformation to limit the number of rows displayed.
+  Use this transformation to restrict the number of rows displayed, providing a more focused view of your data. This is particularly useful when dealing with large datasets.
 
-  In the example below, we have the following response from the data source:
+  Below is an example illustrating the impact of the "Limit Rows" transformation on a response from a data source:
 
   | Time                | Metric      | Value |
   | ------------------- | ----------- | ----- |
@@ -950,6 +950,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2020-07-07 11:34:20 | Temperature | 25    |
   | 2020-07-07 11:34:20 | Humidity    | 22    |
   | 2020-07-07 10:32:20 | Humidity    | 29    |
+
+  This transformation helps you tailor the visual presentation of your data to focus on the most relevant information.
   `;
     },
   },
