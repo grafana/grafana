@@ -48,6 +48,7 @@ func NewOktaProvider(settings map[string]interface{}, cfg *setting.Cfg, features
 	if err != nil {
 		return nil, err
 	}
+
 	config := createOAuthConfig(info, cfg, oktaProviderName)
 	provider := &SocialOkta{
 		SocialBase:    newSocialBase(oktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),

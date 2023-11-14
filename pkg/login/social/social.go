@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -112,100 +111,12 @@ func ProvideService(cfg *setting.Cfg,
 			name = grafanaCom
 		}
 
-		var authStyle oauth2.AuthStyle
-		switch strings.ToLower(sec.Key("auth_style").String()) {
-		case "inparams":
-			authStyle = oauth2.AuthStyleInParams
-		case "inheader":
-			authStyle = oauth2.AuthStyleInHeader
-		case "autodetect", "":
-			authStyle = oauth2.AuthStyleAutoDetect
-		default:
-			ss.log.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
-			authStyle = oauth2.AuthStyleAutoDetect
+		conn, err := ss.createOAuthConnector(name, settingsKVs, cfg, features, cache)
+		if err != nil {
+			ss.log.Error("Failed to create OAuth provider", "error", err, "provider", name)
 		}
 
-		config := oauth2.Config{
-			ClientID:     info.ClientId,
-			ClientSecret: info.ClientSecret,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:   info.AuthUrl,
-				TokenURL:  info.TokenUrl,
-				AuthStyle: authStyle,
-			},
-			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
-			Scopes:      info.Scopes,
-		}
-
-		// GitHub.
-		if name == "github" {
-			githubConnector, err := NewGitHubProvider(settingsKVs, cfg, features)
-			if err != nil {
-				ss.log.Error("Failed to create GitHub provider", "error", err)
-				continue
-			}
-			ss.socialMap["github"] = githubConnector
-		}
-
-		// GitLab.
-		if name == "gitlab" {
-			gitlabConnector, err := NewGitLabProvider(settingsKVs, cfg, features)
-			if err != nil {
-				ss.log.Error("Failed to create GitLab provider", "error", err)
-				continue
-			}
-			ss.socialMap["gitlab"] = gitlabConnector
-		}
-
-		// Google.
-		if name == "google" {
-			googleConnector, err := NewGoogleProvider(settingsKVs, cfg, features)
-			if err != nil {
-				ss.log.Error("Failed to create Google provider", "error", err)
-				continue
-			}
-			ss.socialMap["google"] = googleConnector
-		}
-
-		// AzureAD.
-		if name == "azuread" {
-			azureADConnector, err := NewAzureADProvider(settingsKVs, cfg, features, cache)
-			if err != nil {
-				ss.log.Error("Failed to create AzureAD provider", "error", err)
-				continue
-			}
-			ss.socialMap["azuread"] = azureADConnector
-		}
-
-		// Okta
-		if name == "okta" {
-			settingsKV := convertIniSectionToMap(sec)
-			oktaConnector, err := NewOktaProvider(settingsKV, cfg, features)
-			if err != nil {
-				ss.log.Error("Failed to create Okta provider", "error", err)
-				continue
-			}
-			ss.socialMap["okta"] = oktaConnector
-		}
-
-		if name == "generic_oauth" {
-			genericOAuthConnector, err := NewGenericOAuthProvider(settingsKVs, cfg, features)
-			if err != nil {
-				ss.log.Error("Failed to create Generic OAuth provider", "error", err)
-				continue
-			}
-			ss.socialMap["generic_oauth"] = genericOAuthConnector
-		}
-
-		if name == grafanaCom {
-			grafanaComConnector, err := NewGrafanaComProvider(settingsKVs, cfg, features)
-			if err != nil {
-				ss.log.Error("Failed to create AzureAD provider", "error", err)
-				continue
-			}
-			ss.socialMap[grafanaCom] = grafanaComConnector
-		}
-
+		ss.socialMap[name] = conn
 		ss.oAuthProvider[name] = ss.socialMap[name].GetOAuthInfo()
 	}
 
@@ -590,6 +501,27 @@ func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
 	}
 
 	return rawJSON, nil
+}
+
+func (ss *SocialService) createOAuthConnector(name string, settings map[string]interface{}, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (SocialConnector, error) {
+	switch name {
+	case azureADProviderName:
+		return NewAzureADProvider(settings, cfg, features, cache)
+	case genericOAuthProviderName:
+		return NewGenericOAuthProvider(settings, cfg, features)
+	case gitHubProviderName:
+		return NewGitHubProvider(settings, cfg, features)
+	case gitlabProviderName:
+		return NewGitLabProvider(settings, cfg, features)
+	case googleProviderName:
+		return NewGoogleProvider(settings, cfg, features)
+	case grafanaComProviderName:
+		return NewGrafanaComProvider(settings, cfg, features)
+	case oktaProviderName:
+		return NewOktaProvider(settings, cfg, features)
+	default:
+		return nil, fmt.Errorf("unknown oauth provider: %s", name)
+	}
 }
 
 func appendUniqueScope(config *oauth2.Config, scope string) {

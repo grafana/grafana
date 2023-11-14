@@ -40,6 +40,7 @@ func NewGenericOAuthProvider(settings map[string]interface{}, cfg *setting.Cfg, 
 	if err != nil {
 		return nil, err
 	}
+
 	config := createOAuthConfig(info, cfg, genericOAuthProviderName)
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBase(genericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
@@ -59,8 +60,10 @@ func NewGenericOAuthProvider(settings map[string]interface{}, cfg *setting.Cfg, 
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
+
 	return provider, nil
 }
+
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true

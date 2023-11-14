@@ -8,23 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-kit/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-func newLogger(name string, lev string) log.Logger {
-	logger := log.New(name)
-	logger.Swap(level.NewFilter(logger.GetLogger(), level.AllowInfo()))
-	return logger
-}
 
 func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {

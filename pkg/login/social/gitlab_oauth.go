@@ -54,6 +54,7 @@ func NewGitLabProvider(settings map[string]interface{}, cfg *setting.Cfg, featur
 	if err != nil {
 		return nil, err
 	}
+
 	config := createOAuthConfig(info, cfg, gitlabProviderName)
 	provider := &SocialGitlab{
 		SocialBase:      newSocialBase(gitlabProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),

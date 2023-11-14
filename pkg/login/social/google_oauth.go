@@ -41,6 +41,7 @@ func NewGoogleProvider(settings map[string]interface{}, cfg *setting.Cfg, featur
 	if err != nil {
 		return nil, err
 	}
+
 	config := createOAuthConfig(info, cfg, googleProviderName)
 	provider := &SocialGoogle{
 		SocialBase:      newSocialBase(googleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),

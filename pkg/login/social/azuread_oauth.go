@@ -69,6 +69,7 @@ func NewAzureADProvider(settings map[string]interface{}, cfg *setting.Cfg, featu
 	if err != nil {
 		return nil, err
 	}
+
 	config := createOAuthConfig(info, cfg, azureADProviderName)
 	provider := &SocialAzureAD{
 		SocialBase:           newSocialBase(azureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
