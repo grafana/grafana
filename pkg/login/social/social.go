@@ -134,13 +134,13 @@ func ProvideService(cfg *setting.Cfg,
 
 		// GitHub.
 		if name == "github" {
-			ss.socialMap["github"] = &SocialGithub{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:               info.ApiUrl,
-				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
+			settingsKV := convertIniSectionToMap(sec)
+			githubConnector, err := NewGitHubProvider(settingsKV, cfg, features)
+			if err != nil {
+				ss.log.Error("Failed to create GitHub provider", "error", err)
+				continue
 			}
+			ss.socialMap["github"] = githubConnector
 		}
 
 		// GitLab.
