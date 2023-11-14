@@ -43,11 +43,11 @@ func (r *Registry) HasExternalService(ctx context.Context, name string) (bool, e
 
 // GetExternalServiceNames returns the list of external services registered in store.
 func (r *Registry) GetExternalServiceNames(ctx context.Context) ([]string, error) {
-	names := []string{}
 	extSvcProviders, err := r.retrieveExtSvcProviders(ctx)
 	if err != nil {
 		return nil, err
 	}
+	names := []string{}
 	for s := range extSvcProviders {
 		names = append(names, s)
 	}
