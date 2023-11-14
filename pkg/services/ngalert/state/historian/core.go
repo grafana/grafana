@@ -17,7 +17,7 @@ import (
 
 const StateHistoryWriteTimeout = time.Minute
 
-func shouldRecord(transition state.StateTransition) bool {
+func ShouldRecord(transition state.StateTransition) bool {
 	if !transition.Changed() {
 		return false
 	}

@@ -56,7 +56,7 @@ func NewAnnotationBackend(annotations AnnotationStore, rules RuleStore, metrics 
 func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
-	annotations := buildAnnotations(rule, states, logger)
+	annotations := BuildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
 
 	errCh := make(chan error, 1)
@@ -170,15 +170,15 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 	return frame, nil
 }
 
-func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
+func BuildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
-		if !shouldRecord(state) {
+		if !ShouldRecord(state) {
 			continue
 		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
 
-		annotationText, annotationData := buildAnnotationTextAndData(rule, state.State)
+		annotationText, annotationData := BuildAnnotationTextAndData(rule, state.State)
 
 		item := annotations.Item{
 			AlertID:   rule.ID,
@@ -195,7 +195,7 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 	return items
 }
 
-func buildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
+func BuildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 

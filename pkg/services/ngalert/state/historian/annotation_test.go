@@ -153,7 +153,7 @@ func TestBuildAnnotations(t *testing.T) {
 		states := []state.StateTransition{makeStateTransition()}
 		states[0].State.Values = nil
 
-		items := buildAnnotations(rule, states, logger)
+		items := BuildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		j := assertValidJSON(t, items[0].Data)
@@ -166,7 +166,7 @@ func TestBuildAnnotations(t *testing.T) {
 		states := []state.StateTransition{makeStateTransition()}
 		states[0].State.Values = map[string]float64{"a": 1.0, "b": 2.0}
 
-		items := buildAnnotations(rule, states, logger)
+		items := BuildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		assertValidJSON(t, items[0].Data)
@@ -184,7 +184,7 @@ func TestBuildAnnotations(t *testing.T) {
 		states := []state.StateTransition{makeStateTransition()}
 		states[0].State.Values = map[string]float64{"nan": math.NaN(), "inf": math.Inf(1), "ninf": math.Inf(-1)}
 
-		items := buildAnnotations(rule, states, logger)
+		items := BuildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		j := assertValidJSON(t, items[0].Data)
