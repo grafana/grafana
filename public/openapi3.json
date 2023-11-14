@@ -9559,10 +9559,6 @@
             "example": false,
             "type": "boolean"
           },
-          "requiredBy": {
-            "type": "string",
-            "example": "grafana-app"
-          },
           "login": {
             "example": "sa-grafana",
             "type": "string"
@@ -9575,6 +9571,10 @@
             "example": 1,
             "format": "int64",
             "type": "integer"
+          },
+          "requiredBy": {
+            "type": "string",
+            "example": "grafana-app"
           },
           "role": {
             "example": "Editor",
