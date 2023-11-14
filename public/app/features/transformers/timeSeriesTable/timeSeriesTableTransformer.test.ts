@@ -99,6 +99,24 @@ describe('timeSeriesTableTransformer', () => {
     expect(results[2].fields[2].values[0].value).toEqual(0);
     expect(results[3].fields[2].values[0].value).toEqual(0);
   });
+
+  it('calculate the value for an empty series to null', () => {
+    const series = [getTimeSeries('D', { instance: 'B', pod: 'Y' }, [])];
+
+    const results = timeSeriesToTableTransform(
+      {
+        B: {
+          stat: ReducerID.mean,
+        },
+        D: {
+          stat: ReducerID.mean,
+        },
+      },
+      series
+    );
+
+    expect(results[0].fields[2].values[0].value).toEqual(null);
+  });
 });
 
 it('Will transform multiple data series with the same label', () => {

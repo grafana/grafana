@@ -172,7 +172,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         // and push the frame with reduction
         // into the the appropriate field
         const reducerId = options[refId]?.stat ?? ReducerID.lastNotNull;
-        const value = reduceField({ field, reducers: [reducerId] })[reducerId];
+        const value = reduceField({ field, reducers: [reducerId] })[reducerId] ?? null;
 
         // Push the appropriate time and value frame
         // to the trend frame for the sparkline
