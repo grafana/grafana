@@ -28,7 +28,10 @@ const TransformationEditorRow = (props: Props) => {
   const [keptVals, setKeptVals] = useState<{ expression?: string; mapValue?: string }>({});
 
   register(`config.transformations.${index}.type`, {
-    required: { value: true, message: 'Please select a transformation type' },
+    required: {
+      value: true,
+      message: t('correlations.transform-row.transform-required', 'Please select a transformation type'),
+    },
   });
   const typeValue = useWatch({ name: `config.transformations.${index}.type`, control });
 
@@ -201,7 +204,7 @@ const TransformationEditorRow = (props: Props) => {
       {!readOnly && (
         <div className={styles.removeButton}>
           <IconButton
-            tooltip="Remove transformation"
+            tooltip={t('correlations.transform-row.remove-tooltip', 'Remove transformation')}
             name="trash-alt"
             onClick={() => {
               remove(index);

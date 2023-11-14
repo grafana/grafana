@@ -195,6 +195,14 @@
       "target-label": "Target",
       "title": "Setup the target for the correlation (Step 2 of 3)"
     },
+    "trans-details": {
+      "logfmt-description": "Parse provided field with logfmt to get variables",
+      "logfmt-label": "Logfmt",
+      "regex-description": "Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value. Regex is case insensitive.",
+      "regex-expression": "Use capture groups to extract a portion of the field.",
+      "regex-label": "Regular expression",
+      "regex-map-values": "Defines the name of the variable if the capture group is not named."
+    },
     "transform": {
       "add-button": "Add transformation",
       "heading": "Transformations",
@@ -210,6 +218,8 @@
       "map-value-label": "Map value",
       "map-value-tooltip": "Optional. Defines the name of the variable. This is currently only valid for regular expressions with a single, unnamed capture group.",
       "remove-button": "Remove",
+      "remove-tooltip": "Remove transformation",
+      "transform-required": "Please select a transformation type",
       "type-label": "Type",
       "type-tooltip": "The type of transformation that will be applied to the source data."
     }

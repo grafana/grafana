@@ -200,6 +200,14 @@
       "target-label": "",
       "title": ""
     },
+    "trans-details": {
+      "logfmt-description": "",
+      "logfmt-label": "",
+      "regex-description": "",
+      "regex-expression": "",
+      "regex-label": "",
+      "regex-map-values": ""
+    },
     "transform": {
       "add-button": "",
       "heading": "",
@@ -215,6 +223,8 @@
       "map-value-label": "",
       "map-value-tooltip": "",
       "remove-button": "",
+      "remove-tooltip": "",
+      "transform-required": "",
       "type-label": "",
       "type-tooltip": ""
     }
