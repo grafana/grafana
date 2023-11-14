@@ -351,25 +351,25 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Filter data by values',
     getHelperDocs: function () {
       return `
-  Use this transformation to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
+  Use this transformation to selectively filter data points directly within your visualization. This transformation provides options to include or exclude data based on one or more conditions applied to a selected field.
 
   This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
   The available conditions for all fields are:
 
-  - **Regex:** Match a regex expression
-  - **Is Null:** Match if the value is null
-  - **Is Not Null:** Match if the value is not null
-  - **Equal:** Match if the value is equal to the specified value
-  - **Different:** Match if the value is different than the specified value
+  - **Regex:** Match a regex expression.
+  - **Is Null:** Match if the value is null.
+  - **Is Not Null:** Match if the value is not null.
+  - **Equal:** Match if the value is equal to the specified value.
+  - **Different:** Match if the value is different than the specified value.
 
   The available conditions for number fields are:
 
-  - **Greater:** Match if the value is greater than the specified value
-  - **Lower:** Match if the value is lower than the specified value
-  - **Greater or equal:** Match if the value is greater or equal
-  - **Lower or equal:** Match if the value is lower or equal
-  - **Range:** Match a range between a specified minimum and maximum, min and max included
+  - **Greater:** Match if the value is greater than the specified value.
+  - **Lower:** Match if the value is lower than the specified value.
+  - **Greater or equal:** Match if the value is greater or equal.
+  - **Lower or equal:** Match if the value is lower or equal.
+  - **Range:** Match a range between a specified minimum and maximum, inclusive.
 
   Consider the following data set:
 
@@ -408,11 +408,13 @@ export const transformationDocsContent: TransformationDocsContentType = {
   - Condition 1: Rows where 'Temperature' matches 'Lower' than '30'
   - Condition 2: Rows where 'Altitude' matches 'Greater' than '100'
 
-  When you have more than one condition, you can choose if you want the action (include / exclude) to be applied on rows that **Match all** conditions or **Match any** of the conditions you added.
+  When you have more than one condition, you can choose if you want the action (include/exclude) to be applied on rows that **Match all** conditions or **Match any** of the conditions you added.
 
   In the example above, we chose **Match all** because we wanted to include the rows that have a temperature lower than 30°C *AND* an altitude higher than 100. If we wanted to include the rows that have a temperature lower than 30°C *OR* an altitude higher than 100 instead, then we would select **Match any**. This would include the first row in the original data, which has a temperature of 32°C (does not match the first condition) but an altitude of 101 (which matches the second condition), so it is included.
 
   Conditions that are invalid or incompletely configured are ignored.
+
+  This versatile data filtering transformation empowers you to selectively include or exclude data points based on specific conditions, enhancing your control over visualizations. Experiment with different criteria to tailor your data presentation to meet your unique analytical needs.
   `;
     },
   },
@@ -420,9 +422,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Filter fields by name',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
-  Use this transformation to remove parts of the query results.
-
-  You can filter field names in three different ways:
+  Use this transformation to selectively remove parts of your query results. You have three ways to filter field names:
   
   - [Using a regular expression](#use-a-regular-expression)
   - [Manually selecting included fields](#manually-select-included-fields)
@@ -430,10 +430,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   
   #### Use a regular expression
   
-  When you filter using a regular expression, field names that match the regular expression are included.
-  
-  From the input data:
-  
+  When you filter using a regular expression, field names that match the regular expression are included. For example, from the input data:
+
   | Time                | dev-eu-west | dev-eu-north | prod-eu-west | prod-eu-north |
   | ------------------- | ----------- | ------------ | ------------ | ------------- |
   | 2023-03-04 23:56:23 | 23.5        | 24.5         | 22.2         | 20.2          |
@@ -478,6 +476,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
     imageRenderType,
     'Filter fields by name' + 3
   )}
+
+  This transformation provides flexibility in tailoring your query results to focus on the specific fields you need for effective analysis and visualization.
   `;
     },
   },
