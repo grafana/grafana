@@ -181,6 +181,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           ...state.panelsState.logs,
           columns: logsPanelState.columns ?? this.props.panelState?.logs?.columns,
           visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
+          labelName: logsPanelState.labelName,
         })
       );
     }

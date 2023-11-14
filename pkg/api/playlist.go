@@ -26,7 +26,7 @@ import (
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	// Register the actual handlers
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-		if hs.Features.IsEnabled(featuremgmt.FlagKubernetesPlaylists) {
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
 			// Use k8s client to implement legacy API
 			handler := newPlaylistK8sHandler(hs)
 			playlistRoute.Get("/", handler.searchPlaylists)

@@ -1,5 +1,6 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame, ExplorePanelsState } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   getNewDashboardModelData,
@@ -17,6 +18,7 @@ interface AddPanelToDashboardOptions {
   queryResponse: ExplorePanelData;
   datasource?: DataSourceRef;
   dashboardUid?: string;
+  panelState?: ExplorePanelsState;
 }
 
 function createDashboard(): DashboardDTO {
@@ -28,14 +30,66 @@ function createDashboard(): DashboardDTO {
   return dto;
 }
 
+/**
+ * Returns transformations for the logs table visualisation in explore.
+ * If the logs table supports a labels column, we need to extract the fields.
+ * Then we can set the columns to show in the table via the organize/includeByName transformation
+ * @param panelType
+ * @param options
+ */
+function getLogsTableTransformations(panelType: string, options: AddPanelToDashboardOptions): DataTransformerConfig[] {
+  let transformations: DataTransformerConfig[] = [];
+  if (panelType === 'table' && options.panelState?.logs?.columns) {
+    // If we have a labels column, we need to extract the fields from it
+    if (options.panelState.logs?.labelName) {
+      transformations.push({
+        id: 'extractFields',
+        options: {
+          source: options.panelState.logs.labelName,
+        },
+      });
+    }
+
+    // Show the columns that the user selected in explore
+    transformations.push({
+      id: 'organize',
+      options: {
+        includeByName: Object.values(options.panelState.logs.columns).reduce(
+          (acc: Record<string, boolean>, value: string) => ({
+            ...acc,
+            [value]: true,
+          }),
+          {}
+        ),
+      },
+    });
+  }
+  return transformations;
+}
+
+/**
+ * Returns the transformations to apply to the panel based on the panel type
+ * @param panelType
+ * @param options
+ */
+function getExploreToPanelTransformations(panelType: string, options: AddPanelToDashboardOptions) {
+  let transformations: DataTransformerConfig[] = [];
+  transformations.push(...getLogsTableTransformations(panelType, options));
+
+  return transformations;
+}
+
 export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
-  const panelType = getPanelType(options.queries, options.queryResponse);
+  const panelType = getPanelType(options.queries, options.queryResponse, options?.panelState);
+  let transformations = getExploreToPanelTransformations(panelType, options);
+
   const panel = {
     targets: options.queries,
     type: panelType,
     title: 'New Panel',
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
     datasource: options.datasource,
+    transformations: transformations,
   };
 
   let dto: DashboardDTO;
@@ -62,7 +116,7 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
 const isVisible = (query: DataQuery) => !query.hide;
 const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
 
-function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
+function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData, panelState?: ExplorePanelsState) {
   for (const { refId } of queries.filter(isVisible)) {
     const hasQueryRefId = hasRefId(refId);
     if (queryResponse.flameGraphFrames.some(hasQueryRefId)) {
@@ -72,6 +126,9 @@ function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
       return 'timeseries';
     }
     if (queryResponse.logsFrames.some(hasQueryRefId)) {
+      if (panelState?.logs?.visualisationType) {
+        return panelState.logs.visualisationType;
+      }
       return 'logs';
     }
     if (queryResponse.nodeGraphFrames.some(hasQueryRefId)) {
