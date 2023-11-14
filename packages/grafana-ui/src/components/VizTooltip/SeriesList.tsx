@@ -44,8 +44,10 @@ const SingleSeries = ({ label, value, color, colorIndicator = ColorIndicator.ser
 
   return (
     <div className={styles.contentWrapper}>
-      {color && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
-      <span className={cx(styles.label, isActive && styles.activeSeries)}>{label}</span>
+      <div className={styles.labelWrapper}>
+        {color && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
+        <span className={cx(styles.label, isActive && styles.activeSeries)}>{label}</span>
+      </div>
       <span className={cx(styles.value, isActive)}>{value}</span>
     </div>
   );
@@ -71,9 +73,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textOverflow: 'ellipsis',
     overflow: 'hidden',
   }),
+  labelWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    minWidth: 0,
+  }),
   contentWrapper: css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
   }),
 });

@@ -19,8 +19,10 @@ export const HeaderLabel = ({ headerLabel }: Props) => {
 
   return (
     <div className={styles.wrapper}>
-      {color && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
-      {label && <span className={styles.label}>{label}</span>}
+      <div className={styles.labelWrapper}>
+        {color && <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator!} />}
+        {label && <span className={styles.label}>{label}</span>}
+      </div>
       <span className={styles.labelValue}>{value}</span>
     </div>
   );
@@ -45,9 +47,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
   }),
+  labelWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    minWidth: 0,
+  }),
   wrapper: css({
     display: 'flex',
     alignItems: 'center',
-    width: '244px',
+    width: '244px' /* to leave a space for tooltip close button */,
+    flexWrap: 'wrap',
   }),
 });

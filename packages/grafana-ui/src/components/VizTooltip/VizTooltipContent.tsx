@@ -7,7 +7,6 @@ import { useStyles2 } from '../../themes';
 
 import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { LabelValue } from './types';
-
 interface Props {
   contentLabelValue: LabelValue[];
   customContent?: ReactElement | null;
@@ -22,10 +21,12 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
           return (
             <div className={styles.contentWrapper} key={i}>
               <div className={styles.label}>{labelValue.label}</div>
-              {labelValue.color && (
-                <VizTooltipColorIndicator color={labelValue.color} colorIndicator={labelValue.colorIndicator!} />
-              )}
-              <div className={styles.value}>{labelValue.value}</div>
+              <div className={styles.valueWrapper}>
+                {labelValue.color && (
+                  <VizTooltipColorIndicator color={labelValue.color} colorIndicator={labelValue.colorIndicator!} />
+                )}
+                <div className={styles.value}>{labelValue.value}</div>
+              </div>
             </div>
           );
         })}
@@ -48,6 +49,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
   }),
   customContentPadding: css({
     padding: `${theme.spacing(1)} 0`,
@@ -64,5 +66,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: 500,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+  }),
+  valueWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    minWidth: 0,
   }),
 });
