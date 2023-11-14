@@ -139,13 +139,13 @@ describe('getDerivedFields', () => {
     });
 
     const trace3 = newFields.find((f) => f.name === 'trace3Name');
-    expect(trace3!.values).toEqual(['bar', 'tar', null, null]);
+    expect(trace3!.values).toEqual(['bar', 'tar']);
     expect(trace3!.config.links![0]).toEqual({
       url: 'http://localhost:8080/${__value.raw}',
       title: '',
     });
 
     const trace4 = newFields.find((f) => f.name === 'trace4Name');
-    expect(trace4!.values).toEqual([null, null, null, null]);
+    expect(trace4!.values).toEqual([]);
   });
 });

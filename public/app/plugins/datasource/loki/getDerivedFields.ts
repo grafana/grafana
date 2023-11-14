@@ -40,7 +40,7 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
             continue;
           }
         }
-      } else if (derivedFieldsGrouped[field.name][0].matcherType === 'regex') {
+      } else if (derivedFieldsGrouped[field.name][0].matcherType !== 'regex') {
         // `matcherRegex` will actually be used as a RegExp here
         const line = lineField.values[i];
         const logMatch = line.match(derivedFieldsGrouped[field.name][0].matcherRegex);
