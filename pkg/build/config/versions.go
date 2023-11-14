@@ -101,9 +101,9 @@ var Versions = VersionMap{
 	},
 	ReleaseBranchMode: {
 		Variants: []Variant{
-			VariantArmV6,
-			VariantArmV7,
-			VariantArmV7Musl,
+			// VariantArmV6,
+			// VariantArmV7,
+			// VariantArmV7Musl,
 			VariantArm64,
 			VariantArm64Musl,
 			VariantDarwinAmd64,
@@ -120,7 +120,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARMv7,
+				// ArchARMv7,
 			},
 			Distribution: []Distribution{
 				Alpine,
@@ -136,9 +136,9 @@ var Versions = VersionMap{
 	},
 	TagMode: {
 		Variants: []Variant{
-			VariantArmV6,
-			VariantArmV7,
-			VariantArmV7Musl,
+			// VariantArmV6,
+			// VariantArmV7,
+			// VariantArmV7Musl,
 			VariantArm64,
 			VariantArm64Musl,
 			VariantDarwinAmd64,
@@ -155,7 +155,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARMv7,
+				// ArchARMv7,
 			},
 			Distribution: []Distribution{
 				Alpine,
