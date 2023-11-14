@@ -230,8 +230,8 @@ type FrontendSettingsDTO struct {
 
 	LoginError string `json:"loginError,omitempty"`
 
-	// The namespace to use for this user
-	K8sNamespace string `json:"namespace,omitempty"`
+	// The K8s namespace to use for this user
+	Namespace string `json:"namespace,omitempty"`
 
 	PluginsCDNBaseURL string `json:"pluginsCDNBaseURL,omitempty"`
 
