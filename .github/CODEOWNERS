@@ -69,6 +69,7 @@
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
+/pkg/cmd/grafana/apiserver @grafana/grafana-app-platform-squad
 /pkg/components/apikeygen/ @grafana/identity-access-team
 /pkg/components/satokengen/ @grafana/identity-access-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
@@ -126,6 +127,7 @@
 /pkg/services/secrets/ @grafana/backend-platform
 /pkg/services/shorturls/ @grafana/backend-platform
 /pkg/services/sqlstore/ @grafana/backend-platform
+/pkg/services/ssosettings/ @grafana/identity-access-team
 /pkg/services/star/ @grafana/backend-platform
 /pkg/services/stats/ @grafana/backend-platform
 /pkg/services/tag/ @grafana/backend-platform
@@ -253,7 +255,7 @@
 
 # BI backend code
 /pkg/tsdb/mysql/ @grafana/oss-big-tent
-/pkg/tsdb/postgres/ @grafana/oss-big-tent
+/pkg/tsdb/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /pkg/tsdb/mssql/ @grafana/grafana-bi-squad
 
 # Database migrations
@@ -542,7 +544,7 @@ scripts/generate-icon-bundle.js @grafana/plugins-platform-frontend @grafana/graf
 /public/app/plugins/datasource/mssql/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/mysql/ @grafana/oss-big-tent
 /public/app/plugins/datasource/opentsdb/ @grafana/observability-metrics
-/public/app/plugins/datasource/postgres/ @grafana/oss-big-tent
+/public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
 /public/app/plugins/datasource/zipkin/ @grafana/observability-traces-and-profiling

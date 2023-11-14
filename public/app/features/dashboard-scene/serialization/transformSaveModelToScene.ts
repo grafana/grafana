@@ -1,12 +1,4 @@
-import {
-  AdHocVariableModel,
-  ConstantVariableModel,
-  CustomVariableModel,
-  DataSourceVariableModel,
-  IntervalVariableModel,
-  QueryVariableModel,
-  VariableModel,
-} from '@grafana/data';
+import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
 import {
   VizPanel,
   SceneTimePicker,
@@ -252,12 +244,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   });
 }
 
-export function createSceneVariableFromVariableModel(variable: VariableModel): SceneVariable {
+export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
   const commonProperties = {
     name: variable.name,
     label: variable.label,
   };
-  if (isCustomVariable(variable)) {
+  if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
       value: variable.current.value,
@@ -271,7 +263,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
-  } else if (isQueryVariable(variable)) {
+  } else if (variable.type === 'query') {
     return new QueryVariable({
       ...commonProperties,
       value: variable.current.value,
@@ -289,7 +281,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
-  } else if (isDataSourceVariable(variable)) {
+  } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
       ...commonProperties,
       value: variable.current.value,
@@ -304,7 +296,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       isMulti: variable.multi,
       hide: variable.hide,
     });
-  } else if (isIntervalVariable(variable)) {
+  } else if (variable.type === 'interval') {
     const intervals = getIntervalsFromOldIntervalModel(variable);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
@@ -319,7 +311,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
-  } else if (isConstantVariable(variable)) {
+  } else if (variable.type === 'constant') {
     return new ConstantVariable({
       ...commonProperties,
       description: variable.description,
@@ -417,9 +409,4 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   });
 }
 
-const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type === 'custom';
-const isQueryVariable = (v: VariableModel): v is QueryVariableModel => v.type === 'query';
-const isDataSourceVariable = (v: VariableModel): v is DataSourceVariableModel => v.type === 'datasource';
-const isConstantVariable = (v: VariableModel): v is ConstantVariableModel => v.type === 'constant';
-const isIntervalVariable = (v: VariableModel): v is IntervalVariableModel => v.type === 'interval';
 const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
