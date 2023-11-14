@@ -1286,6 +1286,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2020-07-07 09:30:57 | Humidity    | 33    |
   | 2020-07-07 09:30:05 | Temperature | 19    |
 
+  This transformation facilitates the consolidation of results from multiple time series queries, providing a streamlined and unified dataset for efficient analysis and visualization in a tabular format
+
   > **Note:** This transformation is available in Grafana 7.1+.
   `;
     },
