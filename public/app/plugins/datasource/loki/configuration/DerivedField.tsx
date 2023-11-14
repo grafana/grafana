@@ -9,6 +9,8 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { DerivedFieldConfig } from '../types';
 
+type MatcherType = 'label' | 'regex';
+
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css`
     display: flex;
@@ -34,7 +36,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   dataSource: css``,
   nameMatcherField: css({
-    flex: 0.5,
+    flex: 1,
     marginRight: theme.spacing(0.5),
   }),
 });
@@ -52,7 +54,7 @@ export const DerivedField = (props: Props) => {
   const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
   const previousUid = usePrevious(value.datasourceUid);
-  const [fieldType, setFieldType] = useState<'label' | 'regex'>(value.labelMatcher ? 'label' : 'regex');
+  const [fieldType, setFieldType] = useState<MatcherType>(value.matcherType ?? 'label');
 
   // Force internal link visibility change if uid changed outside of this component.
   useEffect(() => {
@@ -76,13 +78,16 @@ export const DerivedField = (props: Props) => {
   return (
     <div className={className} data-testid="derived-field">
       <div className="gf-form">
+        <Field className={styles.nameField} label="Name" invalid={invalidName} error="The name is already in use">
+          <Input value={value.name} onChange={handleChange('name')} placeholder="Field name" invalid={invalidName} />
+        </Field>
         {config.featureToggles.lokiDerivedFieldsFromLabels && (
           <Field
             className={styles.nameMatcherField}
             label={
               <TooltipLabel
                 label="Type"
-                content="Derived fields can be based on a label or a regular expression base on the log message."
+                content="Derived fields can be created from labels or by applying a regular expression to the log message."
               />
             }
           >
@@ -93,20 +98,18 @@ export const DerivedField = (props: Props) => {
               ]}
               value={fieldType}
               onChange={(type) => {
+                // make sure this is a valid MatcherType
                 if (type.value === 'label' || type.value === 'regex') {
                   setFieldType(type.value);
                   onChange({
                     ...value,
-                    labelMatcher: type.value === 'label',
+                    matcherType: type.value,
                   });
                 }
               }}
             />
           </Field>
         )}
-        <Field className={styles.nameField} label="Name" invalid={invalidName} error="The name is already in use">
-          <Input value={value.name} onChange={handleChange('name')} placeholder="Field name" invalid={invalidName} />
-        </Field>
         <Field
           className={styles.regexField}
           label={
