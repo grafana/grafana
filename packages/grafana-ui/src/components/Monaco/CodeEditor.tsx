@@ -27,6 +27,10 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     if (this.completionCancel) {
       this.completionCancel.dispose();
     }
+
+    if (this.props.onEditorWillUnmount) {
+      this.props.onEditorWillUnmount();
+    }
   }
 
   componentDidUpdate(oldProps: Props) {

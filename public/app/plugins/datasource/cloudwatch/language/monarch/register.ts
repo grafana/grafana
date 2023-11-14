@@ -15,22 +15,46 @@ export type LanguageDefinition = {
   }>;
 };
 
-export const registerLanguage = (
+export const reRegisterCompletionProvider = async (
   monaco: Monaco,
   language: LanguageDefinition,
-  completionItemProvider: Completeable
+  completionItemProvider: Completeable,
+  disposal?: monacoType.IDisposable
+) => {
+  const { id, loader } = language;
+  disposal?.dispose();
+  return loader().then((monarch) => {
+    return monaco.languages.registerCompletionItemProvider(
+      id,
+      completionItemProvider.getCompletionProvider(monaco, language)
+    );
+  });
+};
+
+export const registerLanguage = async (
+  monaco: Monaco,
+  language: LanguageDefinition,
+  completionItemProvider: Completeable,
+  logs = false
 ) => {
   const { id, loader } = language;
 
   const languages = monaco.languages.getLanguages();
   if (languages.find((l) => l.id === id)) {
+    if (!logs) {
+      return;
+    }
+    reRegisterCompletionProvider(monaco, language, completionItemProvider);
     return;
   }
 
   monaco.languages.register({ id });
-  loader().then((monarch) => {
+  return loader().then((monarch) => {
     monaco.languages.setMonarchTokensProvider(id, monarch.language);
     monaco.languages.setLanguageConfiguration(id, monarch.conf);
-    monaco.languages.registerCompletionItemProvider(id, completionItemProvider.getCompletionProvider(monaco, language));
+    return monaco.languages.registerCompletionItemProvider(
+      id,
+      completionItemProvider.getCompletionProvider(monaco, language)
+    );
   });
 };
