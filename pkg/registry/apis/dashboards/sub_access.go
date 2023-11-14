@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
@@ -19,7 +18,6 @@ import (
 )
 
 type AccessREST struct {
-	Store   *genericregistry.Store
 	builder *DashboardsAPIBuilder
 }
 

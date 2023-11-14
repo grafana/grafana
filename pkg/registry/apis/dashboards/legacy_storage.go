@@ -28,7 +28,7 @@ var (
 )
 
 type legacyStorage struct {
-	Store      *genericregistry.Store
+	store      *genericregistry.Store
 	builder    *DashboardsAPIBuilder
 	namespacer request.NamespaceMapper
 }
@@ -52,7 +52,7 @@ func (s *legacyStorage) NewList() runtime.Object {
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.Store.TableConvertor.ConvertToTable(ctx, object, tableOptions)
+	return s.store.TableConvertor.ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -107,7 +107,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	})
 	if err != nil || dto == nil {
 		if true { // errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
-			err = k8serrors.NewNotFound(s.Store.SingularQualifiedResource, name)
+			err = k8serrors.NewNotFound(s.store.SingularQualifiedResource, name)
 		}
 		return nil, err
 	}

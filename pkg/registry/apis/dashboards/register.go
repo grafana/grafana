@@ -157,7 +157,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	// }
 
 	legacyStore := &legacyStorage{
-		Store:      store,
+		store:      store,
 		namespacer: b.namespacer,
 		builder:    b,
 	}
@@ -165,11 +165,9 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 	storage["dashboards"] = legacyStore
 	storage["dashboards/access"] = &AccessREST{
-		Store:   store,
 		builder: b,
 	}
 	storage["dashboards/versions"] = &VersionsREST{
-		Store:   store,
 		builder: b,
 	}
 

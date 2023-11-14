@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashboards "github.com/grafana/grafana/pkg/apis/dashboards/v0alpha1"
@@ -15,7 +14,6 @@ import (
 )
 
 type VersionsREST struct {
-	Store   *genericregistry.Store
 	builder *DashboardsAPIBuilder
 }
 
@@ -33,7 +31,7 @@ func (r *VersionsREST) ConnectMethods() []string {
 }
 
 func (r *VersionsREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return &dashboards.VersionsQueryOptions{}, false, ""
+	return nil, false, ""
 }
 
 func (r *VersionsREST) Connect(ctx context.Context, id string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
