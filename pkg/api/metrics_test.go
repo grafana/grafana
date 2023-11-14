@@ -78,7 +78,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				},
 			},
 		}, &fakeDatasources.FakeDataSourceService{}, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-			secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
+			secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}, featuremgmt.WithFeatures()),
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -124,7 +124,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 				},
 			},
 		},
-		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
+		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}, featuremgmt.WithFeatures(),
 	)
 	qds := query.ProvideService(
 		cfg,
@@ -301,7 +301,7 @@ func TestDataSourceQueryError(t *testing.T) {
 						PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p)},
 					},
 						ds, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-							secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
+							secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}, featuremgmt.WithFeatures()),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})

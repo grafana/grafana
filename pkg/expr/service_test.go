@@ -42,7 +42,7 @@ func TestService(t *testing.T) {
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
-	}, &datafakes.FakeDataSourceService{}, nil, fakes.NewFakeLicensingService(), &config.Cfg{})
+	}, &datafakes.FakeDataSourceService{}, nil, fakes.NewFakeLicensingService(), &config.Cfg{}, featuremgmt.WithFeatures())
 
 	s := Service{
 		cfg:          setting.NewCfg(),
@@ -128,7 +128,7 @@ func TestDSQueryError(t *testing.T) {
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
-	}, &datafakes.FakeDataSourceService{}, nil, nil, &config.Cfg{})
+	}, &datafakes.FakeDataSourceService{}, nil, nil, &config.Cfg{}, featuremgmt.WithFeatures())
 
 	s := Service{
 		cfg:          setting.NewCfg(),
