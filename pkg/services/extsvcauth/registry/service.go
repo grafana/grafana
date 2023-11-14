@@ -43,6 +43,7 @@ func (r *Registry) HasExternalService(ctx context.Context, name string) (bool, e
 
 // GetExternalServiceNames returns the list of external services registered in store.
 func (r *Registry) GetExternalServiceNames(ctx context.Context) ([]string, error) {
+	// TODO (gamab) I think the saReg returns the slugs => think of what needs to be done (de-dup won't work here)
 	names := []string{}
 	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
 		var err error
