@@ -1,3 +1,4 @@
+export const EXTENSIONS_PRIORITY = 6;
 export const RECENT_DASHBOARDS_PRORITY = 5;
 export const ACTIONS_PRIORITY = 4;
 export const DEFAULT_PRIORITY = 3;
