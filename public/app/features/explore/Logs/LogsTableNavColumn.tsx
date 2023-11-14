@@ -62,9 +62,9 @@ function sortLabels(labels: Record<string, fieldNameMeta>) {
 
     if (la != null && lb != null) {
       return (
-        +(lb.type === 'TIME_FIELD') - +(la.type === 'TIME_FIELD') ||
-        +(lb.type === 'BODY_FIELD') - +(la.type === 'BODY_FIELD') ||
-        +a - +b
+        Number(lb.type === 'TIME_FIELD') - Number(la.type === 'TIME_FIELD') ||
+        Number(lb.type === 'BODY_FIELD') - Number(la.type === 'BODY_FIELD') ||
+        Number(a.localeCompare(b))
       );
     }
     // otherwise do not sort
