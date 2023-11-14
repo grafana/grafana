@@ -16,7 +16,6 @@ import {
   SceneRefreshPicker,
   SceneGridItem,
   SceneObject,
-  SceneControlsSpacer,
   VizPanelMenu,
   behaviors,
   VizPanelState,
@@ -25,13 +24,12 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   AdHocFilterSet,
-  SceneFlexItem,
-  SceneFlexLayout,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -198,57 +196,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  const variableControls = new SceneFlexItem({
-    body: new SceneFlexLayout({
-      direction: 'row',
-      md: {
-        direction: 'row',
-      },
-      wrap: 'wrap',
-      children: [
-        new VariableValueSelectors({}),
-        ...filtersSets,
-        new SceneDataLayerControls(),
-        new SceneControlsSpacer(),
-        new DashboardLinksControls({
-          links: oldModel.links,
-          dashboardUID: oldModel.uid,
-        }),
-      ],
-    }),
-  });
-
-  let controlsChildren = [variableControls];
-
-  if (!Boolean(oldModel.timepicker.hidden)) {
-    const timeControls = new SceneFlexItem({
-      xSizing: 'content',
-
-      body: new SceneFlexLayout({
-        direction: 'row',
-        md: {
-          direction: 'row',
-        },
-        children: [
-          new SceneTimePicker({}),
-          new SceneRefreshPicker({
-            refresh: oldModel.refresh,
-            intervals: oldModel.timepicker.refresh_intervals,
-          }),
-        ],
-      }),
-    });
-
-    controlsChildren = controlsChildren.concat([timeControls]);
-  }
-
-  const controlsLayout = new SceneFlexLayout({
-    direction: 'row',
-    children: controlsChildren,
-  });
-
-  let controls: SceneObject[] = [controlsLayout];
-
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
@@ -277,7 +224,24 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
             layers,
           })
         : undefined,
-    controls: controls,
+    controls: [
+      new DashboardControls({
+        variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
+        timeControls: Boolean(oldModel.timepicker.hidden)
+          ? []
+          : [
+              new SceneTimePicker({}),
+              new SceneRefreshPicker({
+                refresh: oldModel.refresh,
+                intervals: oldModel.timepicker.refresh_intervals,
+              }),
+            ],
+        linkControls: new DashboardLinksControls({
+          links: oldModel.links,
+          dashboardUID: oldModel.uid,
+        }),
+      }),
+    ],
   });
 }
 
