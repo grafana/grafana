@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -32,14 +31,14 @@ const (
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
-	licensing plugins.Licensing, pCfg *config.Cfg, features featuremgmt.FeatureToggles) *Provider {
+	licensing plugins.Licensing, pCfg *config.Cfg) *Provider {
 	return &Provider{
 		cfg:                   cfg,
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
 		dataSourceService:     dataSourceService,
 		pluginSettingsService: pluginSettingsService,
-		pluginEnvVars:         envvars.NewProvider(pCfg, licensing, features),
+		pluginEnvVars:         envvars.NewProvider(pCfg, licensing),
 		logger:                log.New("plugin.context"),
 	}
 }
