@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 
@@ -21,6 +22,10 @@ export function SoloPanelPage({ match, queryParams }: Props) {
     stateManager.loadSoloPanel(match.params.uid!, queryParams.panelId, queryParams.timezone);
     return () => stateManager.clearState();
   }, [stateManager, match, queryParams]);
+
+  if (!queryParams.panelId) {
+    return <EntityNotFound entity="Panel" />;
+  }
 
   if (!soloPanel) {
     return <PageLoader />;
