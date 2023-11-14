@@ -194,15 +194,10 @@ export class PanelQueryRunner {
               }
             }
 
-            // replaceVariables() in the field config here so we end up diffing final values to increment structureRev
-            let customCfg = processedData.series[0].fields[1].config.custom;
-            customCfg.axisLabel = this.templateSrv.replace(customCfg.axisLabel, processedData?.request?.scopedVars);
-
             if (
               !streamingPacketWithSameSchema &&
               !compareArrayValues(lastProcessedFrames, processedData.series, compareDataFrameStructures)
             ) {
-              console.log('structureRev++');
               structureRev++;
             }
 
