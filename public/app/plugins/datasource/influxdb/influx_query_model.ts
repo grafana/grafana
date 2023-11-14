@@ -143,7 +143,7 @@ export default class InfluxQueryModel {
 
   private isOperatorTypeHandler(operator: string, value: string, fieldName: string) {
     let textValue;
-    if (operator == 'Is Not') {
+    if (operator === 'Is Not') {
       operator = '!=';
     } else {
       operator = '=';
