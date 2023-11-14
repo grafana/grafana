@@ -158,7 +158,7 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 			"error", err.Error())
 		return nil, err
 	}
-	return &extsvcauth.ExternalService{Name: cmd.Name, ID: slug, Secret: token}, nil
+	return &extsvcauth.ExternalService{Name: slug, ID: slug, Secret: token}, nil
 }
 
 func (esa *ExtSvcAccountsService) RemoveExternalService(ctx context.Context, name string) error {

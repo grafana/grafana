@@ -239,19 +239,20 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		s.logger.Warn("RegisterExternalService called without registration")
 		return nil, nil
 	}
-	s.logger.Info("Registering external service", "external service name", registration.Name)
+	slug := registration.Name
+	s.logger.Info("Registering external service", "external service", slug)
 
 	// Check if the client already exists in store
-	client, errFetchExtSvc := s.sqlstore.GetExternalServiceByName(ctx, registration.Name)
+	client, errFetchExtSvc := s.sqlstore.GetExternalServiceByName(ctx, slug)
 	if errFetchExtSvc != nil && !errors.Is(errFetchExtSvc, oauthserver.ErrClientNotFound) {
-		s.logger.Error("Error fetching service", "external service", registration.Name, "error", errFetchExtSvc)
+		s.logger.Error("Error fetching service", "external service", slug, "error", errFetchExtSvc)
 		return nil, errFetchExtSvc
 	}
 	// Otherwise, create a new client
 	if client == nil {
-		s.logger.Debug("External service does not yet exist", "external service name", registration.Name)
+		s.logger.Debug("External service does not yet exist", "external service", slug)
 		client = &oauthserver.OAuthExternalService{
-			Name:             registration.Name,
+			Name:             slug,
 			ServiceAccountID: oauthserver.NoServiceAccountID,
 			Audiences:        s.cfg.AppURL,
 		}

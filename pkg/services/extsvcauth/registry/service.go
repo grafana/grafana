@@ -43,7 +43,6 @@ func (r *Registry) HasExternalService(ctx context.Context, name string) (bool, e
 
 // GetExternalServiceNames returns the list of external services registered in store.
 func (r *Registry) GetExternalServiceNames(ctx context.Context) ([]string, error) {
-	// TODO (gamab) I think the saReg returns the slugs => think of what needs to be done (de-dup won't work here)
 	names := []string{}
 	extSvcProviders, err := r.retrieveExtSvcProviders(ctx)
 	if err != nil {
@@ -113,7 +112,6 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 }
 
 func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
-	// TODO (gamab) I think the saReg returns the slugs => think of what needs to be done (de-dup won't work here)
 	extsvcs, err := r.retrieveExtSvcProviders(ctx)
 	if err != nil {
 		return err
@@ -140,13 +138,12 @@ func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
 func (r *Registry) retrieveExtSvcProviders(ctx context.Context) (map[string]extsvcauth.AuthProvider, error) {
 	extsvcs := map[string]extsvcauth.AuthProvider{}
 	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
-		// The external service accounts registry return the slugs of the services.
-		slugs, err := r.saReg.GetExternalServiceNames(ctx)
+		names, err := r.saReg.GetExternalServiceNames(ctx)
 		if err != nil {
 			return nil, err
 		}
-		for i := range slugs {
-			extsvcs[slugs[i]] = extsvcauth.ServiceAccounts
+		for i := range names {
+			extsvcs[names[i]] = extsvcauth.ServiceAccounts
 		}
 	}
 	// Important to run this second as the OAuth server uses External Service Accounts as well.
@@ -157,9 +154,6 @@ func (r *Registry) retrieveExtSvcProviders(ctx context.Context) (map[string]exts
 		}
 		for i := range names {
 			extsvcs[names[i]] = extsvcauth.OAuth2Server
-			// Remove the service account entry associated with the slug of this service
-			// because the OAuth2 registry uses the  external service accounts registry
-			delete(extsvcs, slugify.Slugify(names[i]))
 		}
 	}
 	return extsvcs, nil
