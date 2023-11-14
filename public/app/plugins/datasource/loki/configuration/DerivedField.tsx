@@ -35,7 +35,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   dataSource: css``,
   nameMatcherField: css({
-    flex: 1,
+    width: theme.spacing(20),
     marginRight: theme.spacing(0.5),
   }),
 });
