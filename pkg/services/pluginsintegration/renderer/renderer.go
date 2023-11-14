@@ -81,7 +81,7 @@ func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 		return nil, false
 	}
 
-	if len(ps) == 1 {
+	if len(ps) >= 1 {
 		m.renderer = &Plugin{plugin: ps[0]}
 		return m.renderer, true
 	}
