@@ -42,7 +42,7 @@ describe('getDashboardChanges', () => {
 
     // Assertions
     expect(result.migrationChanges).toContain(
-      `-  "schemaVersion": ${deprecatedVersion},\n+  "schemaVersion": ${DASHBOARD_SCHEMA_VERSION},\n`
+      `Changes for path dashboard:\n-\t\"schemaVersion\": 38\n+\t\"schemaVersion\": 39`
     );
 
     expect(result.migrationChanges).not.toContain(
@@ -66,21 +66,11 @@ describe('getDashboardChanges', () => {
     expect(result.userChanges).not.toContain('-  "schemaVersion": 37,\n' + '+  "schemaVersion": 38,\n');
 
     expect(result.userChanges).toContain(
-      '   "panels": [\n' +
-        '     {\n' +
-        '-      "type": "timeseries",\n' +
-        '-      "title": "Panel 1",\n' +
-        '+      "id": 1,\n'
-    );
-
-    expect(result.userChanges).toContain(
-      '-      }\n' +
-        '+      },\n' +
-        '+      "title": "New title",\n' +
-        '+      "type": "timeseries"\n' +
-        '     }\n' +
-        '   ]\n' +
-        ' }\n'
+      [
+        'Changes for path panels/0 with title: Panel 1:',
+        '+\t"id": 1\n-\t"title": "Panel 1"',
+        '+\t"title": "New title"',
+      ].join('\n')
     );
 
     expect(result.migrationChanges).toBeDefined();
