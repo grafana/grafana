@@ -275,7 +275,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	// Set the kubernetes namespace
-	frontendSettings.K8sNamespace = hs.namespacer(c.SignedInUser.OrgID)
+	frontendSettings.Namespace = hs.namespacer(c.SignedInUser.OrgID)
 
 	return frontendSettings, nil
 }
