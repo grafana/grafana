@@ -287,10 +287,10 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Lookup fields from resource',
     getHelperDocs: function () {
       return `
-  Use this transformation on a field value to look up additional fields from an external source.
+  Use this transformation to enrich a field value by looking up additional fields from an external source. Here's how to configure it:
 
-  - **Field** - Select a text field.
-  - **Lookup** - Select from **Countries**, **USA States**, and **Airports**.
+  - **Field:** Select a text field from your dataset.
+  - **Lookup:** Choose from **Countries**, **USA States**, and **Airports**.
 
   This transformation currently supports spatial data.
 
@@ -322,6 +322,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | Arizona   |    |           |            |            | 5      |
   | Arkansas  |    |           |            |            | 1      |
   | Somewhere |    |           |            |            | 5      |
+
+  This transformation enables you to augment your data by fetching additional information from external sources, providing a more comprehensive dataset for analysis and visualization.
   `;
     },
   },
