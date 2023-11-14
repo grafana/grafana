@@ -17,6 +17,9 @@ func (in *DashboardSnapshot) DeepCopyInto(out *DashboardSnapshot) {
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Info = in.Info
+	if in.Dashboard != nil {
+		out.Dashboard = in.Dashboard.DeepCopyany()
+	}
 	return
 }
 
