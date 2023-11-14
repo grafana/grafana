@@ -27,7 +27,7 @@ import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
 import TimelineHeaderRow from './TimelineHeaderRow';
-import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
+import VirtualizedTraceView from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -105,7 +105,6 @@ export type TProps = {
   showCriticalPathSpansOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
-  topOfViewRefType?: TopOfViewRefType;
   headerHeight: number;
   criticalPath: CriticalPathSection[];
 };
