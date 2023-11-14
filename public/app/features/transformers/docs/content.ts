@@ -485,20 +485,22 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Format string',
     getHelperDocs: function () {
       return `
-  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'formatString' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
-
-  Use this transformation to format the output of a string field. You can format output in the following ways:
+  Use this transformation to customize the output of a string field. You can format the output in the following ways:
   
-  - Upper case - Formats the entire string in upper case characters.
-  - Lower case - Formats the entire string in lower case characters.
-  - Sentence case - Formats the the first character of the string in upper case.
-  - Title case - Formats the first character of each word in the string in upper case.
-  - Pascal case - Formats the first character of each word in the string in upper case and doesn't include spaces between words.
-  - Camel case - Formats the first character of each word in the string in upper case, except the first word, and doesn't include spaces between words.
-  - Snake case - Formats all characters in the string in lower case and uses underscores instead of spaces between words.
-  - Kebab case - Formats all characters in the string in lower case and uses dashes instead of spaces between words.
-  - Trim - Removes all leading and trailing spaces from the string.
-  - Substring - Returns a substring of the string, using the specified start and end positions.
+  - Upper case: Formats the entire string in uppercase characters.
+  - Lower case: Formats the entire string in lowercase characters.
+  - Sentence case: Formats the first character of the string in uppercase.
+  - Title case: Formats the first character of each word in the string in uppercase.
+  - Pascal case: Formats the first character of each word in the string in uppercase and doesn't include spaces between words.
+  - Camel case: Formats the first character of each word in the string in uppercase, except the first word, and doesn't include spaces between words.
+  - Snake case: Formats all characters in the string in lowercase and uses underscores instead of spaces between words.
+  - Kebab case: Formats all characters in the string in lowercase and uses dashes instead of spaces between words.
+  - Trim: Removes all leading and trailing spaces from the string.
+  - Substring: Returns a substring of the string, using the specified start and end positions.
+
+  This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
+
+  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'formatString' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
   `;
     },
   },
@@ -506,7 +508,25 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Format time',
     getHelperDocs: function () {
       return `
-  Use this transformation to format the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For instance, if you would like to display only the year of a time field the format string 'YYYY' can be used to show the calendar year (e.g. 1999, 2012, etc.).
+  Use this transformation to customize the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For example, if you want to display only the year of a time field, the format string 'YYYY' can be used to show the calendar year (e.g., 1999, 2012, etc.).
+
+  **Before Transformation:**
+
+  | Timestamp           | Event          |
+  | ------------------- | -------------- |
+  | 1636678740000000000 | System Start   |
+  | 1636678680000000000 | User Login     |
+  | 1636678620000000000 | Data Updated   |
+
+  **After applying 'YYYY-MM-DD HH:mm:ss':**
+
+  | Timestamp           | Event          |
+  | ------------------- | -------------- |
+  | 2021-11-12 14:25:40 | System Start   |
+  | 2021-11-12 14:24:40 | User Login     |
+  | 2021-11-12 14:23:40 | Data Updated   |
+
+  This transformation empowers you to tailor the time representation in your visualizations, providing flexibility and precision in displaying temporal data.
 
   > **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
   `;
