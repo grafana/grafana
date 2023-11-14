@@ -7,6 +7,7 @@ import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { SubMenu } from './SubMenu';
 
@@ -107,6 +108,7 @@ export const MenuItem = React.memo(
       },
       className
     );
+
     const disabledProps = {
       [ItemElement === 'button' ? 'disabled' : 'aria-disabled']: disabled,
       ...(ItemElement === 'a' && disabled && { href: undefined, onClick: undefined }),
@@ -162,7 +164,7 @@ export const MenuItem = React.memo(
         tabIndex={tabIndex}
         {...disabledProps}
       >
-        <div>
+        <Stack direction="row" justifyContent="flex-start" alignItems="center">
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
           {label}
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
@@ -183,7 +185,7 @@ export const MenuItem = React.memo(
               />
             )}
           </div>
-        </div>
+        </Stack>
         {description && (
           <div
             className={cx(styles.description, {
@@ -208,16 +210,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       color: theme.colors.text.primary,
       display: 'flex',
-      alignItems: 'start',
+      flexDirection: 'column',
+      alignItems: 'stretch',
       padding: theme.spacing(0.5, 2),
       minHeight: theme.spacing(4),
       margin: 0,
       border: 'none',
       width: '100%',
       position: 'relative',
-      flexDirection: 'column',
-      alignContent: 'flex-start',
-      flexWrap: 'wrap',
 
       '&:hover, &:focus, &:focus-visible': {
         background: theme.colors.action.hover,
@@ -226,11 +226,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:focus-visible': getFocusStyles(theme),
-
-      '>div': {
-        display: 'flex',
-        width: '100%',
-      },
     }),
     active: css({
       background: theme.colors.action.hover,
@@ -253,7 +248,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     disabled: css({
       color: theme.colors.action.disabledText,
-
+      label: 'menu-item-disabled',
       '&:hover, &:focus, &:focus-visible': {
         cursor: 'not-allowed',
         background: 'none',
@@ -262,17 +257,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     icon: css({
       opacity: 0.7,
-      marginRight: '10px',
-      marginLeft: '-4px',
       color: theme.colors.text.secondary,
     }),
     rightWrapper: css({
       display: 'flex',
       alignItems: 'center',
       marginLeft: 'auto',
-    }),
-    shortcutIcon: css({
-      marginRight: theme.spacing(1),
     }),
     withShortcut: css({
       minWidth: theme.spacing(10.5),
@@ -286,9 +276,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       opacity: 0.7,
     }),
     description: css({
-      fontStyle: 'italic',
-      fontSize: theme.typography.bodySmall.fontSize,
+      ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
+      textAlign: 'start',
     }),
     descriptionWithIcon: css({
       marginLeft: theme.spacing(3),

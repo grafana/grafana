@@ -30,7 +30,7 @@ export const MegaMenu = React.memo(
     // Remove profile + help from tree
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
-      .map((item) => enrichWithInteractionTracking(item, true));
+      .map((item) => enrichWithInteractionTracking(item, state.megaMenu));
 
     const activeItem = getActiveItem(navItems, location.pathname);
 

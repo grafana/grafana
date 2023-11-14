@@ -3,8 +3,7 @@ import React, { useEffect, useId, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Icon, InlineField, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
@@ -96,7 +95,7 @@ export function OperationEditor({
           </div>
         )}
         <div className={styles.paramValue}>
-          <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
+          <Stack gap={0.5} direction="row" alignItems="center">
             <Editor
               index={paramIndex}
               paramDef={paramDef}

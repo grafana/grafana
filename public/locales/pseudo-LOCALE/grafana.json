@@ -964,6 +964,19 @@
       "passwords-must-match": "Päşşŵőřđş mūşŧ mäŧčĥ"
     }
   },
+  "query-operation": {
+    "header": {
+      "collapse-row": "Cőľľäpşę qūęřy řőŵ",
+      "datasource-help": "Ŝĥőŵ đäŧä şőūřčę ĥęľp",
+      "disable-query": "Đįşäþľę qūęřy",
+      "drag-and-drop": "Đřäģ äŉđ đřőp ŧő řęőřđęř",
+      "duplicate-query": "Đūpľįčäŧę qūęřy",
+      "expand-row": "Ēχpäŉđ qūęřy řőŵ",
+      "remove-query": "Ŗęmővę qūęřy",
+      "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
+    },
+    "query-editor-not-exported": "Đäŧä şőūřčę pľūģįŉ đőęş ŉőŧ ęχpőřŧ äŉy Qūęřy Ēđįŧőř čőmpőŉęŉŧ"
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
@@ -1093,6 +1106,7 @@
       "export": "Ēχpőřŧ",
       "library-panel": "Ŀįþřäřy päŉęľ",
       "link": "Ŀįŉĸ",
+      "panel-embed": "Ēmþęđ",
       "snapshot": "Ŝŉäpşĥőŧ"
     },
     "theme-picker": {

@@ -146,7 +146,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
 				sa, err := svc.RetrieveServiceAccount(context.Background(), testOrgId, testServiceAccountId)
 				assert.NoError(t, err, tc.description)
-				assert.Equal(t, tc.expectedIsExternal, sa.IsManaged, tc.description)
+				assert.Equal(t, tc.expectedIsExternal, sa.IsExternal, tc.description)
 			})
 		}
 	})
@@ -164,8 +164,8 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		res, err := svc.SearchOrgServiceAccounts(context.Background(), &serviceaccounts.SearchOrgServiceAccountsQuery{OrgID: 1})
 		require.Len(t, res.ServiceAccounts, 2)
 		require.NoError(t, err)
-		require.False(t, res.ServiceAccounts[0].IsManaged)
-		require.True(t, res.ServiceAccounts[1].IsManaged)
+		require.False(t, res.ServiceAccounts[0].IsExternal)
+		require.True(t, res.ServiceAccounts[1].IsExternal)
 	})
 
 	t.Run("should update service account", func(t *testing.T) {
