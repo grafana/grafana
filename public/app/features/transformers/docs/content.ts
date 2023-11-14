@@ -1309,7 +1309,9 @@ export const transformationDocsContent: TransformationDocsContentType = {
     getHelperDocs: function () {
       // This template string space-formatting is intentional.
       return `
-  Use this transformation to apply spatial operations to query results
+  Use this transformation to apply spatial operations to query results. 
+  
+  This transformation allows you to manipulate and analyze geospatial data, enabling operations such as creating lines between points, calculating spatial properties, and more.
   `;
     },
   },
