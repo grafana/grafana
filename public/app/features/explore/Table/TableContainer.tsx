@@ -93,27 +93,29 @@ export class TableContainer extends PureComponent<Props> {
             {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
           </PanelChrome>
         )}
-        {frames &&
-          frames.length > 0 &&
-          frames.map((data, i) => (
-            <PanelChrome
-              key={data.refId || `table-${i}`}
-              title={this.getTableTitle(dataFrames, data, i)}
-              width={width}
-              height={this.getTableHeight(data.length, this.hasSubFrames(data))}
-              loadingState={loading ? LoadingState.Loading : undefined}
-            >
-              {(innerWidth, innerHeight) => (
-                <Table
-                  ariaLabel={ariaLabel}
-                  data={data}
-                  width={innerWidth}
-                  height={innerHeight}
-                  onCellFilterAdded={onCellFilterAdded}
-                />
-              )}
-            </PanelChrome>
-          ))}
+        {frames && frames.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {frames.map((data, i) => (
+              <PanelChrome
+                key={data.refId || `table-${i}`}
+                title={this.getTableTitle(dataFrames, data, i)}
+                width={width}
+                height={this.getTableHeight(data.length, this.hasSubFrames(data))}
+                loadingState={loading ? LoadingState.Loading : undefined}
+              >
+                {(innerWidth, innerHeight) => (
+                  <Table
+                    ariaLabel={ariaLabel}
+                    data={data}
+                    width={innerWidth}
+                    height={innerHeight}
+                    onCellFilterAdded={onCellFilterAdded}
+                  />
+                )}
+              </PanelChrome>
+            ))}
+          </div>
+        )}
       </>
     );
   }
