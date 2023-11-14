@@ -64,6 +64,7 @@
 /.golangci.toml @grafana/backend-platform
 /build.go @grafana/backend-platform
 /scripts/modowners/ @grafana/backend-platform
+/hack/ @grafana/grafana-app-platform-squad
 
 /pkg/api/ @grafana/backend-platform
 /pkg/apis/ @grafana/grafana-app-platform-squad
