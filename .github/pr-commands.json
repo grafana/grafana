@@ -149,7 +149,7 @@
   },
   {
     "type": "changedfiles",
-    "matches": [ "public/app/plugins/datasource/postgres/**/*", "pkg/tsdb/postgres/**/*"],
+    "matches": [ "public/app/plugins/datasource/grafana-postgresql-datasource/**/*", "pkg/tsdb/grafana-postgresql-datasource/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/Postgres"
   },

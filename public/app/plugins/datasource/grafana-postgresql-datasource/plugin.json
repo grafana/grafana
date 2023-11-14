@@ -1,7 +1,8 @@
 {
   "type": "datasource",
   "name": "PostgreSQL",
-  "id": "postgres",
+  "id": "grafana-postgresql-datasource",
+  "aliasIDs": ["postgres"],
   "category": "sql",
 
   "info": {

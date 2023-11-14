@@ -71,18 +71,18 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			AliasIDs:        panel.AliasIDs,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
-			HideFromList:    panel.HideFromList,
-			ReleaseState:    string(panel.State),
-			Signature:       string(panel.Signature),
-			Sort:            getPanelSort(panel.ID),
-			AngularDetected: panel.AngularDetected,
+			ID:            panel.ID,
+			Name:          panel.Name,
+			AliasIDs:      panel.AliasIDs,
+			Info:          panel.Info,
+			Module:        panel.Module,
+			BaseURL:       panel.BaseURL,
+			SkipDataQuery: panel.SkipDataQuery,
+			HideFromList:  panel.HideFromList,
+			ReleaseState:  string(panel.State),
+			Signature:     string(panel.Signature),
+			Sort:          getPanelSort(panel.ID),
+			Angular:       panel.Angular,
 		}
 	}
 
@@ -274,6 +274,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.GeomapDisableCustomBaseLayer = true
 	}
 
+	// Set the kubernetes namespace
+	frontendSettings.Namespace = hs.namespacer(c.SignedInUser.OrgID)
+
 	return frontendSettings, nil
 }
 
@@ -336,8 +339,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Signature: plugin.Signature,
 			Module:    plugin.Module,
 			BaseURL:   plugin.BaseURL,
+			Angular:   plugin.Angular,
 		}
-		dsDTO.AngularDetected = plugin.AngularDetected
 
 		if ds.JsonData == nil {
 			dsDTO.JSONData = make(map[string]any)
@@ -419,8 +422,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					Signature: ds.Signature,
 					Module:    ds.Module,
 					BaseURL:   ds.BaseURL,
+					Angular:   ds.Angular,
 				},
-				AngularDetected: ds.AngularDetected,
 			}
 			if ds.Name == grafanads.DatasourceName {
 				dto.ID = grafanads.DatasourceID
@@ -435,11 +438,11 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 func newAppDTO(plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
 	app := &plugins.AppDTO{
-		ID:              plugin.ID,
-		Version:         plugin.Info.Version,
-		Path:            plugin.Module,
-		Preload:         false,
-		AngularDetected: plugin.AngularDetected,
+		ID:      plugin.ID,
+		Version: plugin.Info.Version,
+		Path:    plugin.Module,
+		Preload: false,
+		Angular: plugin.Angular,
 	}
 
 	if settings.Enabled {
