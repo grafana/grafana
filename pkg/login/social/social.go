@@ -97,7 +97,12 @@ func ProvideService(cfg *setting.Cfg,
 	for _, name := range allOauthes {
 		sec := cfg.Raw.Section("auth." + name)
 
-		info := loadOAuthInfo(sec, name)
+		settingsKVs := convertIniSectionToMap(sec)
+		info, err := createOAuthInfoFromKeyValues(settingsKVs)
+		if err != nil {
+			ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
+			continue
+		}
 
 		if !info.Enabled {
 			continue
@@ -167,8 +172,7 @@ func ProvideService(cfg *setting.Cfg,
 
 		// AzureAD.
 		if name == "azuread" {
-			settingsKV := convertIniSectionToMap(sec)
-			azureADConnector, err := NewAzureADProvider(settingsKV, cfg, features, cache)
+			azureADConnector, err := NewAzureADProvider(settingsKVs, cfg, features, cache)
 			if err != nil {
 				ss.log.Error("Failed to create AzureAD provider", "error", err)
 				continue
