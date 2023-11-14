@@ -81,7 +81,7 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 		ctxLogger := m.logger.FromContext(ctx)
 		for refID, dr := range resp.Responses {
 			if dr.Error != nil {
-				logParams := []any{"refID", refID, "error", dr.Error}
+				logParams := []any{"refID", refID, "status", int(dr.Status), "error", dr.Error}
 				if m.features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 					logParams = append(logParams, "statusSource", pluginrequestmeta.StatusSourceFromPluginErrorSource(dr.ErrorSource))
 				}
