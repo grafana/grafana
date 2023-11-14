@@ -81,40 +81,6 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
 
   const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold);
 
-  interface HysteresisSectionProps {
-    isRange: boolean;
-    onError?: (error: string | undefined) => void;
-  }
-
-  const HysteresisSection = ({ isRange, onError }: HysteresisSectionProps) => {
-    const hasHysteresis = Boolean(conditionInState.unloadEvaluator);
-
-    const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
-      dispatch(updateHysteresisChecked({ hysteresisChecked: event.currentTarget.checked, onError }));
-    };
-    return (
-      <div className={styles.hysteresis}>
-        <InlineSwitch
-          showLabel={true}
-          label="Custom recovery threshold"
-          value={hasHysteresis}
-          onChange={onHysteresisCheckChange}
-          className={styles.switch}
-        />
-
-        {hasHysteresis && (
-          <RecoveryThresholdRow
-            isRange={isRange}
-            condition={conditionInState}
-            labelWidth={labelWidth}
-            onError={onError}
-            dispatch={dispatch}
-          />
-        )}
-      </div>
-    );
-  };
-
   return (
     <>
       <InlineFieldRow>
@@ -157,6 +123,39 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError }: Prop
       {hysteresisEnabled && <HysteresisSection isRange={isRange} onError={onError} />}
     </>
   );
+  interface HysteresisSectionProps {
+    isRange: boolean;
+    onError?: (error: string | undefined) => void;
+  }
+
+  function HysteresisSection({ isRange, onError }: HysteresisSectionProps) {
+    const hasHysteresis = Boolean(conditionInState.unloadEvaluator);
+
+    const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
+      dispatch(updateHysteresisChecked({ hysteresisChecked: event.currentTarget.checked, onError }));
+    };
+    return (
+      <div className={styles.hysteresis}>
+        <InlineSwitch
+          showLabel={true}
+          label="Custom recovery threshold"
+          value={hasHysteresis}
+          onChange={onHysteresisCheckChange}
+          className={styles.switch}
+        />
+
+        {hasHysteresis && (
+          <RecoveryThresholdRow
+            isRange={isRange}
+            condition={conditionInState}
+            labelWidth={labelWidth}
+            onError={onError}
+            dispatch={dispatch}
+          />
+        )}
+      </div>
+    );
+  }
 };
 
 interface RecoveryThresholdRowProps {
@@ -181,6 +180,11 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
   const { errorMsg: invalidErrorMsg, errorMsgFrom, errorMsgTo } = error ?? {};
 
   if (isRange) {
+    return <RecoveryForRange />;
+  } else {
+    return <RecoveryForSingleValue />;
+  }
+  function RecoveryForRange() {
     if (condition.evaluator.type === EvalFunction.IsWithinRange) {
       return (
         <InlineFieldRow className={styles.hysteresis}>
@@ -243,7 +247,8 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
         </InlineFieldRow>
       );
     }
-  } else {
+  }
+  function RecoveryForSingleValue() {
     if (condition.evaluator.type === EvalFunction.IsAbove) {
       return (
         <InlineFieldRow className={styles.hysteresis}>
