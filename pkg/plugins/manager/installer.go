@@ -160,10 +160,11 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		}
 	}
 
-	if m.serviceRegistry.HasExternalService(ctx, pluginID) {
+	has, err := m.serviceRegistry.HasExternalService(ctx, pluginID)
+	if err == nil && has {
 		return m.serviceRegistry.RemoveExternalService(ctx, pluginID)
 	}
-	return nil
+	return err
 }
 
 // plugin finds a plugin with `pluginID` from the store

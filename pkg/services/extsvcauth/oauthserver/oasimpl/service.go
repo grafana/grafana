@@ -119,6 +119,16 @@ func newProvider(config *fosite.Config, storage any, signingKeyService signingke
 	)
 }
 
+// HasExternalService returns whether an external service has been saved with that name.
+func (s *OAuth2ServiceImpl) HasExternalService(ctx context.Context, name string) (bool, error) {
+	client, errRetrieve := s.sqlstore.GetExternalServiceByName(ctx, name)
+	if errRetrieve != nil && !errors.Is(errRetrieve, oauthserver.ErrClientNotFound) {
+		return false, errRetrieve
+	}
+
+	return client != nil, nil
+}
+
 // GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 // SignedInUser from the associated service account.
 // For performance reason, the service uses caching.

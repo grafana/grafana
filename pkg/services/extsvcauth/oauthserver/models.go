@@ -33,8 +33,6 @@ type OAuth2Server interface {
 	// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 	// SignedInUser from the associated service account.
 	GetExternalService(ctx context.Context, id string) (*OAuthExternalService, error)
-	// GetExternalServiceNames retrieves the list of external service names from store.
-	GetExternalServiceNames(ctx context.Context) ([]string, error)
 	// RemoveExternalService removes an external service and its associated resources from the store.
 	RemoveExternalService(ctx context.Context, name string) error
 

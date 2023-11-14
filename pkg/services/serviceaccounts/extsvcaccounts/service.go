@@ -65,6 +65,18 @@ func (esa *ExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *
 	return esa.saSvc.EnableServiceAccount(ctx, cmd.OrgID, saID, cmd.Enabled)
 }
 
+// HasExternalService returns whether an external service has been saved with that name.
+func (esa *ExtSvcAccountsService) HasExternalService(ctx context.Context, name string) (bool, error) {
+	saName := sa.ExtSvcPrefix + slugify.Slugify(name)
+
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, extsvcauth.TmpOrgID, saName)
+	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
+		return false, errRetrieve
+	}
+
+	return saID > 0, nil
+}
+
 // RetrieveExtSvcAccount fetches an external service account by ID
 func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*sa.ExtSvcAccount, error) {
 	svcAcc, err := esa.saSvc.RetrieveServiceAccount(ctx, orgID, saID)
