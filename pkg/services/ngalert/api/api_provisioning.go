@@ -480,7 +480,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	}
 	provenance := determineProvenance(c)
 
-  userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
 	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.SignedInUser.GetOrgID(), groupModel, userID, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
 		return ErrResp(http.StatusBadRequest, err, "")
