@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, useStyles2, VerticalGroup } from '@grafana/ui';
+import configCore from 'app/core/config';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
@@ -40,7 +41,7 @@ export const PluginActions = ({ plugin }: Props) => {
       <HorizontalGroup>
         {!isInstallControlsDisabled && (
           <>
-            {isExternallyManaged && !hasInstallWarning ? (
+            {isExternallyManaged && !hasInstallWarning && !configCore.featureToggles.managedPluginsInstall ? (
               <ExternallyManagedButton
                 pluginId={plugin.id}
                 pluginStatus={pluginStatus}

@@ -479,7 +479,7 @@ The result from using the regular expression 'prod.\*' would be:
 | 2023-03-04 23:56:23 | 22.2         | 20.2          |
 | 2023-03-04 23:56:23 | 22.1         | 20.1          |
 
-The regular expression can include an interpolated dashboard variable by using the ${$variableName} syntax.
+The regular expression can include an interpolated dashboard variable by using the ${variableName} syntax.
 
 #### Manually select included fields
 

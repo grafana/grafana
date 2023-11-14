@@ -27,7 +27,7 @@ export function runWithRetry(
 ): Observable<{ frames: DataFrame[]; error?: DataQueryError }> {
   const startTime = new Date();
   let retries = 0;
-  let timerID: any;
+  let timerID: ReturnType<typeof setTimeout>;
   let subscription: Subscription;
   let collected = {};
 
