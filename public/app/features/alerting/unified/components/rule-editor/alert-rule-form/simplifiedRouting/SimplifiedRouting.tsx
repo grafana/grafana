@@ -161,7 +161,6 @@ function ContactPointSelector({ selectedReceiver, alertManager, dispatch }: Cont
             aria-label="Contact point"
             onChange={onChange}
             options={options}
-            isClearable
             width={50}
             value={selectedReceiver}
             getOptionLabel={(option: SelectableValue<string>) => {
