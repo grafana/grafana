@@ -53,7 +53,7 @@ export const DerivedField = (props: Props) => {
   const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
   const previousUid = usePrevious(value.datasourceUid);
-  const [fieldType, setFieldType] = useState<MatcherType>(value.matcherType ?? 'label');
+  const [fieldType, setFieldType] = useState<MatcherType>(value.matcherType ?? 'regex');
 
   // Force internal link visibility change if uid changed outside of this component.
   useEffect(() => {
