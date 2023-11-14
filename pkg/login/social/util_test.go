@@ -8,7 +8,6 @@ import (
 )
 
 func TestMapping_IniSectionOAuthInfo(t *testing.T) {
-
 	iniContent := `
 [test]
 client_id =          	client_id
@@ -36,8 +35,8 @@ email_attribute_name = email:primary`
 		},
 	}
 
-	settingsKV := convertIniSectionToMap(iniFile.Section("test"))
-	oauthInfo, err := createOAuthInfoFromKeyValues(settingsKV)
+	settingsKVs := convertIniSectionToMap(iniFile.Section("test"))
+	oauthInfo, err := createOAuthInfoFromKeyValues(settingsKVs)
 	require.NoError(t, err)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
