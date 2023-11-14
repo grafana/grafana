@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -28,20 +28,19 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const { watch, setValue } = useFormContext<RuleFormValues & { location?: string }>();
   const styles = useStyles2(getStyles);
 
-  const [type, labels, queries, condition, folder, alertName] = watch([
+  const [type, labels, queries, condition, folder, alertName, manualRouting] = watch([
     'type',
     'labels',
     'queries',
     'condition',
     'folder',
     'name',
+    'manualRouting',
   ]);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
 
   const shouldRenderPreview = type === RuleFormType.grafana;
-
-  const [routingOption, setRoutingOption] = useState<RoutingOptions>(RoutingOptions['contact point']);
 
   const routingOptions = [
     { label: 'Manually selected contact point', value: RoutingOptions['contact point'] },
@@ -50,12 +49,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   const onRoutingOptionChange = useCallback(
     (option: RoutingOptions) => {
-      setRoutingOption(option);
-      if (option === RoutingOptions['notification policy']) {
-        setValue('contactPoints', []);
-      }
+      setValue('manualRouting', option === RoutingOptions['contact point']);
     },
-    [setRoutingOption, setValue]
+    [setValue]
   );
 
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
@@ -85,15 +81,15 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         <Stack direction="column">
           <RadioButtonGroup
             options={routingOptions}
-            value={routingOption}
+            value={manualRouting ? RoutingOptions['contact point'] : RoutingOptions['notification policy']}
             onChange={onRoutingOptionChange}
             className={styles.routingOptions}
           />
         </Stack>
 
-        <NotificationsOptionDescription routingOption={routingOption} routingOptionEnabled={true} />
+        <NotificationsOptionDescription manualRouting={manualRouting} routingOptionEnabled={true} />
 
-        {routingOption === RoutingOptions['contact point'] ? (
+        {manualRouting ? (
           <div className={styles.simplifiedRouting}>
             <SimplifiedRouting />
           </div>
@@ -221,28 +217,23 @@ function NeedHelpInfoForContactpoint() {
   );
 }
 interface NotificationsStepDescriptionProps {
-  routingOption: RoutingOptions;
+  manualRouting: boolean;
   routingOptionEnabled: boolean;
 }
 
 export const NotificationsOptionDescription = ({
-  routingOption,
+  manualRouting,
   routingOptionEnabled,
 }: NotificationsStepDescriptionProps) => {
   const styles = useStyles2(getStyles);
-  const getRoutingOptionHeader = useCallback((routingOptionEnabled: boolean, routingOption: RoutingOptions) => {
-    if (!routingOptionEnabled || routingOption === 'notification policy') {
-      return 'Notifications for firing alerts are routed to contact points based on matching labels.';
-    }
-    return 'Notifications for firing alerts are routed a selected contact point.';
-  }, []);
   return (
     <div className={styles.notificationsOptionDescription}>
       <Text variant="bodySmall" color="secondary">
-        {getRoutingOptionHeader(routingOptionEnabled, routingOption)}
+        {!routingOptionEnabled || !manualRouting
+          ? 'Notifications for firing alerts are routed to contact points based on matching labels.'
+          : 'Notifications for firing alerts are routed a selected contact point.'}
       </Text>
-      {routingOption === RoutingOptions['notification policy'] && <NeedHelpInfoForNotificationPolicy />}
-      {routingOption === RoutingOptions['contact point'] && <NeedHelpInfoForContactpoint />}
+      {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}
     </div>
   );
 };
