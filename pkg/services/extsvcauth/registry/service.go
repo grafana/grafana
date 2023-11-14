@@ -35,7 +35,7 @@ func ProvideExtSvcRegistry(oauthServer *oasimpl.OAuth2ServiceImpl, saSvc *extsvc
 	}
 }
 
-// CleanUpOrphanedExternalServices searches for external services present in store that have not been registered on startup.
+// CleanUpOrphanedExternalServices remove external services present in store that have not been registered on startup.
 func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
 	extsvcs, err := r.retrieveExtSvcProviders(ctx)
 	if err != nil {
