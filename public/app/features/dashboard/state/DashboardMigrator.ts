@@ -187,7 +187,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 6) {
       // move drop-downs to new schema
-      const annotations: any = find(old.pulldowns, { type: 'annotations' });
+      const annotations = find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {
@@ -318,17 +318,24 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      each(this.dashboard.getVariables(), (templateVariable: any) => {
-        if (templateVariable.refresh) {
-          templateVariable.refresh = 1;
+      each(this.dashboard.getVariables(), (templateVariable) => {
+        if ('refresh' in templateVariable) {
+          if (templateVariable.refresh) {
+            templateVariable.refresh = 1;
+          }
+          if (!templateVariable.refresh) {
+            templateVariable.refresh = 0;
+          }
         }
-        if (!templateVariable.refresh) {
-          templateVariable.refresh = 0;
+        if ('hideVariable' in templateVariable) {
+          if (templateVariable.hideVariable) {
+            templateVariable.hide = 2;
+          }
         }
-        if (templateVariable.hideVariable) {
-          templateVariable.hide = 2;
-        } else if (templateVariable.hideLabel) {
-          templateVariable.hide = 1;
+        if ('hideLabel' in templateVariable) {
+          if (templateVariable.hideLabel) {
+            templateVariable.hide = 1;
+          }
         }
       });
     }
@@ -993,7 +1000,7 @@ export class DashboardMigrator {
         continue;
       }
 
-      const height: any = row.height || DEFAULT_ROW_HEIGHT;
+      const height = row.height || DEFAULT_ROW_HEIGHT;
       const rowGridHeight = getGridHeight(height);
 
       const rowPanel: any = {};

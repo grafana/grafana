@@ -171,7 +171,7 @@ export class DashboardModel implements TimeModel {
     this.version = data.version ?? 0;
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
-    this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
+    this.panels = map(data.panels ?? [], (panelData) => new PanelModel(panelData));
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);
     this.originalTemplating = cloneDeep(this.templating);
@@ -345,7 +345,7 @@ export class DashboardModel implements TimeModel {
 
         return panel.getSaveModel();
       })
-      .map((model: any) => {
+      .map((model) => {
         if (this.isSnapshotTruthy()) {
           return model;
         }
