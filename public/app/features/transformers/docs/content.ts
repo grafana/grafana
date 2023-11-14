@@ -719,13 +719,13 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Join by field',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
-  Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
-  time series results into a single wide table with a shared time field.
+  Use this transformation to merge multiple results into a single table, enabling the consolidation of data from different queries.
+
+  This is especially useful for converting multiple time series results into a single wide table with a shared time field.
 
   #### Inner join
 
-  An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes
-  data where values do not match in every result.
+  An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes data where values do not match in every result.
 
   Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur.
 
@@ -800,6 +800,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
     imageRenderType,
     'Join by field' + 2
   )}
+
+  Combine and analyze data from various queries with table joining for a comprehensive view of your information.
   `;
     },
   },
