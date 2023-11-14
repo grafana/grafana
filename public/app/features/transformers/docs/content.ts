@@ -98,7 +98,11 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Concatenate fields',
     getHelperDocs: function () {
       return `
-  Use this transformation to combine all fields from all frames into one result. Consider the following:
+  Use this transformation to combine all fields from all frames into one result.
+  
+  Suppose you have separate queries retrieving temperature and uptime data (Query A) and air quality index and error information (Query B). Applying the concatenate transformation would yield a consolidated data frame with all relevant information in one view.
+
+  Consider the following:
 
   **Query A:**
 
@@ -117,6 +121,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | Temp  | Uptime   | AQI   | Errors |
   | ----- | -------- | ----- | ------ |
   | 15.4  | 1230233  | 3.2   | 5      |
+
+  This transformation simplifies the process of merging data from different sources, providing a comprehensive view for analysis and visualization in Grafana. Feel free to explore and experiment with concatenation to suit your specific data integration needs.
   `;
     },
   },
@@ -124,19 +130,17 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Config from query results',
     getHelperDocs: function () {
       return `
-  Use this transformation to select one query and from it extract standard options such as
-  **Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
-  This enables dynamic query driven visualization configuration.
+  Use this transformation to select a query and extract standard options, such as **Min**, **Max**, **Unit**, and **Thresholds**, and apply them to other query results. This feature enables dynamic visualization configuration based on the data returned by a specific query.
 
   #### Options
 
-  - **Config query**: Select the query that returns the data you want to use as configuration.
-  - **Apply to**: Select what fields or series to apply the configuration to.
-  - **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
+  - **Config query:** Select the query that returns the data you want to use as configuration.
+  - **Apply to:** Select the fields or series to which the configuration should be applied.
+  - **Apply to options:** Specify a field type or use a field name regex, depending on your selection in **Apply to**.
 
   #### Field mapping table
 
-  Below the configuration listed above you will find the field table. Here all fields found in the data returned by the config query will be listed along with a **Use as** and **Select** option. This table gives you control over what field should be mapped to which config property and if there are multiple rows which value to select.
+  Below the configuration options, you'll find the field mapping table. This table lists all fields found in the data returned by the config query, along with a **Use as** and **Select** option. It provides control over mapping fields to config properties, and for multiple rows, it allows you to choose which value to select.
 
   #### Example
 
@@ -161,14 +165,11 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 1626178119127 | 10                      |
   | 1626178119129 | 30                      |
 
-  Each row in the source data becomes a separate field. Each field now also has a maximum
-  configuration option set. Options such as **min**, **max**, **unit**, and **thresholds** are all part of field configuration, and if they are set like this, they will be used by the visualization instead of any options that are manually configured.
-  in the panel editor options pane.
+  Each row in the source data becomes a separate field. Each field now has a maximum configuration option set. Options such as **min**, **max**, **unit**, and **thresholds** are part of the field configuration. If set, they will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
   #### Value mappings
 
-  You can also transform a query result into value mappings. This is is a bit different because every
-  row in the configuration query result is used to define a single value mapping row. See the following example.
+  You can also transform a query result into value mappings. This is a bit different because every row in the configuration query result defines a single value mapping row. See the following example.
 
   Config query result:
 
@@ -186,7 +187,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | Text  | Value mappings / Text   | All values |
   | Color | Value mappings / Ciolor | All values |
 
-  Grafana will build the value mappings from you query result and apply it the the real data query results. You should see values being mapped and colored according to the config query results.
+  Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
   `;
     },
   },
@@ -194,17 +195,16 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Convert field type',
     getHelperDocs: function () {
       return `
-  Use this transformation to change the field type of the specified field.
+  Use this transformation to modify the field type of a specified field. Here's a breakdown of the options:
 
-  - **Field -** Select from available fields
-  - **as -** Select the FieldType to convert to
-    - **Numeric -** attempts to make the values numbers
-    - **String -** will make the values strings
-    - **Time -** attempts to parse the values as time
-      - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
-    - **Boolean -** will make the values booleans
+  - **Field:** Select from available fields.
+  - **as:** Choose the FieldType to convert to.
+    - **Numeric:** Attempts to make the values numbers.
+    - **String:** Converts the values to strings.
+    - **Time:** Attempts to parse the values as time. You can specify a DateFormat, e.g., yyyy-mm-dd or DD MM YYYY hh:mm:ss.
+    - **Boolean:** Converts the values to booleans.
 
-  For example, the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
+  For example, consider the following query that could be modified by selecting the time field as Time and specifying Date Format as YYYY.
 
   #### Sample Query
 
@@ -225,6 +225,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2018-01-01 00:00:00 | below     | 22    |
   | 2019-01-01 00:00:00 | below     | 29    |
   | 2020-01-01 00:00:00 | above     | 22    |
+
+  This transformation allows you to flexibly adapt your data types, ensuring compatibility and consistency in your visualizations. Experiment with different field type conversions to suit your specific data requirements.
   `;
     },
   },
