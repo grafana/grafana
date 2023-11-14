@@ -183,7 +183,7 @@ Feature Management is an Administration page that allows admin users to visualiz
 
 By default, feature toggles are in read-only mode. Granting admin users the ability to alter the states of feature toggles requires configuring Grafana with the optional [allow_editing](/docs/grafana/latest/setup-grafana/configure-grafana#allow_editing), [update_webhook](/docs/grafana/latest/setup-grafana/configure-grafana#update_webhook) and [update_webhook_token](/docs/grafana/latest/setup-grafana/configure-grafana#update_webhook_token) settings.
 
-Those configurations allow the Grafana operator to setup a webhook that Grafana must call to propagate the configuration change. 
+Those configurations allow the Grafana operator to setup a webhook that Grafana must call to propagate the configuration change.
 
 **Example Request**:
 

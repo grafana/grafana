@@ -21,14 +21,14 @@ For detailed insights into particular features and how they operate, please cons
 
 In the Administration page, the Feature Management section enables administrators to see and switch the various features active in their Grafana environment. Based on the development stage of the feature, we establish specific options for visibility and customization.
 
-| Stage                    | Visibility       | Editable       |
-| ------------------------ | ---------------- | -------------- |
-| Experimental             | Hidden           | No             |
-| PrivatePreview           | Visible*         | No             |
-| Public Preview           | Visible*         | No             |
-| General Availability     | Visible*         | Yes*           |
+| Stage                | Visibility | Editable |
+| -------------------- | ---------- | -------- |
+| Experimental         | Hidden     | No       |
+| PrivatePreview       | Visible\*  | No       |
+| Public Preview       | Visible\*  | No       |
+| General Availability | Visible\*  | Yes\*    |
 
-**Note:** Options marked with an asterisk (*) are defaults for the corresponding feature stage. Each feature toggle owner can override its default behaviour.
+**Note:** Options marked with an asterisk (\*) are defaults for the corresponding feature stage. Each feature toggle owner can override its default behaviour.
 
 ## Edit Feature Toggles State
 
