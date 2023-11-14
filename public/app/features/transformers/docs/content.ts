@@ -331,7 +331,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Filter data by query refId',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
-  Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
+  Use this transformation in panels that have multiple queries if you want to hide one or more of the queries.
 
   Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
 
