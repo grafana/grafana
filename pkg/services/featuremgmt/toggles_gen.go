@@ -272,7 +272,7 @@ const (
 	FlagClientTokenRotation = "clientTokenRotation"
 
 	// FlagDisableElasticsearchBackendExploreQuery
-	// Disable executing of Elasticsearch Explore queries trough backend
+	// Disable executing of Elasticsearch Explore queries through backend
 	FlagDisableElasticsearchBackendExploreQuery = "disableElasticsearchBackendExploreQuery"
 
 	// FlagPrometheusDataplane

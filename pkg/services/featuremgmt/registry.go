@@ -448,7 +448,7 @@ var (
 		},
 		{
 			Name:        "disableElasticsearchBackendExploreQuery",
-			Description: "Disable executing of Elasticsearch Explore queries trough backend",
+			Description: "Disable executing of Elasticsearch Explore queries through backend",
 			State:       FeatureStateBeta,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
