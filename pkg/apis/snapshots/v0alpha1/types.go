@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -10,11 +12,12 @@ type DashboardSnapshot struct {
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// Snapshot summary info
 	Info SnapshotInfo `json:"info"`
 
 	// The raw dashboard (??? openapi ???)
 	// TODO: openapi annotations for codegen?
-	Dashboard any `json:"dashboard"`
+	Dashboard *simplejson.Json `json:"dashboard"`
 
 	// The delete key is only returned when the item is created.  It is not returned from a get request
 	DeleteKey string `json:"deleteKey,omitempty"`

@@ -1,14 +1,9 @@
 package playlist
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -31,7 +26,7 @@ func TestSnapshotsApp(t *testing.T) {
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("snapshots.grafana.app")
 
-		fmt.Printf("%s", disco)
+		//fmt.Printf("%s", disco)
 		require.JSONEq(t, `[
 			{
 			  "version": "v0alpha1",
@@ -83,31 +78,5 @@ func TestSnapshotsApp(t *testing.T) {
 			  ]
 			}
 		  ]`, disco)
-	})
-
-	t.Run("Check dummy with subresource", func(t *testing.T) {
-		client := helper.Org1.Viewer.Client.Resource(schema.GroupVersionResource{
-			Group:    "example.grafana.app",
-			Version:  "v0alpha1",
-			Resource: "dummy",
-		}).Namespace("default")
-		rsp, err := client.Get(context.Background(), "test2", metav1.GetOptions{})
-		require.NoError(t, err)
-
-		require.Equal(t, "dummy: test2", rsp.Object["spec"])
-		require.Equal(t, "DummyResource", rsp.GetObjectKind().GroupVersionKind().Kind)
-
-		// Now a sub-resource
-		rsp, err = client.Get(context.Background(), "test2", metav1.GetOptions{}, "sub")
-		require.NoError(t, err)
-
-		raw, err := json.MarshalIndent(rsp, "", "  ")
-		require.NoError(t, err)
-		//fmt.Printf("%s", string(raw))
-		require.JSONEq(t, `{
-			"apiVersion": "example.grafana.app/v0alpha1",
-			"kind": "DummySubresource",
-			"info": "default/viewer-1"
-		  }`, string(raw))
 	})
 }

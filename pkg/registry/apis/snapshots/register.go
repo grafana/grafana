@@ -42,7 +42,7 @@ func RegisterAPIService(
 	p dashboardsnapshots.Service,
 	apiregistration grafanaapiserver.APIRegistrar,
 ) *SnapshotsAPIBuilder {
-	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 	builder := &SnapshotsAPIBuilder{
