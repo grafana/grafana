@@ -1000,7 +1000,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
       return `
   Use this transformation to provide the flexibility to rename, reorder, or hide fields returned by a single query in your panel. Please note that this transformation is applicable only to panels with a single query. If your panel has multiple queries, consider using an "Outer Join" transformation or removing extra queries.
 
-  ## Transforming Fields
+  #### Transforming Fields
   
   Grafana conveniently displays a list of fields returned by the query, allowing you to perform the following actions:
   
@@ -1010,9 +1010,9 @@ export const transformationDocsContent: TransformationDocsContentType = {
   
   - **Rename Fields:** Simply type a new name in the "Rename <field>" box to customize field names according to your preferences.
   
-  ## Example:
+  #### Example:
   
-  ### Original Query Result
+  ##### Original Query Result
   
   | Time                | Metric      | Value |
   | ------------------- | ----------- | ----- |
@@ -1020,7 +1020,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2020-07-07 11:34:20 | Humidity    | 22    |
   | 2020-07-07 10:32:20 | Humidity    | 29    |
   
-  ### After Applying Field Overrides
+  ##### After Applying Field Overrides
   
   | Time                | Sensor      | Reading |
   | ------------------- | ----------- | ------- |
@@ -1076,13 +1076,17 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Prepare time series',
     getHelperDocs: function () {
       return `
-  Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
+  Use this transformation to address issues when a data source returns time series data in a format that isn't compatible with the desired panel. This transformation allows you to convert time series data between wide and long formats, providing flexibility in data frame structures.
 
-  This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
+  #### Available Options
 
-  Select the 'Multi-frame time series' option to transform the time series data frame from the wide to the long format.
+  ##### 1. Multi-frame Time Series
 
-  Select the 'Wide time series' option to transform the time series data frame from the long to the wide format.
+  Use this option to transform the time series data frame from the wide format to the long format. This is particularly helpful when your data source delivers time series information in a format that needs to be reshaped for optimal compatibility with your visualization panel.
+
+  ##### 2. Wide Time Series
+
+  Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization panel requires a wide format, this transformation simplifies the process.
 
   > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
   `;
