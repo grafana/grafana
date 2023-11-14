@@ -998,15 +998,37 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Oraganize fields',
     getHelperDocs: function () {
       return `
-  Use this transformation to rename, reorder, or hide fields returned by the query.
+  Use this transformation to provide the flexibility to rename, reorder, or hide fields returned by a single query in your panel. Please note that this transformation is applicable only to panels with a single query. If your panel has multiple queries, consider using an "Outer Join" transformation or removing extra queries.
 
-  > **Note:** This transformation only works in panels with a single query. If your panel has multiple queries, then you must either apply an Outer join transformation or remove the extra queries.
+  ## Transforming Fields
+  
+  Grafana conveniently displays a list of fields returned by the query, allowing you to perform the following actions:
+  
+  - **Change Field Order:** Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
+  
+  - **Hide or Show a Field:** Utilize the eye icon next to the field name to toggle the visibility of a specific field.
+  
+  - **Rename Fields:** Simply type a new name in the "Rename <field>" box to customize field names according to your preferences.
+  
+  ## Example:
+  
+  ### Original Query Result
+  
+  | Time                | Metric      | Value |
+  | ------------------- | ----------- | ----- |
+  | 2020-07-07 11:34:20 | Temperature | 25    |
+  | 2020-07-07 11:34:20 | Humidity    | 22    |
+  | 2020-07-07 10:32:20 | Humidity    | 29    |
+  
+  ### After Applying Field Overrides
+  
+  | Time                | Sensor      | Reading |
+  | ------------------- | ----------- | ------- |
+  | 2020-07-07 11:34:20 | Temperature | 25      |
+  | 2020-07-07 11:34:20 | Humidity    | 22      |
+  | 2020-07-07 10:32:20 | Humidity    | 29      |
 
-  Grafana displays a list of fields returned by the query. You can:
-
-  - Change field order by hovering your cursor over a field. The cursor turns into a hand and then you can drag the field to its new place.
-  - Hide or show a field by clicking the eye icon next to the field name.
-  - Rename fields by typing a new name in the **Rename <field>** box.
+  This transformation empowers you to tailor the display of query results, ensuring a clear and insightful representation of your data in Grafana.
   `;
     },
   },
