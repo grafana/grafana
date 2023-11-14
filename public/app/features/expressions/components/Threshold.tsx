@@ -184,6 +184,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
   } else {
     return <RecoveryForSingleValue />;
   }
+
   function RecoveryForRange() {
     if (condition.evaluator.type === EvalFunction.IsWithinRange) {
       return (
@@ -248,6 +249,7 @@ function RecoveryThresholdRow({ isRange, condition, labelWidth, onError, dispatc
       );
     }
   }
+
   function RecoveryForSingleValue() {
     if (condition.evaluator.type === EvalFunction.IsAbove) {
       return (
