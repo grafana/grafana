@@ -29,18 +29,19 @@ Correlations allow users to build a link between any two datasources. For more i
 1. Explore opens a split view. Use the right pane to setup [the target query source of the correlation]({{< relref "../administration/correlations/correlation-configuration#target-query" >}}).
 1. Build target query using [variables syntax]({{< relref "../dashboards/variables/variable-syntax" >}}) with variables from the list provided at the top of the pane. The list contains sample values from the selected data row.
 1. Provide optional label and description. Label is used as the name of the link inside the visualization. It can contain variables.
+1. Provide optional transformations (see below for details)
 1. Click "Save" button in the top bar to save the correlation and exit Correlations Editor mode.
 1. The link used to create the correlation will be replaced with a data link in each row. The variables will be dynamically replaced with values from a selected row.
 
 ## Transformations
 
-Transformations allow us to extract values that exist in a field with other data. A prime example is getting one portion of a log line out to use in a correlation. For more details on transformations in correlations, see the [correlations documentation]({{< relref "../administration/correlations/correlation-configuration/#correlation-transformations" >}}).
+Transformations allow you to extract values that exist in a field with other data. A prime example is getting one portion of a log line out to use in a correlation. For more details on transformations in correlations, see the [correlations documentation]({{< relref "../administration/correlations/correlation-configuration/#correlation-transformations" >}}).
 
 After clicking one of the generated links in the editor mode, you can add transformations by clicking the "Add transformation" button in the "Transformations" dropdown. This will pop up a modal, and you can use a transformation in your correlation with the following steps:
 
 1. First, select a field that the transformation will be applied. This should be a field where we only want to use sections of the field, such as a log line. Once selected, the value of that field will show up to assist building the transformation.
 1. Select the type of the transformation. See the [correlations documentation]({{< relref "../administration/correlations/correlation-configuration/#correlation-transformations" >}}) for the options and relevant settings.
-1. Based on what's selected, you may immediately see one or more variables populate, or you may need to fill in more fields
+1. Based on what's selected, you may immediately see one or more variables populate, or you may need to provide more specifications in options that display.
 1. Select `Add transformation to correlation` to add the specified variables to the list of variables in the list of variables available.
 
 ### Notes for regular expressions
