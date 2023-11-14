@@ -94,7 +94,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
 	addFolderMigrations(mg)
+	// nolint:staticcheck
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		// nolint:staticcheck
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagExternalServiceAuth) {
 			oauthserver.AddMigration(mg)
 		}
