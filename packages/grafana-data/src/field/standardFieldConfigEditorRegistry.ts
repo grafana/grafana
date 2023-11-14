@@ -22,7 +22,9 @@ export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = a
   context: StandardEditorContext<TOptions, TState>;
   id?: string;
 
-  item: StandardEditorsRegistryItem<TValue, TSettings>;
+  item: {
+    settings?: TSettings;
+  };
 }
 
 export interface StandardEditorsRegistryItem<TValue = any, TSettings = any> extends RegistryItem {

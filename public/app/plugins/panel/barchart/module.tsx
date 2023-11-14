@@ -88,7 +88,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         hideFromDefaults: true,
       });
 
-      builder.addCustomEditor({
+      builder.addCustomEditor<
+        { options: typeof graphFieldOptions.thresholdsDisplayModes },
+        FieldConfig['thresholdsStyle']
+      >({
         id: 'thresholdsStyle',
         path: 'thresholdsStyle',
         name: 'Show thresholds',

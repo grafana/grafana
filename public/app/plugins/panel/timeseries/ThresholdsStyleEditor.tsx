@@ -1,10 +1,15 @@
 import React, { useCallback } from 'react';
 
-import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
+import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { GraphTresholdsStyleMode } from '@grafana/schema';
-import { Select } from '@grafana/ui';
+import { Select, graphFieldOptions } from '@grafana/ui';
 
-type Props = FieldOverrideEditorProps<SelectableValue<{ mode: GraphTresholdsStyleMode }>, unknown>;
+import { FieldConfig } from './panelcfg.gen';
+
+type Props = StandardEditorProps<
+  SelectableValue<FieldConfig['thresholdsStyle']>,
+  { options: typeof graphFieldOptions.thresholdsDisplayModes }
+>;
 
 export const ThresholdsStyleEditor = ({ item, value, onChange, id }: Props) => {
   const onChangeCb = useCallback(
@@ -15,5 +20,6 @@ export const ThresholdsStyleEditor = ({ item, value, onChange, id }: Props) => {
     },
     [onChange]
   );
-  return <Select inputId={id} value={value.mode} options={item.settings.options} onChange={onChangeCb} />;
+
+  return <Select inputId={id} value={value.mode} options={item.settings?.options ?? []} onChange={onChangeCb} />;
 };

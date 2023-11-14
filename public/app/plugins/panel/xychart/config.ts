@@ -112,7 +112,7 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         //   },
         //   showIf: (c) => c.show !== ScatterShow.Lines,
         // })
-        .addCustomEditor<void, LineStyle>({
+        .addCustomEditor<unknown, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',
           name: 'Line style',

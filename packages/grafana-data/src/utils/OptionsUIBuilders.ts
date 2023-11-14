@@ -18,7 +18,7 @@ import {
 import { PanelOptionsSupplier } from '../panel/PanelPlugin';
 import { isObject } from '../types';
 import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
-import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
+import { FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 
 /**
@@ -26,7 +26,7 @@ import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel
  */
 export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
   TOptions,
-  FieldConfigEditorProps<any, any>,
+  StandardEditorProps<any, any>,
   FieldConfigPropertyItem<TOptions>
 > {
   addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
@@ -34,7 +34,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       ...config,
       id: config.path,
       override: standardEditorsRegistry.get('number').editor as any,
-      editor: standardEditorsRegistry.get('number').editor as any,
+      editor: standardEditorsRegistry.get('number').editor,
       process: numberOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
@@ -46,7 +46,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       ...config,
       id: config.path,
       override: standardEditorsRegistry.get('slider').editor as any,
-      editor: standardEditorsRegistry.get('slider').editor as any,
+      editor: standardEditorsRegistry.get('slider').editor,
       process: numberOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
@@ -58,7 +58,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       ...config,
       id: config.path,
       override: standardEditorsRegistry.get('text').editor as any,
-      editor: standardEditorsRegistry.get('text').editor as any,
+      editor: standardEditorsRegistry.get('text').editor,
       process: stringOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
@@ -72,7 +72,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       ...config,
       id: config.path,
       override: standardEditorsRegistry.get('select').editor as any,
-      editor: standardEditorsRegistry.get('select').editor as any,
+      editor: standardEditorsRegistry.get('select').editor,
       process: selectOverrideProcessor,
       // ???
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
@@ -85,7 +85,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       ...config,
       id: config.path,
       override: standardEditorsRegistry.get('radio').editor as any,
-      editor: standardEditorsRegistry.get('radio').editor as any,
+      editor: standardEditorsRegistry.get('radio').editor,
       process: selectOverrideProcessor,
       // ???
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
@@ -97,7 +97,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('boolean').editor as any,
+      editor: standardEditorsRegistry.get('boolean').editor,
       override: standardEditorsRegistry.get('boolean').editor as any,
       process: booleanOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
@@ -109,7 +109,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('color').editor as any,
+      editor: standardEditorsRegistry.get('color').editor,
       override: standardEditorsRegistry.get('color').editor as any,
       process: identityOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
@@ -123,7 +123,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('unit').editor as any,
+      editor: standardEditorsRegistry.get('unit').editor,
       override: standardEditorsRegistry.get('unit').editor as any,
       process: unitOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
@@ -137,7 +137,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: standardEditorsRegistry.get('field-name').editor as any,
+      editor: standardEditorsRegistry.get('field-name').editor,
       override: standardEditorsRegistry.get('field-name').editor as any,
       process: identityOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
@@ -152,7 +152,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     return this.addCustomEditor({
       ...config,
       id: config.path,
-      editor: editor as any,
+      editor: editor,
       override: editor as any,
       process: identityOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : () => true,
