@@ -1,4 +1,4 @@
-import { PanelData, LoadingState, DataSourceApi, CoreApp, urlUtil } from '@grafana/data';
+import { PanelData, LoadingState, DataSourceApi, urlUtil } from '@grafana/data';
 import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
 
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
@@ -31,11 +31,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       duration: data.request.endTime! - data.request.startTime,
     };
 
-    if (data.request.app === CoreApp.Explore || data.request.app === CoreApp.Correlations) {
-      enrichWithInfo(eventData, data);
-    } else {
-      enrichWithDashboardInfo(eventData, data);
-    }
+    enrichWithInfo(eventData, data);
 
     if (data.series && data.series.length > 0) {
       // estimate size
@@ -50,11 +46,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
   };
 
   function enrichWithInfo(eventData: DataRequestEventPayload, data: PanelData) {
-    const totalQueries = Object.keys(data.series).length;
-    eventData.totalQueries = totalQueries;
-  }
-
-  function enrichWithDashboardInfo(eventData: DataRequestEventPayload, data: PanelData) {
     const queryCacheStatus: { [key: string]: boolean } = {};
     for (let i = 0; i < data.series.length; i++) {
       const refId = data.series[i].refId;
@@ -62,12 +53,10 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
         queryCacheStatus[refId] = data.series[i].meta?.isCachedResponse ?? false;
       }
     }
-    const totalQueries = Object.keys(queryCacheStatus).length;
-    const cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
 
+    eventData.totalQueries = Object.keys(queryCacheStatus).length;
+    eventData.cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
     eventData.panelId = data.request!.panelId;
-    eventData.totalQueries = totalQueries;
-    eventData.cachedQueries = cachedQueries;
 
     const dashboard = getDashboardSrv().getCurrent();
     if (dashboard) {
@@ -77,8 +66,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       eventData.folderName = dashboard.meta.folderTitle;
     }
 
-    if (data.error) {
-      eventData.error = data.error.message;
+    if (data.errors?.length) {
+      eventData.error = data.errors.join(', ');
     }
   }
 }
