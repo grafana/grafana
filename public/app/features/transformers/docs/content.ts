@@ -959,9 +959,9 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Merge',
     getHelperDocs: function () {
       return `
-  Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel][].
-
-  In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
+  Use this transformation to combine the results from multiple queries into a single result, particularly useful when using the table panel visualization. This transformation merges values into the same row if the shared fields contain the same data.
+  
+  Here's an example illustrating the impact of the "Merge Rows" transformation on two queries returning table data:
 
   Query A:
 
@@ -983,6 +983,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | ------------------- | ------- | ------ | --------- |
   | 2020-07-07 11:34:20 | node    | 15     | 25260122  |
   | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
+
+  This transformation combines values from Query A and Query B into a unified table, enhancing the presentation of data for better insights.
   `;
     },
     links: [
