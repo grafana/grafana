@@ -133,7 +133,7 @@ jobs:
 
       - name: Get link for the Github Action job
         id: job
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
               const name = 'Detect breaking changes';
