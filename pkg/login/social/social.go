@@ -198,24 +198,12 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		if name == grafanaCom {
-			config = oauth2.Config{
-				ClientID:     info.ClientId,
-				ClientSecret: info.ClientSecret,
-				Endpoint: oauth2.Endpoint{
-					AuthURL:   cfg.GrafanaComURL + "/oauth2/authorize",
-					TokenURL:  cfg.GrafanaComURL + "/api/oauth2/token",
-					AuthStyle: oauth2.AuthStyleInHeader,
-				},
-				RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
-				Scopes:      info.Scopes,
+			grafanaComConnector, err := NewGrafanaComProvider(settingsKVs, cfg, features)
+			if err != nil {
+				ss.log.Error("Failed to create AzureAD provider", "error", err)
+				continue
 			}
-
-			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				url:                  cfg.GrafanaComURL,
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
-			}
+			ss.socialMap[grafanaCom] = grafanaComConnector
 		}
 
 		ss.oAuthProvider[name] = ss.socialMap[name].GetOAuthInfo()

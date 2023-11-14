@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,11 +25,8 @@ const (
 )
 
 func TestSocialGrafanaCom_UserInfo(t *testing.T) {
-	provider := SocialGrafanaCom{
-		SocialBase: &SocialBase{
-			log: newLogger("grafana_com_oauth_test", "debug"),
-		},
-	}
+	provider, err := NewGrafanaComProvider(map[string]interface{}{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	type conf struct {
 		skipOrgRoleSync bool
