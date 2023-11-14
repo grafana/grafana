@@ -9528,7 +9528,61 @@
       "SecretURL": {
         "$ref": "#/components/schemas/URL"
       },
-      "ServiceAccountDTO": {},
+      "ServiceAccountDTO": {
+        "description": "swagger: model",
+        "properties": {
+          "accessControl": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "serviceaccounts:delete": true,
+              "serviceaccounts:read": true,
+              "serviceaccounts:write": true
+            },
+            "type": "object"
+          },
+          "avatarUrl": {
+            "example": "/avatar/85ec38023d90823d3e5b43ef35646af9",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isDisabled": {
+            "example": false,
+            "type": "boolean"
+          },
+          "isExternal": {
+            "example": false,
+            "type": "boolean"
+          },
+          "login": {
+            "example": "sa-grafana",
+            "type": "string"
+          },
+          "name": {
+            "example": "grafana",
+            "type": "string"
+          },
+          "orgId": {
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "role": {
+            "example": "Viewer",
+            "type": "string"
+          },
+          "tokens": {
+            "example": 0,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "ServiceAccountProfileDTO": {
         "properties": {
           "accessControl": {
@@ -9573,8 +9627,8 @@
             "type": "integer"
           },
           "requiredBy": {
-            "type": "string",
-            "example": "grafana-app"
+            "example": "grafana-app",
+            "type": "string"
           },
           "role": {
             "example": "Editor",
