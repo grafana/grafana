@@ -68,6 +68,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
     if (data.errors?.length) {
       eventData.error = data.errors.join(', ');
+    } else if (data.error) {
+      eventData.error = data.error.message;
     }
   }
 }
