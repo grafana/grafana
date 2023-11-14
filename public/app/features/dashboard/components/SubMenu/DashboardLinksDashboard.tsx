@@ -43,7 +43,7 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
                 target={link.targetBlank ? '_blank' : undefined}
                 key={`dashlinks-dropdown-item-${resolvedLink.uid}-${index}`}
                 label={resolvedLink.title}
-                data-testid={selectors.components.DashboardLinks.link}
+                testId={selectors.components.DashboardLinks.link}
                 aria-label={`${resolvedLink.title} dashboard`}
               />
             );
@@ -69,6 +69,7 @@ export const DashboardLinksDashboard = (props: Props) => {
           aria-haspopup="menu"
           fill="outline"
           variant="secondary"
+          data-testid={selectors.components.DashboardLinks.dropDown}
         >
           <Icon aria-hidden name="bars" className={styles.iconMargin} />
           <span>{linkInfo.title}</span>
