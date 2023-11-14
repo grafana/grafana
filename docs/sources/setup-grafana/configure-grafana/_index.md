@@ -2487,9 +2487,9 @@ Refer to [Role-based access control]({{< relref "../../administration/roles-and-
 
 ## [navigation.app_sections]
 
-Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: `<pluginId> = <sectionId> <sortWeight>`
 
 ## [navigation.app_standalone_pages]
 
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
-Format: <pageUrl> = <sectionId> <sortWeight>
+Format: `<pageUrl> = <sectionId> <sortWeight>`

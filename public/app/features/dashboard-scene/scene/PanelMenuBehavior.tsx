@@ -1,5 +1,5 @@
 import { InterpolateFunction, PanelMenuItem } from '@grafana/data';
-import { getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -64,7 +64,9 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         shortcut: 'p s',
       });
 
-      addDataTrailAction(dashboard, panel, items);
+      if (config.featureToggles.datatrails) {
+        addDataTrailAction(dashboard, panel, items);
+      }
     }
 
     const exploreUrl = await tryGetExploreUrlForPanel(panel);
