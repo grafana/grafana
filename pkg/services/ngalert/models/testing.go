@@ -144,6 +144,12 @@ func WithOrgID(orgId int64) AlertRuleMutator {
 	}
 }
 
+func WithDashboardUID(dashboardUID string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.DashboardUID = &dashboardUID
+	}
+}
+
 func WithUniqueOrgID() AlertRuleMutator {
 	orgs := map[int64]struct{}{}
 	return func(rule *AlertRule) {
