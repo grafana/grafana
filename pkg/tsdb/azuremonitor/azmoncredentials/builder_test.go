@@ -77,7 +77,7 @@ func TestFromDatasourceData(t *testing.T) {
 			assert.Equal(t, "FAKE-LEGACY-SECRET", credential.ClientSecret)
 		})
 
-		t.Run("should return client secret credentials when auth type is specified but configuration present", func(t *testing.T) {
+		t.Run("should return client secret credentials when auth type is not specified but configuration present", func(t *testing.T) {
 			var data = map[string]interface{}{
 				"cloudName": "chinaazuremonitor",
 				"tenantId":  "LEGACY-TENANT-ID",
