@@ -13,6 +13,7 @@ import { INTEGRATION_ICONS } from 'app/features/alerting/unified/types/contact-p
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { extractReceivers } from 'app/features/alerting/unified/utils/receivers';
+import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { ReceiverMetadataBadge } from '../../../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
@@ -80,6 +81,7 @@ export function SimplifiedRouting() {
   //todo: decide what to do when there some alert managers not postable
   //const shouldShowAM = alertManagerMetaDataPostable.length > 1;
   const shouldShowAM = true;
+  const hrefToContactPoints = '/alerting/notifications';
 
   return alertManagersWithCPState.map((alertManagerContactPoint, index) => {
     return (
@@ -97,11 +99,26 @@ export function SimplifiedRouting() {
               <div className={styles.secondAlertManagerLine}></div>
             </Stack>
           )}
-          <ContactPointSelector
-            selectedReceiver={alertManagerContactPoint.selectedContactPoint}
-            dispatch={dispatch}
-            alertManager={alertManagerContactPoint.alertManager}
-          />
+          <Stack direction="row" gap={1} alignItems="center">
+            <ContactPointSelector
+              selectedReceiver={alertManagerContactPoint.selectedContactPoint}
+              dispatch={dispatch}
+              alertManager={alertManagerContactPoint.alertManager}
+            />
+            <div className={styles.contactPointsLinkRow}>
+              <Text color="secondary">To browse contact points and create new ones go to</Text>
+              <a
+                href={createUrl(hrefToContactPoints)}
+                target="__blank"
+                className={styles.link}
+                rel="noopener"
+                aria-label="View alert rule"
+              >
+                Contact points
+                <Icon name={'external-link-alt'} size="sm" />
+              </a>
+            </div>
+          </Stack>
         </Stack>
       </div>
     );
@@ -171,7 +188,7 @@ function ContactPointSelector({ selectedReceiver, alertManager, dispatch }: Cont
               const integrations = selectedReceiverData && extractReceivers(selectedReceiverData);
               return (
                 <Stack direction="row" gap={1} alignItems="center">
-                  {receiver}
+                  <Text color="primary">{receiver ?? ''}</Text>
                   {integrations?.map((integration, index) => {
                     const iconName =
                       INTEGRATION_ICONS[selectedReceiverData?.grafana_managed_receiver_configs?.[index]?.type ?? ''];
@@ -183,9 +200,7 @@ function ContactPointSelector({ selectedReceiver, alertManager, dispatch }: Cont
                           ) : iconName ? (
                             <Icon name={iconName} />
                           ) : (
-                            <Text variant="body" color="primary">
-                              {integration.name}
-                            </Text>
+                            <Text color="secondary">{integration.name}</Text>
                           )}
                         </Stack>
                       </div>
@@ -197,7 +212,6 @@ function ContactPointSelector({ selectedReceiver, alertManager, dispatch }: Cont
           />
         </div>
       </Field>
-      {/* todo add link to the contact point, and maybe add the description also? : this info is in the meta data */}
       {metadataForSelected && <ReceiverMetadataBadge metadata={metadataForSelected} />}
     </Stack>
   );
@@ -226,5 +240,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   contactPointsSelector: css({
     marginTop: theme.spacing(1),
+  }),
+  link: css({
+    color: theme.colors.primary.text,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  contactPointsLinkRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
+    paddingTop: theme.spacing(2),
+    paddingLeft: theme.spacing(2),
   }),
 });
