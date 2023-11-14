@@ -122,6 +122,12 @@ describe('LogsTable', () => {
   it('should render extracted labels as columns (elastic)', async () => {
     setup({
       logsFrame: getMockElasticFrame(),
+      columnsWithMeta: {
+        counter: { active: true, percentOfLinesWithLabel: 3 },
+        level: { active: true, percentOfLinesWithLabel: 3 },
+        line: { active: true, percentOfLinesWithLabel: 3 },
+        '@timestamp': { active: true, percentOfLinesWithLabel: 3 },
+      },
     });
 
     await waitFor(() => {
@@ -137,6 +143,8 @@ describe('LogsTable', () => {
     setup({
       columnsWithMeta: {
         foo: { active: true, percentOfLinesWithLabel: 3 },
+        Time: { active: true, percentOfLinesWithLabel: 3 },
+        line: { active: true, percentOfLinesWithLabel: 3 },
       },
     });
 
@@ -196,7 +204,16 @@ describe('LogsTable', () => {
     });
 
     it('should render a datalink for each row', async () => {
-      render(getComponent({}, getMockLokiFrameDataPlane()));
+      render(
+        getComponent(
+          {
+            columnsWithMeta: {
+              traceID: { active: true, percentOfLinesWithLabel: 3 },
+            },
+          },
+          getMockLokiFrameDataPlane()
+        )
+      );
 
       await waitFor(() => {
         const links = screen.getAllByRole('link');
@@ -229,12 +246,13 @@ describe('LogsTable', () => {
       setup({
         columnsWithMeta: {
           foo: { active: true, percentOfLinesWithLabel: 3 },
+          line: { active: true, percentOfLinesWithLabel: 3 },
+          Time: { active: true, percentOfLinesWithLabel: 3 },
         },
       });
 
       await waitFor(() => {
         const columns = screen.getAllByRole('columnheader');
-
         expect(columns[0].textContent).toContain('Time');
         expect(columns[1].textContent).toContain('line');
         expect(columns[2].textContent).toContain('foo');
