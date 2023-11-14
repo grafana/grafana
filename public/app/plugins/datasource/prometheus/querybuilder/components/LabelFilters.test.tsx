@@ -66,8 +66,19 @@ describe('LabelFilters', () => {
 
   it('removes label', async () => {
     const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
-    await userEvent.click(screen.getByLabelText(/remove/));
+    await userEvent.click(screen.getByLabelText(/remove-foo/));
     expect(onChange).toBeCalledWith([]);
+  });
+
+  it('removes label but preserves a label with a value of empty string', async () => {
+    const { onChange } = setup({
+      labelsFilters: [
+        { label: 'foo', op: '=', value: 'bar' },
+        { label: 'le', op: '=', value: '' },
+      ],
+    });
+    await userEvent.click(screen.getByLabelText(/remove-foo/));
+    expect(onChange).toBeCalledWith([{ label: 'le', op: '=', value: '' }]);
   });
 
   it('renders empty input when labels are deleted from outside ', async () => {

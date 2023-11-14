@@ -49,7 +49,8 @@ export function LabelFilters({
     setItems(newItems);
 
     // Extract full label filters with both label & value
-    const newLabels = newItems.filter((x) => x.label != null && x.value != null);
+    const newLabels = newItems.filter((x) => x.label !== null && (x.value !== null || x.value !== ''));
+    debugger;
     if (!isEqual(newLabels, labelsFilters)) {
       onChange(newLabels);
     }
