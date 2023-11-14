@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
+import { throttleTime } from 'rxjs';
 
-import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
+import { DashboardCursorSync, DataFrame, DataHoverClearEvent, DataHoverEvent, Field, FieldMatcherID, FieldType, getFrameDisplayName, isTimeSeriesFrames, PanelProps, SelectableValue } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
+import { hasTimeField } from '@grafana/ui/src/components/Table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
@@ -13,6 +15,7 @@ interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id, timeRange } = props;
+  const [rowTimeValue, setRowTimeValue] = React.useState<number | undefined>(undefined);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -25,6 +28,57 @@ export function TablePanel(props: Props) {
   const main = frames[currentIndex];
 
   let tableHeight = height;
+
+  useEffect(() => {
+    if (!panelContext.sync || panelContext.sync() === DashboardCursorSync.Off || !isTimeSeriesFrames(frames)) {
+      return;
+    }
+
+    const sub = panelContext.eventBus.getStream(DataHoverEvent)
+    .pipe(throttleTime(50))
+    .subscribe({
+      next: (evt) => {
+        if (panelContext.eventBus === evt.origin) {
+          return;
+        }
+
+        if (evt.payload.point.time) {
+          setRowTimeValue(evt.payload.point.time);
+        }
+      },
+    })
+
+    return () => {
+      sub.unsubscribe();
+    };
+  }, [panelContext, frames]);
+
+  const onRowHover = useCallback(
+    (idx: number, frame: DataFrame) => {
+      if (!panelContext.sync || panelContext.sync() === DashboardCursorSync.Off) {
+        return;
+      }
+
+      if (!hasTimeField(frame!)) {
+        return;
+      }
+
+      const timeField: Field = frame!.fields.find((f) => f.type === FieldType.time)!;
+
+      panelContext.eventBus.publish(
+        new DataHoverEvent({
+          point: {
+            time: timeField.values[idx]
+          },
+        })
+      );
+    },
+    [panelContext]
+  );
+
+  const onRowLeave = useCallback(() => {
+    panelContext.eventBus.publish(new DataHoverClearEvent());
+  }, [panelContext.eventBus]);
 
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
@@ -53,6 +107,9 @@ export function TablePanel(props: Props) {
       enablePagination={options.footer?.enablePagination}
       cellHeight={options.cellHeight}
       timeRange={timeRange}
+      onRowHover={onRowHover}
+      onRowLeave={onRowLeave}
+      rowTimeValue={rowTimeValue}
     />
   );
 

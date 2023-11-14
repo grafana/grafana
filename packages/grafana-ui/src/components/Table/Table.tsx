@@ -12,7 +12,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID } from '@grafana/data';
+import { DataFrame, FieldType, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -50,6 +50,9 @@ export const Table = memo((props: Props) => {
     enablePagination,
     cellHeight = TableCellHeight.Sm,
     timeRange,
+    onRowHover,
+    onRowLeave,
+    rowTimeValue
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -238,6 +241,27 @@ export const Table = memo((props: Props) => {
     [state.pageIndex, state.pageSize]
   );
 
+  const onRowMouseEnter = useCallback((idx: number, frame: DataFrame) => {
+    if (!onRowHover) {
+      return;
+    }
+
+    onRowHover(idx, frame);
+  }, [onRowHover])
+
+  const onRowMouseLeave = useCallback(() => {
+    if (!onRowLeave) {
+      return;
+    }
+
+    onRowLeave();
+  }, [onRowLeave])
+
+  const aroundMilisecond = (n: number, m: number) => {
+    const floored = Math.floor(n);
+    return m - 1000 < floored && floored < m + 1000;
+  }
+
   const RenderRow = useCallback(
     ({ index, style }: { index: number; style: CSSProperties }) => {
       const indexForPagination = rowIndexForPagination(index);
@@ -246,9 +270,21 @@ export const Table = memo((props: Props) => {
       prepareRow(row);
 
       const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
+      let sharedCrosshairStyle = {};
+      // const timeField = data.fields.find((f) => f.type === FieldType.time);
+      // console.log(rowTimeValue, timeField?.values[indexForPagination]);
+
+      if (rowTimeValue) {
+        const timeField = data.fields.find((f) => f.type === FieldType.time);
+
+        console.log(aroundMilisecond(rowTimeValue, timeField?.values[indexForPagination]));
+        if (aroundMilisecond(rowTimeValue, timeField?.values[indexForPagination])) {
+          sharedCrosshairStyle = css({ '&:hover': { background: 'inherit' } });
+        }
+      }
 
       return (
-        <div {...row.getRowProps({ style })} className={cx(tableStyles.row, expandedRowStyle)}>
+        <div {...row.getRowProps({ style })} className={cx(tableStyles.row, sharedCrosshairStyle, expandedRowStyle)} onMouseEnter={() => onRowMouseEnter(index, data)} onMouseLeave={onRowMouseLeave}>
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {nestedDataField && state.expanded[row.index] && (
             <ExpandedRow
@@ -286,6 +322,9 @@ export const Table = memo((props: Props) => {
       onCellFilterAdded,
       timeRange,
       data,
+      onRowMouseEnter,
+      onRowMouseLeave,
+      rowTimeValue
     ]
   );
 

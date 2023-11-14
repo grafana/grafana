@@ -94,6 +94,9 @@ export interface Props {
   cellHeight?: schema.TableCellHeight;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
+  onRowHover?: (idx: number, frame: DataFrame) => void;
+  onRowLeave?: () => void;
+  rowTimeValue?: number;
 }
 
 /**
