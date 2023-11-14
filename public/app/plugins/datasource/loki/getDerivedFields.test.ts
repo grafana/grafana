@@ -1,5 +1,4 @@
 import { createDataFrame } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { getDerivedFields } from './getDerivedFields';
 
@@ -22,14 +21,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('getDerivedFields', () => {
-  beforeAll(() => {
-    config.featureToggles.lokiDerivedFieldsFromLabels = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.lokiDerivedFieldsFromLabels = false;
-  });
-
   it('adds links to fields', () => {
     const df = createDataFrame({ fields: [{ name: 'line', values: ['nothing', 'trace1=1234', 'trace2=foo'] }] });
     const newFields = getDerivedFields(df, [

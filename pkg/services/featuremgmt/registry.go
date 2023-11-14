@@ -1046,13 +1046,6 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 		},
-		{
-			Name:         "lokiDerivedFieldsFromLabels",
-			Description:  "Provide an option to match Loki's derived fields using labels",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
 	}
 )
 

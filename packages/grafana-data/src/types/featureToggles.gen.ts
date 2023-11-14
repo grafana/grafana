@@ -162,5 +162,4 @@ export interface FeatureToggles {
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
   alertingSimplifiedRouting?: boolean;
-  lokiDerivedFieldsFromLabels?: boolean;
 }

@@ -163,7 +163,6 @@ Experimental features might be changed or removed without prior notice.
 | `dashboardSceneForViewers`                  | Enables dashboard rendering using Scenes for viewer roles                                                                                                                                                                                                                         |
 | `logsInfiniteScrolling`                     | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                                                                                                                                                                           |
 | `flameGraphItemCollapsing`                  | Allow collapsing of flame graph items                                                                                                                                                                                                                                             |
-| `lokiDerivedFieldsFromLabels`               | Provide an option to match Loki's derived fields using labels                                                                                                                                                                                                                     |
 
 ## Development feature toggles
 

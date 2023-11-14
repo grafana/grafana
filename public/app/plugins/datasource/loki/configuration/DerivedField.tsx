@@ -3,7 +3,6 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Select, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -81,35 +80,33 @@ export const DerivedField = (props: Props) => {
         <Field className={styles.nameField} label="Name" invalid={invalidName} error="The name is already in use">
           <Input value={value.name} onChange={handleChange('name')} placeholder="Field name" invalid={invalidName} />
         </Field>
-        {config.featureToggles.lokiDerivedFieldsFromLabels && (
-          <Field
-            className={styles.nameMatcherField}
-            label={
-              <TooltipLabel
-                label="Type"
-                content="Derived fields can be created from labels or by applying a regular expression to the log message."
-              />
-            }
-          >
-            <Select
-              options={[
-                { label: 'Regex in log line', value: 'regex' },
-                { label: 'Label', value: 'label' },
-              ]}
-              value={fieldType}
-              onChange={(type) => {
-                // make sure this is a valid MatcherType
-                if (type.value === 'label' || type.value === 'regex') {
-                  setFieldType(type.value);
-                  onChange({
-                    ...value,
-                    matcherType: type.value,
-                  });
-                }
-              }}
+        <Field
+          className={styles.nameMatcherField}
+          label={
+            <TooltipLabel
+              label="Type"
+              content="Derived fields can be created from labels or by applying a regular expression to the log message."
             />
-          </Field>
-        )}
+          }
+        >
+          <Select
+            options={[
+              { label: 'Regex in log line', value: 'regex' },
+              { label: 'Label', value: 'label' },
+            ]}
+            value={fieldType}
+            onChange={(type) => {
+              // make sure this is a valid MatcherType
+              if (type.value === 'label' || type.value === 'regex') {
+                setFieldType(type.value);
+                onChange({
+                  ...value,
+                  matcherType: type.value,
+                });
+              }
+            }}
+          />
+        </Field>
         <Field
           className={styles.regexField}
           label={

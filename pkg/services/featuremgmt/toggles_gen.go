@@ -582,8 +582,4 @@ const (
 	// FlagAlertingSimplifiedRouting
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
-
-	// FlagLokiDerivedFieldsFromLabels
-	// Provide an option to match Loki&#39;s derived fields using labels
-	FlagLokiDerivedFieldsFromLabels = "lokiDerivedFieldsFromLabels"
 )
