@@ -63,7 +63,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
     // do not show the log message unless there is a link attached
     const fields =
       row.dataFrame.meta?.type === DataFrameType.LogLines
-        ? // for DataFrameType.LogLines frames we don't want to show any additional fields besides the labels
+        ? // for DataFrameType.LogLines frames we don't want to show any additional fields besides already extracted labels and links
           []
         : fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
