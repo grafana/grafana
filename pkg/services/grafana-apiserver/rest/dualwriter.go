@@ -45,6 +45,10 @@ type LegacyStorage interface {
 // Storage is used for all read operations.  This is useful as a migration step from SQL based
 // legacy storage to a more standard kubernetes backed storage interface.
 //
+// NOTE: Only values supported by legacy storage will be preserved in the CREATE/UPDATE commands.
+// For example, annotations, labels, and managed fields may not be preserved.  Everything in upstream
+// storage can be recrated from the data in legacy storage.
+//
 // The LegacyStorage implementation must implement the following interfaces:
 // - rest.Storage
 // - rest.TableConvertor
