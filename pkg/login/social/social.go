@@ -159,15 +159,12 @@ func ProvideService(cfg *setting.Cfg,
 
 		// Google.
 		if name == "google" {
-			if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
-				ss.log.Warn("Using legacy Google API URL, please update your configuration")
+			googleConnector, err := NewGoogleProvider(settingsKVs, cfg, features)
+			if err != nil {
+				ss.log.Error("Failed to create Google provider", "error", err)
+				continue
 			}
-			ss.socialMap["google"] = &SocialGoogle{
-				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				hostedDomain:    info.HostedDomain,
-				apiUrl:          info.ApiUrl,
-				skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
-			}
+			ss.socialMap["google"] = googleConnector
 		}
 
 		// AzureAD.
