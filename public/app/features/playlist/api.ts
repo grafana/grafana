@@ -4,7 +4,6 @@ import { DataQueryRequest, DataFrameView } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
@@ -59,8 +58,7 @@ class K8sAPI implements PlaylistAPI {
   readonly url: string;
 
   constructor() {
-    const ns = contextSrv.user.orgId === 1 ? 'default' : `org-${contextSrv.user.orgId}`;
-    this.url = `/apis/${this.apiVersion}/namespaces/${ns}/playlists`;
+    this.url = `/apis/${this.apiVersion}/namespaces/${config.namespace}/playlists`;
   }
 
   async getAllPlaylist(): Promise<Playlist[]> {

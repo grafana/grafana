@@ -12,6 +12,10 @@ import {
   HIDE_THRESHOLD,
   LABEL_THRESHOLD,
   PIXELS_PER_LEVEL,
+  GROUP_STRIP_WIDTH,
+  GROUP_STRIP_PADDING,
+  GROUP_STRIP_MARGIN_LEFT,
+  GROUP_TEXT_OFFSET,
 } from '../constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
 
@@ -146,7 +150,7 @@ function useRenderFunc(
               label,
               item,
               width,
-              textAlign === 'left' ? x + groupStripMarginLeft + 4 : x,
+              textAlign === 'left' ? x + GROUP_STRIP_MARGIN_LEFT + GROUP_TEXT_OFFSET : x,
               y,
               textAlign
             );
@@ -162,8 +166,6 @@ function useRenderFunc(
     };
   }, [ctx, getBarColor, textAlign, data, collapsedMap]);
 }
-
-const groupStripMarginLeft = 8;
 
 /**
  * Render small strip on the left side of the bar to indicate that this item is part of a group that can be collapsed.
@@ -182,12 +184,11 @@ function renderGroupingStrip(
   item: LevelItem,
   collapsedItemConfig: CollapseConfig
 ) {
-  const groupStripX = x + groupStripMarginLeft;
-  const groupStripWidth = 6;
+  const groupStripX = x + GROUP_STRIP_MARGIN_LEFT;
 
   // This is to mask the label in case we align it right to left.
   ctx.beginPath();
-  ctx.rect(x, y, groupStripX - x + groupStripWidth + 6, height);
+  ctx.rect(x, y, groupStripX - x + GROUP_STRIP_WIDTH + GROUP_STRIP_PADDING, height);
   ctx.fill();
 
   // For item in a group that can be collapsed, we draw a small strip to mark them. On the items that are at the
@@ -195,16 +196,16 @@ function renderGroupingStrip(
   // visually.
   ctx.beginPath();
   if (collapsedItemConfig.collapsed) {
-    ctx.rect(groupStripX, y + height / 4, groupStripWidth, height / 2);
+    ctx.rect(groupStripX, y + height / 4, GROUP_STRIP_WIDTH, height / 2);
   } else {
     if (collapsedItemConfig.items[0] === item) {
       // Top item
-      ctx.rect(groupStripX, y + height / 2, groupStripWidth, height / 2);
+      ctx.rect(groupStripX, y + height / 2, GROUP_STRIP_WIDTH, height / 2);
     } else if (collapsedItemConfig.items[collapsedItemConfig.items.length - 1] === item) {
       // Bottom item
-      ctx.rect(groupStripX, y, groupStripWidth, height / 2);
+      ctx.rect(groupStripX, y, GROUP_STRIP_WIDTH, height / 2);
     } else {
-      ctx.rect(groupStripX, y, groupStripWidth, height);
+      ctx.rect(groupStripX, y, GROUP_STRIP_WIDTH, height);
     }
   }
 
