@@ -11,7 +11,11 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+const oktaProviderName = "okta"
 
 type SocialOkta struct {
 	*SocialBase
@@ -37,6 +41,28 @@ type OktaClaims struct {
 	Email             string `json:"email"`
 	PreferredUsername string `json:"preferred_username"`
 	Name              string `json:"name"`
+}
+
+func NewOktaProvider(settings map[string]interface{}, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialOkta, error) {
+	info, err := createOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+	config := createOAuthConfig(info, cfg, oktaProviderName)
+	provider := &SocialOkta{
+		SocialBase:    newSocialBase(oktaProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		apiUrl:        info.ApiUrl,
+		allowedGroups: info.AllowedGroups,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+		skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
+	}
+
+	if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+		appendUniqueScope(config, OfflineAccessScope)
+	}
+
+	return provider, nil
 }
 
 func (claims *OktaClaims) extractEmail() string {

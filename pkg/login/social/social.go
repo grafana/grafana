@@ -182,15 +182,13 @@ func ProvideService(cfg *setting.Cfg,
 
 		// Okta
 		if name == "okta" {
-			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:          info.ApiUrl,
-				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
-				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
+			settingsKV := convertIniSectionToMap(sec)
+			oktaConnector, err := NewOktaProvider(settingsKV, cfg, features)
+			if err != nil {
+				ss.log.Error("Failed to create Okta provider", "error", err)
+				continue
 			}
-			if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-				appendUniqueScope(&config, OfflineAccessScope)
-			}
+			ss.socialMap["okta"] = oktaConnector
 		}
 
 		if name == "generic_oauth" {
