@@ -182,7 +182,7 @@ const enum Op {
   NOT_IN = 'select_not_any_in',
   MACROS = 'macros',
 }
-const customOperators: typeof BasicConfig.operators = getCustomOperators(BasicConfig);
+const customOperators = getCustomOperators(BasicConfig);
 const textWidget = BasicConfig.types.text.widgets.text;
 const opers = [...(textWidget.operators || []), Op.IN, Op.NOT_IN];
 const customTextWidget = {
