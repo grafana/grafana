@@ -75,7 +75,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	rowTransformer := mysqlQueryResultTransformer{}
 
-	exe, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &rowTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
+	exe, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &rowTransformer, newMysqlMacroEngine(context.TODO(), logger), logger)
 
 	require.NoError(t, err)
 
@@ -1166,7 +1166,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 			queryResultTransformer := mysqlQueryResultTransformer{}
 
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
+			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMysqlMacroEngine(context.TODO(), logger), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {

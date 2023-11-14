@@ -103,6 +103,9 @@ func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalSe
 			m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
 		}
 	}
+
+	m["GF_LOG_USER_FACING_DEFAULT_ERROR"] = s.cfg.UserFacingDefaultError
+
 	// TODO add support via plugin SDK
 	//if s.cfg.AWSAssumeRoleEnabled {
 	//	m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"

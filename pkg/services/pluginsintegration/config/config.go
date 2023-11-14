@@ -39,6 +39,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.SecureSocksDSProxy,
 		grafanaCfg.BuildVersion,
 		grafanaCfg.PluginLogBackendRequests,
+		grafanaCfg.UserFacingDefaultError,
 		grafanaCfg.PluginsCDNURLTemplate,
 		grafanaCfg.AppURL,
 		grafanaCfg.AppSubURL,

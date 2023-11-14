@@ -149,7 +149,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			userError: cfg.UserFacingDefaultError,
 		}
 
-		return sqleng.NewQueryDataHandler(cfg, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
+		return sqleng.NewQueryDataHandler(cfg, config, &rowTransformer, newMysqlMacroEngine(ctx, logger), logger)
 	}
 }
 

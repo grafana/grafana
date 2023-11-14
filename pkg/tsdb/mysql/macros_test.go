@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -8,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
 )
@@ -195,7 +195,7 @@ func TestMacroEngine(t *testing.T) {
 }
 
 func TestMacroEngineConcurrency(t *testing.T) {
-	engine := newMysqlMacroEngine(log.New("test"), setting.NewCfg())
+	engine := newMysqlMacroEngine(context.TODO(), log.New("test"))
 	query1 := backend.DataQuery{
 		JSON: []byte{},
 	}

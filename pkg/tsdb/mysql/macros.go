@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -8,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -23,11 +23,15 @@ type mySQLMacroEngine struct {
 	userError string
 }
 
-func newMysqlMacroEngine(logger log.Logger, cfg *setting.Cfg) sqleng.SQLMacroEngine {
+func newMysqlMacroEngine(ctx context.Context, logger log.Logger) sqleng.SQLMacroEngine {
+	userFacingDefaultError := "please inspect Grafana server log for details"
+	if gCfg := backend.GrafanaConfigFromContext(ctx); gCfg != nil {
+		userFacingDefaultError = gCfg.Get("GF_LOG_USER_FACING_DEFAULT_ERROR")
+	}
 	return &mySQLMacroEngine{
 		SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(),
 		logger:             logger,
-		userError:          cfg.UserFacingDefaultError,
+		userError:          userFacingDefaultError,
 	}
 }
 
