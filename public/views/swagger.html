@@ -33,7 +33,7 @@
       }
 
       .topbar-wrapper img {
-          content: url('./public/img/grafana_icon.svg');
+        content: url('./public/img/grafana_icon.svg');
       }
     </style>
   </head>
@@ -58,23 +58,11 @@
       referrerpolicy="no-referrer"
     ></script>
     <script nonce="[[.Nonce]]">
-      window.onload = async function () {
+      window.onload = function () {
         const urls = [
-            {name: 'Grafana API', url: "/public/api-merged.json"},
+          { name: 'Grafana API', url: '/public/api-merged.json' },
+          { name: 'Kubernetes', url: '/openapi/v2' },
         ];
-        try {
-          const rsp = await fetch('/openapi/v3');
-          const apis = await rsp.json();
-          for (const [key, value] of Object.entries(apis.paths)) {
-            const parts = key.split('/');
-            if (parts.length == 3) {
-              urls.push({name: `${parts[1]}/${parts[2]}`, url: value.serverRelativeURL});
-            }
-          }
-        }
-        catch (err) {
-          console.warn('Error loading k8s apis', err);
-        }
 
         // Begin Swagger UI call region
         const ui = SwaggerUIBundle({
