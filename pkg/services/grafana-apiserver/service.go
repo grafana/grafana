@@ -267,6 +267,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverConfig.Authorization.Authorizer = s.authorizer
+	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Add OpenAPI specs for each group+version
 	defsGetter := getOpenAPIDefinitions(builders)
@@ -300,12 +301,10 @@ func (s *service) start(ctx context.Context) error {
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
 
-	gitVersion, err := GetK8sApiserverPkgSemver()
+	k8sVersion, err := getK8sApiserverVersion()
 	if err != nil {
-		panic(err)
+		return err
 	}
-
-	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 	before, after, _ := strings.Cut(setting.BuildVersion, ".")
 	serverConfig.Version = &version.Info{
 		Major:        before,
@@ -316,9 +315,7 @@ func (s *service) start(ctx context.Context) error {
 		GitTreeState: setting.BuildBranch,
 		GitCommit:    setting.BuildCommit,
 		BuildDate:    time.Unix(setting.BuildStamp, 0).UTC().Format(time.DateTime),
-
-		// This is used by kubectl to check compatibility.
-		GitVersion: gitVersion, //"v1.28.3", // ???? how do we get this programmatically
+		GitVersion:   k8sVersion,
 	}
 
 	// Create the server
@@ -433,14 +430,13 @@ func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) 
 	return f.fn(req)
 }
 
-// gets the k8s version according to git
-func GetK8sApiserverPkgSemver() (string, error) {
+// find the k8s version according to build info
+func getK8sApiserverVersion() (string, error) {
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
 		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
 	}
 
-	gitVersion := ""
 	for _, dep := range bi.Deps {
 		if dep.Path == "k8s.io/apiserver" {
 			if !semver.IsValid(dep.Version) {
@@ -453,9 +449,7 @@ func GetK8sApiserverPkgSemver() (string, error) {
 				return "", fmt.Errorf("could not convert majorVersion to int. majorVersion: %s", majorVersion)
 			}
 			newMajor := fmt.Sprintf("v%d", majorInt+1)
-			// replace
-			gitVersion = strings.Replace(dep.Version, semver.Major(dep.Version), newMajor, 1)
-			return gitVersion, nil
+			return strings.Replace(dep.Version, semver.Major(dep.Version), newMajor, 1), nil
 		}
 	}
 

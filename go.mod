@@ -274,8 +274,6 @@ require (
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // @grafana/partner-datasources
 )
 
-// When upgrading k8s, be sure to set the &version.Info{ GitVersion: "???" } in:
-// https://github.com/grafana/grafana/blob/main/pkg/services/grafana-apiserver/service.go#L314
 require (
 	github.com/spf13/cobra v1.7.0 // @grafana/grafana-app-platform-squad
 	go.opentelemetry.io/otel v1.19.0 // @grafana/backend-platform
