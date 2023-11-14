@@ -669,11 +669,11 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Histogram',
     getHelperDocs: function () {
       return `
-  Use this transformation to generate a histogram based on the input data.
+  Use this transformation to generate a histogram based on input data, allowing you to visualize the distribution of values.
 
-  - **Bucket size** - The distance between the lowest item in the bucket (xMin) and the highest item in the bucket (xMax).
-  - **Bucket offset** - The offset for non-zero based buckets.
-  - **Combine series** - Create a histogram using all the available series.
+  - **Bucket size:** The range between the lowest and highest items in a bucket (xMin to xMax).
+  - **Bucket offset:** The offset for non-zero-based buckets.
+  - **Combine series:** Create a unified histogram using all available series.
 
   **Original data**
 
@@ -710,6 +710,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 7    | 8    | 0   | 1   | 1   | 1   |
   | 8    | 9    | 0   | 0   | 1   | 1   |
   | 9    | 10   | 0   | 0   | 1   | 1   |
+
+  Visualize the distribution of values using the generated histogram, providing insights into the data's spread and density.
   `;
     },
   },
