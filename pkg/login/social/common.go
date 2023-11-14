@@ -7,12 +7,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/jmespath/go-jmespath"
+	"github.com/mitchellh/mapstructure"
 	"golang.org/x/oauth2"
+	"gopkg.in/ini.v1"
 )
 
 var (
@@ -195,4 +199,54 @@ func mustString(value interface{}) string {
 	}
 
 	return result
+}
+
+// convertIniSectionToMap converts key value pairs from an ini section to a map[string]interface{}
+func convertIniSectionToMap(sec *ini.Section) map[string]interface{} {
+	mappedSettings := make(map[string]interface{})
+	for k, v := range sec.KeysHash() {
+		mappedSettings[k] = v
+	}
+	return mappedSettings
+}
+
+// createOAuthInfoFromKeyValues creates an OAuthInfo struct from a map[string]interface{} using mapstructure
+// it puts all extra key values into OAuthInfo's Extra map
+func createOAuthInfoFromKeyValues(settingsKV map[string]interface{}) (*OAuthInfo, error) {
+	emptyStrToSliceDecodeHook := func(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {
+		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
+			strData, ok := data.(string)
+			if !ok {
+				return nil, fmt.Errorf("failed to convert %v to string", data)
+			}
+
+			if strData == "" {
+				return []string{}, nil
+			}
+			return util.SplitString(strData), nil
+		}
+		return data, nil
+	}
+
+	var oauthInfo OAuthInfo
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		DecodeHook:       emptyStrToSliceDecodeHook,
+		Result:           &oauthInfo,
+		WeaklyTypedInput: true,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = decoder.Decode(settingsKV)
+	if err != nil {
+		return nil, err
+	}
+
+	if oauthInfo.EmptyScopes {
+		oauthInfo.Scopes = []string{}
+	}
+
+	return &oauthInfo, err
 }
