@@ -139,6 +139,7 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID
 
 	if s.isProxyEnabled {
 		sa.IsExternal = isExternalServiceAccount(sa.Login)
+		sa.RequiredBy = strings.ReplaceAll(sa.Name, serviceaccounts.ExtSvcPrefix, "")
 	}
 
 	return sa, nil

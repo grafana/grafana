@@ -40,6 +40,7 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
             continue;
           }
         }
+        field.values.push(null);
       } else if (derivedFieldsGrouped[field.name][0].matcherType !== 'regex') {
         // `matcherRegex` will actually be used as a RegExp here
         const line = lineField.values[i];
@@ -50,6 +51,8 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
           continue;
         }
 
+        field.values.push(null);
+      } else {
         field.values.push(null);
       }
     }
