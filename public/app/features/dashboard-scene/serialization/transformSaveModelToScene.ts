@@ -1,4 +1,5 @@
 import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -28,6 +29,7 @@ import {
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
+import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
@@ -188,12 +190,29 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
+        key: `annnotations-${a.name}`,
         query: a,
         name: a.name,
         isEnabled: Boolean(a.enable),
         isHidden: Boolean(a.hide),
       });
     });
+  }
+
+  let shouldUseAlertStatesLayer = config.unifiedAlertingEnabled;
+  if (!shouldUseAlertStatesLayer) {
+    if (oldModel.panels.find((panel) => Boolean(panel.alert))) {
+      shouldUseAlertStatesLayer = true;
+    }
+  }
+
+  if (shouldUseAlertStatesLayer) {
+    layers.push(
+      new AlertStatesDataLayer({
+        key: 'alert-states',
+        name: 'Alert States',
+      })
+    );
   }
 
   return new DashboardScene({

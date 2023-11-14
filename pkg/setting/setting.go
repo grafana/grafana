@@ -361,7 +361,7 @@ type Cfg struct {
 	ApiKeyMaxSecondsToLive int64
 
 	// Check if a feature toggle is enabled
-	// @deprecated
+	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
 	AnonymousEnabled     bool
@@ -1168,6 +1168,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
+	// nolint:staticcheck
 	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
 	}
