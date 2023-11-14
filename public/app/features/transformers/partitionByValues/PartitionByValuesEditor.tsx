@@ -19,6 +19,8 @@ import {
 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
+
 import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
 export function PartitionByValuesEditor({
@@ -145,4 +147,5 @@ export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<Par
   description: partitionByValuesTransformer.description,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.Reformat]),
+  help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
 };

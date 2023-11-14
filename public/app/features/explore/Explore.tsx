@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { get, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { createRef } from 'react';
+import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -151,7 +151,6 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
 
 export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
-  topOfViewRef = createRef<HTMLDivElement>();
   graphEventBus: EventBus;
   logsEventBus: EventBus;
   memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
@@ -580,7 +579,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
               hideHorizontalTrack
             >
-              <div className={styles.exploreContainer} ref={this.topOfViewRef}>
+              <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
                     <ContentOutlineItem title="Queries" icon="arrow">

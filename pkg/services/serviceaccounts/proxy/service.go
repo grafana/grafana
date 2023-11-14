@@ -41,7 +41,7 @@ func ProvideServiceAccountsProxy(
 		isProxyEnabled: features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabled(featuremgmt.FlagExternalServiceAuth),
 	}
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService)
+	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService, features)
 	serviceaccountsAPI.RegisterAPIEndpoints()
 
 	return s, nil

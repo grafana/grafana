@@ -150,7 +150,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
             />
           </InlineSearchField>
           <InlineSearchField
-            label={'Duration'}
+            label={'Span Duration'}
             tooltip="The span duration, i.e.	end - start time of the span. Accepted units are ns, ms, s, m, h"
           >
             <HorizontalGroup spacing={'sm'}>

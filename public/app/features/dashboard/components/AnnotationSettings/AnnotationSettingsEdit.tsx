@@ -10,7 +10,6 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
@@ -23,6 +22,7 @@ import {
   MultiSelect,
   Select,
   useStyles2,
+  Stack,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import config from 'app/core/config';
