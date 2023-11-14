@@ -91,10 +91,14 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
             icon="plus"
             onClick={(event) => {
               event.preventDefault();
-              const newDerivedFields = [
-                ...fields,
-                { name: '', matcherRegex: '', urlDisplayLabel: '', url: '', enableNameMatcher: false },
-              ];
+              const emptyConfig: DerivedFieldConfig = {
+                name: '',
+                matcherRegex: '',
+                urlDisplayLabel: '',
+                url: '',
+                matcherType: 'regex',
+              };
+              const newDerivedFields = [...fields, emptyConfig];
               onChange(newDerivedFields);
             }}
           >
