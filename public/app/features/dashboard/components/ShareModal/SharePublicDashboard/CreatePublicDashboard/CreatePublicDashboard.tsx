@@ -33,11 +33,14 @@ interface CreatePublicDashboarBaseProps {
   unsupportedDatasources?: string[];
   unsupportedTemplateVariables?: boolean;
   dashboard: DashboardModel | DashboardScene;
+  hasError?: boolean;
 }
+
 export const CreatePublicDashboardBase = ({
   unsupportedDatasources = [],
   unsupportedTemplateVariables = false,
   dashboard,
+  hasError = false,
 }: CreatePublicDashboarBaseProps) => {
   const styles = useStyles2(getStyles);
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -47,7 +50,7 @@ export const CreatePublicDashboardBase = ({
     trackDashboardSharingActionPerType('generate_public_url', shareDashboardType.publicDashboard);
   };
 
-  const disableInputs = !hasWritePermissions || isLoading || isError;
+  const disableInputs = !hasWritePermissions || isLoading || isError || hasError;
 
   return (
     <div className={styles.container}>
@@ -88,7 +91,7 @@ export const CreatePublicDashboardBase = ({
   );
 };
 
-export function CreatePublicDashboard() {
+export function CreatePublicDashboard({ hasError }: { hasError?: boolean }) {
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
@@ -99,6 +102,7 @@ export function CreatePublicDashboard() {
       dashboard={dashboard}
       unsupportedDatasources={unsupportedDataSources}
       unsupportedTemplateVariables={hasTemplateVariables}
+      hasError={hasError}
     />
   );
 }

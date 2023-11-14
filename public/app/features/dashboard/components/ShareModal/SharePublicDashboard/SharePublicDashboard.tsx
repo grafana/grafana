@@ -30,7 +30,7 @@ export const Loader = () => {
 };
 
 export const SharePublicDashboard = (props: Props) => {
-  const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(props.dashboard.uid);
+  const { data: publicDashboard, isLoading, isError } = useGetPublicDashboardQuery(props.dashboard.uid);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
@@ -40,7 +40,7 @@ export const SharePublicDashboard = (props: Props) => {
       {isLoading ? (
         <Loader />
       ) : !publicDashboardPersisted(publicDashboard) ? (
-        <CreatePublicDashboard />
+        <CreatePublicDashboard hasError={isError} />
       ) : (
         <ConfigPublicDashboard publicDashboard={publicDashboard!} unsupportedDatasources={unsupportedDataSources} />
       )}
