@@ -44,14 +44,14 @@ func (r *Registry) HasExternalService(ctx context.Context, name string) (bool, e
 // GetExternalServiceNames returns the list of external services registered in store.
 func (r *Registry) GetExternalServiceNames(ctx context.Context) ([]string, error) {
 	names := []string{}
-	if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
 		var err error
 		names, err = r.saReg.GetExternalServiceNames(ctx)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 		// Only add names that have not been added yet.
 		already := map[string]bool{}
 		for i := range names {
