@@ -214,12 +214,3 @@ function getStyles(theme: GrafanaTheme2) {
     }),
   };
 }
-
-{
-  /* <Card
-key={index}
-href={sceneGraph.interpolate(model, `\${__url.path}\${__url.params}&metric=${option.value}`)}
->
-<Card.Heading>{String(option.value)}</Card.Heading>
-</Card> */
-}
