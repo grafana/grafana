@@ -1,15 +1,21 @@
 <!-- HTML for static distribution bundle build -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Swagger UI</title>
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui.css" integrity="sha384-pzdBB6iZwPIzBHgXle+9cgvKuMgtWNrBopXkjrWnKCi3m4uJsPPdLQ4IPMqRDirS" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui.css"
+      integrity="sha384-pzdBB6iZwPIzBHgXle+9cgvKuMgtWNrBopXkjrWnKCi3m4uJsPPdLQ4IPMqRDirS"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
     <style>
-      html
-      {
+      html {
         box-sizing: border-box;
         overflow: -moz-scrollbars-vertical;
         overflow-y: scroll;
@@ -17,14 +23,12 @@
 
       *,
       *:before,
-      *:after
-      {
+      *:after {
         box-sizing: inherit;
       }
 
-      body
-      {
-        margin:0;
+      body {
+        margin: 0;
         background: #fafafa;
       }
     </style>
@@ -33,31 +37,56 @@
   <body>
     <div id="swagger-ui"></div>
 
-    <script nonce="[[.Nonce]]" src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-bundle.js" charset="UTF-8" integrity="sha384-BGJ5JzR5LEl4ETmxXXlZtXtMWj3uQ9jj9/OHe3yrn5rrtAyLOz1SyyzwMfuwZgPc" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script nonce="[[.Nonce]]" src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-standalone-preset.js" charset="UTF-8" integrity="sha384-AWSfISmlS8fS336GXRkpL0Uv6EbCpsFfXDUwmklhbb3SctGSuvXWBcbjERjgf/e4" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script
+      nonce="[[.Nonce]]"
+      src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-bundle.js"
+      charset="UTF-8"
+      integrity="sha384-BGJ5JzR5LEl4ETmxXXlZtXtMWj3uQ9jj9/OHe3yrn5rrtAyLOz1SyyzwMfuwZgPc"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      nonce="[[.Nonce]]"
+      src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-standalone-preset.js"
+      charset="UTF-8"
+      integrity="sha384-AWSfISmlS8fS336GXRkpL0Uv6EbCpsFfXDUwmklhbb3SctGSuvXWBcbjERjgf/e4"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <script nonce="[[.Nonce]]">
-    window.onload = function() {
-      // Begin Swagger UI call region
-      const ui = SwaggerUIBundle({
-        url: "/public/api-merged.json",
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: "StandaloneLayout",
-        filter: true,
-        tagsSorter: "alpha",
-        tryItOutEnabled: true
-      });
-      // End Swagger UI call region
+      window.onload = async function () {
+        const urls = [
+            {name: 'Grafana API', url: "/public/api-merged.json"},
+        ];
+        try {
+          const rsp = await fetch('/openapi/v3');
+          const apis = await rsp.json();
+          for (const [key, value] of Object.entries(apis.paths)) {
+            const parts = key.split('/');
+            if (parts.length == 3) {
+              urls.push({name: `${parts[1]}/${parts[2]}`, url: value.serverRelativeURL});
+            }
+          }
+        }
+        catch (err) {
+          console.warn('Error loading k8s apis');
+        }
 
-      window.ui = ui;
-    };
-  </script>
+        // Begin Swagger UI call region
+        const ui = SwaggerUIBundle({
+          urls,
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+          layout: 'StandaloneLayout',
+          filter: true,
+          tagsSorter: 'alpha',
+          tryItOutEnabled: true,
+        });
+
+        window.ui = ui;
+      };
+    </script>
   </body>
 </html>
