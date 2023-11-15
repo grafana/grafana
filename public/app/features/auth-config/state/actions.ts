@@ -4,21 +4,38 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Settings, ThunkResult, UpdateSettingsQuery } from 'app/types';
 
-import { getAuthProviderStatus, getRegisteredAuthProviders } from '..';
+import { getAuthProviderStatus, getRegisteredAuthProviders, SSOProvider } from '..';
 import { AuthProviderStatus, SettingsError } from '../types';
 
-import { loadingBegin, loadingEnd, providerStatusesLoaded, resetError, setError, settingsUpdated } from './reducers';
+import {
+  loadingBegin,
+  loadingEnd,
+  providersLoaded,
+  providerStatusesLoaded,
+  resetError,
+  setError,
+  settingsUpdated,
+} from './reducers';
 
 export function loadSettings(): ThunkResult<Promise<Settings>> {
   return async (dispatch) => {
     if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
       dispatch(loadingBegin());
+      loadProviders();
       const result = await getBackendSrv().get('/api/admin/settings');
       dispatch(settingsUpdated(result));
       await dispatch(loadProviderStatuses());
       dispatch(loadingEnd());
       return result;
     }
+  };
+}
+
+export function loadProviders(): ThunkResult<Promise<SSOProvider[]>> {
+  return async (dispatch) => {
+    const result = await getBackendSrv().get('/api/v1/sso-settings');
+    dispatch(providersLoaded(result));
+    return result;
   };
 }
 
