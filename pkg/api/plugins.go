@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -21,7 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -440,8 +444,27 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
+	jsonBody, err := hs.pluginJSON(c.Req.Context(), pluginID, dto.Version)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to fetch plugin json", err)
+	}
+	jsonData := struct {
+		ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration"`
+	}{}
+	err = json.Unmarshal(jsonBody, &jsonData)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to read plugin json", err)
+	}
+	if jsonData.ExternalServiceRegistration != nil {
+		hs.log.Info("plugin will to register an external service")
+		hasAccess := accesscontrol.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
+		if !hasAccess(toEvalAll(jsonData.ExternalServiceRegistration.Permissions)) {
+			return response.Error(http.StatusForbidden, "installer does not have the permission requested by the plugin", err)
+		}
+	}
+
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
+	err = hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
@@ -513,6 +536,53 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 	return md.Content, nil
 }
 
+func (hs *HTTPServer) pluginJSON(ctx context.Context, pluginID, version string) ([]byte, error) {
+	client := &http.Client{
+		Timeout:   time.Second * 10,
+		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
+	}
+	path := hs.Cfg.GrafanaComAPIURL + "/plugins/" + pluginID
+	if version != "" {
+		path = path + "versions/" + version
+	}
+
+	req, err := http.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	resp, err := client.Do(req)
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			hs.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("invalid status %v", resp.Status)
+	}
+	data, err := io.ReadAll(resp.Body)
+	data = fakePluginJson
+
+	return data, err
+
+}
+
+func toEvalAll(ps []plugindef.Permission) ac.Evaluator {
+	if len(ps) == 0 {
+		return nil
+	}
+	res := []ac.Evaluator{}
+	for _, p := range ps {
+		scope := ""
+		if p.Scope != nil {
+			scope = *p.Scope
+		}
+		res = append(res, ac.EvalPermission(p.Action, scope))
+	}
+	return ac.EvalAll(res...)
+}
+
 func mdFilepath(mdFilename string) (string, error) {
 	fileExt := filepath.Ext(mdFilename)
 	switch fileExt {
@@ -524,3 +594,160 @@ func mdFilepath(mdFilename string) (string, error) {
 		return "", ErrUnexpectedFileExtension
 	}
 }
+
+var fakePluginJson = []byte(`{
+  "status": "active",
+  "id": 778,
+  "typeId": 1,
+  "typeName": "Application",
+  "typeCode": "app",
+  "slug": "aws-datasource-provisioner-app",
+  "name": "AWS Data Sources",
+  "description": "AWS Datasource Provisioner",
+  "version": "1.13.1",
+  "versionStatus": "active",
+  "versionSignatureType": "grafana",
+  "versionSignedByOrg": "grafana",
+  "versionSignedByOrgName": "Grafana Labs",
+  "userId": 0,
+  "orgId": 321556,
+  "orgName": "Amazon Web Services",
+  "orgSlug": "aws",
+  "orgUrl": "",
+  "url": "https://github.com/grafana/aws-datasource-provisioner-app/",
+  "createdAt": "2022-01-31T17:33:37.000Z",
+  "updatedAt": "2023-10-25T20:21:25.000Z",
+  "json": {
+    "backend": true,
+    "dependencies": {
+      "grafanaDependency": ">=7.3.0",
+      "grafanaVersion": ">=7.3.0"
+    },
+    "executable": "gpx_AWS_Datasource_Provisioner",
+    "id": "aws-datasource-provisioner-app",
+    "includes": [
+      {
+        "addToNav": true,
+        "defaultNav": true,
+        "icon": "cube",
+        "name": "AWS services",
+        "path": "/a/aws-datasource-provisioner-app/?tab=services",
+        "role": "Admin",
+        "type": "page"
+      },
+      {
+        "addToNav": true,
+        "icon": "database",
+        "name": "Data sources",
+        "path": "/a/aws-datasource-provisioner-app/?tab=datasources",
+        "role": "Admin",
+        "type": "page"
+      },
+      {
+        "addToNav": true,
+        "icon": "sliders-v-alt",
+        "name": "Settings",
+        "path": "/a/aws-datasource-provisioner-app/?tab=settings",
+        "role": "Admin",
+        "type": "page"
+      }
+    ],
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com/"
+      },
+      "build": {
+        "time": 1698220907343,
+        "repo": "https://github.com/grafana/aws-datasource-provisioner-app",
+        "branch": "master",
+        "hash": "22a0b787bcf9c38ba5df2fd17c9103dbe149738e",
+        "build": 507
+      },
+      "description": "AWS Datasource Provisioner",
+      "links": [],
+      "logos": {
+        "large": "assets/logo-large.svg",
+        "small": "assets/logo-small.svg"
+      },
+      "updated": "2023-10-25",
+      "version": "1.13.1"
+    },
+    "name": "AWS Data Sources",
+    "role": "",
+    "routes": [],
+    "type": "app"
+  },
+  "readme": "<h2>AWS Data Sources Plugin</h2>\n<p>The AWS Data Sources plugin allows you to create data sources for all AWS services with Grafana plugins.</p>\n<p>Read more about it <a href=\"https://docs.aws.amazon.com/grafana/latest/userguide/AMG-data-sources.html\" target=\"_blank\" rel=\"noopener nofollow\">here</a>.</p>\n",
+  "changelog": "<h1>Changelog</h1>\n<h2>v1.13.1 (2023-10-24)</h2>\n<ul>\n<li><strong>Chore</strong> Support Node 18 https://github.com/grafana/aws-datasource-provisioner-app/pull/164</li>\n<li><strong>Fix</strong> Fix Install Now host url https://github.com/grafana/aws-datasource-provisioner-app/pull/166</li>\n</ul>\n<h2>v1.13.0 (2023-08-18)</h2>\n<ul>\n<li><strong>Feature</strong> Adds the ability to provision a Redshift Serverless datasource by @yota-p https://github.com/grafana/aws-datasource-provisioner-app/pull/162</li>\n</ul>\n<h2>v1.12.0 (2023-07-12)</h2>\n<ul>\n<li><strong>Feature</strong> Add monitoring flags to cloudwatch accounts https://github.com/grafana/aws-datasource-provisioner-app/pull/158 (note requires additional OAM permissions to work, documented in contributing.md)</li>\n<li><strong>Feature</strong> OpenSearch: auto detect version https://github.com/grafana/aws-datasource-provisioner-app/pull/156</li>\n</ul>\n<h2>v1.11.0 (2023-05-17)</h2>\n<ul>\n<li><strong>Fix</strong> Bump aws-sdk-go to fix issue with regions https://github.com/grafana/aws-datasource-provisioner-app/pull/148</li>\n</ul>\n<h2>v1.10.0 (2023-01-26)</h2>\n<ul>\n<li><strong>Feature</strong> Add ability to provision an OpenSearch Serverless data source https://github.com/grafana/aws-datasource-provisioner-app/pull/139</li>\n</ul>\n<h2>v1.9.0 (2022-12-07)</h2>\n<ul>\n<li><strong>Feature</strong> Add new open search versions in https://github.com/grafana/aws-datasource-provisioner-app/pull/132</li>\n<li><strong>Fix</strong> Fix regionId used while fetching resources for multiple regions and no accountIds in https://github.com/grafana/aws-datasource-provisioner-app/pull/130</li>\n<li><strong>Fix</strong> TwinMaker: Fix multiple workspaces resource listing in https://github.com/grafana/aws-datasource-provisioner-app/pull/128</li>\n<li><strong>Chore</strong> Change twinMakerInfo to pointer, add test for resource handler in https://github.com/grafana/aws-datasource-provisioner-app/pull/127</li>\n<li><strong>Feature</strong> Add TwinMaker info box in https://github.com/grafana/aws-datasource-provisioner-app/pull/125</li>\n<li><strong>Feature</strong>: Add support for TwinMaker in https://github.com/grafana/aws-datasource-provisioner-app/pull/122</li>\n</ul>\n<h2>v1.8.0 (2022-07-21)</h2>\n<ul>\n<li><strong>Chore</strong> Use aws/aws-sdk-go instead of Grafana internal repo by @fridgepoet in https://github.com/grafana/aws-datasource-provisioner-app/pull/119</li>\n<li><strong>Chore</strong> Paginate calls to DescribeElasticsearchDomains (#118) by @joanlopez in https://github.com/grafana/aws-datasource-provisioner-app/pull/121</li>\n</ul>\n<h2>v1.7.1 (2022-05-06)</h2>\n<ul>\n<li><strong>UI</strong>: Surface AWS SDK errors to UI as warning messages (#114).</li>\n</ul>\n<h2>v1.7.0 (2022-01-31)</h2>\n<ul>\n<li><strong>Chore</strong>: Update Grafana SDK (JS/Go) dependencies.</li>\n</ul>\n<h2>v1.6.1 (2022-01-25)</h2>\n<ul>\n<li><strong>Bug fixes</strong>: Fix account id and name mapping when listing resources.</li>\n</ul>\n<h2>v1.6.0 (2022-01-14)</h2>\n<ul>\n<li><strong>Bug fixes</strong>: Use the default credentials when listing non-flat resources for the account that owns the workspace.</li>\n</ul>\n<h2>v1.5.0 (2021-10-29)</h2>\n<ul>\n<li><strong>Athena</strong>: Support for provisioning Athena data sources.</li>\n<li><strong>Redshift</strong>: Support for provisioning Redshift data sources.</li>\n</ul>\n<h2>v1.4.1 (2021-10-11)</h2>\n<ul>\n<li><strong>OpenSearch</strong>: Fix datasource provisioning when version is autodetected.</li>\n</ul>\n<h2>v1.4.0 (2021-10-08)</h2>\n<ul>\n<li><strong>OpenSearch</strong>: Fix detected Elasticsearch version when migrating from OpenDistro or Elasticsearch datasource.</li>\n<li><strong>OpenSearch</strong>: Autodetect Elasticsearch and OpenSearch versions when provisioning OpenSearch datasources.</li>\n</ul>\n<h2>v1.3.0 (2021-07-27)</h2>\n<ul>\n<li><strong>OpenSearch</strong>: Multiple changes introduced into the migration dialogue box and the underlying logics.</li>\n<li><strong>OpenSearch</strong>: Replaced <code>grafana-es-open-distro-datasource</code> plugin support in favor of <code>grafana-opensearch-datasource</code>.</li>\n<li><strong>Bug fixes</strong>: Minor UI fixes.</li>\n</ul>\n<h2>v1.2.0 (2021-03-30)</h2>\n<ul>\n<li><strong>Open Distro</strong>: Multiple changes introduced into the migration dialogue box and the underlying logics.</li>\n<li><strong>Amazon Web Services</strong>: The <code>default</code> auth type has been replaced with the new <code>ec2_iam_role</code> type.</li>\n<li><strong>Amazon Web Services</strong>: The name of some services has been updated (e.g. Amazon Managed Service for Prometheus).</li>\n<li><strong>Assets</strong>: Set up different service icons based on the Grafana theme (dark vs light).</li>\n<li><strong>Bug fixes</strong>: Minor UI fixes with the light theme.</li>\n</ul>\n<h2>v1.1.0 (2021-03-23)</h2>\n<ul>\n<li><strong>Open Distro</strong>: Support for provisioning Open Distro data sources and migrating the old ones.</li>\n<li><strong>Bug fixes</strong>: Minor bug fixes on navigation and provisioning.</li>\n</ul>\n<h2>v1.0.0 (2020-12-21)</h2>\n<ul>\n<li><strong>Amazon Web Services</strong>: Support for single accounts and organizational accounts.</li>\n<li><strong>Provisioning</strong>: Support for CloudWatch, IoT SiteWise, Timestream, X-Ray, Elasticsearch and Prometheus.</li>\n<li><strong>Settings</strong>: Bulk settings for CloudWatch (custom metrics) and Prometheus (scrape interval, query timeout).</li>\n</ul>\n",
+  "statusContext": "",
+  "downloads": 545916,
+  "verified": false,
+  "featured": 0,
+  "internal": false,
+  "downloadSlug": "aws-datasource-provisioner-app",
+  "popularity": 0.0152,
+  "signatureType": "private",
+  "grafanaDependency": ">=7.3.0",
+  "packages": {
+    "linux-amd64": {
+      "md5": "fd9468e3fd9a964322650430aaac6050",
+      "sha256": "65abeeb102221c3a497aec10ae6ccefa17635ad722b1c60ec869dc3ffc1cb2c5",
+      "packageName": "linux-amd64",
+      "downloadUrl": "/api/plugins/aws-datasource-provisioner-app/versions/1.13.1/download?os=linux&arch=amd64"
+    },
+    "linux-arm64": {
+      "md5": "9d6e2193de83c29854fe26e1eed859bf",
+      "sha256": "720c08350097a52406de93cc0cf57b783a4a41fa55db019d92b581cc295d733a",
+      "packageName": "linux-arm64",
+      "downloadUrl": "/api/plugins/aws-datasource-provisioner-app/versions/1.13.1/download?os=linux&arch=arm64"
+    },
+    "linux-arm": {
+      "md5": "d83d98e51fa63718aa549a4a5fd85d4e",
+      "sha256": "2c6929255f84d77c8bfe4c9d88689323f0130efeddff4d3f4389b573783afbf7",
+      "packageName": "linux-arm",
+      "downloadUrl": "/api/plugins/aws-datasource-provisioner-app/versions/1.13.1/download?os=linux&arch=arm"
+    },
+    "windows-amd64": {
+      "md5": "02a004c9984f13973e6ba4614d192b21",
+      "sha256": "02f0e91787ccb622d83fc6ccd3fd940588aa200bca453ad01fe4214e3fecb593",
+      "packageName": "windows-amd64",
+      "downloadUrl": "/api/plugins/aws-datasource-provisioner-app/versions/1.13.1/download?os=windows&arch=amd64"
+    },
+    "darwin-amd64": {
+      "md5": "ff14dfa152b8c8a09716e34e32852227",
+      "sha256": "7329971c1080946c8aa972ca8d6761b3264adc22b446e21756c58500cbc324a5",
+      "packageName": "darwin-amd64",
+      "downloadUrl": "/api/plugins/aws-datasource-provisioner-app/versions/1.13.1/download?os=darwin&arch=amd64"
+    },
+    "darwin-arm64": {
+      "md5": "261afe827d2edec12e0fe6bd93353900",
+      "sha256": "2d427d4204c56783dfab25d69e1b12ce0861aa40381245ce6a018df2552032cf",
+      "packageName": "darwin-arm64",
+      "downloadUrl": "/api/plugins/aws-datasource-provisioner-app/versions/1.13.1/download?os=darwin&arch=arm64"
+    }
+  },
+  "externalServiceRegistration": {
+    "permissions": [{"action": "users:read", "scope": "org.users:*"}]
+  },
+  "links": [
+    {
+      "rel": "self",
+      "href": "/plugins/aws-datasource-provisioner-app"
+    },
+    {
+      "rel": "versions",
+      "href": "/plugins/aws-datasource-provisioner-app/versions"
+    },
+    {
+      "rel": "latest",
+      "href": "/plugins/aws-datasource-provisioner-app/versions/1.13.1"
+    },
+    {
+      "rel": "download",
+      "href": "/plugins/aws-datasource-provisioner-app/versions/1.13.1/download"
+    }
+  ],
+  "angularDetected": false
+}
+`)
