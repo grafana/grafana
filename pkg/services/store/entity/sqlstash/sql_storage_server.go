@@ -25,8 +25,9 @@ import (
 )
 
 type EntityDB interface {
-	GetSession() *session.SessionDB
-	GetEngine() *xorm.Engine
+	Init() error
+	GetSession() (*session.SessionDB, error)
+	GetEngine() (*xorm.Engine, error)
 	GetCfg() *setting.Cfg
 }
 
@@ -34,7 +35,7 @@ type EntityDB interface {
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 var _ entity.EntityStoreAdminServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db EntityDB /*, cfg *setting.Cfg, grpcServerProvider grpcserver.Provider*/) (entity.EntityStoreServer, error) {
+func ProvideSQLEntityServer(db EntityDB /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
 	snode, err := snowflake.NewNode(rand.Int63n(1024))
 	if err != nil {
 		return nil, err
@@ -42,13 +43,9 @@ func ProvideSQLEntityServer(db EntityDB /*, cfg *setting.Cfg, grpcServerProvider
 
 	entityServer := &sqlEntityServer{
 		db:        db,
-		sess:      db.GetSession(),
-		dialect:   migrator.NewDialect(db.GetEngine().DriverName()),
 		log:       log.New("sql-entity-server"),
 		snowflake: snode,
 	}
-
-	// entity.RegisterEntityStoreServer(grpcServerProvider.GetServer(), entityServer)
 
 	return entityServer, nil
 }
@@ -59,6 +56,35 @@ type sqlEntityServer struct {
 	sess      *session.SessionDB
 	dialect   migrator.Dialect
 	snowflake *snowflake.Node
+}
+
+func (s *sqlEntityServer) Init() error {
+	if s.sess != nil {
+		return nil
+	}
+
+	if s.db == nil {
+		return errors.New("missing db")
+	}
+
+	err := s.db.Init()
+	if err != nil {
+		return err
+	}
+
+	sess, err := s.db.GetSession()
+	if err != nil {
+		return err
+	}
+
+	engine, err := s.db.GetEngine()
+	if err != nil {
+		return err
+	}
+
+	s.sess = sess
+	s.dialect = migrator.NewDialect(engine.DriverName())
+	return nil
 }
 
 func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
@@ -86,14 +112,18 @@ func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
 	return fields
 }
 
-func (s *sqlEntityServer) getReadSelect(r *entity.ReadEntityRequest) string {
+func (s *sqlEntityServer) getReadSelect(r *entity.ReadEntityRequest) (string, error) {
+	if err := s.Init(); err != nil {
+		return "", err
+	}
+
 	fields := s.getReadFields(r)
 
 	quotedFields := make([]string, len(fields))
 	for i, f := range fields {
 		quotedFields[i] = s.dialect.Quote(f)
 	}
-	return "SELECT " + strings.Join(quotedFields, ",")
+	return "SELECT " + strings.Join(quotedFields, ","), nil
 }
 
 func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
@@ -180,6 +210,10 @@ func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *grn.GRN) (*grn.G
 }
 
 func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	return s.read(ctx, s.sess, r)
 }
 
@@ -207,7 +241,10 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		args = append(args, r.Version)
 	}
 
-	query := s.getReadSelect(r)
+	query, err := s.getReadSelect(r)
+	if err != nil {
+		return nil, err
+	}
 
 	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
 		query += " FOR UPDATE"
@@ -262,8 +299,12 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 	}
 
 	req := b.Batch[0]
-	query := s.getReadSelect(req) +
-		" FROM entity" +
+	query, err := s.getReadSelect(req)
+	if err != nil {
+		return nil, err
+	}
+
+	query += " FROM entity" +
 		" WHERE (" + strings.Join(constraints, " OR ") + ")"
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
@@ -289,6 +330,10 @@ func (s *sqlEntityServer) Write(ctx context.Context, r *entity.WriteEntityReques
 
 //nolint:gocyclo
 func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEntityRequest) (*entity.WriteEntityResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	grn, err := s.validateGRN(ctx, r.Entity.GRN)
 	if err != nil {
 		s.log.Error("error validating GRN", "msg", err.Error())
@@ -302,7 +347,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 	createdBy := r.Entity.CreatedBy
 	updatedAt := r.Entity.UpdatedAt
 	updatedBy := r.Entity.UpdatedBy
-	if updatedBy == "" {
+	if updatedBy == "" || createdBy == "" {
 		modifier, err := appcontext.User(ctx)
 		if err != nil {
 			return nil, err
@@ -310,7 +355,12 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		if modifier == nil {
 			return nil, fmt.Errorf("can not find user in context")
 		}
-		updatedBy = store.GetUserIDString(modifier)
+		if createdBy == "" {
+			createdBy = store.GetUserIDString(modifier)
+		}
+		if updatedBy == "" {
+			updatedBy = store.GetUserIDString(modifier)
+		}
 	}
 	if updatedAt < 1000 {
 		updatedAt = timestamp
@@ -574,6 +624,10 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 }
 
 func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	grn, err := s.validateGRN(ctx, r.Entity.GRN)
 	if err != nil {
 		s.log.Error("error validating GRN", "msg", err.Error())
@@ -582,12 +636,9 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 	fmt.Printf("r.Entity: %#v\n", r.Entity)
 
-	timestamp := time.Now().UnixMilli()
 	createdAt := r.Entity.CreatedAt
 	createdBy := r.Entity.CreatedBy
-	updatedAt := r.Entity.UpdatedAt
-	updatedBy := r.Entity.UpdatedBy
-	if updatedBy == "" {
+	if createdBy == "" {
 		modifier, err := appcontext.User(ctx)
 		if err != nil {
 			return nil, err
@@ -595,11 +646,10 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		if modifier == nil {
 			return nil, fmt.Errorf("can not find user in context")
 		}
-		updatedBy = store.GetUserIDString(modifier)
+		createdBy = store.GetUserIDString(modifier)
 	}
-	if updatedAt < 1000 {
-		updatedAt = timestamp
-	}
+	updatedAt := r.Entity.UpdatedAt
+	updatedBy := r.Entity.UpdatedBy
 
 	rsp := &entity.CreateEntityResponse{
 		Entity: &entity.Entity{},
@@ -793,6 +843,10 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 //nolint:gocyclo
 func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequest) (*entity.UpdateEntityResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	grn, err := s.validateGRN(ctx, r.Entity.GRN)
 	if err != nil {
 		s.log.Error("error validating GRN", "msg", err.Error())
@@ -1048,6 +1102,10 @@ func (s *sqlEntityServer) writeSearchInfo(
 */
 
 func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	rsp := &entity.DeleteEntityResponse{}
 
 	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
@@ -1118,6 +1176,10 @@ func doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) er
 }
 
 func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	grn2, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -1136,8 +1198,12 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		WithSummary: true,
 	}
 
-	query := s.getReadSelect(rr) +
-		" FROM entity_history" +
+	query, err := s.getReadSelect(rr)
+	if err != nil {
+		return nil, err
+	}
+
+	query += " FROM entity_history" +
 		" WHERE (tenant_id=? AND kind=? AND uid=?)"
 	args := []any{
 		grn2.TenantID, grn2.ResourceKind, grn2.ResourceIdentifier,
@@ -1179,6 +1245,10 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 }
 
 func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequest) (*entity.EntitySearchResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
@@ -1331,10 +1401,18 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 }
 
 func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
+	if err := s.Init(); err != nil {
+		return err
+	}
+
 	return fmt.Errorf("unimplemented")
 }
 
 func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntitySearchResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
