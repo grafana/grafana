@@ -25,13 +25,13 @@ Correlations allow users to build a link between any two datasources. For more i
 1. The visualization is enriched with links allowing to create new correlations. Links are attached to the data that you can use to build a new query:
    - Logs: links are displayed next to field values inside log details for each log row
    - Table: every table cell is a link
-1. Click on a link to begin adding new correlation. Links are associated with a field that is used as [a results field of a correlation]({{< relref "../administration/correlations/correlation-configuration" >}}). This means the correlation is created on the link you select after the correlation is saved.
+1. Click on a link to begin adding new correlation. Links are associated with a field that is used as [a results field of a correlation]({{< relref "../administration/correlations/correlation-configuration" >}}). The correlation link is created on the link you select after the correlation is saved.
 1. Explore opens a split view. Use the right pane to setup [the target query source of the correlation]({{< relref "../administration/correlations/correlation-configuration#target-query" >}}).
 1. Build target query using [variables syntax]({{< relref "../dashboards/variables/variable-syntax" >}}) with variables from the list provided at the top of the pane. The list contains sample values from the selected data row.
 1. Provide optional label and description. Label is used as the name of the link inside the visualization. It can contain variables.
 1. Provide optional transformations (see below for details)
 1. Click "Save" button in the top bar to save the correlation and exit Correlations Editor mode.
-1. The link used to create the correlation is replaced with a data link in each row. When clicked, the query constructed will run in another pane, with the variables used being replaced dynamically with the values from the selected row.
+1. The link used to create the correlation is replaced with a data link in each row. When the link is clicked, the query defined will run in another pane, with the variables replaced dynamically with the values from the selected row.
 
 ## Transformations
 
@@ -46,7 +46,7 @@ After clicking one of the generated links in the editor mode, you can add transf
 
 ### Notes for regular expressions
 
-For regular expressions in this dialog box, the `mapValue` referred to in other documentation is called `Variable Name` here. The field value highlights the matching text based on the expression. Use regular expression capture groups to select what portion of the match should be extracted. When a valid regular expression is provided, the variable and the value of that variable appear below the `Variable Name` field.
+For regular expressions in this dialog box, the `mapValue` referred to in other documentation is called `Variable Name` here. Grafana highlights any text that matches the expression in the field value. Use regular expression capture groups to select what portion of the match should be extracted. When a valid regular expression is provided, the variable and the value of that variable appear below the `Variable Name` field.
 
 ## Example: Create a text to graph correlation
 
@@ -78,7 +78,7 @@ Please make sure you have set up [a test data source]({{< relref "../datasources
 1. Run a query to see that it produces a graph using sample values from the variables.
 1. Save the correlation using "Save" button in the top.
 
-After the correlation is saved, Explore exits the Correlations Editor automatically and reruns the query in the left pane. By clicking a state name, the query on the right is rerun with values from the row being inserted into the CSV, thus changing the graph. The query is rerun with updates values every time you click on a state name.
+After the correlation is saved, Explore exits the Correlations Editor automatically and reruns the query in the left pane. By clicking a state name, the query on the right is rerun with values from the row being inserted into the CSV, thus changing the graph. The query is rerun with updated values every time you click on a state name.
 
 {{< figure src="/static/img/docs/correlations/screenshot-correlations-example-link-10.2.png" max-width="600px" caption="Result of clicking on a data link" >}}
 
