@@ -288,12 +288,6 @@ func (s *service) start(ctx context.Context) error {
 
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		// Make sure all requests have have a valid grafana user in context
-		// This should not require devMode, however lets limit the effect until we have more confidence
-		if s.config.devMode {
-			delegateHandler = newAuthHandler(delegateHandler)
-		}
-
 		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
 		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
 		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
