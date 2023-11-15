@@ -26,11 +26,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       }}
     >
       <Stack grow={1} wrap={'wrap'}>
-        <Box shrink={0}>
-          {variableControls.map((c) => (
-            <c.Component model={c} key={c.state.key} />
-          ))}
-        </Box>
+        {variableControls.map((c) => (
+          <c.Component model={c} key={c.state.key} />
+        ))}
         <Box grow={1} />
         <linkControls.Component model={linkControls} />
       </Stack>
