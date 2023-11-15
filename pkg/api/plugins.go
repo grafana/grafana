@@ -458,8 +458,13 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	if jsonData.ExternalServiceRegistration != nil {
 		hs.log.Info("plugin will to register an external service")
 		hasAccess := accesscontrol.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
-		if !hasAccess(toEvalAll(jsonData.ExternalServiceRegistration.Permissions)) {
-			return response.Error(http.StatusForbidden, "installer does not have the permission requested by the plugin", err)
+		// TODO (gamab) single_organization setup
+		evaluator := toEvalAll(jsonData.ExternalServiceRegistration.Permissions)
+		if !hasAccess(evaluator) {
+			c.JSON(http.StatusForbidden, map[string]string{
+				"title":   "Access denied",
+				"message": fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", evaluator.String()),
+			})
 		}
 	}
 
@@ -562,7 +567,7 @@ func (hs *HTTPServer) pluginJSON(ctx context.Context, pluginID, version string) 
 		return nil, fmt.Errorf("invalid status %v", resp.Status)
 	}
 	data, err := io.ReadAll(resp.Body)
-	data = fakePluginJson
+	// data = fakePluginJson
 
 	return data, err
 
@@ -570,6 +575,7 @@ func (hs *HTTPServer) pluginJSON(ctx context.Context, pluginID, version string) 
 
 func toEvalAll(ps []plugindef.Permission) ac.Evaluator {
 	if len(ps) == 0 {
+		// TODO (gamab) this is going to fail evaluation
 		return nil
 	}
 	res := []ac.Evaluator{}
@@ -728,7 +734,7 @@ var fakePluginJson = []byte(`{
     }
   },
   "externalServiceRegistration": {
-    "permissions": [{"action": "users:read", "scope": "org.users:*"}]
+    "permissions": [{"action": "users:read", "scope": "global.users:*"}]
   },
   "links": [
     {
@@ -749,5 +755,4 @@ var fakePluginJson = []byte(`{
     }
   ],
   "angularDetected": false
-}
-`)
+}`)
