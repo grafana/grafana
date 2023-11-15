@@ -327,15 +327,10 @@ export class DashboardMigrator {
             templateVariable.refresh = 0;
           }
         }
-        if ('hideVariable' in templateVariable) {
-          if (templateVariable.hideVariable) {
-            templateVariable.hide = 2;
-          }
-        }
-        if ('hideLabel' in templateVariable) {
-          if (templateVariable.hideLabel) {
-            templateVariable.hide = 1;
-          }
+        if ('hideVariable' in templateVariable && templateVariable.hideVariable) {
+          templateVariable.hide = 2;
+        } else if ('hideLabel' in templateVariable && templateVariable.hideLabel) {
+          templateVariable.hide = 1;
         }
       });
     }
