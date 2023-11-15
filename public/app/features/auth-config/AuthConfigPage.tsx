@@ -51,7 +51,7 @@ export const AuthConfigPageUnconnected = ({
 
   const authProviders = getRegisteredAuthProviders();
   const enabledProviders = authProviders.filter((p) => providerStatuses[p.id]?.enabled);
-  const configuresProviders = authProviders.filter(
+  const configuredProviders = authProviders.filter(
     (p) => providerStatuses[p.id]?.configured && !providerStatuses[p.id]?.enabled
   );
   const availableProviders = authProviders.filter(
@@ -112,9 +112,9 @@ export const AuthConfigPageUnconnected = ({
             onClick={onCTAClick}
           />
         )}
-        {!!configuresProviders?.length && (
+        {!!configuredProviders?.length && (
           <div className={styles.cardsContainer}>
-            {configuresProviders.map((provider) => (
+            {configuredProviders.map((provider) => (
               <ProviderCard
                 key={provider.id}
                 providerId={provider.id}
