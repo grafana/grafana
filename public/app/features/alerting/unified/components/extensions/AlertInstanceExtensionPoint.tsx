@@ -23,11 +23,15 @@ export const AlertInstanceExtensionPoint = ({
   const context = { instance, rule };
   const extensions = useExtensionLinks(context, extensionPointId);
 
+  if (extensions.length === 0) {
+    return null;
+  }
+
   const menu = <AlertExtensionPointMenu extensions={extensions} onSelect={setSelectedExtension} />;
   return (
     <>
       <Dropdown placement="bottom-start" overlay={menu}>
-        <IconButton name="ellipsis-v" aria-label="Actions" disabled={extensions.length === 0} variant="secondary" />
+        <IconButton name="ellipsis-v" aria-label="Actions" variant="secondary" />
       </Dropdown>
       {!!selectedExtension && !!selectedExtension.path && (
         <ConfirmNavigationModal
