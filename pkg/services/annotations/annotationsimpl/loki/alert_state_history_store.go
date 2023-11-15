@@ -115,6 +115,9 @@ func (r *AlertStateHistoryStore) Get(ctx context.Context, query *annotations.Ite
 	return items, err
 }
 
+// itemsFromStreams builds annotation items from a list of Loki streams.
+// It will filter out items that the user does not have access to
+// and will skip items that cannot be parsed.
 func (r *AlertStateHistoryStore) itemsFromStreams(
 	ctx context.Context,
 	orgID int64,
@@ -138,44 +141,29 @@ func (r *AlertStateHistoryStore) itemsFromStreams(
 				continue
 			}
 
-			time := sample.T
-
-			transition, err := buildTransitionStub(&entry, time)
+			transition, err := buildTransitionStub(&entry, sample.T)
 			if err != nil {
 				r.log.Debug("could not build state transition", "err", err)
 				continue
 			}
 
-			if !historian.ShouldRecord(*transition) {
+			if !shouldReplay(entry, transition, resources) {
 				continue
-			}
-
-			if _, ok := resources.ScopeTypes[annotations.Organization.String()]; ok {
-				if entry.DashboardUID != "" {
-					continue
-				}
-			}
-
-			dashID, canAccess := resources.Dashboards[entry.DashboardUID]
-			if _, ok := resources.ScopeTypes[annotations.Dashboard.String()]; ok {
-				if !canAccess {
-					continue
-				}
 			}
 
 			rule, ok := rules[entry.RuleUID]
 			if !ok {
 				ruleQ := ruleQuery{OrgID: orgID, UID: entry.RuleUID}
 				rule, err = r.getRule(ctx, ruleQ)
-
 				if err != nil {
 					r.log.Debug(fmt.Sprintf("could not find rule with UID `%s`", entry.RuleUID), "entry", entry, "err", err)
 					continue
 				}
+
 				rules[entry.RuleUID] = rule
 			}
 
-			item, err := buildAnnotationItem(&entry, dashID, rule, transition.State)
+			item, err := buildAnnotationItem(&entry, resources.Dashboards[entry.DashboardUID], rule, transition.State)
 			if err != nil {
 				r.log.Debug("could not build annotation item", "entry", entry, "err", err)
 				continue
@@ -247,6 +235,27 @@ func (r *AlertStateHistoryStore) CleanOrphanedAnnotationTags(ctx context.Context
 }
 
 // util
+
+func shouldReplay(entry historian.LokiEntry, transition *state.StateTransition, resources accesscontrol.AccessResources) bool {
+	if !historian.ShouldRecord(*transition) {
+		return false
+	}
+
+	if _, ok := resources.ScopeTypes[annotations.Organization.String()]; ok {
+		if entry.DashboardUID != "" {
+			return false
+		}
+	}
+
+	if _, ok := resources.ScopeTypes[annotations.Dashboard.String()]; ok {
+		_, canAccess := resources.Dashboards[entry.DashboardUID]
+		if !canAccess {
+			return false
+		}
+	}
+
+	return true
+}
 
 func float64Map(j *simplejson.Json) (map[string]float64, error) {
 	m, err := j.Map()

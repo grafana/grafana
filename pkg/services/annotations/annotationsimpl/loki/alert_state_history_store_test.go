@@ -423,6 +423,58 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	})
 }
 
+func TestShouldReplay(t *testing.T) {
+	entry := historian.LokiEntry{
+		DashboardUID: "dashboard-uid",
+	}
+	transition := &state.StateTransition{
+		PreviousState: eval.Normal,
+		State: &state.State{
+			State: eval.Alerting,
+		},
+	}
+
+	t.Run("should return false when transition should not be recorded", func(t *testing.T) {
+		transition := &state.StateTransition{
+			PreviousState: eval.Normal,
+			State: &state.State{
+				State: eval.Normal,
+			},
+		}
+		require.False(t, shouldReplay(entry, transition, annotation_ac.AccessResources{}))
+	})
+
+	t.Run("should return false when scope is organization and entry has dashboard UID", func(t *testing.T) {
+		require.False(t, shouldReplay(entry, transition, annotation_ac.AccessResources{
+			ScopeTypes: map[interface{}]struct{}{
+				testutil.OrgScopeType: {},
+			},
+		}))
+	})
+
+	t.Run("should return false when scope is dashboard and dashboard UID is not in resources", func(t *testing.T) {
+		require.False(t, shouldReplay(entry, transition, annotation_ac.AccessResources{
+			ScopeTypes: map[interface{}]struct{}{
+				testutil.DashScopeType: {},
+			},
+			Dashboards: map[string]int64{
+				"other-dashboard-uid": 1,
+			},
+		}))
+	})
+
+	t.Run("should return true when scope is dashboard and dashboard UID is in resources", func(t *testing.T) {
+		require.True(t, shouldReplay(entry, transition, annotation_ac.AccessResources{
+			ScopeTypes: map[interface{}]struct{}{
+				testutil.DashScopeType: {},
+			},
+			Dashboards: map[string]int64{
+				"dashboard-uid": 1,
+			},
+		}))
+	})
+}
+
 func TestFloat64Map(t *testing.T) {
 	t.Run(`should convert json string:float kv to Golang map[string]float64`, func(t *testing.T) {
 		jsonMap := simplejson.NewFromAny(map[string]any{
