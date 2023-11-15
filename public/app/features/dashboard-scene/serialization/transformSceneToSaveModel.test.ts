@@ -136,6 +136,9 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     panels: [],
+    featureToggles: {
+      dataTrails: false,
+    },
     theme2: {
       visualization: {
         getColorByName: jest.fn().mockReturnValue('red'),

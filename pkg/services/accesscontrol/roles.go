@@ -208,6 +208,14 @@ var (
 				Action: ActionSettingsWrite,
 				Scope:  ScopeSettingsAuth,
 			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsSAML,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsSAML,
+			},
 		},
 	}
 )
