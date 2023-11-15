@@ -25,12 +25,10 @@ const rawRange = {
   to: toUtc('2018-04-25 11:00'),
 };
 
-const defaultTimeSrvMock = {
-  timeRange: jest.fn().mockReturnValue({
-    from: rawRange.from,
-    to: rawRange.to,
-    raw: rawRange,
-  }),
+const defaultTimeRangeMock = {
+  from: rawRange.from,
+  to: rawRange.to,
+  raw: rawRange,
 };
 
 const defaultTemplateSrvMock = {
@@ -40,8 +38,7 @@ const defaultTemplateSrvMock = {
 
 export function createLokiDatasource(
   templateSrvMock: Partial<TemplateSrv> = defaultTemplateSrvMock,
-  settings: Partial<DataSourceInstanceSettings<LokiOptions>> = {},
-  timeSrvStub = defaultTimeSrvMock
+  settings: Partial<DataSourceInstanceSettings<LokiOptions>> = {}
 ): LokiDatasource {
   const customSettings: DataSourceInstanceSettings<LokiOptions> = {
     url: 'myloggingurl',
@@ -79,7 +76,11 @@ export function createLokiDatasource(
   };
 
   // @ts-expect-error
-  return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub);
+  const lokiDatasource = new LokiDatasource(customSettings, templateSrvMock);
+  // We rely on the default time range in many tests
+  // So we mock this function to always return the same value
+  lokiDatasource.languageProvider.getDefaultTimeRange = jest.fn().mockReturnValue(defaultTimeRangeMock);
+  return lokiDatasource;
 }
 
 export function createMetadataRequest(
