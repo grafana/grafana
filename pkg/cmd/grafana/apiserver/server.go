@@ -65,6 +65,11 @@ func (o *ExampleServerOptions) LoadAPIGroupBuilders(args []string) error {
 		// No dependencies for testing
 		case "example.grafana.app":
 			o.builders = append(o.builders, &example.TestingAPIBuilder{})
+		case "snapshosts.grafana.app":
+
+			//	snapshots.RegisterAPIService()
+
+			return fmt.Errorf("todo... manual wire")
 		default:
 			return fmt.Errorf("unknown group: %s", g)
 		}
