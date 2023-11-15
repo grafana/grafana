@@ -117,9 +117,9 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(1);
-      expect(scene.state.$behaviors![0]).toBeInstanceOf(behaviors.CursorSync);
-      expect((scene.state.$behaviors![0] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+      expect(scene.state.$behaviors).toHaveLength(2);
+      expect(scene.state.$behaviors![1]).toBeInstanceOf(behaviors.CursorSync);
+      expect((scene.state.$behaviors![1] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
   });
 

@@ -136,6 +136,9 @@ jest.mock('@grafana/runtime', () => ({
   },
   config: {
     panels: [],
+    featureToggles: {
+      dataTrails: false,
+    },
     theme2: {
       visualization: {
         getColorByName: jest.fn().mockReturnValue('red'),
@@ -143,6 +146,15 @@ jest.mock('@grafana/runtime', () => ({
     },
   },
 }));
+
+jest.mock('@grafana/scenes', () => ({
+  ...jest.requireActual('@grafana/scenes'),
+  sceneUtils: {
+    ...jest.requireActual('@grafana/scenes').sceneUtils,
+    registerVariableMacro: jest.fn(),
+  },
+}));
+
 describe('transformSceneToSaveModel', () => {
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
