@@ -482,7 +482,11 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
-require github.com/google/gnostic-models v0.6.8 // indirect
+require (
+	github.com/google/gnostic-models v0.6.8 // indirect
+	github.com/tkrajina/go-reflector v0.5.5 // indirect
+	github.com/tkrajina/typescriptify-golang-structs v0.1.7 // indirect
+)
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c
