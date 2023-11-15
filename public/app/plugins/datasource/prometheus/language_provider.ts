@@ -348,9 +348,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
 function getNameLabelValue(promQuery: string, tokens: any): string {
   let nameLabelValue = '';
-  for (let prop in tokens) {
-    if (typeof tokens[prop] === 'string') {
-      nameLabelValue = tokens[prop] as string;
+
+  for (const token of tokens) {
+    if (typeof token === 'string') {
+      nameLabelValue = token;
       break;
     }
   }

@@ -43,7 +43,7 @@ const REDACTED = "redacted"
 func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 	var folders []*folder.Folder
 	var err error
-	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
 		folders, err = hs.folderService.GetChildren(c.Req.Context(), &folder.GetChildrenQuery{
 			OrgID:        c.SignedInUser.GetOrgID(),
 			Limit:        c.QueryInt64("limit"),
@@ -190,7 +190,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 	}
 
 	isNested := folder.ParentUID != ""
-	if !isNested || !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if !isNested || !hs.Features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
@@ -212,7 +212,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
-	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
 		cmd := folder.MoveFolderCommand{}
 		if err := web.Bind(c.Req, &cmd); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -390,7 +390,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 		return dtos.Folder{}, err
 	}
 
-	if !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
 		return folderDTO, nil
 	}
 
