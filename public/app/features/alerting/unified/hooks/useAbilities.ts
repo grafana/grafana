@@ -1,12 +1,17 @@
 import { useMemo } from 'react';
 
 import { contextSrv as ctx } from 'app/core/services/context_srv';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
-import { useCanSilence } from '../components/rules/RuleDetailsActionButtons';
+import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
-import { getInstancesPermissions, getNotificationsPermissions } from '../utils/access-control';
+import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { isFederatedRuleGroup, isGrafanaRulerRule } from '../utils/rules';
+
+import { useIsRuleEditable } from './useIsRuleEditable';
 
 /**
  * These hooks will determine if
@@ -51,17 +56,23 @@ export enum AlertmanagerAction {
   DeleteMuteTiming = 'delete-mute-timing',
 }
 
-/**
- * The difference between "AlertSourceAction" and "AlertRuleAction" comes down to
- * checking if we have either permissions to update "any" rules (use AlertSourceAction)
- * or permissions to update a _single_ rule (use AlertRuleAction).
- */
-export enum AlertSourceAction {
+export enum AlertRuleAction {
+  CreateAlertRule = 'create-alert-rule',
+  DuplicateAlertRule = 'duplicate-alert-rule',
+  ViewAlertRule = 'view-alert-rule',
+  UpdateAlertRule = 'update-alert-rule',
+  DeleteAlertRule = 'delete-alert-rule',
+  ExploreRule = 'explore-alert-rule',
+  SilenceAlertRule = 'SilenceAlertRule',
+}
+
+export enum AlertingAction {
   // internal (Grafana managed)
   CreateAlertRule = 'create-alert-rule',
   ViewAlertRule = 'view-alert-rule',
   UpdateAlertRule = 'update-alert-rule',
   DeleteAlertRule = 'delete-alert-rule',
+  ExportGrafanaManagedRules = 'export-grafana-managed-rules',
   // external (any compatible alerting data source)
   CreateExternalAlertRule = 'create-external-alert-rule',
   ViewExternalAlertRule = 'view-external-alert-rule',
@@ -69,74 +80,90 @@ export enum AlertSourceAction {
   DeleteExternalAlertRule = 'delete-external-alert-rule',
 }
 
-export enum AlertRuleAction {
-  // internal (Grafana managed)
-  ViewAlertRule = 'view-alert-rule',
-  UpdateAlertRule = 'update-alert-rule',
-  DeleteAlertRule = 'delete-alert-rule',
-  SilenceAlertRule = 'silence-alert-rule',
-  ExploreRule = 'explore-alert-rule',
-}
-
 const AlwaysSupported = true; // this just makes it easier to understand the code
-export type Action = AlertmanagerAction | AlertSourceAction | AlertRuleAction;
+const NotSupported = false;
+export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction;
 
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
-export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
-  const abilities: Abilities<AlertSourceAction> = {
-    // -- Grafana managed alert rules --
-    [AlertSourceAction.CreateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleCreate)],
-    [AlertSourceAction.ViewAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleRead)],
-    [AlertSourceAction.UpdateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleUpdate)],
-    [AlertSourceAction.DeleteAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleDelete)],
-    // -- External alert rules (Mimir / Loki / etc) --
-    // for these we only have "read" and "write" permissions
-    [AlertSourceAction.CreateExternalAlertRule]: [
+/**
+ * This one will check for alerting abilities that don't apply to any particular alert source or alert rule
+ */
+export const useAlertingAbilities = (): Abilities<AlertingAction> => {
+  return {
+    // internal (Grafana managed)
+    [AlertingAction.CreateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleCreate)],
+    [AlertingAction.ViewAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleRead)],
+    [AlertingAction.UpdateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleUpdate)],
+    [AlertingAction.DeleteAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleDelete)],
+    [AlertingAction.ExportGrafanaManagedRules]: [
+      AlwaysSupported,
+      ctx.hasPermission(AccessControlAction.AlertingProvisioningRead) ||
+        ctx.hasPermission(AccessControlAction.AlertingProvisioningReadSecrets),
+    ],
+    // external
+    [AlertingAction.CreateExternalAlertRule]: [
       AlwaysSupported,
       ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
-    [AlertSourceAction.ViewExternalAlertRule]: [
+    [AlertingAction.ViewExternalAlertRule]: [
       AlwaysSupported,
       ctx.hasPermission(AccessControlAction.AlertingRuleExternalRead),
     ],
-    [AlertSourceAction.UpdateExternalAlertRule]: [
+    [AlertingAction.UpdateExternalAlertRule]: [
       AlwaysSupported,
       ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
-    [AlertSourceAction.DeleteExternalAlertRule]: [
+    [AlertingAction.DeleteExternalAlertRule]: [
       AlwaysSupported,
       ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
   };
+};
 
-  return abilities;
-}
+export const useAlertingAbility = (action: AlertingAction): Ability => {
+  const allAbilities = useAlertingAbilities();
+  return allAbilities[action];
+};
 
 /**
- * This hook will check if we have sufficient permissions for actions on a single alert rule
+ * This hook will check if we support the action and have sufficient permissions for it on a single alert rule
  */
-export function useAlertRuleAbility(rulesSource: RulesSource, rule: CombinedRule, action: AlertRuleAction): Ability {
-  const abilities = useAllAlertRuleAbilities(rulesSource, rule);
+export function useAlertRuleAbility(rule: CombinedRule, action: AlertRuleAction): Ability {
+  const abilities = useAllAlertRuleAbilities(rule);
 
   return useMemo(() => {
     return abilities[action];
   }, [abilities, action]);
 }
 
-export function useAllAlertRuleAbilities(rulesSource: RulesSource, rule: CombinedRule): Abilities<AlertRuleAction> {
-  // we have to check for both alert source abilities and specific alert rule abilities
-  const alertSourceAbilities = useAlertSourceAbilities();
+export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRuleAction> {
+  const rulesSource = rule.namespace.rulesSource;
+  const rulesSourceName = typeof rulesSource === 'string' ? rulesSource : rulesSource.name;
 
-  const [silenceSupported, silenceAllowed] = useCanSilence(rulesSource);
+  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+  const isFederated = isFederatedRuleGroup(rule.group);
 
+  // if a rule is either provisioned or a federated rule, we don't allow it to be removed or edited
+  const immutableRule = isProvisioned || isFederated;
+
+  // TODO refactor this hook maybe
+  const { isEditable, isRemovable, loading } = useIsRuleEditable(rulesSourceName, rule.rulerRule);
+  const MaybeSupported = immutableRule ? NotSupported : loading ? NotSupported : AlwaysSupported; // while we gather info, pretend it's not supported
+
+  const rulesPermissions = getRulesPermissions(rulesSourceName);
+  const canSilence = useCanSilence(rulesSource);
+
+  // TODO check if alert source supports actions!
   const abilities: Abilities<AlertRuleAction> = {
-    [AlertRuleAction.ViewAlertRule]: [false, false],
-    [AlertRuleAction.UpdateAlertRule]: [false, false],
-    [AlertRuleAction.DeleteAlertRule]: [false, false],
-    [AlertRuleAction.SilenceAlertRule]: [silenceSupported, silenceAllowed],
+    [AlertRuleAction.CreateAlertRule]: [AlwaysSupported, ctx.hasPermission(rulesPermissions.create)],
+    [AlertRuleAction.DuplicateAlertRule]: [AlwaysSupported, ctx.hasPermission(rulesPermissions.create)],
+    [AlertRuleAction.ViewAlertRule]: [AlwaysSupported, ctx.hasPermission(rulesPermissions.read)],
+    [AlertRuleAction.UpdateAlertRule]: [MaybeSupported, isEditable ?? false],
+    [AlertRuleAction.DeleteAlertRule]: [MaybeSupported, isRemovable ?? false],
     [AlertRuleAction.ExploreRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.DataSourcesExplore)],
+    [AlertRuleAction.SilenceAlertRule]: canSilence,
   };
 
   return abilities;
@@ -244,7 +271,30 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
   }, [abilities, actions]);
 }
 
-export function useAlertSourceAbility(action: AlertSourceAction): Ability {
-  const abilities = useAlertSourceAbilities();
-  return useMemo(() => abilities[action], [abilities, action]);
+/**
+ * We don't want to show the silence button if either
+ * 1. the user has no permissions to create silences
+ * 2. the admin has configured to only send instances to external AMs
+ */
+export function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
+  const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
+
+  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
+  const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
+    skip: !isGrafanaManagedRule,
+  });
+
+  // we don't support silencing when the rule is not a Grafana managed rule
+  // we simply don't know what Alertmanager the ruler is sending alerts to
+  if (!isGrafanaManagedRule || isLoading) {
+    return [false, false];
+  }
+
+  const hasPermissions = ctx.hasPermission(AccessControlAction.AlertingInstanceCreate);
+
+  const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
+  const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
+  const silenceSupported = !interactsOnlyWithExternalAMs || interactsWithAll;
+
+  return [silenceSupported, hasPermissions];
 }
