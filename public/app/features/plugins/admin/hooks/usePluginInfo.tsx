@@ -20,7 +20,10 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   // Populate info
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
   const useLatestCompatibleInfo = !plugin.isInstalled;
-  const version = plugin.installedVersion || (useLatestCompatibleInfo && latestCompatibleVersion?.version);
+  let version = plugin.installedVersion;
+  if (!version && useLatestCompatibleInfo && latestCompatibleVersion?.version) {
+    version = latestCompatibleVersion?.version;
+  }
 
   if (Boolean(version)) {
     info.push({
