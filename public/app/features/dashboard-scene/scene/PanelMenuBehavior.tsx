@@ -1,16 +1,15 @@
 import { InterpolateFunction, PanelMenuItem } from '@grafana/data';
-import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { DataTrailDrawer } from 'app/features/trails/DataTrailDrawer';
-import { buildVisualQueryFromString } from 'app/plugins/datasource/prometheus/querybuilder/parsing';
+import { addDataTrailAction } from 'app/features/trails/dashboardIntegration';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks } from './PanelLinks';
@@ -92,35 +91,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
   };
 
   asyncFunc();
-}
-
-function addDataTrailAction(dashboard: DashboardScene, vizPanel: VizPanel, items: PanelMenuItem[]) {
-  const queryRunner = getQueryRunnerFor(vizPanel);
-  if (!queryRunner) {
-    return;
-  }
-
-  const ds = getDataSourceSrv().getInstanceSettings(queryRunner.state.datasource);
-  if (!ds || ds.meta.id !== 'prometheus' || queryRunner.state.queries.length > 1) {
-    return;
-  }
-
-  const query = queryRunner.state.queries[0];
-  const parsedResult = buildVisualQueryFromString(query.expr);
-  if (parsedResult.errors.length > 0) {
-    return;
-  }
-
-  items.push({
-    text: 'Data trail',
-    iconClassName: 'code-branch',
-    onClick: () => {
-      dashboard.showModal(
-        new DataTrailDrawer({ query: parsedResult.query, dsRef: ds, timeRange: dashboard.state.$timeRange!.clone() })
-      );
-    },
-    shortcut: 'p s',
-  });
 }
 
 /**
