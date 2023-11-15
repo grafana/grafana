@@ -228,6 +228,12 @@ func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Respo
 		return nil
 	})
 	g.Go(func() error {
+		if err := hs.DashboardService.DeleteACLByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
 		if err := hs.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
 			return err
 		}
