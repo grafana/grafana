@@ -25,3 +25,15 @@ export function trackToolbarTimePickerClick() {
 export function trackToolbarZoomClick() {
   reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'zoom_out_time_range' });
 }
+
+export function trackToolbarShareClick() {
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'share' });
+}
+
+export function trackToolbarSaveClick() {
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'save' });
+}
+
+export function trackToolbarAddClick() {
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'add' });
+}

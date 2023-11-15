@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -11,11 +11,18 @@ import AddPanelMenu from './AddPanelMenu';
 
 export interface Props {
   dashboard: DashboardModel;
+  onToolbarAddClick?: () => void;
 }
 
-const AddPanelButton = ({ dashboard }: Props) => {
+const AddPanelButton = ({ dashboard, onToolbarAddClick }: Props) => {
   const styles = getStyles(useTheme2());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMenuOpen && onToolbarAddClick) {
+      onToolbarAddClick();
+    }
+  }, [isMenuOpen, onToolbarAddClick]);
 
   return (
     <Dropdown
