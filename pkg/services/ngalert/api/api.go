@@ -83,7 +83,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		DataProxy: api.DataProxy,
 		ac:        api.AccessControl,
 	}
-	regularAuthzService := accesscontrol.NewRuleService(api.AccessControl)
+	ruleAuthzService := accesscontrol.NewRuleService(api.AccessControl)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
@@ -95,7 +95,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, authz: regularAuthzService},
+		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, authz: ruleAuthzService},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
@@ -109,7 +109,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			xactManager:        api.TransactionManager,
 			log:                logger,
 			cfg:                &api.Cfg.UnifiedAlerting,
-			authz:              regularAuthzService,
+			authz:              ruleAuthzService,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -117,7 +117,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			AlertingProxy:   proxy,
 			DatasourceCache: api.DatasourceCache,
 			log:             logger,
-			authz:           regularAuthzService,
+			authz:           ruleAuthzService,
 			evaluator:       api.EvaluatorFactory,
 			cfg:             &api.Cfg.UnifiedAlerting,
 			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory, api.Tracer),
