@@ -202,7 +202,7 @@ describe('Loki Query Editor', () => {
     // Should have 3 columns
     cells.should('have.length', 3);
     // Time column has correct value
-    cells.contains('2023-11-15 09:41:23');
+    cells.contains('"wave":-0.5877852522916832');
 
     // "age" column has correct value of "new", need to requery the DOM because of the .contains call above
     cy.get('[data-panelid="1"]').find('[role="table"] [role="cell"]').contains('new');
