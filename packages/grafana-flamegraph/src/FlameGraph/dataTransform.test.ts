@@ -1,6 +1,6 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
-import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
+import { CollapsedMapContainer, FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
 import { textToDataContainer } from './testHelpers';
 
 describe('nestedSetToLevels', () => {
@@ -90,6 +90,17 @@ describe('FlameGraphDataContainer', () => {
     });
   });
 
+  it('creates correct collapse map 2', () => {
+    // Should not create any groups because even though the 1 is within threshold it has a sibling
+    const container = textToDataContainer(`
+      [0////////////////////////////////]
+      [1/////////////////////////////][2]
+    `)!;
+
+    const collapsedMap = container.getCollapsedMap();
+    expect(Array.from(collapsedMap.keys()).length).toEqual(0);
+  });
+
   it('creates empty collapse map if no items are similar', () => {
     const container = textToDataContainer(`
       [0//////////////]
@@ -99,5 +110,81 @@ describe('FlameGraphDataContainer', () => {
 
     const collapsedMap = container.getCollapsedMap();
     expect(Array.from(collapsedMap.keys()).length).toEqual(0);
+  });
+});
+
+describe('CollapsedMapContainer', () => {
+  const defaultItem: LevelItem = {
+    itemIndexes: [0],
+    value: 100,
+    level: 0,
+    children: [],
+    start: 0,
+  };
+
+  it('groups items if they are within value threshold', () => {
+    const container = new CollapsedMapContainer();
+
+    const parent: LevelItem = {
+      ...defaultItem,
+    };
+
+    const child1: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [1],
+    };
+
+    const child2: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [1],
+      value: 99.1,
+    };
+
+    container.addItem(child1, parent);
+    container.addItem(child2, child1);
+    expect(container.getMap().get(child1)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
+    expect(container.getMap().get(child2)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
+    expect(container.getMap().get(parent)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
+  });
+
+  it("doesn't group items if they are outside value threshold", () => {
+    const container = new CollapsedMapContainer();
+
+    const parent: LevelItem = {
+      ...defaultItem,
+    };
+
+    const child: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [1],
+      value: 98,
+    };
+
+    container.addItem(child, parent);
+    expect(container.getMap().size).toBe(0);
+  });
+
+  it("doesn't group items if parent has multiple children", () => {
+    const container = new CollapsedMapContainer();
+
+    const child1: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [1],
+      value: 99.1,
+    };
+
+    const child2: LevelItem = {
+      ...defaultItem,
+      itemIndexes: [2],
+      value: 0.09,
+    };
+
+    const parent: LevelItem = {
+      ...defaultItem,
+      children: [child1, child2],
+    };
+
+    container.addItem(child1, parent);
+    expect(container.getMap().size).toBe(0);
   });
 });

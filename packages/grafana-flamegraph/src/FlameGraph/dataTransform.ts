@@ -34,8 +34,6 @@ export type CollapseConfig = {
   collapsed: boolean;
 };
 
-export type CollapsedMap = Map<LevelItem, CollapseConfig>;
-
 /**
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
  * rendering code.
@@ -51,7 +49,6 @@ export function nestedSetToLevels(
 
   let parent: LevelItem | undefined = undefined;
   const uniqueLabels: Record<string, LevelItem[]> = {};
-  const collapsedMap: CollapsedMap = new Map();
 
   for (let i = 0; i < container.data.length; i++) {
     const currentLevel = container.getLevel(i);
@@ -82,22 +79,6 @@ export function nestedSetToLevels(
       level: currentLevel,
     };
 
-    if (options?.collapsing) {
-      // We collapse similar items here, where it seems like parent and child are the same thing and so the distinction
-      // isn't that important. We create a map of items that should be collapsed together.
-      if (parent && newItem.value === parent.value) {
-        if (collapsedMap.has(parent)) {
-          const config = collapsedMap.get(parent)!;
-          collapsedMap.set(newItem, config);
-          config.items.push(newItem);
-        } else {
-          const config = { items: [parent, newItem], collapsed: true };
-          collapsedMap.set(parent, config);
-          collapsedMap.set(newItem, config);
-        }
-      }
-    }
-
     if (uniqueLabels[container.getLabel(i)]) {
       uniqueLabels[container.getLabel(i)].push(newItem);
     } else {
@@ -112,7 +93,55 @@ export function nestedSetToLevels(
     levels[currentLevel].push(newItem);
   }
 
-  return [levels, uniqueLabels, collapsedMap];
+  const collapsedMapContainer = new CollapsedMapContainer();
+  if (options?.collapsing) {
+    // We collapse similar items here, where it seems like parent and child are the same thing and so the distinction
+    // isn't that important. We create a map of items that should be collapsed together.
+    collapsedMapContainer.addTree(levels[0][0]);
+  }
+
+  return [levels, uniqueLabels, collapsedMapContainer.getMap()];
+}
+
+export type CollapsedMap = Map<LevelItem, CollapseConfig>;
+export class CollapsedMapContainer {
+  private map = new Map();
+
+  addTree(root: LevelItem) {
+    const stack = [root];
+    while (stack.length) {
+      const current = stack.shift()!;
+
+      if (current.parents?.length) {
+        this.addItem(current, current.parents[0]);
+      }
+
+      if (current.children.length) {
+        stack.unshift(...current.children);
+      }
+    }
+  }
+
+  addItem(item: LevelItem, parent?: LevelItem) {
+    // The heuristics here is pretty simple right now. Just check if it's single child and if we are within threshold.
+    // We assume items with small self just aren't too important while we cannot really collapse items with siblings
+    // as it's not clear what to do with said sibling.
+    if (parent && item.value > parent.value * 0.99 && parent.children.length === 1) {
+      if (this.map.has(parent)) {
+        const config = this.map.get(parent)!;
+        this.map.set(item, config);
+        config.items.push(item);
+      } else {
+        const config = { items: [parent, item], collapsed: true };
+        this.map.set(parent, config);
+        this.map.set(item, config);
+      }
+    }
+  }
+
+  getMap() {
+    return new Map(this.map);
+  }
 }
 
 export function getMessageCheckFieldsResult(wrongFields: CheckFieldsResult) {
