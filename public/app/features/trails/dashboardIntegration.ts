@@ -8,7 +8,7 @@ import { getQueryRunnerFor } from '../dashboard-scene/utils/utils';
 
 import { DataTrailDrawer } from './DataTrailDrawer';
 
-export function addDataTrailAction(dashboard: DashboardScene, vizPanel: VizPanel, items: PanelMenuItem[]) {
+export function addDataTrailPanelAction(dashboard: DashboardScene, vizPanel: VizPanel, items: PanelMenuItem[]) {
   const queryRunner = getQueryRunnerFor(vizPanel);
   if (!queryRunner) {
     return;

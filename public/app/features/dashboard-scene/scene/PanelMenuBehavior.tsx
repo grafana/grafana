@@ -5,7 +5,7 @@ import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { addDataTrailAction } from 'app/features/trails/dashboardIntegration';
+import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -64,7 +64,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
 
       if (config.featureToggles.datatrails) {
-        addDataTrailAction(dashboard, panel, items);
+        addDataTrailPanelAction(dashboard, panel, items);
       }
     }
 
