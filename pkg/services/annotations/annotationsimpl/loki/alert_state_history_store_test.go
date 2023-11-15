@@ -265,9 +265,10 @@ func TestIntegrationGetRule(t *testing.T) {
 	})
 }
 
-func TestItemsFromStreams(t *testing.T) {
+func TestIntegrationItemsFromStreams(t *testing.T) {
 	sql := db.InitTestDB(t)
-	store := createTestLokiStore(t, sql, NewFakeLokiClient())
+	fakeLokiClient := NewFakeLokiClient()
+	store := createTestLokiStore(t, sql, fakeLokiClient)
 
 	t.Run("should return empty list when no streams", func(t *testing.T) {
 		items := store.itemsFromStreams(context.Background(), 1, []historian.Stream{}, annotation_ac.AccessResources{})
@@ -284,6 +285,36 @@ func TestItemsFromStreams(t *testing.T) {
 	})
 
 	t.Run("should return one annotation per stream+sample", func(t *testing.T) {
+		alert := createAlertRule(t, sql, nil, "Test Rule")
+
+		start := time.Now()
+		numTransitions := 10
+		transitions := genStateTransitions(t, numTransitions, start)
+
+		fakeLokiClient.Response = []historian.Stream{
+			historian.StatesToStream(ruleMetaFromRule(t, alert), transitions, map[string]string{}, log.NewNopLogger()),
+		}
+
+		items := store.itemsFromStreams(context.Background(), 1, fakeLokiClient.Response, annotation_ac.AccessResources{})
+		require.Len(t, items, numTransitions)
+
+		for i := 0; i < numTransitions; i++ {
+			item := items[i]
+			transition := transitions[i]
+
+			expected := &annotations.ItemDTO{
+				AlertID:   alert.ID,
+				AlertName: alert.Title,
+				Time:      transition.State.LastEvaluationTime.UnixMilli(),
+				NewState:  transition.Formatted(),
+			}
+			if i > 0 {
+				prevTransition := transitions[i-1]
+				expected.PrevState = prevTransition.Formatted()
+			}
+
+			compareAnnotationItem(t, expected, item)
+		}
 	})
 }
 
@@ -598,6 +629,26 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 	return transitions
 }
 
+func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) {
+	t.Helper()
+
+	require.Equal(t, expected.AlertID, actual.AlertID)
+	require.Equal(t, expected.AlertName, actual.AlertName)
+	if expected.DashboardUID != nil {
+		require.Equal(t, expected.DashboardID, actual.DashboardID)
+		require.Equal(t, *expected.DashboardUID, *actual.DashboardUID)
+	}
+	require.Equal(t, expected.NewState, actual.NewState)
+	if expected.PrevState != "" {
+		require.Equal(t, expected.PrevState, actual.PrevState)
+	}
+	require.Equal(t, expected.Time, actual.Time)
+	if expected.Text != "" && expected.Data != nil {
+		require.Equal(t, expected.Text, actual.Text)
+		require.Equal(t, expected.Data, actual.Data)
+	}
+}
+
 type FakeLokiClient struct {
 	client   client.Requester
 	cfg      historian.LokiConfig
@@ -623,7 +674,7 @@ func NewFakeLokiClient() *FakeLokiClient {
 	}
 }
 
-func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to, limit int64) (historian.QueryRes, error) {
+func (c *FakeLokiClient) RangeQuery(_ context.Context, _ string, _, _, _ int64) (historian.QueryRes, error) {
 	res := historian.QueryRes{
 		Data: historian.QueryData{
 			Result: c.Response,
