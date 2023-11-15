@@ -12,7 +12,9 @@ export type GetStatusHook = () => Promise<AuthProviderStatus>;
 
 export type SSOProvider = {
   provider: string;
-  settings: object;
+  settings: {
+    enabled: boolean;
+  };
 };
 
 export interface AuthConfigState {

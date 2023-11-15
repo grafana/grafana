@@ -3,9 +3,10 @@ import { isEmpty } from 'lodash';
 import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, IconName } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Badge, Card, Icon, useStyles2 } from '@grafana/ui';
+import { Grid } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 
@@ -22,10 +23,11 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
-  const { isLoading, providerStatuses } = state.authConfig;
+  const { isLoading, providerStatuses, providers } = state.authConfig;
   return {
     isLoading,
     providerStatuses,
+    providers,
   };
 }
 
@@ -35,7 +37,12 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSettings }: Props): JSX.Element => {
+export const AuthConfigPageUnconnected = ({
+  providerStatuses,
+  isLoading,
+  loadSettings,
+  providers,
+}: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -78,22 +85,24 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   return (
     <Page navId="authentication" subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
-        <h3 className={styles.sectionHeader}>Configured authentication</h3>
-        {!!enabledProviders?.length && (
-          <div className={styles.cardsContainer}>
-            {enabledProviders.map((provider) => (
-              <ProviderCard
-                key={provider.id}
-                providerId={provider.id}
-                displayName={providerStatuses[provider.id]?.name || provider.displayName}
-                authType={provider.protocol}
-                enabled={providerStatuses[provider.id]?.enabled}
-                configPath={provider.configPath}
-                onClick={() => onProviderCardClick(provider)}
-              />
+        <Grid gap={3} minColumnWidth={34}>
+          {!!providers?.length &&
+            providers.map(({ provider, settings }) => (
+              <Card href={'#'} key={provider}>
+                <Card.Heading>{provider}</Card.Heading>
+                <Card.Meta>OAuth</Card.Meta>
+                <Card.Figure>
+                  <Icon name={provider as IconName} size={'xxxl'} />
+                </Card.Figure>
+                <Card.Actions>
+                  <Badge
+                    text={settings.enabled ? 'Enabled' : 'Not enabled'}
+                    color={settings.enabled ? 'green' : 'blue'}
+                  />
+                </Card.Actions>
+              </Card>
             ))}
-          </div>
-        )}
+        </Grid>
         {!enabledProviders?.length && firstAvailableProvider && !isEmpty(providerStatuses) && (
           <ConfigureAuthCTA
             title={`You have no ${firstAvailableProvider.type} configuration created at the moment`}
