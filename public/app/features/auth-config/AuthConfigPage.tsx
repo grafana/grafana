@@ -1,11 +1,9 @@
-import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Card, Icon, useStyles2 } from '@grafana/ui';
+import { Box } from '@grafana/ui';
 import { Grid } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
@@ -13,7 +11,6 @@ import { StoreState } from 'app/types';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
-import { AuthProviderInfo } from './types';
 import { getProviderUrl } from './utils';
 
 import { getRegisteredAuthProviders } from '.';
@@ -43,8 +40,6 @@ export const AuthConfigPageUnconnected = ({
   loadSettings,
   providers,
 }: Props): JSX.Element => {
-  const styles = useStyles2(getStyles);
-
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
@@ -78,8 +73,8 @@ export const AuthConfigPageUnconnected = ({
   const onCTAClick = () => {
     reportInteraction('authentication_ui_created', { provider: firstAvailableProvider?.type });
   };
-  const onProviderCardClick = (provider: AuthProviderInfo) => {
-    reportInteraction('authentication_ui_provider_clicked', { provider: provider.type });
+  const onProviderCardClick = (providerType: string) => {
+    reportInteraction('authentication_ui_provider_clicked', { provider: providerType });
   };
 
   return (
@@ -88,19 +83,14 @@ export const AuthConfigPageUnconnected = ({
         <Grid gap={3} minColumnWidth={34}>
           {!!providers?.length &&
             providers.map(({ provider, settings }) => (
-              <Card href={'#'} key={provider}>
-                <Card.Heading>{provider}</Card.Heading>
-                <Card.Meta>OAuth</Card.Meta>
-                <Card.Figure>
-                  <Icon name={provider as IconName} size={'xxxl'} />
-                </Card.Figure>
-                <Card.Actions>
-                  <Badge
-                    text={settings.enabled ? 'Enabled' : 'Not enabled'}
-                    color={settings.enabled ? 'green' : 'blue'}
-                  />
-                </Card.Actions>
-              </Card>
+              <ProviderCard
+                key={provider}
+                authType={'OAuth'}
+                providerId={provider}
+                displayName={provider}
+                enabled={settings.enabled}
+                onClick={() => onProviderCardClick(provider)}
+              />
             ))}
         </Grid>
         {!enabledProviders?.length && firstAvailableProvider && !isEmpty(providerStatuses) && (
@@ -113,56 +103,25 @@ export const AuthConfigPageUnconnected = ({
           />
         )}
         {!!configuredProviders?.length && (
-          <div className={styles.cardsContainer}>
-            {configuredProviders.map((provider) => (
-              <ProviderCard
-                key={provider.id}
-                providerId={provider.id}
-                displayName={providerStatuses[provider.id]?.name || provider.displayName}
-                authType={provider.protocol}
-                enabled={providerStatuses[provider.id]?.enabled}
-                configPath={provider.configPath}
-                onClick={() => onProviderCardClick(provider)}
-              />
-            ))}
-          </div>
+          <Box paddingTop={3}>
+            <Grid gap={3} minColumnWidth={34}>
+              {configuredProviders.map((provider) => (
+                <ProviderCard
+                  key={provider.id}
+                  providerId={provider.id}
+                  displayName={providerStatuses[provider.id]?.name || provider.displayName}
+                  authType={provider.protocol}
+                  enabled={providerStatuses[provider.id]?.enabled}
+                  configPath={provider.configPath}
+                  onClick={() => onProviderCardClick(provider.type)}
+                />
+              ))}
+            </Grid>
+          </Box>
         )}
       </Page.Contents>
     </Page>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    cardsContainer: css`
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
-      gap: ${theme.spacing(3)};
-      margin-bottom: ${theme.spacing(3)};
-      margin-top: ${theme.spacing(2)};
-    `,
-    sectionHeader: css`
-      margin-bottom: ${theme.spacing(3)};
-    `,
-    settingsSection: css`
-      margin-top: ${theme.spacing(4)};
-    `,
-    settingName: css`
-      padding-left: 25px;
-    `,
-    doclink: css`
-      padding-bottom: 5px;
-      padding-top: -5px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      a {
-        color: ${theme.colors.info.name}; // use theme link color or any other color
-        text-decoration: underline; // underline or none, as you prefer
-      }
-    `,
-    settingValue: css`
-      white-space: break-spaces;
-    `,
-  };
 };
 
 export default connector(AuthConfigPageUnconnected);
