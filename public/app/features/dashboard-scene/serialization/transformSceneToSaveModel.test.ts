@@ -143,6 +143,15 @@ jest.mock('@grafana/runtime', () => ({
     },
   },
 }));
+
+jest.mock('@grafana/scenes', () => ({
+  ...jest.requireActual('@grafana/scenes'),
+  sceneUtils: {
+    ...jest.requireActual('@grafana/scenes').sceneUtils,
+    registerVariableMacro: jest.fn(),
+  },
+}));
+
 describe('transformSceneToSaveModel', () => {
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
