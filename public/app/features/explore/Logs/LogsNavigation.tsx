@@ -21,8 +21,6 @@ type Props = {
   scrollToTopLogs: () => void;
   addResultsToCache: () => void;
   clearCache: () => void;
-  loadMoreLogs?: (range: AbsoluteTimeRange) => void;
-  scrollElement?: HTMLDivElement;
 };
 
 export type LogsPage = {
@@ -41,8 +39,6 @@ function LogsNavigation({
   queries,
   clearCache,
   addResultsToCache,
-  loadMoreLogs,
-  scrollElement
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -95,39 +91,6 @@ function LogsNavigation({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const scrollView = scrollElement;
-    if (!scrollView) {
-      return;
-    }
-    const delta = 5;
-    function handleScroll(e: Event) {
-      if (!e.target || !loadMoreLogs) {
-        return;
-      }
-      const target: HTMLDivElement = e.target as HTMLDivElement;
-      const diff = (target.scrollHeight - target.scrollTop) - target.clientHeight;
-      if (diff > delta) {
-        return;
-      }
-      if (!onLastPage) {
-        const indexChange = oldestLogsFirst ? -1 : 1;
-          loadMoreLogs({
-            from: pages[currentPageIndex + indexChange].queryRange.from,
-            to: pages[currentPageIndex + indexChange].queryRange.to,
-          });
-      } else {
-        loadMoreLogs({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
-      }
-      scrollView?.removeEventListener('scroll', handleScroll);
-    }
-    scrollView.addEventListener('scroll', handleScroll);
-
-    return () => {
-      scrollView.removeEventListener('scroll', handleScroll);
-    }
-  }, [currentPageIndex, loadMoreLogs, oldestLogsFirst, onLastPage, pages, scrollElement, visibleRange.from]);
-
   const changeTime = useCallback(
     ({ from, to }: AbsoluteTimeRange) => {
       expectedRangeRef.current = { from, to };
@@ -143,40 +106,28 @@ function LogsNavigation({
     return a.queryRange.to > b.queryRange.to ? -1 : 1;
   };
 
-  const handleloadMoreLogs = () => {
-    //If we are not on the last page, use next page's range
-    reportInteraction('grafana_explore_logs_pagination_clicked', {
-      pageType: 'olderLogsButton',
-    });
-    if (!onLastPage) {
-      const indexChange = oldestLogsFirst ? -1 : 1;
-      if (loadMoreLogs) {
-        loadMoreLogs({
-          from: pages[currentPageIndex + indexChange].queryRange.from,
-          to: pages[currentPageIndex + indexChange].queryRange.to,
-        });
-      } else {
-        changeTime({
-          from: pages[currentPageIndex + indexChange].queryRange.from,
-          to: pages[currentPageIndex + indexChange].queryRange.to,
-        });
-      }
-    } else {
-      //If we are on the last page, create new range
-      if (loadMoreLogs) {
-        loadMoreLogs({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
-      } else {
-        changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
-      }
-    }
-  };
-
   const olderLogsButton = (
     <Button
       data-testid="olderLogsButton"
       className={styles.navButton}
       variant="secondary"
-      onClick={handleloadMoreLogs}
+      onClick={() => {
+        //If we are not on the last page, use next page's range
+        reportInteraction('grafana_explore_logs_pagination_clicked', {
+          pageType: 'olderLogsButton',
+        });
+        if (!onLastPage) {
+          const indexChange = oldestLogsFirst ? -1 : 1;
+          changeTime({
+            from: pages[currentPageIndex + indexChange].queryRange.from,
+            to: pages[currentPageIndex + indexChange].queryRange.to,
+          });
+        } else {
+          //If we are on the last page, create new range
+          changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
+        }
+        scrollToTopLogs();
+      }}
       disabled={loading}
     >
       <div className={styles.navButtonContent}>
@@ -203,6 +154,7 @@ function LogsNavigation({
             to: pages[currentPageIndex + indexChange].queryRange.to,
           });
         }
+        scrollToTopLogs();
         //If we are on the first page, button is disabled and we do nothing
       }}
       disabled={loading || onFirstPage}
@@ -228,7 +180,7 @@ function LogsNavigation({
   );
 
   return (
-    <div className={styles.navContainer} style={{ display: 'none' }}>
+    <div className={styles.navContainer}>
       {oldestLogsFirst ? olderLogsButton : newerLogsButton}
       <LogsNavigationPages
         pages={pages}
