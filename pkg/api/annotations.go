@@ -589,11 +589,13 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 		if scopeParts[0] != accesscontrol.ScopeAnnotationsRoot || len(scopeParts) != 3 {
 			return nil, accesscontrol.ErrInvalidScope
 		}
+		
 		annotationIdStr := scopeParts[2]
 		annotationId, err := strconv.Atoi(annotationIdStr)
 		if err != nil {
 			return nil, accesscontrol.ErrInvalidScope
 		}
+		
 		// tempUser is used to resolve annotation type.
 		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
 		tempUser := &user.SignedInUser{
