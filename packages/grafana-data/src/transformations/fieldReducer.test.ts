@@ -1,6 +1,6 @@
 import { difference } from 'lodash';
 
-import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { createDataFrame, guessFieldTypeFromValue, toDataFrame } from '../dataframe/processDataFrame';
 import { Field, FieldType, NullValueMode } from '../types/index';
 
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
@@ -241,5 +241,18 @@ describe('Stats Calculators', () => {
     someNulls.config.nullValueMode = NullValueMode.Null;
 
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
+  });
+
+  it('should calculate empty data to null', () => {
+    const stats = reduceField({
+      field: toDataFrame({ fields: [{ name: 'x', values: [] }] }).fields[0],
+      reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count, ReducerID.allIsNull],
+    });
+
+    expect(stats.first).toEqual(null);
+    expect(stats.last).toEqual(null);
+    expect(stats.mean).toEqual(null);
+    expect(stats.count).toEqual(0);
+    expect(stats.allIsNull).toEqual(true);
   });
 });

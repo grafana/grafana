@@ -60,7 +60,6 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   if (!field || !reducers || reducers.length < 1) {
     return {};
   }
-
   if (field.state?.calcs) {
     // Find the values we need to calculate
     const missing: string[] = [];
@@ -87,7 +86,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   if (data.length < 1) {
     const calcs: FieldCalcs = { ...field.state.calcs };
     for (const reducer of queue) {
-      calcs[reducer.id] = reducer.emptyInputResult !== null ? reducer.emptyInputResult : null;
+      calcs[reducer.id] = reducer.emptyInputResult ?? null;
     }
     return (field.state.calcs = calcs);
   }
