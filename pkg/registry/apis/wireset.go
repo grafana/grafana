@@ -3,7 +3,7 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/registry/apis/datasources"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 )
@@ -15,5 +15,5 @@ var WireSet = wire.NewSet(
 	//	playlistV0.RegisterAPIService,
 	playlist.RegisterAPIService,
 	example.RegisterAPIService,
-	datasources.RegisterAPIService,
+	datasource.RegisterAPIService,
 )

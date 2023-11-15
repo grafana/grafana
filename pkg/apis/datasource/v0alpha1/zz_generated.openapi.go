@@ -16,14 +16,14 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.DataSourceConfig":     schema_pkg_apis_datasources_v0alpha1_DataSourceConfig(ref),
-		"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.DataSourceConfigList": schema_pkg_apis_datasources_v0alpha1_DataSourceConfigList(ref),
-		"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.InstanceInfo":         schema_pkg_apis_datasources_v0alpha1_InstanceInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.InstanceInfoList":     schema_pkg_apis_datasources_v0alpha1_InstanceInfoList(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceConfig":       schema_pkg_apis_datasource_v0alpha1_DataSourceConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceConfigList":   schema_pkg_apis_datasource_v0alpha1_DataSourceConfigList(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceInstance":     schema_pkg_apis_datasource_v0alpha1_DataSourceInstance(ref),
+		"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceInstanceList": schema_pkg_apis_datasource_v0alpha1_DataSourceInstanceList(ref),
 	}
 }
 
-func schema_pkg_apis_datasources_v0alpha1_DataSourceConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_datasource_v0alpha1_DataSourceConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -52,17 +52,9 @@ func schema_pkg_apis_datasources_v0alpha1_DataSourceConfig(ref common.ReferenceC
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The body depends on each plugin type",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"secure": {
@@ -90,7 +82,7 @@ func schema_pkg_apis_datasources_v0alpha1_DataSourceConfig(ref common.ReferenceC
 	}
 }
 
-func schema_pkg_apis_datasources_v0alpha1_DataSourceConfigList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_datasource_v0alpha1_DataSourceConfigList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -123,7 +115,7 @@ func schema_pkg_apis_datasources_v0alpha1_DataSourceConfigList(ref common.Refere
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.DataSourceConfig"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceConfig"),
 									},
 								},
 							},
@@ -133,11 +125,11 @@ func schema_pkg_apis_datasources_v0alpha1_DataSourceConfigList(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.DataSourceConfig", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceConfig", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_datasources_v0alpha1_InstanceInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_datasource_v0alpha1_DataSourceInstance(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -178,6 +170,13 @@ func schema_pkg_apis_datasources_v0alpha1_InstanceInfo(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"pluginId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The plugin id (is this necessary? or implied from the group name)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"title"},
 			},
@@ -187,7 +186,7 @@ func schema_pkg_apis_datasources_v0alpha1_InstanceInfo(ref common.ReferenceCallb
 	}
 }
 
-func schema_pkg_apis_datasources_v0alpha1_InstanceInfoList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_datasource_v0alpha1_DataSourceInstanceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -220,7 +219,7 @@ func schema_pkg_apis_datasources_v0alpha1_InstanceInfoList(ref common.ReferenceC
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.InstanceInfo"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceInstance"),
 									},
 								},
 							},
@@ -230,6 +229,6 @@ func schema_pkg_apis_datasources_v0alpha1_InstanceInfoList(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1.InstanceInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceInstance", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }

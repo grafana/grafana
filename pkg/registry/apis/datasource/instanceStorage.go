@@ -1,4 +1,4 @@
-package datasources
+package datasource
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -45,7 +45,7 @@ func (s *instanceStorage) GetSingularName() string {
 }
 
 func (s *instanceStorage) NewList() runtime.Object {
-	return &v0alpha1.InstanceInfoList{}
+	return &v0alpha1.DataSourceInstanceList{}
 }
 
 func (s *instanceStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -60,12 +60,12 @@ func (s *instanceStorage) Get(ctx context.Context, name string, options *metav1.
 	return s.asInstance(ds), nil
 }
 
-func (s *instanceStorage) asInstance(ds *datasources.DataSource) *v0alpha1.InstanceInfo {
+func (s *instanceStorage) asInstance(ds *datasources.DataSource) *v0alpha1.DataSourceInstance {
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%d/%s", ds.Created.UnixMilli(), ds.UID)))
 	uid := fmt.Sprintf("%x", h.Sum(nil))
 
-	return &v0alpha1.InstanceInfo{
+	return &v0alpha1.DataSourceInstance{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "InstanceInfo",
 			APIVersion: s.apiVersion,
@@ -82,12 +82,12 @@ func (s *instanceStorage) asInstance(ds *datasources.DataSource) *v0alpha1.Insta
 }
 
 func (s *instanceStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	result := &v0alpha1.InstanceInfoList{
+	result := &v0alpha1.DataSourceInstanceList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DataSourceConfigList",
 			APIVersion: s.apiVersion,
 		},
-		Items: []v0alpha1.InstanceInfo{},
+		Items: []v0alpha1.DataSourceInstance{},
 	}
 	vals, err := s.builder.getDataSources(ctx)
 	if err == nil {

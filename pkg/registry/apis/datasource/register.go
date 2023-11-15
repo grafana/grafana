@@ -1,4 +1,4 @@
-package datasources
+package datasource
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/utils/strings/slices"
 
-	"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -59,7 +59,7 @@ func RegisterAPIService(
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
 	ids := []string{
 		"grafana-testdata-datasource",
-		"postgres",
+		"grafana-postgresql-datasource",
 	}
 
 	for _, ds := range all {
@@ -68,7 +68,7 @@ func RegisterAPIService(
 		}
 
 		groupVersion := schema.GroupVersion{
-			Group:   fmt.Sprintf("%s.ds.grafana.com", ds.ID),
+			Group:   fmt.Sprintf("%s.ds.grafana.app", ds.ID),
 			Version: VersionID,
 		}
 		builder = &DSAPIBuilder{
@@ -93,8 +93,8 @@ func (b *DSAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(b.groupVersion,
 		&v0alpha1.DataSourceConfig{},
 		&v0alpha1.DataSourceConfigList{},
-		&v0alpha1.InstanceInfo{},
-		&v0alpha1.InstanceInfoList{},
+		&v0alpha1.DataSourceInstance{},
+		&v0alpha1.DataSourceInstanceList{},
 	)
 	metav1.AddToGroupVersion(scheme, b.groupVersion)
 	return scheme.SetVersionPriority(b.groupVersion)
