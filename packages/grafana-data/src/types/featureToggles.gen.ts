@@ -162,5 +162,5 @@ export interface FeatureToggles {
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
   alertingSimplifiedRouting?: boolean;
-  logsRowsPopoverMenu?: boolean;
+  logRowsPopoverMenu?: boolean;
 }

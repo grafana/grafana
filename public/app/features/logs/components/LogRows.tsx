@@ -101,7 +101,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   }
 
   handleSelection = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel): boolean => {
-    if (!config.featureToggles.logsRowsPopoverMenu) {
+    if (!config.featureToggles.logRowsPopoverMenu) {
       return false;
     }
     // Selection is ignored if the filter functions are not defined.
