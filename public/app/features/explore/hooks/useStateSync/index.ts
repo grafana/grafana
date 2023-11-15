@@ -78,8 +78,11 @@ export function useStateSync(params: ExploreQueryParams) {
           if (!isEqual(prevParams.current.panes, JSON.stringify(panesQueryParams))) {
             // If there's no previous state it means we are mounting explore for the first time,
             // in this case we want to replace the URL instead of pushing a new entry to the history.
+            // If theinitstate is 'pending' it means explore still hasn't finished initializing. in that case we skip
+            // pushing a new entry in the history as the first entry will be pushed after initialization.
             const replace =
-              !!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0;
+              (!!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0) ||
+              initState.current === 'pending';
 
             prevParams.current = {
               panes: JSON.stringify(panesQueryParams),
@@ -232,36 +235,38 @@ export function useStateSync(params: ExploreQueryParams) {
           })
         );
 
-        const newParams = initializedPanes.reduce(
-          (acc, { exploreId, state }) => {
-            return {
-              ...acc,
-              panes: {
-                ...acc.panes,
-                [exploreId]: getUrlStateFromPaneState(state),
-              },
-            };
-          },
-          {
-            panes: {},
-          }
-        );
-        initState.current = 'done';
+        const panesObj = initializedPanes.reduce((acc, { exploreId, state }) => {
+          return {
+            ...acc,
+            [exploreId]: getUrlStateFromPaneState(state),
+          };
+        }, {});
+
         // we need to use partial here beacuse replace doesn't encode the query params.
-        location.partial(
-          {
-            // partial doesn't remove other parameters, so we delete (by setting them to undefined) all the current one before adding the new ones.
-            ...Object.keys(location.getSearchObject()).reduce<Record<string, unknown>>((acc, key) => {
-              acc[key] = undefined;
-              return acc;
-            }, {}),
-            // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
-            schemaVersion: urlState.schemaVersion,
-            panes: JSON.stringify(newParams.panes),
-            orgId,
-          },
-          true
-        );
+        const oldQuery = location.getSearchObject();
+
+        // we create the default query params from the current URL, omitting all the properties we know should be in the final url.
+        // This includes params from previous schema versions and 'schemaVersion', 'panes', 'orgId' as we want to replace those.
+        let defaults: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(oldQuery).filter(
+          ([key]) => !['schemaVersion', 'panes', 'orgId'].includes(key)
+        )) {
+          defaults[key] = value;
+        }
+
+        const searchParams = new URLSearchParams({
+          // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
+          schemaVersion: `${urlState.schemaVersion}`,
+          panes: JSON.stringify(panesObj),
+          orgId: `${orgId}`,
+          ...defaults,
+        });
+
+        location.replace({
+          pathname: location.getLocation().pathname,
+          search: searchParams.toString(),
+        });
+        initState.current = 'done';
       });
     }
 
