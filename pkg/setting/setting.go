@@ -1051,7 +1051,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	Target := valueAsString(iniFile.Section(""), "target", "all")
 	if Target != "" {
-		cfg.Target = strings.Split(Target, " ")
+		cfg.Target = util.SplitString(Target)
 	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
@@ -1408,6 +1408,18 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 
 	return key
+}
+
+func (s *DynamicSection) KeysHash() map[string]string {
+	hash := s.section.KeysHash()
+	for k := range hash {
+		envKey := EnvKey(s.section.Name(), k)
+		envValue := os.Getenv(envKey)
+		if len(envValue) > 0 {
+			hash[k] = envValue
+		}
+	}
+	return hash
 }
 
 // SectionWithEnvOverrides dynamically overrides keys with environment variables.
