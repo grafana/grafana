@@ -10,17 +10,11 @@ interface GridPropsBase extends Omit<HTMLAttributes<HTMLDivElement>, 'className'
   children: NonNullable<React.ReactNode>;
   /** Specifies the gutters between columns and rows. It is overwritten when a column or row gap has a value. */
   gap?: ResponsiveProp<ThemeSpacingTokens>;
-  /** Number of columns. */
-  columns?: ResponsiveProp<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12>;
-  /** For a responsive layout, fit as many columns while maintaining this minimum column width.
-   *  The real width will be calculated based on the theme spacing tokens: `theme.spacing(minColumnWidth).`
-   */
-  minColumnWidth?: ResponsiveProp<1 | 2 | 3 | 5 | 8 | 13 | 21 | 34 | 44 | 55 | 72 | 89 | 144>;
 }
 
 interface PropsWithColumns extends GridPropsBase {
   /** Number of columns */
-  columns?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+  columns?: ResponsiveProp<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12>;
   minColumnWidth?: never;
 }
 
@@ -29,7 +23,7 @@ interface PropsWithMinColumnWidth extends GridPropsBase {
   /** For a responsive layout, fit as many columns while maintaining this minimum column width.
    *  The real width will be calculated based on the theme spacing tokens: `theme.spacing(minColumnWidth)`
    */
-  minColumnWidth?: 1 | 2 | 3 | 5 | 8 | 13 | 21 | 34 | 44 | 55 | 72 | 89 | 144;
+  minColumnWidth?: ResponsiveProp<1 | 2 | 3 | 5 | 8 | 13 | 21 | 34 | 44 | 55 | 72 | 89 | 144>;
 }
 
 /** 'columns' and 'minColumnWidth' are mutually exclusive */
