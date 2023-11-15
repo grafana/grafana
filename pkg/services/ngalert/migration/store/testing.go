@@ -41,6 +41,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		cfg.UnifiedAlerting.BaseInterval = time.Second * 10
 	}
 	features := featuremgmt.WithFeatures()
+	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 	alertingStore := store.DBstore{
 		SQLStore: sqlStore,
 		Cfg:      cfg.UnifiedAlerting,

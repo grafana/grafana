@@ -156,7 +156,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		return dashFolder, nil
 	}
 
@@ -328,7 +328,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		return nil, nil
 	}
 	return s.store.GetParents(ctx, q)
@@ -360,7 +360,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
 	dashFolder.OrgID = cmd.OrgID
 
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
@@ -801,7 +801,7 @@ func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescen
 
 	result := []string{*cmd.UID}
 	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		subfolders, err := s.getNestedFolders(ctx, cmd.OrgID, *cmd.UID)
 		if err != nil {
 			logger.Error("failed to get subfolders", "error", err)

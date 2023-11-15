@@ -66,7 +66,7 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 }
 
 func (d *dashboardStore) emitEntityEvent() bool {
-	return d.features != nil && d.features.IsEnabled(featuremgmt.FlagPanelTitleSearch)
+	return d.features != nil && d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashboard *dashboards.Dashboard, overwrite bool) (bool, error) {
@@ -981,8 +981,8 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	if query.OrgId != 0 {
 		orgID = query.OrgId
 		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
-	} else if query.SignedInUser.OrgID != 0 {
-		orgID = query.SignedInUser.OrgID
+	} else if query.SignedInUser.GetOrgID() != 0 {
+		orgID = query.SignedInUser.GetOrgID()
 		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 	}
 
@@ -1010,7 +1010,12 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if len(query.FolderUIDs) > 0 {
-		filters = append(filters, searchstore.FolderUIDFilter{Dialect: d.store.GetDialect(), OrgID: orgID, UIDs: query.FolderUIDs, NestedFoldersEnabled: d.features.IsEnabled(featuremgmt.FlagNestedFolders)})
+		filters = append(filters, searchstore.FolderUIDFilter{
+			Dialect:              d.store.GetDialect(),
+			OrgID:                orgID,
+			UIDs:                 query.FolderUIDs,
+			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+		})
 	}
 
 	var res []dashboards.DashboardSearchProjection
