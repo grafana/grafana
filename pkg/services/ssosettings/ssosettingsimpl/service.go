@@ -45,7 +45,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		fbStrategies: strategies,
 	}
 
-	if features.IsEnabled(featuremgmt.FlagSsoSettingsApi) {
+	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
 		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
 		ssoSettingsApi.RegisterAPIEndpoints()
 	}

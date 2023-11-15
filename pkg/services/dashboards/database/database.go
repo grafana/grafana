@@ -66,7 +66,7 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 }
 
 func (d *dashboardStore) emitEntityEvent() bool {
-	return d.features != nil && d.features.IsEnabled(featuremgmt.FlagPanelTitleSearch)
+	return d.features != nil && d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashboard *dashboards.Dashboard, overwrite bool) (bool, error) {
@@ -330,6 +330,7 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 		}
 	}
 
+	// nolint:staticcheck
 	if dash.FolderID > 0 {
 		var existingFolder dashboards.Dashboard
 		folderExists, err := sess.Where("org_id=? AND id=? AND is_folder=?", dash.OrgID, dash.FolderID,
@@ -364,6 +365,7 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 		return isParentFolderChanged, dashboards.ErrDashboardTypeMismatch
 	}
 
+	// nolint:staticcheck
 	if !dash.IsFolder && dash.FolderID != existing.FolderID {
 		isParentFolderChanged = true
 	}
@@ -389,6 +391,7 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite,
 	isParentFolderChanged bool) (bool, error) {
 	var existing dashboards.Dashboard
+	// nolint:staticcheck
 	exists, err := sess.Where("org_id=? AND title=? AND (is_folder=? OR folder_id=?)", dash.OrgID, dash.Title,
 		dialect.BooleanStr(true), dash.FolderID).Get(&existing)
 	if err != nil {
@@ -403,6 +406,7 @@ func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Das
 			return isParentFolderChanged, dashboards.ErrDashboardFolderWithSameNameAsDashboard
 		}
 
+		// nolint:staticcheck
 		if !dash.IsFolder && (dash.FolderID != existing.FolderID || dash.ID == 0) {
 			isParentFolderChanged = true
 		}
@@ -897,6 +901,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 		}
 		// nolint:staticcheck
 		if query.FolderID != nil {
+			// nolint:staticcheck
 			dashboard.FolderID = *query.FolderID
 			mustCols = append(mustCols, "folder_id")
 		}
@@ -981,8 +986,8 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	if query.OrgId != 0 {
 		orgID = query.OrgId
 		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
-	} else if query.SignedInUser.OrgID != 0 {
-		orgID = query.SignedInUser.OrgID
+	} else if query.SignedInUser.GetOrgID() != 0 {
+		orgID = query.SignedInUser.GetOrgID()
 		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 	}
 
@@ -1010,7 +1015,12 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if len(query.FolderUIDs) > 0 {
-		filters = append(filters, searchstore.FolderUIDFilter{Dialect: d.store.GetDialect(), OrgID: orgID, UIDs: query.FolderUIDs, NestedFoldersEnabled: d.features.IsEnabled(featuremgmt.FlagNestedFolders)})
+		filters = append(filters, searchstore.FolderUIDFilter{
+			Dialect:              d.store.GetDialect(),
+			OrgID:                orgID,
+			UIDs:                 query.FolderUIDs,
+			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+		})
 	}
 
 	var res []dashboards.DashboardSearchProjection

@@ -28,6 +28,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
+import { DashboardDataDTO } from 'app/types';
 
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -112,9 +113,9 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(1);
-      expect(scene.state.$behaviors![0]).toBeInstanceOf(behaviors.CursorSync);
-      expect((scene.state.$behaviors![0] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+      expect(scene.state.$behaviors).toHaveLength(2);
+      expect(scene.state.$behaviors![1]).toBeInstanceOf(behaviors.CursorSync);
+      expect((scene.state.$behaviors![1] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
   });
 
@@ -741,6 +742,34 @@ describe('transformSaveModelToScene', () => {
       expect(dataLayers.state.layers[3].state.name).toBe('Hidden');
       expect(dataLayers.state.layers[3].state.isEnabled).toBe(true);
       expect(dataLayers.state.layers[3].state.isHidden).toBe(true);
+    });
+  });
+
+  describe('Alerting data layer', () => {
+    it('Should add alert states data layer if unified alerting enabled', () => {
+      config.unifiedAlertingEnabled = true;
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+
+      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+
+      const dataLayers = scene.state.$data as SceneDataLayers;
+      expect(dataLayers.state.layers).toHaveLength(5);
+      expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
+    });
+
+    it('Should add alert states data layer if any panel has a legacy alert defined', () => {
+      config.unifiedAlertingEnabled = false;
+      const dashboard = { ...dashboard_to_load1 } as unknown as DashboardDataDTO;
+      dashboard.panels![0].alert = {};
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+
+      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+
+      const dataLayers = scene.state.$data as SceneDataLayers;
+      expect(dataLayers.state.layers).toHaveLength(5);
+      expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
     });
   });
 });

@@ -88,6 +88,17 @@ You can use the Text mode option to control what text the visualization renders.
 - **Name -** Show name instead of value. Value is displayed in the hover tooltip.
 - **None -** Show nothing (empty). Name and value are displayed in the hover tooltip.
 
+### Wide layout
+
+Set whether wide layout is enabled or not. Wide layout is enabled by default.
+
+- **On -** Wide layout is enabled.
+- **Off -** Wide layout is disabled.
+
+{{% admonition type="note" %}}
+This option is only applicable when **Text mode** is set to **Value and name**. When wide layout is enabled, the value and name are displayed side-by-side with the value on the right, if the panel is wide enough. When wide layout is disabled, the value is always rendered underneath the name.
+{{% /admonition %}}
+
 ### Color mode
 
 Select a color mode.

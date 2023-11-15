@@ -218,7 +218,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) test/pkg/agent.(*Target).start.func1 (4.10 Bil)",
-      "x": 16,
+      "x": 10,
       "y": 35,
     },
     "transform": [
@@ -250,7 +250,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 0,
             "y": 22,
           },
@@ -295,8 +295,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 8,
+            "width": 3,
+            "x": 4,
             "y": 27.5,
           },
           "transform": [
@@ -1888,7 +1888,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) test/pkg/pprof.OpenRaw (390 Mil)",
-      "x": 125.84204131227219,
+      "x": 119.84204131227219,
       "y": 79,
     },
     "transform": [
@@ -1920,7 +1920,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 109.84204131227219,
             "y": 66,
           },
@@ -1965,8 +1965,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 117.84204131227219,
+            "width": 3,
+            "x": 113.84204131227219,
             "y": 71.5,
           },
           "transform": [
@@ -4211,7 +4211,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) sort.Sort (240 Mil)",
-      "x": 184.16524908869988,
+      "x": 178.16524908869988,
       "y": 101,
     },
     "transform": [
@@ -4243,7 +4243,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 168.16524908869988,
             "y": 88,
           },
@@ -4288,8 +4288,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 176.16524908869988,
+            "width": 3,
+            "x": 172.16524908869988,
             "y": 93.5,
           },
           "transform": [
@@ -6522,7 +6522,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(4) io/ioutil.ReadAll (430 Mil)",
-      "x": 372.74362089914945,
+      "x": 366.74362089914945,
       "y": 57,
     },
     "transform": [
@@ -6554,7 +6554,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 356.74362089914945,
             "y": 44,
           },
@@ -6599,8 +6599,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 364.74362089914945,
+            "width": 3,
+            "x": 360.74362089914945,
             "y": 49.5,
           },
           "transform": [
@@ -7379,7 +7379,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(8) net/http.serverHandler.ServeHTTP (5.58 Bil)",
-      "x": 414.5419198055893,
+      "x": 408.5419198055893,
       "y": 57,
     },
     "transform": [
@@ -7411,7 +7411,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 398.5419198055893,
             "y": 44,
           },
@@ -7456,8 +7456,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 406.5419198055893,
+            "width": 3,
+            "x": 402.5419198055893,
             "y": 49.5,
           },
           "transform": [
@@ -7575,7 +7575,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) net/http.HandlerFunc.ServeHTTP (5.54 Bil)",
-      "x": 414.5419198055893,
+      "x": 408.5419198055893,
       "y": 79,
     },
     "transform": [
@@ -7607,7 +7607,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 398.5419198055893,
             "y": 66,
           },
@@ -7652,8 +7652,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 406.5419198055893,
+            "width": 3,
+            "x": 402.5419198055893,
             "y": 71.5,
           },
           "transform": [
@@ -8089,7 +8089,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) github.com/weaveworks/common/middleware.Instrument.Wrap.func1.2 (5.49 Bil)",
-      "x": 414.5419198055893,
+      "x": 408.5419198055893,
       "y": 167,
     },
     "transform": [
@@ -8121,7 +8121,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 398.5419198055893,
             "y": 154,
           },
@@ -8166,8 +8166,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 406.5419198055893,
+            "width": 3,
+            "x": 402.5419198055893,
             "y": 159.5,
           },
           "transform": [
@@ -8285,7 +8285,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) github.com/bufbuild/connect-go.(*Handler).ServeHTTP (1.61 Bil)",
-      "x": 414.5419198055893,
+      "x": 408.5419198055893,
       "y": 189,
     },
     "transform": [
@@ -8317,7 +8317,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 398.5419198055893,
             "y": 176,
           },
@@ -8362,8 +8362,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 406.5419198055893,
+            "width": 3,
+            "x": 402.5419198055893,
             "y": 181.5,
           },
           "transform": [
@@ -8481,7 +8481,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) github.com/bufbuild/connect-go.NewUnaryHandler[...].func1.1 (1.54 Bil)",
-      "x": 414.5419198055893,
+      "x": 408.5419198055893,
       "y": 211,
     },
     "transform": [
@@ -8513,7 +8513,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 398.5419198055893,
             "y": 198,
           },
@@ -8558,8 +8558,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 406.5419198055893,
+            "width": 3,
+            "x": 402.5419198055893,
             "y": 203.5,
           },
           "transform": [
@@ -13607,7 +13607,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(4) net/http.(*ServeMux).ServeHTTP (3.88 Bil)",
-      "x": 571.0425273390036,
+      "x": 565.0425273390036,
       "y": 189,
     },
     "transform": [
@@ -13639,7 +13639,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 555.0425273390036,
             "y": 176,
           },
@@ -13684,8 +13684,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 563.0425273390036,
+            "width": 3,
+            "x": 559.0425273390036,
             "y": 181.5,
           },
           "transform": [
@@ -13909,7 +13909,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) runtime/pprof.writeAlloc (3.23 Bil)",
-      "x": 571.0425273390036,
+      "x": 565.0425273390036,
       "y": 233,
     },
     "transform": [
@@ -13941,7 +13941,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 555.0425273390036,
             "y": 220,
           },
@@ -13986,8 +13986,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 563.0425273390036,
+            "width": 3,
+            "x": 559.0425273390036,
             "y": 225.5,
           },
           "transform": [
@@ -22041,7 +22041,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) runtime/pprof.writeGoroutine (640 Mil)",
-      "x": 885.0157958687728,
+      "x": 879.0157958687728,
       "y": 233,
     },
     "transform": [
@@ -22073,7 +22073,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 869.0157958687728,
             "y": 220,
           },
@@ -22118,8 +22118,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 877.0157958687728,
+            "width": 3,
+            "x": 873.0157958687728,
             "y": 225.5,
           },
           "transform": [
@@ -22237,7 +22237,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) runtime/pprof.runtime_goroutineProfileWithLabels (250 Mil)",
-      "x": 885.0157958687728,
+      "x": 879.0157958687728,
       "y": 255,
     },
     "transform": [
@@ -22269,7 +22269,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 869.0157958687728,
             "y": 242,
           },
@@ -22314,8 +22314,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 877.0157958687728,
+            "width": 3,
+            "x": 873.0157958687728,
             "y": 247.5,
           },
           "transform": [
@@ -26212,7 +26212,7 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) runtime.systemstack (6.17 Bil)",
-      "x": 961.8080194410693,
+      "x": 955.8080194410693,
       "y": 57,
     },
     "transform": [
@@ -26244,7 +26244,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 20,
+            "width": 10,
             "x": 945.8080194410693,
             "y": 44,
           },
@@ -26289,8 +26289,8 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 11,
-            "width": 6,
-            "x": 953.8080194410693,
+            "width": 3,
+            "x": 949.8080194410693,
             "y": 49.5,
           },
           "transform": [

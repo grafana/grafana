@@ -102,7 +102,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &folderId,
+					ID:           &folderId, // nolint:staticcheck
 					OrgID:        orgID,
 					SignedInUser: usr,
 				})
@@ -112,7 +112,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			var zeroInt int64 = 0
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
 				foldr, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &zeroInt,
+					ID:           &zeroInt, // nolint:staticcheck
 					OrgID:        orgID,
 					SignedInUser: usr,
 				})
@@ -353,7 +353,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	cfg := setting.NewCfg()
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
-	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db), quotaService)
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
 
@@ -464,7 +464,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		})
 		t.Run("With nested folder feature flag off", func(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
-			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
+			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
 			require.NoError(t, err)
 			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
 
@@ -623,7 +623,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, tc.service)
 				require.NoError(t, err)
 
-				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, tc.featuresFlag, tagimpl.ProvideService(db, db.Cfg), quotaService)
+				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, tc.featuresFlag, tagimpl.ProvideService(db), quotaService)
 				require.NoError(t, err)
 				nestedFolderStore := ProvideStore(db, db.Cfg, tc.featuresFlag)
 				tc.service.dashboardStore = dashStore
@@ -1173,7 +1173,7 @@ func TestNestedFolderService(t *testing.T) {
 			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Get(context.Background(), &folder.GetFolderQuery{
 				OrgID:        orgID,
-				ID:           &folder.GeneralFolder.ID,
+				ID:           &folder.GeneralFolder.ID, // nolint:staticcheck
 				SignedInUser: usr,
 			})
 			require.NoError(t, err)

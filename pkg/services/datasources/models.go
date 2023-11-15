@@ -23,7 +23,7 @@ const (
 	DS_TEMPO          = "tempo"
 	DS_ZIPKIN         = "zipkin"
 	DS_MYSQL          = "mysql"
-	DS_POSTGRES       = "postgres"
+	DS_POSTGRES       = "grafana-postgresql-datasource"
 	DS_MSSQL          = "mssql"
 	DS_ACCESS_DIRECT  = "direct"
 	DS_ACCESS_PROXY   = "proxy"
