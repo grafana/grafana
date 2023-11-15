@@ -191,7 +191,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				}
 				lastTime = item.Time
 			}
-
 		})
 	})
 
