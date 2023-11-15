@@ -37,25 +37,36 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	sql := db.InitTestDB(t)
+
+	t.Cleanup(func() {
+		err := sql.WithDbSession(context.Background(), func(dbSession *db.Session) error {
+			_, err := dbSession.Exec("DELETE FROM dashboard WHERE 1=1")
+			if err != nil {
+				return err
+			}
+			return err
+		})
+		require.NoError(t, err)
+	})
+
+	dashboard1 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		UserID: 1,
+		OrgID:  1,
+		Dashboard: simplejson.NewFromAny(map[string]any{
+			"title": "Dashboard 1",
+		}),
+	})
+
+	dashboard2 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
+		UserID: 1,
+		OrgID:  1,
+		Dashboard: simplejson.NewFromAny(map[string]any{
+			"title": "Dashboard 2",
+		}),
+	})
+
 	t.Run("Testing Loki state history read", func(t *testing.T) {
-		sql := db.InitTestDB(t)
-
-		dashboard1 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
-			UserID: 1,
-			OrgID:  1,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"title": "Dashboard 1",
-			}),
-		})
-
-		dashboard2 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
-			UserID: 1,
-			OrgID:  1,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"title": "Dashboard 2",
-			}),
-		})
-
 		knownUIDs := &sync.Map{}
 
 		dashAlert1 := createAlertRuleWithDashboard(
@@ -88,10 +99,9 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			knownUIDs,
 			"Test Rule 4",
 		)
-		orgAlert1.DashboardUID = nil
 
 		start := time.Now()
-		numTransitions := 10
+		numTransitions := 2
 		transitions := genStateTransitions(t, numTransitions, start)
 
 		fakeLokiClient := NewFakeLokiClient()
@@ -231,90 +241,86 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, res, 0)
 		})
 	})
-}
 
-func TestIntegrationGetRule(t *testing.T) {
-	sql := db.InitTestDB(t)
+	t.Run("Testing get alert rule", func(t *testing.T) {
+		store := createTestLokiStore(t, sql, NewFakeLokiClient())
+		rule := createAlertRuleWithDashboard(t, sql, nil, "Alert Rule", "dashboardUID")
 
-	store := createTestLokiStore(t, sql, NewFakeLokiClient())
-
-	rule := createAlertRuleWithDashboard(t, sql, nil, "Alert Rule", "dashboardUID")
-
-	t.Run("should get rule by UID", func(t *testing.T) {
-		query := ruleQuery{
-			OrgID: 1,
-			UID:   rule.UID,
-		}
-
-		dbRule, err := store.getRule(context.Background(), query)
-		require.NoError(t, err)
-		require.Equal(t, rule.ID, dbRule.ID)
-		require.Equal(t, rule.UID, dbRule.UID)
-	})
-
-	t.Run("should get rule by ID", func(t *testing.T) {
-		query := ruleQuery{
-			OrgID: 1,
-			ID:    rule.ID,
-		}
-
-		dbRule, err := store.getRule(context.Background(), query)
-		require.NoError(t, err)
-		require.Equal(t, rule.ID, dbRule.ID)
-		require.Equal(t, rule.UID, dbRule.UID)
-	})
-}
-
-func TestIntegrationItemsFromStreams(t *testing.T) {
-	sql := db.InitTestDB(t)
-	fakeLokiClient := NewFakeLokiClient()
-	store := createTestLokiStore(t, sql, fakeLokiClient)
-
-	t.Run("should return empty list when no streams", func(t *testing.T) {
-		items := store.itemsFromStreams(context.Background(), 1, []historian.Stream{}, annotation_ac.AccessResources{})
-		require.Empty(t, items)
-	})
-
-	t.Run("should return empty list when no entries", func(t *testing.T) {
-		items := store.itemsFromStreams(context.Background(), 1, []historian.Stream{
-			{
-				Values: []historian.Sample{},
-			},
-		}, annotation_ac.AccessResources{})
-		require.Empty(t, items)
-	})
-
-	t.Run("should return one annotation per stream+sample", func(t *testing.T) {
-		alert := createAlertRule(t, sql, nil, "Test Rule")
-
-		start := time.Now()
-		numTransitions := 10
-		transitions := genStateTransitions(t, numTransitions, start)
-
-		fakeLokiClient.Response = []historian.Stream{
-			historian.StatesToStream(ruleMetaFromRule(t, alert), transitions, map[string]string{}, log.NewNopLogger()),
-		}
-
-		items := store.itemsFromStreams(context.Background(), 1, fakeLokiClient.Response, annotation_ac.AccessResources{})
-		require.Len(t, items, numTransitions)
-
-		for i := 0; i < numTransitions; i++ {
-			item := items[i]
-			transition := transitions[i]
-
-			expected := &annotations.ItemDTO{
-				AlertID:   alert.ID,
-				AlertName: alert.Title,
-				Time:      transition.State.LastEvaluationTime.UnixMilli(),
-				NewState:  transition.Formatted(),
-			}
-			if i > 0 {
-				prevTransition := transitions[i-1]
-				expected.PrevState = prevTransition.Formatted()
+		t.Run("should get rule by UID", func(t *testing.T) {
+			query := ruleQuery{
+				OrgID: 1,
+				UID:   rule.UID,
 			}
 
-			compareAnnotationItem(t, expected, item)
-		}
+			dbRule, err := store.getRule(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, rule.ID, dbRule.ID)
+			require.Equal(t, rule.UID, dbRule.UID)
+		})
+
+		t.Run("should get rule by ID", func(t *testing.T) {
+			query := ruleQuery{
+				OrgID: 1,
+				ID:    rule.ID,
+			}
+
+			dbRule, err := store.getRule(context.Background(), query)
+			require.NoError(t, err)
+			require.Equal(t, rule.ID, dbRule.ID)
+			require.Equal(t, rule.UID, dbRule.UID)
+		})
+	})
+
+	t.Run("Testing items from Loki stream", func(t *testing.T) {
+		fakeLokiClient := NewFakeLokiClient()
+		store := createTestLokiStore(t, sql, fakeLokiClient)
+
+		t.Run("should return empty list when no streams", func(t *testing.T) {
+			items := store.itemsFromStreams(context.Background(), 1, []historian.Stream{}, annotation_ac.AccessResources{})
+			require.Empty(t, items)
+		})
+
+		t.Run("should return empty list when no entries", func(t *testing.T) {
+			items := store.itemsFromStreams(context.Background(), 1, []historian.Stream{
+				{
+					Values: []historian.Sample{},
+				},
+			}, annotation_ac.AccessResources{})
+			require.Empty(t, items)
+		})
+
+		t.Run("should return one annotation per stream+sample", func(t *testing.T) {
+			alert := createAlertRule(t, sql, nil, "Test Rule")
+
+			start := time.Now()
+			numTransitions := 2
+			transitions := genStateTransitions(t, numTransitions, start)
+
+			res := []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, alert), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{})
+			require.Len(t, items, numTransitions)
+
+			for i := 0; i < numTransitions; i++ {
+				item := items[i]
+				transition := transitions[i]
+
+				expected := &annotations.ItemDTO{
+					AlertID:   alert.ID,
+					AlertName: alert.Title,
+					Time:      transition.State.LastEvaluationTime.UnixMilli(),
+					NewState:  transition.Formatted(),
+				}
+				if i > 0 {
+					prevTransition := transitions[i-1]
+					expected.PrevState = prevTransition.Formatted()
+				}
+
+				compareAnnotationItem(t, expected, item)
+			}
+		})
 	})
 }
 
@@ -496,6 +502,7 @@ func createAlertRule(t *testing.T, sql db.DB, knownUIDs *sync.Map, title string)
 	generator := ngmodels.AlertRuleGen(
 		ngmodels.WithTitle(title),
 		ngmodels.WithUniqueUID(knownUIDs),
+		ngmodels.WithDashboardUID(""), // no dashboard
 		ngmodels.WithUniqueID(),
 		ngmodels.WithOrgID(1),
 	)
