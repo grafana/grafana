@@ -228,7 +228,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		features = featuremgmt.WithFeatures()
 	}
 	// nolint:staticcheck
-	cfg := setting.NewCfgWithFeatures(features.IsEnabled)
+	cfg := setting.NewCfgWithFeatures(features.IsEnabledGlobally)
 
 	return &HTTPServer{
 		Cfg:             cfg,

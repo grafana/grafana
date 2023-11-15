@@ -55,13 +55,12 @@ func newClientConfig(executablePath string, args []string, env []string, skipHos
 		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
 		GRPCDialOptions: []grpc.DialOption{
 			grpc.WithChainUnaryInterceptor(
-				otelgrpc.UnaryClientInterceptor(),
 				grpc_opentracing.UnaryClientInterceptor(),
 			),
 			grpc.WithChainStreamInterceptor(
-				otelgrpc.StreamClientInterceptor(),
 				grpc_opentracing.StreamClientInterceptor(),
 			),
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		},
 	}
 }

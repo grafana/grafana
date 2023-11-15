@@ -63,10 +63,6 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagNewDBLibrary
-	// Use jmoiron/sqlx rather than xorm for a few backend services
-	FlagNewDBLibrary = "newDBLibrary"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -578,6 +574,10 @@ const (
 	// FlagAlertingDetailsViewV2
 	// Enables the preview of the new alert details view
 	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
+
+	// FlagDatatrails
+	// Enables the new core app datatrails
+	FlagDatatrails = "datatrails"
 
 	// FlagAlertingSimplifiedRouting
 	// Enables the simplified routing for alerting

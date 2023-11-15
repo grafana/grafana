@@ -65,7 +65,7 @@ type OAuth2ServiceImpl struct {
 func ProvideService(router routing.RouteRegister, bus bus.Bus, db db.DB, cfg *setting.Cfg,
 	extSvcAccSvc serviceaccounts.ExtSvcAccountsService, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
 	teamSvc team.Service, keySvc signingkeys.Service, fmgmt *featuremgmt.FeatureManager) (*OAuth2ServiceImpl, error) {
-	if !fmgmt.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if !fmgmt.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
 		return nil, nil
 	}
 	config := &fosite.Config{
