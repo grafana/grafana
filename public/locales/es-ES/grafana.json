@@ -2,14 +2,14 @@
   "_comment": "",
   "access-control": {
     "add-permission": {
-      "role-label": "",
+      "role-label": "Rol",
       "serviceaccount-label": "",
       "team-label": "",
       "title": "",
       "user-label": ""
     },
     "add-permissions": {
-      "save": ""
+      "save": "Guardar"
     },
     "permission-list": {
       "permission": ""
@@ -18,7 +18,7 @@
       "add-label": "",
       "no-permissions": "",
       "permissions-change-warning": "",
-      "role": "",
+      "role": "Rol",
       "serviceaccount": "",
       "team": "",
       "title": "",
@@ -27,7 +27,7 @@
   },
   "browse-dashboards": {
     "action": {
-      "cancel-button": "",
+      "cancel-button": "Cancelar",
       "cannot-move-folders": "",
       "delete-button": "",
       "delete-modal-invalid-text": "",
@@ -45,29 +45,24 @@
       "new-folder-name-required-phrase": ""
     },
     "counts": {
-      "alertRule_one": "",
-      "alertRule_many": "",
-      "alertRule_other": "",
-      "dashboard_one": "",
-      "dashboard_many": "",
-      "dashboard_other": "",
-      "folder_one": "",
-      "folder_many": "",
-      "folder_other": "",
-      "libraryPanel_one": "",
-      "libraryPanel_many": "",
-      "libraryPanel_other": "",
-      "total_one": "",
-      "total_many": "",
-      "total_other": ""
+      "alertRule_one": "{{count}} regla de alerta",
+      "alertRule_other": "{{count}} reglas de alerta",
+      "dashboard_one": "{{count}} panel de control",
+      "dashboard_other": "{{count}} paneles de control",
+      "folder_one": "{{count}} carpeta",
+      "folder_other": "{{count}} carpetas",
+      "libraryPanel_one": "{{count}} panel de librería",
+      "libraryPanel_other": "{{count}} paneles de librería",
+      "total_one": "{{count}} elemento",
+      "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
       "collapse-folder-button": "",
       "expand-folder-button": "",
-      "name-column": "",
+      "name-column": "Nombre",
       "select-all-header-checkbox": "",
       "select-checkbox": "",
-      "tags-column": ""
+      "tags-column": "Etiquetas"
     },
     "folder-actions-button": {
       "delete": "",
@@ -77,22 +72,22 @@
     },
     "folder-picker": {
       "accessible-label": "",
-      "button-label": "",
+      "button-label": "Seleccionar carpeta",
       "empty-message": "",
       "error-title": "",
       "search-placeholder": "",
       "unknown-error": ""
     },
     "manage-folder-nav": {
-      "alert-rules": "",
-      "dashboards": "",
+      "alert-rules": "Reglas de alerta",
+      "dashboards": "Paneles de control",
       "panels": "",
       "permissions": "",
-      "settings": ""
+      "settings": "Configuración"
     },
     "new-folder-form": {
-      "cancel-label": "",
-      "create-label": "",
+      "cancel-label": "Cancelar",
+      "create-label": "Crear",
       "name-label": ""
     },
     "no-results": {
@@ -131,7 +126,7 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": ""
+      "category-header-label": "Orígenes de datos"
     },
     "search": {
       "placeholder": ""
@@ -162,10 +157,10 @@
       "target": ""
     },
     "navigation-form": {
-      "add-button": "",
+      "add-button": "Añadir",
       "back-button": "",
       "next-button": "",
-      "save-button": ""
+      "save-button": "Guardar"
     },
     "page-content": "",
     "page-heading": "",
@@ -178,7 +173,7 @@
       "loading": "",
       "query-description": "",
       "query-editor-title": "",
-      "query-label": ""
+      "query-label": "Consulta"
     },
     "source-form": {
       "control-required": "",
@@ -222,10 +217,10 @@
       "field-tooltip": "",
       "map-value-label": "",
       "map-value-tooltip": "",
-      "remove-button": "",
+      "remove-button": "Eliminar",
       "remove-tooltip": "",
       "transform-required": "",
-      "type-label": "",
+      "type-label": "Tipo",
       "type-tooltip": ""
     }
   },
@@ -249,7 +244,7 @@
       "add-widget-header": "",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "",
-      "import-dashboard-button": ""
+      "import-dashboard-button": "Importar panel de control"
     },
     "inspect": {
       "data-tab": "Datos",
@@ -330,7 +325,7 @@
       "secondary-text": ""
     },
     "form-actions": {
-      "cancel": "",
+      "cancel": "Cancelar",
       "load": ""
     },
     "gcom-field": {
@@ -355,12 +350,12 @@
       "description-label": "",
       "editable-description": "",
       "editable-label": "",
-      "folder-label": "",
+      "folder-label": "Carpeta",
       "panel-options-graph-tooltip-description": "",
       "panel-options-graph-tooltip-label": "",
       "panel-options-label": "",
-      "tags-label": "",
-      "title": "",
+      "tags-label": "Etiquetas",
+      "title": "General",
       "title-label": ""
     },
     "json-editor": {
@@ -375,7 +370,7 @@
       "title": ""
     },
     "settings": {
-      "title": ""
+      "title": "Configuración"
     },
     "time-picker": {
       "hide-time-picker": "",
@@ -384,8 +379,8 @@
       "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "",
       "time-options-label": "",
-      "time-zone-label": "",
-      "week-start-label": ""
+      "time-zone-label": "Huso horario",
+      "week-start-label": "Inicio de la semana"
     },
     "variables": {
       "title": ""
@@ -425,13 +420,13 @@
       "newest-first": "",
       "oldest-first": "",
       "query-history": "",
-      "settings": "",
-      "starred": ""
+      "settings": "Configuración",
+      "starred": "Destacado"
     },
     "rich-history-card": {
       "add-comment-form": "",
       "add-comment-tooltip": "",
-      "cancel": "",
+      "cancel": "Cancelar",
       "confirm-delete": "",
       "copy-query-tooltip": "",
       "copy-shortened-link-tooltip": "",
@@ -455,7 +450,7 @@
       "update-comment-form": ""
     },
     "rich-history-container": {
-      "loading": ""
+      "loading": "Cargando..."
     },
     "rich-history-notification": {
       "query-copied": "",
@@ -468,7 +463,7 @@
       "filter-history": "",
       "filter-placeholder": "",
       "history-local": "",
-      "loading": "",
+      "loading": "Cargando...",
       "loading-results": "",
       "search-placeholder": "",
       "showing-queries": "",
@@ -498,7 +493,7 @@
     "rich-history-starred-tab": {
       "filter-queries-aria-label": "",
       "filter-queries-placeholder": "",
-      "loading": "",
+      "loading": "Cargando...",
       "loading-results": "",
       "local-history-message": "",
       "search-queries-placeholder": "",
@@ -535,7 +530,7 @@
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
-      "refresh-picker-cancel": "",
+      "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "",
       "split-close": "",
       "split-close-tooltip": "",
@@ -558,7 +553,7 @@
       "no-options": "No se ha encontrado ninguna opción"
     },
     "select": {
-      "no-options-label": "",
+      "no-options-label": "No se ha encontrado ninguna opción",
       "placeholder": ""
     }
   },
@@ -572,7 +567,7 @@
   },
   "help-modal": {
     "shortcuts-category": {
-      "dashboard": "",
+      "dashboard": "Panel de control",
       "focused-panel": "",
       "global": "",
       "time-range": ""
@@ -580,7 +575,7 @@
     "shortcuts-description": {
       "change-theme": "",
       "collapse-all-rows": "",
-      "dashboard-settings": "",
+      "dashboard-settings": "Ajustes del panel de control",
       "duplicate-panel": "",
       "exit-edit/setting-views": "",
       "expand-all-rows": "",
@@ -595,7 +590,7 @@
       "open-shared-modal": "",
       "refresh-all-panels": "",
       "remove-panel": "",
-      "save-dashboard": "",
+      "save-dashboard": "Guardar panel de control",
       "show-all-shortcuts": "",
       "toggle-active-mode": "",
       "toggle-all-panel-legends": "",
@@ -606,14 +601,14 @@
       "toggle-panel-edit": "",
       "toggle-panel-fullscreen": "",
       "toggle-panel-legend": "",
-      "zoom-out-time-range": ""
+      "zoom-out-time-range": "Reducir el intervalo de tiempo"
     },
     "title": ""
   },
   "inspector": {
     "query": {
       "collapse-all": "",
-      "copy-to-clipboard": "",
+      "copy-to-clipboard": "Copiar al portapapeles",
       "description": "",
       "expand-all": "",
       "no-data": "",
@@ -635,16 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "",
-      "body_many": "",
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_one": "",
+      "body_other": ""
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -726,15 +720,15 @@
     },
     "config-access": {
       "subtitle": "",
-      "title": ""
+      "title": "Usuarios y acceso"
     },
     "config-general": {
       "subtitle": "",
-      "title": ""
+      "title": "General"
     },
     "config-plugins": {
       "subtitle": "",
-      "title": ""
+      "title": "Complementos y datos"
     },
     "connect-data": {
       "title": ""
@@ -768,7 +762,7 @@
     },
     "data-sources": {
       "subtitle": "",
-      "title": ""
+      "title": "Orígenes de datos"
     },
     "datasources": {
       "subtitle": "Añadir y configurar orígenes de datos",
@@ -837,7 +831,7 @@
       "title": "Nueva carpeta"
     },
     "observability": {
-      "title": ""
+      "title": "Observabilidad"
     },
     "oncall": {
       "title": ""
@@ -972,7 +966,7 @@
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
-      "new-alert-rule": "",
+      "new-alert-rule": "Nueva regla de alerta",
       "query": "Consulta",
       "remove": "Eliminar",
       "share": "Compartir",
@@ -987,19 +981,19 @@
       "add-tag-label": "",
       "add-tag-placeholder": "",
       "add-title-label": "",
-      "cancel": "",
+      "cancel": "Cancelar",
       "heading": "",
       "interval-label": "",
       "interval-placeholder": "",
       "interval-required": "",
-      "name-label": "",
-      "name-placeholder": "",
-      "name-required": "",
-      "save": "",
+      "name-label": "Nombre",
+      "name-placeholder": "Nombre",
+      "name-required": "El nombre es obligatorio",
+      "save": "Guardar",
       "table-delete": "",
       "table-drag": "",
       "table-empty": "",
-      "table-heading": ""
+      "table-heading": "Paneles de control"
     },
     "sub-title": "",
     "title": ""
@@ -1027,7 +1021,7 @@
   },
   "profile": {
     "change-password": {
-      "cancel-button": "",
+      "cancel-button": "Cancelar",
       "cannot-change-password-message": "",
       "change-password-button": "",
       "confirm-password-label": "",
@@ -1072,7 +1066,7 @@
       "label": "Apagado"
     },
     "tooltip": {
-      "interval-selected": "",
+      "interval-selected": "Establecer intervalo de actualización automática",
       "turned-off": ""
     }
   },
@@ -1183,7 +1177,7 @@
       "export": "Exportar",
       "library-panel": "Panel de librería",
       "link": "Enlace",
-      "panel-embed": "",
+      "panel-embed": "Incrustar",
       "public-dashboard": "",
       "snapshot": "Instantánea"
     },
@@ -1200,8 +1194,8 @@
   "share-playlist": {
     "checkbox-description": "",
     "checkbox-label": "",
-    "copy-link-button": "",
-    "link-url-label": "",
+    "copy-link-button": "Copiar",
+    "link-url-label": "URL del enlace",
     "mode": "",
     "mode-kiosk": "",
     "mode-normal": "",
@@ -1211,8 +1205,8 @@
   "shared": {
     "preferences": {
       "theme": {
-        "dark-label": "",
-        "light-label": "",
+        "dark-label": "Oscuro",
+        "light-label": "Claro",
         "system-label": ""
       }
     }
@@ -1238,9 +1232,9 @@
   },
   "snapshot": {
     "external-badge": "",
-    "name-column-header": "",
+    "name-column-header": "Nombre",
     "url-column-header": "",
-    "view-button": ""
+    "view-button": "Vista"
   },
   "tag-filter": {
     "loading": "Cargando...",
