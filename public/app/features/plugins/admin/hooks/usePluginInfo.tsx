@@ -48,9 +48,9 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   }
 
   const pluginDependencies = plugin.details?.pluginDependencies;
-  let grafanaDependency = plugin.details?.grafanaDependency
+  let grafanaDependency = plugin.details?.grafanaDependency;
   if (useLatestCompatibleInfo && latestCompatibleVersion?.grafanaDependency) {
-    grafanaDependency = latestCompatibleVersion?.grafanaDependency
+    grafanaDependency = latestCompatibleVersion?.grafanaDependency;
   }
   const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
 

@@ -12,10 +12,7 @@ type Props = {
   className?: string;
 };
 
-export function PluginDetailsHeaderDependencies({
-  plugin,
-  grafanaDependency,
-}: Props): React.ReactElement | null {
+export function PluginDetailsHeaderDependencies({ plugin, grafanaDependency }: Props): React.ReactElement | null {
   const styles = useStyles2(getStyles);
   const pluginDependencies = plugin.details?.pluginDependencies;
   const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
