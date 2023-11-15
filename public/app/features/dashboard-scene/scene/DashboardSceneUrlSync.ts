@@ -31,11 +31,18 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey: inspectPanelId, viewPanelKey: viewPanelId } = this._scene.state;
+    const { inspectPanelKey, viewPanelKey, meta, isEditing } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
-    if (typeof values.editview === 'string') {
+    if (typeof values.editview === 'string' && meta.canEdit) {
       update.editview = createDashboardEditViewFor(values.editview);
+
+      // If we are not in editing (for example after full page reload)
+      if (!isEditing) {
+        // Not sure what is best to do here.
+        // The reason for the timeout is for this change to happen after the url sync has completed
+        setTimeout(() => this._scene.onEnterEditMode());
+      }
     } else if (values.hasOwnProperty('editview')) {
       update.editview = undefined;
     }
@@ -51,7 +58,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       update.inspectPanelKey = values.inspect;
       update.overlay = new PanelInspectDrawer({ panelRef: panel.getRef() });
-    } else if (inspectPanelId) {
+    } else if (inspectPanelKey) {
       update.inspectPanelKey = undefined;
       update.overlay = undefined;
     }
@@ -72,7 +79,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.viewPanelKey = values.viewPanel;
-    } else if (viewPanelId) {
+    } else if (viewPanelKey) {
       update.viewPanelKey = undefined;
     }
 

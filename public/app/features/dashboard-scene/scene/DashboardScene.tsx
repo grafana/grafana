@@ -81,7 +81,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Url state before editing started
    */
-  private _initiallUrlState?: UrlQueryMap;
+  private _initialUrlState?: H.Location;
   /**
    * change tracking subscription
    */
@@ -132,7 +132,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
-    this._initiallUrlState = locationService.getSearchObject();
+    this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
     this.setState({ isEditing: true });
@@ -152,7 +152,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Stop url sync before updating url
     this.stopUrlSync();
     // Now we can update url
-    locationService.partial(this._initiallUrlState!, true);
+    locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
     // Update state and disable editing
     this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again
@@ -170,7 +170,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, editview, viewPanelKey } = this.state;
+    const { meta, viewPanelKey } = this.state;
 
     let pageNav: NavModelItem = {
       text: this.state.title,
