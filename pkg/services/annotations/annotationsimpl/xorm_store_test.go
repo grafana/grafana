@@ -27,11 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	dashScopeType = annotations.Dashboard.String()
-	orgScopeType  = annotations.Organization.String()
-)
-
 func TestIntegrationAnnotations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
