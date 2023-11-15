@@ -69,8 +69,8 @@ var SecretsManagerProvider PluginBackendProvider = func(_ context.Context, p *pl
 }
 
 func DefaultProvider(features featuremgmt.FeatureToggles) PluginBackendProvider {
-	return func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-		skipEnvVars := features.IsEnabled(featuremgmt.FlagPluginsSkipHostEnvVars)
+	return func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+		skipEnvVars := features.IsEnabled(ctx, featuremgmt.FlagPluginsSkipHostEnvVars)
 		return grpcplugin.NewBackendPlugin(p.ID, p.ExecutablePath(), skipEnvVars)
 	}
 }

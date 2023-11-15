@@ -89,7 +89,7 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	// If FlagPluginsSkipHostEnvVars is enabled, get some allowed variables from the current process and pass
 	// them down to the plugin. If the feature flag is not enabled, do not add anything else because ALL env vars
 	// from the current process (os.Environ()) will be forwarded to the plugin's process by go-plugin
-	if s.cfg.Features.IsEnabled(featuremgmt.FlagPluginsSkipHostEnvVars) {
+	if s.cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) {
 		hostEnv = append(hostEnv, s.allowedHostEnvVars()...)
 	}
 
