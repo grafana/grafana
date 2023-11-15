@@ -26,7 +26,7 @@ var (
 )
 
 type ProfilingClient interface {
-	ProfileTypes(context.Context) ([]*ProfileType, error)
+	ProfileTypes(ctx context.Context) ([]*ProfileType, error)
 	LabelNames(ctx context.Context) ([]string, error)
 	LabelValues(ctx context.Context, label string) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
@@ -166,7 +166,7 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 // contains Frames ([]*Frame).
 func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	ctxLogger := logger.FromContext(ctx)
-	ctxLogger.Debug("Processing queries", "queryLenght", len(req.Queries), "function", logEntrypoint())
+	ctxLogger.Debug("Processing queries", "queryLength", len(req.Queries), "function", logEntrypoint())
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
