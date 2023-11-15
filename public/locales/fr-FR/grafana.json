@@ -993,7 +993,7 @@
       "table-delete": "",
       "table-drag": "",
       "table-empty": "",
-      "table-heading": ""
+      "table-heading": "Tableaux de bord"
     },
     "sub-title": "",
     "title": ""
@@ -1021,7 +1021,7 @@
   },
   "profile": {
     "change-password": {
-      "cancel-button": "",
+      "cancel-button": "Annuler",
       "cannot-change-password-message": "",
       "change-password-button": "",
       "confirm-password-label": "",
@@ -1101,7 +1101,7 @@
       "tags-header": "Étiquettes",
       "type-dashboard": "Tableau de bord",
       "type-folder": "Dossier",
-      "type-header": ""
+      "type-header": "Type"
     },
     "search-input": {
       "include-panels-placeholder": "Rechercher des tableaux de bord et des panneaux",
@@ -1177,7 +1177,7 @@
       "export": "Exporter",
       "library-panel": "Panneau de bibliothèque",
       "link": "Lien",
-      "panel-embed": "",
+      "panel-embed": "Intégrer",
       "public-dashboard": "",
       "snapshot": "Instantané"
     },
@@ -1194,7 +1194,7 @@
   "share-playlist": {
     "checkbox-description": "",
     "checkbox-label": "",
-    "copy-link-button": "",
+    "copy-link-button": "Copier",
     "link-url-label": "Lien URL",
     "mode": "",
     "mode-kiosk": "",
@@ -1205,8 +1205,8 @@
   "shared": {
     "preferences": {
       "theme": {
-        "dark-label": "",
-        "light-label": "",
+        "dark-label": "Sombre",
+        "light-label": "Clair",
         "system-label": ""
       }
     }
@@ -1232,9 +1232,9 @@
   },
   "snapshot": {
     "external-badge": "",
-    "name-column-header": "",
+    "name-column-header": "Nom",
     "url-column-header": "",
-    "view-button": ""
+    "view-button": "Afficher"
   },
   "tag-filter": {
     "loading": "Chargement en cours...",
