@@ -138,6 +138,7 @@
 /pkg/services/validations/ @grafana/backend-platform
 /pkg/setting/ @grafana/backend-platform
 /pkg/tests/ @grafana/backend-platform
+/pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/correlations/ @grafana/explore-squad
 /pkg/tsdb/grafanads/ @grafana/backend-platform
 /pkg/tsdb/intervalv2/ @grafana/backend-platform
@@ -413,6 +414,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/storage/ @grafana/grafana-app-platform-squad
 /public/app/features/teams/ @grafana/identity-access-team
 /public/app/features/templating/ @grafana/dashboards-squad
+/public/app/features/trails/ @torkelo
 /public/app/features/transformers/ @grafana/grafana-bi-squad
 /public/app/features/users/ @grafana/identity-access-team
 /public/app/features/variables/ @grafana/dashboards-squad
@@ -465,7 +467,6 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
 /public/test/helpers/alertingRuleEditor.tsx @grafana/alerting-frontend
 /public/views/ @grafana/grafana-frontend-platform
-/public/views/openapi3.html @grafana/backend-platform
 /public/views/swagger.html @grafana/backend-platform
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
@@ -603,6 +604,7 @@ embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
+/pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/corekind/ @grafana/grafana-as-code
@@ -665,6 +667,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-delivery
 /.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/.github/workflows/i18n-crowdin-fix-files.yml @grafana/grafana-frontend-platform
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
