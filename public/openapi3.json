@@ -5272,6 +5272,7 @@
             "type": "boolean"
           },
           "id": {
+            "description": "Deprecated: use Uid instead",
             "format": "int64",
             "type": "integer"
           },
