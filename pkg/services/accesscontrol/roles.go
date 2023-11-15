@@ -202,6 +202,14 @@ var (
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsAuth,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsAuth,
+			},
+			{
+				Action: ActionSettingsRead,
 				Scope:  ScopeSettingsSAML,
 			},
 			{

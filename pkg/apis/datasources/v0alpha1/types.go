@@ -26,7 +26,7 @@ type DataSourceConfigList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type InstanceInfo struct {
+type DataSourceInstance struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
@@ -35,13 +35,16 @@ type InstanceInfo struct {
 
 	// Optional description for the data source (does not exist yet)
 	Description string `json:"description,omitempty"`
+
+	// The plugin id (is this necessary? or implied from the group name)
+	PluginID string `json:"pluginId,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type InstanceInfoList struct {
+type DataSourceInstanceList struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []InstanceInfo `json:"items,omitempty"`
+	Items []DataSourceInstance `json:"items,omitempty"`
 }

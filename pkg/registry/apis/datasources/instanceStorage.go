@@ -31,7 +31,7 @@ type instanceStorage struct {
 }
 
 func (s *instanceStorage) New() runtime.Object {
-	return &v0alpha1.InstanceInfo{}
+	return &v0alpha1.DataSourceInstance{}
 }
 
 func (s *instanceStorage) Destroy() {}

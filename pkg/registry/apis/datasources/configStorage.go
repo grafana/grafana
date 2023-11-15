@@ -14,11 +14,11 @@ import (
 )
 
 var (
+	_ rest.Storage              = (*configStorage)(nil)
 	_ rest.Scoper               = (*configStorage)(nil)
 	_ rest.SingularNameProvider = (*configStorage)(nil)
 	_ rest.Getter               = (*configStorage)(nil)
 	_ rest.Lister               = (*configStorage)(nil)
-	_ rest.Storage              = (*configStorage)(nil)
 )
 
 type configStorage struct {

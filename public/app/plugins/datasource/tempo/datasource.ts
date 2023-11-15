@@ -986,7 +986,7 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
         range: !instant,
         exemplar: !instant,
         instant: instant,
-      } as PromQuery,
+      },
       datasourceUid,
       datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },

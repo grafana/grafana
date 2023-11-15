@@ -71,33 +71,6 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 			sub.HandleFunc(route.Path, route.Handler).
 				Methods(methods...)
 		}
-
-		//	getter := makeGetter(restConfig)
-		for resource, routes := range routes.Resource {
-			sub = router.PathPrefix(prefix + "/" + resource + "/{name}").Subrouter()
-			for _, route := range routes {
-				// err = validPath(route.Path)
-				// if err != nil {
-				// 	return nil, err
-				// }
-
-				useful = true
-				methods, err := methodsFromSpec(route.Path, route.Spec)
-				if err != nil {
-					return nil, err
-				}
-
-				sub.MethodNotAllowedHandler = &methodNotAllowedHandler{}
-				sub.HandleFunc(route.Path, route.Handler).
-					Methods(methods...)
-
-				//fmt.Printf("TODO: %s/%v\n", resource, route)
-				// get a client for that resource kind
-				//getter := makeGetter(restConfig)
-				// sub.HandleFunc(v.Slug, SubresourceHandlerWrapper(v.Handler, getter)).
-				// 	Methods(methods...)
-			}
-		}
 	}
 
 	if !useful {
@@ -192,14 +165,6 @@ func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 				for _, route := range routes.Namespace {
 					copy.Paths.Paths[prefix+"/namespaces/{namespace}"+route.Path] = &spec3.Path{
 						PathProps: *route.Spec,
-					}
-				}
-
-				for resource, routes := range routes.Resource {
-					for _, route := range routes {
-						copy.Paths.Paths[prefix+"/namespaces/{namespace}/"+resource+"/{name}"+route.Path] = &spec3.Path{
-							PathProps: *route.Spec,
-						}
 					}
 				}
 

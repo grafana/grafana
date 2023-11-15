@@ -6418,10 +6418,8 @@
         ],
         "summary": "Get custom permissions report.",
         "operationId": "getCustomPermissionsReport",
+        "deprecated": true,
         "responses": {
-          "200": {
-            "$ref": "#/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -6440,10 +6438,8 @@
         ],
         "summary": "Get custom permissions report in CSV format.",
         "operationId": "getCustomPermissionsCSV",
+        "deprecated": true,
         "responses": {
-          "200": {
-            "$ref": "#/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -13317,53 +13313,6 @@
         }
       }
     },
-    "CustomPermissionsRecordDTO": {
-      "type": "object",
-      "properties": {
-        "customPermissions": {
-          "type": "string"
-        },
-        "granteeName": {
-          "type": "string"
-        },
-        "granteeType": {
-          "type": "string"
-        },
-        "granteeUrl": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isFolder": {
-          "type": "boolean"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "orgRole": {
-          "type": "string"
-        },
-        "slug": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "usersCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DashboardACLInfoDTO": {
       "type": "object",
       "properties": {
@@ -15278,6 +15227,7 @@
       "type": "object",
       "properties": {
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -18702,7 +18652,7 @@
           "type": "boolean",
           "example": false
         },
-        "isManaged": {
+        "isExternal": {
           "type": "boolean",
           "example": false
         },
@@ -18757,7 +18707,7 @@
           "type": "boolean",
           "example": false
         },
-        "isManaged": {
+        "isExternal": {
           "type": "boolean",
           "example": false
         },
@@ -18773,6 +18723,10 @@
           "type": "integer",
           "format": "int64",
           "example": 1
+        },
+        "requiredBy": {
+          "type": "string",
+          "example": "grafana-app"
         },
         "role": {
           "type": "string",
@@ -21812,15 +21766,6 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/OrgDetailsDTO"
-      }
-    },
-    "getCustomPermissionsReportResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/CustomPermissionsRecordDTO"
-        }
       }
     },
     "getDashboardPermissionsListResponse": {

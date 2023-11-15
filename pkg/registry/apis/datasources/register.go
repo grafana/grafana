@@ -12,7 +12,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana/pkg/apis/datasources/v0alpha1"
@@ -52,13 +51,16 @@ func RegisterAPIService(
 	dsService datasources.DataSourceService,
 	dataSourceCache datasources.CacheService,
 ) *DSAPIBuilder {
-	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 
 	var builder *DSAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
-	ids := []string{"grafana-testdata-datasource", "postgres"}
+	ids := []string{
+		"grafana-testdata-datasource",
+		"postgres",
+	}
 
 	for _, ds := range all {
 		if !slices.Contains(ids, ds.ID) {
@@ -135,71 +137,72 @@ func (b *DSAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 // Register additional routes with the server
 func (b *DSAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	return &grafanaapiserver.APIRoutes{
-		Resource: map[string][]grafanaapiserver.APIRouteHandler{
-			"instance": {
-				{Path: "/query",
-					Spec: &spec3.PathProps{
-						Summary:     "an example at the root level",
-						Description: "longer description here?",
-						Get: &spec3.Operation{
-							OperationProps: spec3.OperationProps{
-								Parameters: []*spec3.Parameter{
-									{ParameterProps: spec3.ParameterProps{
-										Name: "a",
-									}},
-								},
-							},
-						},
-						Post: &spec3.Operation{
-							OperationProps: spec3.OperationProps{
-								Parameters: []*spec3.Parameter{
-									{ParameterProps: spec3.ParameterProps{
-										Name: "a",
-									}},
-								},
-							},
-						},
-					},
-					Handler: b.doSubresource,
-				},
-				{Path: "/health",
-					Spec: &spec3.PathProps{
-						Summary:     "an example at the root level",
-						Description: "longer description here?",
-						Get: &spec3.Operation{
-							OperationProps: spec3.OperationProps{
-								Parameters: []*spec3.Parameter{
-									{ParameterProps: spec3.ParameterProps{
-										Name: "a",
-									}},
-								},
-							},
-						},
-					},
-					Handler: b.doSubresource,
-				},
-				{Path: "/resource",
-					Spec: &spec3.PathProps{
-						Summary:     "generic resource call...",
-						Description: "TODO... check that this is actually implemented",
-						Get:         &spec3.Operation{},
-						Post:        &spec3.Operation{},
-					},
-					Handler: b.doSubresource,
-				},
-				{Path: "/resource/{.*}",
-					Spec: &spec3.PathProps{
-						Summary:     "generic resource call...",
-						Description: "TODO... check that this is actually implemented",
-						Get:         &spec3.Operation{},
-						Post:        &spec3.Operation{},
-					},
-					Handler: b.doSubresource,
-				},
-			},
-		},
-	}
+	return nil
+	// return &grafanaapiserver.APIRoutes{
+	// 	Resource: map[string][]grafanaapiserver.APIRouteHandler{
+	// 		"instance": {
+	// 			{Path: "/query",
+	// 				Spec: &spec3.PathProps{
+	// 					Summary:     "an example at the root level",
+	// 					Description: "longer description here?",
+	// 					Get: &spec3.Operation{
+	// 						OperationProps: spec3.OperationProps{
+	// 							Parameters: []*spec3.Parameter{
+	// 								{ParameterProps: spec3.ParameterProps{
+	// 									Name: "a",
+	// 								}},
+	// 							},
+	// 						},
+	// 					},
+	// 					Post: &spec3.Operation{
+	// 						OperationProps: spec3.OperationProps{
+	// 							Parameters: []*spec3.Parameter{
+	// 								{ParameterProps: spec3.ParameterProps{
+	// 									Name: "a",
+	// 								}},
+	// 							},
+	// 						},
+	// 					},
+	// 				},
+	// 				Handler: b.doSubresource,
+	// 			},
+	// 			{Path: "/health",
+	// 				Spec: &spec3.PathProps{
+	// 					Summary:     "an example at the root level",
+	// 					Description: "longer description here?",
+	// 					Get: &spec3.Operation{
+	// 						OperationProps: spec3.OperationProps{
+	// 							Parameters: []*spec3.Parameter{
+	// 								{ParameterProps: spec3.ParameterProps{
+	// 									Name: "a",
+	// 								}},
+	// 							},
+	// 						},
+	// 					},
+	// 				},
+	// 				Handler: b.doSubresource,
+	// 			},
+	// 			{Path: "/resource",
+	// 				Spec: &spec3.PathProps{
+	// 					Summary:     "generic resource call...",
+	// 					Description: "TODO... check that this is actually implemented",
+	// 					Get:         &spec3.Operation{},
+	// 					Post:        &spec3.Operation{},
+	// 				},
+	// 				Handler: b.doSubresource,
+	// 			},
+	// 			{Path: "/resource/{.*}",
+	// 				Spec: &spec3.PathProps{
+	// 					Summary:     "generic resource call...",
+	// 					Description: "TODO... check that this is actually implemented",
+	// 					Get:         &spec3.Operation{},
+	// 					Post:        &spec3.Operation{},
+	// 				},
+	// 				Handler: b.doSubresource,
+	// 			},
+	// 		},
+	// 	},
+	// }
 }
 
 func (b *DSAPIBuilder) getDataSource(ctx context.Context, name string) (*datasources.DataSource, error) {

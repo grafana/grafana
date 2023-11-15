@@ -1,3 +1,39 @@
+<!-- 10.2.1 START -->
+
+# 10.2.1 (2023-11-13)
+
+### Features and enhancements
+
+- **Stat:** Add panel option to control wide layout. [#78012](https://github.com/grafana/grafana/issues/78012), [@nmarrs](https://github.com/nmarrs)
+
+### Bug fixes
+
+- **Dashboards:** Fix dashboard listing when user can't list any folders. [#77988](https://github.com/grafana/grafana/issues/77988), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Search:** Modify query for better performance. [#77713](https://github.com/grafana/grafana/issues/77713), [@papagian](https://github.com/papagian)
+- **RBAC:** Allow scoping access to root level dashboards. [#77608](https://github.com/grafana/grafana/issues/77608), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **CloudWatch Logs:** Add labels to alert and expression queries. [#77594](https://github.com/grafana/grafana/issues/77594), [@iwysiu](https://github.com/iwysiu)
+- **Bug Fix:** Respect data source version when provisioning. [#77542](https://github.com/grafana/grafana/issues/77542), [@andresmgot](https://github.com/andresmgot)
+- **Explore:** Fix support for angular based datasource editors. [#77505](https://github.com/grafana/grafana/issues/77505), [@Elfo404](https://github.com/Elfo404)
+- **Plugins:** Fix status_source always being "plugin" in plugin request logs. [#77436](https://github.com/grafana/grafana/issues/77436), [@xnyo](https://github.com/xnyo)
+- **InfluxDB:** Fix aliasing with $measurement or $m on backend mode. [#77383](https://github.com/grafana/grafana/issues/77383), [@itsmylife](https://github.com/itsmylife)
+- **InfluxDB:** Fix parsing multiple tags on backend mode. [#77382](https://github.com/grafana/grafana/issues/77382), [@itsmylife](https://github.com/itsmylife)
+- **Explore:** Fix panes vertical scrollbar not being draggable. [#77344](https://github.com/grafana/grafana/issues/77344), [@Elfo404](https://github.com/Elfo404)
+- **Explore:** Avoid reinitializing graph on every query run. [#77290](https://github.com/grafana/grafana/issues/77290), [@Elfo404](https://github.com/Elfo404)
+- **Bug fix:** Correctly set permissions on provisioned dashboards. [#77230](https://github.com/grafana/grafana/issues/77230), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **InfluxDB:** Fix adhoc filter calls by properly checking optional parameter in metricFindQuery. [#77145](https://github.com/grafana/grafana/issues/77145), [@itsmylife](https://github.com/itsmylife)
+- **InfluxDB:** Fix table parsing with backend mode. [#76990](https://github.com/grafana/grafana/issues/76990), [@itsmylife](https://github.com/itsmylife)
+- **Alerting:** Alert rule constraint violations return as 400s in provisioning API. [#76978](https://github.com/grafana/grafana/issues/76978), [@alexweav](https://github.com/alexweav)
+- **PresenceIndicators:** Do not retry failed views/recent API calls. (Enterprise)
+- **Analytics:** Use panel renderer rather than legacy flot graph. (Enterprise)
+
+### Breaking changes
+
+For the existing backend mode users who have table visualization might see some inconsistencies on their panels. We have updated the table column naming. This will potentially affect field transformations and/or field overrides. To resolve this either:
+
+- Update transformation
+- Update field override Issue [#76990](https://github.com/grafana/grafana/issues/76990)
+
+<!-- 10.2.1 END -->
 <!-- 10.2.0 START -->
 
 # 10.2.0 (2023-10-24)
@@ -1314,6 +1350,18 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.14 START -->
+
+# 9.5.14 (2023-11-13)
+
+### Bug fixes
+
+- **Alerting:** Fix state manager to not keep datasource_uid and ref_id labels in state after Error. [#77391](https://github.com/grafana/grafana/issues/77391), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Transformations:** Config overrides being lost when config from query transform is applied. [#75347](https://github.com/grafana/grafana/issues/75347), [@IbrahimCSAE](https://github.com/IbrahimCSAE)
+- **LDAP:** FIX Enable users on successfull login . [#75192](https://github.com/grafana/grafana/issues/75192), [@gamab](https://github.com/gamab)
+- **Auditing and UsageInsights:** FIX Loki configuration to use proxy env variables. (Enterprise)
+
+<!-- 9.5.14 END -->
 <!-- 9.5.13 START -->
 
 # 9.5.13 (2023-10-11)

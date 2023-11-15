@@ -33,27 +33,50 @@ var _ grafanaapiserver.APIGroupBuilder = (*TestingAPIBuilder)(nil)
 // This is used just so wire has something unique to return
 type TestingAPIBuilder struct {
 	codecs serializer.CodecFactory
+	gv     schema.GroupVersion
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *TestingAPIBuilder {
-	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := &TestingAPIBuilder{}
+	builder := &TestingAPIBuilder{
+		gv: schema.GroupVersion{Group: GroupName, Version: VersionID},
+	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
 func (b *TestingAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return SchemeGroupVersion
+	return b.gv
+}
+
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
+		&example.RuntimeInfo{},
+		&example.DummyResource{},
+		&example.DummyResourceList{},
+		&example.DummySubresource{},
+	)
 }
 
 func (b *TestingAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := AddToScheme(scheme)
-	if err != nil {
-		return err
-	}
-	return scheme.SetVersionPriority(SchemeGroupVersion)
+	addKnownTypes(scheme, b.gv)
+
+	// Link this version to the internal representation.
+	// This is used for server-side-apply (PATCH), and avoids the error:
+	//   "no kind is registered for the type"
+	addKnownTypes(scheme, schema.GroupVersion{
+		Group:   b.gv.Group,
+		Version: runtime.APIVersionInternal,
+	})
+
+	// If multiple versions exist, then register conversions from zz_generated.conversion.go
+	// if err := playlist.RegisterConversions(scheme); err != nil {
+	//   return err
+	// }
+	metav1.AddToGroupVersion(scheme, b.gv)
+	return scheme.SetVersionPriority(b.gv)
 }
 
 func (b *TestingAPIBuilder) GetAPIGroupInfo(
@@ -61,11 +84,14 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
-	storage := map[string]rest.Storage{}
-	storage["runtime"] = newDeploymentInfoStorage()
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	b.codecs = codecs
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+
+	storage := map[string]rest.Storage{}
+	storage["runtime"] = newDeploymentInfoStorage(b.gv, scheme)
+	storage["dummy"] = newDummyStorage(b.gv, scheme, "test1", "test2", "test3")
+	storage["dummy/sub"] = &dummySubresourceREST{}
+	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo, nil
 }
 
@@ -169,29 +195,4 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 			},
 		},
 	}
-}
-
-// SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: VersionID}
-
-// Resource takes an unqualified resource and returns a Group qualified GroupResource
-func Resource(resource string) schema.GroupResource {
-	return SchemeGroupVersion.WithResource(resource).GroupResource()
-}
-
-var (
-	// SchemeBuilder points to a list of functions added to Scheme.
-	SchemeBuilder      = runtime.NewSchemeBuilder(addKnownTypes)
-	localSchemeBuilder = &SchemeBuilder
-	// AddToScheme is a common registration function for mapping packaged scoped group & version keys to a scheme.
-	AddToScheme = localSchemeBuilder.AddToScheme
-)
-
-// Adds the list of known types to the given scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
-		&example.RuntimeInfo{},
-	)
-	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-	return nil
 }

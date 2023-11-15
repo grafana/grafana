@@ -20,7 +20,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 	}
 	sqlStore := db.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 
 	folderCmd := dashboards.SaveDashboardCommand{
