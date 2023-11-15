@@ -15,6 +15,8 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"golang.org/x/mod/semver"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -43,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	entitystorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/entity"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
@@ -51,10 +54,11 @@ import (
 type StorageType string
 
 const (
-	StorageTypeFile    StorageType = "file"
-	StorageTypeEtcd    StorageType = "etcd"
-	StorageTypeLegacy  StorageType = "legacy"
-	StorageTypeUnified StorageType = "unified"
+	StorageTypeFile        StorageType = "file"
+	StorageTypeEtcd        StorageType = "etcd"
+	StorageTypeLegacy      StorageType = "legacy"
+	StorageTypeUnified     StorageType = "unified"
+	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
 )
 
 var (
@@ -281,6 +285,19 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
+
+	case StorageTypeUnifiedGrpc:
+		// Create a connection to the gRPC server
+		conn, err := grpc.Dial("localhost:10000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+		// defer conn.Close()
+
+		// Create a client instance
+		store := entity.NewEntityStoreClientWrapper(conn)
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
 
