@@ -78,8 +78,6 @@ type TeamHTTPHeader struct {
 	Value  string `json:"value"`
 }
 
-const DefaultTeamHTTPHeader = "default"
-
 func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
 	return GetTeamHTTPHeaders(ds.JsonData)
 }
