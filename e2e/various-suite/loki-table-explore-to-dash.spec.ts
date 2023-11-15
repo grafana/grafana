@@ -201,7 +201,7 @@ describe('Loki Query Editor', () => {
     const cells = panel.find('[role="table"] [role="cell"]');
     // Should have 3 columns
     cells.should('have.length', 3);
-    // Time column has correct value
+    // Cells contain strings found in log line
     cells.contains('"wave":-0.5877852522916832');
 
     // "age" column has correct value of "new", need to requery the DOM because of the .contains call above
