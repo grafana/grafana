@@ -1,10 +1,11 @@
 import { InterpolateFunction, PanelMenuItem } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
-import { sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -61,6 +62,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         },
         shortcut: 'p s',
       });
+
+      if (config.featureToggles.datatrails) {
+        addDataTrailPanelAction(dashboard, panel, items);
+      }
     }
 
     const exploreUrl = await tryGetExploreUrlForPanel(panel);

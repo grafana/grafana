@@ -183,7 +183,7 @@ const enum Op {
   MACROS = 'macros',
 }
 // eslint-ignore
-const customOperators = getCustomOperators(BasicConfig) as typeof BasicConfig.operators;
+const customOperators = getCustomOperators(BasicConfig);
 const textWidget = BasicConfig.types.text.widgets.text;
 const opers = [...(textWidget.operators || []), Op.IN, Op.NOT_IN];
 const customTextWidget = {
@@ -216,7 +216,7 @@ export const raqbConfig: Config = {
   ...BasicConfig,
   widgets,
   settings,
-  operators: customOperators as typeof BasicConfig.operators,
+  operators: customOperators,
   types: customTypes,
 };
 

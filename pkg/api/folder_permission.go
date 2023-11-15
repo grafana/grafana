@@ -45,6 +45,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *contextmodel.ReqContext) respon
 			continue
 		}
 
+		// nolint:staticcheck
 		perm.FolderID = folder.ID
 		perm.DashboardID = 0
 

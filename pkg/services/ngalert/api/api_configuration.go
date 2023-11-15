@@ -44,7 +44,7 @@ func (srv ConfigSrv) RouteGetAlertmanagers(c *contextmodel.ReqContext) response.
 }
 
 func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.Response {
-	if c.OrgRole != org.RoleAdmin {
+	if c.SignedInUser.GetOrgRole() != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
 
@@ -66,7 +66,7 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 }
 
 func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
-	if c.OrgRole != org.RoleAdmin {
+	if c.SignedInUser.GetOrgRole() != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
 
@@ -100,7 +100,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 }
 
 func (srv ConfigSrv) RouteDeleteNGalertConfig(c *contextmodel.ReqContext) response.Response {
-	if c.OrgRole != org.RoleAdmin {
+	if c.SignedInUser.GetOrgRole() != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
 

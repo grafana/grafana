@@ -67,16 +67,18 @@ func TestIntegrationPluginManager(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{
-		Raw:                    raw,
-		StaticRootPath:         staticRootPath,
-		BundledPluginsPath:     bundledPluginsPath,
-		Azure:                  &azsettings.AzureSettings{},
-		IsFeatureToggleEnabled: func(_ string) bool { return false },
+		Raw:                raw,
+		StaticRootPath:     staticRootPath,
+		BundledPluginsPath: bundledPluginsPath,
+		Azure:              &azsettings.AzureSettings{},
+
+		// nolint:staticcheck
+		IsFeatureToggleEnabled: features.IsEnabledGlobally,
 	}
 
 	tracer := tracing.InitializeTracerForTest()
-	features := featuremgmt.WithFeatures()
 
 	hcp := httpclient.NewProvider()
 	am := azuremonitor.ProvideService(cfg, hcp, features)
