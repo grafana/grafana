@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
 import { DashboardLink } from '@grafana/schema';
-import { CustomScrollbar, Dropdown, Icon, LinkButton, Menu, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, Dropdown, Icon, Button, Menu, useStyles2 } from '@grafana/ui';
 import { ButtonLinkProps } from '@grafana/ui/src/components/Button';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem } from 'app/features/search/types';
@@ -169,11 +169,11 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export const DashboardLinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
+export const DashboardLinkButton = React.forwardRef<HTMLButtonElement, ButtonLinkProps>(
   ({ className, ...otherProps }, ref) => {
     const styles = useStyles2(getStyles);
     return (
-      <LinkButton
+      <Button
         {...otherProps}
         variant="secondary"
         fill="outline"
