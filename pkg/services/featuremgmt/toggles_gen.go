@@ -583,7 +583,7 @@ const (
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 
-	// FlaglogRowsPopoverMenu
+	// FlagLogRowsPopoverMenu
 	// Enable filtering menu displayed when text of a log line is selected
-	FlaglogRowsPopoverMenu = "logRowsPopoverMenu"
+	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
 )
