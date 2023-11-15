@@ -78,11 +78,16 @@ describe('timeSeriesTableTransformer', () => {
     const series = [
       getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
       getTimeSeries('B', { instance: 'A', pod: 'C' }, [3, 4, 5]),
+      getTimeSeries('C', { instance: 'B', pod: 'X' }, [4, 2, 0]),
+      getTimeSeries('D', { instance: 'B', pod: 'Y' }, [0, 0, 0]),
     ];
 
     const results = timeSeriesToTableTransform(
       {
         B: {
+          stat: ReducerID.mean,
+        },
+        D: {
           stat: ReducerID.mean,
         },
       },
@@ -91,6 +96,26 @@ describe('timeSeriesTableTransformer', () => {
 
     expect(results[0].fields[2].values[0].value).toEqual(3);
     expect(results[1].fields[2].values[0].value).toEqual(4);
+    expect(results[2].fields[2].values[0].value).toEqual(0);
+    expect(results[3].fields[2].values[0].value).toEqual(0);
+  });
+
+  it('calculate the value for an empty series to null', () => {
+    const series = [getTimeSeries('D', { instance: 'B', pod: 'Y' }, [])];
+
+    const results = timeSeriesToTableTransform(
+      {
+        B: {
+          stat: ReducerID.mean,
+        },
+        D: {
+          stat: ReducerID.mean,
+        },
+      },
+      series
+    );
+
+    expect(results[0].fields[2].values[0].value).toEqual(null);
   });
 });
 

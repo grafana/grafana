@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -33,7 +34,8 @@ import (
 func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	// nolint:staticcheck
+	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	{
 		oldVersion := setting.BuildVersion
@@ -74,6 +76,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 			PluginSettings:        cfg.PluginSettings,
 		}),
+		namespacer:    request.GetNamespaceMapper(cfg),
 		SocialService: social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage()),
 	}
 
@@ -295,7 +298,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							AngularDetected: true,
+							Angular: plugins.AngularMeta{Detected: true},
 						},
 					},
 				}
@@ -308,11 +311,11 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
-						ID:              "test-app",
-						Preload:         true,
-						Path:            "/test-app/module.js",
-						Version:         "0.5.0",
-						AngularDetected: true,
+						ID:      "test-app",
+						Preload: true,
+						Path:    "/test-app/module.js",
+						Version: "0.5.0",
+						Angular: plugins.AngularMeta{Detected: true},
 					},
 				},
 			},

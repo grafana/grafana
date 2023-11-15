@@ -35,6 +35,13 @@ import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { ShareButton } from './ShareButton';
+import {
+  trackToolbarFavoritesClick,
+  trackToolbarRefreshClick,
+  trackToolbarSettingsClick,
+  trackToolbarTimePickerClick,
+  trackToolbarZoomClick,
+} from './analytics';
 
 const mapDispatchToProps = {
   setStarred,
@@ -122,6 +129,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const onStarDashboard = () => {
+    trackToolbarFavoritesClick();
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
 
@@ -133,6 +141,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const onOpenSettings = () => {
+    trackToolbarSettingsClick();
     locationService.partial({ editview: 'settings' });
   };
 
@@ -196,7 +205,7 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (config.featureToggles.scenes) {
+    if (config.featureToggles.scenes && !dashboard.isSnapshot()) {
       buttons.push(
         <DashNavButton
           key="button-scenes"
@@ -242,9 +251,15 @@ export const DashNav = React.memo<Props>((props) => {
     if (hideTimePicker) {
       return null;
     }
-
     return (
-      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
+      <DashNavTimeControls
+        dashboard={dashboard}
+        onChangeTimeZone={updateTimeZoneForSession}
+        onToolbarRefreshClick={trackToolbarRefreshClick}
+        onToolbarZoomClick={trackToolbarZoomClick}
+        onToolbarTimePickerClick={trackToolbarTimePickerClick}
+        key="time-controls"
+      />
     );
   };
 

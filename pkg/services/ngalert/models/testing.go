@@ -266,6 +266,14 @@ func WithQuery(query ...AlertQuery) AlertRuleMutator {
 	}
 }
 
+func WithGroupKey(groupKey AlertRuleGroupKey) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.RuleGroup = groupKey.RuleGroup
+		rule.OrgID = groupKey.OrgID
+		rule.NamespaceUID = groupKey.NamespaceUID
+	}
+}
+
 func GenerateAlertLabels(count int, prefix string) data.Labels {
 	labels := make(data.Labels, count)
 	for i := 0; i < count; i++ {

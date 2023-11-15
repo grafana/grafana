@@ -20,7 +20,7 @@ var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-
 const (
 	GeneralFolderUID     = "general"
 	RootFolderUID        = ""
-	MaxNestedFolderDepth = 8
+	MaxNestedFolderDepth = 4
 )
 
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
@@ -128,7 +128,8 @@ type DeleteFolderCommand struct {
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
 type GetFolderQuery struct {
-	UID   *string
+	UID *string
+	// Deprecated: use FolderUID instead
 	ID    *int64
 	Title *string
 	OrgID int64
