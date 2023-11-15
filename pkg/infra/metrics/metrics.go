@@ -652,8 +652,8 @@ func SetPluginBuildInformation(pluginID, pluginType, version, signatureStatus st
 	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version, signatureStatus).Set(1)
 }
 
-func initMetricVars() {
-	prometheus.MustRegister(
+func initMetricVars(reg prometheus.Registerer) {
+	reg.MustRegister(
 		MInstanceStart,
 		MPageStatus,
 		MApiStatus,
