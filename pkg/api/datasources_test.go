@@ -286,6 +286,10 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 				Cfg:                  setting.NewCfg(),
 				Features:             featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
 				accesscontrolService: actest.FakeService{},
+				AccessControl: actest.FakeAccessControl{
+					ExpectedEvaluate: true,
+					ExpectedErr:      nil,
+				},
 			}
 			sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
 			hs.Cfg.AuthProxyEnabled = true
@@ -300,7 +304,9 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 					Type:     "test",
 					JsonData: jsonData,
 				})
-				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
+				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{
+					{Action: datasources.ActionPermissionsWrite, Scope: datasources.ScopeAll},
+				})
 				return hs.AddDataSource(c)
 			}))
 

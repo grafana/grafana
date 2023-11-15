@@ -54,6 +54,7 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should return validation error if it's a folder and have a folder id", func(t *testing.T) {
 				dto.Dashboard = dashboards.NewDashboardFolder("Folder")
+				// nolint:staticcheck
 				dto.Dashboard.FolderID = 1
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, dashboards.ErrDashboardFolderCannotHaveParent)

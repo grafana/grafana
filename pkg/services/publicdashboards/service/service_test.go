@@ -312,6 +312,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 
 	// #nosec G101 -- This is dummy/test token
 	accessToken := "c54b1c4dd2b143a1a7a43005264d256d"
+	// nolint:staticcheck
 	d := &dashboards.Dashboard{UID: "mydashboard", Data: data, Slug: "dashboardSlug", Created: now, Updated: now, Version: 1, FolderID: 1}
 
 	testCases := []struct {
@@ -592,7 +593,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 	t.Run("Create public dashboard", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
@@ -678,7 +679,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		t.Run(fmt.Sprintf("Create public dashboard with %s null boolean fields stores them as false", tt.Name), func(t *testing.T) {
 			sqlStore := db.InitTestDB(t)
 			quotaService := quotatest.New(false, nil)
-			dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 			require.NoError(t, err)
 			publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 			dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
@@ -716,7 +717,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
@@ -749,7 +750,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 	t.Run("Creates pubdash whose dashboard has template variables successfully", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 		templateVars := make([]map[string]any, 1)
@@ -825,7 +826,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 	t.Run("Create public dashboard with given pubdash uid", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
@@ -903,7 +904,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 	t.Run("Create public dashboard with given pubdash access token", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
@@ -964,7 +965,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 
 	t.Run("Returns error if public dashboard exists", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 		require.NoError(t, err)
 
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
@@ -1001,7 +1002,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 	t.Run("Validate pubdash has default share value", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]any{}, nil)
@@ -1044,7 +1045,7 @@ func assertFalseIfNull(t *testing.T, expectedValue bool, nullableValue *bool) {
 func TestUpdatePublicDashboard(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
@@ -1230,7 +1231,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		t.Run(fmt.Sprintf("Update public dashboard with %s null boolean fields let those fields with old persisted value", tt.Name), func(t *testing.T) {
 			sqlStore := db.InitTestDB(t)
 			quotaService := quotatest.New(false, nil)
-			dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 			require.NoError(t, err)
 			publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 			serviceWrapper := ProvideServiceWrapper(publicdashboardStore)

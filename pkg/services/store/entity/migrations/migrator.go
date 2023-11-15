@@ -14,7 +14,7 @@ import (
 
 func MigrateEntityStore(xdb db.DB, features featuremgmt.FeatureToggles) error {
 	// Skip if feature flag is not enabled
-	if !features.IsEnabled(featuremgmt.FlagEntityStore) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagEntityStore) {
 		return nil
 	}
 
@@ -67,6 +67,6 @@ func MigrateEntityStore(xdb db.DB, features featuremgmt.FeatureToggles) error {
 	}
 
 	return mg.Start(
-		features.IsEnabled(featuremgmt.FlagMigrationLocking),
+		features.IsEnabledGlobally(featuremgmt.FlagMigrationLocking),
 		sql.GetMigrationLockAttemptTimeout())
 }

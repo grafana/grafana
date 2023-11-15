@@ -84,7 +84,7 @@ export class ElasticResponse {
         }
         case 'extended_stats': {
           for (const statName in metric.meta) {
-            if (!metric.meta[statName as ExtendedStatMetaType]) {
+            if (!metric.meta[statName]) {
               continue;
             }
 
@@ -210,7 +210,7 @@ export class ElasticResponse {
           }
           case 'extended_stats': {
             for (const statName in metric.meta) {
-              if (!metric.meta[statName as ExtendedStatMetaType]) {
+              if (!metric.meta[statName]) {
                 continue;
               }
 
@@ -340,7 +340,7 @@ export class ElasticResponse {
     if (target.alias) {
       const regex = /\{\{([\s\S]+?)\}\}/g;
 
-      return target.alias.replace(regex, (match: any, g1: any, g2: any) => {
+      return target.alias.replace(regex, (match, g1, g2) => {
         const group = g1 || g2;
 
         if (group.indexOf('term ') === 0) {
@@ -367,7 +367,7 @@ export class ElasticResponse {
           metricName = getScriptValue(agg);
 
           for (const pv of agg.pipelineVariables) {
-            const appliedAgg: any = find(target.metrics, { id: pv.pipelineAgg });
+            const appliedAgg = find(target.metrics, { id: pv.pipelineAgg });
             if (appliedAgg) {
               metricName = metricName.replace('params.' + pv.name, describeMetric(appliedAgg));
             }
@@ -376,7 +376,7 @@ export class ElasticResponse {
           metricName = 'Unset';
         }
       } else {
-        const appliedAgg: any = find(target.metrics, { id: series.field });
+        const appliedAgg = find(target.metrics, { id: series.field });
         if (appliedAgg) {
           metricName += ' ' + describeMetric(appliedAgg);
         } else {
@@ -734,7 +734,7 @@ const createEmptyDataFrame = (
       name: logMessageField,
       type: FieldType.string,
     });
-    series.setParser(f, (v: any) => {
+    series.setParser(f, (v) => {
       return v || '';
     });
   }
@@ -744,7 +744,7 @@ const createEmptyDataFrame = (
       name: 'level',
       type: FieldType.string,
     });
-    series.setParser(f, (v: any) => {
+    series.setParser(f, (v) => {
       return v || '';
     });
   }
@@ -768,7 +768,7 @@ const createEmptyDataFrame = (
       name,
       type,
     });
-    series.setParser(f, (v: any) => {
+    series.setParser(f, (v) => {
       return v || '';
     });
   }
@@ -776,7 +776,7 @@ const createEmptyDataFrame = (
   return series;
 };
 
-const addPreferredVisualisationType = (series: any, type: PreferredVisualisationType) => {
+const addPreferredVisualisationType = (series: DataFrame, type: PreferredVisualisationType) => {
   let s = series;
   s.meta
     ? (s.meta.preferredVisualisationType = type)
@@ -786,7 +786,7 @@ const addPreferredVisualisationType = (series: any, type: PreferredVisualisation
 };
 
 const toNameTypePair =
-  (docs: Array<Record<string, any>>) =>
+  (docs: Array<Record<string, unknown>>) =>
   (propName: string): [string, FieldType] => [
     propName,
     guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName]),

@@ -238,7 +238,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID string) func(include *plugins.Includes) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(include *plugins.Includes) bool {
-		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) && include.RequiresRBACAction()
+		useRBAC := s.features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && include.RequiresRBACAction()
 		if useRBAC && !hasAccess(ac.EvalPermission(include.Action)) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
@@ -267,7 +267,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"k6-app":                           {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"},
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagNavAdminSubsections) && s.features.IsEnabled(featuremgmt.FlagCostManagementUi) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagNavAdminSubsections) && s.features.IsEnabledGlobally(featuremgmt.FlagCostManagementUi) {
 		// if cost management is enabled we want to nest adaptive metrics and log volume explorer under that plugin
 		// in the admin section
 		s.navigationAppConfig["grafana-adaptive-metrics-app"] = NavigationAppConfig{SectionID: navtree.NavIDCfg}
