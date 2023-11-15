@@ -63,10 +63,6 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagNewDBLibrary
-	// Use jmoiron/sqlx rather than xorm for a few backend services
-	FlagNewDBLibrary = "newDBLibrary"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -191,10 +187,6 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagGcomOnlyExternalOrgRoleSync
-	// Prohibits a user from changing organization roles synced with Grafana Cloud auth provider
-	FlagGcomOnlyExternalOrgRoleSync = "gcomOnlyExternalOrgRoleSync"
-
 	// FlagPrometheusMetricEncyclopedia
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
@@ -230,10 +222,6 @@ const (
 	// FlagAlertStateHistoryLokiSecondary
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
-
-	// FlagAlertingNotificationsPoliciesMatchingInstances
-	// Enables the preview of matching instances for notification policies
-	FlagAlertingNotificationsPoliciesMatchingInstances = "alertingNotificationsPoliciesMatchingInstances"
 
 	// FlagAlertStateHistoryLokiPrimary
 	// Enable a remote Loki instance as the primary source for state history reads.
@@ -559,6 +547,10 @@ const (
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
 
+	// FlagDashboardScene
+	// Enables dashboard rendering using scenes for all roles
+	FlagDashboardScene = "dashboardScene"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
@@ -570,4 +562,24 @@ const (
 	// FlagSsoSettingsApi
 	// Enables the SSO settings API
 	FlagSsoSettingsApi = "ssoSettingsApi"
+
+	// FlagLogsInfiniteScrolling
+	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
+	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
+
+	// FlagFlameGraphItemCollapsing
+	// Allow collapsing of flame graph items
+	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
+
+	// FlagAlertingDetailsViewV2
+	// Enables the preview of the new alert details view
+	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
+
+	// FlagDatatrails
+	// Enables the new core app datatrails
+	FlagDatatrails = "datatrails"
+
+	// FlagAlertingSimplifiedRouting
+	// Enables the simplified routing for alerting
+	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 )
