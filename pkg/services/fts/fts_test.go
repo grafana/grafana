@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/grn"
 )
 
 const cons = "bdfghjklmnprstvz"
@@ -43,7 +42,11 @@ func TestStandaloneFTS(t *testing.T) {
 	for i := 0; i < N; i++ {
 		uid := uuid.Must(uuid.NewRandom()).String()
 		doc := Document{
-			GRN: grn.GRN{TenantID: 1, ResourceKind: "test_doc", ResourceGroup: "test_doc", ResourceIdentifier: uid},
+			DocumentID: DocumentID{
+				OrgID: int64(1),
+				Kind:  "test_doc",
+				UID:   uid,
+			},
 			Fields: []Field{
 				{"title", text(16)},
 				{"descrption", text(140)},
@@ -61,7 +64,7 @@ func TestStandaloneFTS(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(results) != 1 || results[0].ResourceIdentifier != docs[index].GRN.ResourceIdentifier {
+	if len(results) != 1 || results[0] != docs[index].DocumentID {
 		t.Fatal(results)
 	}
 }

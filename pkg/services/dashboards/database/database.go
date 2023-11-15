@@ -35,7 +35,7 @@ type dashboardStore struct {
 	log         log.Logger
 	features    featuremgmt.FeatureToggles
 	tagService  tag.Service
-	searchIndex fts.Index
+	searchIndex fts.Service
 }
 
 // SQL bean helper to save tags
@@ -49,7 +49,7 @@ type dashboardTag struct {
 var _ dashboards.Store = (*dashboardStore)(nil)
 
 func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service, fts fts.Service) (dashboards.Store, error) {
-	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService, searchIndex: fts.Index("fts")}
+	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService, searchIndex: fts}
 
 	if err := s.searchIndex.Init(); err != nil {
 		return nil, err

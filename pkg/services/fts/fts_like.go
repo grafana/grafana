@@ -3,9 +3,9 @@ package fts
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
@@ -19,7 +19,7 @@ type sqlIndex struct {
 
 func (index *sqlIndex) Init() error {
 	return index.db.WithDbSession(context.TODO(), func(sess *db.Session) error {
-		_, err := sess.Exec(`CREATE TABLE IF NOT EXISTS ` + index.name + ` (grn TEXT, org_id INTEGER, kind STRING, uid STRING, field TEXT, content TEXT)`)
+		_, err := sess.Exec(`CREATE TABLE IF NOT EXISTS ` + index.name + ` (org_id INTEGER, kind TEXT , uid TEXT, field TEXT, content TEXT)`)
 		if err != nil {
 			return err
 		}
@@ -49,12 +49,11 @@ func (index *sqlIndex) Update(docs ...Document) error {
 	// TODO: batches
 	return index.db.WithDbSession(context.TODO(), func(sess *db.Session) error {
 		for _, doc := range docs {
-			if _, err := sess.Exec(`DELETE FROM `+index.name+` WHERE grn = ?`, doc.GRN.ToGRNString()); err != nil {
+			if _, err := sess.Exec(`DELETE FROM `+index.name+` WHERE org_id = ? AND kind = ? AND uid = ?`, doc.OrgID, doc.Kind, doc.UID); err != nil {
 				return err
 			}
 			for _, f := range doc.Fields {
-				if _, err := sess.Exec(`INSERT INTO `+index.name+` (grn, org_id, kind, uid, field, content) VALUES (?, ?, ?)`,
-					doc.GRN.ToGRNString(), doc.GRN.TenantID, doc.GRN.ResourceKind, doc.GRN.ResourceIdentifier, f.Field, f.Value); err != nil {
+				if _, err := sess.Exec(`INSERT INTO `+index.name+` (org_id, kind, uid, field, content) VALUES (?, ?, ?, ?, ?)`, doc.OrgID, doc.Kind, doc.UID, f.Field, f.Value); err != nil {
 					return err
 				}
 			}
@@ -84,19 +83,23 @@ func (filter sqlFilter) Where() (string, []any) {
 	return fmt.Sprintf(`%s.content %s ?`, filter.name, "LIKE"), []any{"%" + filter.query + "%"}
 }
 
-func (index *sqlIndex) Search(query string) ([]grn.GRN, error) {
-	grns := []grn.GRN{}
+func (index *sqlIndex) Search(query string) ([]DocumentID, error) {
+	docs := []DocumentID{}
 	err := index.db.WithDbSession(context.TODO(), func(sess *db.Session) error {
-		// TODO: delegate to the filter?
-		rows, err := sess.Query(`SELECT grn FROM `+index.name+` WHERE content `+index.db.GetDialect().LikeStr()+` ?`, "%"+query+"%")
+		rows, err := sess.Query(`SELECT org_id, kind, uid FROM `+index.name+` WHERE content `+index.db.GetDialect().LikeStr()+` ?`, "%"+query+"%")
 		if err != nil {
 			return err
 		}
 		for _, row := range rows {
-			id := string(row["grn"])
-			grns = append(grns, *grn.MustParseStr(id))
+			orgID, err := strconv.ParseInt(string(row["org_id"]), 10, 64)
+			if err != nil {
+				return err
+			}
+			kind := string(row["kind"])
+			uid := string(row["uid"])
+			docs = append(docs, DocumentID{OrgID: orgID, Kind: kind, UID: uid})
 		}
 		return nil
 	})
-	return grns, err
+	return docs, err
 }

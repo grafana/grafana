@@ -2,38 +2,34 @@ package fts
 
 import (
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
-// TODO: have staticallyt cmpiled indices via provideservice
 type Service interface {
-	Index(name string) Index
-}
-
-type Index interface {
-	Init() error
-	Update(...Document) error
-	Search(string) ([]grn.GRN, error)
-	Filter(string) model.FilterWhere
+	Init() error              // TODO: turn this into a schema/index migration
+	Update(...Document) error // TODO: one method vs two methods (single insert + bulk insert)?
+	Search(string) ([]DocumentID, error)
+	Filter(string) model.FilterWhere // TODO: Should it be a join filter+where filter instead?
 }
 
 func ProvideService(db db.DB) Service {
-	return &fts{db: db}
+	return ProvideServiceWithName(db, "fts")
 }
 
-type fts struct {
-	db db.DB
+func ProvideServiceWithName(db db.DB, name string) Service {
+	return &sqliteFTS{db: db, name: name}
 }
 
-func (fts *fts) Index(name string) Index {
-	// return &sqlIndex{db: fts.db, name: name}
-	return &sqliteFTSIndex{db: fts.db, name: name}
+// DocumentID is a unique document identifier, consisting of an orgID, document kind and UID.
+type DocumentID struct {
+	OrgID int64
+	Kind  string
+	UID   string
 }
 
 // Document represents all indexable text data associated with a certain document identifier (GRN)
 type Document struct {
-	GRN    grn.GRN
+	DocumentID
 	Fields []Field
 }
 

@@ -3,22 +3,21 @@ package fts
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
-// sqliteFTSIndex is an FTS index based on a virtual table using FTS4 plugin for SQLite.
-type sqliteFTSIndex struct {
+// sqliteFTS is an FTS index based on a virtual table using FTS4 plugin for SQLite.
+type sqliteFTS struct {
 	db   db.DB
 	name string
 }
 
-func (index *sqliteFTSIndex) Init() error {
+func (index *sqliteFTS) Init() error {
 	return index.db.WithDbSession(context.TODO(), func(sess *db.Session) error {
-		_, err := sess.Exec(`CREATE VIRTUAL TABLE IF NOT EXISTS ` + index.name + ` USING FTS4 (
-			grn TEXT, org_id INTEGER, kind TEXT, uid TEXT, field TEXT, content TEXT)`)
+		_, err := sess.Exec(`CREATE VIRTUAL TABLE IF NOT EXISTS ` + index.name + ` USING FTS4 (org_id INTEGER, kind TEXT, uid TEXT, field TEXT, content TEXT)`)
 		if err != nil {
 			return err
 		}
@@ -43,16 +42,15 @@ func (index *sqliteFTSIndex) Init() error {
 	})
 }
 
-func (index *sqliteFTSIndex) Update(docs ...Document) error {
+func (index *sqliteFTS) Update(docs ...Document) error {
 	// TODO: batches
 	return index.db.WithDbSession(context.TODO(), func(sess *db.Session) error {
 		for _, doc := range docs {
-			if _, err := sess.Exec(`DELETE FROM `+index.name+` WHERE grn = ?`, doc.GRN.ToGRNString()); err != nil {
+			if _, err := sess.Exec(`DELETE FROM `+index.name+` WHERE org_id = ? AND kind = ? AND uid = ?`, doc.OrgID, doc.Kind, doc.UID); err != nil {
 				return err
 			}
 			for _, f := range doc.Fields {
-				if _, err := sess.Exec(`INSERT INTO `+index.name+` (grn, field, content) VALUES (?, ?, ?)`,
-					doc.GRN.ToGRNString(), f.Field, f.Value); err != nil {
+				if _, err := sess.Exec(`INSERT INTO `+index.name+` (org_id, kind, uid, field, content) VALUES (?, ?, ?)`, doc.OrgID, doc.Kind, doc.UID, f.Field, f.Value); err != nil {
 					return err
 				}
 			}
@@ -60,8 +58,7 @@ func (index *sqliteFTSIndex) Update(docs ...Document) error {
 		return nil
 	})
 }
-func (index *sqliteFTSIndex) Filter(query string) model.FilterWhere {
-	fmt.Println("index", query)
+func (index *sqliteFTS) Filter(query string) model.FilterWhere {
 	return &sqliteFTSFilter{name: index.name, query: query}
 }
 
@@ -78,18 +75,23 @@ func (filter sqliteFTSFilter) Where() (string, []any) {
 	return fmt.Sprintf(`%[1]s.uid IS NOT NULL`, filter.name), nil
 }
 
-func (index *sqliteFTSIndex) Search(query string) ([]grn.GRN, error) {
-	grns := []grn.GRN{}
+func (index *sqliteFTS) Search(query string) ([]DocumentID, error) {
+	docs := []DocumentID{}
 	err := index.db.WithDbSession(context.TODO(), func(sess *db.Session) error {
-		rows, err := sess.Query(`SELECT grn FROM `+index.name+` WHERE content MATCH ?`, query)
+		rows, err := sess.Query(`SELECT org_id, uid, kind FROM `+index.name+` WHERE content MATCH ?`, query)
 		if err != nil {
 			return err
 		}
 		for _, row := range rows {
-			id := string(row["grn"])
-			grns = append(grns, *grn.MustParseStr(id))
+			orgID, err := strconv.ParseInt(string(row["org_id"]), 10, 64)
+			if err != nil {
+				return err
+			}
+			kind := string(row["kind"])
+			uid := string(row["uid"])
+			docs = append(docs, DocumentID{OrgID: orgID, Kind: kind, UID: uid})
 		}
 		return nil
 	})
-	return grns, err
+	return docs, err
 }
