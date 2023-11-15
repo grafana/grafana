@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/kinds"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type Key struct {
@@ -204,7 +203,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object) error {
 		}
 	}
 
-	fmt.Printf("RESOURCE: %#v\n\n", res)
+	// fmt.Printf("RESOURCE: %#v\n\n", res)
 
 	return nil
 }
@@ -215,7 +214,7 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		return nil, err
 	}
 
-	fmt.Printf("RESOURCE: %+v\n", res)
+	// fmt.Printf("RESOURCE: %+v\n", res)
 
 	g, err := keyToGRN(key)
 	if err != nil {
@@ -273,59 +272,25 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 		}
 	}
 
-	fmt.Printf("ENTITY: %+v\n", rsp)
+	// fmt.Printf("ENTITY: %+v\n", rsp)
+
 	return rsp, nil
 }
 
-func contextWithFakeGrafanaUser(ctx context.Context) (context.Context, error) {
-	info, ok := request.UserFrom(ctx)
-	if !ok {
-		return ctx, fmt.Errorf("could not find k8s user info in context")
+func contextWithGrafanaUser(ctx context.Context) (context.Context, error) {
+	// TODO: this relies on grafana populating the context with the user
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return ctx, fmt.Errorf("could not find grafana user in context: %s", err)
 	}
 
-	var err error
-	user := &user.SignedInUser{
-		UserID: -1,
-		OrgID:  -1,
-		Name:   info.GetName(),
-	}
-	if user.Name == "system:apiserver" {
-		user.OrgID = 1
-		user.UserID = 1
-	}
+	// set grpc metadata into the context to pass to the grpc server
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(
+		"grafana-idtoken", user.IDToken,
+		"grafana-userid", strconv.FormatInt(user.UserID, 10),
+		"grafana-orgid", strconv.FormatInt(user.OrgID, 10),
+		"grafana-login", user.Login,
+	))
 
-	v, ok := info.GetExtra()["user-id"]
-	if ok && len(v) > 0 {
-		user.UserID, err = strconv.ParseInt(v[0], 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't determine the Grafana user id from extras map")
-		}
-	}
-	v, ok = info.GetExtra()["org-id"]
-	if ok && len(v) > 0 {
-		user.OrgID, err = strconv.ParseInt(v[0], 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't determine the Grafana org id from extras map")
-		}
-	}
-
-	if user.OrgID < 0 || user.UserID < 0 {
-		// Aggregated mode.... need to map this to a real user somehow
-		user.OrgID = 1
-		user.UserID = 1
-		// return nil, fmt.Errorf("insufficient information on user context, couldn't determine UserID and OrgID")
-	}
-
-	// HACK alert... change to the requested org
-	// TODO: should validate that user has access to that org/tenant
-	ns, ok := request.NamespaceFrom(ctx)
-	if ok && ns != "" {
-		nsorg, err := util.NamespaceToOrgID(ns)
-		if err != nil {
-			return nil, err
-		}
-		user.OrgID = nsorg
-	}
-
-	return appcontext.WithUser(ctx, user), nil
+	return ctx, nil
 }

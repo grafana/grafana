@@ -22,10 +22,34 @@ import (
 var _ sqlstash.EntityDB = (*EntityDB)(nil)
 
 func ProvideEntityDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*EntityDB, error) {
+	return &EntityDB{
+		db:       db,
+		cfg:      cfg,
+		features: features,
+	}, nil
+}
+
+type EntityDB struct {
+	db       db.DB
+	features featuremgmt.FeatureToggles
+	engine   *xorm.Engine
+	cfg      *setting.Cfg
+}
+
+func (db *EntityDB) Init() error {
+	_, err := db.GetEngine()
+	return err
+}
+
+func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
+	if db.engine != nil {
+		return db.engine, nil
+	}
+
 	var engine *xorm.Engine
 	var err error
 
-	cfgSection := cfg.SectionWithEnvOverrides("entity_api")
+	cfgSection := db.cfg.SectionWithEnvOverrides("entity_api")
 	dbType := cfgSection.Key("db_type").MustString("")
 
 	if dbType != "" {
@@ -93,38 +117,32 @@ func ProvideEntityDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureTog
 			engine.ShowExecTime(true)
 		}
 	} else {
-		if db == nil {
+		if db.db == nil {
 			return nil, fmt.Errorf("no db connection provided")
 		}
 
-		engine = db.GetEngine()
+		engine = db.db.GetEngine()
 	}
 
-	eDB := &EntityDB{
-		cfg:    cfg,
-		engine: engine,
-	}
+	db.engine = engine
 
-	if err := migrations.MigrateEntityStore(eDB, features); err != nil {
+	if err := migrations.MigrateEntityStore(db, db.features); err != nil {
+		db.engine = nil
 		return nil, err
 	}
 
-	return eDB, nil
+	return db.engine, nil
 }
 
-type EntityDB struct {
-	engine *xorm.Engine
-	cfg    *setting.Cfg
+func (db *EntityDB) GetSession() (*session.SessionDB, error) {
+	engine, err := db.GetEngine()
+	if err != nil {
+		return nil, err
+	}
+
+	return session.GetSession(sqlx.NewDb(engine.DB().DB, engine.DriverName())), nil
 }
 
-func (db EntityDB) GetSession() *session.SessionDB {
-	return session.GetSession(sqlx.NewDb(db.engine.DB().DB, db.engine.DriverName()))
-}
-
-func (db EntityDB) GetEngine() *xorm.Engine {
-	return db.engine
-}
-
-func (db EntityDB) GetCfg() *setting.Cfg {
+func (db *EntityDB) GetCfg() *setting.Cfg {
 	return db.cfg
 }

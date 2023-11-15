@@ -79,7 +79,7 @@ func NewStorage(
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	ctx, err := contextWithFakeGrafanaUser(ctx)
+	ctx, err := contextWithGrafanaUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		Entity: e,
 	}
 
-	fmt.Printf("req: %#v\n\n", req)
+	// fmt.Printf("req: %#v\n\n", req)
 
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
@@ -156,7 +156,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 func (s *Storage) Delete(
 	ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions,
 	validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-	ctx, err := contextWithFakeGrafanaUser(ctx)
+	ctx, err := contextWithGrafanaUser(ctx)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -205,7 +205,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-	ctx, err := contextWithFakeGrafanaUser(ctx)
+	ctx, err := contextWithGrafanaUser(ctx)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -245,14 +245,14 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	ctx, err := contextWithFakeGrafanaUser(ctx)
+	ctx, err := contextWithGrafanaUser(ctx)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
 
 	k := key
 
-	fmt.Printf("kind: %#v\n", k)
+	// fmt.Printf("kind: %#v\n", k)
 
 	listPtr, err := meta.GetItemsPtr(listObj)
 	if err != nil {
@@ -289,7 +289,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	if rsp.NextPageToken != "" {
 		listAccessor.SetContinue(rsp.NextPageToken)
-		fmt.Printf("CONTINUE: %s\n", rsp.NextPageToken)
+		// fmt.Printf("CONTINUE: %s\n", rsp.NextPageToken)
 	}
 
 	fmt.Printf("k8s GETLIST: %#v\n\n", listObj)
@@ -342,7 +342,7 @@ func (s *Storage) guaranteedUpdate(
 	tryUpdate storage.UpdateFunc,
 	cachedExistingObject runtime.Object,
 ) error {
-	ctx, err := contextWithFakeGrafanaUser(ctx)
+	ctx, err := contextWithGrafanaUser(ctx)
 	if err != nil {
 		return err
 	}

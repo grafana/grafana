@@ -26,7 +26,12 @@ func MigrateEntityStore(db sqlstash.EntityDB, features featuremgmt.FeatureToggle
 		return nil
 	}
 
-	mg := migrator.NewScopedMigrator(db.GetEngine(), db.GetCfg(), "entity")
+	engine, err := db.GetEngine()
+	if err != nil {
+		return err
+	}
+
+	mg := migrator.NewScopedMigrator(engine, db.GetCfg(), "entity")
 	mg.AddCreateMigration()
 
 	marker := initEntityTables(mg)
@@ -35,7 +40,7 @@ func MigrateEntityStore(db sqlstash.EntityDB, features featuremgmt.FeatureToggle
 	// The initial plan is to keep the source of truth in existing SQL tables, and mirrot it
 	// to a kubernetes model.  Once the kubernetes model needs to be preserved,
 	// this code should be removed
-	exists, err := db.GetEngine().IsTableExist("entity_migration_log")
+	exists, err := engine.IsTableExist("entity_migration_log")
 	if err != nil {
 		return err
 	}
@@ -50,7 +55,12 @@ func MigrateEntityStore(db sqlstash.EntityDB, features featuremgmt.FeatureToggle
 			tables := []string{"entity_migration_log"}
 
 			ctx := context.Background()
-			err = db.GetSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+			sess, err := db.GetSession()
+			if err != nil {
+				return err
+			}
+
+			err = sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 				for _, t := range tables {
 					_, err := tx.Exec(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", t))
 					if err != nil {

@@ -166,16 +166,19 @@ func ProvideService(
 				req.URL.Path = "/"
 			}
 
-			//TODO: add support for the existing MetricsEndpointBasicAuth config option
+			// TODO: add support for the existing MetricsEndpointBasicAuth config option
 			if req.URL.Path == "/apiserver-metrics" {
 				req.URL.Path = "/metrics"
 			}
 
+			// TODO: none of these are used today, we use the context directly in k8s
 			ctx := req.Context()
 			signedInUser := appcontext.MustUser(ctx)
-
 			req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
 			req.Header.Set("X-Remote-Group", "grafana")
+			if signedInUser.IDToken != "" {
+				req.Header.Set("X-Remote-Extra-ID-Token", signedInUser.IDToken)
+			}
 
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
