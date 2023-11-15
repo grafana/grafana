@@ -63,6 +63,7 @@ func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *con
 	dash.Overwrite = true
 	dash.OrgID = cfg.OrgID
 	dash.Dashboard.OrgID = cfg.OrgID
+	// nolint:staticcheck
 	dash.Dashboard.FolderID = folderID
 	dash.Dashboard.FolderUID = folderUID
 
