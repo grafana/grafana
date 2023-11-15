@@ -33,65 +33,14 @@ const lokiQueryResult = {
                   value: 223921,
                 },
                 {
-                  displayName: 'Summary: lines processed per second',
-                  value: 1346,
-                },
-                {
                   displayName: 'Summary: total bytes processed',
                   unit: 'decbytes',
                   value: 4156,
                 },
                 {
-                  displayName: 'Summary: total lines processed',
-                  value: 25,
-                },
-                {
                   displayName: 'Summary: exec time',
                   unit: 's',
                   value: 0.01856,
-                },
-                {
-                  displayName: 'Ingester: total reached',
-                  value: 1,
-                },
-                {
-                  displayName: 'Ingester: total chunks matched',
-                  value: 12,
-                },
-                {
-                  displayName: 'Ingester: total batches',
-                  value: 1,
-                },
-                {
-                  displayName: 'Ingester: total lines sent',
-                  value: 1,
-                },
-                {
-                  displayName: 'Ingester: head chunk bytes',
-                  unit: 'decbytes',
-                  value: 0,
-                },
-                {
-                  displayName: 'Ingester: head chunk lines',
-                  value: 0,
-                },
-                {
-                  displayName: 'Ingester: decompressed bytes',
-                  unit: 'decbytes',
-                  value: 0,
-                },
-                {
-                  displayName: 'Ingester: decompressed lines',
-                  value: 0,
-                },
-                {
-                  displayName: 'Ingester: compressed bytes',
-                  unit: 'decbytes',
-                  value: 0,
-                },
-                {
-                  displayName: 'Ingester: total duplicates',
-                  value: 0,
                 },
               ],
               executedQueryString: 'Expr: {age="new"}',
