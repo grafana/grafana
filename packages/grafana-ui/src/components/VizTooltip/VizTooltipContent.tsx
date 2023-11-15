@@ -29,6 +29,7 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
               color={color}
               colorIndicator={colorIndicator}
               colorFirst={false}
+              justify={'space-between'}
             />
           );
         })}

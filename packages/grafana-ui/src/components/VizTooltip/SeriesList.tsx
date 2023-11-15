@@ -26,6 +26,7 @@ export const SeriesList = ({ series }: SeriesListProps) => {
             color={series.color}
             colorIndicator={ColorIndicator.series}
             isActive={series.isActive}
+            justify={'space-between'}
           />
         );
       })}

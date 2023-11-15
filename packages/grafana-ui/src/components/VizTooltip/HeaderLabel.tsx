@@ -11,13 +11,6 @@ export const HeaderLabel = ({ headerLabel }: Props) => {
   const { label, value, color, colorIndicator } = headerLabel;
 
   return (
-    <VizTooltipRow
-      label={label}
-      value={value}
-      color={color}
-      colorIndicator={colorIndicator}
-      justify={'space-between'}
-      marginRight={'22px'}
-    />
+    <VizTooltipRow label={label} value={value} color={color} colorIndicator={colorIndicator} marginRight={'22px'} />
   );
 };
