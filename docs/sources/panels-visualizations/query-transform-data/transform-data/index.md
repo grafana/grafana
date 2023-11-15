@@ -126,10 +126,10 @@ You can perform the following transformations on your data.
 
 Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
-- **Mode -** Select a mode:
-  - **Reduce row -** Apply selected calculation on each row of selected fields independently.
-  - **Binary operation -** Apply basic binary operations (for example, sum or multiply) on values in a single row from two selected fields.
-  - **Unary operation -** Apply basic unary operations on values in a single row from a selected field. The available operations are:
+- **Mode** - Select a mode:
+  - **Reduce row** - Apply selected calculation on each row of selected fields independently.
+  - **Binary operation** - Apply basic binary operations (for example, sum or multiply) on values in a single row from two selected fields.
+  - **Unary operation** - Apply basic unary operations on values in a single row from a selected field. The available operations are:
     - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
     - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
     - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
@@ -153,13 +153,13 @@ Use this transformation to add a new field calculated from two other fields. Eac
       - Documentation is either limited or not provided outside of code comments. No SLA is provided.
       - Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature.
       - Contact Grafana Support to enable this feature in Grafana Cloud.
-  - **Row index -** Insert a field with the row index.
-- **Field name -** Select the names of fields you want to use in the calculation for the new field.
-- **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
-- **Operation -** If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
-- **As percentile -** If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
-- **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
-- **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
+  - **Row index** - Insert a field with the row index.
+- **Field name** - Select the names of fields you want to use in the calculation for the new field.
+- **Calculation** - If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
+- **Operation** - If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
+- **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
+- **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
+- **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
 In the example below, we added two fields together and named them Sum.
 
@@ -260,12 +260,12 @@ Use this transformation to modify the field type of a specified field.
 
 Here's a breakdown of the options:
 
-- **Field:** Select from available fields.
-- **as:** Choose the FieldType to convert to.
-  - **Numeric:** Attempts to make the values numbers.
-  - **String:** Converts the values to strings.
-  - **Time:** Attempts to parse the values as time. You can specify a DateFormat, e.g., yyyy-mm-dd or DD MM YYYY hh:mm:ss.
-  - **Boolean:** Converts the values to booleans.
+- **Field** - Select from available fields.
+- **as** - Choose the FieldType to convert to.
+  - **Numeric** - Attempts to make the values numbers.
+  - **String** - Converts the values to strings.
+  - **Time** - Attempts to parse the values as time. You can specify a DateFormat, e.g., yyyy-mm-dd or DD MM YYYY hh:mm:ss.
+  - **Boolean** - Converts the values to booleans.
 
 For example, consider the following query that could be modified by selecting the time field as Time and specifying Date Format as YYYY.
 
@@ -295,13 +295,13 @@ This transformation allows you to flexibly adapt your data types, ensuring compa
 
 Use this transformation to select a source of data and extract content from it in different formats. Set the following fields:
 
-- **Source:** Select the field for the source of data.
-- **Format:** Choose one of the following:
-  - **JSON:** To parse JSON content from the source.
-  - **Key+Value Parse:** To parse content in the format 'a=b' or 'c:d' from the source.
-  - **Auto:** To discover fields automatically.
-- **Replace All Fields:** _(Optional)_ Select this option to hide all other fields and display only your calculated field in the visualization.
-- **Keep Time:** _(Optional)_ Available only if **Replace All Fields** is true. Keeps the time field in the output.
+- **Source** - Select the field for the source of data.
+- **Format** - Choose one of the following:
+  - **JSON** - To parse JSON content from the source.
+  - **Key+Value Parse** - To parse content in the format 'a=b' or 'c:d' from the source.
+  - **Auto** - To discover fields automatically.
+- **Replace All Fields** - _(Optional)_ Select this option to hide all other fields and display only your calculated field in the visualization.
+- **Keep Time** - _(Optional)_ Available only if **Replace All Fields** is true. Keeps the time field in the output.
 
 Consider the following data set:
 
@@ -340,8 +340,8 @@ Use this transformation to enrich a field value by looking up additional fields 
 
 Here's how to configure it:
 
-- **Field:** Select a text field from your dataset.
-- **Lookup:** Choose from **Countries**, **USA States**, and **Airports**.
+- **Field** - Select a text field from your dataset.
+- **Lookup** - Choose from **Countries**, **USA States**, and **Airports**.
 
 This transformation currently supports spatial data.
 
@@ -396,19 +396,19 @@ This transformation is very useful if your data source does not natively filter 
 
 The available conditions for all fields are:
 
-- **Regex:** Match a regex expression.
-- **Is Null:** Match if the value is null.
-- **Is Not Null:** Match if the value is not null.
-- **Equal:** Match if the value is equal to the specified value.
-- **Different:** Match if the value is different than the specified value.
+- **Regex** - Match a regex expression.
+- **Is Null** - Match if the value is null.
+- **Is Not Null** - Match if the value is not null.
+- **Equal** - Match if the value is equal to the specified value.
+- **Different** - Match if the value is different than the specified value.
 
 The available conditions for number fields are:
 
-- **Greater:** Match if the value is greater than the specified value.
-- **Lower:** Match if the value is lower than the specified value.
-- **Greater or equal:** Match if the value is greater or equal.
-- **Lower or equal:** Match if the value is lower or equal.
-- **Range:** Match a range between a specified minimum and maximum, min and max included.
+- **Greater** - Match if the value is greater than the specified value.
+- **Lower** - Match if the value is lower than the specified value.
+- **Greater or equal** - Match if the value is greater or equal.
+- **Lower or equal** - Match if the value is lower or equal.
+- **Range** - Match a range between a specified minimum and maximum, min and max included.
 
 Consider the following data set:
 
@@ -507,16 +507,16 @@ This transformation provides flexibility in tailoring your query results to focu
 
 Use this transformation to customize the output of a string field. You can format the output in the following ways:
 
-- Upper case: Formats the entire string in uppercase characters.
-- Lower case: Formats the entire string in lowercase characters.
-- Sentence case: Formats the first character of the string in uppercase.
-- Title case: Formats the first character of each word in the string in uppercase.
-- Pascal case: Formats the first character of each word in the string in uppercase and doesn't include spaces between words.
-- Camel case: Formats the first character of each word in the string in uppercase, except the first word, and doesn't include spaces between words.
-- Snake case: Formats all characters in the string in lowercase and uses underscores instead of spaces between words.
-- Kebab case: Formats all characters in the string in lowercase and uses dashes instead of spaces between words.
-- Trim: Removes all leading and trailing spaces from the string.
-- Substring: Returns a substring of the string, using the specified start and end positions.
+- **Upper case** - Formats the entire string in uppercase characters.
+- **Lower case** - Formats the entire string in lowercase characters.
+- **Sentence case** - Formats the first character of the string in uppercase.
+- **Title case** - Formats the first character of each word in the string in uppercase.
+- **Pascal case** - Formats the first character of each word in the string in uppercase and doesn't include spaces between words.
+- **Camel case** - Formats the first character of each word in the string in uppercase, except the first word, and doesn't include spaces between words.
+- **Snake case** - Formats all characters in the string in lowercase and uses underscores instead of spaces between words.
+- **Kebab case** - Formats all characters in the string in lowercase and uses dashes instead of spaces between words.
+- **Trim** - Removes all leading and trailing spaces from the string.
+- **Substring** - Returns a substring of the string, using the specified start and end positions.
 
 This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
 
@@ -594,7 +594,7 @@ And we can add more than one calculation. For instance:
 - For field Server Status, we can calculate the _Last_ value to know what is the last state value for each server
 - For field Temperature, we can also calculate the _Last_ value to know what is the latest monitored temperature for each server
 
-We would then get :
+We would then get:
 
 | Server ID | CPU Temperature (mean) | CPU Temperature (last) | Time (last)         | Server Status (last) |
 | --------- | ---------------------- | ---------------------- | ------------------- | -------------------- |
@@ -636,16 +636,16 @@ Use this transformation to prepare histogram data for visualizing trends over ti
 
 This setting determines how the x-axis is split into buckets.
 
-- **Size:** Specify a time interval in the input field. For instance, a time range of '1h' creates cells one hour wide on the x-axis.
-- **Count:** For non-time-related series, use this option to define the number of elements in a bucket.
+- **Size** - Specify a time interval in the input field. For instance, a time range of '1h' creates cells one hour wide on the x-axis.
+- **Count** - For non-time-related series, use this option to define the number of elements in a bucket.
 
 #### Y Bucket
 
 This setting determines how the y-axis is split into buckets.
 
 - **Linear**
-- **Logarithmic:** Choose between base 2 or base 10.
-- **Symlog:** Utilizes a symmetrical logarithmic scale. Opt for base 2 or base 10, allowing for negative values.
+- **Logarithmic** - Choose between base 2 or base 10.
+- **Symlog** - Utilizes a symmetrical logarithmic scale. Opt for base 2 or base 10, allowing for negative values.
 
 Assume you have the following dataset:
 
@@ -665,9 +665,9 @@ Enhance your data representation by leveraging histogram transformations for ins
 
 Use this transformation to generate a histogram based on input data, allowing you to visualize the distribution of values.
 
-- **Bucket size:** The range between the lowest and highest items in a bucket (xMin to xMax).
-- **Bucket offset:** The offset for non-zero-based buckets.
-- **Combine series:** Create a unified histogram using all available series.
+- **Bucket size** - The range between the lowest and highest items in a bucket (xMin to xMax).
+- **Bucket offset** - The offset for non-zero-based buckets.
+- **Combine series** - Create a unified histogram using all available series.
 
 **Original data**
 
@@ -721,7 +721,7 @@ Use this transformation to combine the results from multiple queries (combining 
 
 In the following example, two queries return table data. It is visualized as two separate tables before applying the inner join transformation.
 
-Query A:
+**Query A:**
 
 | Time                | Job     | Uptime    |
 | ------------------- | ------- | --------- |
@@ -729,7 +729,7 @@ Query A:
 | 2020-07-07 11:24:20 | postgre | 123001233 |
 | 2020-07-07 11:14:20 | postgre | 345001233 |
 
-Query B:
+**Query B:**
 
 | Time                | Server   | Errors |
 | ------------------- | -------- | ------ |
@@ -750,7 +750,7 @@ An outer join includes all data from an inner join and rows where values do not 
 
 In the following example, two queries return table data. It is visualized as two tables before applying the outer join transformation.
 
-Query A:
+**Query A:**
 
 | Time                | Job     | Uptime    |
 | ------------------- | ------- | --------- |
@@ -758,7 +758,7 @@ Query A:
 | 2020-07-07 11:24:20 | postgre | 123001233 |
 | 2020-07-07 11:14:20 | postgre | 345001233 |
 
-Query B:
+**Query B:**
 
 | Time                | Server   | Errors |
 | ------------------- | -------- | ------ |
@@ -929,14 +929,14 @@ Use this transformation to combine the results from multiple queries into a sing
 
 Here's an example illustrating the impact of the "Merge Rows" transformation on two queries returning table data:
 
-Query A:
+**Query A:**
 
 | Time                | Job     | Uptime    |
 | ------------------- | ------- | --------- |
 | 2020-07-07 11:34:20 | node    | 25260122  |
 | 2020-07-07 11:24:20 | postgre | 123001233 |
 
-Query B:
+**Query B:**
 
 | Time                | Job     | Errors |
 | ------------------- | ------- | ------ |
@@ -960,11 +960,9 @@ Use this transformation to provide the flexibility to rename, reorder, or hide f
 
 Grafana conveniently displays a list of fields returned by the query, allowing you to perform the following actions:
 
-- **Change Field Order:** Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
-
-- **Hide or Show a Field:** Utilize the eye icon next to the field name to toggle the visibility of a specific field.
-
-- **Rename Fields:** Simply type a new name in the "Rename <field>" box to customize field names according to your preferences.
+- **Change Field Order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
+- **Hide or Show a Field** - Utilize the eye icon next to the field name to toggle the visibility of a specific field.
+- **Rename Fields** - Simply type a new name in the "Rename <field>" box to customize field names according to your preferences.
 
 #### Example:
 
@@ -1028,13 +1026,45 @@ Use this transformation to address issues when a data source returns time series
 
 #### Available Options
 
-##### 1. Multi-frame Time Series
+##### Multi-frame Time Series
 
 Use this option to transform the time series data frame from the wide format to the long format. This is particularly helpful when your data source delivers time series information in a format that needs to be reshaped for optimal compatibility with your visualization panel.
 
-##### 2. Wide Time Series
+**Example: Converting from Wide to Long Format**
+
+| Timestamp           | Value1 | Value2 |
+| ------------------- | ------ | ------ |
+| 2023-01-01 00:00:00 | 10     | 20     |
+| 2023-01-01 01:00:00 | 15     | 25     |
+
+**Transformed to:**
+
+| Timestamp           | Variable | Value |
+| ------------------- | -------- | ----- |
+| 2023-01-01 00:00:00 | Value1   | 10    |
+| 2023-01-01 00:00:00 | Value2   | 20    |
+| 2023-01-01 01:00:00 | Value1   | 15    |
+| 2023-01-01 01:00:00 | Value2   | 25    |
+
+##### Wide Time Series
 
 Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization panel requires a wide format, this transformation simplifies the process.
+
+**Example: Converting from Long to Wide Format**
+
+| Timestamp           | Variable | Value |
+| ------------------- | -------- | ----- |
+| 2023-01-01 00:00:00 | Value1   | 10    |
+| 2023-01-01 00:00:00 | Value2   | 20    |
+| 2023-01-01 01:00:00 | Value1   | 15    |
+| 2023-01-01 01:00:00 | Value2   | 25    |
+
+**Transformed to:**
+
+| Timestamp           | Value1 | Value2 |
+| ------------------- | ------ | ------ |
+| 2023-01-01 00:00:00 | 10     | 20     |
+| 2023-01-01 01:00:00 | 15     | 25     |
 
 > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 
@@ -1044,14 +1074,14 @@ Use this transformation to apply a calculation to each field in the data frame a
 
 Consider the input:
 
-Query A:
+**Query A:**
 
 | Time                | Temp | Uptime  |
 | ------------------- | ---- | ------- |
 | 2020-07-07 11:34:20 | 12.3 | 256122  |
 | 2020-07-07 11:24:20 | 15.4 | 1230233 |
 
-Query B:
+**Query B:**
 
 | Time                | AQI | Errors |
 | ------------------- | --- | ------ |
@@ -1060,8 +1090,8 @@ Query B:
 
 The reduce transformer has two modes:
 
-- **Series to rows -** Creates a row for each field and a column for each calculation.
-- **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
+- **Series to rows** - Creates a row for each field and a column for each calculation.
+- **Reduce fields** - Keeps the existing frame structure, but collapses each field into a single value.
 
 For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then
 the result would be:
@@ -1076,13 +1106,13 @@ the result would be:
 The **Reduce fields** with the **Last** calculation,
 results in two frames, each with one row:
 
-Query A:
+**Query A:**
 
 | Temp | Uptime  |
 | ---- | ------- |
 | 15.4 | 1230233 |
 
-Query B:
+**Query B:**
 
 | AQI | Errors |
 | --- | ------ |
@@ -1132,14 +1162,14 @@ Useful when visualizing data in:
 
 If a field does not map to config property Grafana will automatically use it as source for a label on the output field-
 
-Example:
+**Example:**
 
 | Name    | DataCenter | Value |
 | ------- | ---------- | ----- |
 | ServerA | US         | 100   |
 | ServerB | EU         | 200   |
 
-Output:
+**Output:**
 
 | ServerA (labels: DataCenter: US) | ServerB (labels: DataCenter: EU) |
 | -------------------------------- | -------------------------------- |
@@ -1151,7 +1181,7 @@ If you want to extract config from one query and apply it to another you should 
 
 #### Example
 
-Input:
+**Input:**
 
 | Name    | Value | Max |
 | ------- | ----- | --- |
@@ -1159,7 +1189,7 @@ Input:
 | ServerB | 20    | 200 |
 | ServerC | 30    | 300 |
 
-Output:
+**Output:**
 
 | ServerA (config: max=100) | ServerB (config: max=200) | ServerC (config: max=300) |
 | ------------------------- | ------------------------- | ------------------------- |
@@ -1177,7 +1207,7 @@ The result from this transformation will contain three columns: Time, Metric, an
 
 In the example below, we have two queries returning time series data. It is visualized as two separate tables before applying the transformation.
 
-Query A:
+**Query A:**
 
 | Time                | Temperature |
 | ------------------- | ----------- |
@@ -1185,7 +1215,7 @@ Query A:
 | 2020-07-07 10:31:22 | 22          |
 | 2020-07-07 09:30:05 | 19          |
 
-Query B:
+**Query B:**
 
 | Time                | Humidity |
 | ------------------- | -------- |
@@ -1219,6 +1249,23 @@ In practical terms, consider a scenario where time-series data is retrieved from
 ### Spatial
 
 Use this transformation to apply spatial operations to query results.
+
+- **Action** - Select an action:
+  - **Prepare spacial field** - Set a geometry field based on the results of other fields.
+    - **Location mode** - Select a location mode (these options are shared in **Calculate value** and **Transform** modes):
+      - **Auto** - Automatically identify location data based on default field names.
+      - **Coords** - Specify latitude and longitude fields.
+      - **Geohash** - Specify a geohash field.
+      - **Lookup** - Specify Gazetteer location fields.
+  - **Calculate value** - Use the geometry to define a new field (heading/distance/area).
+    - **Function** - Choose a mathematical operation to apply to the geometry:
+      - **Heading** - Calculate the heading (direction) between two points.
+      - **Area** - Calculate the area enclosed by a polygon defined by the geometry.
+      - **Distance** - Calculate the distance between two points.
+  - **Transform** - Apply spatial operations to the geometry.
+    - **Operation** - Choose an operation to apply to the geometry:
+      - **As line** - Create a single line feature with a vertx at each row.
+      - **Line builder** - Create a line between two points.
 
 This transformation allows you to manipulate and analyze geospatial data, enabling operations such as creating lines between points, calculating spatial properties, and more.
 
