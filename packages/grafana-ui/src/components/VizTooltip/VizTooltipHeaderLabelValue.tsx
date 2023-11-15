@@ -1,62 +1,23 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
-import { useStyles2 } from '../../themes';
-
-import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
+import { VizTooltipRow } from './VizTooltipRow';
 import { LabelValue } from './types';
 
 interface Props {
   keyValuePairs?: LabelValue[];
 }
 
-export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: Props) => {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <>
-      {keyValuePairs?.map((keyValuePair, i) => (
-        <div className={styles.contentWrapper} key={i}>
-          <span className={styles.label}>{keyValuePair.label}</span>
-          <div className={styles.valueWrapper}>
-            {keyValuePair.color && (
-              <VizTooltipColorIndicator color={keyValuePair.color} colorIndicator={keyValuePair.colorIndicator!} />
-            )}
-            <span className={styles.value}>{keyValuePair.value}</span>
-          </div>
-        </div>
-      ))}
-    </>
-  );
-};
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  hgContainer: css({
-    flexGrow: 1,
-  }),
-  label: css({
-    color: theme.colors.text.secondary,
-    fontWeight: 400,
-    marginRight: 'auto',
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    minWidth: '48px',
-  }),
-  value: css({
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-  }),
-  valueWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
-    minWidth: 0,
-  }),
-  contentWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-  }),
-});
+export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: Props) => (
+  <>
+    {keyValuePairs?.map((keyValuePair, i) => (
+      <VizTooltipRow
+        key={i}
+        label={keyValuePair.label}
+        value={keyValuePair.value}
+        color={keyValuePair.color}
+        colorIndicator={keyValuePair.colorIndicator!}
+        colorFirst={false}
+      />
+    ))}
+  </>
+);

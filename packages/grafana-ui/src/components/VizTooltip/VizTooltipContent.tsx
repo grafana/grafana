@@ -5,12 +5,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
-import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
+import { VizTooltipRow } from './VizTooltipRow';
 import { LabelValue } from './types';
+
 interface Props {
   contentLabelValue: LabelValue[];
   customContent?: ReactElement | null;
 }
+
 export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -18,16 +20,16 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) =
     <div className={styles.wrapper}>
       <div>
         {contentLabelValue?.map((labelValue, i) => {
+          const { label, value, color, colorIndicator } = labelValue;
           return (
-            <div className={styles.contentWrapper} key={i}>
-              <div className={styles.label}>{labelValue.label}</div>
-              <div className={styles.valueWrapper}>
-                {labelValue.color && (
-                  <VizTooltipColorIndicator color={labelValue.color} colorIndicator={labelValue.colorIndicator!} />
-                )}
-                <div className={styles.value}>{labelValue.value}</div>
-              </div>
-            </div>
+            <VizTooltipRow
+              key={i}
+              label={label}
+              value={value}
+              color={color}
+              colorIndicator={colorIndicator}
+              colorFirst={false}
+            />
           );
         })}
       </div>
@@ -45,31 +47,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
   }),
-  contentWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-  }),
   customContentPadding: css({
     padding: `${theme.spacing(1)} 0`,
-  }),
-  label: css({
-    color: theme.colors.text.secondary,
-    fontWeight: 400,
-    marginRight: 'auto',
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    minWidth: '48px',
-  }),
-  value: css({
-    fontWeight: 500,
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-  }),
-  valueWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
-    minWidth: 0,
   }),
 });
