@@ -56,20 +56,6 @@ export interface CloneOptions {
 
 export type DashboardLinkType = 'link' | 'dashboards';
 
-// export interface DashboardLink {
-//   icon: string;
-//   title: string;
-//   tooltip: string;
-//   type: DashboardLinkType;
-//   url: string;
-//   asDropdown: boolean;
-//   tags: any[];
-//   searchHits?: any[];
-//   targetBlank: boolean;
-//   keepTime: boolean;
-//   includeVars: boolean;
-// }
-
 export class DashboardModel implements TimeModel {
   /** @deprecated use UID */
   id: any;
