@@ -698,8 +698,8 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, err
 	}
 
-	// current folder height + current folder + parent folder + parent folder depth should be less than or equal 8
-	if folderHeight+len(parents)+2 > folder.MaxNestedFolderDepth {
+	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal MaxNestedFolderDepth
+	if folderHeight+len(parents)+1 > folder.MaxNestedFolderDepth {
 		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
 	}
 
@@ -961,7 +961,7 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 		return fmt.Errorf("failed to get parents: %w", err)
 	}
 
-	if len(ancestors) == folder.MaxNestedFolderDepth {
+	if len(ancestors) >= folder.MaxNestedFolderDepth {
 		return folder.ErrMaximumDepthReached.Errorf("failed to validate parent folder")
 	}
 
