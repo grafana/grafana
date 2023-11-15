@@ -377,7 +377,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		})
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagDatatrails) {
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDatatrails) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "Data trails",
 			Id:   "data-trails",
