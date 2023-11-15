@@ -33,5 +33,5 @@ jobs:
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: Fix up I18n files
+          commit_message: "Github Action: Auto-fix i18n files"
           file_pattern: public/locales/*/grafana.json
