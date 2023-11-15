@@ -223,7 +223,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 	args := []any{}
 
 	if r.Key != "" {
-		where = append(where, "key=?")
+		where = append(where, s.dialect.Quote("key")+"=?")
 		args = append(args, r.Key)
 	} else {
 		grn, err := s.validateGRN(ctx, r.GRN)
@@ -281,7 +281,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 		}
 
 		if r.Key != "" {
-			constraints = append(constraints, "key=?")
+			constraints = append(constraints, s.dialect.Quote("key")+"=?")
 			args = append(args, r.Key)
 		} else {
 			grn, err := s.validateGRN(ctx, r.GRN)
@@ -1281,7 +1281,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	entityQuery := selectQuery{
-		dialect:  migrator.NewDialect(s.sess.DriverName()),
+		dialect:  s.dialect,
 		fields:   fields,
 		from:     "entity", // the table
 		args:     []any{},
@@ -1299,7 +1299,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		args := []any{}
 		for _, k := range r.Key {
 			args = append(args, k+"/%")
-			where = append(where, "key LIKE ?")
+			where = append(where, s.dialect.Quote("key")+" LIKE ?")
 		}
 
 		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)

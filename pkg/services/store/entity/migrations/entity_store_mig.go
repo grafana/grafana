@@ -60,8 +60,6 @@ func initEntityTables(mg *migrator.Migrator) string {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"tenant_id", "kind", "uid"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"tenant_id", "key"}, Type: migrator.UniqueIndex},
-			// {Cols: []string{"tenant_id", "folder", "slug"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"folder"}, Type: migrator.IndexType},
 		},
 	})
@@ -118,7 +116,6 @@ func initEntityTables(mg *migrator.Migrator) string {
 		Indices: []*migrator.Index{
 			{Cols: []string{"guid", "version"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"tenant_id", "kind", "uid", "version"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"tenant_id", "key", "version"}, Type: migrator.UniqueIndex},
 		},
 	})
 
