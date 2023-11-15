@@ -30,6 +30,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDataDTO } from 'app/types';
 
+import { DashboardControls } from '../scene/DashboardControls';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
@@ -100,8 +101,11 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.controls).toBeDefined();
-      expect(scene.state.controls![1]).toBeInstanceOf(AdHocFilterSet);
-      expect((scene.state.controls![1] as AdHocFilterSet).state.name).toBe('CoolFilters');
+      expect(scene.state.controls![0]).toBeInstanceOf(DashboardControls);
+      expect((scene.state.controls![0] as DashboardControls).state.variableControls[1]).toBeInstanceOf(AdHocFilterSet);
+      expect(
+        ((scene.state.controls![0] as DashboardControls).state.variableControls[1] as AdHocFilterSet).state.name
+      ).toBe('CoolFilters');
     });
 
     it('should apply cursor sync behavior', () => {
@@ -723,7 +727,9 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+        SceneDataLayerControls
+      );
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(4);
@@ -751,7 +757,9 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+        SceneDataLayerControls
+      );
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(5);
@@ -765,7 +773,9 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+        SceneDataLayerControls
+      );
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(5);
