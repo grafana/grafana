@@ -243,7 +243,7 @@ describe('Stats Calculators', () => {
     expect(reduce(someNulls, ReducerID.count)).toEqual(4);
   });
 
-  it('should calculate empty data to null', () => {
+  it('should calculate empty data to null when emptyInputResult is not set', () => {
     const stats = reduceField({
       field: toDataFrame({ fields: [{ name: 'x', values: [] }] }).fields[0],
       reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count, ReducerID.allIsNull],
