@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -9,14 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/kinds"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
@@ -275,22 +272,4 @@ func resourceToEntity(key string, res runtime.Object, requestInfo *request.Reque
 	// fmt.Printf("ENTITY: %+v\n", rsp)
 
 	return rsp, nil
-}
-
-func contextWithGrafanaUser(ctx context.Context) (context.Context, error) {
-	// TODO: this relies on grafana populating the context with the user
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return ctx, fmt.Errorf("could not find grafana user in context: %s", err)
-	}
-
-	// set grpc metadata into the context to pass to the grpc server
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(
-		"grafana-idtoken", user.IDToken,
-		"grafana-userid", strconv.FormatInt(user.UserID, 10),
-		"grafana-orgid", strconv.FormatInt(user.OrgID, 10),
-		"grafana-login", user.Login,
-	))
-
-	return ctx, nil
 }
