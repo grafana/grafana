@@ -83,7 +83,7 @@ hosted_domain = test_hosted_domain
 		AllowAssignGrafanaAdmin: true,
 		UseRefreshToken:         true,
 		HostedDomain:            "test_hosted_domain",
-		Extra: map[string]interface{}{
+		Extra: map[string]string{
 			"allowed_organizations":   "org1, org2",
 			"id_token_attribute_name": "id_token",
 			"login_attribute_path":    "login",
