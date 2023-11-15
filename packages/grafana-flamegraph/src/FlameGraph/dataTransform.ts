@@ -94,7 +94,8 @@ export function nestedSetToLevels(
   const collapsedMapContainer = new CollapsedMapContainer(options?.collapsingThreshold);
   if (options?.collapsing) {
     // We collapse similar items here, where it seems like parent and child are the same thing and so the distinction
-    // isn't that important. We create a map of items that should be collapsed together.
+    // isn't that important. We create a map of items that should be collapsed together. We need to do it with complete
+    // tree as we need to know how many children an item has to know if we can collapse it.
     collapsedMapContainer.addTree(levels[0][0]);
   }
 
