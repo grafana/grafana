@@ -10,22 +10,20 @@ type Props = {
   range: AbsoluteTimeRange;
   rows: LogRowModel[];
   scrollElement?: HTMLDivElement;
-  sortOrder: LogsSortOrder | null;
+  sortOrder: LogsSortOrder;
 };
 
-export const InfiniteScroll = ({ children, loadMoreLogs, range, rows, scrollElement }: Props) => {
+export const InfiniteScroll = ({ children, loadMoreLogs, range, rows, scrollElement, sortOrder }: Props) => {
   useEffect(() => {
     if (!scrollElement || !loadMoreLogs) {
       return;
     }
-    
+
     function handleScroll() {
       if (!scrollElement || !loadMoreLogs || !rows.length || !shouldLoadMore(scrollElement)) {
         return;
       }
-      const visibleRange = getVisibleRange(rows);
-      const rangeSpan = range.to - range.from;
-      loadMoreLogs({ from: visibleRange.from - rangeSpan, to: visibleRange.from });
+      loadMoreLogs(getNextRange(getVisibleRange(rows), range, sortOrder));
 
       scrollElement?.removeEventListener('scroll', handleScroll);
     }
@@ -34,7 +32,7 @@ export const InfiniteScroll = ({ children, loadMoreLogs, range, rows, scrollElem
     return () => {
       scrollElement.removeEventListener('scroll', handleScroll);
     };
-  }, [loadMoreLogs, range.from, range.to, rows, scrollElement]);
+  }, [loadMoreLogs, range, rows, scrollElement, sortOrder]);
 
   return <>{children}</>;
 };
@@ -54,5 +52,12 @@ function getVisibleRange(rows: LogRowModel[]) {
       ? { from: lastTimeStamp, to: firstTimeStamp }
       : { from: firstTimeStamp, to: lastTimeStamp };
 
-    return visibleRange;
+  return visibleRange;
+}
+
+function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: AbsoluteTimeRange, sortOrder: LogsSortOrder) {
+  const rangeSpan = currentRange.to - currentRange.from;
+  return sortOrder === LogsSortOrder.Descending
+    ? { from: visibleRange.from - rangeSpan, to: visibleRange.from }
+    : { from: visibleRange.to, to: visibleRange.to + rangeSpan };
 }
