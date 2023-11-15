@@ -124,7 +124,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   handleDeselection = (e: Event) => {
-    if (targetIsElement(e.target) && e.target?.getAttribute('role') === 'menuitem') {
+    if (
+      targetIsElement(e.target) &&
+      (e.target?.getAttribute('role') === 'menuitem' || e.target?.parentElement?.getAttribute('role') === 'menuitem')
+    ) {
       // Delegate closing the menu to the popover component.
       return;
     }
