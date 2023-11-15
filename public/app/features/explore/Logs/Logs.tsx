@@ -797,7 +797,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 <InfiniteScroll
                   loading={loading}
                   loadMoreLogs={loadMoreLogs}
-                  range={absoluteRange}
+                  range={this.props.range}
                   rows={logRows}
                   scrollElement={this.state.logsContainer}
                   sortOrder={logsSortOrder}
