@@ -40,9 +40,7 @@ export type CollapseConfig = {
  */
 export function nestedSetToLevels(
   container: FlameGraphDataContainer,
-  options?: {
-    collapsing: boolean;
-  }
+  options?: Options
 ): [LevelItem[][], Record<string, LevelItem[]>, CollapsedMap] {
   const levels: LevelItem[][] = [];
   let offset = 0;
@@ -88,12 +86,12 @@ export function nestedSetToLevels(
     if (parent) {
       parent.children.push(newItem);
     }
-    parent = newItem;
 
+    parent = newItem;
     levels[currentLevel].push(newItem);
   }
 
-  const collapsedMapContainer = new CollapsedMapContainer();
+  const collapsedMapContainer = new CollapsedMapContainer(options?.collapsingThreshold);
   if (options?.collapsing) {
     // We collapse similar items here, where it seems like parent and child are the same thing and so the distinction
     // isn't that important. We create a map of items that should be collapsed together.
@@ -106,6 +104,13 @@ export function nestedSetToLevels(
 export type CollapsedMap = Map<LevelItem, CollapseConfig>;
 export class CollapsedMapContainer {
   private map = new Map();
+  private threshold = 0.99;
+
+  constructor(threshold?: number) {
+    if (threshold !== undefined) {
+      this.threshold = threshold;
+    }
+  }
 
   addTree(root: LevelItem) {
     const stack = [root];
@@ -126,7 +131,7 @@ export class CollapsedMapContainer {
     // The heuristics here is pretty simple right now. Just check if it's single child and if we are within threshold.
     // We assume items with small self just aren't too important while we cannot really collapse items with siblings
     // as it's not clear what to do with said sibling.
-    if (parent && item.value > parent.value * 0.99 && parent.children.length === 1) {
+    if (parent && item.value > parent.value * this.threshold && parent.children.length === 1) {
       if (this.map.has(parent)) {
         const config = this.map.get(parent)!;
         this.map.set(item, config);
@@ -195,9 +200,14 @@ export function checkFields(data: DataFrame): CheckFieldsResult | undefined {
   return undefined;
 }
 
+export type Options = {
+  collapsing: boolean;
+  collapsingThreshold?: number;
+};
+
 export class FlameGraphDataContainer {
   data: DataFrame;
-  options: { collapsing: boolean };
+  options: Options;
 
   labelField: Field;
   levelField: Field;
@@ -216,7 +226,7 @@ export class FlameGraphDataContainer {
   private uniqueLabelsMap: Record<string, LevelItem[]> | undefined;
   private collapsedMap: Map<LevelItem, CollapseConfig> | undefined;
 
-  constructor(data: DataFrame, options: { collapsing: boolean }, theme: GrafanaTheme2 = createTheme()) {
+  constructor(data: DataFrame, options: Options, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
     this.options = options;
 

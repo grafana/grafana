@@ -92,10 +92,13 @@ describe('FlameGraphDataContainer', () => {
 
   it('creates correct collapse map 2', () => {
     // Should not create any groups because even though the 1 is within threshold it has a sibling
-    const container = textToDataContainer(`
+    const container = textToDataContainer(
+      `
       [0////////////////////////////////]
       [1/////////////////////////////][2]
-    `)!;
+    `,
+      { collapsing: true, collapsingThreshold: 0.5 }
+    )!;
 
     const collapsedMap = container.getCollapsedMap();
     expect(Array.from(collapsedMap.keys()).length).toEqual(0);
@@ -125,19 +128,21 @@ describe('CollapsedMapContainer', () => {
   it('groups items if they are within value threshold', () => {
     const container = new CollapsedMapContainer();
 
-    const parent: LevelItem = {
+    const child2: LevelItem = {
       ...defaultItem,
+      itemIndexes: [2],
+      value: 99.1,
     };
 
     const child1: LevelItem = {
       ...defaultItem,
       itemIndexes: [1],
+      children: [child2],
     };
 
-    const child2: LevelItem = {
+    const parent: LevelItem = {
       ...defaultItem,
-      itemIndexes: [1],
-      value: 99.1,
+      children: [child1],
     };
 
     container.addItem(child1, parent);
