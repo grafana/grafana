@@ -79,6 +79,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
   });
 
+  // Dashboard settings
+  keybindings.addBinding({
+    key: 'd s',
+    onTrigger: scene.onOpenSettings,
+  });
+
   // toggle all panel legends (TODO)
   // delete panel (TODO when we work on editing)
   // toggle all exemplars (TODO)
