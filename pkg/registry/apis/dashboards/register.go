@@ -52,7 +52,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	provisioningService dashboardssvc.DashboardProvisioningService,
 	accessControl accesscontrol.AccessControl,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 
