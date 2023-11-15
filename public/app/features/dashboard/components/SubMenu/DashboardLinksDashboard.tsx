@@ -7,7 +7,7 @@ import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
 import { DashboardLink } from '@grafana/schema';
 import { CustomScrollbar, Dropdown, Icon, Button, Menu, useStyles2 } from '@grafana/ui';
-import { ButtonLinkProps } from '@grafana/ui/src/components/Button';
+import { ButtonLinkProps, LinkButton } from '@grafana/ui/src/components/Button';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem } from 'app/features/search/types';
 
@@ -169,19 +169,18 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export const DashboardLinkButton = React.forwardRef<HTMLButtonElement, ButtonLinkProps>(
-  ({ className, ...otherProps }, ref) => {
-    const styles = useStyles2(getStyles);
-    return (
-      <Button
-        {...otherProps}
-        variant="secondary"
-        fill="outline"
-        className={cx(className, styles.dashButton)}
-        ref={ref}
-      />
-    );
-  }
-);
+export const DashboardLinkButton = React.forwardRef<unknown, ButtonLinkProps>(({ className, ...otherProps }, ref) => {
+  const styles = useStyles2(getStyles);
+  const Component = otherProps.href ? LinkButton : Button;
+  return (
+    <Component
+      {...otherProps}
+      variant="secondary"
+      fill="outline"
+      className={cx(className, styles.dashButton)}
+      ref={ref as any}
+    />
+  );
+});
 
 DashboardLinkButton.displayName = 'DashboardLinkButton';
