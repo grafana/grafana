@@ -582,4 +582,8 @@ const (
 	// FlagAlertingSimplifiedRouting
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
+
+	// FlagPluginsSkipHostEnvVars
+	// Disables passing host environment variable to plugin processes
+	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
 )

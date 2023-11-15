@@ -162,4 +162,5 @@ export interface FeatureToggles {
   alertingDetailsViewV2?: boolean;
   datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
+  pluginsSkipHostEnvVars?: boolean;
 }
