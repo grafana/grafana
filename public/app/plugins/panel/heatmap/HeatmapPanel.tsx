@@ -221,22 +221,20 @@ export const HeatmapPanel = ({
     );
   }
 
+  const newVizTooltips = config.featureToggles.newVizTooltips ?? false;
+
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {/*children ? children(config, alignedFrame) : null*/}
-            <ZoomPlugin
-              config={builder}
-              onZoom={({ from, to }) => {
-                onChangeTimeRange({ from, to });
-              }}
-            />
-            {config.featureToggles.newVizTooltips && options.tooltip.show && (
+            {!newVizTooltips && <ZoomPlugin config={builder} onZoom={onChangeTimeRange} />}
+            {newVizTooltips && options.tooltip.show && (
               <TooltipPlugin2
                 config={builder}
                 hoverMode={TooltipHoverMode.xyOne}
+                queryZoom={onChangeTimeRange}
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                   return (
                     <HeatmapTooltip
@@ -259,7 +257,7 @@ export const HeatmapPanel = ({
           </UPlotChart>
         )}
       </VizLayout>
-      {!config.featureToggles.newVizTooltips && (
+      {!newVizTooltips && (
         <Portal>
           {hover && options.tooltip.show && (
             <VizTooltipContainer
