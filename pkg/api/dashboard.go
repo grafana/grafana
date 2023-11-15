@@ -172,7 +172,9 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	// lookup folder title
+	// nolint:staticcheck
 	if dash.FolderID > 0 {
+		// nolint:staticcheck
 		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()}
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err != nil {

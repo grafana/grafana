@@ -142,4 +142,6 @@ ssoSettingsApi,experimental,@grafana/identity-access-team,true,false,false,false
 logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 alertingDetailsViewV2,experimental,@grafana/alerting-squad,false,false,false,true
+datatrails,experimental,@grafana/dashboards-squad,false,false,false,true
 alertingSimplifiedRouting,experimental,@grafana/alerting-squad,false,false,false,false
+pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false,false
