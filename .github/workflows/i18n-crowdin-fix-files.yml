@@ -1,0 +1,32 @@
+name: Fix Crowdin I18n files
+
+on:
+  pull_request:
+    paths:
+      - 'public/locales/*/grafana.json'
+    branches:
+      - main
+
+jobs:
+  fix-files:
+    if: github.head_ref == 'crowdin-service-branch'
+    name: Fix files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.9.0
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Extract I18n files
+        run: yarn i18n:extract
+
+      - name: Get changed files
+        run: git diff --name-only -r HEAD^1 HEAD
