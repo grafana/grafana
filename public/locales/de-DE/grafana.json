@@ -2,14 +2,14 @@
   "_comment": "",
   "access-control": {
     "add-permission": {
-      "role-label": "",
+      "role-label": "Rolle",
       "serviceaccount-label": "",
       "team-label": "",
       "title": "",
       "user-label": ""
     },
     "add-permissions": {
-      "save": ""
+      "save": "Speichern"
     },
     "permission-list": {
       "permission": ""
@@ -18,7 +18,7 @@
       "add-label": "",
       "no-permissions": "",
       "permissions-change-warning": "",
-      "role": "",
+      "role": "Rolle",
       "serviceaccount": "",
       "team": "",
       "title": "",
@@ -27,7 +27,7 @@
   },
   "browse-dashboards": {
     "action": {
-      "cancel-button": "",
+      "cancel-button": "Abbrechen",
       "cannot-move-folders": "",
       "delete-button": "",
       "delete-modal-invalid-text": "",
@@ -59,10 +59,10 @@
     "dashboards-tree": {
       "collapse-folder-button": "",
       "expand-folder-button": "",
-      "name-column": "",
+      "name-column": "Name",
       "select-all-header-checkbox": "",
       "select-checkbox": "",
-      "tags-column": ""
+      "tags-column": "Tags"
     },
     "folder-actions-button": {
       "delete": "",
@@ -72,20 +72,20 @@
     },
     "folder-picker": {
       "accessible-label": "",
-      "button-label": "",
+      "button-label": "Ordner auswählen",
       "empty-message": "",
       "error-title": "",
       "search-placeholder": "",
       "unknown-error": ""
     },
     "manage-folder-nav": {
-      "alert-rules": "",
-      "dashboards": "",
+      "alert-rules": "Warnregeln",
+      "dashboards": "Dashboards",
       "panels": ""
     },
     "new-folder-form": {
-      "cancel-label": "",
-      "create-label": "",
+      "cancel-label": "Abbrechen",
+      "create-label": "Erstellen",
       "name-label": ""
     },
     "no-results": {
@@ -124,7 +124,7 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": ""
+      "category-header-label": "Datenquellen"
     },
     "search": {
       "placeholder": ""
@@ -155,10 +155,10 @@
       "target": ""
     },
     "navigation-form": {
-      "add-button": "",
+      "add-button": "Hinzufügen",
       "back-button": "",
       "next-button": "",
-      "save-button": ""
+      "save-button": "Speichern"
     },
     "page-content": "",
     "page-heading": "",
@@ -171,7 +171,7 @@
       "loading": "",
       "query-description": "",
       "query-editor-title": "",
-      "query-label": ""
+      "query-label": "Abfrage"
     },
     "source-form": {
       "control-required": "",
@@ -215,10 +215,10 @@
       "field-tooltip": "",
       "map-value-label": "",
       "map-value-tooltip": "",
-      "remove-button": "",
+      "remove-button": "Entfernen",
       "remove-tooltip": "",
       "transform-required": "",
-      "type-label": "",
+      "type-label": "Typ",
       "type-tooltip": ""
     }
   },
@@ -242,7 +242,7 @@
       "add-widget-header": "",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "",
-      "import-dashboard-button": ""
+      "import-dashboard-button": "Dashboard importieren"
     },
     "inspect": {
       "data-tab": "Daten",
@@ -323,7 +323,7 @@
       "secondary-text": ""
     },
     "form-actions": {
-      "cancel": "",
+      "cancel": "Abbrechen",
       "load": ""
     },
     "gcom-field": {
@@ -348,12 +348,12 @@
       "description-label": "",
       "editable-description": "",
       "editable-label": "",
-      "folder-label": "",
+      "folder-label": "Ordner",
       "panel-options-graph-tooltip-description": "",
       "panel-options-graph-tooltip-label": "",
       "panel-options-label": "",
-      "tags-label": "",
-      "title": "",
+      "tags-label": "Tags",
+      "title": "Allgemein",
       "title-label": ""
     },
     "json-editor": {
@@ -368,7 +368,7 @@
       "title": ""
     },
     "settings": {
-      "title": ""
+      "title": "Einstellungen"
     },
     "time-picker": {
       "hide-time-picker": "",
@@ -377,8 +377,8 @@
       "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "",
       "time-options-label": "",
-      "time-zone-label": "",
-      "week-start-label": ""
+      "time-zone-label": "Zeitzone",
+      "week-start-label": "Wochenbeginn"
     },
     "variables": {
       "title": ""
@@ -418,13 +418,13 @@
       "newest-first": "",
       "oldest-first": "",
       "query-history": "",
-      "settings": "",
-      "starred": ""
+      "settings": "Einstellungen",
+      "starred": "Hervorgehoben"
     },
     "rich-history-card": {
       "add-comment-form": "",
       "add-comment-tooltip": "",
-      "cancel": "",
+      "cancel": "Abbrechen",
       "confirm-delete": "",
       "copy-query-tooltip": "",
       "copy-shortened-link-tooltip": "",
@@ -448,7 +448,7 @@
       "update-comment-form": ""
     },
     "rich-history-container": {
-      "loading": ""
+      "loading": "Wird geladen ..."
     },
     "rich-history-notification": {
       "query-copied": "",
@@ -461,7 +461,7 @@
       "filter-history": "",
       "filter-placeholder": "",
       "history-local": "",
-      "loading": "",
+      "loading": "Wird geladen ...",
       "loading-results": "",
       "search-placeholder": "",
       "showing-queries": "",
@@ -491,7 +491,7 @@
     "rich-history-starred-tab": {
       "filter-queries-aria-label": "",
       "filter-queries-placeholder": "",
-      "loading": "",
+      "loading": "Wird geladen ...",
       "loading-results": "",
       "local-history-message": "",
       "search-queries-placeholder": "",
@@ -528,7 +528,7 @@
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
-      "refresh-picker-cancel": "",
+      "refresh-picker-cancel": "Abbrechen",
       "refresh-picker-run": "",
       "split-close": "",
       "split-close-tooltip": "",
@@ -551,7 +551,7 @@
       "no-options": "Keine Optionen gefunden"
     },
     "select": {
-      "no-options-label": "",
+      "no-options-label": "Keine Optionen gefunden",
       "placeholder": ""
     }
   },
@@ -565,7 +565,7 @@
   },
   "help-modal": {
     "shortcuts-category": {
-      "dashboard": "",
+      "dashboard": "Dashboard",
       "focused-panel": "",
       "global": "",
       "time-range": ""
@@ -573,7 +573,7 @@
     "shortcuts-description": {
       "change-theme": "",
       "collapse-all-rows": "",
-      "dashboard-settings": "",
+      "dashboard-settings": "Dashboard-Einstellungen",
       "duplicate-panel": "",
       "exit-edit/setting-views": "",
       "expand-all-rows": "",
@@ -588,7 +588,7 @@
       "open-shared-modal": "",
       "refresh-all-panels": "",
       "remove-panel": "",
-      "save-dashboard": "",
+      "save-dashboard": "Dashboard speichern",
       "show-all-shortcuts": "",
       "toggle-active-mode": "",
       "toggle-all-panel-legends": "",
@@ -599,14 +599,14 @@
       "toggle-panel-edit": "",
       "toggle-panel-fullscreen": "",
       "toggle-panel-legend": "",
-      "zoom-out-time-range": ""
+      "zoom-out-time-range": "Zeitbereich verkleinern"
     },
     "title": ""
   },
   "inspector": {
     "query": {
       "collapse-all": "",
-      "copy-to-clipboard": "",
+      "copy-to-clipboard": "In die Zwischenablage kopieren",
       "description": "",
       "expand-all": "",
       "no-data": "",
@@ -718,15 +718,15 @@
     },
     "config-access": {
       "subtitle": "",
-      "title": ""
+      "title": "Benutzer und Zugriff"
     },
     "config-general": {
       "subtitle": "",
-      "title": ""
+      "title": "Allgemein"
     },
     "config-plugins": {
       "subtitle": "",
-      "title": ""
+      "title": "Plugins und Daten"
     },
     "connect-data": {
       "title": ""
@@ -760,7 +760,7 @@
     },
     "data-sources": {
       "subtitle": "",
-      "title": ""
+      "title": "Datenquellen"
     },
     "datasources": {
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
@@ -829,7 +829,7 @@
       "title": "Neuer Ordner"
     },
     "observability": {
-      "title": ""
+      "title": "Beobachtbarkeit"
     },
     "oncall": {
       "title": ""
@@ -964,7 +964,7 @@
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
-      "new-alert-rule": "",
+      "new-alert-rule": "Neue Warnregel",
       "query": "Abfrage",
       "remove": "Entfernen",
       "share": "Teilen",
@@ -979,19 +979,19 @@
       "add-tag-label": "",
       "add-tag-placeholder": "",
       "add-title-label": "",
-      "cancel": "",
+      "cancel": "Abbrechen",
       "heading": "",
       "interval-label": "",
       "interval-placeholder": "",
       "interval-required": "",
-      "name-label": "",
-      "name-placeholder": "",
-      "name-required": "",
-      "save": "",
+      "name-label": "Name",
+      "name-placeholder": "Name",
+      "name-required": "Name ist erforderlich",
+      "save": "Speichern",
       "table-delete": "",
       "table-drag": "",
       "table-empty": "",
-      "table-heading": ""
+      "table-heading": "Dashboards"
     },
     "sub-title": "",
     "title": ""
@@ -1019,7 +1019,7 @@
   },
   "profile": {
     "change-password": {
-      "cancel-button": "",
+      "cancel-button": "Abbrechen",
       "cannot-change-password-message": "",
       "change-password-button": "",
       "confirm-password-label": "",
@@ -1064,7 +1064,7 @@
       "label": "Aus"
     },
     "tooltip": {
-      "interval-selected": "",
+      "interval-selected": "Automatisches Aktualisierungsintervall festlegen",
       "turned-off": ""
     }
   },
@@ -1160,7 +1160,7 @@
       "export": "Exportieren",
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
-      "panel-embed": "",
+      "panel-embed": "Einbetten",
       "public-dashboard": "",
       "snapshot": "Schnappschuss"
     },
@@ -1177,8 +1177,8 @@
   "share-playlist": {
     "checkbox-description": "",
     "checkbox-label": "",
-    "copy-link-button": "",
-    "link-url-label": "",
+    "copy-link-button": "Kopieren",
+    "link-url-label": "Link-URL",
     "mode": "",
     "mode-kiosk": "",
     "mode-normal": "",
@@ -1188,8 +1188,8 @@
   "shared": {
     "preferences": {
       "theme": {
-        "dark-label": "",
-        "light-label": "",
+        "dark-label": "Dunkel",
+        "light-label": "Hell",
         "system-label": ""
       }
     }
@@ -1215,9 +1215,9 @@
   },
   "snapshot": {
     "external-badge": "",
-    "name-column-header": "",
+    "name-column-header": "Name",
     "url-column-header": "",
-    "view-button": ""
+    "view-button": "Anzeigen"
   },
   "tag-filter": {
     "loading": "Wird geladen ...",
