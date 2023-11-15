@@ -57,6 +57,9 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, featu
 
 // EnableExtSvcAccount enables or disables the service account associated to an external service
 func (esa *ExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *sa.EnableExtSvcAccountCmd) error {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.EnableExtSvcAccount")
+	defer span.End()
+
 	saName := sa.ExtSvcPrefix + slugify.Slugify(cmd.ExtSvcSlug)
 
 	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, saName)
@@ -69,6 +72,9 @@ func (esa *ExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *
 
 // HasExternalService returns whether an external service has been saved with that name.
 func (esa *ExtSvcAccountsService) HasExternalService(ctx context.Context, name string) (bool, error) {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.HasExternalService")
+	defer span.End()
+
 	saName := sa.ExtSvcPrefix + slugify.Slugify(name)
 
 	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, extsvcauth.TmpOrgID, saName)
@@ -81,6 +87,9 @@ func (esa *ExtSvcAccountsService) HasExternalService(ctx context.Context, name s
 
 // RetrieveExtSvcAccount fetches an external service account by ID
 func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*sa.ExtSvcAccount, error) {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.RetrieveExtSvcAccount")
+	defer span.End()
+
 	svcAcc, err := esa.saSvc.RetrieveServiceAccount(ctx, orgID, saID)
 	if err != nil {
 		return nil, err
@@ -103,7 +112,7 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 		return nil, nil
 	}
 
-	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.SaveExternalServiceAccount")
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.SaveExternalService")
 	defer span.End()
 
 	if cmd == nil {
@@ -150,6 +159,9 @@ func (esa *ExtSvcAccountsService) RemoveExternalService(ctx context.Context, nam
 		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return nil
 	}
+
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.RemoveExternalService")
+	defer span.End()
 
 	return esa.RemoveExtSvcAccount(ctx, extsvcauth.TmpOrgID, slugify.Slugify(name))
 }
