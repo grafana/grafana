@@ -38,8 +38,6 @@ export function logError(error: Error, context?: LogContext) {
   logErrorRuntime(error, context);
 }
 
-const excludePluginSandbox = ['grafana-incident-app'];
-
 export function isFrontendSandboxSupported({
   isAngular,
   pluginId,
@@ -49,8 +47,7 @@ export function isFrontendSandboxSupported({
 }): boolean {
   // To fast test and debug the sandbox in the browser.
   const sandboxQueryParam = location.search.includes('nosandbox') && config.buildInfo.env === 'development';
-  const isPluginExcepted =
-    config.disableFrontendSandboxForPlugins.includes(pluginId) || excludePluginSandbox.includes(pluginId);
+  const isPluginExcepted = config.disableFrontendSandboxForPlugins.includes(pluginId);
   return (
     !isAngular &&
     Boolean(config.featureToggles.pluginsFrontendSandbox) &&
