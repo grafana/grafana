@@ -879,13 +879,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:         "navAdminSubsections",
-			Description:  "Splits the administration section of the nav tree into subsections",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:            "recoveryThreshold",
 			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
 			Stage:           FeatureStageExperimental,
