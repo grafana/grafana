@@ -164,7 +164,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	if s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)

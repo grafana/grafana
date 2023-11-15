@@ -75,6 +75,18 @@ func TestPlaylist(t *testing.T) {
 			},
 		}))
 	})
+
+	t.Run("with dual write", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServer,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+		}))
+	})
 }
 
 func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {

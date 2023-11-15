@@ -81,7 +81,7 @@ func NewAzureADProvider(settings map[string]any, cfg *setting.Cfg, features *fea
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
 		appendUniqueScope(config, OfflineAccessScope)
 	}
 

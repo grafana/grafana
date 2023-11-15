@@ -71,10 +71,6 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		// skipOrgRoleSync: info.SkipOrgRoleSync
 	}
 
-	if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-		appendUniqueScope(config, OfflineAccessScope)
-	}
-
 	return provider, nil
 }
 

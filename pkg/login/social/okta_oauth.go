@@ -59,7 +59,7 @@ func NewOktaProvider(settings map[string]any, cfg *setting.Cfg, features *featur
 		skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
 	}
 
-	if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
 		appendUniqueScope(config, OfflineAccessScope)
 	}
 
