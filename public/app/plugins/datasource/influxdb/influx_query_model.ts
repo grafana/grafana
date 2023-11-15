@@ -200,7 +200,6 @@ export default class InfluxQueryModel {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
 
-
       if (operator.startsWith('Is')) {
         let r = this.isOperatorTypeHandler(operator, value, tag.key);
         operator = r.operator;

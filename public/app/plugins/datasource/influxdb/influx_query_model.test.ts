@@ -395,7 +395,6 @@ describe('InfluxQuery', () => {
     });
   });
 
-
   describe('series with groupByTag', () => {
     it('should generate correct query', () => {
       const query = new InfluxQueryModel(

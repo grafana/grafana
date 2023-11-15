@@ -10,7 +10,6 @@ import { toSelectableValue } from '../utils/toSelectableValue';
 import { AddButton } from './AddButton';
 import { Seg } from './Seg';
 
-
 type KnownOperator = '=' | '!=' | '<>' | '<' | '>' | '>=' | '<=' | '=~' | '!~' | 'Is' | 'Is Not';
 const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<', '>', '>=', '<=', '=~', '!~', 'Is', 'Is Not'];
 
