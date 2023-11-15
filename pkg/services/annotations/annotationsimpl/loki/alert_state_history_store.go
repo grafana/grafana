@@ -257,6 +257,7 @@ func shouldReplay(entry historian.LokiEntry, transition *state.StateTransition, 
 	return true
 }
 
+// float64Map converts a simplejson map[string]any to a map[string]float64.
 func float64Map(j *simplejson.Json) (map[string]float64, error) {
 	m, err := j.Map()
 	if err != nil {
