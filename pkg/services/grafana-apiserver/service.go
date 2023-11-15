@@ -294,8 +294,12 @@ func (s *service) start(ctx context.Context) error {
 		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
 		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
 		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
+
+		// add signed in user to context when appropriate
+		authHandler := newAuthHandler(delegateHandler)
+
 		requestHandler, err := getAPIHandler(
-			delegateHandler,
+			authHandler,
 			c.LoopbackClientConfig,
 			builders)
 		if err != nil {
