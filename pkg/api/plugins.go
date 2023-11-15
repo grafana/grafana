@@ -448,7 +448,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusInternalServerError, "Failed to fetch plugin json", err)
 	}
 	if jsonData.ExternalServiceRegistration != nil {
-		hs.log.Info("plugin will to register an external service")
+		hs.log.Debug("check installer's permissions, plugin wants to register an external service")
 		hasAccess := accesscontrol.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 		// TODO (gamab) single_organization setup
 		evaluator := toEvalAll(jsonData.ExternalServiceRegistration.Permissions)
