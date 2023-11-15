@@ -48,10 +48,36 @@ type dashboardTag struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*dashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service, fts fts.Service) (dashboards.Store, error) {
-	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService, searchIndex: fts}
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service, ftsService fts.Service) (dashboards.Store, error) {
+	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService, searchIndex: ftsService}
 
+	// Schema and data migration for FTS
+	// TODO: should be moved somewhere else?
 	if err := s.searchIndex.Init(); err != nil {
+		return nil, err
+	}
+	if err := sqlStore.WithDbSession(context.Background(), func(dbSession *db.Session) error {
+		items := []struct {
+			OrgID    int64  `xorm:"org_id"`
+			UID      string `xorm:"uid"`
+			Title    string `xorm:"title"`
+			IsFolder bool   `xorm:"is_folder"`
+		}{}
+		err := dbSession.Table("dashboard").Find(&items)
+		docs := make([]fts.Document, len(items))
+		for i, item := range items {
+			docs[i] = fts.Document{
+				DocumentID: fts.DocumentID{OrgID: item.OrgID, UID: item.UID, Kind: "dashboard"},
+				Fields:     []fts.Field{{"title", item.Title}},
+			}
+			if item.IsFolder {
+				docs[i].Kind = "folder"
+			}
+			fmt.Println(">>>>", docs[i])
+		}
+		s.searchIndex.Update(docs...)
+		return err
+	}); err != nil {
 		return nil, err
 	}
 
@@ -973,7 +999,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if len(query.Title) > 0 {
-		if false {
+		if false { // TODO: use feature toggle
 			filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
 		} else {
 			filters = append(filters, d.searchIndex.Filter(query.Title))

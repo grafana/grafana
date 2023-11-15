@@ -18,32 +18,12 @@ type sqliteFTS struct {
 func (index *sqliteFTS) Init() error {
 	return index.db.WithDbSession(context.TODO(), func(sess *db.Session) error {
 		_, err := sess.Exec(`CREATE VIRTUAL TABLE IF NOT EXISTS ` + index.name + ` USING FTS4 (org_id INTEGER, kind TEXT, uid TEXT, field TEXT, content TEXT)`)
-		if err != nil {
-			return err
-		}
-		// XXX: this is a terrible hack for development
-		// TODO: move this to migrations
-		_, err = sess.Exec(`DELETE FROM ` + index.name)
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Exec(`INSERT INTO ` + index.name + ` (org_id, kind, uid, field, content)
-							SELECT org_id, "dashboard", uid, 'title', title FROM dashboard`)
-		if err != nil {
-			return err
-		}
-		_, err = sess.Exec(`INSERT INTO ` + index.name + ` (org_id, kind, uid, field, content)
-							SELECT org_id, "folder", uid, 'title', title FROM folder`)
-		if err != nil {
-			return err
-		}
 		return err
 	})
 }
 
 func (index *sqliteFTS) Update(docs ...Document) error {
-	// TODO: batches
+	// TODO: batches, transactions
 	return index.db.WithDbSession(context.TODO(), func(sess *db.Session) error {
 		for _, doc := range docs {
 			if _, err := sess.Exec(`DELETE FROM `+index.name+` WHERE org_id = ? AND kind = ? AND uid = ?`, doc.OrgID, doc.Kind, doc.UID); err != nil {
