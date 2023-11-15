@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -105,17 +104,8 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	if legacy, ok := d.legacy.(rest.Updater); ok {
-		// Make sure the old one exists in legacy storage before trying to update
-		old, err := d.legacy.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil || old == nil {
-			if err == nil {
-				err = fmt.Errorf("legacy version not found")
-			}
-			return nil, false, err
-		}
-
 		// Get the previous version from k8s storage (the one)
-		old, err = d.Get(ctx, name, &metav1.GetOptions{})
+		old, err := d.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
 		}

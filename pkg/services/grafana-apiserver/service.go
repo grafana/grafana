@@ -438,7 +438,7 @@ func getK8sApiserverVersion() (string, error) {
 	}
 
 	if len(bi.Deps) == 0 {
-		return "v?", nil // this happens when debugging
+		return "v?.?", nil // this is normal while debugging
 	}
 
 	for _, dep := range bi.Deps {

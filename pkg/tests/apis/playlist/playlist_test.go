@@ -89,6 +89,7 @@ func TestPlaylist(t *testing.T) {
 	})
 
 	t.Run("with dual write (etcd)", func(t *testing.T) {
+		// NOTE: make sure the local etcd is empty first!
 		t.Skip("local etcd testing")
 
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
