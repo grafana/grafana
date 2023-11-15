@@ -498,7 +498,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return nil, err
 	}
 
-	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		return dashFolder, nil
 	}
 
