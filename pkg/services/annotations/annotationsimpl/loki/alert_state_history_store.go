@@ -121,7 +121,6 @@ func (r *AlertStateHistoryStore) itemsFromStreams(
 	streams []historian.Stream,
 	resources accesscontrol.AccessResources,
 ) []*annotations.ItemDTO {
-
 	totalLen := 0
 	for _, stream := range streams {
 		totalLen += len(stream.Values)
@@ -358,7 +357,6 @@ func historyQueryFromItemQuery(
 	rule *ngmodels.AlertRule,
 	accessResources accesscontrol.AccessResources,
 ) ngmodels.HistoryQuery {
-
 	histQuery := ngmodels.HistoryQuery{
 		OrgID: query.OrgID,
 	}
