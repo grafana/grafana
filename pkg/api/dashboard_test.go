@@ -406,7 +406,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					"title": "Dash",
 				}),
 				Overwrite: true,
-				FolderID:  folderID,
+				FolderID:  folderID, // nolint:staticcheck
 				FolderUID: folderUID,
 				IsFolder:  false,
 				Message:   "msg",
