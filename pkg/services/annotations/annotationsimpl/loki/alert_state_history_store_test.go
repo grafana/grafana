@@ -290,7 +290,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return one annotation per stream+sample", func(t *testing.T) {
-			alert := createAlertRule(t, sql, nil, "Test Rule")
+			alert := createAlertRuleWithDashboard(t, sql, nil, "Test Rule", dashboard1.UID)
 
 			start := time.Now()
 			numTransitions := 2
@@ -300,7 +300,14 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				historian.StatesToStream(ruleMetaFromRule(t, alert), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
-			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{})
+			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{
+				Dashboards: map[string]int64{
+					dashboard1.UID: dashboard1.ID,
+				},
+				ScopeTypes: map[any]struct{}{
+					testutil.DashScopeType: {},
+				},
+			})
 			require.Len(t, items, numTransitions)
 
 			for i := 0; i < numTransitions; i++ {
@@ -308,10 +315,13 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				transition := transitions[i]
 
 				expected := &annotations.ItemDTO{
-					AlertID:   alert.ID,
-					AlertName: alert.Title,
-					Time:      transition.State.LastEvaluationTime.UnixMilli(),
-					NewState:  transition.Formatted(),
+					AlertID:      alert.ID,
+					AlertName:    alert.Title,
+					DashboardID:  dashboard1.ID,
+					DashboardUID: &dashboard1.UID,
+					PanelID:      *alert.PanelID,
+					Time:         transition.State.LastEvaluationTime.UnixMilli(),
+					NewState:     transition.Formatted(),
 				}
 				if i > 0 {
 					prevTransition := transitions[i-1]
@@ -349,10 +359,13 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				transition := transitions[i]
 
 				expected := &annotations.ItemDTO{
-					AlertID:   alert1.ID,
-					AlertName: alert1.Title,
-					Time:      transition.State.LastEvaluationTime.UnixMilli(),
-					NewState:  transition.Formatted(),
+					AlertID:      alert1.ID,
+					AlertName:    alert1.Title,
+					DashboardID:  dashboard1.ID,
+					DashboardUID: &dashboard1.UID,
+					PanelID:      *alert1.PanelID,
+					Time:         transition.State.LastEvaluationTime.UnixMilli(),
+					NewState:     transition.Formatted(),
 				}
 				if i > 0 {
 					prevTransition := transitions[i-1]
@@ -588,7 +601,7 @@ func createAlertRule(t *testing.T, sql db.DB, knownUIDs *sync.Map, title string)
 	generator := ngmodels.AlertRuleGen(
 		ngmodels.WithTitle(title),
 		ngmodels.WithUniqueUID(knownUIDs),
-		ngmodels.WithDashboardUID(""), // no dashboard
+		withDashboardUID(""), // no dashboard
 		ngmodels.WithUniqueID(),
 		ngmodels.WithOrgID(1),
 	)
@@ -630,7 +643,8 @@ func createAlertRuleWithDashboard(t *testing.T, sql db.DB, knownUIDs *sync.Map, 
 		ngmodels.WithUniqueUID(knownUIDs),
 		ngmodels.WithUniqueID(),
 		ngmodels.WithOrgID(1),
-		ngmodels.WithDashboardUID(dashboardUID),
+		withDashboardUID(dashboardUID),
+		withPanelID(123),
 	)
 
 	rule := generator()
@@ -722,11 +736,26 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 	return transitions
 }
 
+func withDashboardUID(dashboardUID string) ngmodels.AlertRuleMutator {
+	return func(rule *ngmodels.AlertRule) {
+		rule.DashboardUID = &dashboardUID
+	}
+}
+
+func withPanelID(panelID int64) ngmodels.AlertRuleMutator {
+	return func(rule *ngmodels.AlertRule) {
+		rule.PanelID = &panelID
+	}
+}
+
 func compareAnnotationItem(t *testing.T, expected, actual *annotations.ItemDTO) {
 	t.Helper()
 
 	require.Equal(t, expected.AlertID, actual.AlertID)
 	require.Equal(t, expected.AlertName, actual.AlertName)
+	if expected.PanelID != 0 {
+		require.Equal(t, expected.PanelID, actual.PanelID)
+	}
 	if expected.DashboardUID != nil {
 		require.Equal(t, expected.DashboardID, actual.DashboardID)
 		require.Equal(t, *expected.DashboardUID, *actual.DashboardUID)
