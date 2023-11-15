@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -38,6 +39,7 @@ type LegacyStorage interface {
 	rest.Scoper
 	rest.SingularNameProvider
 	rest.TableConvertor
+	rest.Getter
 }
 
 // DualWriter is a storage implementation that writes first to LegacyStorage and then to Storage.
@@ -82,8 +84,15 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 		if err != nil {
 			return nil, err
 		}
-		obj = created // write the updated version
-		rsp, err := d.Storage.Create(ctx, obj, createValidation, options)
+
+		accessor, err := meta.Accessor(created)
+		if err != nil {
+			return created, err
+		}
+		accessor.SetResourceVersion("")
+		accessor.SetUID("")
+
+		rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 		if err != nil {
 			d.log.Error("unable to create object in duplicate storage", "error", err)
 		}
@@ -96,8 +105,17 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 // Update overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	if legacy, ok := d.legacy.(rest.Updater); ok {
-		// Will resource version checking work????
-		old, err := d.Get(ctx, name, &metav1.GetOptions{})
+		// Make sure the old one exists in legacy storage before trying to update
+		old, err := d.legacy.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil || old == nil {
+			if err == nil {
+				err = fmt.Errorf("legacy version not found")
+			}
+			return nil, false, err
+		}
+
+		// Get the previous version from k8s storage (the one)
+		old, err = d.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			return nil, false, err
 		}

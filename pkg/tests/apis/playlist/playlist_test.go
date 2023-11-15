@@ -76,11 +76,25 @@ func TestPlaylist(t *testing.T) {
 		}))
 	})
 
-	t.Run("with dual write", func(t *testing.T) {
+	t.Run("with dual write (file)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServer,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+		}))
+	})
+
+	t.Run("with dual write (etcd)", func(t *testing.T) {
+		t.Skip("local etcd testing")
+
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServer,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
