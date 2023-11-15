@@ -212,6 +212,7 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 
 		orgID := rand.Int63()
 		folder := &folder.Folder{ID: 2, UID: "2"}
+		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 		dashSvc.On("G")
 		folderStore.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
@@ -240,6 +241,7 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 
 		orgID := rand.Int63()
 		folder := &folder.Folder{ID: 2, UID: "2"}
+		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 
 		dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
@@ -270,6 +272,7 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 		dashSvc := &FakeDashboardService{}
 		_, resolver := NewDashboardIDScopeResolver(foldertest.NewFakeFolderStore(t), dashSvc, foldertest.NewFakeService())
 
+		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: 0, UID: "1"}
 		dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
 		resolved, err := resolver.Resolve(context.Background(), 1, ac.Scope("dashboards", "id", "1"))
@@ -294,6 +297,7 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 
 		orgID := rand.Int63()
 		folder := &folder.Folder{ID: 2, UID: "2"}
+		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 
 		dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
@@ -322,6 +326,7 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 
 		orgID := rand.Int63()
 		folder := &folder.Folder{ID: 2, UID: "2"}
+		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 		dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
 		folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(folder, nil).Once()
@@ -351,6 +356,7 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 		service := &FakeDashboardService{}
 		_, resolver := NewDashboardUIDScopeResolver(foldertest.NewFakeFolderStore(t), service, foldertest.NewFakeService())
 
+		// nolint:staticcheck
 		dashboard := &Dashboard{ID: 1, FolderID: 0, UID: "1"}
 		service.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
 		resolved, err := resolver.Resolve(context.Background(), 1, ac.Scope("dashboards", "uid", "1"))
