@@ -69,12 +69,12 @@ func (j *Json) DeepCopyInto(out *Json) {
 }
 
 // DeepCopy will make a deep copy of the JSON object
-func (in *Json) DeepCopy() *Json {
-	if in == nil {
+func (j *Json) DeepCopy() *Json {
+	if j == nil {
 		return nil
 	}
 	out := new(Json)
-	in.DeepCopyInto(out)
+	j.DeepCopyInto(out)
 	return out
 }
 
