@@ -571,6 +571,10 @@ const (
 	// Enables the preview of the new alert details view
 	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
 
+	// FlagDatatrails
+	// Enables the new core app datatrails
+	FlagDatatrails = "datatrails"
+
 	// FlagAlertingSimplifiedRouting
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
