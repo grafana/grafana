@@ -174,7 +174,6 @@ describe('Loki Query Editor', () => {
     cy.window().then((win) => {
       win.localStorage.setItem('grafana.featureToggles', 'logsExploreTableVisualisation=1');
     });
-    e2e.flows.revertAllChanges();
   });
   it('Should be able to add explore table to dashboard', () => {
     addDataSource();
