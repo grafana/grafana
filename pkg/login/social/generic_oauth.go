@@ -10,10 +10,11 @@ import (
 	"net/mail"
 	"strconv"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/oauth2"
 )
 
 const genericOAuthProviderName = "generic_oauth"
