@@ -10,7 +10,7 @@ import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { LabelValue } from './types';
 
 interface Props extends LabelValue {
-  spaceBetween?: boolean;
+  justify?: string;
   colorFirst?: boolean;
   isActive?: boolean; // for series list
   marginRight?: string;
@@ -21,12 +21,12 @@ export const VizTooltipRow = ({
   value,
   color,
   colorIndicator,
-  spaceBetween = true,
+  justify = 'flex-start',
   colorFirst = true,
   isActive = false,
   marginRight = '0px',
 }: Props) => {
-  const styles = useStyles2(getStyles, spaceBetween, marginRight);
+  const styles = useStyles2(getStyles, justify, marginRight);
 
   const [showLabelTooltip, setShowLableTooltip] = useState(false);
   const [showValueTooltip, setShowValueTooltip] = useState(false);
@@ -76,7 +76,7 @@ export const VizTooltipRow = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, spaceBetween: boolean, marginRight: string) => ({
+const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) => ({
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
@@ -88,7 +88,7 @@ const getStyles = (theme: GrafanaTheme2, spaceBetween: boolean, marginRight: str
   contentWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: spaceBetween ? 'space-between' : 'flex-start',
+    justifyContent: justify,
     flexWrap: 'wrap',
     marginRight: marginRight,
   }),

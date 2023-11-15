@@ -16,7 +16,7 @@ export const HeaderLabel = ({ headerLabel }: Props) => {
       value={value}
       color={color}
       colorIndicator={colorIndicator}
-      spaceBetween={false}
+      justify={'space-between'}
       marginRight={'22px'}
     />
   );
