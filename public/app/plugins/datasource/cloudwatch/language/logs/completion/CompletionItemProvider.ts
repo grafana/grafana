@@ -13,7 +13,7 @@ import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKinds';
 import { LogsTokenTypes } from './types';
 
-type queryContext = {
+export type queryContext = {
   logGroups?: LogGroup[];
   region: string;
 };
