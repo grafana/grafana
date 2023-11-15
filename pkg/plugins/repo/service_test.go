@@ -57,7 +57,7 @@ func TestGetPluginArchive(t *testing.T) {
 				grafanaVersion = "10.0.0"
 			)
 
-			srv := mockPluginRepoAPI(t,
+			srv := mockPluginVersionsAPI(t,
 				srvData{
 					pluginID:       pluginID,
 					version:        version,
@@ -127,15 +127,13 @@ type srvData struct {
 	archive        []byte
 }
 
-func mockPluginRepoAPI(t *testing.T, data srvData) *httptest.Server {
+func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
 	t.Helper()
 
 	mux := http.NewServeMux()
 	// mock plugin version data
-	mux.HandleFunc(fmt.Sprintf("/repo/%s", data.pluginID), func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(fmt.Sprintf("/%s/versions", data.pluginID), func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, data.grafanaVersion, r.Header.Get("grafana-version"))
-		require.Equal(t, data.opSys, r.Header.Get("grafana-os"))
-		require.Equal(t, data.arch, r.Header.Get("grafana-arch"))
 		require.NotNil(t, fmt.Sprintf("grafana %s", data.grafanaVersion), r.Header.Get("User-Agent"))
 
 		w.WriteHeader(http.StatusOK)
@@ -143,9 +141,9 @@ func mockPluginRepoAPI(t *testing.T, data srvData) *httptest.Server {
 
 		_, _ = w.Write([]byte(fmt.Sprintf(`
 				{
-					"versions": [{
+					"items": [{
 						"version": "%s",
-						"arch": {
+						"packages": {
 							"%s-%s": {
 								"sha256": "%s"
 							}
