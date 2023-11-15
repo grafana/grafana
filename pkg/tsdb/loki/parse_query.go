@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/sdkinterval"
 )
 
 const (
@@ -32,8 +32,8 @@ const (
 )
 
 func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration, queryType dataquery.LokiQueryType, step time.Duration) string {
-	intervalText := intervalv2.FormatDuration(interval)
-	stepText := intervalv2.FormatDuration(step)
+	intervalText := sdkinterval.FormatDuration(interval)
+	stepText := sdkinterval.FormatDuration(step)
 	intervalMsText := strconv.FormatInt(int64(interval/time.Millisecond), 10)
 
 	rangeMs := timeRange.Milliseconds()

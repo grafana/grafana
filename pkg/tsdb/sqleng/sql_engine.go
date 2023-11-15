@@ -21,7 +21,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/sdkinterval"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -45,8 +45,6 @@ type SqlQueryResultTransformer interface {
 	TransformQueryError(logger log.Logger, err error) error
 	GetConverterList() []sqlutil.StringConverter
 }
-
-var sqlIntervalCalculator = intervalv2.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
 //
@@ -402,15 +400,23 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, query.Interval.String(), query.Interval.Milliseconds(), time.Second*60)
-	if err != nil {
-		return "", err
+var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, dsMinInterval string, sql string) (string, error) {
+	defaultInterval := time.Second * 60
+	if dsMinInterval != "" {
+		dsMinInterval, err := sdkinterval.ParseIntervalStringToTimeDuration(dsMinInterval)
+		if err != nil {
+			return "", err
+		}
+		defaultInterval = dsMinInterval
 	}
-	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval, query.MaxDataPoints)
 
-	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
-	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
+	intervalDuration := sdkinterval.GetConsistentInterval(query, defaultInterval, 1500)
+
+	intervalText := sdkinterval.FormatDuration(intervalDuration)
+	intervalMilliseconds := intervalDuration.Nanoseconds() / int64(time.Millisecond)
+
+	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(intervalMilliseconds, 10))
+	sql = strings.ReplaceAll(sql, "$__interval", intervalText)
 	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.From.UTC().Unix()))
 	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.To.UTC().Unix()))
 

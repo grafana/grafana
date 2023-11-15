@@ -20,12 +20,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/sdkinterval"
 )
 
 func addInterval(period string, field *data.Field) error {
 	period = strings.TrimPrefix(period, "+")
-	p, err := intervalv2.ParseIntervalStringToTimeDuration(period)
+	p, err := sdkinterval.ParseIntervalStringToTimeDuration(period)
 	if err != nil {
 		return err
 	}
