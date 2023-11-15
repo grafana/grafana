@@ -81,9 +81,7 @@
     "manage-folder-nav": {
       "alert-rules": "",
       "dashboards": "",
-      "panels": "",
-      "permissions": "",
-      "settings": ""
+      "panels": ""
     },
     "new-folder-form": {
       "cancel-label": "",
@@ -1085,15 +1083,6 @@
       "new-dashboard": "Neues Dashboard",
       "new-folder": "Neuer Ordner"
     },
-    "folder-view": {
-      "go-to-folder": "Zum Ordner",
-      "select-folder": "Ordner auswählen"
-    },
-    "result-kind": {
-      "dashboard": "Dashboard",
-      "folder": "Ordner",
-      "panel": "Panel"
-    },
     "results-table": {
       "datasource-header": "Datenquelle",
       "location-header": "Standort",
@@ -1106,12 +1095,6 @@
     "search-input": {
       "include-panels-placeholder": "Nach Dashboards und Panels suchen",
       "placeholder": "Nach Dashboards suchen"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "",
-      "text": ""
     }
   },
   "share-modal": {

@@ -76,9 +76,7 @@
     "manage-folder-nav": {
       "alert-rules": "",
       "dashboards": "",
-      "panels": "",
-      "permissions": "",
-      "settings": ""
+      "panels": ""
     },
     "new-folder-form": {
       "cancel-label": "",
@@ -1079,15 +1077,6 @@
       "new-dashboard": "新建仪表板",
       "new-folder": "新建文件夹"
     },
-    "folder-view": {
-      "go-to-folder": "前往文件夹",
-      "select-folder": "选择文件夹"
-    },
-    "result-kind": {
-      "dashboard": "仪表板",
-      "folder": "文件夹",
-      "panel": "面板"
-    },
     "results-table": {
       "datasource-header": "数据源",
       "location-header": "位置",
@@ -1100,12 +1089,6 @@
     "search-input": {
       "include-panels-placeholder": "搜索仪表板和面板",
       "placeholder": "搜索仪表板"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "",
-      "text": ""
     }
   },
   "share-modal": {

@@ -86,9 +86,7 @@
     "manage-folder-nav": {
       "alert-rules": "",
       "dashboards": "",
-      "panels": "",
-      "permissions": "",
-      "settings": ""
+      "panels": ""
     },
     "new-folder-form": {
       "cancel-label": "",
@@ -1091,15 +1089,6 @@
       "new-dashboard": "Nuevo panel de control",
       "new-folder": "Nueva carpeta"
     },
-    "folder-view": {
-      "go-to-folder": "Ir a la carpeta",
-      "select-folder": "Seleccionar carpeta"
-    },
-    "result-kind": {
-      "dashboard": "Panel de control",
-      "folder": "Carpeta",
-      "panel": "Panel"
-    },
     "results-table": {
       "datasource-header": "Fuente de datos",
       "location-header": "Ubicación",
@@ -1112,12 +1101,6 @@
     "search-input": {
       "include-panels-placeholder": "Buscar paneles de control y paneles",
       "placeholder": "Buscar paneles de control"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "",
-      "text": ""
     }
   },
   "share-modal": {
