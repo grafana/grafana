@@ -529,9 +529,10 @@
     },
     "toolbar": {
       "aria-label": "Ēχpľőřę ŧőőľþäř",
-      "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
-      "copy-shortened-link-abs-time": "Cőpy şĥőřŧęŉęđ ľįŉĸ ŵįŧĥ äþşőľūŧę ŧįmę",
-      "copy-shortened-link-abs-time-desc": "Ŀőčĸş ŧĥę čūřřęŉŧ ŧįmę ƒőř čőŉşįşŧęŉŧ vįęŵįŉģ",
+      "copy-link": "Cőpy ŮŖĿ",
+      "copy-link-abs-time": "Cőpy Åþşőľūŧę ŮŖĿ",
+      "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ŮŖĿ",
+      "copy-shortened-link-abs-time": "Cőpy Åþşőľūŧę Ŝĥőřŧęŉęđ ŮŖĿ",
       "copy-shortened-link-menu": "Øpęŉ şĥőřŧęŉęđ ľįŉĸ męŉū",
       "refresh-picker-cancel": "Cäŉčęľ",
       "refresh-picker-run": "Ŗūŉ qūęřy",

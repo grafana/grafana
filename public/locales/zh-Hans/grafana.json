@@ -524,7 +524,11 @@
     },
     "toolbar": {
       "aria-label": "",
+      "copy-link": "",
+      "copy-link-abs-time": "",
       "copy-shortened-link": "",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "取消",
       "refresh-picker-run": "",
       "split-close": "",
