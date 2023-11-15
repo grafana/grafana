@@ -20,7 +20,7 @@ import (
 
 func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider, err := NewGenericOAuthProvider(map[string]interface{}{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		provider, err := NewGenericOAuthProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		tests := []struct {
@@ -105,7 +105,7 @@ func TestSearchJSONForEmail(t *testing.T) {
 
 func TestSearchJSONForGroups(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider, err := NewGenericOAuthProvider(map[string]interface{}{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		provider, err := NewGenericOAuthProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		tests := []struct {
@@ -165,7 +165,7 @@ func TestSearchJSONForGroups(t *testing.T) {
 
 func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider, err := NewGenericOAuthProvider(map[string]interface{}{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		provider, err := NewGenericOAuthProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
 		tests := []struct {
@@ -224,7 +224,7 @@ func TestSearchJSONForRole(t *testing.T) {
 }
 
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
-	provider, err := NewGenericOAuthProvider(map[string]interface{}{
+	provider, err := NewGenericOAuthProvider(map[string]any{
 		"email_attribute_path": "email",
 	}, &setting.Cfg{}, featuremgmt.WithFeatures())
 	require.NoError(t, err)
@@ -492,7 +492,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 func TestUserInfoSearchesForLogin(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider, err := NewGenericOAuthProvider(map[string]interface{}{
+		provider, err := NewGenericOAuthProvider(map[string]any{
 			"login_attribute_path": "login",
 		}, &setting.Cfg{}, featuremgmt.WithFeatures())
 		require.NoError(t, err)
@@ -585,7 +585,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 
 func TestUserInfoSearchesForName(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider, err := NewGenericOAuthProvider(map[string]interface{}{
+		provider, err := NewGenericOAuthProvider(map[string]any{
 			"name_attribute_path": "name",
 		}, &setting.Cfg{}, featuremgmt.WithFeatures())
 		require.NoError(t, err)
@@ -726,7 +726,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 					require.NoError(t, err)
 				}))
 
-				provider, err := NewGenericOAuthProvider(map[string]interface{}{
+				provider, err := NewGenericOAuthProvider(map[string]any{
 					"groups_attribute_path": test.groupsAttributePath,
 					"api_url":               ts.URL,
 				}, &setting.Cfg{}, featuremgmt.WithFeatures())
@@ -748,7 +748,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 }
 
 func TestPayloadCompression(t *testing.T) {
-	provider, err := NewGenericOAuthProvider(map[string]interface{}{
+	provider, err := NewGenericOAuthProvider(map[string]any{
 		"email_attribute_path": "email",
 	}, &setting.Cfg{}, featuremgmt.WithFeatures())
 	require.NoError(t, err)
@@ -824,12 +824,12 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 	}
 	testCases := []struct {
 		name     string
-		settings map[string]interface{}
+		settings map[string]any
 		want     settingFields
 	}{
 		{
 			name: "nameAttributePath is set",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"name_attribute_path": "name",
 			},
 			want: settingFields{
@@ -842,7 +842,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "loginAttributePath is set",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"login_attribute_path": "login",
 			},
 			want: settingFields{
@@ -855,7 +855,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "idTokenAttributeName is set",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"id_token_attribute_name": "id_token",
 			},
 			want: settingFields{
@@ -868,7 +868,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "teamIds is set",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"team_ids": "[\"team1\", \"team2\"]",
 			},
 			want: settingFields{
@@ -881,7 +881,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "allowedOrganizations is set",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"allowed_organizations": "org1, org2",
 			},
 			want: settingFields{

@@ -29,11 +29,11 @@ func (s *OAuthStrategy) IsMatch(provider string) bool {
 	return s.supportedProvidersRegex.MatchString(provider)
 }
 
-func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context) (map[string]interface{}, error) {
+func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context) (map[string]any, error) {
 	section := s.cfg.SectionWithEnvOverrides("auth." + s.provider)
 
 	// TODO: load the provider specific keys separately
-	result := map[string]interface{}{
+	result := map[string]any{
 		"client_id":               section.Key("client_id").Value(),
 		"client_secret":           section.Key("client_secret").Value(),
 		"scopes":                  section.Key("scopes").Value(),

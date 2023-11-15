@@ -166,7 +166,7 @@ func createOAuthConfig(info *OAuthInfo, cfg *setting.Cfg, defaultName string) *o
 	return &config
 }
 
-func mustBool(value interface{}, defaultValue bool) bool {
+func mustBool(value any, defaultValue bool) bool {
 	if value == nil {
 		return defaultValue
 	}
@@ -188,7 +188,7 @@ func mustBool(value interface{}, defaultValue bool) bool {
 	return result
 }
 
-func mustString(value interface{}) string {
+func mustString(value any) string {
 	if value == nil {
 		return ""
 	}
@@ -201,19 +201,19 @@ func mustString(value interface{}) string {
 	return result
 }
 
-// convertIniSectionToMap converts key value pairs from an ini section to a map[string]interface{}
-func convertIniSectionToMap(sec *ini.Section) map[string]interface{} {
-	mappedSettings := make(map[string]interface{})
+// convertIniSectionToMap converts key value pairs from an ini section to a map[string]any
+func convertIniSectionToMap(sec *ini.Section) map[string]any {
+	mappedSettings := make(map[string]any)
 	for k, v := range sec.KeysHash() {
 		mappedSettings[k] = v
 	}
 	return mappedSettings
 }
 
-// createOAuthInfoFromKeyValues creates an OAuthInfo struct from a map[string]interface{} using mapstructure
+// createOAuthInfoFromKeyValues creates an OAuthInfo struct from a map[string]any using mapstructure
 // it puts all extra key values into OAuthInfo's Extra map
-func createOAuthInfoFromKeyValues(settingsKV map[string]interface{}) (*OAuthInfo, error) {
-	emptyStrToSliceDecodeHook := func(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {
+func createOAuthInfoFromKeyValues(settingsKV map[string]any) (*OAuthInfo, error) {
+	emptyStrToSliceDecodeHook := func(from reflect.Type, to reflect.Type, data any) (any, error) {
 		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
 			strData, ok := data.(string)
 			if !ok {

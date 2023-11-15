@@ -43,7 +43,7 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(settings map[string]interface{}, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialOkta, error) {
+func NewOktaProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialOkta, error) {
 	info, err := createOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err

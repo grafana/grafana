@@ -33,7 +33,7 @@ func falseBoolPtr() *bool {
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		providerCfg map[string]interface{}
+		providerCfg map[string]any
 		cfg         *setting.Cfg
 		usGovURL    bool
 	}
@@ -60,7 +60,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -80,7 +80,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "No email",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -102,7 +102,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			name:   "No id token",
 			claims: nil,
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -123,7 +123,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -151,7 +151,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -171,7 +171,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Admin role",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -198,7 +198,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Lowercase Admin role",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -225,7 +225,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Only other roles",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -260,7 +260,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -287,7 +287,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -307,7 +307,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Admin and Editor roles in claim",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -334,7 +334,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Grafana Admin but setting is disabled",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                       "azuread",
 					"client_id":                  "client-id-example",
 					"allow_assign_grafana_admin": false,
@@ -364,7 +364,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Editor roles in claim and GrafanaAdminAssignment enabled",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                       "azuread",
 					"client_id":                  "client-id-example",
 					"allow_assign_grafana_admin": true,
@@ -393,7 +393,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Grafana Admin and Editor roles in claim",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                       "azuread",
 					"client_id":                  "client-id-example",
 					"allow_assign_grafana_admin": true,
@@ -422,7 +422,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Error if user is not a member of allowed_groups",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                       "azuread",
 					"client_id":                  "client-id-example",
 					"allow_assign_grafana_admin": false,
@@ -446,7 +446,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Error if user is not a member of allowed_organizations",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                       "azuread",
 					"client_id":                  "client-id-example",
 					"allow_assign_grafana_admin": false,
@@ -471,7 +471,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "No error if user is a member of allowed_organizations",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                  "azuread",
 					"client_id":             "client-id-example",
 					"allowed_organizations": "uuid-1234,uuid-5678",
@@ -502,7 +502,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "No Error if user is a member of allowed_groups",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                       "azuread",
 					"client_id":                  "client-id-example",
 					"allow_assign_grafana_admin": "false",
@@ -532,7 +532,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":      "azuread",
 					"client_id": "client-id-example",
 				},
@@ -563,7 +563,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when forceUseGraphAPI is set",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                "azuread",
 					"client_id":           "client-id-example",
 					"force_use_graph_api": "true",
@@ -596,7 +596,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                  "azuread",
 					"client_id":             "client-id-example",
 					"role_attribute_strict": "true",
@@ -619,7 +619,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no role claims returned",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                  "azuread",
 					"client_id":             "client-id-example",
 					"role_attribute_strict": "true",
@@ -743,7 +743,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 	type fields struct {
 		SocialBase  *SocialBase
-		providerCfg map[string]interface{}
+		providerCfg map[string]any
 		cfg         *setting.Cfg
 	}
 
@@ -758,7 +758,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		{
 			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should get roles, skipOrgRoleSyncBase disabled",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                       "azuread",
 					"client_id":                  "client-id-example",
 					"allow_assign_grafana_admin": "true",
@@ -789,7 +789,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		{
 			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should not get roles",
 			fields: fields{
-				providerCfg: map[string]interface{}{
+				providerCfg: map[string]any{
 					"name":                       "azuread",
 					"client_id":                  "client-id-example",
 					"allow_assign_grafana_admin": "true",
@@ -919,12 +919,12 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 	}
 	testCases := []struct {
 		name     string
-		settings map[string]interface{}
+		settings map[string]any
 		want     settingFields
 	}{
 		{
 			name: "forceUseGraphAPI is set to true",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"force_use_graph_api": "true",
 			},
 			want: settingFields{
@@ -934,7 +934,7 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "allowedOrganizations is set",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"allowed_organizations": "uuid-1234,uuid-5678",
 			},
 			want: settingFields{

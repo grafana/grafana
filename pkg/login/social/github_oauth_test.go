@@ -239,7 +239,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			}))
 			defer server.Close()
 
-			s, err := NewGitHubProvider(map[string]interface{}{
+			s, err := NewGitHubProvider(map[string]any{
 				"allowed_organizations": "",
 				"api_url":               server.URL + "/user",
 				"team_ids":              "",
@@ -273,12 +273,12 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 	}
 	testCases := []struct {
 		name     string
-		settings map[string]interface{}
+		settings map[string]any
 		want     settingFields
 	}{
 		{
 			name: "teamIds is set",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"team_ids": "1234,5678",
 			},
 			want: settingFields{
@@ -288,7 +288,7 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "allowedOrganizations is set",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"allowed_organizations": "uuid-1234,uuid-5678",
 			},
 			want: settingFields{
@@ -298,7 +298,7 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 		},
 		{
 			name: "teamIds and allowedOrganizations are empty",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"team_ids":              "",
 				"allowed_organizations": "",
 			},

@@ -25,7 +25,7 @@ const (
 )
 
 func TestSocialGrafanaCom_UserInfo(t *testing.T) {
-	provider, err := NewGrafanaComProvider(map[string]interface{}{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	provider, err := NewGrafanaComProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
 	type conf struct {
@@ -99,19 +99,19 @@ func TestSocialGrafanaCom_InitializeExtraFields(t *testing.T) {
 	}
 	testCases := []struct {
 		name     string
-		settings map[string]interface{}
+		settings map[string]any
 		want     settingFields
 	}{
 		{
 			name:     "allowedOrganizations is not set",
-			settings: map[string]interface{}{},
+			settings: map[string]any{},
 			want: settingFields{
 				allowedOrganizations: []string{},
 			},
 		},
 		{
 			name: "allowedOrganizations is set",
-			settings: map[string]interface{}{
+			settings: map[string]any{
 				"allowed_organizations": "uuid-1234,uuid-5678",
 			},
 			want: settingFields{

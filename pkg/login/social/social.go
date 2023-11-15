@@ -410,8 +410,8 @@ func (ss *SocialService) GetOAuthInfoProviders() map[string]*OAuthInfo {
 	return ss.oAuthProvider
 }
 
-func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	authTypes := map[string]bool{}
 	for provider, enabled := range ss.GetOAuthProviders() {
@@ -446,7 +446,7 @@ func (s *SocialBase) isGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
+func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
 	tokenString, ok := idToken.(string)
 	if !ok {
 		return nil, fmt.Errorf("id_token is not a string: %v", idToken)
@@ -468,7 +468,7 @@ func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("error base64 decoding header: %w", err)
 	}
 
-	var header map[string]interface{}
+	var header map[string]any
 	if err := json.Unmarshal(headerBytes, &header); err != nil {
 		return nil, fmt.Errorf("error deserializing header: %w", err)
 	}
@@ -502,7 +502,7 @@ func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
 	return rawJSON, nil
 }
 
-func (ss *SocialService) createOAuthConnector(name string, settings map[string]interface{}, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (SocialConnector, error) {
+func (ss *SocialService) createOAuthConnector(name string, settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (SocialConnector, error) {
 	switch name {
 	case azureADProviderName:
 		return NewAzureADProvider(settings, cfg, features, cache)

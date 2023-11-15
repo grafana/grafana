@@ -98,7 +98,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			defer server.Close()
 
 			provider, err := NewOktaProvider(
-				map[string]interface{}{
+				map[string]any{
 					"api_url":                    server.URL + "/user",
 					"role_attribute_path":        tt.RoleAttributePath,
 					"allow_assign_grafana_admin": tt.allowAssignGrafanaAdmin,

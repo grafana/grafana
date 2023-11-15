@@ -181,7 +181,7 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := NewGoogleProvider(map[string]interface{}{
+			s, err := NewGoogleProvider(map[string]any{
 				"api_url":                    "",
 				"scopes":                     tt.fields.Scopes,
 				"hosted_domain":              "",
@@ -635,7 +635,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := NewGoogleProvider(map[string]interface{}{
+			s, err := NewGoogleProvider(map[string]any{
 				"api_url":                    tt.fields.apiURL,
 				"scopes":                     tt.fields.Scopes,
 				"allowed_groups":             tt.fields.allowedGroups,
