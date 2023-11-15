@@ -219,7 +219,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				"tags":  []interface{}{},
 			}),
 			Overwrite: true,
-			FolderID:  2,
+			FolderID:  2, // nolint:staticcheck
 			UserID:    100,
 		}
 		dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
@@ -234,7 +234,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 				"title": "folderId",
 				"tags":  []interface{}{},
 			}),
-			FolderID:  0,
+			FolderID:  0, // nolint:staticcheck
 			Overwrite: true,
 			UserID:    100,
 		}
@@ -1151,7 +1151,7 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		FolderID:  folderId,
+		FolderID:  folderId, // nolint:staticcheck
 		FolderUID: folderUID,
 		IsFolder:  isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -1173,7 +1173,7 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store,
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:    orgId,
-		FolderID: folderId,
+		FolderID: folderId, // nolint:staticcheck
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -1186,21 +1186,6 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store,
 	require.NoError(t, err)
 
 	return dash
-}
-
-func updateDashboardACL(t *testing.T, dashboardStore dashboards.Store, dashboardID int64,
-	items ...dashboards.DashboardACL) error {
-	t.Helper()
-
-	var itemPtrs []*dashboards.DashboardACL
-	for _, it := range items {
-		item := it
-		item.Created = time.Now()
-		item.Updated = time.Now()
-		itemPtrs = append(itemPtrs, &item)
-	}
-
-	return dashboardStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
 }
 
 // testSearchDashboards is a (near) copy of the dashboard service
