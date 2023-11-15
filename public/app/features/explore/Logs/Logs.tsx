@@ -47,6 +47,7 @@ import {
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { dispatch, getState } from 'app/store/store';
 
 import { ExploreItemState } from '../../../types';
@@ -129,7 +130,6 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
-  logRowsHeight: number;
 }
 config.featureToggles.exploreScrollableLogsContainer = true;
 const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
@@ -172,7 +172,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
     tableFrame: undefined,
     visualisationType: this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType(),
     logsContainer: undefined,
-    logRowsHeight: 0,
   };
 
   constructor(props: Props) {
@@ -258,8 +257,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onLogsContainerRef = (node: HTMLDivElement) => {
-    const newState = { logsContainer: node, logRowsHeight: this.state.logRowsHeight };
-    this.setState(newState);
+    this.setState({ logsContainer: node });
   };
 
   onChangeLogsSortOrder = () => {
@@ -565,7 +563,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       getRowContext,
       getLogRowContextUi,
       getRowContextQuery,
-      loadMoreLogs
+      loadMoreLogs,
     } = this.props;
 
     const {
@@ -790,38 +788,51 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </div>
             )}
             {this.state.visualisationType === 'logs' && hasData && (
-              <div className={scrollableLogsContainer ? styles.scrollableLogRows : styles.logRows} data-testid="logRows" ref={this.onLogsContainerRef}>
-                <LogRows
-                  logRows={logRows}
-                  deduplicatedRows={dedupedRows}
-                  dedupStrategy={dedupStrategy}
-                  onClickFilterLabel={onClickFilterLabel}
-                  onClickFilterOutLabel={onClickFilterOutLabel}
-                  showContextToggle={showContextToggle}
-                  getRowContextQuery={getRowContextQuery}
-                  showLabels={showLabels}
-                  showTime={showTime}
-                  enableLogDetails={true}
-                  forceEscape={forceEscape}
-                  wrapLogMessage={wrapLogMessage}
-                  prettifyLogMessage={prettifyLogMessage}
-                  timeZone={timeZone}
-                  getFieldLinks={getFieldLinks}
-                  logsSortOrder={logsSortOrder}
-                  displayedFields={displayedFields}
-                  onClickShowField={this.showField}
-                  onClickHideField={this.hideField}
-                  app={CoreApp.Explore}
-                  onLogRowHover={this.onLogRowHover}
-                  onOpenContext={this.onOpenContext}
-                  onPermalinkClick={this.onPermalinkClick}
-                  permalinkedRowId={this.props.panelState?.logs?.id}
-                  scrollIntoView={this.scrollIntoView}
-                  isFilterLabelActive={this.props.isFilterLabelActive}
-                  containerRendered={!!this.state.logsContainer}
-                  onClickFilterValue={this.props.onClickFilterValue}
-                  onClickFilterOutValue={this.props.onClickFilterOutValue}
-                />
+              <div
+                className={scrollableLogsContainer ? styles.scrollableLogRows : styles.logRows}
+                data-testid="logRows"
+                ref={this.onLogsContainerRef}
+              >
+                <InfiniteScroll
+                  loading={loading}
+                  loadMoreLogs={loadMoreLogs}
+                  range={absoluteRange}
+                  rows={logRows}
+                  scrollElement={this.state.logsContainer}
+                  sortOrder={logsSortOrder}
+                >
+                  <LogRows
+                    logRows={logRows}
+                    deduplicatedRows={dedupedRows}
+                    dedupStrategy={dedupStrategy}
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                    showContextToggle={showContextToggle}
+                    getRowContextQuery={getRowContextQuery}
+                    showLabels={showLabels}
+                    showTime={showTime}
+                    enableLogDetails={true}
+                    forceEscape={forceEscape}
+                    wrapLogMessage={wrapLogMessage}
+                    prettifyLogMessage={prettifyLogMessage}
+                    timeZone={timeZone}
+                    getFieldLinks={getFieldLinks}
+                    logsSortOrder={logsSortOrder}
+                    displayedFields={displayedFields}
+                    onClickShowField={this.showField}
+                    onClickHideField={this.hideField}
+                    app={CoreApp.Explore}
+                    onLogRowHover={this.onLogRowHover}
+                    onOpenContext={this.onOpenContext}
+                    onPermalinkClick={this.onPermalinkClick}
+                    permalinkedRowId={this.props.panelState?.logs?.id}
+                    scrollIntoView={this.scrollIntoView}
+                    isFilterLabelActive={this.props.isFilterLabelActive}
+                    containerRendered={!!this.state.logsContainer}
+                    onClickFilterValue={this.props.onClickFilterValue}
+                    onClickFilterOutValue={this.props.onClickFilterOutValue}
+                  />
+                </InfiniteScroll>
               </div>
             )}
             {!loading && !hasData && !scanning && (
@@ -844,20 +855,20 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 </div>
               </div>
             )}
-            <LogsNavigation
-              logsSortOrder={logsSortOrder}
-              visibleRange={navigationRange ?? absoluteRange}
-              absoluteRange={absoluteRange}
-              timeZone={timeZone}
-              onChangeTime={onChangeTime}
-              loading={loading}
-              queries={logsQueries ?? []}
-              scrollToTopLogs={this.scrollToTopLogs}
-              addResultsToCache={addResultsToCache}
-              clearCache={clearCache}
-              loadMoreLogs={loadMoreLogs}
-              scrollElement={this.state.logsContainer}
-            />
+            {!config.featureToggles.logsInfiniteScrolling && (
+              <LogsNavigation
+                logsSortOrder={logsSortOrder}
+                visibleRange={navigationRange ?? absoluteRange}
+                absoluteRange={absoluteRange}
+                timeZone={timeZone}
+                onChangeTime={onChangeTime}
+                loading={loading}
+                queries={logsQueries ?? []}
+                scrollToTopLogs={this.scrollToTopLogs}
+                addResultsToCache={addResultsToCache}
+                clearCache={clearCache}
+              />
+            )}
           </div>
         </PanelChrome>
       </>
