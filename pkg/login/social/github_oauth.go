@@ -332,7 +332,7 @@ func convertToGroupList(t []GithubTeam) []string {
 }
 
 func mustInts(s []string) ([]int, error) {
-	result := make([]int, len(s))
+	result := make([]int, 0, len(s))
 	for _, v := range s {
 		num, err := strconv.Atoi(v)
 		if err != nil {

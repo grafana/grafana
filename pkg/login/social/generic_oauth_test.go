@@ -813,3 +813,97 @@ func TestPayloadCompression(t *testing.T) {
 		})
 	}
 }
+
+func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
+	type settingFields struct {
+		nameAttributePath    string
+		loginAttributePath   string
+		idTokenAttributeName string
+		teamIds              []string
+		allowedOrganizations []string
+	}
+	testCases := []struct {
+		name     string
+		settings map[string]interface{}
+		want     settingFields
+	}{
+		{
+			name: "nameAttributePath is set",
+			settings: map[string]interface{}{
+				"name_attribute_path": "name",
+			},
+			want: settingFields{
+				nameAttributePath:    "name",
+				loginAttributePath:   "",
+				idTokenAttributeName: "",
+				teamIds:              []string{},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "loginAttributePath is set",
+			settings: map[string]interface{}{
+				"login_attribute_path": "login",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "login",
+				idTokenAttributeName: "",
+				teamIds:              []string{},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "idTokenAttributeName is set",
+			settings: map[string]interface{}{
+				"id_token_attribute_name": "id_token",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "",
+				idTokenAttributeName: "id_token",
+				teamIds:              []string{},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "teamIds is set",
+			settings: map[string]interface{}{
+				"team_ids": "[\"team1\", \"team2\"]",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "",
+				idTokenAttributeName: "",
+				teamIds:              []string{"team1", "team2"},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "allowedOrganizations is set",
+			settings: map[string]interface{}{
+				"allowed_organizations": "org1, org2",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "",
+				idTokenAttributeName: "",
+				teamIds:              []string{},
+				allowedOrganizations: []string{"org1", "org2"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
+			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
+			require.Equal(t, tc.want.idTokenAttributeName, s.idTokenAttributeName)
+			require.Equal(t, tc.want.teamIds, s.teamIds)
+			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
+		})
+	}
+}

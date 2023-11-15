@@ -265,3 +265,57 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		})
 	}
 }
+
+func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
+	type settingFields struct {
+		teamIds              []int
+		allowedOrganizations []string
+	}
+	testCases := []struct {
+		name     string
+		settings map[string]interface{}
+		want     settingFields
+	}{
+		{
+			name: "teamIds is set",
+			settings: map[string]interface{}{
+				"team_ids": "1234,5678",
+			},
+			want: settingFields{
+				teamIds:              []int{1234, 5678},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "allowedOrganizations is set",
+			settings: map[string]interface{}{
+				"allowed_organizations": "uuid-1234,uuid-5678",
+			},
+			want: settingFields{
+				teamIds:              []int{},
+				allowedOrganizations: []string{"uuid-1234", "uuid-5678"},
+			},
+		},
+		{
+			name: "teamIds and allowedOrganizations are empty",
+			settings: map[string]interface{}{
+				"team_ids":              "",
+				"allowed_organizations": "",
+			},
+			want: settingFields{
+				teamIds:              []int{},
+				allowedOrganizations: []string{},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := NewGitHubProvider(tc.settings, &setting.Cfg{}, featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want.teamIds, s.teamIds)
+			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
+		})
+	}
+}

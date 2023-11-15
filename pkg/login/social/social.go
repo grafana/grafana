@@ -57,7 +57,6 @@ type OAuthInfo struct {
 	Icon                    string                 `mapstructure:"icon"`
 	Name                    string                 `mapstructure:"name"`
 	RoleAttributePath       string                 `mapstructure:"role_attribute_path"`
-	SkipOrgRoleSync         bool                   `mapstructure:"skip_org_role_sync"`
 	TeamIdsAttributePath    string                 `mapstructure:"team_ids_attribute_path"`
 	TeamsUrl                string                 `mapstructure:"teams_url"`
 	TlsClientCa             string                 `mapstructure:"tls_client_ca"`

@@ -911,3 +911,46 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		})
 	}
 }
+
+func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
+	type settingFields struct {
+		forceUseGraphAPI     bool
+		allowedOrganizations []string
+	}
+	testCases := []struct {
+		name     string
+		settings map[string]interface{}
+		want     settingFields
+	}{
+		{
+			name: "forceUseGraphAPI is set to true",
+			settings: map[string]interface{}{
+				"force_use_graph_api": "true",
+			},
+			want: settingFields{
+				forceUseGraphAPI:     true,
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "allowedOrganizations is set",
+			settings: map[string]interface{}{
+				"allowed_organizations": "uuid-1234,uuid-5678",
+			},
+			want: settingFields{
+				forceUseGraphAPI:     false,
+				allowedOrganizations: []string{"uuid-1234", "uuid-5678"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := NewAzureADProvider(tc.settings, &setting.Cfg{}, featuremgmt.WithFeatures(), nil)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want.forceUseGraphAPI, s.forceUseGraphAPI)
+			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
+		})
+	}
+}
