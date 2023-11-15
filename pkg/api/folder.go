@@ -117,6 +117,7 @@ func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
+	// nolint:staticcheck
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.SignedInUser.GetOrgID(), SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
