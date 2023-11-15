@@ -45,16 +45,16 @@
       "new-folder-name-required-phrase": ""
     },
     "counts": {
-      "alertRule_one": "",
-      "alertRule_other": "",
-      "dashboard_one": "",
-      "dashboard_other": "",
-      "folder_one": "",
-      "folder_other": "",
-      "libraryPanel_one": "",
-      "libraryPanel_other": "",
-      "total_one": "",
-      "total_other": ""
+      "alertRule_one": "{{count}} regla de alerta",
+      "alertRule_other": "{{count}} reglas de alerta",
+      "dashboard_one": "{{count}} panel de control",
+      "dashboard_other": "{{count}} paneles de control",
+      "folder_one": "{{count}} carpeta",
+      "folder_other": "{{count}} carpetas",
+      "libraryPanel_one": "{{count}} panel de librería",
+      "libraryPanel_other": "{{count}} paneles de librería",
+      "total_one": "{{count}} elemento",
+      "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
       "collapse-folder-button": "",
