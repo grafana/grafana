@@ -1,39 +1,40 @@
 import { FormatVariable, SceneObject, sceneUtils } from '@grafana/scenes';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+
+import { getDashboardSceneFor } from '../utils/utils';
 
 /**
  * Handles expressions like ${__dashboard.uid}
  */
-const getDashboardMacro = (dashboard: DashboardModel) => {
-  return class DashboardMacro implements FormatVariable {
-    public state: { name: string; type: string };
+class DashboardMacro implements FormatVariable {
+  public state: { name: string; type: string };
 
-    public constructor(name: string, _: SceneObject) {
-      this.state = { name: name, type: 'dashboard_macro' };
+  public constructor(
+    name: string,
+    private _sceneObject: SceneObject
+  ) {
+    this.state = { name: name, type: 'dashboard_macro' };
+  }
+
+  public getValue(fieldPath?: string): string {
+    const dashboard = getDashboardSceneFor(this._sceneObject);
+    switch (fieldPath) {
+      case 'uid':
+        return dashboard.state.uid || '';
+      case 'title':
+      case 'name':
+      case 'id':
+      default:
+        return dashboard.state.title;
     }
+  }
 
-    public getValue(fieldPath?: string): string {
-      switch (fieldPath) {
-        case 'uid':
-          return dashboard.uid;
-        case 'title':
-        case 'name':
-        case 'id':
-        default:
-          return String(dashboard.title);
-      }
-    }
+  public getValueText?(): string {
+    return '';
+  }
+}
 
-    public getValueText?(): string {
-      return '';
-    }
-  };
-};
+export function registerDashboardMacro() {
+  const unregister = sceneUtils.registerVariableMacro('__dashboard', DashboardMacro);
 
-export function registerDashboardMacro(dashboard: DashboardModel) {
-  return () => {
-    const unregister = sceneUtils.registerVariableMacro('__dashboard', getDashboardMacro(dashboard));
-
-    return () => unregister();
-  };
+  return () => unregister();
 }

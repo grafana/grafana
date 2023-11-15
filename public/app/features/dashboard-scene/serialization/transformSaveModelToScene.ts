@@ -250,7 +250,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
     $variables: variables,
     $behaviors: [
-      registerDashboardMacro(oldModel),
+      registerDashboardMacro,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
