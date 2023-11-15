@@ -2,7 +2,7 @@ import { debounce } from 'lodash';
 import React, { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Themeable2, TabbedContainer, TabConfig, withTheme2 } from '@grafana/ui';
+import { TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 import { RichHistoryQuery } from 'app/types/explore';
@@ -27,7 +27,7 @@ export const getSortOrderOptions = () =>
     { label: t('explore.rich-history.datasource-z-a', 'Data source Z-A'), value: SortOrder.DatasourceZA },
   ].filter((option) => supportedFeatures().availableFilters.includes(option.value));
 
-export interface RichHistoryProps extends Themeable2 {
+export interface RichHistoryProps {
   richHistory: RichHistoryQuery[];
   richHistoryTotal?: number;
   richHistorySettings: RichHistorySettings;
@@ -45,7 +45,7 @@ export interface RichHistoryProps extends Themeable2 {
   onClose: () => void;
 }
 
-function UnThemedRichHistory(props: RichHistoryProps) {
+export function RichHistory(props: RichHistoryProps) {
   const {
     richHistory,
     richHistoryTotal,
@@ -162,5 +162,3 @@ function UnThemedRichHistory(props: RichHistoryProps) {
     />
   );
 }
-
-export const RichHistory = withTheme2(UnThemedRichHistory);
