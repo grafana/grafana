@@ -48,7 +48,8 @@ export default class PrometheusMetricFindQuery {
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
     if (labelValuesQuery) {
-      if (labelValuesQuery[1]) {
+      const hasEmptyFilter = () => labelValuesQuery[1].split(' ').join('') === '{}';
+      if (labelValuesQuery[1] && !hasEmptyFilter()) {
         return this.labelValuesQuery(labelValuesQuery[2], labelValuesQuery[1]);
       } else {
         return this.labelValuesQuery(labelValuesQuery[2]);
