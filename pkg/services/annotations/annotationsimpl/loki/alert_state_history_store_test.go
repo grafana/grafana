@@ -321,6 +321,92 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				compareAnnotationItem(t, expected, item)
 			}
 		})
+		t.Run("should filter out history from dashboards not in scope", func(t *testing.T) {
+			alert1 := createAlertRuleWithDashboard(t, sql, nil, "Test Rule 1", dashboard1.UID)
+			alert2 := createAlertRuleWithDashboard(t, sql, nil, "Test Rule 2", dashboard2.UID)
+
+			start := time.Now()
+			numTransitions := 2
+			transitions := genStateTransitions(t, numTransitions, start)
+
+			res := []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, alert1), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, alert2), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{
+				Dashboards: map[string]int64{
+					dashboard1.UID: dashboard1.ID,
+				},
+				ScopeTypes: map[any]struct{}{
+					testutil.DashScopeType: {},
+				},
+			})
+			require.Len(t, items, numTransitions)
+
+			for i := 0; i < numTransitions; i++ {
+				item := items[i]
+				transition := transitions[i]
+
+				expected := &annotations.ItemDTO{
+					AlertID:   alert1.ID,
+					AlertName: alert1.Title,
+					Time:      transition.State.LastEvaluationTime.UnixMilli(),
+					NewState:  transition.Formatted(),
+				}
+				if i > 0 {
+					prevTransition := transitions[i-1]
+					expected.PrevState = prevTransition.Formatted()
+				}
+
+				compareAnnotationItem(t, expected, item)
+			}
+		})
+
+		t.Run("should include only history without linked dashboard on org scope", func(t *testing.T) {
+			knownUIDs := &sync.Map{}
+
+			alert1 := createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 1", dashboard1.UID)
+
+			alert2 := createAlertRule(t, sql, knownUIDs, "Test Rule 2")
+
+			start := time.Now()
+			numTransitions := 2
+			transitions := genStateTransitions(t, numTransitions, start)
+
+			res := []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, alert1), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, alert2), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{
+				Dashboards: map[string]int64{
+					dashboard1.UID: dashboard1.ID,
+				},
+				ScopeTypes: map[any]struct{}{
+					testutil.OrgScopeType: {},
+				},
+			})
+			require.Len(t, items, numTransitions)
+
+			for i := 0; i < numTransitions; i++ {
+				item := items[i]
+				transition := transitions[i]
+
+				expected := &annotations.ItemDTO{
+					AlertID:   alert2.ID,
+					AlertName: alert2.Title,
+					Time:      transition.State.LastEvaluationTime.UnixMilli(),
+					NewState:  transition.Formatted(),
+				}
+				if i > 0 {
+					prevTransition := transitions[i-1]
+					expected.PrevState = prevTransition.Formatted()
+				}
+
+				compareAnnotationItem(t, expected, item)
+			}
+		})
 	})
 }
 
