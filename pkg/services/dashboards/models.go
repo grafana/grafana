@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/kinds"
@@ -14,9 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const RootFolderName = "General"
@@ -473,16 +473,10 @@ func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
 	return dto.hasSameRoleAs(other) || dto.hasSameUserAs(other) || dto.hasSameTeamAs(other)
 }
 
-// QUERIES
-type GetDashboardACLInfoListQuery struct {
-	DashboardID int64
-	OrgID       int64
-}
-
 type FindPersistedDashboardsQuery struct {
 	Title         string
 	OrgId         int64
-	SignedInUser  *user.SignedInUser
+	SignedInUser  identity.Requester
 	DashboardIds  []int64
 	DashboardUIDs []string
 	Type          string

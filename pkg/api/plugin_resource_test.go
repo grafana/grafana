@@ -46,9 +46,6 @@ func TestCallResource(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = staticRootPath
-	cfg.IsFeatureToggleEnabled = func(_ string) bool {
-		return false
-	}
 	cfg.Azure = &azsettings.AzureSettings{}
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,

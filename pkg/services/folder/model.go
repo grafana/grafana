@@ -20,7 +20,7 @@ var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-
 const (
 	GeneralFolderUID     = "general"
 	RootFolderUID        = ""
-	MaxNestedFolderDepth = 8
+	MaxNestedFolderDepth = 4
 )
 
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")

@@ -18,6 +18,7 @@ import {
 import { sceneGraph, VariableCustomFormatterFn } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
+import { getVariablesCompatibility } from '../dashboard-scene/utils/getVariablesCompatibility';
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 import { isAdHoc } from '../variables/guard';
@@ -74,6 +75,11 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   getVariables(): TypedVariableModel[] {
+    // For scenes we have this backward compatiblity translation
+    if (window.__grafanaSceneContext) {
+      return getVariablesCompatibility(window.__grafanaSceneContext);
+    }
+
     return this.dependencies.getVariables();
   }
 

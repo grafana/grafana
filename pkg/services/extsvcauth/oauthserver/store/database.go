@@ -126,6 +126,7 @@ func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver
 			return err
 		}
 		if !found {
+			res = nil
 			return oauthserver.ErrClientNotFoundFn(id)
 		}
 
@@ -220,6 +221,21 @@ func (s *store) UpdateExternalServiceGrantTypes(ctx context.Context, clientID, g
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		query := `UPDATE oauth_client SET grant_types = ? WHERE client_id = ?`
 		_, err := sess.Exec(query, grantTypes, clientID)
+		return err
+	})
+}
+
+func (s *store) DeleteExternalService(ctx context.Context, id string) error {
+	if id == "" {
+		return oauthserver.ErrClientRequiredID
+	}
+
+	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if _, err := sess.Exec(`DELETE FROM oauth_client WHERE client_id = ?`, id); err != nil {
+			return err
+		}
+
+		_, err := sess.Exec(`DELETE FROM oauth_impersonate_permission WHERE client_id = ?`, id)
 		return err
 	})
 }

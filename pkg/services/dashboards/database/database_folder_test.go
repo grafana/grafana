@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -47,7 +49,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			sqlStore = db.InitTestDB(t)
 			quotaService := quotatest.New(false, nil)
 			var err error
-			dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 			require.NoError(t, err)
 			flder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod", "webapp")
@@ -145,7 +147,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				quotaService := quotatest.New(false, nil)
 				var err error
-				dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+				dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 				require.NoError(t, err)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, "", true, "prod")
@@ -252,7 +254,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
 		var err error
-		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 
 		usr := createUser(t, sqlStore, "viewer", "Viewer", false)
@@ -412,7 +414,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			dashboardReadStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, tc.features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+			dashboardReadStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, tc.features, tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 			require.NoError(t, err)
 
 			viewer.Permissions = map[int64]map[string][]string{viewer.OrgID: tc.permissions}
@@ -449,4 +451,29 @@ func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, d
 	require.NoError(t, err)
 
 	return dash
+}
+
+func createUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) user.User {
+	t.Helper()
+	sqlStore.Cfg.AutoAssignOrg = true
+	sqlStore.Cfg.AutoAssignOrgId = 1
+	sqlStore.Cfg.AutoAssignOrgRole = role
+
+	qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+
+	o, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("test org %d", time.Now().UnixNano())})
+	require.NoError(t, err)
+
+	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin, OrgID: o.ID}
+	currentUser, err := usrSvc.Create(context.Background(), &currentUserCmd)
+	require.NoError(t, err)
+	orgs, err := orgService.GetUserOrgList(context.Background(), &org.GetUserOrgListQuery{UserID: currentUser.ID})
+	require.NoError(t, err)
+	require.Equal(t, org.RoleType(role), orgs[0].Role)
+	require.Equal(t, o.ID, orgs[0].OrgID)
+	return *currentUser
 }

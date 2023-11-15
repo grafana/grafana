@@ -158,6 +158,8 @@ type ServiceAccountProfileDTO struct {
 	Teams []string `json:"teams" xorm:"-"`
 	// example: false
 	IsExternal bool `json:"isExternal,omitempty" xorm:"-"`
+	// example: grafana-app
+	RequiredBy string `json:"requiredBy,omitempty" xorm:"-"`
 
 	Tokens        int64           `json:"tokens,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
