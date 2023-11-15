@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 
-import { IconName, urlUtil } from '@grafana/data';
+import { IconName, urlUtil, ExploreUrlState } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ToolbarButton, Dropdown, Menu, Stack, ToolbarButtonRow } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { useSelector } from 'app/types';
+import { ExploreItemState, useSelector } from 'app/types';
 
 import { getUrlStateFromPaneState } from './hooks/useStateSync';
 import { selectPanes } from './state/selectors';
@@ -30,6 +30,11 @@ export function ShortLinkButtonMenu() {
     description?: string;
   }
 
+  type StateEntry = [string, ExploreItemState];
+  const isStateEntry = (entry: [string, ExploreItemState | undefined]): entry is StateEntry => {
+    return entry[1] !== undefined;
+  };
+
   const menuOptions: ShortLinkMenuItemData[] = [
     {
       key: 'copy-link',
@@ -47,19 +52,20 @@ export function ShortLinkButtonMenu() {
       ),
       getUrl: () => {
         const urlStates = Object.entries(panes)
+          .filter(isStateEntry)
           .map(([exploreId, pane]) => {
-            if (!pane) {
-              return;
-            }
             const urlState = getUrlStateFromPaneState(pane);
             urlState.range = {
               to: pane.range.to.valueOf().toString(),
               from: pane.range.from.valueOf().toString(),
             };
-            return JSON.stringify({ [exploreId]: { ...urlState } });
+            const panes: [string, ExploreUrlState] = [exploreId, urlState];
+            return panes;
           })
-          .filter((urlState): urlState is string => urlState !== undefined);
-        return urlUtil.renderUrl('/explore', { panes: urlStates, schemaVersion: 1 });
+          .reduce((acc, [exploreId, urlState]) => {
+            return { ...acc, [exploreId]: urlState };
+          }, {});
+        return urlUtil.renderUrl('/explore', { schemaVersion: 1, panes: JSON.stringify(urlStates) });
       },
     },
   ];
