@@ -18,24 +18,12 @@ export const InfiniteScroll = ({ children, loadMoreLogs, range, rows, scrollElem
     if (!scrollElement || !loadMoreLogs) {
       return;
     }
-    const delta = 5;
-    function handleScroll(e: Event) {
-      if (!e.target || !loadMoreLogs || !rows.length) {
+    
+    function handleScroll() {
+      if (!scrollElement || !loadMoreLogs || !rows.length || !shouldLoadMore(scrollElement)) {
         return;
       }
-      const target: HTMLDivElement = e.target as HTMLDivElement;
-      const diff = target.scrollHeight - target.scrollTop - target.clientHeight;
-      if (diff > delta) {
-        return;
-      }
-
-      const firstTimeStamp = rows[0].timeEpochMs;
-      const lastTimeStamp = rows[rows.length - 1].timeEpochMs;
-
-      const visibleRange =
-        lastTimeStamp < firstTimeStamp
-          ? { from: lastTimeStamp, to: firstTimeStamp }
-          : { from: firstTimeStamp, to: lastTimeStamp };
+      const visibleRange = getVisibleRange(rows);
       const rangeSpan = range.to - range.from;
       loadMoreLogs({ from: visibleRange.from - rangeSpan, to: visibleRange.from });
 
@@ -50,3 +38,21 @@ export const InfiniteScroll = ({ children, loadMoreLogs, range, rows, scrollElem
 
   return <>{children}</>;
 };
+
+function shouldLoadMore(element: HTMLDivElement) {
+  const delta = 5;
+  const diff = element.scrollHeight - element.scrollTop - element.clientHeight;
+  return diff <= delta;
+}
+
+function getVisibleRange(rows: LogRowModel[]) {
+  const firstTimeStamp = rows[0].timeEpochMs;
+  const lastTimeStamp = rows[rows.length - 1].timeEpochMs;
+
+  const visibleRange =
+    lastTimeStamp < firstTimeStamp
+      ? { from: lastTimeStamp, to: firstTimeStamp }
+      : { from: firstTimeStamp, to: lastTimeStamp };
+
+    return visibleRange;
+}
