@@ -671,6 +671,41 @@ func TestRateInterval(t *testing.T) {
 		require.Equal(t, "sum(rate(process_cpu_seconds_total[2m0s]))", res.Expr)
 		require.Equal(t, 30*time.Second, res.Step)
 	})
+
+	t.Run("minStep is auto and ds scrape interval 15s and time range 5 minutes", func(t *testing.T) {
+		query := backend.DataQuery{
+			RefID:         "A",
+			QueryType:     "",
+			MaxDataPoints: 1055,
+			Interval:      15 * time.Second,
+			TimeRange: backend.TimeRange{
+				From: now,
+				To:   now.Add(5 * time.Minute),
+			},
+			JSON: []byte(`{
+			"datasource": {
+		        "type": "prometheus",
+		        "uid": "2z9d6ElGk"
+		    },
+		    "editorMode": "code",
+		    "expr": "sum(rate(cache_requests_total[$__rate_interval]))",
+		    "legendFormat": "__auto",
+		    "range": true,
+		    "refId": "A",
+		    "exemplar": false,
+		    "requestId": "1A",
+		    "utcOffsetSec": 0,
+		    "interval": "",
+		    "datasourceId": 508,
+		    "intervalMs": 15000,
+		    "maxDataPoints": 1055
+		}`),
+		}
+		res, err := models.Parse(query, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.Equal(t, "sum(rate(cache_requests_total[1m0s]))", res.Expr)
+		require.Equal(t, 15*time.Second, res.Step)
+	})
 }
 
 func mockQuery(expr string, interval string, intervalMs int64, timeRange *backend.TimeRange) backend.DataQuery {
