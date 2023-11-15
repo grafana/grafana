@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Tooltip } from '@grafana/ui';
 
 import { useStyles2 } from '../../themes';
+import { Tooltip } from '../Tooltip';
 
 import { VizTooltipColorIndicator } from './VizTooltipColorIndicator';
 import { LabelValue } from './types';
@@ -28,16 +28,16 @@ export const VizTooltipRow = ({
 }: Props) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
-  const [showLabelTooltip, setShowLableTooltip] = useState(false);
+  const [showLabelTooltip, setShowLabelTooltip] = useState(false);
   const [showValueTooltip, setShowValueTooltip] = useState(false);
 
   const onMouseEnterLabel = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.currentTarget.offsetWidth < event.currentTarget.scrollWidth) {
-      setShowLableTooltip(true);
+      setShowLabelTooltip(true);
     }
   };
 
-  const onMouseLeaveLabel = () => setShowLableTooltip(false);
+  const onMouseLeaveLabel = () => setShowLabelTooltip(false);
 
   const onMouseEnterValue = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.currentTarget.offsetWidth < event.currentTarget.scrollWidth) {
