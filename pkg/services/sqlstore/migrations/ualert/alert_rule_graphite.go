@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 )
 
@@ -29,13 +29,14 @@ type panel struct {
 }
 
 type target struct {
-	RefID  string `json:"refId"`
-	Target string `json:"target"`
+	RefID      string `json:"refId"`
+	Target     string `json:"target"`
+	TargetFull string `json:"targetFull"`
 }
 
 // fixGraphiteReferencedSubQueries attempts to fix graphite referenced sub queries, given unified alerting does not support this.
 // targetFull of Graphite data source contains the expanded version of field 'target', so let's copy that.
-func fixGraphiteReferencedSubQueries(l log.Logger, queryData map[string]json.RawMessage, ruleID, panelID int64, dashboard *dashboards.Dashboard) map[string]json.RawMessage {
+func fixGraphiteReferencedSubQueries(l log.Logger, queryData map[string]json.RawMessage, ruleID, panelID int64, dashboard *dashboard) map[string]json.RawMessage {
 	if !isFixable(l, queryData) {
 		return queryData
 	}
@@ -94,7 +95,7 @@ func isFixable(l log.Logger, queryData map[string]json.RawMessage) bool {
 	return true
 }
 
-func unwrapFromDashboard(l log.Logger, queryData map[string]json.RawMessage, panelID int64, dashboard *dashboards.Dashboard) (string, error) {
+func unwrapFromDashboard(l log.Logger, queryData map[string]json.RawMessage, panelID int64, dashboard *dashboard) (string, error) {
 	refIDRaw, ok := queryData["refId"]
 	if !ok {
 		return "", fmt.Errorf("query data does not have field 'refId'")
@@ -202,4 +203,49 @@ func logGraphiteMigrationStats(l log.Logger) {
 		"failed", failedGraphiteMigrations,
 		"success_copy", successfulGraphiteMigrationCopy,
 		"success_dashboard", successfulGraphiteMigrationDashboard)
+}
+
+func fixBrokenGraphitePlaceholders(l log.Logger, dash *dashboard, panelID int64, settings *dashAlertSettings, dsTypes map[int64]*dsType) error {
+	for i := range settings.Conditions {
+		cond := settings.Conditions[i]
+		val, present := dsTypes[cond.Query.DatasourceID]
+		if !present {
+			return fmt.Errorf("failed to find datasource with id %d", cond.Query.DatasourceID)
+		}
+		if val.Type != datasources.DS_GRAPHITE {
+			return nil
+		}
+		var t target
+		if err := json.Unmarshal(cond.Query.Model, &t); err != nil {
+			return err
+		}
+		if t.Target != "" && !hasPlaceholders(t.Target) {
+			continue
+		}
+		if t.TargetFull != "" && !hasPlaceholders(t.TargetFull) {
+			continue
+		}
+		var data map[string]json.RawMessage
+		if err := json.Unmarshal(cond.Query.Model, &data); err != nil {
+			return err
+		}
+		unwrapped, err := unwrapFromDashboard(nil, data, panelID, dash)
+		if err != nil {
+			return err
+		}
+		marshUnwrapped, err := json.Marshal(unwrapped)
+		if err != nil {
+			l.Error("error", "err", err)
+			return err
+		}
+		data[graphite.TargetFullModelField] = marshUnwrapped
+		b, err := json.Marshal(data)
+		if err != nil {
+			l.Error("error", "err", err)
+			return err
+		}
+		cond.Query.Model = b
+		settings.Conditions[i] = cond
+	}
+	return nil
 }

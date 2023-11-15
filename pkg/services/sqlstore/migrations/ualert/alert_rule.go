@@ -118,7 +118,11 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate alert rule queries: related dashboard could not be loaded: %w", err)
 	}
-	dsTypeMap, err := m.fetchDsTypes(cond.Data)
+	var uids []string
+	for _, d := range cond.Data {
+		uids = append(uids, d.DatasourceUID)
+	}
+	dsTypeMap, err := m.fetchDsTypes(uids)
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate alert rule queries: datasources could not be loaded: %w", err)
 	}
@@ -185,15 +189,15 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	return ar, nil
 }
 
-func (m *migration) fetchDashboard(orgID int64, dashboardUID string) (*dashboards.Dashboard, error) {
+func (m *migration) fetchDashboard(orgID int64, dashboardUID string) (*dashboard, error) {
 	// This is a hack for unit tests in 9.4.
 	if m.sess == nil {
-		return &dashboards.Dashboard{}, nil
+		return &dashboard{}, nil
 	}
 
-	var queryResult *dashboards.Dashboard
+	var queryResult *dashboard
 
-	dashboard := dashboards.Dashboard{OrgID: orgID, UID: dashboardUID}
+	dashboard := dashboard{OrgId: orgID, Uid: dashboardUID}
 
 	has, err := m.sess.Get(&dashboard)
 
@@ -203,14 +207,14 @@ func (m *migration) fetchDashboard(orgID int64, dashboardUID string) (*dashboard
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
-	dashboard.SetID(dashboard.ID)
-	dashboard.SetUID(dashboard.UID)
+	dashboard.setUid(dashboard.Uid)
 	queryResult = &dashboard
 
 	return queryResult, err
 }
 
 type dsType struct {
+	ID   int64  `xorm:"id"`
 	UID  string `xorm:"uid"`
 	Type string `xorm:"type"`
 }
@@ -219,31 +223,54 @@ func (dsType) TableName() string {
 	return "data_source"
 }
 
-func (m *migration) fetchDsTypes(data []alertQuery) (map[string]string, error) {
+func (m *migration) fetchDsTypes(uids []string) (map[string]*dsType, error) {
 	// This is a hack for unit tests in 9.4.
 	if m.sess == nil {
-		return map[string]string{}, nil
+		return map[string]*dsType{}, nil
 	}
 
-	result := make(map[string]string)
-	for _, q := range data {
-		result[q.DatasourceUID] = ""
+	result := make(map[string]*dsType)
+	for _, uid := range uids {
+		result[uid] = nil
 	}
 	var dsTypes []*dsType
-	for _, uid := range result {
+	for uid := range result {
 		dsTypes = append(dsTypes, &dsType{UID: uid})
 	}
 
 	err := m.sess.Find(&dsTypes)
 
 	for _, ds := range dsTypes {
-		result[ds.UID] = ds.Type
+		result[ds.UID] = ds
+	}
+	return result, err
+}
+
+func (m *migration) fetchDsTypesByIDs(ids []int64) (map[int64]*dsType, error) {
+	// This is a hack for unit tests in 9.4.
+	if m.sess == nil {
+		return map[int64]*dsType{}, nil
+	}
+
+	result := make(map[int64]*dsType)
+	for _, id := range ids {
+		result[id] = nil
+	}
+	var dsTypes []*dsType
+	for id := range result {
+		dsTypes = append(dsTypes, &dsType{ID: id})
+	}
+
+	err := m.sess.Find(&dsTypes)
+
+	for _, ds := range dsTypes {
+		result[ds.ID] = ds
 	}
 	return result, err
 }
 
 // migrateAlertRuleQueries attempts to fix alert rule queries so they can work in unified alerting. Queries of some data sources are not compatible with unified alerting.
-func migrateAlertRuleQueries(l log.Logger, ruleID int64, data []alertQuery, panelID int64, dashboard *dashboards.Dashboard, dsTypes map[string]string) ([]alertQuery, error) {
+func migrateAlertRuleQueries(l log.Logger, ruleID int64, data []alertQuery, panelID int64, dashboard *dashboard, dsTypes map[string]*dsType) ([]alertQuery, error) {
 	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
 		// queries that are expression are not relevant, skip them.
@@ -256,7 +283,7 @@ func migrateAlertRuleQueries(l log.Logger, ruleID int64, data []alertQuery, pane
 			l.Error("datasource not found", "uid", d.DatasourceUID)
 			return nil, fmt.Errorf("datasource not found")
 		}
-		if dsType != datasources.DS_GRAPHITE {
+		if dsType.Type != datasources.DS_GRAPHITE {
 			continue
 		}
 		var fixedData map[string]json.RawMessage
