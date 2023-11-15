@@ -32,6 +32,10 @@ func (auth StackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
 	}
 
+	if a.GetNamespace() == "default" {
+		return authorizer.DecisionDeny, "use `stack-${id}` for the namespace", nil
+	}
+
 	info, err := grafanarequest.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
