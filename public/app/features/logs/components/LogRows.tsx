@@ -97,14 +97,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   popoverMenuSupported() {
+    if (!config.featureToggles.logRowsPopoverMenu) {
+      return false;
+    }
     return Boolean(this.props.onClickFilterOutValue || this.props.onClickFilterValue);
   }
 
   handleSelection = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel): boolean => {
-    if (!config.featureToggles.logRowsPopoverMenu) {
-      return false;
-    }
-    // Selection is ignored if the filter functions are not defined.
     if (this.popoverMenuSupported() === false) {
       return false;
     }
