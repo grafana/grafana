@@ -6,6 +6,7 @@ import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { createDashboardEditViewFor } from '../settings/DashboardEditView';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
@@ -17,17 +18,27 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel'];
+    return ['inspect', 'viewPanel', 'editview'];
   }
 
   getUrlState(): SceneObjectUrlValues {
     const state = this._scene.state;
-    return { inspect: state.inspectPanelKey, viewPanel: state.viewPanelKey };
+    return {
+      inspect: state.inspectPanelKey,
+      viewPanel: state.viewPanelKey,
+      editview: state.editview?.getUrlKey(),
+    };
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
     const { inspectPanelKey: inspectPanelId, viewPanelKey: viewPanelId } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
+
+    if (typeof values.editview === 'string') {
+      update.editview = createDashboardEditViewFor(values.editview);
+    } else if (values.hasOwnProperty('editview')) {
+      update.editview = undefined;
+    }
 
     // Handle inspect object state
     if (typeof values.inspect === 'string') {

@@ -25,6 +25,7 @@ import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
+import { DashboardEditView } from '../settings/DashboardEditView';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
@@ -55,6 +56,8 @@ export interface DashboardSceneState extends SceneObjectState {
   inspectPanelKey?: string;
   /** Panel to view in full screen */
   viewPanelKey?: string;
+  /** Edit view */
+  editview?: DashboardEditView;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
 }
@@ -167,14 +170,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta } = this.state;
+    const { meta, editview, viewPanelKey } = this.state;
 
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: getDashboardUrl({
         uid: this.state.uid,
         currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null },
+        updateQuery: { viewPanel: null, inspect: null, editview: null },
         useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && meta.canEdit),
       }),
     };
@@ -205,7 +208,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       }
     }
 
-    if (this.state.viewPanelKey) {
+    if (viewPanelKey) {
       pageNav = {
         text: 'View panel',
         parentItem: pageNav,
@@ -274,6 +277,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       console.error('Failed to star dashboard', err);
     }
   }
+
+  public onOpenSettings = () => {
+    locationService.partial({ editview: 'settings' });
+  };
 
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request

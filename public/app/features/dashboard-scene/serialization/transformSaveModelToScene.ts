@@ -32,6 +32,7 @@ import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardEditControls } from '../scene/DashboardEditControls';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -220,6 +221,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     ...filtersSets,
     new SceneDataLayerControls(),
     new SceneControlsSpacer(),
+    new DashboardEditControls({}),
   ];
 
   if (!Boolean(oldModel.timepicker.hidden)) {
