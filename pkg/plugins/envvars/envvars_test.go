@@ -38,6 +38,7 @@ func TestInitializer_envVars(t *testing.T) {
 					"custom_env_var": "customVal",
 				},
 			},
+			Features: featuremgmt.WithFeatures(),
 		}, licensing)
 
 		envVars := envVarsProvider.Get(context.Background(), p)
@@ -66,7 +67,7 @@ func TestInitializer_skipHostEnvVars(t *testing.T) {
 	}
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
-		envVarsProvider := NewProvider(&config.Cfg{}, nil)
+		envVarsProvider := NewProvider(&config.Cfg{Features: featuremgmt.WithFeatures()}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 
 		// We want to test that the envvars.Provider does not add any of the host env vars.
