@@ -375,9 +375,12 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 		datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
 		return errors.New("validation error, invalid format of TeamHTTPHeaders")
 	}
+	if teamHTTPHeadersJSON == nil {
+		return nil
+	}
 	// whitelisting ValidHeaders
 	// each teams headers
-	for _, teamheaders := range teamHTTPHeadersJSON {
+	for _, teamheaders := range teamHTTPHeadersJSON.Headers {
 		for _, header := range teamheaders {
 			if !slices.ContainsFunc(validHeaders, func(v string) bool {
 				return http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(header.Header)
