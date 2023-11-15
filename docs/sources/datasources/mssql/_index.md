@@ -126,8 +126,8 @@ datasources:
     type: mssql
     url: localhost:1433
     user: grafana
+    database: grafana
     jsonData:
-      database: grafana
       maxOpenConns: 100 # Grafana v5.4+
       maxIdleConns: 100 # Grafana v5.4+
       maxIdleConnsAuto: true # Grafana v9.5.1+
