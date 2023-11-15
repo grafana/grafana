@@ -21,7 +21,7 @@ The user or team frontend preferences
 | Property   | Type                | Required | Default | Description                                                                                                                                                                                                                                                                    |
 |------------|---------------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `metadata` | [object](#metadata) | **Yes**  |         | metadata contains embedded CommonMetadata and can be extended with custom string fields<br/>TODO: use CommonMetadata instead of redefining here; currently needs to be defined here<br/>without external reference as using the CommonMetadata reference breaks thema codegen. |
-| `spec`     | [object](#spec)     | **Yes**  |         |                                                                                                                                                                                                                                                                                |
+| `spec`     | [object](#spec)     | **Yes**  |         | Spec defines user, team or org Grafana preferences<br/>swagger:model Preferences                                                                                                                                                                                               |
 | `status`   | [object](#status)   | **Yes**  |         |                                                                                                                                                                                                                                                                                |
 
 ### Metadata
@@ -68,6 +68,9 @@ extraFields is reserved for any fields that are pulled from the API server metad
 |----------|------|----------|---------|-------------|
 
 ### Spec
+
+Spec defines user, team or org Grafana preferences
+swagger:model Preferences
 
 | Property            | Type                                              | Required | Default | Description                                                                     |
 |---------------------|---------------------------------------------------|----------|---------|---------------------------------------------------------------------------------|

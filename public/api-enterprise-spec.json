@@ -3528,6 +3528,7 @@
           "format": "int64"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4340,6 +4341,7 @@
           "type": "boolean"
         },
         "id": {
+          "description": "Deprecated: use Uid instead",
           "type": "integer",
           "format": "int64"
         },
@@ -5717,6 +5719,38 @@
         }
       }
     },
+    "Preferences": {
+      "description": "Spec defines user, team or org Grafana preferences",
+      "type": "object",
+      "properties": {
+        "cookiePreferences": {
+          "$ref": "#/definitions/CookiePreferences"
+        },
+        "homeDashboardUID": {
+          "description": "UID for the home dashboard",
+          "type": "string"
+        },
+        "language": {
+          "description": "Selected language (beta)",
+          "type": "string"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "theme": {
+          "description": "Theme light, dark, empty is default",
+          "type": "string"
+        },
+        "timezone": {
+          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+          "type": "string"
+        },
+        "weekStart": {
+          "description": "WeekStart day of the week (sunday, monday, etc)",
+          "type": "string"
+        }
+      }
+    },
     "PrometheusRemoteWriteTargetJSON": {
       "type": "object",
       "properties": {
@@ -5902,8 +5936,10 @@
     },
     "QueryHistoryPreference": {
       "type": "object",
+      "title": "QueryHistoryPreference defines model for QueryHistoryPreference.",
       "properties": {
         "homeTab": {
+          "description": "HomeTab one of: '' | 'query' | 'starred';",
           "type": "string"
         }
       }
@@ -6652,38 +6688,6 @@
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
-    },
-    "Spec": {
-      "type": "object",
-      "title": "Spec defines model for Spec.",
-      "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/CookiePreferences"
-        },
-        "homeDashboardUID": {
-          "description": "UID for the home dashboard",
-          "type": "string"
-        },
-        "language": {
-          "description": "Selected language (beta)",
-          "type": "string"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
-        },
-        "theme": {
-          "description": "Theme light, dark, empty is default",
-          "type": "string"
-        },
-        "timezone": {
-          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-          "type": "string"
-        },
-        "weekStart": {
-          "description": "WeekStart day of the week (sunday, monday, etc)",
-          "type": "string"
-        }
-      }
     },
     "State": {
       "type": "string"
@@ -8531,7 +8535,7 @@
     "getPreferencesResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Spec"
+        "$ref": "#/definitions/Preferences"
       }
     },
     "getPublicAnnotationsResponse": {
