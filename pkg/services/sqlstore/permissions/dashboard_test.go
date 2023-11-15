@@ -777,7 +777,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 			dashes = append(dashes, dashboards.Dashboard{
 				OrgID:    1,
 				IsFolder: false,
-				FolderID: int64(folderID),
+				FolderID: int64(folderID), // nolint:staticcheck
 				UID:      str,
 				Slug:     str,
 				Title:    str,

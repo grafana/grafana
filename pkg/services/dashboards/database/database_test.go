@@ -61,6 +61,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, savedDash.Slug, "test-dash-23")
 		require.NotEqual(t, savedDash.ID, 0)
 		require.False(t, savedDash.IsFolder)
+		// nolint:staticcheck
 		require.Positive(t, savedDash.FolderID)
 		require.Positive(t, len(savedDash.UID))
 
@@ -68,6 +69,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, savedFolder.Slug, "1-test-dash-folder")
 		require.NotEqual(t, savedFolder.ID, 0)
 		require.True(t, savedFolder.IsFolder)
+		// nolint:staticcheck
 		require.EqualValues(t, savedFolder.FolderID, 0)
 		require.Positive(t, len(savedFolder.UID))
 	})
@@ -222,6 +224,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		}
 		dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 		require.NoError(t, err)
+		// nolint:staticcheck
 		require.EqualValues(t, dash.FolderID, 2)
 
 		cmd = dashboards.SaveDashboardCommand{
@@ -245,6 +248,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		queryResult, err := dashboardStore.GetDashboard(context.Background(), &query)
 		require.NoError(t, err)
+		// nolint:staticcheck
 		require.Equal(t, queryResult.FolderID, int64(0))
 		require.Equal(t, queryResult.CreatedBy, savedDash.CreatedBy)
 		require.WithinDuration(t, queryResult.Created, savedDash.Created, 3*time.Second)
@@ -700,6 +704,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 		savedFolder := insertTestDashboard(t, dashboardStore, "test dash folder", 1, 0, "", true, "prod", "webapp")
 		savedDash := insertTestDashboard(t, dashboardStore, "test dash", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// nolint:staticcheck
 			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: savedDash.Title, FolderID: savedFolder.ID, OrgID: 1}, sqlStore.GetDialect(), false, false)
 			return err
 		})
@@ -1181,6 +1186,21 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store,
 	require.NoError(t, err)
 
 	return dash
+}
+
+func updateDashboardACL(t *testing.T, dashboardStore dashboards.Store, dashboardID int64,
+	items ...dashboards.DashboardACL) error {
+	t.Helper()
+
+	var itemPtrs []*dashboards.DashboardACL
+	for _, it := range items {
+		item := it
+		item.Created = time.Now()
+		item.Updated = time.Now()
+		itemPtrs = append(itemPtrs, &item)
+	}
+
+	return dashboardStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
 }
 
 // testSearchDashboards is a (near) copy of the dashboard service

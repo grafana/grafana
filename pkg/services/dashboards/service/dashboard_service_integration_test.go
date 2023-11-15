@@ -202,7 +202,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInGeneralFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.savedDashInGeneralFolder.FolderID,
+						FolderID:  sc.savedDashInGeneralFolder.FolderID, // nolint:staticcheck
 						FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 						UserID:    10000,
 						Overwrite: true,
@@ -227,7 +227,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.savedDashInFolder.FolderID,
+						FolderID:  sc.savedDashInFolder.FolderID, // nolint:staticcheck
 						FolderUID: sc.savedDashInFolder.FolderUID,
 						UserID:    10000,
 						Overwrite: true,
@@ -575,7 +575,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderID:  sc.savedDashInFolder.FolderID,
+							FolderID:  sc.savedDashInFolder.FolderID, // nolint:staticcheck
 							FolderUID: sc.savedDashInFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
@@ -592,7 +592,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderID:  sc.savedDashInGeneralFolder.FolderID,
+							FolderID:  sc.savedDashInGeneralFolder.FolderID, // nolint:staticcheck
 							FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
@@ -715,7 +715,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderID:  sc.savedDashInFolder.FolderID,
+							FolderID:  sc.savedDashInFolder.FolderID, // nolint:staticcheck
 							FolderUID: sc.savedDashInFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
@@ -740,7 +740,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderID:  sc.savedDashInGeneralFolder.FolderID,
+							FolderID:  sc.savedDashInGeneralFolder.FolderID, // nolint:staticcheck
 							FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
@@ -907,6 +907,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		require.Equal(t, "saved-folder", savedFolder.Slug)
 		require.NotEqual(t, int64(0), savedFolder.ID)
 		require.True(t, savedFolder.IsFolder)
+		// nolint:staticcheck
 		require.Equal(t, int64(0), savedFolder.FolderID)
 		require.NotEmpty(t, savedFolder.UID)
 
@@ -914,6 +915,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		require.Equal(t, "saved-dash-in-folder", savedDashInFolder.Slug)
 		require.NotEqual(t, int64(0), savedDashInFolder.ID)
 		require.False(t, savedDashInFolder.IsFolder)
+		// nolint:staticcheck
 		require.Equal(t, savedFolder.ID, savedDashInFolder.FolderID)
 		require.NotEmpty(t, savedDashInFolder.UID)
 
