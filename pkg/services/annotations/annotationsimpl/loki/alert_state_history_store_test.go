@@ -39,17 +39,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 	sql := db.InitTestDB(t)
 
-	t.Cleanup(func() {
-		err := sql.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-			_, err := dbSession.Exec("DELETE FROM dashboard WHERE 1=1")
-			if err != nil {
-				return err
-			}
-			return err
-		})
-		require.NoError(t, err)
-	})
-
 	dashboard1 := testutil.CreateDashboard(t, sql, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
 		OrgID:  1,
@@ -66,40 +55,21 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		}),
 	})
 
+	knownUIDs := &sync.Map{}
+
+	dashboardRules := map[string][]*ngmodels.AlertRule{
+		dashboard1.UID: {
+			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 1", dashboard1.UID),
+			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 2", dashboard1.UID),
+		},
+		dashboard2.UID: {
+			createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 3", dashboard2.UID),
+		},
+	}
+
+	ruleNoDash := createAlertRule(t, sql, knownUIDs, "Test Rule 4")
+
 	t.Run("Testing Loki state history read", func(t *testing.T) {
-		knownUIDs := &sync.Map{}
-
-		dashAlert1 := createAlertRuleWithDashboard(
-			t,
-			sql,
-			knownUIDs,
-			"Test Rule 1",
-			dashboard1.UID,
-		)
-
-		dashAlert2 := createAlertRuleWithDashboard(
-			t,
-			sql,
-			knownUIDs,
-			"Test Rule 2",
-			dashboard1.UID,
-		)
-
-		dashAlert3 := createAlertRuleWithDashboard(
-			t,
-			sql,
-			knownUIDs,
-			"Test Rule 3",
-			dashboard2.UID,
-		)
-
-		orgAlert1 := createAlertRule(
-			t,
-			sql,
-			knownUIDs,
-			"Test Rule 4",
-		)
-
 		start := time.Now()
 		numTransitions := 2
 		transitions := genStateTransitions(t, numTransitions, start)
@@ -108,15 +78,17 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		store := createTestLokiStore(t, sql, fakeLokiClient)
 
 		t.Run("can query history by alert id", func(t *testing.T) {
+			rule := dashboardRules[dashboard1.UID][0]
+
 			fakeLokiClient.Response = []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, dashAlert1), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			query := annotations.ItemQuery{
 				OrgID:   1,
-				AlertID: dashAlert1.ID,
-				From:    start.Unix(),
-				To:      start.Add(time.Second * time.Duration(numTransitions)).Unix(),
+				AlertID: rule.ID,
+				From:    start.UnixMilli(),
+				To:      start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
 			}
 			res, err := store.Get(
 				context.Background(),
@@ -136,15 +108,15 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 		t.Run("can query history by dashboard id", func(t *testing.T) {
 			fakeLokiClient.Response = []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, dashAlert1), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, dashAlert2), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			query := annotations.ItemQuery{
 				OrgID:       1,
 				DashboardID: dashboard1.ID,
-				From:        start.Unix(),
-				To:          start.Add(time.Second * time.Duration(numTransitions)).Unix(),
+				From:        start.UnixMilli(),
+				To:          start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
 			}
 			res, err := store.Get(
 				context.Background(),
@@ -162,68 +134,12 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.Len(t, res, 2*numTransitions)
 		})
 
-		t.Run("should only include history from dashboards in scope", func(t *testing.T) {
-			fakeLokiClient.Response = []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, dashAlert1), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, dashAlert2), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, dashAlert3), transitions, map[string]string{}, log.NewNopLogger()),
-			}
-
-			query := annotations.ItemQuery{
-				OrgID: 1,
-				From:  start.Unix(),
-				To:    start.Add(time.Second * time.Duration(numTransitions)).Unix(),
-			}
-			res, err := store.Get(
-				context.Background(),
-				&query,
-				annotation_ac.AccessResources{
-					Dashboards: map[string]int64{
-						dashboard2.UID: dashboard2.ID,
-					},
-					ScopeTypes: map[any]struct{}{
-						testutil.DashScopeType: {},
-					},
-				},
-			)
-			require.NoError(t, err)
-			require.Len(t, res, numTransitions)
-		})
-
-		t.Run("should only include history without linked dashboard on org scope", func(t *testing.T) {
-			query := annotations.ItemQuery{
-				OrgID: 1,
-				From:  start.Unix(),
-				To:    start.Add(time.Second * time.Duration(numTransitions)).Unix(),
-			}
-
-			fakeLokiClient.Response = []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, dashAlert1), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, dashAlert2), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, dashAlert3), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, orgAlert1), transitions, map[string]string{}, log.NewNopLogger()),
-			}
-
-			res, err := store.Get(
-				context.Background(),
-				&query,
-				annotation_ac.AccessResources{
-					Dashboards: map[string]int64{},
-					ScopeTypes: map[any]struct{}{
-						testutil.OrgScopeType: {},
-					},
-				},
-			)
-			require.NoError(t, err)
-			require.Len(t, res, numTransitions)
-		})
-
-		t.Run("should not find any when item is outside time range", func(t *testing.T) {
+		t.Run("should not find any when history is outside time range", func(t *testing.T) {
 			query := annotations.ItemQuery{
 				OrgID:       1,
 				DashboardID: dashboard1.ID,
-				From:        start.Add(-2 * time.Second).Unix(),
-				To:          start.Add(-1 * time.Second).Unix(),
+				From:        start.Add(-2 * time.Second).UnixMilli(),
+				To:          start.Add(-1 * time.Second).UnixMilli(),
 			}
 			res, err := store.Get(
 				context.Background(),
@@ -240,11 +156,48 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, res, 0)
 		})
+
+		t.Run("should sort history by time", func(t *testing.T) {
+			fakeLokiClient.Response = []historian.Stream{
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][1]), transitions, map[string]string{}, log.NewNopLogger()),
+			}
+
+			query := annotations.ItemQuery{
+				OrgID:       1,
+				DashboardID: dashboard1.ID,
+				From:        start.UnixMilli(),
+				To:          start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+			}
+			res, err := store.Get(
+				context.Background(),
+				&query,
+				annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					ScopeTypes: map[any]struct{}{
+						testutil.DashScopeType: {},
+					},
+				},
+			)
+			require.NoError(t, err)
+			require.Len(t, res, 2*numTransitions)
+
+			var lastTime int64
+			for _, item := range res {
+				if lastTime != 0 {
+					require.True(t, item.Time <= lastTime)
+				}
+				lastTime = item.Time
+			}
+
+		})
 	})
 
 	t.Run("Testing get alert rule", func(t *testing.T) {
 		store := createTestLokiStore(t, sql, NewFakeLokiClient())
-		rule := createAlertRuleWithDashboard(t, sql, nil, "Alert Rule", "dashboardUID")
+		rule := ruleNoDash
 
 		t.Run("should get rule by UID", func(t *testing.T) {
 			query := ruleQuery{
@@ -290,14 +243,13 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should return one annotation per stream+sample", func(t *testing.T) {
-			alert := createAlertRuleWithDashboard(t, sql, nil, "Test Rule", dashboard1.UID)
-
+			rule := dashboardRules[dashboard1.UID][0]
 			start := time.Now()
 			numTransitions := 2
 			transitions := genStateTransitions(t, numTransitions, start)
 
 			res := []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, alert), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, rule), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{
@@ -315,11 +267,11 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				transition := transitions[i]
 
 				expected := &annotations.ItemDTO{
-					AlertID:      alert.ID,
-					AlertName:    alert.Title,
+					AlertID:      rule.ID,
+					AlertName:    rule.Title,
 					DashboardID:  dashboard1.ID,
 					DashboardUID: &dashboard1.UID,
-					PanelID:      *alert.PanelID,
+					PanelID:      *rule.PanelID,
 					Time:         transition.State.LastEvaluationTime.UnixMilli(),
 					NewState:     transition.Formatted(),
 				}
@@ -331,17 +283,18 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				compareAnnotationItem(t, expected, item)
 			}
 		})
+
 		t.Run("should filter out history from dashboards not in scope", func(t *testing.T) {
-			alert1 := createAlertRuleWithDashboard(t, sql, nil, "Test Rule 1", dashboard1.UID)
-			alert2 := createAlertRuleWithDashboard(t, sql, nil, "Test Rule 2", dashboard2.UID)
+			rule1 := dashboardRules[dashboard1.UID][0]
+			rule2 := dashboardRules[dashboard2.UID][0]
 
 			start := time.Now()
 			numTransitions := 2
 			transitions := genStateTransitions(t, numTransitions, start)
 
 			res := []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, alert1), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, alert2), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, rule1), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, rule2), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{
@@ -359,11 +312,11 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				transition := transitions[i]
 
 				expected := &annotations.ItemDTO{
-					AlertID:      alert1.ID,
-					AlertName:    alert1.Title,
+					AlertID:      rule1.ID,
+					AlertName:    rule1.Title,
 					DashboardID:  dashboard1.ID,
 					DashboardUID: &dashboard1.UID,
-					PanelID:      *alert1.PanelID,
+					PanelID:      *rule1.PanelID,
 					Time:         transition.State.LastEvaluationTime.UnixMilli(),
 					NewState:     transition.Formatted(),
 				}
@@ -377,19 +330,13 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		})
 
 		t.Run("should include only history without linked dashboard on org scope", func(t *testing.T) {
-			knownUIDs := &sync.Map{}
-
-			alert1 := createAlertRuleWithDashboard(t, sql, knownUIDs, "Test Rule 1", dashboard1.UID)
-
-			alert2 := createAlertRule(t, sql, knownUIDs, "Test Rule 2")
-
 			start := time.Now()
 			numTransitions := 2
 			transitions := genStateTransitions(t, numTransitions, start)
 
 			res := []historian.Stream{
-				historian.StatesToStream(ruleMetaFromRule(t, alert1), transitions, map[string]string{}, log.NewNopLogger()),
-				historian.StatesToStream(ruleMetaFromRule(t, alert2), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, dashboardRules[dashboard1.UID][0]), transitions, map[string]string{}, log.NewNopLogger()),
+				historian.StatesToStream(ruleMetaFromRule(t, ruleNoDash), transitions, map[string]string{}, log.NewNopLogger()),
 			}
 
 			items := store.itemsFromStreams(context.Background(), 1, res, annotation_ac.AccessResources{
@@ -407,8 +354,8 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				transition := transitions[i]
 
 				expected := &annotations.ItemDTO{
-					AlertID:   alert2.ID,
-					AlertName: alert2.Title,
+					AlertID:   ruleNoDash.ID,
+					AlertName: ruleNoDash.Title,
 					Time:      transition.State.LastEvaluationTime.UnixMilli(),
 					NewState:  transition.Formatted(),
 				}
@@ -848,10 +795,23 @@ func NewFakeLokiClient() *FakeLokiClient {
 	}
 }
 
-func (c *FakeLokiClient) RangeQuery(_ context.Context, _ string, _, _, _ int64) (historian.QueryRes, error) {
+func (c *FakeLokiClient) RangeQuery(_ context.Context, _ string, from, to, _ int64) (historian.QueryRes, error) {
+	streams := make([]historian.Stream, len(c.Response))
+
+	for n, stream := range c.Response {
+		streams[n].Stream = stream.Stream
+		streams[n].Values = []historian.Sample{}
+		for _, sample := range stream.Values {
+			if sample.T.UnixMilli() < from || sample.T.UnixMilli() >= to { // matches Loki behavior
+				continue
+			}
+			streams[n].Values = append(streams[n].Values, sample)
+		}
+	}
+
 	res := historian.QueryRes{
 		Data: historian.QueryData{
-			Result: c.Response,
+			Result: streams,
 		},
 	}
 	// reset expected streams on read
