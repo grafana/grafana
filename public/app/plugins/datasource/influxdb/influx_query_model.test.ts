@@ -206,6 +206,44 @@ describe('InfluxQuery', () => {
     });
   });
 
+  describe('query with greater-than-or-equal-to condition', () => {
+    it('should use >=', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '5', operator: '>=' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" >= 5) AND $timeFilter');
+    });
+  });
+
+  describe('query with less-than-or-equal-to condition', () => {
+    it('should use <=', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '5', operator: '<=' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" <= 5) AND $timeFilter');
+    });
+  });
+
   describe('series with groupByTag', () => {
     it('should generate correct query', () => {
       const query = new InfluxQueryModel(

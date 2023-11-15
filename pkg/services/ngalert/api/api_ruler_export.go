@@ -15,12 +15,12 @@ import (
 // ExportFromPayload converts the rule groups from the argument `ruleGroupConfig` to export format. All rules are expected to be fully specified. The access to data sources mentioned in the rules is not enforced.
 // Can return 403 StatusForbidden if user is not authorized to read folder `namespaceTitle`
 func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceTitle string) response.Response {
-	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
 
-	rulesWithOptionals, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgID, namespace, srv.cfg)
+	rulesWithOptionals, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace, srv.cfg)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -107,7 +107,7 @@ func (srv RulerSrv) getRuleWithFolderTitleByRuleUid(c *contextmodel.ReqContext, 
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderTitle{}, err
 	}
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), rule.NamespaceUID, c.SignedInUser.OrgID, c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), rule.NamespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderTitle{}, errors.Join(errFolderAccess, err)
 	}
@@ -116,7 +116,7 @@ func (srv RulerSrv) getRuleWithFolderTitleByRuleUid(c *contextmodel.ReqContext, 
 
 // getRuleGroupWithFolderTitle calls getAuthorizedRuleGroup and combines its result with folder (aka namespace) title.
 func (srv RulerSrv) getRuleGroupWithFolderTitle(c *contextmodel.ReqContext, ruleGroupKey ngmodels.AlertRuleGroupKey) (ngmodels.AlertRuleGroupWithFolderTitle, error) {
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), ruleGroupKey.NamespaceUID, c.SignedInUser.OrgID, c.SignedInUser)
+	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), ruleGroupKey.NamespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderTitle{}, errors.Join(errFolderAccess, err)
 	}

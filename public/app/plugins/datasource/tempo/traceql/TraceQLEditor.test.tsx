@@ -72,6 +72,14 @@ describe('Check for syntax errors in query', () => {
     ['{span.status = $code}'],
     ['{span.${attribute} = "GET"}'],
     ['{span.${attribute:format} = ${value:format} }'],
+    ['{true} >> {true}'],
+    ['{true} << {true}'],
+    ['{true} !>> {true}'],
+    ['{true} !<< {true}'],
+    [
+      `{ true } /* && { false } && */ && { true } // && { false }
+    && { true }`,
+    ],
   ])('valid query - %s', (query: string) => {
     expect(getErrorNodes(query)).toStrictEqual([]);
   });

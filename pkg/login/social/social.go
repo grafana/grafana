@@ -14,10 +14,10 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
-	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -206,7 +206,7 @@ func ProvideService(cfg *setting.Cfg,
 				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
 				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 			}
-			if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+			if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
 				appendUniqueScope(&config, OfflineAccessScope)
 			}
 		}
@@ -219,7 +219,7 @@ func ProvideService(cfg *setting.Cfg,
 				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
 				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
 			}
-			if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+			if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
 				appendUniqueScope(&config, OfflineAccessScope)
 			}
 		}

@@ -27,6 +27,18 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
+// pluginSet is list of plugins supported on v2.
+var pluginSet = map[int]goplugin.PluginSet{
+	grpcplugin.ProtocolVersion: {
+		"diagnostics":    &grpcplugin.DiagnosticsGRPCPlugin{},
+		"resource":       &grpcplugin.ResourceGRPCPlugin{},
+		"data":           &grpcplugin.DataGRPCPlugin{},
+		"stream":         &grpcplugin.StreamGRPCPlugin{},
+		"renderer":       &pluginextensionv2.RendererGRPCPlugin{},
+		"secretsmanager": &secretsmanagerplugin.SecretsManagerGRPCPlugin{},
+	},
+}
+
 func newClientConfig(executablePath string, args []string, env []string, logger log.Logger,
 	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
@@ -42,13 +54,12 @@ func newClientConfig(executablePath string, args []string, env []string, logger 
 		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
 		GRPCDialOptions: []grpc.DialOption{
 			grpc.WithChainUnaryInterceptor(
-				otelgrpc.UnaryClientInterceptor(),
 				grpc_opentracing.UnaryClientInterceptor(),
 			),
 			grpc.WithChainStreamInterceptor(
-				otelgrpc.StreamClientInterceptor(),
 				grpc_opentracing.StreamClientInterceptor(),
 			),
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		},
 	}
 }
@@ -70,18 +81,6 @@ type PluginDescriptor struct {
 	startSecretsManagerFn StartSecretsManagerFunc
 }
 
-// getV2PluginSet returns list of plugins supported on v2.
-func getV2PluginSet() goplugin.PluginSet {
-	return goplugin.PluginSet{
-		"diagnostics":    &grpcplugin.DiagnosticsGRPCPlugin{},
-		"resource":       &grpcplugin.ResourceGRPCPlugin{},
-		"data":           &grpcplugin.DataGRPCPlugin{},
-		"stream":         &grpcplugin.StreamGRPCPlugin{},
-		"renderer":       &pluginextensionv2.RendererGRPCPlugin{},
-		"secretsmanager": &secretsmanagerplugin.SecretsManagerGRPCPlugin{},
-	}
-}
-
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
 func NewBackendPlugin(pluginID, executablePath string, executableArgs ...string) backendplugin.PluginFactoryFunc {
 	return newBackendPlugin(pluginID, executablePath, true, executableArgs...)
@@ -95,38 +94,32 @@ func NewUnmanagedBackendPlugin(pluginID, executablePath string, executableArgs .
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
 func newBackendPlugin(pluginID, executablePath string, managed bool, executableArgs ...string) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
-		pluginID:       pluginID,
-		executablePath: executablePath,
-		executableArgs: executableArgs,
-		managed:        managed,
-		versionedPlugins: map[int]goplugin.PluginSet{
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
-		},
+		pluginID:         pluginID,
+		executablePath:   executablePath,
+		executableArgs:   executableArgs,
+		managed:          managed,
+		versionedPlugins: pluginSet,
 	})
 }
 
 // NewRendererPlugin creates a new renderer plugin factory used for registering a backend renderer plugin.
 func NewRendererPlugin(pluginID, executablePath string, startFn StartRendererFunc) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
-		pluginID:       pluginID,
-		executablePath: executablePath,
-		managed:        false,
-		versionedPlugins: map[int]goplugin.PluginSet{
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
-		},
-		startRendererFn: startFn,
+		pluginID:         pluginID,
+		executablePath:   executablePath,
+		managed:          false,
+		versionedPlugins: pluginSet,
+		startRendererFn:  startFn,
 	})
 }
 
 // NewSecretsManagerPlugin creates a new secrets manager plugin factory used for registering a backend secrets manager plugin.
 func NewSecretsManagerPlugin(pluginID, executablePath string, startFn StartSecretsManagerFunc) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
-		pluginID:       pluginID,
-		executablePath: executablePath,
-		managed:        false,
-		versionedPlugins: map[int]goplugin.PluginSet{
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
-		},
+		pluginID:              pluginID,
+		executablePath:        executablePath,
+		managed:               false,
+		versionedPlugins:      pluginSet,
 		startSecretsManagerFn: startFn,
 	})
 }

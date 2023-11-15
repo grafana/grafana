@@ -246,6 +246,7 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
+	PluginInstallToken               string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -360,7 +361,7 @@ type Cfg struct {
 	ApiKeyMaxSecondsToLive int64
 
 	// Check if a feature toggle is enabled
-	// @deprecated
+	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
 	AnonymousEnabled     bool
@@ -432,6 +433,7 @@ type Cfg struct {
 	RudderstackWriteKey                 string
 	RudderstackSDKURL                   string
 	RudderstackConfigURL                string
+	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
 
 	// AzureAD
@@ -978,7 +980,20 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 		Azure:  &azsettings.AzureSettings{},
+
+		// Avoid nil pointer
+		IsFeatureToggleEnabled: func(_ string) bool {
+			return false
+		},
 	}
+}
+
+// Deprecated: Avoid using IsFeatureToggleEnabled from settings.  If you need to access
+// feature flags, read them from the FeatureToggle (or FeatureManager) interface
+func NewCfgWithFeatures(features func(string) bool) *Cfg {
+	cfg := NewCfg()
+	cfg.IsFeatureToggleEnabled = features
+	return cfg
 }
 
 func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
@@ -1113,6 +1128,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
+	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -1152,6 +1168,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
+	// nolint:staticcheck
 	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
 	}
@@ -1627,7 +1644,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
 	// Extended JWT auth
-	authExtendedJWT := iniFile.Section("auth.extended_jwt")
+	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
 	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
 	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
 	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")

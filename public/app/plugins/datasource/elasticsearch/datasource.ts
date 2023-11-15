@@ -35,10 +35,17 @@ import {
   DataSourceWithToggleableQueryFiltersSupport,
   QueryFilterOptions,
   ToggleFilterAction,
+  DataSourceGetTagValuesOptions,
+  AdHocVariableFilter,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import {
+  DataSourceWithBackend,
+  getDataSourceSrv,
+  config,
+  BackendSrvRequest,
+  TemplateSrv,
+  getTemplateSrv,
+} from '@grafana/runtime';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
@@ -114,7 +121,6 @@ export class ElasticDatasource
   languageProvider: LanguageProvider;
   includeFrozen: boolean;
   isProxyAccess: boolean;
-  timeSrv: TimeSrv;
   databaseVersion: SemVer | null;
   legacyQueryRunner: LegacyQueryRunner;
 
@@ -128,7 +134,7 @@ export class ElasticDatasource
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
     this.isProxyAccess = instanceSettings.access === 'proxy';
-    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    const settingsData = instanceSettings.jsonData || {};
 
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
@@ -157,7 +163,6 @@ export class ElasticDatasource
       this.logLevelField = undefined;
     }
     this.languageProvider = new LanguageProvider(this);
-    this.timeSrv = getTimeSrv();
     this.legacyQueryRunner = new LegacyQueryRunner(this, this.templateSrv);
   }
 
@@ -186,7 +191,7 @@ export class ElasticDatasource
    * @param url the url to query the index on, for example `/_mapping`.
    */
 
-  private requestAllIndices(url: string, range = getDefaultTimeRange()): Observable<any> {
+  private requestAllIndices(url: string, range = getDefaultTimeRange()) {
     let indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (!Array.isArray(indexList)) {
       indexList = [this.indexPattern.getIndexForToday()];
@@ -399,8 +404,12 @@ export class ElasticDatasource
     return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars | {}): ElasticsearchQuery[] {
-    return queries.map((q) => this.applyTemplateVariables(q, scopedVars));
+  interpolateVariablesInQueries(
+    queries: ElasticsearchQuery[],
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): ElasticsearchQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
   async testDatasource() {
@@ -490,10 +499,6 @@ export class ElasticDatasource
     }
 
     return text;
-  }
-
-  showContextToggle(): boolean {
-    return true;
   }
 
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
@@ -832,9 +837,8 @@ export class ElasticDatasource
     return lastValueFrom(this.getFields());
   }
 
-  getTagValues(options: { key: string }) {
-    const range = this.timeSrv.timeRange();
-    return lastValueFrom(this.getTerms({ field: options.key }, range));
+  getTagValues(options: DataSourceGetTagValuesOptions) {
+    return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
   }
 
   targetContainsTemplate(target: ElasticsearchQuery) {
@@ -944,9 +948,8 @@ export class ElasticDatasource
     return { ...query, query: expression };
   }
 
-  addAdHocFilters(query: string) {
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    if (adhocFilters.length === 0) {
+  addAdHocFilters(query: string, adhocFilters?: AdHocVariableFilter[]) {
+    if (!adhocFilters) {
       return query;
     }
     let finalQuery = query;
@@ -958,7 +961,11 @@ export class ElasticDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(query: ElasticsearchQuery, scopedVars: ScopedVars): ElasticsearchQuery {
+  applyTemplateVariables(
+    query: ElasticsearchQuery,
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): ElasticsearchQuery {
     // We need a separate interpolation format for lucene queries, therefore we first interpolate any
     // lucene query string and then everything else
     const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
@@ -981,7 +988,7 @@ export class ElasticDatasource
     const expandedQuery = {
       ...query,
       datasource: this.getRef(),
-      query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
+      query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars), filters),
       bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
     };
 

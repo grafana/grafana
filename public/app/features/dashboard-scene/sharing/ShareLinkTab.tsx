@@ -13,7 +13,7 @@ import { trackDashboardSharingActionPerType } from 'app/features/dashboard/compo
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { getDashboardUrl } from '../utils/utils';
+import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { SceneShareTabState } from './types';
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
@@ -74,6 +74,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       currentQueryParams: location.search,
       updateQuery: urlParamsUpdate,
       absolute: true,
+      useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && dashboard.state.meta.canEdit),
     });
 
     if (useShortUrl) {

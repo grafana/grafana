@@ -153,11 +153,11 @@ exports[`alertmanager abilities should report everything except exporting for Mi
   ],
   "export-contact-point": [
     false,
-    false,
+    true,
   ],
   "export-notification-policies": [
     false,
-    false,
+    true,
   ],
   "update-external-configuration": [
     true,
@@ -254,11 +254,11 @@ exports[`alertmanager abilities should report everything is supported for builti
   ],
   "export-contact-point": [
     true,
-    false,
+    true,
   ],
   "export-notification-policies": [
     true,
-    false,
+    true,
   ],
   "update-external-configuration": [
     true,

@@ -22,12 +22,12 @@ import { stylesFactory, withTheme2 } from '@grafana/ui';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { SpanBarOptions } from '../settings/SpanBarSettings';
-import { SpanLinkFunc, TNil } from '../types';
+import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
 import TimelineHeaderRow from './TimelineHeaderRow';
-import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
+import VirtualizedTraceView from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -102,10 +102,11 @@ export type TProps = {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
+  showCriticalPathSpansOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
-  topOfViewRefType?: TopOfViewRefType;
   headerHeight: number;
+  criticalPath: CriticalPathSection[];
 };
 
 type State = {

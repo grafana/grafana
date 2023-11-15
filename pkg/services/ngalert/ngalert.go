@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -171,7 +172,17 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
+
+	var overrides []notifier.Option
+	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
+		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+			externalAMCfg := remote.AlertmanagerConfig{}
+			return remote.NewAlertmanager(externalAMCfg, orgID)
+		})
+
+		overrides = append(overrides, override)
+	}
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService, overrides...)
 	if err != nil {
 		return err
 	}
@@ -235,9 +246,9 @@ func (ng *AlertNG) init() error {
 		Images:                         ng.ImageService,
 		Clock:                          clk,
 		Historian:                      history,
-		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState),
+		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
-		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoDataErrorExecution),
+		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
@@ -472,7 +483,7 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 	// If all toggles are enabled, we listen to the state history config as written.
 	// If any of them are disabled, we ignore the configured backend and treat the toggles as an override.
 	// If multiple toggles are disabled, we go with the most "restrictive" one.
-	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiSecondary) {
+	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiSecondary) {
 		// If we cannot even treat Loki as a secondary, we must use annotations only.
 		if backend == historian.BackendTypeMultiple || backend == historian.BackendTypeLoki {
 			logger.Info("Forcing Annotation backend due to state history feature toggles")
@@ -482,7 +493,7 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
-	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiPrimary) {
+	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiPrimary) {
 		// If we're using multiple backends, Loki must be the secondary.
 		if backend == historian.BackendTypeMultiple {
 			logger.Info("Coercing Loki to a secondary backend due to state history feature toggles")
@@ -498,7 +509,7 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
-	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiOnly) {
+	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiOnly) {
 		// If we're not allowed to use Loki only, make it the primary but keep the annotation writes.
 		if backend == historian.BackendTypeLoki {
 			logger.Info("Forcing dual writes to Loki and Annotations due to state history feature toggles")

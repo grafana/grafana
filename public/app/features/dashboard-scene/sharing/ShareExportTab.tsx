@@ -3,7 +3,6 @@ import React from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { config, getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Switch, VerticalGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -18,12 +17,10 @@ import { transformSceneToSaveModel } from '../serialization/transformSceneToSave
 import { SceneShareTabState } from './types';
 
 const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
-const exportDefaultTranslation = t('share-modal.export.share-default-label', `Export with default values removed`);
 
 interface ShareExportTabState extends SceneShareTabState {
   dashboardRef: SceneObjectRef<DashboardScene>;
   isSharingExternally?: boolean;
-  shouldTrimDefaults?: boolean;
   isViewingJSON?: boolean;
 }
 
@@ -35,7 +32,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
   constructor(state: Omit<ShareExportTabState, 'panelRef'>) {
     super({
       isSharingExternally: false,
-      shouldTrimDefaults: false,
       isViewingJSON: false,
       ...state,
     });
@@ -51,12 +47,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
     });
   };
 
-  public onTrimDefaultsChange = () => {
-    this.setState({
-      shouldTrimDefaults: !this.state.shouldTrimDefaults,
-    });
-  };
-
   public onViewJSON = () => {
     this.setState({
       isViewingJSON: !this.state.isViewingJSON,
@@ -68,19 +58,14 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
   }
 
   public async getExportableDashboardJson() {
-    const { dashboardRef, isSharingExternally, shouldTrimDefaults } = this.state;
+    const { dashboardRef, isSharingExternally } = this.state;
     const saveModel = transformSceneToSaveModel(dashboardRef.resolve());
 
     const exportable = isSharingExternally
       ? await this._exporter.makeExportable(new DashboardModel(saveModel))
       : saveModel;
 
-    if (shouldTrimDefaults) {
-      const trimmed = await getBackendSrv().post('/api/dashboards/trim', { dashboard: exportable });
-      return trimmed.dashboard;
-    } else {
-      return exportable;
-    }
+    return exportable;
   }
 
   public async onSaveAsFile() {
@@ -92,13 +77,17 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
     });
 
     const time = new Date().getTime();
-    saveAs(blob, `${dashboardJson.title}-${time}.json`);
+    let title = 'dashboard';
+    if ('title' in dashboardJson && dashboardJson.title) {
+      title = dashboardJson.title;
+    }
+    saveAs(blob, `${title}-${time}.json`);
     trackDashboardSharingActionPerType('save_export', shareDashboardType.export);
   }
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
-  const { isSharingExternally, shouldTrimDefaults, isViewingJSON, modalRef } = model.useState();
+  const { isSharingExternally, isViewingJSON, modalRef } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     if (isViewingJSON) {
@@ -124,12 +113,6 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
                 onChange={model.onShareExternallyChange}
               />
             </Field>
-
-            {config.featureToggles.trimDefaults && (
-              <Field label={exportDefaultTranslation}>
-                <Switch id="trim-defaults-toggle" value={shouldTrimDefaults} onChange={model.onTrimDefaultsChange} />
-              </Field>
-            )}
           </VerticalGroup>
 
           <Modal.ButtonRow>

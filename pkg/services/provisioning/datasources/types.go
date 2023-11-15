@@ -243,6 +243,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 
 	return &datasources.UpdateDataSourceCommand{
 		ID:                      id,
+		Version:                 ds.Version,
 		UID:                     ds.UID,
 		OrgID:                   ds.OrgID,
 		Name:                    ds.Name,
