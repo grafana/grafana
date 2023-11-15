@@ -151,8 +151,8 @@ function NeedHelpInfoForNotificationPolicy() {
   return (
     <NeedHelpInfo
       contentText={
-        <Stack gap={1}>
-          <Stack direction="row" gap={0}>
+        <Stack gap={1} direction="column">
+          <Stack direction="column" gap={0}>
             <>
               Firing alert rule instances are routed to notification policies based on matching labels. All alert rules
               and instances, irrespective of their labels, match the default notification policy. If there are no nested
@@ -169,7 +169,7 @@ function NeedHelpInfoForNotificationPolicy() {
               </Text>
             </a>
           </Stack>
-          <Stack direction="row" gap={0}>
+          <Stack direction="column" gap={0}>
             <>
               Custom labels change the way your notifications are routed. First, add labels to your alert rule and then
               connect them to your notification policy by adding label matchers.
@@ -195,27 +195,27 @@ function NeedHelpInfoForContactpoint() {
   return (
     <NeedHelpInfo
       contentText={
-        <Stack direction="row" gap={0}>
-          <>
-            Select a contact point to notify all recipients in it. Notifications for firing alert instances are grouped
-            based on folder and alert rule name. The waiting time until the initial notification is sent for a new group
-            created by an incoming alert is 30 seconds. The waiting time to send a batch of new alerts for that group
-            after the first notification was sent is 5 minutes. The waiting time to resend an alert after they have
-            successfully been sent is 4 hours. Grouping and wait time values are defined in your default notification
-            policy.
-          </>
-          <a
-            href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Text color="link">
-              Read more about notifiying contact points. <Icon name="external-link-alt" />
-            </Text>
-          </a>
-        </Stack>
+        <>
+          Select a contact point to notify all recipients in it.
+          <br />
+          <br />
+          Notifications for firing alert instances are grouped based on folder and alert rule name.
+          <br />
+          The waiting time until the initial notification is sent for a new group created by an incoming alert is 30
+          seconds.
+          <br />
+          The waiting time to send a batch of new alerts for that group after the first notification was sent is 5
+          minutes.
+          <br />
+          The waiting time to resend an alert after they have successfully been sent is 4 hours.
+          <br />
+          Grouping and wait time values are defined in your default notification policy.
+        </>
       }
-      title="Notifify contact points"
+      // todo: update the link with the new documentation about simplified routing
+      externalLink="`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/`"
+      linkText="Read more about notifiying contact points"
+      title="Notify contact points"
     />
   );
 }

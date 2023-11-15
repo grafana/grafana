@@ -268,14 +268,8 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
             Add labels to your rule to annotate your rules, ease searching, or route to a notification policy.
           </Text>
           <NeedHelpInfo
-            contentText={
-              <Stack direction="row" gap={0}>
-                <>
-                  The dropdown only displays labels that you have previously used for alerts. Select a label from the
-                  dropdown or type in a new one.
-                </>
-              </Stack>
-            }
+            contentText="The dropdown only displays labels that you have previously used for alerts. 
+            Select a label from thedropdown or type in a new one."
             title="Labels"
           />
         </Stack>
