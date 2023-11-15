@@ -1257,11 +1257,6 @@ func TestIntegrationMySQL(t *testing.T) {
 	})
 
 	t.Run("Given an empty table", func(t *testing.T) {
-		type emptyObj struct {
-			EmptyKey string
-			EmptyVal int64
-		}
-
 		_, err := db.Exec("DROP TABLE IF EXISTS empty_obj")
 		require.NoError(t, err)
 
