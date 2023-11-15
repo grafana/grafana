@@ -52,7 +52,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
 			},
-			expectedResult: 100,
+			expectedResult: 110,
 		},
 		{
 			desc:       "Should be able to view all dashboards with folder wildcard scope",
@@ -60,7 +60,32 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
-			expectedResult: 100,
+			expectedResult: 110,
+		},
+		{
+			desc:       "Should be able to view dashboards under the root with folders:uid:general scope",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
+			},
+			expectedResult: 10,
+		},
+		{
+			desc:       "Should not be able to view editable dashboards under the root with folders:uid:general scope if missing write action",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
+			},
+			expectedResult: 0,
+		},
+		{
+			desc:       "Should be able to view editable dashboards under the root with folders:uid:general scope if has write action",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
+			},
+			expectedResult: 10,
 		},
 		{
 			desc:       "Should be able to view a subset of dashboards with dashboard scopes",
@@ -163,7 +188,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		store := setupTest(t, 10, 100, tt.permissions)
+		store := setupTest(t, 10, 110, tt.permissions)
 		recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
 		require.NoError(t, err)
 
@@ -219,7 +244,7 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
 			},
-			expectedResult: 100,
+			expectedResult: 110,
 		},
 		{
 			desc:       "Should be able to view all dashboards with folder wildcard scope",
@@ -227,7 +252,7 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
-			expectedResult: 100,
+			expectedResult: 110,
 		},
 		{
 			desc:                    "Should not be able to view any dashboards or folders without any permissions",
@@ -257,6 +282,31 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:10"},
 			},
 			expectedResult: 20,
+		},
+		{
+			desc:       "Should be able to view dashboards under the root with folders:uid:general scope",
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
+			},
+			expectedResult: 10,
+		},
+		{
+			desc:       "Should not be able to view editable dashboards under the root with folders:uid:general scope if missing write action",
+			permission: dashboards.PERMISSION_EDIT,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
+			},
+			expectedResult: 0,
+		},
+		{
+			desc:       "Should be able to view editable dashboards under the root with folders:uid:general scope if has write action",
+			permission: dashboards.PERMISSION_EDIT,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
+			},
+			expectedResult: 10,
 		},
 		{
 			desc:       "Should be able to view all folders with folder wildcard",
@@ -337,7 +387,7 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 	}
 
 	for _, tt := range tests {
-		store := setupTest(t, 10, 100, []accesscontrol.Permission{})
+		store := setupTest(t, 10, 110, []accesscontrol.Permission{})
 		recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
 		require.NoError(t, err)
 
@@ -717,17 +767,17 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 				Updated:  time.Now(),
 			})
 		}
-		// Seed 100 dashboard
+		// Seed dashboards
 		for i := numFolders + 1; i <= numFolders+numDashboards; i++ {
 			str := strconv.Itoa(i)
-			folderID := numFolders
-			if i%numFolders != 0 {
-				folderID = i % numFolders
+			folderID := 0
+			if i%(numFolders+1) != 0 {
+				folderID = i % (numFolders + 1)
 			}
 			dashes = append(dashes, dashboards.Dashboard{
 				OrgID:    1,
 				IsFolder: false,
-				FolderID: int64(folderID),
+				FolderID: int64(folderID), // nolint:staticcheck
 				UID:      str,
 				Slug:     str,
 				Title:    str,
@@ -789,7 +839,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	db := sqlstore.InitTestDB(t)
 
 	// dashboard store commands that should be called.
-	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)
@@ -815,8 +865,9 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 
 	// create dashboard under parent folder
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:    orgID,
-		FolderID: parent.ID,
+		OrgID:     orgID,
+		FolderID:  parent.ID, // nolint:staticcheck
+		FolderUID: parent.UID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under parent folder",
 		}),
@@ -825,8 +876,9 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 
 	// create dashboard under subfolder
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		OrgID:    orgID,
-		FolderID: subfolder.ID,
+		OrgID:     orgID,
+		FolderID:  subfolder.ID, // nolint:staticcheck
+		FolderUID: subfolder.UID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under subfolder",
 		}),

@@ -39,7 +39,7 @@ export default class InfluxQueryModel {
   }
 
   updateProjection() {
-    this.selectModels = map(this.target.select, (parts: any) => {
+    this.selectModels = map(this.target.select, (parts) => {
       return map(parts, queryPart.create);
     });
     this.groupByParts = map(this.target.groupBy, queryPart.create);
@@ -47,18 +47,18 @@ export default class InfluxQueryModel {
 
   updatePersistedParts() {
     this.target.select = map(this.selectModels, (selectParts) => {
-      return map(selectParts, (part: any) => {
+      return map(selectParts, (part) => {
         return { type: part.def.type, params: part.params };
       });
     });
   }
 
   hasGroupByTime() {
-    return find(this.target.groupBy, (g: any) => g.type === 'time');
+    return find(this.target.groupBy, (g) => g.type === 'time');
   }
 
   hasFill() {
-    return find(this.target.groupBy, (g: any) => g.type === 'fill');
+    return find(this.target.groupBy, (g) => g.type === 'fill');
   }
 
   addGroupBy(value: string) {
@@ -95,10 +95,10 @@ export default class InfluxQueryModel {
 
     if (part.def.type === 'time') {
       // remove fill
-      this.target.groupBy = filter(this.target.groupBy, (g: any) => g.type !== 'fill');
+      this.target.groupBy = filter(this.target.groupBy, (g) => g.type !== 'fill');
       // remove aggregations
-      this.target.select = map(this.target.select, (s: any) => {
-        return filter(s, (part: any) => {
+      this.target.select = map(this.target.select, (s) => {
+        return filter(s, (part) => {
           const partModel = queryPart.create(part);
           if (partModel.def.category === categories.Aggregations) {
             return false;
@@ -163,7 +163,7 @@ export default class InfluxQueryModel {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-      if (operator !== '>' && operator !== '<') {
+      if ((!operator.startsWith('>') && !operator.startsWith('<')) || operator === '<>') {
         value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
       }
     } else if (interpolate) {

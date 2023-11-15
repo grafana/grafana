@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/utils"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type store struct {
@@ -101,13 +100,8 @@ func (s *store) SaveExternalService(ctx context.Context, client *oauthserver.OAu
 	}
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		previous, errFetchExtSvc := getExternalServiceByName(sess, client.Name)
-		if errFetchExtSvc != nil {
-			var srcError errutil.Error
-			if errors.As(errFetchExtSvc, &srcError) {
-				if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
-					return errFetchExtSvc
-				}
-			}
+		if errFetchExtSvc != nil && !errors.Is(errFetchExtSvc, oauthserver.ErrClientNotFound) {
+			return errFetchExtSvc
 		}
 		if previous == nil {
 			return registerExternalService(sess, client)
@@ -132,7 +126,8 @@ func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver
 			return err
 		}
 		if !found {
-			return oauthserver.ErrClientNotFound(id)
+			res = nil
+			return oauthserver.ErrClientNotFoundFn(id)
 		}
 
 		impersonatePermQuery := `SELECT action, scope FROM oauth_impersonate_permission WHERE client_id = ?`
@@ -157,7 +152,7 @@ func (s *store) GetExternalServicePublicKey(ctx context.Context, clientID string
 			return err
 		}
 		if !found {
-			return oauthserver.ErrClientNotFound(clientID)
+			return oauthserver.ErrClientNotFoundFn(clientID)
 		}
 		return nil
 	}); err != nil {
@@ -209,11 +204,38 @@ func getExternalServiceByName(sess *db.Session, name string) (*oauthserver.OAuth
 		return nil, err
 	}
 	if !found {
-		return nil, oauthserver.ErrClientNotFound(name)
+		return nil, oauthserver.ErrClientNotFoundFn(name)
 	}
 
 	impersonatePermQuery := `SELECT action, scope FROM oauth_impersonate_permission WHERE client_id = ?`
 	errPerm := sess.SQL(impersonatePermQuery, res.ClientID).Find(&res.ImpersonatePermissions)
 
 	return res, errPerm
+}
+
+func (s *store) UpdateExternalServiceGrantTypes(ctx context.Context, clientID, grantTypes string) error {
+	if clientID == "" {
+		return oauthserver.ErrClientRequiredID
+	}
+
+	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		query := `UPDATE oauth_client SET grant_types = ? WHERE client_id = ?`
+		_, err := sess.Exec(query, grantTypes, clientID)
+		return err
+	})
+}
+
+func (s *store) DeleteExternalService(ctx context.Context, id string) error {
+	if id == "" {
+		return oauthserver.ErrClientRequiredID
+	}
+
+	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if _, err := sess.Exec(`DELETE FROM oauth_client WHERE client_id = ?`, id); err != nil {
+			return err
+		}
+
+		_, err := sess.Exec(`DELETE FROM oauth_impersonate_permission WHERE client_id = ?`, id)
+		return err
+	})
 }

@@ -37,7 +37,7 @@ func TestImportDashboardService(t *testing.T) {
 					OrgID:    3,
 					Version:  dto.Dashboard.Version,
 					PluginID: "prometheus",
-					FolderID: dto.Dashboard.FolderID,
+					FolderID: dto.Dashboard.FolderID, // nolint:staticcheck
 					Title:    dto.Dashboard.Title,
 					Data:     dto.Dashboard.Data,
 				}, nil
@@ -77,7 +77,7 @@ func TestImportDashboardService(t *testing.T) {
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
 			User:     &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
-			FolderId: 5,
+			FolderId: 5, // nolint:staticcheck
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
 		require.NoError(t, err)
@@ -91,6 +91,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
 		require.Equal(t, int64(2), userID)
 		require.Equal(t, "prometheus", importDashboardArg.Dashboard.PluginID)
+		// nolint:staticcheck
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderID)
 
 		panel := importDashboardArg.Dashboard.Data.Get("panels").GetIndex(0)
@@ -112,7 +113,7 @@ func TestImportDashboardService(t *testing.T) {
 					OrgID:    3,
 					Version:  dto.Dashboard.Version,
 					PluginID: "prometheus",
-					FolderID: dto.Dashboard.FolderID,
+					FolderID: dto.Dashboard.FolderID, // nolint:staticcheck
 					Title:    dto.Dashboard.Title,
 					Data:     dto.Dashboard.Data,
 				}, nil
@@ -144,7 +145,7 @@ func TestImportDashboardService(t *testing.T) {
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
 			User:     &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
-			FolderId: 5,
+			FolderId: 5, // nolint:staticcheck
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
 		require.NoError(t, err)
@@ -158,6 +159,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
 		require.Equal(t, int64(2), userID)
 		require.Equal(t, "", importDashboardArg.Dashboard.PluginID)
+		// nolint:staticcheck
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderID)
 
 		panel := importDashboardArg.Dashboard.Data.Get("panels").GetIndex(0)

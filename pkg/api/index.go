@@ -38,7 +38,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
 		if !prefs.Cookies("analytics") {
 			settings.GoogleAnalytics4Id = ""
 			settings.GoogleAnalyticsId = ""
@@ -166,7 +166,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	data.NavTree.ApplyAdminIA(hs.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNavAdminSubsections))
+	data.NavTree.ApplyAdminIA(hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNavAdminSubsections))
 	data.NavTree.Sort()
 
 	return &data, nil
@@ -244,7 +244,7 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 
 	if pref.IsValidThemeID(themePrefId) {
 		theme := pref.GetThemeByID(themePrefId)
-		if !theme.IsExtra || hs.Features.IsEnabled(featuremgmt.FlagExtraThemes) {
+		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagExtraThemes) {
 			return theme
 		}
 	}

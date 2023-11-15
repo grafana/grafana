@@ -149,6 +149,7 @@ func ProvideDashboardPermissions(
 			if err != nil {
 				return nil, err
 			}
+			// nolint:staticcheck
 			if dashboard.FolderID > 0 {
 				query := &dashboards.GetDashboardQuery{ID: dashboard.FolderID, OrgID: orgID}
 				queryResult, err := dashboardStore.GetDashboard(ctx, query)
@@ -163,7 +164,7 @@ func ProvideDashboardPermissions(
 				}
 				return append([]string{parentScope}, nestedScopes...), nil
 			}
-			return []string{}, nil
+			return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}, nil
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,

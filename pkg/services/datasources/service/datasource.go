@@ -198,7 +198,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
-		if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+		if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
 			cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 			if err != nil {
 				return err
@@ -229,7 +229,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			{BuiltinRole: "Editor", Permission: "Query"},
 		}
 		if cmd.UserID != 0 {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Edit"})
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
 		}
 		_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
 		return err
@@ -689,7 +689,7 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	}
 
 	cmd.EncryptedSecureJsonData = make(map[string][]byte)
-	if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
 		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 		if err != nil {
 			return err

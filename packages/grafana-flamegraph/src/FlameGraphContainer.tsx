@@ -53,6 +53,11 @@ export type Props = {
    * If true the flamegraph will be rendered on top of the table.
    */
   vertical?: boolean;
+
+  /**
+   * Disable behaviour where similar items in the same stack will be collapsed into single item.
+   */
+  disableCollapsing?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -65,6 +70,7 @@ const FlameGraphContainer = ({
   stickyHeader,
   extraHeaderElements,
   vertical,
+  disableCollapsing,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -83,8 +89,8 @@ const FlameGraphContainer = ({
     if (!data) {
       return;
     }
-    return new FlameGraphDataContainer(data, theme);
-  }, [data, theme]);
+    return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
+  }, [data, theme, disableCollapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme, vertical);
 
@@ -198,6 +204,7 @@ const FlameGraphContainer = ({
               onFocusPillClick={resetFocus}
               onSandwichPillClick={resetSandwich}
               colorScheme={colorScheme}
+              collapsing={!disableCollapsing}
             />
           )}
         </div>

@@ -674,8 +674,6 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
-
-  angularDetected?: boolean;
 }
 
 /**
@@ -713,7 +711,7 @@ abstract class LanguageProvider {
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.
    */
-  abstract start: () => Promise<Array<Promise<any>>>;
+  abstract start: (timeRange?: TimeRange) => Promise<Array<Promise<any>>>;
   startTask?: Promise<any[]>;
 }
 

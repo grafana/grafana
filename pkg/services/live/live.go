@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -119,55 +120,36 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	}
 	g.node = node
 
+	redisHealthy := false
 	if g.IsHA() {
 		// Configure HA with Redis. In this case Centrifuge nodes
 		// will be connected over Redis PUB/SUB. Presence will work
 		// globally since kept inside Redis.
-		redisAddress := g.Cfg.LiveHAEngineAddress
-		redisPassword := g.Cfg.LiveHAEnginePassword
-		redisShardConfigs := []centrifuge.RedisShardConfig{
-			{Address: redisAddress, Password: redisPassword},
-		}
-		var redisShards []*centrifuge.RedisShard
-		for _, redisConf := range redisShardConfigs {
-			redisShard, err := centrifuge.NewRedisShard(node, redisConf)
-			if err != nil {
-				return nil, fmt.Errorf("error connecting to Live Redis: %v", err)
-			}
-			redisShards = append(redisShards, redisShard)
-		}
-
-		broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
-			Prefix: "gf_live",
-			Shards: redisShards,
-		})
+		err := setupRedisLiveEngine(g, node)
 		if err != nil {
-			return nil, fmt.Errorf("error creating Live Redis broker: %v", err)
+			logger.Error("failed to setup redis live engine: %v", err)
+		} else {
+			redisHealthy = true
 		}
-		node.SetBroker(broker)
-
-		presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
-			Prefix: "gf_live",
-			Shards: redisShards,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error creating Live Redis presence manager: %v", err)
-		}
-		node.SetPresenceManager(presenceManager)
 	}
 
 	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node, nil)
 
 	var managedStreamRunner *managedstream.Runner
-	if g.IsHA() {
+	var redisClient *redis.Client
+	if g.IsHA() && redisHealthy {
 		redisClient := redis.NewClient(&redis.Options{
 			Addr:     g.Cfg.LiveHAEngineAddress,
 			Password: g.Cfg.LiveHAEnginePassword,
 		})
 		cmd := redisClient.Ping(context.Background())
 		if _, err := cmd.Result(); err != nil {
-			return nil, fmt.Errorf("error pinging Redis: %v", err)
+			logger.Error("live engine failed to ping redis, proceeding without live ha, error: %v", err)
+			redisClient = nil
 		}
+	}
+
+	if redisClient != nil {
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
 			channelLocalPublisher,
@@ -333,16 +315,51 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/ws", g.websocketHandler)
-	}, middleware.ReqSignedIn)
+	}, middleware.ReqSignedIn, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
 	g.RouteRegister.Group("/api/live", func(group routing.RouteRegister) {
 		group.Get("/push/:streamId", g.pushWebsocketHandler)
 		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
-	}, middleware.ReqOrgAdmin)
+	}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
 	g.registerUsageMetrics()
 
 	return g, nil
+}
+
+func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
+	redisAddress := g.Cfg.LiveHAEngineAddress
+	redisPassword := g.Cfg.LiveHAEnginePassword
+	redisShardConfigs := []centrifuge.RedisShardConfig{
+		{Address: redisAddress, Password: redisPassword},
+	}
+	var redisShards []*centrifuge.RedisShard
+	for _, redisConf := range redisShardConfigs {
+		redisShard, err := centrifuge.NewRedisShard(node, redisConf)
+		if err != nil {
+			return fmt.Errorf("error connecting to Live Redis: %v", err)
+		}
+		redisShards = append(redisShards, redisShard)
+	}
+
+	broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
+		Prefix: "gf_live",
+		Shards: redisShards,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating Live Redis broker: %v", err)
+	}
+	node.SetBroker(broker)
+
+	presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
+		Prefix: "gf_live",
+		Shards: redisShards,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating Live Redis presence manager: %v", err)
+	}
+	node.SetPresenceManager(presenceManager)
+	return nil
 }
 
 // GrafanaLive manages live real-time connections to Grafana (over WebSocket at this moment).

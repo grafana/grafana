@@ -18,6 +18,9 @@ func ProvideAuthorizer(
 	cfg *setting.Cfg,
 ) authorizer.Authorizer {
 	authorizers := []authorizer.Authorizer{
+		// This will allow privileged uses to do anything.
+		// In development mode, a privileged user is configured and saved into:
+		// ${data}/grafana-apiserver/grafana.kubeconfig
 		authorizerfactory.NewPrivilegedGroups(user.SystemPrivilegedGroup),
 	}
 
@@ -28,7 +31,8 @@ func ProvideAuthorizer(
 		authorizers = append(authorizers, orgIDAuthorizer)
 	}
 
+	// org role is last -- and will return allow for verbs that match expectations
+	// Ideally FGAC happens earlier and returns an explicit answer
 	authorizers = append(authorizers, orgRoleAuthorizer)
-
 	return union.New(authorizers...)
 }

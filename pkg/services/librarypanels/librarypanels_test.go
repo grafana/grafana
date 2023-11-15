@@ -94,7 +94,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with library panels inside and outside of rows, it should connect all",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.CreateLibraryElementCommand{
-				FolderID: sc.initialResult.Result.FolderID,
+				FolderID: sc.initialResult.Result.FolderID, // nolint:staticcheck
 				Name:     "Outside row",
 				Model: []byte(`
 			{
@@ -233,7 +233,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with unused/removed library panels, it should disconnect unused/removed library panels",
 		func(t *testing.T, sc scenarioContext) {
 			unused, err := sc.elementService.CreateElement(sc.ctx, sc.user, model.CreateLibraryElementCommand{
-				FolderID: sc.folder.ID,
+				FolderID: sc.folder.ID, // nolint:staticcheck
 				Name:     "Unused Libray Panel",
 				Model: []byte(`
 			{
@@ -638,7 +638,7 @@ func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement 
 	return libraryElement{
 		ID:          res.ID,
 		OrgID:       res.OrgID,
-		FolderID:    res.FolderID,
+		FolderID:    res.FolderID, // nolint:staticcheck
 		UID:         res.UID,
 		Name:        res.Name,
 		Type:        res.Type,
@@ -705,6 +705,7 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 }
 
 func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
+	// nolint:staticcheck
 	dash.FolderID = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
@@ -714,10 +715,10 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 		Overwrite: false,
 	}
 
+	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
@@ -739,12 +740,11 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder {
 	t.Helper()
 
+	features := featuremgmt.WithFeatures()
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
-	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sc.sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
 	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sc.sqlStore, features)
@@ -762,7 +762,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := model.CreateLibraryElementCommand{
-			FolderID: sc.folder.ID,
+			FolderID: sc.folder.ID, // nolint:staticcheck
 			Name:     "Text - Library Panel",
 			Model: []byte(`
 			{
@@ -785,7 +785,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			Result: libraryPanel{
 				ID:          resp.ID,
 				OrgID:       resp.OrgID,
-				FolderID:    resp.FolderID,
+				FolderID:    resp.FolderID, // nolint:staticcheck
 				UID:         resp.UID,
 				Name:        resp.Name,
 				Type:        resp.Type,
@@ -825,7 +825,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashService)
 
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		features := featuremgmt.WithFeatures()
 		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sqlStore, features)

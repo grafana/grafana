@@ -27,7 +27,16 @@ export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
 export const stringOperators = ['=', '!=', '=~', '!~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
-export const intrinsics = ['duration', 'kind', 'name', 'status'];
+export const intrinsics = [
+  'duration',
+  'kind',
+  'name',
+  'rootName',
+  'rootServiceName',
+  'status',
+  'statusMessage',
+  'traceDuration',
+];
 export const scopes: string[] = ['resource', 'span'];
 
 export const functions = ['avg', 'min', 'max', 'sum', 'count', 'by'];
@@ -54,6 +63,10 @@ export const language: languages.IMonarchLanguage = {
 
   tokenizer: {
     root: [
+      // comments
+      [/\/\/.*/, 'comment'], // line comment
+      [/\/\*.*\*\//, 'comment'], // block comment
+
       // durations
       [/[0-9]+(.[0-9]+)?(us|µs|ns|ms|s|m|h)/, 'number'],
 
@@ -129,7 +142,7 @@ export const languageDefinition = {
 
 export const traceqlGrammar: Grammar = {
   comment: {
-    pattern: /#.*/,
+    pattern: /\/\/.*/,
   },
   'span-set': {
     pattern: /\{[^}]*}/,

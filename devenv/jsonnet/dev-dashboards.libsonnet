@@ -149,6 +149,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('dashlist', import '../dev-dashboards/panel-dashlist/dashlist.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('datadata-macros', import '../dev-dashboards/feature-templating/datadata-macros.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -381,6 +388,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('loki_fakedata', import '../dev-dashboards/datasource-loki/loki_fakedata.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('loki_query_splitting', import '../dev-dashboards/datasource-loki/loki_query_splitting.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -703,6 +717,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('timeseries', import '../dev-dashboards/panel-timeseries/timeseries.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('timeseries-bars-high-density', import '../dev-dashboards/panel-timeseries/timeseries-bars-high-density.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

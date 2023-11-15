@@ -9,9 +9,14 @@ import {
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
   type PluginExtensionOpenModalOptions,
+  isDateTime,
+  dateTime,
+  PluginContextProvider,
+  PluginMeta,
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
 export function logWarning(message: string) {
@@ -43,13 +48,14 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
 }
 
 // Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
-export function getEventHelpers(context?: Readonly<object>): PluginExtensionEventHelpers {
-  const openModal: PluginExtensionEventHelpers['openModal'] = (options) => {
+export function getEventHelpers(pluginId: string, context?: Readonly<object>): PluginExtensionEventHelpers {
+  const openModal: PluginExtensionEventHelpers['openModal'] = async (options) => {
     const { title, body, width, height } = options;
+    const pluginMeta = await getPluginSettings(pluginId);
 
     appEvents.publish(
       new ShowModalReactEvent({
-        component: getModalWrapper({ title, body, width, height }),
+        component: getModalWrapper({ title, body, width, height, pluginMeta }),
       })
     );
   };
@@ -70,14 +76,17 @@ const getModalWrapper = ({
   body: Body,
   width,
   height,
-}: PluginExtensionOpenModalOptions) => {
+  pluginMeta,
+}: { pluginMeta: PluginMeta } & PluginExtensionOpenModalOptions) => {
   const className = css({ width, height });
 
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
     return (
-      <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-        <Body onDismiss={onDismiss} />
-      </Modal>
+      <PluginContextProvider meta={pluginMeta}>
+        <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+          <Body onDismiss={onDismiss} />
+        </Modal>
+      </PluginContextProvider>
     );
   };
 
@@ -158,6 +167,13 @@ export function getReadOnlyProxy<T extends object>(obj: T): T {
       }
 
       const value = Reflect.get(target, prop, receiver);
+
+      // This will create a clone of the date time object
+      // instead of creating a proxy because the underlying
+      // momentjs object needs to be able to mutate itself.
+      if (isDateTime(value)) {
+        return dateTime(value);
+      }
 
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {

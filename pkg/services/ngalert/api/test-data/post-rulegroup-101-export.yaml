@@ -48,7 +48,7 @@ groups:
                 type: math
           noDataState: NoData
           execErrState: Alerting
-          for: 0s
+          for: 2m
           isPaused: false
         - title: reduced testdata query - 2
           condition: B

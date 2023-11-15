@@ -147,7 +147,11 @@ func NewFakeFeatureToggles(t *testing.T, returnValue bool) featuremgmt.FeatureTo
 	}
 }
 
-func (f fakeFeatureToggles) IsEnabled(feature string) bool {
+func (f fakeFeatureToggles) IsEnabledGlobally(feature string) bool {
+	return f.returnValue
+}
+
+func (f fakeFeatureToggles) IsEnabled(ctx context.Context, feature string) bool {
 	return f.returnValue
 }
 
