@@ -41,13 +41,13 @@ const formatLabels = (labels: Labels): string => {
 };
 
 const formatFolderName = (namespace: CombinedRuleNamespace): string => {
-  const ruleName = namespace.name;
+  const nameSpaceName = namespace.name;
 
   if (isCloudRulesSource(namespace.rulesSource)) {
-    return ruleName;
+    return nameSpaceName;
   }
 
-  return ruleName.substring(ruleName.indexOf('/') + 1);
+  return nameSpaceName.substring(nameSpaceName.indexOf('/') + 1);
 };
 
 const isEmptySeries = (series: DataFrame[]): boolean => {
