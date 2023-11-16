@@ -657,7 +657,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2023-01-01 12:45:00 | 8     |
 
   - With X Bucket set to 'Size: 15m' and Y Bucket as 'Linear', the histogram organizes values into time intervals of 15 minutes on the x-axis and linearly on the y-axis.
-  - For X Bucket as 'Count: 2' and Y Bucket as 'Logarithmic (base 10)', the histogram would group values into buckets of two on the x-axis and use a logarithmic scale on the y-axis.
+  - For X Bucket as 'Count: 2' and Y Bucket as 'Logarithmic (base 10)', the histogram groups values into buckets of two on the x-axis and use a logarithmic scale on the y-axis.
 
   Enhance your data representation by leveraging histogram transformations for insightful visualizations over time.
   `;
