@@ -2,7 +2,7 @@ import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv, FetchResponse } from '@grafana/runtime';
+import { getDataSourceSrv, FetchResponse, logWarning } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import {
@@ -43,6 +43,13 @@ const toEnrichedCorrelationData = ({
   const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
   const targetDatasource = getDataSourceSrv().getInstanceSettings(targetUID);
 
+  // According to #72258 we will remove logic to handle orgId=0/null as global correlations.
+  // This logging is to check if there are any customers who did not migrate existing correlations.
+  // See Deprecation Notice in https://github.com/grafana/grafana/pull/72258 for more details
+  if (correlation.orgId === undefined || correlation.orgId === null || correlation.orgId === 0) {
+    logWarning('Invalid correlation config: Missing org id.');
+  }
+
   if (
     sourceDatasource &&
     sourceDatasource?.uid !== undefined &&
@@ -55,6 +62,11 @@ const toEnrichedCorrelationData = ({
       target: targetDatasource,
     };
   } else {
+    logWarning(
+      `Invalid correlation config: Missing source or target. source = ${JSON.stringify(
+        sourceDatasource
+      )}, target = ${JSON.stringify(targetDatasource)}`
+    );
     return undefined;
   }
 };
