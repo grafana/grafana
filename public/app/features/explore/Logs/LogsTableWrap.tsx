@@ -54,9 +54,9 @@ export function LogsTableWrap(props: Props) {
 
   const height = getTableHeight();
   // The refId of the current frame being displayed
-  const [currentFrameRef, setCurrentFrameRef] = useState<string | undefined>(logsFrames[0].refId);
+  const [currentFrameRefId, setCurrentFrameRefId] = useState<string | undefined>(logsFrames[0].refId);
   const [currentDataFrame, setCurrentDataFrame] = useState(
-    logsFrames.find((frame) => frame.refId === currentFrameRef) ?? logsFrames[0]
+    logsFrames.find((frame) => frame.refId === currentFrameRefId) ?? logsFrames[0]
   );
 
   const getColumnsFromProps = useCallback(
@@ -98,10 +98,10 @@ export function LogsTableWrap(props: Props) {
 
   // Set frame ref when the explore panel state changes
   useEffect(() => {
-    if (props.panelState?.refId && props.panelState?.refId !== currentFrameRef) {
-      setCurrentFrameRef(props.panelState.refId);
+    if (props.panelState?.refId && props.panelState?.refId !== currentFrameRefId) {
+      setCurrentFrameRefId(props.panelState.refId);
     }
-  }, [props?.panelState?.refId, currentFrameRef]);
+  }, [props?.panelState?.refId, currentFrameRefId]);
 
   /**
    * when the query results change, we need to update the columnsWithMeta state
@@ -316,7 +316,7 @@ export function LogsTableWrap(props: Props) {
 
   const onFrameSelectorChange = (value: SelectableValue<string>) => {
     if (value) {
-      setCurrentFrameRef(value.value);
+      setCurrentFrameRefId(value.value);
       const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
       if (matchingDataFrame) {
         setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
@@ -344,7 +344,7 @@ export function LogsTableWrap(props: Props) {
               <Select
                 inputId={'explore_logs_table_frame_selector'}
                 aria-label={'Select query by name'}
-                value={currentFrameRef}
+                value={currentFrameRefId}
                 options={logsFrames.map((frame) => {
                   return {
                     label: frame.refId,
