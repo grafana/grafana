@@ -213,8 +213,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
-	r.Get("/swagger-ui", swaggerUI)
-	r.Get("/openapi3", openapi3)
+	// add swagger support
+	registerSwaggerUI(r)
 
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagClientTokenRotation) {
 		r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))

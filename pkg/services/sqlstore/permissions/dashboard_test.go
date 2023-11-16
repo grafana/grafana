@@ -777,7 +777,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 			dashes = append(dashes, dashboards.Dashboard{
 				OrgID:    1,
 				IsFolder: false,
-				FolderID: int64(folderID),
+				FolderID: int64(folderID), // nolint:staticcheck
 				UID:      str,
 				Slug:     str,
 				Title:    str,
@@ -866,7 +866,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	// create dashboard under parent folder
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID:     orgID,
-		FolderID:  parent.ID,
+		FolderID:  parent.ID, // nolint:staticcheck
 		FolderUID: parent.UID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under parent folder",
@@ -877,7 +877,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	// create dashboard under subfolder
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID:     orgID,
-		FolderID:  subfolder.ID,
+		FolderID:  subfolder.ID, // nolint:staticcheck
 		FolderUID: subfolder.UID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under subfolder",

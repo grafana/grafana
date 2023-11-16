@@ -377,6 +377,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		})
 	}
 
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDatatrails) {
+		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+			Text: "Data trails",
+			Id:   "data-trails",
+			Url:  s.cfg.AppSubURL + "/data-trails",
+			Icon: "code-branch",
+		})
+	}
+
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", IsCreateAction: true,
