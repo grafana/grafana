@@ -1,4 +1,5 @@
-import { linear, polynomial, DataPoint, Result } from 'regression';
+import { PolynomialRegression } from 'ml-regression-polynomial';
+import { SimpleLinearRegression } from 'ml-regression-simple-linear';
 import { map } from 'rxjs';
 
 import {
@@ -16,7 +17,6 @@ export enum ModelType {
 
 export interface RegressionTransformerOptions {
   modelType?: ModelType;
-  precision?: number;
   order?: number;
   xFieldName?: string;
   yFieldName?: string;
@@ -51,28 +51,25 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
       if (!xField || !yField) {
         return frames;
       }
-      // If the field type is time we'll use the microsecond epoch value,
-      // this number is too big compared to normal value ranges and make
-      // the coefficients so small we run into javascript float issues.
-      // To alleviate this problem we normalize the epoch millis to the
-      // start of the time range.
+
+      // If x is a time field we normalize the time to the start of the timeseries
       const lowest = xField.type === FieldType.time ? xField.values[0] : 0;
 
       const yValues = yField.values;
-      const dataPoints = xField.values.map<DataPoint>((v, i) => {
-        return [v - lowest, yValues[i]];
+      const xValues = xField.values.map((x) => {
+        return x - lowest;
       });
 
-      let result: Result;
+      let result: PolynomialRegression | SimpleLinearRegression;
       switch (options.modelType) {
         case ModelType.linear:
-          result = linear(dataPoints, { precision: options.precision });
+          result = new SimpleLinearRegression(xValues, yValues);
           break;
         case ModelType.polynomial:
-          result = polynomial(dataPoints, { precision: options.precision, order: options.order });
+          result = new PolynomialRegression(xValues, yValues, options.order ?? 2);
           break;
         default:
-          throw 'model type not found';
+          return frames;
       }
 
       const newFrame: DataFrame = {
@@ -83,7 +80,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
           {
             name: yField.name,
             type: yField.type,
-            values: xField.values.map((v) => result.predict(v - lowest)).map((d) => d[1]),
+            values: xField.values.map((v) => result.predict(v - lowest)),
             config: {},
           },
         ],
