@@ -691,10 +691,6 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		if err != nil {
 			return err
 		}
-
-		if err := deleteFolderAlertRules(sess, dashboard, cmd.ForceDeleteFolderRules); err != nil {
-			return err
-		}
 	} else {
 		if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
 			return err
@@ -781,33 +777,6 @@ func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, d
 
 		for _, sql := range childrenDeletes {
 			_, err := sess.Exec(sql, dashboard.OrgID, dashboard.ID)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func deleteFolderAlertRules(sess *db.Session, dashboard dashboards.Dashboard, forceDeleteFolderAlertRules bool) error {
-	var existingRuleID int64
-	exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", dashboard.ID).Cols("id").Get(&existingRuleID)
-	if err != nil {
-		return err
-	}
-	if exists {
-		if !forceDeleteFolderAlertRules {
-			return fmt.Errorf("folder cannot be deleted: %w", dashboards.ErrFolderContainsAlertRules)
-		}
-
-		// Delete all rules under this folder.
-		deleteNGAlertsByFolder := []string{
-			"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
-			"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
-		}
-
-		for _, sql := range deleteNGAlertsByFolder {
-			_, err := sess.Exec(sql, dashboard.ID)
 			if err != nil {
 				return err
 			}

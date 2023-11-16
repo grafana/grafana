@@ -206,7 +206,7 @@ func TestDashboardService(t *testing.T) {
 
 		t.Run("Given non provisioned dashboard", func(t *testing.T) {
 			t.Run("DeleteProvisionedDashboard should delete the dashboard", func(t *testing.T) {
-				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1, ForceDeleteFolderRules: false}
+				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
 				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)

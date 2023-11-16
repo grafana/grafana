@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -258,45 +257,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		deleteCmd := &dashboards.DeleteDashboardCommand{ID: emptyFolder.ID}
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
-		require.NoError(t, err)
-	})
-
-	t.Run("Should be not able to delete a dashboard if force delete rules is disabled", func(t *testing.T) {
-		setup()
-		deleteCmd := &dashboards.DeleteDashboardCommand{ID: savedFolder.ID, ForceDeleteFolderRules: false}
-		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
-		require.True(t, errors.Is(err, dashboards.ErrFolderContainsAlertRules))
-	})
-
-	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
-		setup()
-		deleteCmd := &dashboards.DeleteDashboardCommand{ID: savedFolder.ID, ForceDeleteFolderRules: true}
-		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
-		require.NoError(t, err)
-
-		query := dashboards.FindPersistedDashboardsQuery{
-			OrgId:        1,
-			FolderIds:    []int64{savedFolder.ID}, // nolint:staticcheck
-			SignedInUser: &user.SignedInUser{},
-		}
-
-		res, err := dashboardStore.FindDashboards(context.Background(), &query)
-		require.NoError(t, err)
-		require.Equal(t, len(res), 0)
-
-		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			var existingRuleID int64
-			exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", savedFolder.ID).Cols("id").Get(&existingRuleID)
-			require.NoError(t, err)
-			require.False(t, exists)
-
-			var existingRuleVersionID int64
-			exists, err = sess.Table("alert_rule_version").Where("rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", savedFolder.ID).Cols("id").Get(&existingRuleVersionID)
-			require.NoError(t, err)
-			require.False(t, exists)
-
-			return nil
-		})
 		require.NoError(t, err)
 	})
 
