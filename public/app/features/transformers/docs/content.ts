@@ -1280,7 +1280,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
-  This transformation offers a powerful way to reshape and enhance your data, providing flexibility in configuring and styling individual fields for a more customized and descriptive visualization experience.
+  This transformation enables the conversion of rows into individual fields, facilitates dynamic field configuration, and maps additional fields to labels.
   `;
     },
   },
