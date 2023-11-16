@@ -1358,7 +1358,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   Use this transformation to convert time series results into a table, transforming a time series data frame into a "Trend" field. The "Trend" field can then be rendered using the [sparkline cell type][], generating an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
   For each generated "Trend" field value, a calculation function can be selected. The default is "last non-null value." This value will be displayed next to the sparkline and used for sorting table rows.
-  
+
   > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
   `;
     },
