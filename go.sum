@@ -1835,8 +1835,6 @@ github.com/grafana/grafana-google-sdk-go v0.1.0 h1:LKGY8z2DSxKjYfr2flZsWgTRTZ6HG
 github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.191.0 h1:HcpBsrySv7m8TOeeWyeeKfROVUEwSSKvlfiJTF15JZU=
-github.com/grafana/grafana-plugin-sdk-go v0.191.0/go.mod h1:Sl9pQlI6djp/340+nY+mpOjQksENLGL40WSqxP/o21Y=
 github.com/grafana/grafana-plugin-sdk-go v0.193.0 h1:vRL96urrUfb+XWd4G6/317wpJBWTvoR9+Lrb+yGXZho=
 github.com/grafana/grafana-plugin-sdk-go v0.193.0/go.mod h1:6Igwuc+iWyYNWXhJhsWUQpPn2ugNIo6r36vtn7GyIiE=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
