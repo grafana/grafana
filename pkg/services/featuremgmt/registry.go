@@ -894,6 +894,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "lokiStructuredMetadata",
+			Description:  "Enables the loki data source to request structured metadata from the Loki server",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "teamHttpHeaders",
 			Description:  "Enables datasources to apply team headers to the client requests",
 			Stage:        FeatureStageExperimental,
