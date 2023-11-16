@@ -299,7 +299,7 @@ export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
   );
 };
 
-export interface DataSourceWithQueryModificationSupportSupport<TQuery extends DataQuery> {
+export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery> {
   /**
    * Given a query, applies a query modification `action`, returning the updated query.
    * Explore currently supports the following action types:
@@ -321,7 +321,7 @@ export interface DataSourceWithQueryModificationSupportSupport<TQuery extends Da
  */
 export const hasQueryModificationSupport = <TQuery extends DataQuery>(
   datasource: unknown
-): datasource is DataSourceWithQueryModificationSupportSupport<TQuery> => {
+): datasource is DataSourceWithQueryModificationSupport<TQuery> => {
   return (
     datasource !== null &&
     typeof datasource === 'object' &&
