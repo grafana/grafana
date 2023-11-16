@@ -524,7 +524,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2021-11-12 14:24:40 | User Login     |
   | 2021-11-12 14:23:40 | Data Updated   |
 
-  This transformation empowers you to tailor the time representation in your visualizations, providing flexibility and precision in displaying temporal data.
+  This transformation lets you tailor the time representation in your visualizations, providing flexibility and precision in displaying temporal data.
 
   > **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
   `;
