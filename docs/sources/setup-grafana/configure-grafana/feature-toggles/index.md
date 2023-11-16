@@ -60,7 +60,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `panelTitleSearch`               | Search for dashboards using panel title                                                                                                                                                      |
 | `migrationLocking`               | Lock database during migrations                                                                                                                                                              |
 | `correlations`                   | Correlations page                                                                                                                                                                            |
-| `newDBLibrary`                   | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `autoMigrateOldPanels`           | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
 | `disableAngular`                 | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
 | `grpcServer`                     | Run the GRPC server                                                                                                                                                                          |
@@ -164,6 +163,7 @@ Experimental features might be changed or removed without prior notice.
 | `logsInfiniteScrolling`                     | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                                                                                                                                                                           |
 | `flameGraphItemCollapsing`                  | Allow collapsing of flame graph items                                                                                                                                                                                                                                             |
 | `logRowsPopoverMenu`                        | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                                                                               |
+| `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 
 ## Development feature toggles
 

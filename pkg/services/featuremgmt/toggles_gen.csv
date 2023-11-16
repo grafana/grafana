@@ -13,7 +13,6 @@ correlations,preview,@grafana/explore-squad,false,false,false,false
 exploreContentOutline,GA,@grafana/explore-squad,false,false,false,true
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,false,false,false,false
 traceToMetrics,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
-newDBLibrary,preview,@grafana/backend-platform,false,false,false,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,false,true
@@ -142,5 +141,7 @@ ssoSettingsApi,experimental,@grafana/identity-access-team,true,false,false,false
 logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 alertingDetailsViewV2,experimental,@grafana/alerting-squad,false,false,false,true
+datatrails,experimental,@grafana/dashboards-squad,false,false,false,true
 alertingSimplifiedRouting,experimental,@grafana/alerting-squad,false,false,false,false
 logRowsPopoverMenu,experimental,@grafana/observability-logs,false,false,false,true
+pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false,false

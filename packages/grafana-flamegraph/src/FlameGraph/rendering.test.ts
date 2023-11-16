@@ -28,7 +28,7 @@ describe('walkTree', () => {
   it('correctly compute sizes for a single item', () => {
     const root: LevelItem = { start: 0, itemIndexes: [0], children: [], value: 100, level: 0 };
     const container = new FlameGraphDataContainer(
-      makeDataFrame({ value: [100], level: [1], label: ['1'], self: [0] }),
+      makeDataFrame({ value: [100], level: [0], label: ['1'], self: [0] }),
       { collapsing: true }
     );
 
