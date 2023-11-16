@@ -51,6 +51,7 @@ export interface ExploreLogsPanelState {
   id?: string;
   columns?: Record<number, string>;
   visualisationType?: 'table' | 'logs';
+  // Used for logs table visualisation, contains the refId of the dataFrame that is currently visualized
   refId?: string;
 }
 
