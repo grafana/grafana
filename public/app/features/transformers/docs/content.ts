@@ -993,7 +993,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     ],
   },
   organize: {
-    name: 'Oraganize fields',
+    name: 'Organize fields',
     getHelperDocs: function () {
       return `
   Use this transformation to provide the flexibility to rename, reorder, or hide fields returned by a single query in your panel. Please note that this transformation is applicable only to panels with a single query. If your panel has multiple queries, consider using an "Outer Join" transformation or removing extra queries.
