@@ -53,8 +53,10 @@ export function LogsTableWrap(props: Props) {
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
   const height = getTableHeight();
+
   // The refId of the current frame being displayed
   const [currentFrameRefId, setCurrentFrameRefId] = useState<string | undefined>(logsFrames[0].refId);
+  // The current dataFrame containing the refId above, used to prevent the table from flashing when switching between queries
   const [currentDataFrame, setCurrentDataFrame] = useState(
     logsFrames.find((frame) => frame.refId === currentFrameRefId) ?? logsFrames[0]
   );
