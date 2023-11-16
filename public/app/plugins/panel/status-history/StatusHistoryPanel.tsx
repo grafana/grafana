@@ -220,16 +220,11 @@ export const StatusHistoryPanel = ({
         if (config.featureToggles.newVizTooltips) {
           return (
             <>
-              <ZoomPlugin
-                config={builder}
-                onZoom={({ from, to }) => {
-                  onChangeTimeRange({ from, to });
-                }}
-              />
               {options.tooltip.mode !== TooltipDisplayMode.None && (
                 <TooltipPlugin2
                   config={builder}
                   hoverMode={TooltipHoverMode.xyOne}
+                  queryZoom={onChangeTimeRange}
                   render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                     return (
                       <StatusHistoryTooltip2
