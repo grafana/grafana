@@ -19,64 +19,43 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 
 	logger.Debug("Separating queries into batches")
 
-	// get query IDs which are referenced in math expressions
-	mathQueryIdToReferences := getReferencedQueries(queries)
-
-	rootQueries := getRootQueries(queries, mathQueryIdToReferences)
-
-	batches := [][]*models.CloudWatchQuery{}
-	for query := range rootQueries {
-		batches = append(batches, getConnectedQueries(query, mathQueryIdToReferences))
-	}
-	return batches
-}
-
-func getRootQueries(queries []*models.CloudWatchQuery, mathQueryIdToReferences map[string][]*models.CloudWatchQuery) map[*models.CloudWatchQuery]bool {
-	referencedQueries := make(map[string]bool)
-	for _, referencedIds := range mathQueryIdToReferences {
-		for _, query := range referencedIds {
-			referencedQueries[query.Id] = true
-		}
-	}
-
-	rootQueries := make(map[*models.CloudWatchQuery]bool)
+	// set up list of math expression queries since below we loop over them to get what query IDs they reference
+	var mathQueries []*models.CloudWatchQuery
 	for _, query := range queries {
-		// if a query is not referenced, then it is a "root" query
-		if _, ok := referencedQueries[query.Id]; !ok {
-			rootQueries[query] = true
+		if query.GetGetMetricDataAPIMode() == models.GMDApiModeMathExpression {
+			mathQueries = append(mathQueries, query)
 		}
 	}
 
-	return rootQueries
-}
-
-// getReferencedQueries gets query IDs which are referenced in math expressions
-func getReferencedQueries(queries []*models.CloudWatchQuery) map[string][]*models.CloudWatchQuery {
 	// put queries into a set in order to facilitate lookup below
 	idToQuery := make(map[string]*models.CloudWatchQuery, len(queries))
 	for _, q := range queries {
 		idToQuery[q.Id] = q
 	}
 
-	// set up list of math expression queries since below we loop over them to get what query IDs they reference
-	var mathQueries []*models.CloudWatchQuery
-	for _, query := range idToQuery {
-		if query.GetGetMetricDataAPIMode() == models.GMDApiModeMathExpression {
-			mathQueries = append(mathQueries, query)
-		}
-	}
-
+	// gets query IDs which are referenced in math expressions
 	mathQueryIdToReferences := make(map[string][]*models.CloudWatchQuery)
+	// we will use this set of referenced queries to determine the root queries below
+	referencedQueries := make(map[string]bool)
 	for _, mathQuery := range mathQueries {
 		substrings := nonWordRegex.Split(mathQuery.Expression, -1)
 		for _, id := range substrings {
 			query, found := idToQuery[id]
 			if found {
 				mathQueryIdToReferences[mathQuery.Id] = append(mathQueryIdToReferences[mathQuery.Id], query)
+				referencedQueries[query.Id] = true
 			}
 		}
 	}
-	return mathQueryIdToReferences
+
+	batches := [][]*models.CloudWatchQuery{}
+	for _, query := range queries {
+		// if a query is not referenced, then it is a "root" query
+		if _, ok := referencedQueries[query.Id]; !ok {
+			batches = append(batches, getConnectedQueries(query, mathQueryIdToReferences))
+		}
+	}
+	return batches
 }
 
 // getConnectedQueries does a breadth-first search to find all the query ids connected to the root id by references. The root id is also returned in the response.
