@@ -5,5 +5,10 @@ export const Messages = {
       default: 'Default',
       custom: 'Custom',
     },
+    autoDiscoveryOptions: {
+      enabled: 'Enabled',
+      disabled: 'Disabled',
+      custom: 'Custom',
+    },
   },
 };

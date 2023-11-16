@@ -14,8 +14,8 @@ import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
 import { AdditionalOptionsFormPartProps, PostgreSQLAdditionalOptionsProps } from '../FormParts.types';
 
-import { tablestatOptions } from './AdditionalOptions.constants';
-import { TablestatOptionsInterface } from './AdditionalOptions.types';
+import { autoDiscoveryOptions, tablestatOptions } from './AdditionalOptions.constants';
+import { AutoDiscoveryOptionsInterface, TablestatOptionsInterface } from './AdditionalOptions.types';
 import { MongodbTLSCertificate } from './MongodbTLSCertificate';
 import { MysqlTLSCertificate } from './MysqlTLSCertificate';
 import { PostgreTLSCertificate } from './PostgreTLSCertificate';
@@ -41,16 +41,55 @@ export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
   );
 };
 
-export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> = ({ isRDS, isAzure }) => (
-  <>
-    <h4>{Messages.form.labels.trackingOptions}</h4>
-    <RadioButtonGroupField
-      name="tracking"
-      data-testid="tracking-options-radio-button-group"
-      options={isRDS || isAzure ? rdsTrackingOptions : trackingOptions}
-    />
-  </>
-);
+export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> = ({ form, isRDS, isAzure }) => {
+  const selectedOption = form.getState()?.values?.autoDiscoveryOptions;
+  const [selectedValue, setSelectedValue] = useState<string>(selectedOption || AutoDiscoveryOptionsInterface.enabled);
+  const styles = useStyles2(getStyles);
+  const validators = [platformCoreValidators.containsNumber, ...platformCoreValidators.int32];
+
+  const getAutoDiscoveryLimitValue = (type: AutoDiscoveryOptionsInterface) =>
+    type === AutoDiscoveryOptionsInterface.enabled ? 0 : type === AutoDiscoveryOptionsInterface.disabled ? -1 : 10;
+
+  useEffect(() => {
+    setSelectedValue(selectedOption);
+    form.change('autoDiscoveryLimit', getAutoDiscoveryLimitValue(selectedOption));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedOption]);
+
+  return (
+    <>
+      <h4>{Messages.form.labels.trackingOptions}</h4>
+      <RadioButtonGroupField
+        name="tracking"
+        data-testid="tracking-options-radio-button-group"
+        options={isRDS || isAzure ? rdsTrackingOptions : trackingOptions}
+        className={styles.radioField}
+        fullWidth
+      />
+      <h4>{Messages.form.labels.postgresqlDetails.autoDiscovery}</h4>
+      <div className={styles.group}>
+        <RadioButtonGroupField
+          name="autoDiscoveryOptions"
+          data-testid="auto-discovery-options-radio-button-group"
+          defaultValue={selectedValue}
+          options={autoDiscoveryOptions}
+          className={styles.radioField}
+          label={Messages.form.labels.postgresqlDetails.autoDiscoveryLimitOptions}
+          fullWidth
+        />
+        <NumberInputField
+          key="autoDiscoveryLimit"
+          name="autoDiscoveryLimit"
+          defaultValue={0}
+          disabled={selectedValue !== AutoDiscoveryOptionsInterface.custom}
+          validators={validators}
+          label={Messages.form.labels.postgresqlDetails.autoDiscoveryLimit}
+          tooltipText={Messages.form.tooltips.postgresqlDetails.autoDiscoveryLimit}
+        />
+      </div>
+    </>
+  );
+};
 
 const getTablestatValues = (type: TablestatOptionsInterface) => {
   switch (type) {
@@ -69,7 +108,8 @@ const MySQLOptions = ({ form }: { form: FormApi }) => {
   useEffect(() => {
     setSelectedValue(selectedOption);
     form.change('tablestats_group_table_limit', getTablestatValues(selectedOption));
-  }, [selectedOption, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedOption]);
 
   return (
     <>
@@ -115,6 +155,7 @@ export const getAdditionalOptions = (
             />
           </>
           <PostgreSQLAdditionalOptions
+            form={form}
             isRDS={remoteInstanceCredentials.isRDS}
             isAzure={remoteInstanceCredentials.isAzure}
           />

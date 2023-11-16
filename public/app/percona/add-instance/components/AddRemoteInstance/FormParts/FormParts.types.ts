@@ -21,6 +21,7 @@ export interface AdditionalOptionsFormPartProps {
 export interface PostgreSQLAdditionalOptionsProps {
   isRDS?: boolean;
   isAzure?: boolean;
+  form: FormApi;
 }
 
 export enum Schema {
