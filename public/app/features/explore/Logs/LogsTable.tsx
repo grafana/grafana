@@ -26,7 +26,7 @@ import { getFieldLinksForExplore } from '../utils/links';
 import { fieldNameMeta } from './LogsTableWrap';
 
 interface Props {
-  logsFrame: DataFrame;
+  dataFrame: DataFrame;
   width: number;
   timeZone: string;
   splitOpen: SplitOpen;
@@ -39,11 +39,8 @@ interface Props {
 }
 
 export function LogsTable(props: Props) {
-  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrame, columnsWithMeta } = props;
+  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
-
-  // Only a single frame (query) is supported currently
-  const logFrameRaw = logsFrame ? logsFrame : undefined;
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
@@ -99,14 +96,12 @@ export function LogsTable(props: Props) {
   useEffect(() => {
     const prepare = async () => {
       // Parse the dataframe to a logFrame
-      const logsFrame = logFrameRaw ? parseLogsFrame(logFrameRaw) : undefined;
+      const logsFrame = dataFrame ? parseLogsFrame(dataFrame) : undefined;
 
-      if (!logFrameRaw || !logsFrame) {
+      if (!logsFrame) {
         setTableFrame(undefined);
         return;
       }
-
-      let dataFrame = logFrameRaw;
 
       // create extract JSON transformation for every field that is `json.RawMessage`
       const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFields(dataFrame);
@@ -139,7 +134,7 @@ export function LogsTable(props: Props) {
       }
     };
     prepare();
-  }, [columnsWithMeta, logFrameRaw, logsSortOrder, prepareTableFrame]);
+  }, [columnsWithMeta, dataFrame, logsSortOrder, prepareTableFrame]);
 
   if (!tableFrame) {
     return null;
@@ -152,11 +147,11 @@ export function LogsTable(props: Props) {
       return;
     }
     if (operator === FILTER_FOR_OPERATOR) {
-      onClickFilterLabel(key, value, logsFrame.refId);
+      onClickFilterLabel(key, value, dataFrame.refId);
     }
 
     if (operator === FILTER_OUT_OPERATOR) {
-      onClickFilterOutLabel(key, value, logsFrame.refId);
+      onClickFilterOutLabel(key, value, dataFrame.refId);
     }
   };
 

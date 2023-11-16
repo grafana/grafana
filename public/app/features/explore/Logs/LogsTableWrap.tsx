@@ -374,7 +374,7 @@ export function LogsTableWrap(props: Props) {
           splitOpen={props.splitOpen}
           timeZone={props.timeZone}
           width={tableWidth}
-          logsFrame={dataFrame}
+          dataFrame={dataFrame}
           columnsWithMeta={columnsWithMeta}
           height={height}
         />
