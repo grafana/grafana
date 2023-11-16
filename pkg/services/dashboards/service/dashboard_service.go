@@ -138,8 +138,10 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		if err != nil {
 			return nil, err
 		}
+		// nolint:staticcheck
 		dash.FolderID = folder.ID
-	} else if dash.FolderID != 0 {
+	} else if dash.FolderID != 0 { // nolint:staticcheck
+		// nolint:staticcheck
 		folder, err := dr.folderStore.GetFolderByID(ctx, dash.OrgID, dash.FolderID)
 		if err != nil {
 			return nil, err
