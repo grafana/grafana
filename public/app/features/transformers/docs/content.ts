@@ -1055,7 +1055,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2022-10-20 12:00:00 | EU     | 2936  |
   | 2022-10-20 01:00:00 | EU     | 912   |
 
-  This transformation simplifies the process and enhances the flexibility of visualizing multiple series within the same TimeSeries panel.
+  This transformation simplifies the process and enhances the flexibility of visualizing multiple series within the same Time Series panel.
   `;
     },
   },
