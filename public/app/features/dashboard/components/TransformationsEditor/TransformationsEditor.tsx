@@ -485,7 +485,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     </Drawer>
 
 
-    const picker = false ? redesignPicker : oldPicker;//transformationsRedesign
+    const picker = transformationsRedesign ? redesignPicker : oldPicker;
 
     return (
         showPicker ? (
