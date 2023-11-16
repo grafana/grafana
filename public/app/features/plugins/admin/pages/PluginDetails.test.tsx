@@ -768,8 +768,10 @@ describe('Plugin details page', () => {
     });
 
     it('should display a custom deprecation message if the plugin has it set', async () => {
+      const defaultMessage =
+        'This app plugin is deprecated and has been removed from the catalog. No further updates will be made to the plugin.';
       const statusContext = 'A detailed explanation of why this plugin is deprecated.';
-      const { queryByText } = renderPluginDetails({
+      const { findByText } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: true,
@@ -779,9 +781,30 @@ describe('Plugin details page', () => {
         },
       });
 
-      const re = new RegExp(`No further updates will be made to the plugin. More information: ${statusContext}`, 'i');
+      expect(await findByText(defaultMessage)).toBeInTheDocument();
+      expect(await findByText(statusContext)).toBeInTheDocument();
+    });
 
-      await waitFor(() => expect(queryByText(re)).toBeInTheDocument());
+    it('should be possible to render markdown inside a custom deprecation message', async () => {
+      const defaultMessage =
+        'This app plugin is deprecated and has been removed from the catalog. No further updates will be made to the plugin.';
+      const statusContext =
+        '**This is a custom deprecation message.** [Link 1](https://grafana.com) <a href="https://grafana.com" target="_blank">Link 2</a>';
+      const { findByText, findByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      expect(await findByText(defaultMessage)).toBeInTheDocument();
+      expect(await findByText('This is a custom deprecation message.')).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 1' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toHaveAttribute('href', 'https://grafana.com');
     });
   });
 
