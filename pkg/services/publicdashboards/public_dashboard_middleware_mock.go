@@ -18,12 +18,12 @@ func (_m *FakePublicDashboardMiddleware) HandleApi(c *contextmodel.ReqContext) {
 }
 
 // HandleGet provides a mock function with given fields: c
-func (_m *FakePublicDashboardMiddleware) HandleGet(c *contextmodel.ReqContext) {
+func (_m *FakePublicDashboardMiddleware) HandleView(c *contextmodel.ReqContext) {
 	_m.Called(c)
 }
 
 // HandleRequestOrConfirmAccess provides a mock function with given fields: c
-func (_m *FakePublicDashboardMiddleware) HandleRequestOrConfirmAccess(c *contextmodel.ReqContext) {
+func (_m *FakePublicDashboardMiddleware) HandleAccessView(c *contextmodel.ReqContext) {
 	_m.Called(c)
 }
 

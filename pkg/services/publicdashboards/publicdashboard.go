@@ -69,6 +69,6 @@ type Store interface {
 //go:generate mockery --name Middleware --structname FakePublicDashboardMiddleware --inpackage --filename public_dashboard_middleware_mock.go
 type Middleware interface {
 	HandleApi(c *contextmodel.ReqContext)
-	HandleGet(c *contextmodel.ReqContext)
-	HandleRequestOrConfirmAccess(c *contextmodel.ReqContext)
+	HandleView(c *contextmodel.ReqContext)
+	HandleAccessView(c *contextmodel.ReqContext)
 }

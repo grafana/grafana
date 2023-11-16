@@ -79,7 +79,7 @@ func ProvideMiddleware() *Middleware {
 }
 func (m *Middleware) HandleApi(c *contextmodel.ReqContext) {
 }
-func (m *Middleware) HandleGet(c *contextmodel.ReqContext) {
+func (m *Middleware) HandleView(c *contextmodel.ReqContext) {
 }
-func (m *Middleware) HandleRequestOrConfirmAccess(c *contextmodel.ReqContext) {
+func (m *Middleware) HandleAccessView(c *contextmodel.ReqContext) {
 }
