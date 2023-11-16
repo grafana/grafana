@@ -998,7 +998,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
       return `
   Use this transformation to provide the flexibility to rename, reorder, or hide fields returned by a single query in your panel. Please note that this transformation is applicable only to panels with a single query. If your panel has multiple queries, consider using an "Outer Join" transformation or removing extra queries.
 
-  #### Transforming Fields
+  #### Transforming fields
   
   Grafana conveniently displays a list of fields returned by the query, allowing you to perform the following actions:
   
