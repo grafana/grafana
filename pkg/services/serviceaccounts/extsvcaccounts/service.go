@@ -107,6 +107,9 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 
 // GetExternalServiceNames get the names of External Service in store
 func (esa *ExtSvcAccountsService) GetExternalServiceNames(ctx context.Context) ([]string, error) {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.GetExternalServiceNames")
+	defer span.End()
+
 	esa.logger.Debug("Get external service names from store")
 	sas, err := esa.saSvc.SearchOrgServiceAccounts(ctx, &sa.SearchOrgServiceAccountsQuery{
 		OrgID:        extsvcauth.TmpOrgID,
@@ -268,6 +271,9 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 
 // saveExtSvcAccount creates or updates the service account associated with an external service
 func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *saveCmd) (int64, error) {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.saveExtSvcAccount")
+	defer span.End()
+
 	if cmd.SaID <= 0 {
 		// Create a service account
 		esa.logger.Info("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
@@ -307,6 +313,9 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 
 // deleteExtSvcAccount deletes a service account by ID and removes its associated role
 func (esa *ExtSvcAccountsService) deleteExtSvcAccount(ctx context.Context, orgID int64, slug string, saID int64) error {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.deleteExtSvcAccount")
+	defer span.End()
+
 	esa.logger.Info("Delete service account", "service", slug, "orgID", orgID, "saID", saID)
 	if err := esa.saSvc.DeleteServiceAccount(ctx, orgID, saID); err != nil {
 		return err
