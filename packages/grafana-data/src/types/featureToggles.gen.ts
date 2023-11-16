@@ -160,5 +160,7 @@ export interface FeatureToggles {
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
+  datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
+  pluginsSkipHostEnvVars?: boolean;
 }

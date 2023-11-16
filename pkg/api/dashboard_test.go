@@ -379,11 +379,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given two dashboards with the same title in different folders", func(t *testing.T) {
 		dashOne := dashboards.NewDashboard("dash")
 		dashOne.ID = 2
+		// nolint:staticcheck
 		dashOne.FolderID = 1
 		dashOne.HasACL = false
 
 		dashTwo := dashboards.NewDashboard("dash")
 		dashTwo.ID = 4
+		// nolint:staticcheck
 		dashTwo.FolderID = 3
 		dashTwo.HasACL = false
 	})
@@ -404,13 +406,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					"title": "Dash",
 				}),
 				Overwrite: true,
-				FolderID:  folderID,
+				FolderID:  folderID, // nolint:staticcheck
 				FolderUID: folderUID,
 				IsFolder:  false,
 				Message:   "msg",
 			}
 
 			dashboardService := dashboards.NewFakeDashboardService(t)
+			// nolint:staticcheck
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2, FolderUID: folderUID, FolderID: folderID}, nil)
 			mockFolderService := &foldertest.FakeService{
@@ -646,6 +649,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		const folderID int64 = 1
 		fakeDash := dashboards.NewDashboard("Child dash")
 		fakeDash.ID = 2
+		// nolint:staticcheck
 		fakeDash.FolderID = folderID
 		fakeDash.HasACL = false
 
@@ -780,6 +784,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 	fakeDash := dashboards.NewDashboard("Child dash")
 	fakeDash.ID = 1
+	// nolint:staticcheck
 	fakeDash.FolderID = 1
 
 	fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
