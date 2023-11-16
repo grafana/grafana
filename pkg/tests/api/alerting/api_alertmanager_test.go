@@ -2284,7 +2284,7 @@ func TestIntegrationEval(t *testing.T) {
 			},
 			expectedMessage: func() string {
 				if setting.IsEnterprise {
-					return "user is not authorized to access rule group"
+					return "user is not authorized to access rule group  in folder "
 				}
 				return "Failed to build evaluator for queries and expressions: failed to build query 'A': data source not found"
 			},
