@@ -290,20 +290,20 @@ func TestRemoteLokiBackend(t *testing.T) {
 func TestMerge(t *testing.T) {
 	testCases := []struct {
 		name         string
-		res          queryRes
+		res          QueryRes
 		ruleID       string
 		expectedTime []time.Time
 	}{
 		{
 			name: "Should return values from multiple streams in right order",
-			res: queryRes{
-				Data: queryData{
-					Result: []stream{
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
 						{
 							Stream: map[string]string{
 								"current": "pending",
 							},
-							Values: []sample{
+							Values: []Sample{
 								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": "b"}}`},
 							},
 						},
@@ -311,7 +311,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "firing",
 							},
-							Values: []sample{
+							Values: []Sample{
 								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
 							},
 						},
@@ -326,14 +326,14 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "Should handle empty values",
-			res: queryRes{
-				Data: queryData{
-					Result: []stream{
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
 						{
 							Stream: map[string]string{
 								"current": "normal",
 							},
-							Values: []sample{},
+							Values: []Sample{},
 						},
 					},
 				},
@@ -343,14 +343,14 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "Should handle multiple values in one stream",
-			res: queryRes{
-				Data: queryData{
-					Result: []stream{
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
 						{
 							Stream: map[string]string{
 								"current": "normal",
 							},
-							Values: []sample{
+							Values: []Sample{
 								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
 								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
 							},
@@ -359,7 +359,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "firing",
 							},
-							Values: []sample{
+							Values: []Sample{
 								{time.Unix(0, 3), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
 							},
 						},
@@ -533,12 +533,12 @@ func createTestRule() history_model.RuleMeta {
 	}
 }
 
-func requireSingleEntry(t *testing.T, res stream) lokiEntry {
+func requireSingleEntry(t *testing.T, res Stream) lokiEntry {
 	require.Len(t, res.Values, 1)
 	return requireEntry(t, res.Values[0])
 }
 
-func requireEntry(t *testing.T, row sample) lokiEntry {
+func requireEntry(t *testing.T, row Sample) lokiEntry {
 	t.Helper()
 
 	var entry lokiEntry
