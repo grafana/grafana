@@ -50,7 +50,7 @@ You must install a Grafana Enterprise build to use the enterprise features, whic
 {{% admonition type="note" %}}
 
 If you already use Grafana OSS, you can replace it with the same version of Grafana Enterprise.
-It is recommended that you back up the configuration and database before switching.
+Ensure that you back up the configuration and database before proceeding.
 For more information, refer to [Back up Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/back-up-grafana/).
 
 {{% /admonition %}}
