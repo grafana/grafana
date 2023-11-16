@@ -33,7 +33,7 @@ func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
 		AppChildDecorateFunc(cfg),
-		SkipEnvVarsDecorateFunc(cfg),
+		SkipHostEnvVarsDecorateFunc(cfg),
 	}
 }
 
@@ -156,10 +156,10 @@ func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plu
 	}
 }
 
-// SkipEnvVarsDecorateFunc is a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
+// SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
 // It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin does not have
 // skip_host_env_vars = false in its plugin settings.
-func SkipEnvVarsDecorateFunc(cfg *config.Cfg) DecorateFunc {
+func SkipHostEnvVarsDecorateFunc(cfg *config.Cfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		p.SkipHostEnvVars = cfg.Features != nil &&
 			cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
