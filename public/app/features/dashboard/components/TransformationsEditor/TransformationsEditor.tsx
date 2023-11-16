@@ -34,6 +34,7 @@ import {
   useStyles2,
   Card,
   Switch,
+  Drawer,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import config from 'app/core/config';
@@ -351,150 +352,144 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       );
     }
 
-    return (
-      <>
-        {noTransforms && !config.featureToggles.transformationsRedesign && (
-          <Container grow={1}>
-            <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
-              {(isDismissed, onDismiss) => {
-                if (isDismissed) {
-                  return null;
-                }
+    const { transformationsRedesign } = config.featureToggles;
 
-                return (
-                  <Alert
-                    title="Transformations"
-                    severity="info"
-                    onRemove={() => {
-                      onDismiss(true);
-                    }}
-                  >
-                    <p>
-                      Transformations allow you to join, calculate, re-order, hide, and rename your query results before
-                      they are visualized. <br />
-                      Many transforms are not suitable if you&apos;re using the Graph visualization, as it currently
-                      only supports time series data. <br />
-                      It can help to switch to the Table visualization to understand what a transformation is doing.{' '}
-                    </p>
-                    <a
-                      href={getDocsLink(DocsId.Transformations)}
-                      className="external-link"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Read more
-                    </a>
-                  </Alert>
-                );
-              }}
-            </LocalStorageValueProvider>
-          </Container>
-        )}
-        {showPicker ? (
-          <>
-            {config.featureToggles.transformationsRedesign && (
-              <>
-                {!noTransforms && (
-                  <Button
-                    variant="secondary"
-                    fill="text"
-                    icon="angle-left"
-                    onClick={() => {
-                      this.setState({ showPicker: false });
-                    }}
-                  >
-                    Go back to&nbsp;<i>Transformations in use</i>
-                  </Button>
-                )}
-                <div className={styles.pickerInformationLine}>
+    const oldPicker = <VerticalGroup>
+      {noTransforms && (
+        <Container grow={1}>
+          <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
+            {(isDismissed, onDismiss) => {
+              if (isDismissed) {
+                return null;
+              }
+
+              return (
+                <Alert
+                  title="Transformations"
+                  severity="info"
+                  onRemove={() => {
+                    onDismiss(true);
+                  }}
+                >
+                  <p>
+                    Transformations allow you to join, calculate, re-order, hide, and rename your query results before
+                    they are visualized. <br />
+                    Many transforms are not suitable if you&apos;re using the Graph visualization, as it currently
+                    only supports time series data. <br />
+                    It can help to switch to the Table visualization to understand what a transformation is doing.{' '}
+                  </p>
                   <a
                     href={getDocsLink(DocsId.Transformations)}
                     className="external-link"
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
-                    <Icon name="external-link-alt" />
+                    Read more
                   </a>
-                  &nbsp;allow you to manipulate your data before a visualization is applied.
-                </div>
-              </>
-            )}
-            <VerticalGroup>
-              {!config.featureToggles.transformationsRedesign && (
-                <Input
-                  data-testid={selectors.components.Transforms.searchInput}
-                  value={search ?? ''}
-                  autoFocus={!noTransforms}
-                  placeholder="Search for transformation"
-                  onChange={this.onSearchChange}
-                  onKeyDown={this.onSearchKeyDown}
-                  suffix={suffix}
-                />
-              )}
+                </Alert>
+              );
+            }}
+          </LocalStorageValueProvider>
+        </Container>
+      )}
+      <Input
+        data-testid={selectors.components.Transforms.searchInput}
+        value={search ?? ''}
+        autoFocus={!noTransforms}
+        placeholder="Search for transformation"
+        onChange={this.onSearchChange}
+        onKeyDown={this.onSearchKeyDown}
+        suffix={suffix} />
+        {xforms.map((t) => {
+          return (
+            <TransformationCard
+              key={t.name}
+              transform={t}
+              onClick={() => {
+                this.onTransformationAdd({ value: t.id });
+              }}
+            />
+          );
+        })}
+    </VerticalGroup>;
 
-              {!config.featureToggles.transformationsRedesign &&
-                xforms.map((t) => {
-                  return (
-                    <TransformationCard
-                      key={t.name}
-                      transform={t}
-                      onClick={() => {
-                        this.onTransformationAdd({ value: t.id });
-                      }}
-                    />
-                  );
-                })}
 
-              {config.featureToggles.transformationsRedesign && (
-                <div className={styles.searchWrapper}>
-                  <Input
-                    data-testid={selectors.components.Transforms.searchInput}
-                    className={styles.searchInput}
-                    value={search ?? ''}
-                    autoFocus={!noTransforms}
-                    placeholder="Search for transformation"
-                    onChange={this.onSearchChange}
-                    onKeyDown={this.onSearchKeyDown}
-                    suffix={suffix}
-                  />
-                  <div className={styles.showImages}>
-                    <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
-                    <Switch
-                      value={this.state.showIllustrations}
-                      onChange={() => this.setState({ showIllustrations: !this.state.showIllustrations })}
-                    />
-                  </div>
-                </div>
-              )}
 
-              {config.featureToggles.transformationsRedesign && (
-                <div className={styles.filterWrapper}>
-                  {filterCategoriesLabels.map(([slug, label]) => {
-                    return (
-                      <FilterPill
-                        key={slug}
-                        onClick={() => this.setState({ selectedFilter: slug })}
-                        label={label}
-                        selected={this.state.selectedFilter === slug}
-                      />
-                    );
-                  })}
-                </div>
-              )}
+    const redesignPicker = <Drawer onClose={() => ( this.setState({showPicker: false}))}>
+      
+        {!noTransforms && (
+          <Button
+            variant="secondary"
+            fill="text"
+            icon="angle-left"
+            onClick={() => {
+              this.setState({ showPicker: false });
+            }}
+          >
+            Go back to&nbsp;<i>Transformations in use</i>
+          </Button>
+        )}
+      <div className={styles.pickerInformationLine}>
+        <a
+          href={getDocsLink(DocsId.Transformations)}
+          className="external-link"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
+          <Icon name="external-link-alt" />
+        </a>
+        &nbsp;allow you to manipulate your data before a visualization is applied.
+      </div>
+      
+      <div className={styles.searchWrapper}>
+        <Input
+          data-testid={selectors.components.Transforms.searchInput}
+          className={styles.searchInput}
+          value={search ?? ''}
+          autoFocus={!noTransforms}
+          placeholder="Search for transformation"
+          onChange={this.onSearchChange}
+          onKeyDown={this.onSearchKeyDown}
+          suffix={suffix}
+        />
+        <div className={styles.showImages}>
+          <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
+          <Switch
+            value={this.state.showIllustrations}
+            onChange={() => this.setState({ showIllustrations: !this.state.showIllustrations })}
+          />
+        </div>
+      </div>
 
-              {config.featureToggles.transformationsRedesign && (
-                <TransformationsGrid
-                  showIllustrations={this.state.showIllustrations}
-                  transformations={xforms}
-                  data={this.state.data}
-                  onClick={(id) => {
-                    this.onTransformationAdd({ value: id });
-                  }}
-                />
-              )}
-            </VerticalGroup>
-          </>
+      <div className={styles.filterWrapper}>
+        {filterCategoriesLabels.map(([slug, label]) => {
+          return (
+            <FilterPill
+              key={slug}
+              onClick={() => this.setState({ selectedFilter: slug })}
+              label={label}
+              selected={this.state.selectedFilter === slug}
+            />
+          );
+        })}
+      </div>
+
+      <TransformationsGrid
+        showIllustrations={this.state.showIllustrations}
+        transformations={xforms}
+        data={this.state.data}
+        onClick={(id) => {
+          this.onTransformationAdd({ value: id });
+        }} />
+    </Drawer>
+
+
+    const picker = false ? redesignPicker : oldPicker;//transformationsRedesign
+
+    return (
+        showPicker ? (
+          picker
         ) : (
           <Button
             icon="plus"
@@ -504,10 +499,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             }}
             data-testid={selectors.components.Transforms.addTransformationButton}
           >
-            Add{config.featureToggles.transformationsRedesign ? ' another ' : ' '}transformation
+            Add another transformation
           </Button>
-        )}
-      </>
+        )
     );
   }
 
