@@ -11,11 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -148,6 +151,81 @@ func TestAuth_Middleware(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 		})
 	}
+}
+
+func TestRoleAppPluginAuth(t *testing.T) {
+	t.Run("Verify user's role when requesting app route which requires role", func(t *testing.T) {
+		appSubURL := setting.AppSubUrl
+		setting.AppSubUrl = "/grafana/"
+		t.Cleanup(func() {
+			setting.AppSubUrl = appSubURL
+		})
+
+		tcs := []struct {
+			roleRequired org.RoleType
+			role         org.RoleType
+			signedIn     bool
+			expStatus    int
+			expBody      string
+			expLocation  string
+		}{
+			{signedIn: false, roleRequired: org.RoleViewer, role: org.RoleAdmin, expStatus: http.StatusFound, expBody: "<a href=\"/grafana/login\">Found</a>.\n\n", expLocation: "/grafana/login"},
+			{signedIn: false, roleRequired: org.RoleAdmin, role: org.RoleAdmin, expStatus: http.StatusFound, expBody: "<a href=\"/grafana/login\">Found</a>.\n\n", expLocation: "/grafana/login"},
+			{signedIn: true, roleRequired: org.RoleViewer, role: org.RoleAdmin, expStatus: http.StatusOK, expBody: ""},
+			{signedIn: true, roleRequired: org.RoleAdmin, role: org.RoleAdmin, expStatus: http.StatusOK, expBody: ""},
+			{signedIn: true, roleRequired: org.RoleAdmin, role: org.RoleViewer, expStatus: http.StatusFound, expBody: "<a href=\"/grafana/\">Found</a>.\n\n", expLocation: "/grafana/"},
+			{signedIn: true, roleRequired: "", role: org.RoleViewer, expStatus: http.StatusOK, expBody: ""},
+			{signedIn: true, roleRequired: org.RoleEditor, role: "", expStatus: http.StatusFound, expBody: "<a href=\"/grafana/\">Found</a>.\n\n", expLocation: "/grafana/"},
+		}
+
+		for i, tc := range tcs {
+			t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
+				ps := pluginstore.NewFakePluginStore(pluginstore.Plugin{
+					JSONData: plugins.JSONData{
+						ID: "test-app",
+						Includes: []*plugins.Includes{
+							{
+								Type: "page",
+								Role: tc.roleRequired,
+								Path: "/test",
+							},
+						},
+					},
+				})
+
+				middlewareScenario(t, t.Name(), func(t *testing.T, sc *scenarioContext) {
+					if tc.signedIn {
+						sc.withIdentity(&authn.Identity{
+							OrgRoles: map[int64]org.RoleType{
+								0: tc.role,
+							},
+						})
+					}
+					sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ps), func(c *contextmodel.ReqContext) {
+						c.JSON(http.StatusOK, map[string]interface{}{})
+					})
+					sc.fakeReq("GET", "/a/test-app/test").exec()
+					assert.Equal(t, tc.expStatus, sc.resp.Code)
+					assert.Equal(t, tc.expBody, sc.resp.Body.String())
+					assert.Equal(t, tc.expLocation, sc.resp.Header().Get("Location"))
+				})
+			})
+		}
+	})
+
+	middlewareScenario(t, "Plugin is not found returns a 404", func(t *testing.T, sc *scenarioContext) {
+		sc.withIdentity(&authn.Identity{
+			OrgRoles: map[int64]org.RoleType{
+				0: org.RoleViewer,
+			},
+		})
+		sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(&pluginstore.FakePluginStore{}), func(c *contextmodel.ReqContext) {
+			c.JSON(http.StatusOK, map[string]interface{}{})
+		})
+		sc.fakeReq("GET", "/a/test-app/test").exec()
+		assert.Equal(t, 404, sc.resp.Code)
+		assert.Equal(t, "", sc.resp.Body.String())
+	})
 }
 
 func TestRemoveForceLoginparams(t *testing.T) {

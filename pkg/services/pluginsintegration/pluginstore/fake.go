@@ -10,6 +10,12 @@ type FakePluginStore struct {
 	PluginList []Plugin
 }
 
+func NewFakePluginStore(ps ...Plugin) *FakePluginStore {
+	return &FakePluginStore{
+		PluginList: ps,
+	}
+}
+
 func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (Plugin, bool) {
 	for _, v := range pr.PluginList {
 		if v.ID == pluginID {

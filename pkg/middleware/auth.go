@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -140,6 +142,52 @@ func Auth(options *AuthOptions) web.Handler {
 		}
 
 		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
+			accessForbidden(c)
+			return
+		}
+	}
+}
+
+func RoleAppPluginAuthAndSignedIn(ps pluginstore.Store) web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		if !c.IsSignedIn {
+			notAuthorized(c)
+			return
+		}
+
+		pluginID := web.Params(c.Req)[":id"]
+		p, exists := ps.Plugin(c.Req.Context(), pluginID)
+		if !exists {
+			c.JsonApiErr(http.StatusNotFound, "Plugin not found", nil)
+			return
+		}
+
+		normalizePath := func(p string) string {
+			return filepath.Clean(p)
+		}
+
+		//found := false
+		allowed := false
+		path := normalizePath(c.Req.RequestURI)
+		for _, i := range p.Includes {
+			if i.Type != "page" {
+				continue
+			}
+
+			if normalizePath(i.Path) == path {
+				//found = true
+				if i.Role == "" || c.HasRole(i.Role) {
+					allowed = true
+				}
+				break
+			}
+		}
+
+		//if !found {
+		//	c.JsonApiErr(http.StatusNotFound, "Plugin page not found", nil)
+		//	return
+		//}
+		if !allowed {
 			accessForbidden(c)
 			return
 		}

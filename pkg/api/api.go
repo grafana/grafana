@@ -61,6 +61,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
+	reqRoleForAppRoute := middleware.RoleAppPluginAuthAndSignedIn(hs.pluginStore)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
@@ -140,8 +141,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// App Root Page
 	appPluginIDScope := pluginaccesscontrol.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
-	r.Get("/a/:id/*", authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), hs.Index)
-	r.Get("/a/:id", authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), hs.Index)
+	r.Get("/a/:id/*", reqRoleForAppRoute, authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), hs.Index)
+	r.Get("/a/:id", reqRoleForAppRoute, authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, appPluginIDScope)), hs.Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
