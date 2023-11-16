@@ -6,7 +6,6 @@ import {
   DataSourceInstanceSettings,
   DataSourceRef,
   DataSourceSelectItem,
-  EventBusSrv,
   ScopedVars,
 } from '@grafana/data';
 import {

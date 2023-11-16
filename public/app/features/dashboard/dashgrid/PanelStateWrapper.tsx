@@ -31,8 +31,10 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
+import { createWarningNotification } from 'app/core/copy/appNotification';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -392,11 +394,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
   onPanelWarning = (event: BusEvent) => {
     console.log('Panel warning', event);
-    const panelWarning =
-      'The data source of this ' +
-      this.props.panel.id +
-      ' panel is multi-choice var. You are only seeing the first (in visible order) data source selected for the variable.';
-    this.setState({ errorMessage: panelWarning });
+    dispatch(
+      notifyApp(
+        createWarningNotification(
+          `panel id: ${this.props.panel.id} warning`,
+          'Panel id warning because of multi-choice var'
+        )
+      )
+    );
   };
 
   logPanelChangesOnError() {
