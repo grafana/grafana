@@ -443,13 +443,12 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.hasPluginRequestedPermissions(c, pluginID, dto.Version)
-	if err != nil {
-		return response.Err(err)
+	if accessErr := hs.hasPluginRequestedPermissions(c, pluginID, dto.Version); accessErr != nil {
+		return response.Err(accessErr)
 	}
 
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-	err = hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
+	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
