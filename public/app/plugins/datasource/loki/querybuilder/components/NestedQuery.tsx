@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, toOption } from '@grafana/data';
+import { GrafanaTheme2, TimeRange, toOption } from '@grafana/data';
 import { EditorRows, FlexItem } from '@grafana/experimental';
 import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
@@ -16,13 +16,14 @@ export interface Props {
   datasource: LokiDatasource;
   index: number;
   showExplain: boolean;
+  timeRange?: TimeRange;
   onChange: (index: number, update: LokiVisualQueryBinary) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
 }
 
 export const NestedQuery = React.memo<Props>(
-  ({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain }) => {
+  ({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain, timeRange }) => {
     const styles = useStyles2(getStyles);
 
     return (
@@ -81,6 +82,7 @@ export const NestedQuery = React.memo<Props>(
               query={nestedQuery.query}
               datasource={datasource}
               onRunQuery={onRunQuery}
+              timeRange={timeRange}
               onChange={(update) => {
                 onChange(index, { ...nestedQuery, query: update });
               }}

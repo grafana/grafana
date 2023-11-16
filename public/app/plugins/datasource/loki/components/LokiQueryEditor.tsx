@@ -106,7 +106,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     );
     if (update) {
       const makeAsyncRequest = async () => {
-        const stats = await datasource.getStats(query);
+        const stats = await datasource.getStats(query, timeRange);
         setQueryStats(stats);
       };
       makeAsyncRequest();
@@ -196,6 +196,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
             showExplain={explain}
+            timeRange={timeRange}
           />
         )}
         <LokiQueryBuilderOptions

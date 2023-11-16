@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { SelectableValue, TimeRange, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { getOperationParamId } from '../../../prometheus/querybuilder/shared/operationUtils';
@@ -19,6 +19,7 @@ export function UnwrapParamEditor({
   value,
   query,
   datasource,
+  timeRange,
 }: QueryBuilderOperationParamEditorProps) {
   const [state, setState] = useState<{
     options?: Array<SelectableValue<string>>;
@@ -53,7 +54,8 @@ export function UnwrapParamEditor({
 
 async function loadUnwrapOptions(
   query: LokiVisualQuery,
-  datasource: LokiDatasource
+  datasource: LokiDatasource,
+  timeRange?: TimeRange
 ): Promise<Array<SelectableValue<string>>> {
   const queryExpr = lokiQueryModeller.renderQuery(query);
   const logExpr = getLogQueryFromMetricsQuery(queryExpr);
@@ -61,7 +63,7 @@ async function loadUnwrapOptions(
     return [];
   }
 
-  const samples = await datasource.getDataSamples({ expr: logExpr, refId: 'unwrap_samples' });
+  const samples = await datasource.getDataSamples({ expr: logExpr, refId: 'unwrap_samples' }, timeRange);
   const unwrapLabels = extractUnwrapLabelKeysFromDataFrame(samples[0]);
 
   const labelOptions = unwrapLabels.map((label) => ({

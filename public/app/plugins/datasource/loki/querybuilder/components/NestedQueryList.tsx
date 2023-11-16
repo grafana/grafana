@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { TimeRange } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
 import { LokiDatasource } from '../../datasource';
@@ -11,11 +12,12 @@ export interface Props {
   query: LokiVisualQuery;
   datasource: LokiDatasource;
   showExplain: boolean;
+  timeRange?: TimeRange;
   onChange: (query: LokiVisualQuery) => void;
   onRunQuery: () => void;
 }
 
-export function NestedQueryList({ query, datasource, onChange, onRunQuery, showExplain }: Props) {
+export function NestedQueryList({ query, datasource, onChange, onRunQuery, showExplain, timeRange }: Props) {
   const nestedQueries = query.binaryQueries ?? [];
 
   const onNestedQueryUpdate = (index: number, update: LokiVisualQueryBinary) => {
@@ -41,6 +43,7 @@ export function NestedQueryList({ query, datasource, onChange, onRunQuery, showE
           onRemove={onRemove}
           onRunQuery={onRunQuery}
           showExplain={showExplain}
+          timeRange={timeRange}
         />
       ))}
     </Stack>

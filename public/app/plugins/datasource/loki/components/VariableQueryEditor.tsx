@@ -16,7 +16,7 @@ export type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions, Lok
 
 const refId = 'LokiVariableQueryEditor-VariableQuery';
 
-export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) => {
+export const LokiVariableQueryEditor = ({ onChange, query, datasource, range }: Props) => {
   const [type, setType] = useState<number | undefined>(undefined);
   const [label, setLabel] = useState('');
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
@@ -38,7 +38,7 @@ export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) 
       return;
     }
 
-    datasource.labelNamesQuery().then((labelNames: Array<{ text: string }>) => {
+    datasource.labelNamesQuery(range).then((labelNames: Array<{ text: string }>) => {
       setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
     });
   }, [datasource, type]);

@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useId, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
@@ -24,6 +24,7 @@ export interface Props {
   query: any;
   datasource: DataSourceApi;
   queryModeller: VisualQueryModeller;
+  timeRange?: TimeRange;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
@@ -42,6 +43,7 @@ export function OperationEditor({
   datasource,
   flash,
   highlight,
+  timeRange,
 }: Props) {
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
@@ -106,6 +108,7 @@ export function OperationEditor({
               onRunQuery={onRunQuery}
               query={query}
               datasource={datasource}
+              timeRange={timeRange}
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button

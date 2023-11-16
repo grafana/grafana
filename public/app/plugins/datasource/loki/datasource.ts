@@ -36,13 +36,14 @@ import {
   renderLegendFormat,
   LegacyMetricFindQueryOptions,
   AdHocVariableFilter,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
 } from '@grafana/data';
 import { intervalToMs } from '@grafana/data/src/datetime/rangeutil';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { serializeParams } from '../../../core/utils/fetch';
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
@@ -147,8 +148,7 @@ export class LokiDatasource
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
 
@@ -451,19 +451,10 @@ export class LokiDatasource
   }
 
   /**
-   * Retrieve the current time range.
-   * @returns The current time range as provided by the timeSrv.
-   */
-  getTimeRange() {
-    return this.timeSrv.timeRange();
-  }
-
-  /**
    * Retrieve the current time range as Loki parameters.
    * @returns An object containing the start and end times in nanoseconds since the Unix epoch.
    */
-  getTimeRangeParams() {
-    const timeRange = this.getTimeRange();
+  getTimeRangeParams(timeRange: TimeRange) {
     return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
@@ -533,7 +524,7 @@ export class LokiDatasource
    * Used in `getStats`. Retrieves statistics for a Loki query and processes them into a QueryStats object.
    * @returns A Promise that resolves to a QueryStats object containing the query statistics or undefined if the query is invalid.
    */
-  async getQueryStats(query: LokiQuery): Promise<QueryStats | undefined> {
+  async getQueryStats(query: LokiQuery, timeRange: TimeRange): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
     if (isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return undefined;
@@ -543,7 +534,7 @@ export class LokiDatasource
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
     for (const idx in labelMatchers) {
-      const { start, end } = this.getStatsTimeRange(query, Number(idx));
+      const { start, end } = this.getStatsTimeRange(query, Number(idx), timeRange);
 
       if (start === undefined || end === undefined) {
         return { streams: 0, chunks: 0, bytes: 0, entries: 0, message: 'Query size estimate not available.' };
@@ -580,7 +571,11 @@ export class LokiDatasource
    * @returns An object containing the start and end time in nanoseconds (NS_IN_MS) or undefined if the time range cannot be estimated.
    */
 
-  getStatsTimeRange(query: LokiQuery, idx: number): { start: number | undefined; end: number | undefined } {
+  getStatsTimeRange(
+    query: LokiQuery,
+    idx: number,
+    timeRange: TimeRange
+  ): { start: number | undefined; end: number | undefined } {
     let start: number, end: number;
     const NS_IN_MS = 1000000;
     const durationNodes = getNodesFromQuery(query.expr, [Duration]);
@@ -592,7 +587,7 @@ export class LokiDatasource
         return { start: undefined, end: undefined };
       }
       // logs query with range type
-      return this.getTimeRangeParams();
+      return this.getTimeRangeParams(timeRange);
     }
 
     if (query.queryType === LokiQueryType.Instant) {
@@ -600,7 +595,7 @@ export class LokiDatasource
 
       if (!!durations[idx]) {
         // if query has a duration e.g. [1m]
-        end = this.getTimeRangeParams().end;
+        end = this.getTimeRangeParams(timeRange).end;
         start = end - intervalToMs(durations[idx]) * NS_IN_MS;
         return { start, end };
       } else {
@@ -608,7 +603,7 @@ export class LokiDatasource
 
         if (/(\$__auto|\$__range)/.test(query.expr)) {
           // if $__auto or $__range is used, we can estimate the time range using the selected range
-          return this.getTimeRangeParams();
+          return this.getTimeRangeParams(timeRange);
         }
 
         // otherwise we cant estimate the time range
@@ -617,19 +612,19 @@ export class LokiDatasource
     }
 
     // metric query with range type
-    return this.getTimeRangeParams();
+    return this.getTimeRangeParams(timeRange);
   }
 
   /**
    * Retrieves statistics for a Loki query and returns the QueryStats object.
    * @returns A Promise that resolves to a QueryStats object or null if the query is invalid or has no statistics.
    */
-  async getStats(query: LokiQuery): Promise<QueryStats | null> {
+  async getStats(query: LokiQuery, timeRange?: TimeRange): Promise<QueryStats | null> {
     if (!query) {
       return null;
     }
-
-    const response = await this.getQueryStats(query);
+    const range = timeRange ?? this.languageProvider.getDefaultTimeRange();
+    const response = await this.getQueryStats(query, range);
 
     if (!response) {
       return null;
@@ -647,9 +642,10 @@ export class LokiDatasource
       return Promise.resolve([]);
     }
 
+    const timeRange = options?.range ?? this.languageProvider.getDefaultTimeRange();
     if (typeof query === 'string') {
       const interpolated = this.interpolateString(query, options?.scopedVars);
-      return await this.legacyProcessMetricFindQuery(interpolated);
+      return await this.legacyProcessMetricFindQuery(interpolated, timeRange);
     }
 
     const interpolatedQuery = {
@@ -658,7 +654,7 @@ export class LokiDatasource
       stream: this.interpolateString(query.stream || '', options?.scopedVars),
     };
 
-    return await this.processMetricFindQuery(interpolatedQuery);
+    return await this.processMetricFindQuery(interpolatedQuery, timeRange);
   }
 
   /**
@@ -666,9 +662,9 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of variable results based on the query type and parameters.
    */
 
-  private async processMetricFindQuery(query: LokiVariableQuery) {
+  private async processMetricFindQuery(query: LokiVariableQuery, timeRange: TimeRange) {
     if (query.type === LokiVariableQueryType.LabelNames) {
-      return this.labelNamesQuery();
+      return this.labelNamesQuery(timeRange);
     }
 
     if (!query.label) {
@@ -677,10 +673,10 @@ export class LokiDatasource
 
     // If we have stream selector, use /series endpoint
     if (query.stream) {
-      return this.labelValuesSeriesQuery(query.stream, query.label);
+      return this.labelValuesSeriesQuery(query.stream, query.label, timeRange);
     }
 
-    return this.labelValuesQuery(query.label);
+    return this.labelValuesQuery(query.label, timeRange);
   }
 
   /**
@@ -689,19 +685,19 @@ export class LokiDatasource
    * @todo It can be refactored in the future to return a LokiVariableQuery and be used in `processMetricFindQuery`
    * to not duplicate querying logic.
    */
-  async legacyProcessMetricFindQuery(query: string) {
+  async legacyProcessMetricFindQuery(query: string, timeRange: TimeRange) {
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
-      return await this.labelNamesQuery();
+      return await this.labelNamesQuery(timeRange);
     }
 
     const labelValues = query.match(labelValuesRegex);
     if (labelValues) {
       // If we have stream selector, use /series endpoint
       if (labelValues[1]) {
-        return await this.labelValuesSeriesQuery(labelValues[1], labelValues[2]);
+        return await this.labelValuesSeriesQuery(labelValues[1], labelValues[2], timeRange);
       }
-      return await this.labelValuesQuery(labelValues[2]);
+      return await this.labelValuesQuery(labelValues[2], timeRange);
     }
 
     return Promise.resolve([]);
@@ -712,9 +708,10 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of label names as text values.
    * @todo Future exploration may involve using the `languageProvider.fetchLabels()` to avoid duplicating logic.
    */
-  async labelNamesQuery() {
+  async labelNamesQuery(timeRange?: TimeRange) {
     const url = 'labels';
-    const params = this.getTimeRangeParams();
+    const range = timeRange ?? this.languageProvider.getDefaultTimeRange();
+    const params = this.getTimeRangeParams(range);
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
   }
@@ -724,8 +721,8 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of label values as text values.
    * @todo Future exploration may involve using the `languageProvider.fetchLabelValues()` method to avoid duplicating logic.
    */
-  private async labelValuesQuery(label: string) {
-    const params = this.getTimeRangeParams();
+  private async labelValuesQuery(label: string, timeRange: TimeRange) {
+    const params = this.getTimeRangeParams(timeRange);
     const url = `label/${label}/values`;
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
@@ -736,8 +733,8 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of label values as text values.
    * @todo Future exploration may involve using the `languageProvider.fetchLabelValues()` or `languageProvider.fetchSeriesLabels()` method to avoid duplicating logic.
    */
-  private async labelValuesSeriesQuery(expr: string, label: string) {
-    const timeParams = this.getTimeRangeParams();
+  private async labelValuesSeriesQuery(expr: string, label: string, timeRange: TimeRange) {
+    const timeParams = this.getTimeRangeParams(timeRange);
     const params = {
       ...timeParams,
       'match[]': expr,
@@ -759,7 +756,8 @@ export class LokiDatasource
    * Currently, it works for logs data only.
    * @returns A Promise that resolves to an array of DataFrames containing data samples.
    */
-  async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
+  async getDataSamples(query: LokiQuery, timeRange?: TimeRange): Promise<DataFrame[]> {
+    const range = timeRange ?? this.languageProvider.getDefaultTimeRange();
     // Currently works only for logs sample
     if (!isLogsQuery(query.expr) || isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return [];
@@ -773,8 +771,7 @@ export class LokiDatasource
       supportingQueryType: SupportingQueryType.DataSample,
     };
 
-    const timeRange = this.getTimeRange();
-    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
+    const request = makeRequest(lokiLogsQuery, range, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }
 
@@ -782,16 +779,18 @@ export class LokiDatasource
    * Implemented as part of the DataSourceAPI. Retrieves tag keys that can be used for ad-hoc filtering.
    * @returns A Promise that resolves to an array of label names.
    */
-  async getTagKeys() {
-    return await this.labelNamesQuery();
+  async getTagKeys(options?: DataSourceGetTagKeysOptions) {
+    const timeRange = options?.timeRange ?? this.languageProvider.getDefaultTimeRange();
+    return await this.labelNamesQuery(timeRange);
   }
 
   /**
    * Implemented as part of the DataSourceAPI. Retrieves tag values that can be used for ad-hoc filtering.
    * @returns A Promise that resolves to an array of label values.
    */
-  async getTagValues(options: any = {}) {
-    return await this.labelValuesQuery(options.key);
+  async getTagValues(options: DataSourceGetTagValuesOptions) {
+    const timeRange = options?.timeRange ?? this.languageProvider.getDefaultTimeRange();
+    return await this.labelValuesQuery(options.key, timeRange);
   }
 
   /**
