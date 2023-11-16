@@ -285,6 +285,20 @@ export interface DataSourceWithToggleableQueryFiltersSupport<TQuery extends Data
   queryHasFilter(query: TQuery, filter: QueryFilterOptions): boolean;
 }
 
+/**
+ * @internal
+ */
+export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
+  datasource: unknown
+): datasource is DataSourceWithToggleableQueryFiltersSupport<TQuery> => {
+  return (
+    datasource !== null &&
+    typeof datasource === 'object' &&
+    'toggleQueryFilter' in datasource &&
+    'queryHasFilter' in datasource
+  );
+};
+
 export interface DataSourceWithQueryModificationSupportSupport<TQuery extends DataQuery> {
   /**
    * Given a query, applies a query modification `action`, returning the updated query.
@@ -305,13 +319,13 @@ export interface DataSourceWithQueryModificationSupportSupport<TQuery extends Da
 /**
  * @internal
  */
-export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
+export const hasQueryModificationSupport = <TQuery extends DataQuery>(
   datasource: unknown
-): datasource is DataSourceWithToggleableQueryFiltersSupport<TQuery> => {
+): datasource is DataSourceWithQueryModificationSupportSupport<TQuery> => {
   return (
     datasource !== null &&
     typeof datasource === 'object' &&
-    'toggleQueryFilter' in datasource &&
-    'queryHasFilter' in datasource
+    'modifyQuery' in datasource &&
+    'getSupportedQueryModifications' in datasource
   );
 };
