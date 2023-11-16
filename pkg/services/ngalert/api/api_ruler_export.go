@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -147,7 +148,7 @@ func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext,
 			}
 		}
 		if len(query.NamespaceUIDs) == 0 {
-			return nil, fmt.Errorf("%w access rules in the specified folders", ErrAuthorization)
+			return nil, fmt.Errorf("%w access rules in the specified folders", accesscontrol.ErrAuthorization)
 		}
 	} else {
 		for _, folder := range folders {

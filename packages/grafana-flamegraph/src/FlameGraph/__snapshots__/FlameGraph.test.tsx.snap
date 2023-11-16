@@ -13606,7 +13606,7 @@ exports[`FlameGraph should render correctly 1`] = `
   {
     "props": {
       "maxWidth": null,
-      "text": "(4) net/http.(*ServeMux).ServeHTTP (3.88 Bil)",
+      "text": "(5) net/http.(*ServeMux).ServeHTTP (3.88 Bil)",
       "x": 565.0425273390036,
       "y": 189,
     },
@@ -13728,7 +13728,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 375.1846901579587,
+            "width": 312.97326852976914,
             "x": 555.5425273390036,
             "y": 198,
           },
@@ -13773,115 +13773,9 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 375.1846901579587,
+            "width": 312.97326852976914,
             "x": 555.5425273390036,
             "y": 198,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "runtime/pprof.(*Profile).WriteTo (3.87 Bil)",
-      "x": 559.0425273390036,
-      "y": 211,
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 312.97326852976914,
-            "x": 555.5425273390036,
-            "y": 220,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 312.97326852976914,
-            "x": 555.5425273390036,
-            "y": 220,
           },
           "transform": [
             1,
@@ -13910,7 +13804,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "(2) runtime/pprof.writeAlloc (3.23 Bil)",
       "x": 565.0425273390036,
-      "y": 233,
+      "y": 211,
     },
     "transform": [
       1,
@@ -13943,7 +13837,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 10,
             "x": 555.0425273390036,
-            "y": 220,
+            "y": 198,
           },
           "transform": [
             1,
@@ -13988,7 +13882,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 11,
             "width": 3,
             "x": 559.0425273390036,
-            "y": 225.5,
+            "y": 203.5,
           },
           "transform": [
             1,
@@ -14032,7 +13926,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 311.0291616038882,
             "x": 555.5425273390036,
-            "y": 242,
+            "y": 220,
           },
           "transform": [
             1,
@@ -14077,7 +13971,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 311.0291616038882,
             "x": 555.5425273390036,
-            "y": 242,
+            "y": 220,
           },
           "transform": [
             1,
@@ -14106,7 +14000,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime/pprof.writeHeapProto (3.21 Bil)",
       "x": 559.0425273390036,
-      "y": 255,
+      "y": 233,
     },
     "transform": [
       1,
@@ -14138,7 +14032,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 30.105710814094778,
             "x": 555.5425273390036,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -14183,7 +14077,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 30.105710814094778,
             "x": 555.5425273390036,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -14212,7 +14106,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime/pprof.(*profileBuilder).pbSample (320 Mil)",
       "x": 559.0425273390036,
-      "y": 277,
+      "y": 255,
     },
     "transform": [
       1,
@@ -14245,7 +14139,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 6.804374240583233,
             "x": 555.0425273390036,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -14290,7 +14184,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 555.0425273390036,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -14335,7 +14229,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 555.0425273390036,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -14380,7 +14274,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 555.0425273390036,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -14425,7 +14319,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 556.0145808019441,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -14470,7 +14364,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 556.9866342648846,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -14515,7 +14409,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 558.9307411907655,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -14560,7 +14454,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 558.9307411907655,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -14605,7 +14499,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 559.902794653706,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -14650,7 +14544,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 6.804374240583233,
             "x": 561.8469015795869,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -14695,7 +14589,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 561.8469015795869,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -14740,7 +14634,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 561.8469015795869,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -14785,7 +14679,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 563.7910085054679,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -14830,7 +14724,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 566.7071688942892,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -14875,7 +14769,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 567.6792223572297,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -14920,7 +14814,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 9.720534629404618,
             "x": 568.6512758201701,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -14965,7 +14859,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 568.6512758201701,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -15010,7 +14904,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 4.860267314702309,
             "x": 578.3718104495748,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -15054,7 +14948,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 178.82989064398544,
             "x": 586.6482381530984,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -15099,7 +14993,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 178.82989064398544,
             "x": 586.6482381530984,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -15127,6 +15021,112 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "runtime/pprof.(*profileBuilder).appendLocsForStack (1.85 Bil)",
+      "x": 590.1482381530984,
+      "y": 255,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 38.85419198055893,
+            "x": 586.6482381530984,
+            "y": 264,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 38.85419198055893,
+            "x": 586.6482381530984,
+            "y": 264,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "runtime/pprof.(*profileBuilder).emitLocation (410 Mil)",
       "x": 590.1482381530984,
       "y": 277,
     },
@@ -15158,7 +15158,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 38.85419198055893,
+            "width": 9.69258809234508,
             "x": 586.6482381530984,
             "y": 286,
           },
@@ -15203,115 +15203,9 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 38.85419198055893,
+            "width": 9.69258809234508,
             "x": 586.6482381530984,
             "y": 286,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "runtime/pprof.(*profileBuilder).emitLocation (410 Mil)",
-      "x": 590.1482381530984,
-      "y": 299,
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 9.69258809234508,
-            "x": 586.6482381530984,
-            "y": 308,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 9.69258809234508,
-            "x": 586.6482381530984,
-            "y": 308,
           },
           "transform": [
             1,
@@ -15356,7 +15250,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 8.748481166464156,
             "x": 586.1482381530984,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -15401,7 +15295,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 586.1482381530984,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -15446,7 +15340,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 586.1482381530984,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -15491,7 +15385,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 590.0364520048603,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -15536,186 +15430,6 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 591.9805589307413,
-            "y": 352,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 0.9720534629404618,
-            "x": 591.9805589307413,
-            "y": 374,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 1.9441069258809236,
-            "x": 592.9526123936816,
-            "y": 374,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 0.9720534629404618,
-            "x": 592.9526123936816,
-            "y": 396,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 1.9441069258809236,
-            "x": 594.8967193195626,
             "y": 330,
           },
           "transform": [
@@ -15760,8 +15474,188 @@ exports[`FlameGraph should render correctly 1`] = `
           "props": {
             "height": 22,
             "width": 0.9720534629404618,
-            "x": 594.8967193195626,
+            "x": 591.9805589307413,
             "y": 352,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 1.9441069258809236,
+            "x": 592.9526123936816,
+            "y": 352,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 0.9720534629404618,
+            "x": 592.9526123936816,
+            "y": 374,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 1.9441069258809236,
+            "x": 594.8967193195626,
+            "y": 308,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 0.9720534629404618,
+            "x": 594.8967193195626,
+            "y": 330,
           },
           "transform": [
             1,
@@ -15806,7 +15700,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 595.868772782503,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -15851,7 +15745,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 596.8408262454435,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -15896,7 +15790,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 596.8408262454435,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -15941,7 +15835,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 598.7849331713245,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -15986,7 +15880,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 599.7569866342649,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -16031,7 +15925,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 599.7569866342649,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -16076,7 +15970,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 603.6452004860267,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -16121,7 +16015,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 603.6452004860267,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -16166,7 +16060,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 7.776427703523694,
             "x": 607.5334143377886,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -16211,7 +16105,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 607.5334143377886,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -16256,7 +16150,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 607.5334143377886,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -16301,7 +16195,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 610.44957472661,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -16345,6 +16239,51 @@ exports[`FlameGraph should render correctly 1`] = `
           "props": {
             "height": 22,
             "width": 5.832320777642771,
+            "x": 615.3098420413123,
+            "y": 286,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 2.9161603888213854,
             "x": 615.3098420413123,
             "y": 308,
           },
@@ -16390,53 +16329,8 @@ exports[`FlameGraph should render correctly 1`] = `
           "props": {
             "height": 22,
             "width": 2.9161603888213854,
-            "x": 615.3098420413123,
-            "y": 330,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 2.9161603888213854,
             "x": 618.2260024301337,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -16481,7 +16375,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 618.2260024301337,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -16526,7 +16420,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 621.1421628189551,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -16571,7 +16465,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 622.1142162818956,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -16616,7 +16510,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 623.086269744836,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -16661,7 +16555,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 624.0583232077764,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -16705,7 +16599,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 14.552855407047389,
             "x": 626.5024301336574,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -16750,7 +16644,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 14.552855407047389,
             "x": 626.5024301336574,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -16794,7 +16688,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 10.664641555285542,
             "x": 626.5024301336574,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -16839,7 +16733,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 10.664641555285542,
             "x": 626.5024301336574,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -16884,7 +16778,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 626.0024301336574,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -16929,7 +16823,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 9.720534629404618,
             "x": 627.9465370595383,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -16974,7 +16868,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 4.860267314702309,
             "x": 627.9465370595383,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -17019,7 +16913,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 632.8068043742406,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -17064,7 +16958,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 633.7788578371811,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -17108,7 +17002,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 61.211421628189555,
             "x": 642.0552855407047,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -17153,7 +17047,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 61.211421628189555,
             "x": 642.0552855407047,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -17182,7 +17076,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime/pprof.allFrames (640 Mil)",
       "x": 645.5552855407047,
-      "y": 299,
+      "y": 277,
     },
     "transform": [
       1,
@@ -17215,7 +17109,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 641.5552855407047,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -17259,7 +17153,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 52.462940461725395,
             "x": 643.0273390036452,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -17304,7 +17198,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 52.462940461725395,
             "x": 643.0273390036452,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -17333,7 +17227,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime.(*Frames).Next (550 Mil)",
       "x": 646.5273390036452,
-      "y": 321,
+      "y": 299,
     },
     "transform": [
       1,
@@ -17365,7 +17259,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 38.85419198055893,
             "x": 643.0273390036452,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -17410,7 +17304,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 38.85419198055893,
             "x": 643.0273390036452,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -17439,7 +17333,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime.funcline1 (410 Mil)",
       "x": 646.5273390036452,
-      "y": 343,
+      "y": 321,
     },
     "transform": [
       1,
@@ -17472,7 +17366,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 7.776427703523694,
             "x": 642.5273390036452,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -17517,7 +17411,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 642.5273390036452,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -17561,7 +17455,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 24.273390036452007,
             "x": 650.803766707169,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -17606,7 +17500,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 24.273390036452007,
             "x": 650.803766707169,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -17635,7 +17529,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime.pcvalue (260 Mil)",
       "x": 654.303766707169,
-      "y": 365,
+      "y": 343,
     },
     "transform": [
       1,
@@ -17668,7 +17562,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 650.303766707169,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -17712,7 +17606,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 15.52490886998785,
             "x": 652.7478736330498,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -17757,7 +17651,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 15.52490886998785,
             "x": 652.7478736330498,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -17802,7 +17696,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 675.5771567436209,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -17847,7 +17741,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 675.5771567436209,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -17892,7 +17786,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 675.5771567436209,
-            "y": 396,
+            "y": 374,
           },
           "transform": [
             1,
@@ -17937,7 +17831,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 682.3815309842041,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -17982,7 +17876,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 682.3815309842041,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -18027,7 +17921,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 684.3256379100851,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -18072,7 +17966,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 685.2976913730256,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -18117,7 +18011,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 686.269744835966,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -18162,7 +18056,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 4.860267314702309,
             "x": 688.213851761847,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -18207,7 +18101,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 688.213851761847,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -18252,7 +18146,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 688.213851761847,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -18297,7 +18191,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 692.1020656136088,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -18342,7 +18236,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 6.804374240583233,
             "x": 695.9902794653706,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -18387,7 +18281,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 695.9902794653706,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -18432,7 +18326,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 698.9064398541921,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -18476,7 +18370,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 27.189550425273392,
             "x": 704.2667071688943,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -18521,7 +18415,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 27.189550425273392,
             "x": 704.2667071688943,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -18550,7 +18444,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime.mapaccess2_fast64 (290 Mil)",
       "x": 707.7667071688943,
-      "y": 299,
+      "y": 277,
     },
     "transform": [
       1,
@@ -18583,7 +18477,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 8.748481166464156,
             "x": 703.7667071688943,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -18628,7 +18522,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 731.9562575941677,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -18673,7 +18567,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 731.9562575941677,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -18718,7 +18612,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 732.9283110571082,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -18762,7 +18656,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 19.413122721749698,
             "x": 735.3724179829891,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -18807,7 +18701,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 19.413122721749698,
             "x": 735.3724179829891,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -18852,7 +18746,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 734.8724179829891,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -18897,7 +18791,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 734.8724179829891,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -18942,7 +18836,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 735.8444714459296,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -18986,7 +18880,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 10.664641555285542,
             "x": 737.3165249088701,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -19031,7 +18925,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 10.664641555285542,
             "x": 737.3165249088701,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -19076,7 +18970,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 8.748481166464156,
             "x": 736.8165249088701,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -19121,7 +19015,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 736.8165249088701,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -19166,7 +19060,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 742.6488456865128,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -19211,7 +19105,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 745.5650060753342,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -19256,7 +19150,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 745.5650060753342,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -19301,7 +19195,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 746.5370595382747,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -19346,7 +19240,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 4.860267314702309,
             "x": 748.4811664641555,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -19391,7 +19285,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 748.4811664641555,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -19436,7 +19330,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 755.2855407047388,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -19481,7 +19375,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 765.9781287970839,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -19525,7 +19419,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 26.21749696233293,
             "x": 767.4501822600243,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -19570,7 +19464,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 26.21749696233293,
             "x": 767.4501822600243,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -19599,7 +19493,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime/pprof.(*profileBuilder).build (280 Mil)",
       "x": 770.9501822600243,
-      "y": 277,
+      "y": 255,
     },
     "transform": [
       1,
@@ -19631,7 +19525,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 13.580801944106927,
             "x": 767.4501822600243,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -19676,7 +19570,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 13.580801944106927,
             "x": 767.4501822600243,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -19721,7 +19615,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 766.9501822600243,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -19766,7 +19660,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 766.9501822600243,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -19811,7 +19705,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 7.776427703523694,
             "x": 772.7825030376671,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -19856,7 +19750,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 4.860267314702309,
             "x": 772.7825030376671,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -19901,7 +19795,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 772.7825030376671,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -19946,7 +19840,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 772.7825030376671,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -19991,7 +19885,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 774.7266099635481,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -20036,7 +19930,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 777.6427703523694,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -20081,7 +19975,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 779.5868772782503,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -20126,7 +20020,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 780.5589307411908,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -20170,7 +20064,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 11.636695018226003,
             "x": 782.0309842041313,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -20215,7 +20109,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 11.636695018226003,
             "x": 782.0309842041313,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -20259,6 +20153,51 @@ exports[`FlameGraph should render correctly 1`] = `
           "props": {
             "height": 22,
             "width": 6.804374240583233,
+            "x": 781.5309842041313,
+            "y": 286,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 2.9161603888213854,
             "x": 781.5309842041313,
             "y": 308,
           },
@@ -20304,53 +20243,8 @@ exports[`FlameGraph should render correctly 1`] = `
           "props": {
             "height": 22,
             "width": 2.9161603888213854,
-            "x": 781.5309842041313,
-            "y": 330,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 2.9161603888213854,
             "x": 784.4471445929527,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -20395,7 +20289,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 784.4471445929527,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -20440,7 +20334,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 785.4191980558932,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -20485,7 +20379,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 787.363304981774,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -20530,7 +20424,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 788.3353584447145,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -20575,7 +20469,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 789.3074119076549,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -20620,7 +20514,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 793.1956257594168,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -20664,7 +20558,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 56.35115431348724,
             "x": 794.6676792223573,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -20709,7 +20603,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 56.35115431348724,
             "x": 794.6676792223573,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -20738,7 +20632,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime.FuncForPC (590 Mil)",
       "x": 798.1676792223573,
-      "y": 277,
+      "y": 255,
     },
     "transform": [
       1,
@@ -20771,7 +20665,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 794.1676792223573,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -20816,7 +20710,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 794.1676792223573,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -20861,7 +20755,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 796.1117861482383,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -20905,7 +20799,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 13.580801944106927,
             "x": 800.5,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -20950,7 +20844,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 13.580801944106927,
             "x": 800.5,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -20995,7 +20889,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 800,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -21039,7 +20933,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 10.664641555285542,
             "x": 803.4161603888215,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -21084,7 +20978,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 10.664641555285542,
             "x": 803.4161603888215,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -21129,7 +21023,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 802.9161603888215,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -21174,7 +21068,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 7.776427703523694,
             "x": 803.8882138517619,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -21218,7 +21112,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 34.96597812879708,
             "x": 815.080801944107,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -21263,7 +21157,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 34.96597812879708,
             "x": 815.080801944107,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -21292,7 +21186,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime.funcline1 (370 Mil)",
       "x": 818.580801944107,
-      "y": 299,
+      "y": 277,
     },
     "transform": [
       1,
@@ -21324,7 +21218,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 24.273390036452007,
             "x": 815.080801944107,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -21369,7 +21263,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 24.273390036452007,
             "x": 815.080801944107,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -21398,7 +21292,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime.pcvalue (260 Mil)",
       "x": 818.580801944107,
-      "y": 321,
+      "y": 299,
     },
     "transform": [
       1,
@@ -21431,7 +21325,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 814.580801944107,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -21475,7 +21369,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 13.580801944106927,
             "x": 818.9690157958688,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -21520,7 +21414,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 13.580801944106927,
             "x": 818.9690157958688,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -21564,7 +21458,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 9.69258809234508,
             "x": 840.354191980559,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -21609,7 +21503,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 9.69258809234508,
             "x": 840.354191980559,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -21654,7 +21548,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 8.748481166464156,
             "x": 839.854191980559,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -21699,7 +21593,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 851.5188335358445,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -21744,7 +21638,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 852.490886998785,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -21789,7 +21683,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 854.434993924666,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -21834,7 +21728,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 6.804374240583233,
             "x": 856.3791008505468,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -21879,7 +21773,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 856.3791008505468,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -21924,7 +21818,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 867.0716889428919,
-            "y": 242,
+            "y": 220,
           },
           "transform": [
             1,
@@ -21968,7 +21862,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 61.211421628189555,
             "x": 869.5157958687728,
-            "y": 220,
+            "y": 198,
           },
           "transform": [
             1,
@@ -22013,7 +21907,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 61.211421628189555,
             "x": 869.5157958687728,
-            "y": 220,
+            "y": 198,
           },
           "transform": [
             1,
@@ -22041,6 +21935,202 @@ exports[`FlameGraph should render correctly 1`] = `
     "props": {
       "maxWidth": null,
       "text": "(2) runtime/pprof.writeGoroutine (640 Mil)",
+      "x": 879.0157958687728,
+      "y": 211,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 10,
+            "x": 869.0157958687728,
+            "y": 198,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 11,
+            "width": 3,
+            "x": 873.0157958687728,
+            "y": 203.5,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 23.301336573511545,
+            "x": 869.5157958687728,
+            "y": 220,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 23.301336573511545,
+            "x": 869.5157958687728,
+            "y": 220,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "(2) runtime/pprof.runtime_goroutineProfileWithLabels (250 Mil)",
       "x": 879.0157958687728,
       "y": 233,
     },
@@ -22162,7 +22252,7 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 23.301336573511545,
+            "width": 21.35722964763062,
             "x": 869.5157958687728,
             "y": 242,
           },
@@ -22207,205 +22297,9 @@ exports[`FlameGraph should render correctly 1`] = `
         {
           "props": {
             "height": 22,
-            "width": 23.301336573511545,
-            "x": 869.5157958687728,
-            "y": 242,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "maxWidth": null,
-      "text": "(2) runtime/pprof.runtime_goroutineProfileWithLabels (250 Mil)",
-      "x": 879.0157958687728,
-      "y": 255,
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fillText",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 10,
-            "x": 869.0157958687728,
-            "y": 242,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 11,
-            "width": 3,
-            "x": 873.0157958687728,
-            "y": 247.5,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
             "width": 21.35722964763062,
             "x": 869.5157958687728,
-            "y": 264,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "stroke",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 21.35722964763062,
-            "x": 869.5157958687728,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -22434,7 +22328,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime.forEachGRace (230 Mil)",
       "x": 873.0157958687728,
-      "y": 277,
+      "y": 255,
     },
     "transform": [
       1,
@@ -22466,7 +22360,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 16.496962332928312,
             "x": 869.5157958687728,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -22511,7 +22405,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 16.496962332928312,
             "x": 869.5157958687728,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -22555,7 +22449,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 15.52490886998785,
             "x": 869.5157958687728,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -22600,7 +22494,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 15.52490886998785,
             "x": 869.5157958687728,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -22645,7 +22539,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 4.860267314702309,
             "x": 869.0157958687728,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -22690,7 +22584,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 869.0157958687728,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -22735,7 +22629,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 869.9878493317133,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -22780,7 +22674,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 869.9878493317133,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -22825,7 +22719,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 870.9599027946538,
-            "y": 374,
+            "y": 352,
           },
           "transform": [
             1,
@@ -22870,7 +22764,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 873.8760631834751,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -22915,7 +22809,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 873.8760631834751,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -22960,7 +22854,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 874.8481166464156,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -23005,7 +22899,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 879.7083839611179,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -23050,7 +22944,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 885.5407047387607,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -23095,7 +22989,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 4.860267314702309,
             "x": 886.5127582017011,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -23140,7 +23034,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 886.5127582017011,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -23185,7 +23079,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 891.3730255164035,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -23230,7 +23124,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 892.345078979344,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -23274,7 +23168,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 36.91008505467801,
             "x": 893.8171324422843,
-            "y": 242,
+            "y": 220,
           },
           "transform": [
             1,
@@ -23319,7 +23213,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 36.91008505467801,
             "x": 893.8171324422843,
-            "y": 242,
+            "y": 220,
           },
           "transform": [
             1,
@@ -23348,7 +23242,7 @@ exports[`FlameGraph should render correctly 1`] = `
       "maxWidth": null,
       "text": "runtime/pprof.printCountProfile (390 Mil)",
       "x": 897.3171324422843,
-      "y": 255,
+      "y": 233,
     },
     "transform": [
       1,
@@ -23381,7 +23275,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 893.3171324422843,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -23426,7 +23320,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 893.3171324422843,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -23471,7 +23365,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 893.3171324422843,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -23516,7 +23410,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 893.3171324422843,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -23561,7 +23455,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 893.3171324422843,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -23606,7 +23500,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 896.2332928311058,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -23651,7 +23545,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 897.2053462940462,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -23696,7 +23590,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 899.1494532199272,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -23741,7 +23635,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 899.1494532199272,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -23786,7 +23680,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 900.1215066828676,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -23831,7 +23725,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 8.748481166464156,
             "x": 902.0656136087485,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -23876,7 +23770,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 902.0656136087485,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -23921,7 +23815,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 5.832320777642771,
             "x": 903.037667071689,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -23966,7 +23860,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 903.037667071689,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -24011,7 +23905,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 3.888213851761847,
             "x": 904.0097205346294,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -24056,7 +23950,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 904.0097205346294,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -24101,7 +23995,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 904.0097205346294,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -24146,7 +24040,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 904.9817739975699,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -24191,7 +24085,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 906.9258809234508,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -24236,7 +24130,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 908.8699878493318,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -24281,7 +24175,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 908.8699878493318,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -24326,7 +24220,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 909.8420413122723,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -24370,7 +24264,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 16.496962332928312,
             "x": 911.3140947752127,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -24415,7 +24309,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 16.496962332928312,
             "x": 911.3140947752127,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -24459,7 +24353,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 15.52490886998785,
             "x": 911.3140947752127,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -24504,7 +24398,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 15.52490886998785,
             "x": 911.3140947752127,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -24549,7 +24443,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 4.860267314702309,
             "x": 910.8140947752127,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -24594,7 +24488,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 910.8140947752127,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -24639,7 +24533,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 910.8140947752127,
-            "y": 352,
+            "y": 330,
           },
           "transform": [
             1,
@@ -24684,7 +24578,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 912.7582017010936,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -24729,7 +24623,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 913.730255164034,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -24774,7 +24668,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 914.7023086269745,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -24819,7 +24713,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 2.9161603888213854,
             "x": 915.674362089915,
-            "y": 308,
+            "y": 286,
           },
           "transform": [
             1,
@@ -24864,7 +24758,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 915.674362089915,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -24909,7 +24803,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 917.6184690157959,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -24953,6 +24847,51 @@ exports[`FlameGraph should render correctly 1`] = `
           "props": {
             "height": 22,
             "width": 8.748481166464156,
+            "x": 918.5905224787364,
+            "y": 286,
+          },
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "rect",
+        },
+      ],
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "fill",
+  },
+  {
+    "props": {
+      "fillRule": "nonzero",
+      "path": [
+        {
+          "props": {},
+          "transform": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+          ],
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "height": 22,
+            "width": 0.9720534629404618,
             "x": 918.5905224787364,
             "y": 308,
           },
@@ -24998,53 +24937,8 @@ exports[`FlameGraph should render correctly 1`] = `
           "props": {
             "height": 22,
             "width": 0.9720534629404618,
-            "x": 918.5905224787364,
-            "y": 330,
-          },
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "rect",
-        },
-      ],
-    },
-    "transform": [
-      1,
-      0,
-      0,
-      1,
-      0,
-      0,
-    ],
-    "type": "fill",
-  },
-  {
-    "props": {
-      "fillRule": "nonzero",
-      "path": [
-        {
-          "props": {},
-          "transform": [
-            1,
-            0,
-            0,
-            1,
-            0,
-            0,
-          ],
-          "type": "beginPath",
-        },
-        {
-          "props": {
-            "height": 22,
-            "width": 0.9720534629404618,
             "x": 919.5625759416769,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -25089,7 +24983,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 6.804374240583233,
             "x": 920.5346294046172,
-            "y": 330,
+            "y": 308,
           },
           "transform": [
             1,
@@ -25134,7 +25028,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 927.3390036452006,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -25179,7 +25073,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 1.9441069258809236,
             "x": 928.311057108141,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,
@@ -25224,7 +25118,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 928.311057108141,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -25269,7 +25163,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 929.2831105710815,
-            "y": 286,
+            "y": 264,
           },
           "transform": [
             1,
@@ -25314,7 +25208,7 @@ exports[`FlameGraph should render correctly 1`] = `
             "height": 22,
             "width": 0.9720534629404618,
             "x": 930.255164034022,
-            "y": 264,
+            "y": 242,
           },
           "transform": [
             1,

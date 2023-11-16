@@ -35,12 +35,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '14px',
     height: '4px',
     borderRadius: theme.shape.radius.pill,
+    minWidth: '14px',
   }),
   value: css({
     width: '12px',
     height: '12px',
     borderRadius: theme.shape.radius.default,
     fontWeight: 500,
+    minWidth: '12px',
   }),
   hexagon: css({}),
   pie_1_4: css({}),
@@ -50,15 +52,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '4px',
     height: '4px',
     borderRadius: theme.shape.radius.circle,
+    minWidth: '4px',
   }),
   marker_md: css({
     width: '8px',
     height: '8px',
     borderRadius: theme.shape.radius.circle,
+    minWidth: '8px',
   }),
   marker_lg: css({
     width: '12px',
     height: '12px',
     borderRadius: theme.shape.radius.circle,
+    minWidth: '12px',
   }),
 });

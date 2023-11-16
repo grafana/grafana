@@ -41,6 +41,7 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
+	// Deprecated: use FolderUID instead
 	FolderID  int64  `xorm:"folder_id"`
 	FolderUID string `xorm:"folder_uid"`
 	IsFolder  bool
@@ -104,6 +105,7 @@ func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, any] {
 			Key:  d.PluginID,
 		})
 	}
+	// nolint:staticcheck
 	if d.FolderID > 0 {
 		res.Metadata.SetFolder(fmt.Sprintf("folder:%d", d.FolderID))
 	}
@@ -186,6 +188,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
 	dash.UpdateSlug()
@@ -425,10 +428,11 @@ type DashboardACL struct {
 func (p DashboardACL) TableName() string { return "dashboard_acl" }
 
 type DashboardACLInfoDTO struct {
-	OrgID       int64  `json:"-" xorm:"org_id"`
-	DashboardID int64  `json:"dashboardId,omitempty" xorm:"dashboard_id"`
-	FolderID    int64  `json:"folderId,omitempty" xorm:"folder_id"`
-	FolderUID   string `json:"folderUid,omitempty" xorm:"folder_uid"`
+	OrgID       int64 `json:"-" xorm:"org_id"`
+	DashboardID int64 `json:"dashboardId,omitempty" xorm:"dashboard_id"`
+	// Deprecated: use FolderUID instead
+	FolderID  int64  `json:"folderId,omitempty" xorm:"folder_id"`
+	FolderUID string `json:"folderUid,omitempty" xorm:"folder_uid"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
