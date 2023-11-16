@@ -167,7 +167,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   #### Value mappings
 
-  You can also transform a query result into value mappings. This is a bit different because every row in the configuration query result defines a single value mapping row. See the following example.
+  You can also transform a query result into value mappings. With this option, every row in the configuration query result defines a single value mapping row. See the following example.
 
   Config query result:
 
