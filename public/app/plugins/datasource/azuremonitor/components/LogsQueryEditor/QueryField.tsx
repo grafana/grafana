@@ -1,5 +1,4 @@
-import { EngineSchema, Schema, getKustoWorker } from '@kusto/monaco-kusto';
-import { Uri } from 'monaco-editor';
+import { EngineSchema, getKustoWorker } from '@kusto/monaco-kusto';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
@@ -11,16 +10,6 @@ import { setKustoQuery } from './setQueryValue';
 interface MonacoEditorValues {
   editor: MonacoEditor;
   monaco: Monaco;
-}
-
-interface MonacoLanguages {
-  kusto: {
-    getKustoWorker: () => Promise<
-      (url: Uri) => Promise<{
-        setSchema: (schema: Schema) => void;
-      }>
-    >;
-  };
 }
 
 const QueryField = ({ query, onQueryChange, schema }: AzureQueryEditorFieldProps) => {
