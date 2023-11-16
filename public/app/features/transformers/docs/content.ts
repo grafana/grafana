@@ -1004,7 +1004,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   
   - **Change Field Order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
   - **Hide or Show a Field** - Use the eye icon next to the field name to toggle the visibility of a specific field.
-  - **Rename Fields** - Simply type a new name in the "Rename <field>" box to customize field names according to your preferences.
+  - **Rename Fields** - Type a new name in the "Rename <field>" box to customize field names.
   
   #### Example:
   
