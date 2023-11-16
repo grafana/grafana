@@ -410,7 +410,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   Conditions that are invalid or incompletely configured are ignored.
 
-  This versatile data filtering transformation empowers you to selectively include or exclude data points based on specific conditions, enhancing your control over visualizations. Experiment with different criteria to tailor your data presentation to meet your unique analytical needs.
+  This versatile data filtering transformation empowers you to selectively include or exclude data points based on specific conditions, enhancing your control over visualizations. Customize the criteria to tailor your data presentation to meet your unique analytical needs.
   `;
     },
   },
