@@ -63,10 +63,6 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagNewDBLibrary
-	// Use jmoiron/sqlx rather than xorm for a few backend services
-	FlagNewDBLibrary = "newDBLibrary"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -491,6 +487,10 @@ const (
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
 
+	// FlagLokiStructuredMetadata
+	// Enables the loki data source to request structured metadata from the Loki server
+	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
+
 	// FlagTeamHttpHeaders
 	// Enables datasources to apply team headers to the client requests
 	FlagTeamHttpHeaders = "teamHttpHeaders"
@@ -579,7 +579,19 @@ const (
 	// Enables the preview of the new alert details view
 	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
 
+	// FlagDatatrails
+	// Enables the new core app datatrails
+	FlagDatatrails = "datatrails"
+
 	// FlagAlertingSimplifiedRouting
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
+
+	// FlagLogRowsPopoverMenu
+	// Enable filtering menu displayed when text of a log line is selected
+	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
+
+	// FlagPluginsSkipHostEnvVars
+	// Disables passing host environment variable to plugin processes
+	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
 )
