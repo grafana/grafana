@@ -228,7 +228,6 @@ Every panel consists of a _query_ and a _visualization_. The query defines _what
    sum(rate(tns_request_duration_seconds_count[5m])) by(route)
    ```
 
-
 1. In the panel editor on the right, under **Panel options**, change the panel title to "Traffic".
 1. Click **Apply** in the top-right corner to save the panel and go back to the dashboard view.
 1. Click the **Save dashboard** (disk) icon at the top of the dashboard to save your dashboard.
@@ -241,7 +240,7 @@ When things go bad, it often helps if you understand the context in which the fa
 In the next part of the tutorial, we will simulate some common use cases that someone would add annotations for.
 
 1. To manually add an annotation, click anywhere in your graph, then click **Add annotation**.
-Note: you might need to save the dashboard first.
+   Note: you might need to save the dashboard first.
 1. In **Description**, enter **Migrated user database**.
 1. Click **Save**.
 
@@ -322,15 +321,15 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Alert rules**.
 1. Click **+ New alert rule**.
 1. For **Section 1**, name the rule `fundamentals-test`.
-1. For **Section 2**, Find the **query A** box. Choose your Prometheus datasource. Note that the rule type should automatically switch to Grafana-managed alert. 
-1. Switch to code mode by checking the Builder/Code toggle. 
-1. Enter the same query that we used in our earlier panel `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` 
+1. For **Section 2**, Find the **query A** box. Choose your Prometheus datasource. Note that the rule type should automatically switch to Grafana-managed alert.
+1. Switch to code mode by checking the Builder/Code toggle.
+1. Enter the same query that we used in our earlier panel `sum(rate(tns_request_duration_seconds_count[5m])) by(route)`
 1. Press **Preview**. You should see some data returned.
 1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value [You can read more about queries and conditions here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 1. In **Section 3**, in Folder, create a new folder, by typing a name for the folder. This folder will contain our alerts. For example: `fundamentals`. Then, click + add new or hit enter twice.
-1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too. 
+1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too.
 1. Choose an Evaluation interval (how often the alert will be evaluated). For example, every `30s` (30 seconds).
-1. Set the pending period . This is the time that a condition has to be met until the alert enters in Firing state and a notification is sent.  Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
+1. Set the pending period . This is the time that a condition has to be met until the alert enters in Firing state and a notification is sent. Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
 1. In **Section 4**, you can optionally add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
 1. Click **Save rule and exit** at the top of the page.
 1. In Grafana's sidebar, navigate to **Notification policies**.
