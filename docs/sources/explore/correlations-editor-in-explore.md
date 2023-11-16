@@ -46,7 +46,7 @@ You can use a transformation in your correlation with the following steps:
 1. Select a field to apply the transformation to.
    Select the portion of the field that you want to use for the transformation. For example, a log line.
    Once selected, the value of this field will be used to assist you in building the transformation.
-1. Select the type of the transformation. 
+1. Select the type of the transformation.
    See [correlations]({{< relref "../administration/correlations/correlation-configuration/#correlation-transformations" >}}) for the options and relevant settings.
 1. Based on your selection, you might see one or more variables populate, or you might need to provide more specifications in options that are displayed.
 1. Select **Add transformation to correlation** to add the specified variables to the list of available variables.
@@ -87,6 +87,7 @@ To follow this example, make sure you have set up [a test data source]({{< relre
    {{< figure src="/static/img/docs/correlations/screenshot-correlations-editor-target-10.2.png" max-width="600px" caption="Setting up the target of a correlation" >}}
 
    Run a query to see that it produces a graph using sample values from the variables.
+
 1. Click **Save** to save the correlation and exit the Correlations Editor.
 
    After the correlation is saved, Explore will rerun the query in the left pane. By clicking a state name, the query on the right is rerun with values from the row being inserted into the CSV, thus changing the graph. The query is rerun with updated values every time you click on a state name.
@@ -118,7 +119,7 @@ To follow this example, make sure you have set up [a test data source]({{< relre
 1. Click **Add transformation** again and under **Field**, select **hostname**.
 1. Under **Type**, select **Regular expression**.
 1. Under **Expression**, enter the following:
-   -([0-9]*)
+   `-([0-9]\*)`
    This selects any numbers to the right of the dash.
 1. Under **Variable Name**, enter the following:
    hostNumber
@@ -127,7 +128,7 @@ To follow this example, make sure you have set up [a test data source]({{< relre
 1. In the data source editor, open the **Scenario** dropdown menu and select **CSV Content**.
 1. In the text box below, provide the following and save the correlation:
 
-   ```sql
+   ```csv
    time,msg,hostNumber,status
    ${time},${msg},${hostNumber},${status}
    ```
