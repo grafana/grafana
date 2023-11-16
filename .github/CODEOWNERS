@@ -254,10 +254,12 @@
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
 /pkg/tsdb/parca/ @grafana/observability-traces-and-profiling
 
-# BI backend code
+# OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/oss-big-tent
 /pkg/tsdb/grafana-postgresql-datasource/ @grafana/oss-big-tent
-/pkg/tsdb/mssql/ @grafana/grafana-bi-squad
+
+# Partner Datasources backend code
+/pkg/tsdb/mssql/ @grafana/partner-datasources
 
 # Database migrations
 /pkg/services/sqlstore/migrations/ @grafana/backend-platform @grafana/hosted-grafana-team
