@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -799,7 +800,10 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.JSONEq(t, `{"message":"folder cannot be deleted: folder contains alert rules"}`, string(b))
+		var errutilErr errutil.PublicError
+		err = json.Unmarshal(b, &errutilErr)
+		require.NoError(t, err)
+		assert.Equal(t, "Folder cannot be deleted: folder contains alert rules", errutilErr.Message)
 	}
 
 	// Next, the editor can delete the folder if forceDeleteRules is true.

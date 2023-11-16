@@ -625,8 +625,8 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			return folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
 		}
 
-		for _, folder := range result {
-			dashFolder, ok := dashFolders[folder]
+		for _, f := range result {
+			dashFolder, ok := dashFolders[f]
 			if !ok {
 				return err
 			}
@@ -634,6 +634,19 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			if cmd.ForceDeleteRules {
 				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser); err != nil {
 					return err
+				}
+			} else {
+				alertRuleSrv, ok := s.registry[entity.StandardKindAlertRule]
+				if !ok {
+					return folder.ErrInternal.Errorf("no alert rule service found in registry")
+				}
+				alertRulesInFolder, err := alertRuleSrv.CountInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser)
+				if err != nil {
+					s.log.Error("failed to count alert rules in folder", "error", err)
+					return err
+				}
+				if alertRulesInFolder > 0 {
+					return folder.ErrFolderContainsAlertRules.Errorf("")
 				}
 			}
 

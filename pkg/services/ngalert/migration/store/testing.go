@@ -68,6 +68,9 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	require.NoError(t, err)
 	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features)
 
+	err = folderService.RegisterService(alertingStore)
+	require.NoError(t, err)
+
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		features, routeRegister, sqlStore, ac, license, dashboardStore, folderService, acSvc, teamSvc, userSvc)
 	require.NoError(t, err)
@@ -86,7 +89,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	err = acSvc.RegisterFixedRoles(context.Background())
 	require.NoError(t, err)
 
-	return &migrationStore{
+	store := &migrationStore{
 		log:                            &logtest.Fake{},
 		cfg:                            cfg,
 		store:                          sqlStore,
@@ -100,4 +103,6 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		orgService:                     orgService,
 		legacyAlertNotificationService: legacyalerting.ProvideService(sqlStore, encryptionservice.SetupTestService(t), nil),
 	}
+
+	return store
 }
