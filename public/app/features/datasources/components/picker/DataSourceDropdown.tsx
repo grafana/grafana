@@ -57,7 +57,6 @@ export interface DataSourceDropdownProps {
   logs?: boolean;
   uploadFile?: boolean;
   filter?: (ds: DataSourceInstanceSettings) => boolean;
-  includeDataSourceVariable?: string;
 }
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {

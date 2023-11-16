@@ -75,9 +75,6 @@ export interface GetDataSourceListFilters {
 
   /** Only returns datasources matching the specified types (ie. Loki, Prometheus) */
   type?: string | string[];
-
-  /** Name of the DS variable that is repeated in current panel */
-  dsRepeatedVariable?: string;
 }
 
 let singletonInstance: DataSourceSrv;

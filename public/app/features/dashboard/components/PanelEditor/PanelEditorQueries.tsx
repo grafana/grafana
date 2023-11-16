@@ -120,7 +120,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
   render() {
     const { panel } = this.props;
 
-    // If no panel data source set, wait with render. Will be set to default in componentDidMount
+    // If no panel data soruce set, wait with render. Will be set to default in componentDidMount
     if (!panel.datasource) {
       return null;
     }
@@ -134,7 +134,6 @@ export class PanelEditorQueries extends PureComponent<Props> {
         onRunQueries={this.onRunQueries}
         onOpenQueryInspector={this.onOpenQueryInspector}
         onOptionsChange={this.onOptionsChange}
-        includeDataSourceVariable={panel.repeat}
       />
     );
   }

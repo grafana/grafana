@@ -41,7 +41,6 @@ export interface DataSourceListProps {
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
-  includeDataSourceVariable?: string;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
@@ -67,10 +66,7 @@ export function DataSourceList(props: DataSourceListProps) {
     tracing: props.tracing,
     type: props.type,
     variables: props.variables,
-    dsRepeatedVariable: props.includeDataSourceVariable,
   });
-
-  console.log('dataSources', dataSources);
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;

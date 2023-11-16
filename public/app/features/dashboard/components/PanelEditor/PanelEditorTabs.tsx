@@ -7,7 +7,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Tab, TabContent, TabsBar, toIconName, useForceUpdate, useStyles2 } from '@grafana/ui';
 import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
-import { PanelDSVarRepeatChangedEvent, PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
+import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
 import { DashboardModel, PanelModel } from '../../state';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
@@ -46,7 +46,6 @@ export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab
     const eventSubs = new Subscription();
     eventSubs.add(panel.events.subscribe(PanelQueriesChangedEvent, forceUpdate));
     eventSubs.add(panel.events.subscribe(PanelTransformationsChangedEvent, forceUpdate));
-    eventSubs.add(panel.events.subscribe(PanelDSVarRepeatChangedEvent, forceUpdate));
     return () => eventSubs.unsubscribe();
   }, [panel, dashboard, forceUpdate]);
 

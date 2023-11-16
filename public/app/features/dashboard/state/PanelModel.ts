@@ -27,7 +27,6 @@ import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { QueryGroupOptions } from 'app/types';
 import {
-  PanelDSVarRepeatChangedEvent,
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
   PanelTransformationsChangedEvent,
@@ -68,6 +67,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   dataSupport: true,
   key: true,
   isNew: true,
+  refreshWhenInView: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -192,6 +192,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;
   isNew?: boolean;
+  refreshWhenInView = false;
 
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -287,10 +288,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.render();
   }
 
-  updateConfig() {
-    this.events.publish(new PanelDSVarRepeatChangedEvent());
-  }
-
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
     this.configRev++;
@@ -368,6 +365,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (this.type === 'row') {
       return;
     }
+
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
@@ -622,7 +620,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   isAngularPlugin(): boolean {
-    return (this.plugin && this.plugin.angularPanelCtrl) !== undefined || (this.plugin?.meta?.angularDetected ?? false);
+    return (
+      (this.plugin && this.plugin.angularPanelCtrl) !== undefined || (this.plugin?.meta?.angular?.detected ?? false)
+    );
   }
 
   destroy() {
