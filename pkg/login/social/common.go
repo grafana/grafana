@@ -188,19 +188,6 @@ func mustBool(value any, defaultValue bool) bool {
 	return result
 }
 
-func mustString(value any) string {
-	if value == nil {
-		return ""
-	}
-
-	result, ok := value.(string)
-	if !ok {
-		return ""
-	}
-
-	return result
-}
-
 // convertIniSectionToMap converts key value pairs from an ini section to a map[string]any
 func convertIniSectionToMap(sec *ini.Section) map[string]any {
 	mappedSettings := make(map[string]any)

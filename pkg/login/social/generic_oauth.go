@@ -49,13 +49,13 @@ func NewGenericOAuthProvider(settings map[string]any, cfg *setting.Cfg, features
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
 		emailAttributePath:   info.EmailAttributePath,
-		nameAttributePath:    mustString(info.Extra["name_attribute_path"]),
+		nameAttributePath:    info.Extra["name_attribute_path"],
 		groupsAttributePath:  info.GroupsAttributePath,
-		loginAttributePath:   mustString(info.Extra["login_attribute_path"]),
-		idTokenAttributeName: mustString(info.Extra["id_token_attribute_name"]),
+		loginAttributePath:   info.Extra["login_attribute_path"],
+		idTokenAttributeName: info.Extra["id_token_attribute_name"],
 		teamIdsAttributePath: info.TeamIdsAttributePath,
-		teamIds:              util.SplitString(mustString(info.Extra["team_ids"])),
-		allowedOrganizations: util.SplitString(mustString(info.Extra["allowed_organizations"])),
+		teamIds:              util.SplitString(info.Extra["team_ids"]),
+		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
 		allowedGroups:        info.AllowedGroups,
 		skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
@@ -65,6 +65,7 @@ func NewGenericOAuthProvider(settings map[string]any, cfg *setting.Cfg, features
 	return provider, nil
 }
 
+// TODOD: remove this in the next PR and use the isGroupMember from social.go
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true

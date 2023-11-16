@@ -55,7 +55,7 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		return nil, err
 	}
 
-	teamIds, err := mustInts(util.SplitString(mustString(info.Extra["team_ids"])))
+	teamIds, err := mustInts(util.SplitString(info.Extra["team_ids"]))
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *feat
 		SocialBase:           newSocialBase(gitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 		apiUrl:               info.ApiUrl,
 		teamIds:              teamIds,
-		allowedOrganizations: util.SplitString(mustString(info.Extra["allowed_organizations"])),
+		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
 		skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
 		// FIXME: Move skipOrgRoleSync to OAuthInfo
 		// skipOrgRoleSync: info.SkipOrgRoleSync

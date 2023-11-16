@@ -165,6 +165,7 @@ func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
 	return groups
 }
 
+// TODO: remove this in a separate PR and use the isGroupMember from the social.go
 func (s *SocialOkta) IsGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true
