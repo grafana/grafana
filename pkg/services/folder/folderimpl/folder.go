@@ -860,6 +860,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 
 	if strings.EqualFold(dash.Title, dashboards.RootFolderName) {
 		return nil, dashboards.ErrDashboardFolderNameExists
+	}
 
 	if dash.FolderUID != "" {
 		if _, err := s.dashboardFolderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID); err != nil {
