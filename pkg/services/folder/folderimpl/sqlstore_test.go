@@ -439,6 +439,7 @@ func TestIntegrationGet(t *testing.T) {
 			ID: &f.ID, // nolint:staticcheck
 		})
 		require.NoError(t, err)
+		// nolint:staticcheck
 		assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
