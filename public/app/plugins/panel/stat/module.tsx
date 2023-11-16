@@ -87,6 +87,12 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
             { value: BigValueJustifyMode.Center, label: 'Center' },
           ],
         },
+      })
+      .addBooleanSwitch({
+        path: 'showPercentChange',
+        name: 'Show percent change',
+        defaultValue: defaultOptions.showPercentChange,
+        category: mainCategory,
       });
   })
   .setNoPadding()
