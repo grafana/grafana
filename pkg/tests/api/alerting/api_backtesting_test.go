@@ -18,7 +18,6 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -92,10 +91,6 @@ func TestBacktesting(t *testing.T) {
 	})
 
 	t.Run("if user does not have permissions", func(t *testing.T) {
-		if !setting.IsEnterprise {
-			t.Skip("Enterprise-only test")
-		}
-
 		testUserId := createUser(t, env.SQLStore, user.CreateUserCommand{
 			DefaultOrgRole: "",
 			Password:       "test",
@@ -128,7 +123,7 @@ func TestBacktesting(t *testing.T) {
 
 		t.Run("fail if can't query data sources", func(t *testing.T) {
 			status, body := testUserApiCli.SubmitRuleForBacktesting(t, queryRequest)
-			require.Contains(t, body, "user is not authorized to query one or many data sources used by the rule")
+			require.Contains(t, body, "user is not authorized to access rule group")
 			require.Equalf(t, http.StatusUnauthorized, status, "Response: %s", body)
 		})
 	})

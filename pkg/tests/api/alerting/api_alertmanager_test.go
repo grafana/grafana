@@ -1051,7 +1051,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				}(),
 				expectedMessage: func() string {
 					if setting.IsEnterprise {
-						return "user is not authorized to create a new alert rule 'AlwaysFiring' because the user does not have read permissions for one or many datasources the rule uses"
+						return "user is not authorized to create a new alert rule 'AlwaysFiring'"
 					}
 					return "failed to update rule group: invalid alert rule 'AlwaysFiring': failed to build query 'A': data source not found"
 				}(),
@@ -2284,7 +2284,7 @@ func TestIntegrationEval(t *testing.T) {
 			},
 			expectedMessage: func() string {
 				if setting.IsEnterprise {
-					return "user is not authorized to query one or many data sources used by the rule"
+					return "user is not authorized to access rule group"
 				}
 				return "Failed to build evaluator for queries and expressions: failed to build query 'A': data source not found"
 			},
