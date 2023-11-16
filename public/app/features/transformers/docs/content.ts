@@ -1213,7 +1213,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     'Rename by regex' + 2
   )}
 
-  This transformation empowers you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
+  This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
   `;
     },
   },
