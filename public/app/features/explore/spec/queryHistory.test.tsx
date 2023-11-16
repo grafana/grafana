@@ -192,6 +192,8 @@ describe('Explore: Query History', () => {
   });
 
   it('add comments to query history', async () => {
+    // eslint-disable-next-line no-console
+    console.time('*** BENCHMARK ***');
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -208,6 +210,8 @@ describe('Explore: Query History', () => {
 
     await commentQueryHistory(0, 'test comment');
     await assertQueryHistoryComment(['test comment'], 'left');
+    // eslint-disable-next-line no-console
+    console.timeEnd('*** BENCHMARK ***');
   });
 
   it('removes the query item from the history panel when user deletes a regular query', async () => {
