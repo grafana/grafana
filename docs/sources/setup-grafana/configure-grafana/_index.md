@@ -518,8 +518,7 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 
 ### enabled
 
-This option is also known as _usage analytics_. When `false`, this option disables the writers that read/write from and to the Grafana databases. The default
-value is `true`.
+This option is also known as _usage analytics_. When `false`, this option disables the writers that write to the Grafana database and the associated features, such as dashboard and data source insights, presence indicators, and advanced dashboard search. The default value is `true`.
 
 ### reporting_enabled
 
@@ -2488,9 +2487,9 @@ Refer to [Role-based access control]({{< relref "../../administration/roles-and-
 
 ## [navigation.app_sections]
 
-Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: `<pluginId> = <sectionId> <sortWeight>`
 
 ## [navigation.app_standalone_pages]
 
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
-Format: <pageUrl> = <sectionId> <sortWeight>
+Format: `<pageUrl> = <sectionId> <sortWeight>`

@@ -46,7 +46,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
@@ -93,7 +93,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:    util.Pointer("test dash 23"),
-			FolderID: &savedFolder.ID,
+			FolderID: &savedFolder.ID, // nolint:staticcheck
 			OrgID:    1,
 		}
 
@@ -122,7 +122,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:    util.Pointer("test dash 23"),
-			FolderID: util.Pointer(int64(0)),
+			FolderID: util.Pointer(int64(0)), // nolint:staticcheck
 			OrgID:    1,
 		}
 
@@ -276,7 +276,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:        1,
-			FolderIds:    []int64{savedFolder.ID},
+			FolderIds:    []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{},
 		}
 
@@ -435,7 +435,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:     1,
-			FolderIds: []int64{savedFolder.ID},
+			FolderIds: []int64{savedFolder.ID}, // nolint:staticcheck
 			SignedInUser: &user.SignedInUser{
 				OrgID:   1,
 				OrgRole: org.RoleEditor,
@@ -517,12 +517,14 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		// setup() saves one dashboard in the general folder and two in the "savedFolder".
 		count, err := dashboardStore.CountDashboardsInFolder(
 			context.Background(),
+			// nolint:staticcheck
 			&dashboards.CountDashboardsInFolderRequest{FolderID: 0, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 
 		count, err = dashboardStore.CountDashboardsInFolder(
 			context.Background(),
+			// nolint:staticcheck
 			&dashboards.CountDashboardsInFolderRequest{FolderID: savedFolder.ID, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
@@ -542,6 +544,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			})
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		count, err := dashboardStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 2, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, count, int64(0))
@@ -553,10 +556,8 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 		t.Skip("skipping integration test")
 	}
 	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	pluginId := "test-app"
 
@@ -579,10 +580,8 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, "", false)
@@ -633,9 +632,8 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	}
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, "", false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, "", false)
@@ -678,9 +676,8 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	insertTestDashboard(t, dashboardStore, "Apple", 1, 0, "", false)
 	t.Run("Finds a dashboard with existing name in root directory and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
@@ -717,10 +714,9 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 
 	orgID := int64(1)
@@ -800,7 +796,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+			dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 			require.NoError(t, err)
 			res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
 				SignedInUser: user,
@@ -833,10 +829,9 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 
 	orgID := int64(1)
@@ -1044,7 +1039,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	for _, tc := range testCases {
 		for featureFlags := range tc.expectedResult {
 			t.Run(fmt.Sprintf("%s with featureFlags: %v", tc.desc, featureFlags), func(t *testing.T) {
-				dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featureFlags), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+				dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featureFlags), tagimpl.ProvideService(sqlStore), quotaService)
 				require.NoError(t, err)
 				res, err := dashboardStore.FindDashboards(context.Background(), &dashboards.FindPersistedDashboardsQuery{
 					SignedInUser: user,
@@ -1188,21 +1183,6 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store,
 	return dash
 }
 
-func updateDashboardACL(t *testing.T, dashboardStore dashboards.Store, dashboardID int64,
-	items ...dashboards.DashboardACL) error {
-	t.Helper()
-
-	var itemPtrs []*dashboards.DashboardACL
-	for _, it := range items {
-		item := it
-		item.Created = time.Now()
-		item.Updated = time.Now()
-		itemPtrs = append(itemPtrs, &item)
-	}
-
-	return dashboardStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
-}
-
 // testSearchDashboards is a (near) copy of the dashboard service
 // SearchDashboards, which is a wrapper around FindDashboards.
 func testSearchDashboards(d dashboards.Store, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
@@ -1239,6 +1219,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 				Tags:        []string{},
 			}
 
+			// nolint:staticcheck
 			if item.FolderID > 0 {
 				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
 			}

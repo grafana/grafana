@@ -78,7 +78,6 @@ export interface State {
   isFirstLoad: boolean;
   renderCounter: number;
   errorMessage?: string;
-  refreshWhenInView: boolean;
   context: PanelContext;
   data: PanelData;
   liveTime?: TimeRange;
@@ -99,7 +98,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.state = {
       isFirstLoad: true,
       renderCounter: 0,
-      refreshWhenInView: false,
       context: {
         eventsScope: '__global_',
         eventBus,
@@ -263,7 +261,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView, width } = this.props;
+    const { isInView, width, panel } = this.props;
     const { context } = this.state;
 
     const app = this.getPanelContextApp();
@@ -281,7 +279,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     if (isInView !== prevProps.isInView) {
       if (isInView) {
         // Check if we need a delayed refresh
-        if (this.state.refreshWhenInView) {
+        if (panel.refreshWhenInView) {
           this.onRefresh();
         }
       }
@@ -348,7 +346,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { dashboard, panel, isInView, width } = this.props;
 
     if (!isInView) {
-      this.setState({ refreshWhenInView: true });
+      panel.refreshWhenInView = true;
       return;
     }
 
@@ -360,9 +358,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         return;
       }
 
-      if (this.state.refreshWhenInView) {
-        this.setState({ refreshWhenInView: false });
-      }
+      panel.refreshWhenInView = false;
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
