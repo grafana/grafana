@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -442,22 +443,9 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	repoCompatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, dto.Version, repoCompatOpts)
+	err := hs.hasPluginRequestedPermissions(c, pluginID, dto.Version)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to fetch plugin json", err)
-	}
-	if jsonData.ExternalServiceRegistration != nil && len(jsonData.ExternalServiceRegistration.Permissions) > 0 {
-		hs.log.Debug("check installer's permissions, plugin wants to register an external service")
-		hasAccess := accesscontrol.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
-		// TODO (gamab) single_organization setup
-		evaluator := evalAllPermissions(jsonData.ExternalServiceRegistration.Permissions)
-		if !hasAccess(evaluator) {
-			c.JSON(http.StatusForbidden, map[string]string{
-				"title":   "Access denied",
-				"message": fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", evaluator.String()),
-			})
-		}
+		return response.Err(err)
 	}
 
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
@@ -531,6 +519,30 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 		}
 	}
 	return md.Content, nil
+}
+
+// hasPluginRequestedPermissions verifies an installer has the permissions that the plugin requests to have on Grafana.
+func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID, version string) error {
+	repoCompatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
+	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, version, repoCompatOpts)
+	if err != nil {
+		return errutil.Internal("Failed to fetch plugin json").Errorf("failed to fetch plugin json: %w", err)
+	}
+	if jsonData.ExternalServiceRegistration == nil || len(jsonData.ExternalServiceRegistration.Permissions) == 0 {
+		return nil
+	}
+	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
+	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
+	if !hs.Cfg.RBACSingleOrganization {
+		// If this is not in a single organization setup, the installer needs to have plugin's permissions in all orgs
+		// TODO (gamab) this is probably going to fail for a lot of permissions since we only grant server admin permissions globally.
+		hasAccess = accesscontrol.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
+	}
+	evaluator := evalAllPermissions(jsonData.ExternalServiceRegistration.Permissions)
+	if !hasAccess(evaluator) {
+		return errutil.Forbidden("Access denied").Errorf(fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", evaluator.String()))
+	}
+	return nil
 }
 
 // evalAllPermissions generates an evaluator with all permissions from the input slice
