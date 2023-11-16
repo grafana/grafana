@@ -1,9 +1,17 @@
 import { cx, css } from '@emotion/css';
-import React, { FormEventHandler, KeyboardEventHandler, ReactNode } from "react";
+import React, { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react';
 
-import { DataFrame, DataTransformerID, DocsId, TransformerRegistryItem, TransformationApplicabilityLevels, GrafanaTheme2,standardTransformersRegistry } from "@grafana/data";
+import {
+  DataFrame,
+  DataTransformerID,
+  DocsId,
+  TransformerRegistryItem,
+  TransformationApplicabilityLevels,
+  GrafanaTheme2,
+  standardTransformersRegistry,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Card, Button, Drawer, FilterPill, Icon, IconButton, Input, Switch, useStyles2 } from "@grafana/ui";
+import { Card, Button, Drawer, FilterPill, Icon, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
@@ -11,60 +19,65 @@ import { categoriesLabels } from 'app/features/transformers/utils';
 
 import { FilterCategory } from './TransformationsEditor';
 
-
 const viewAllLabel = 'View all';
 const VIEW_ALL_VALUE = 'viewAll';
 const filterCategoriesLabels: Array<[FilterCategory, string]> = [
-    [VIEW_ALL_VALUE, viewAllLabel],
-    ...(Object.entries(categoriesLabels) as Array<[FilterCategory, string]>),
+  [VIEW_ALL_VALUE, viewAllLabel],
+  ...(Object.entries(categoriesLabels) as Array<[FilterCategory, string]>),
 ];
 
 interface TransformationPickerNgProps {
-    onTransformationAdd: Function;
-    setState: Function;
-    onSearchChange: FormEventHandler<HTMLInputElement>;
-    onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
-    noTransforms: boolean;
-    xforms: Array<TransformerRegistryItem<any>>;
-    search: string;
-    suffix: ReactNode;
-    data: DataFrame[];
-    showIllustrations?: boolean;
-    selectedFilter?: FilterCategory;
+  onTransformationAdd: Function;
+  setState: Function;
+  onSearchChange: FormEventHandler<HTMLInputElement>;
+  onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
+  noTransforms: boolean;
+  xforms: Array<TransformerRegistryItem<any>>;
+  search: string;
+  suffix: ReactNode;
+  data: DataFrame[];
+  showIllustrations?: boolean;
+  selectedFilter?: FilterCategory;
 }
 
-export function TransformationPickerNg (props: TransformationPickerNgProps) {
-    const styles = useStyles2(getTransformationPickerStyles);
-    const { noTransforms, suffix, setState, xforms, search, onSearchChange, onSearchKeyDown, showIllustrations, onTransformationAdd, selectedFilter, data } = props;
+export function TransformationPickerNg(props: TransformationPickerNgProps) {
+  const styles = useStyles2(getTransformationPickerStyles);
+  const {
+    noTransforms,
+    suffix,
+    setState,
+    xforms,
+    search,
+    onSearchChange,
+    onSearchKeyDown,
+    showIllustrations,
+    onTransformationAdd,
+    selectedFilter,
+    data,
+  } = props;
 
-    return (
-        <Drawer onClose={() => ( setState({showPicker: false}))}>
-      
-        {!noTransforms && (
-          <Button
-            variant="secondary"
-            fill="text"
-            icon="angle-left"
-            onClick={() => {
-              setState({ showPicker: false });
-            }}
-          >
-            Go back to&nbsp;<i>Transformations in use</i>
-          </Button>
-        )}
-      <div className={styles.pickerInformationLine}>
-        <a
-          href={getDocsLink(DocsId.Transformations)}
-          className="external-link"
-          target="_blank"
-          rel="noreferrer"
+  return (
+    <Drawer onClose={() => setState({ showPicker: false })}>
+      {!noTransforms && (
+        <Button
+          variant="secondary"
+          fill="text"
+          icon="angle-left"
+          onClick={() => {
+            setState({ showPicker: false });
+          }}
         >
+          Go back to&nbsp;<i>Transformations in use</i>
+        </Button>
+      )}
+      <div className={styles.pickerInformationLine}>
+        <a href={getDocsLink(DocsId.Transformations)} className="external-link" target="_blank" rel="noreferrer">
           <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
           <Icon name="external-link-alt" />
         </a>
         &nbsp;allow you to manipulate your data before a visualization is applied.
       </div>
-      
+
       <div className={styles.searchWrapper}>
         <Input
           data-testid={selectors.components.Transforms.searchInput}
@@ -78,10 +91,7 @@ export function TransformationPickerNg (props: TransformationPickerNgProps) {
         />
         <div className={styles.showImages}>
           <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
-          <Switch
-            value={showIllustrations}
-            onChange={() => setState({ showIllustrations: !showIllustrations })}
-          />
+          <Switch value={showIllustrations} onChange={() => setState({ showIllustrations: !showIllustrations })} />
         </div>
       </div>
 
@@ -103,133 +113,134 @@ export function TransformationPickerNg (props: TransformationPickerNgProps) {
         transformations={xforms}
         data={data}
         onClick={(id) => {
-            onTransformationAdd({ value: id });
-        }} />
+          onTransformationAdd({ value: id });
+        }}
+      />
     </Drawer>
-    )
+  );
 }
 
 function getTransformationPickerStyles(theme: GrafanaTheme2) {
-    return {
-        showImages: css({
-            flexBasis: '0',
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'center',
-        }),
-        pickerInformationLine: css({
-            fontSize: '16px',
-            marginBottom: `${theme.spacing(2)}`,
-        }),
-        pickerInformationLineHighlight: css({
-            verticalAlign: 'middle',
-        }),
-        searchWrapper: css({
-            display: 'flex',
-            flexWrap: 'wrap',
-            columnGap: '27px',
-            rowGap: '16px',
-            width: '100%',
-        }),
-        searchInput: css({
-            flexGrow: '1',
-            width: 'initial',
-        }),
-        illustationSwitchLabel: css({
-            whiteSpace: 'nowrap',
-        }),
-        filterWrapper: css({
-            padding: `${theme.spacing(1)} 0`,
-            display: 'flex',
-            flexWrap: 'wrap',
-            rowGap: `${theme.spacing(1)}`,
-            columnGap: `${theme.spacing(0.5)}`,
-        }),
-    }
+  return {
+    showImages: css({
+      flexBasis: '0',
+      display: 'flex',
+      gap: '8px',
+      alignItems: 'center',
+    }),
+    pickerInformationLine: css({
+      fontSize: '16px',
+      marginBottom: `${theme.spacing(2)}`,
+    }),
+    pickerInformationLineHighlight: css({
+      verticalAlign: 'middle',
+    }),
+    searchWrapper: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      columnGap: '27px',
+      rowGap: '16px',
+      width: '100%',
+    }),
+    searchInput: css({
+      flexGrow: '1',
+      width: 'initial',
+    }),
+    illustationSwitchLabel: css({
+      whiteSpace: 'nowrap',
+    }),
+    filterWrapper: css({
+      padding: `${theme.spacing(1)} 0`,
+      display: 'flex',
+      flexWrap: 'wrap',
+      rowGap: `${theme.spacing(1)}`,
+      columnGap: `${theme.spacing(0.5)}`,
+    }),
+  };
 }
 
 interface TransformationsGridProps {
-    transformations: Array<TransformerRegistryItem<any>>;
-    showIllustrations?: boolean;
-    onClick: (id: string) => void;
-    data: DataFrame[];
+  transformations: Array<TransformerRegistryItem<any>>;
+  showIllustrations?: boolean;
+  onClick: (id: string) => void;
+  data: DataFrame[];
 }
 
 function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
-    const styles = useStyles2(getTransformationGridStyles);
-  
-    return (
-      <div className={styles.grid}>
-        {transformations.map((transform) => {
-          // Check to see if the transform
-          // is applicable to the given data
-          let applicabilityScore = TransformationApplicabilityLevels.Applicable;
-          if (transform.transformation.isApplicable !== undefined) {
-            applicabilityScore = transform.transformation.isApplicable(data);
+  const styles = useStyles2(getTransformationGridStyles);
+
+  return (
+    <div className={styles.grid}>
+      {transformations.map((transform) => {
+        // Check to see if the transform
+        // is applicable to the given data
+        let applicabilityScore = TransformationApplicabilityLevels.Applicable;
+        if (transform.transformation.isApplicable !== undefined) {
+          applicabilityScore = transform.transformation.isApplicable(data);
+        }
+        const isApplicable = applicabilityScore > 0;
+
+        let applicabilityDescription = null;
+        if (transform.transformation.isApplicableDescription !== undefined) {
+          if (typeof transform.transformation.isApplicableDescription === 'function') {
+            applicabilityDescription = transform.transformation.isApplicableDescription(data);
+          } else {
+            applicabilityDescription = transform.transformation.isApplicableDescription;
           }
-          const isApplicable = applicabilityScore > 0;
-  
-          let applicabilityDescription = null;
-          if (transform.transformation.isApplicableDescription !== undefined) {
-            if (typeof transform.transformation.isApplicableDescription === 'function') {
-              applicabilityDescription = transform.transformation.isApplicableDescription(data);
-            } else {
-              applicabilityDescription = transform.transformation.isApplicableDescription;
-            }
-          }
-  
-          // Add disabled styles to disabled
-          let cardClasses = styles.newCard;
-          if (!isApplicable) {
-            cardClasses = cx(styles.newCard, styles.cardDisabled);
-          }
-  
-          return (
-            <Card
-              className={cardClasses}
-              data-testid={selectors.components.TransformTab.newTransform(transform.name)}
-              onClick={() => onClick(transform.id)}
-              key={transform.id}
-            >
-              <Card.Heading className={styles.heading}>
-                <>
-                  <span>{transform.name}</span>
-                  <span className={styles.pluginStateInfoWrapper}>
-                    <PluginStateInfo state={transform.state} />
-                  </span>
-                </>
-              </Card.Heading>
-              <Card.Description className={styles.description}>
-                <>
-                  <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
-                  {showIllustrations && (
-                    <span>
-                      <img
-                        className={styles.image}
-                        src={getImagePath(transform.id, !isApplicable)}
-                        alt={transform.name}
-                      />
-                    </span>
-                  )}
-                  {!isApplicable && applicabilityDescription !== null && (
-                    <IconButton
-                      className={styles.cardApplicableInfo}
-                      name="info-circle"
-                      tooltip={applicabilityDescription}
+        }
+
+        // Add disabled styles to disabled
+        let cardClasses = styles.newCard;
+        if (!isApplicable) {
+          cardClasses = cx(styles.newCard, styles.cardDisabled);
+        }
+
+        return (
+          <Card
+            className={cardClasses}
+            data-testid={selectors.components.TransformTab.newTransform(transform.name)}
+            onClick={() => onClick(transform.id)}
+            key={transform.id}
+          >
+            <Card.Heading className={styles.heading}>
+              <>
+                <span>{transform.name}</span>
+                <span className={styles.pluginStateInfoWrapper}>
+                  <PluginStateInfo state={transform.state} />
+                </span>
+              </>
+            </Card.Heading>
+            <Card.Description className={styles.description}>
+              <>
+                <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
+                {showIllustrations && (
+                  <span>
+                    <img
+                      className={styles.image}
+                      src={getImagePath(transform.id, !isApplicable)}
+                      alt={transform.name}
                     />
-                  )}
-                </>
-              </Card.Description>
-            </Card>
-          );
-        })}
-      </div>
-    );
+                  </span>
+                )}
+                {!isApplicable && applicabilityDescription !== null && (
+                  <IconButton
+                    className={styles.cardApplicableInfo}
+                    name="info-circle"
+                    tooltip={applicabilityDescription}
+                  />
+                )}
+              </>
+            </Card.Description>
+          </Card>
+        );
+      })}
+    </div>
+  );
 }
 
 function getTransformationGridStyles(theme: GrafanaTheme2) {
-    return {
-        heading: css`
+  return {
+    heading: css`
             font-weight: 400,
             > button: {
                 width: '100%',
@@ -238,76 +249,74 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
                 align-items: 'center',
                 flex-wrap: 'no-wrap',
         },`,
-        description: css({
-            fontSize: '12px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-        }),
-        image: css({
-            display: 'block',
-            maxEidth: '100%`',
-            marginTop: `${theme.spacing(2)}`,
-        }),
-        grid: css({
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gridAutoRows: '1fr',
-            gap: `${theme.spacing(2)} ${theme.spacing(1)}`,
-            width: '100%',
-        }),
-        cardDisabled: css({
-            backgroundColor: 'rgb(204, 204, 220, 0.045)',
-            color: `${theme.colors.text.disabled} !important`,
-        }),  
-        cardApplicableInfo: css({
-            position: 'absolute',
-            bottom: `${theme.spacing(1)}`,
-            right: `${theme.spacing(1)}`,
-        }),
-        newCard: css({
-            gridTemplateRows: 'min-content 0 1fr 0',
-        }),
-        pluginStateInfoWrapper: css({
-            marginLeft: '5px',
-        }),
-    }
+    description: css({
+      fontSize: '12px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+    }),
+    image: css({
+      display: 'block',
+      maxEidth: '100%`',
+      marginTop: `${theme.spacing(2)}`,
+    }),
+    grid: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+      gridAutoRows: '1fr',
+      gap: `${theme.spacing(2)} ${theme.spacing(1)}`,
+      width: '100%',
+    }),
+    cardDisabled: css({
+      backgroundColor: 'rgb(204, 204, 220, 0.045)',
+      color: `${theme.colors.text.disabled} !important`,
+    }),
+    cardApplicableInfo: css({
+      position: 'absolute',
+      bottom: `${theme.spacing(1)}`,
+      right: `${theme.spacing(1)}`,
+    }),
+    newCard: css({
+      gridTemplateRows: 'min-content 0 1fr 0',
+    }),
+    pluginStateInfoWrapper: css({
+      marginLeft: '5px',
+    }),
+  };
 }
 
-
 const getImagePath = (id: string, disabled: boolean) => {
-    let folder = null;
-    if (!disabled) {
-        folder = config.theme2.isDark ? 'dark' : 'light';
-    } else {
-        folder = 'disabled';
-    }
+  let folder = null;
+  if (!disabled) {
+    folder = config.theme2.isDark ? 'dark' : 'light';
+  } else {
+    folder = 'disabled';
+  }
 
-    return `public/img/transformations/${folder}/${id}.svg`;
+  return `public/img/transformations/${folder}/${id}.svg`;
 };
-  
 
 const TransformationDescriptionOverrides: { [key: string]: string } = {
-    [DataTransformerID.concatenate]: 'Combine all fields into a single frame.',
-    [DataTransformerID.configFromData]: 'Set unit, min, max and more.',
-    [DataTransformerID.fieldLookup]: 'Use a field value to lookup countries, states, or airports.',
-    [DataTransformerID.filterFieldsByName]: 'Remove parts of the query results using a regex pattern.',
-    [DataTransformerID.filterByRefId]: 'Remove rows from the data based on origin query',
-    [DataTransformerID.filterByValue]: 'Remove rows from the query results using user-defined filters.',
-    [DataTransformerID.groupBy]: 'Group data by a field value and create aggregate data.',
-    [DataTransformerID.groupingToMatrix]: 'Summarize and reorganize data based on three fields.',
-    [DataTransformerID.joinByField]: 'Combine rows from 2+ tables, based on a related field.',
-    [DataTransformerID.labelsToFields]: 'Group series by time and return labels or tags as fields.',
-    [DataTransformerID.merge]: 'Merge multiple series. Values will be combined into one row.',
-    [DataTransformerID.organize]: 'Re-order, hide, or rename fields.',
-    [DataTransformerID.partitionByValues]: 'Split a one-frame dataset into multiple series.',
-    [DataTransformerID.prepareTimeSeries]: 'Stretch data frames from the wide format into the long format.',
-    [DataTransformerID.reduce]: 'Reduce all rows or data points to a single value (ex. max, mean).',
-    [DataTransformerID.renameByRegex]:
+  [DataTransformerID.concatenate]: 'Combine all fields into a single frame.',
+  [DataTransformerID.configFromData]: 'Set unit, min, max and more.',
+  [DataTransformerID.fieldLookup]: 'Use a field value to lookup countries, states, or airports.',
+  [DataTransformerID.filterFieldsByName]: 'Remove parts of the query results using a regex pattern.',
+  [DataTransformerID.filterByRefId]: 'Remove rows from the data based on origin query',
+  [DataTransformerID.filterByValue]: 'Remove rows from the query results using user-defined filters.',
+  [DataTransformerID.groupBy]: 'Group data by a field value and create aggregate data.',
+  [DataTransformerID.groupingToMatrix]: 'Summarize and reorganize data based on three fields.',
+  [DataTransformerID.joinByField]: 'Combine rows from 2+ tables, based on a related field.',
+  [DataTransformerID.labelsToFields]: 'Group series by time and return labels or tags as fields.',
+  [DataTransformerID.merge]: 'Merge multiple series. Values will be combined into one row.',
+  [DataTransformerID.organize]: 'Re-order, hide, or rename fields.',
+  [DataTransformerID.partitionByValues]: 'Split a one-frame dataset into multiple series.',
+  [DataTransformerID.prepareTimeSeries]: 'Stretch data frames from the wide format into the long format.',
+  [DataTransformerID.reduce]: 'Reduce all rows or data points to a single value (ex. max, mean).',
+  [DataTransformerID.renameByRegex]:
     'Rename parts of the query results using a regular expression and replacement pattern.',
-    [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
+  [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
 };
 
 const getTransformationsRedesignDescriptions = (id: string): string => {
-    return TransformationDescriptionOverrides[id] || standardTransformersRegistry.getIfExists(id)?.description || '';
+  return TransformationDescriptionOverrides[id] || standardTransformersRegistry.getIfExists(id)?.description || '';
 };

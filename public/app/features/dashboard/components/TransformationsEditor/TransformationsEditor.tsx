@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Alert, Button, ConfirmModal, Container, CustomScrollbar, Themeable, withTheme, IconButton} from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Container, CustomScrollbar, Themeable, withTheme, IconButton } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { AppNotificationSeverity } from '../../../../types';
@@ -25,7 +25,6 @@ import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationPicker } from './TransformationPicker';
 import { TransformationPickerNg } from './TransformationPickerNg';
 import { TransformationsEditorTransformation } from './types';
-
 
 interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
@@ -319,48 +318,50 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       );
     }
 
-    const redesignPicker = <TransformationPickerNg
-      noTransforms={noTransforms}
-      search={search}
-      suffix={suffix}
-      xforms={xforms}
-      setState={this.setState.bind(this)}
-      onSearchChange={this.onSearchChange}
-      onSearchKeyDown={this.onSearchKeyDown}
-      onTransformationAdd={this.onTransformationAdd}
-      data={this.state.data}
-      selectedFilter={this.state.selectedFilter}
-      showIllustrations={this.state.showIllustrations}
-    />;
+    const redesignPicker = (
+      <TransformationPickerNg
+        noTransforms={noTransforms}
+        search={search}
+        suffix={suffix}
+        xforms={xforms}
+        setState={this.setState.bind(this)}
+        onSearchChange={this.onSearchChange}
+        onSearchKeyDown={this.onSearchKeyDown}
+        onTransformationAdd={this.onTransformationAdd}
+        data={this.state.data}
+        selectedFilter={this.state.selectedFilter}
+        showIllustrations={this.state.showIllustrations}
+      />
+    );
 
-    const oldPicker = <TransformationPicker 
-      noTransforms={noTransforms}
-      search={search}
-      suffix={suffix}
-      xforms={xforms}
-      onSearchChange={this.onSearchChange}
-      onSearchKeyDown={this.onSearchKeyDown}
-      onTransformationAdd={this.onTransformationAdd}
-    />;
+    const oldPicker = (
+      <TransformationPicker
+        noTransforms={noTransforms}
+        search={search}
+        suffix={suffix}
+        xforms={xforms}
+        onSearchChange={this.onSearchChange}
+        onSearchKeyDown={this.onSearchKeyDown}
+        onTransformationAdd={this.onTransformationAdd}
+      />
+    );
 
     const { transformationsRedesign } = config.featureToggles;
     const picker = transformationsRedesign ? redesignPicker : oldPicker;
 
-    return (
-        showPicker ? (
-          picker
-        ) : (
-          <Button
-            icon="plus"
-            variant="secondary"
-            onClick={() => {
-              this.setState({ showPicker: true });
-            }}
-            data-testid={selectors.components.Transforms.addTransformationButton}
-          >
-            Add another transformation
-          </Button>
-        )
+    return showPicker ? (
+      picker
+    ) : (
+      <Button
+        icon="plus"
+        variant="secondary"
+        onClick={() => {
+          this.setState({ showPicker: true });
+        }}
+        data-testid={selectors.components.Transforms.addTransformationButton}
+      >
+        Add another transformation
+      </Button>
     );
   }
 
@@ -417,10 +418,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     );
   }
 }
-
-
-
-
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
