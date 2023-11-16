@@ -69,7 +69,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
   
   > **Note:** 'Cumulative functions' and 'Window functions' modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
-  
+
   In the example below, we added two fields together and named them Sum.
 
   ${buildImageContent(
@@ -1340,7 +1340,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   Use this transformation to apply spatial operations to query results.
   
   - **Action** - Select an action:
-    - **Prepare spacial field** - Set a geometry field based on the results of other fields.
+    - **Prepare spatial field** - Set a geometry field based on the results of other fields.
       - **Location mode** - Select a location mode (these options are shared in **Calculate value** and **Transform** modes):
         - **Auto** - Automatically identify location data based on default field names.
         - **Coords** - Specify latitude and longitude fields.
@@ -1353,7 +1353,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
         - **Distance** - Calculate the distance between two points.
     - **Transform** - Apply spatial operations to the geometry.
       - **Operation** - Choose an operation to apply to the geometry:
-        - **As line** - Create a single line feature with a vertx at each row.
+        - **As line** - Create a single line feature with a vertex at each row.
         - **Line builder** - Create a line between two points.
   
   This transformation allows you to manipulate and analyze geospatial data, enabling operations such as creating lines between points, calculating spatial properties, and more.

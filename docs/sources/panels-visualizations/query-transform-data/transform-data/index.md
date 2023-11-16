@@ -1245,7 +1245,7 @@ For example, in a scenario where time-series data is retrieved from a data sourc
 Use this transformation to apply spatial operations to query results.
 
 - **Action** - Select an action:
-  - **Prepare spacial field** - Set a geometry field based on the results of other fields.
+  - **Prepare spatial field** - Set a geometry field based on the results of other fields.
     - **Location mode** - Select a location mode (these options are shared in **Calculate value** and **Transform** modes):
       - **Auto** - Automatically identify location data based on default field names.
       - **Coords** - Specify latitude and longitude fields.
@@ -1258,7 +1258,7 @@ Use this transformation to apply spatial operations to query results.
       - **Distance** - Calculate the distance between two points.
   - **Transform** - Apply spatial operations to the geometry.
     - **Operation** - Choose an operation to apply to the geometry:
-      - **As line** - Create a single line feature with a vertx at each row.
+      - **As line** - Create a single line feature with a vertex at each row.
       - **Line builder** - Create a line between two points.
 
 This transformation allows you to manipulate and analyze geospatial data, enabling operations such as creating lines between points, calculating spatial properties, and more.
