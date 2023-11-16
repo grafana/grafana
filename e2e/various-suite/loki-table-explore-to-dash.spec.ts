@@ -171,7 +171,10 @@ describe('Loki Query Editor', () => {
 
     cy.contains('label', 'targetLabelName').should('be.visible');
     cy.contains('label', 'targetLabelName').click();
-    cy.contains('label', 'targetLabelName').find('input[type="checkbox"]').should('be.checked');
+    cy.contains('label', 'targetLabelName')
+      .find('input[type="checkbox"]')
+      .should('not.be.visible')
+      .should('be.checked');
 
     const exploreCells = cy.get('[role="cell"]');
 
