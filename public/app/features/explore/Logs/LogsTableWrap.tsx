@@ -55,7 +55,10 @@ export function LogsTableWrap(props: Props) {
   const height = getTableHeight();
 
   // The refId of the current frame being displayed
-  const [currentFrameRefId, setCurrentFrameRefId] = useState<string | undefined>(logsFrames[0].refId);
+  const [currentFrameRefId, setCurrentFrameRefId] = useState<string | undefined>(
+    props.panelState?.refId ?? logsFrames[0].refId
+  );
+
   // The current dataFrame containing the refId above, used to prevent the table from flashing when switching between queries
   const [currentDataFrame, setCurrentDataFrame] = useState(
     logsFrames.find((frame) => frame.refId === currentFrameRefId) ?? logsFrames[0]
@@ -97,13 +100,6 @@ export function LogsTableWrap(props: Props) {
       setFilteredColumnsWithMeta(newFiltered);
     }
   }, [columnsWithMeta, filteredColumnsWithMeta]);
-
-  // Set frame ref when the explore panel state changes
-  useEffect(() => {
-    if (props.panelState?.refId && props.panelState?.refId !== currentFrameRefId) {
-      setCurrentFrameRefId(props.panelState.refId);
-    }
-  }, [props?.panelState?.refId, currentFrameRefId]);
 
   /**
    * when the query results change, we need to update the columnsWithMeta state
