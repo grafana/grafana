@@ -1064,6 +1064,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "logRowsPopoverMenu",
+			Description:  "Enable filtering menu displayed when text of a log line is selected",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "pluginsSkipHostEnvVars",
 			Description:  "Disables passing host environment variable to plugin processes",
 			Stage:        FeatureStageExperimental,
