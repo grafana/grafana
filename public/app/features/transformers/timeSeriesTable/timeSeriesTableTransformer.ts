@@ -12,6 +12,7 @@ import {
   ReducerID,
   reduceField,
   TransformationApplicabilityLevels,
+  isTimeSeriesField,
 } from '@grafana/data';
 
 /**
@@ -148,15 +149,16 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       // Retrieve the time field that's been configured
       // If one isn't configured then use the first found
       let timeField = null;
-      if (options[refId]?.timeField !== undefined) {
-        timeField = frame.fields.find((field) => field.name === options[refId]?.timeField);
+      let timeFieldName = options[refId]?.timeField;
+      if (timeFieldName && timeFieldName.length > 0) {
+        timeField = frame.fields.find((field) => field.name === timeFieldName);
       } else {
-        timeField = frame.fields.find((field) => field.type === FieldType.time);
+        timeField = frame.fields.find((field) => isTimeSeriesField(field));
       }
 
       // If it's not a time series frame we add
       // it unmodified to the result
-      if (!isTimeSeriesFrame(frame, timeField)) {
+      if (!isTimeSeriesFrame(frame)) {
         result.push(frame);
         continue;
       }
