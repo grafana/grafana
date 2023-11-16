@@ -3,6 +3,7 @@ package extsvcaccounts
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -104,6 +105,28 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 	}, nil
 }
 
+// GetExternalServiceNames get the names of External Service in store
+func (esa *ExtSvcAccountsService) GetExternalServiceNames(ctx context.Context) ([]string, error) {
+	esa.logger.Debug("Get external service names from store")
+	sas, err := esa.saSvc.SearchOrgServiceAccounts(ctx, &sa.SearchOrgServiceAccountsQuery{
+		OrgID:        extsvcauth.TmpOrgID,
+		Filter:       sa.FilterOnlyExternal,
+		SignedInUser: extsvcuser,
+	})
+	if err != nil {
+		esa.logger.Error("Could not fetch external service accounts from store", "error", err.Error())
+		return nil, err
+	}
+	if sas == nil {
+		return []string{}, nil
+	}
+	res := make([]string, len(sas.ServiceAccounts))
+	for i := range sas.ServiceAccounts {
+		res[i] = strings.TrimPrefix(sas.ServiceAccounts[i].Name, sa.ExtSvcPrefix)
+	}
+	return res, nil
+}
+
 // SaveExternalService creates, updates or delete a service account (and its token) with the requested permissions.
 func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
@@ -150,7 +173,7 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 			"error", err.Error())
 		return nil, err
 	}
-	return &extsvcauth.ExternalService{Name: cmd.Name, ID: slug, Secret: token}, nil
+	return &extsvcauth.ExternalService{Name: slug, ID: slug, Secret: token}, nil
 }
 
 func (esa *ExtSvcAccountsService) RemoveExternalService(ctx context.Context, name string) error {

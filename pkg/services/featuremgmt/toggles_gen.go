@@ -582,4 +582,12 @@ const (
 	// FlagAlertingSimplifiedRouting
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
+
+	// FlagLogRowsPopoverMenu
+	// Enable filtering menu displayed when text of a log line is selected
+	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
+
+	// FlagPluginsSkipHostEnvVars
+	// Disables passing host environment variable to plugin processes
+	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
 )

@@ -143,3 +143,5 @@ flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profilin
 alertingDetailsViewV2,experimental,@grafana/alerting-squad,false,false,false,true
 datatrails,experimental,@grafana/dashboards-squad,false,false,false,true
 alertingSimplifiedRouting,experimental,@grafana/alerting-squad,false,false,false,false
+logRowsPopoverMenu,experimental,@grafana/observability-logs,false,false,false,true
+pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false,false

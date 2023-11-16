@@ -4,9 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -21,6 +18,8 @@ import (
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 type TestEnv struct {
@@ -438,6 +437,71 @@ func TestExtSvcAccountsService_RemoveExtSvcAccount(t *testing.T) {
 			if tt.checks != nil {
 				tt.checks(t, env)
 			}
+			env.SaSvc.AssertExpectations(t)
+			env.AcStore.AssertExpectations(t)
+		})
+	}
+}
+
+func TestExtSvcAccountsService_GetExternalServiceNames(t *testing.T) {
+	sa1 := sa.ServiceAccountDTO{
+		Id:    1,
+		Name:  sa.ExtSvcPrefix + "sa-svc-1",
+		Login: sa.ServiceAccountPrefix + sa.ExtSvcPrefix + "sa-svc-1",
+		OrgId: extsvcauth.TmpOrgID,
+	}
+	sa2 := sa.ServiceAccountDTO{
+		Id:    2,
+		Name:  sa.ExtSvcPrefix + "sa-svc-2",
+		Login: sa.ServiceAccountPrefix + sa.ExtSvcPrefix + "sa-svc-2",
+		OrgId: extsvcauth.TmpOrgID,
+	}
+	tests := []struct {
+		name string
+		init func(env *TestEnv)
+		want []string
+	}{
+		{
+			name: "should return names",
+			init: func(env *TestEnv) {
+				env.SaSvc.On("SearchOrgServiceAccounts", mock.Anything, mock.MatchedBy(func(cmd *sa.SearchOrgServiceAccountsQuery) bool {
+					return cmd.OrgID == extsvcauth.TmpOrgID &&
+						cmd.Filter == sa.FilterOnlyExternal &&
+						len(cmd.SignedInUser.GetPermissions()[sa.ActionRead]) > 0
+				})).Return(&sa.SearchOrgServiceAccountsResult{
+					TotalCount:      2,
+					ServiceAccounts: []*sa.ServiceAccountDTO{&sa1, &sa2},
+					Page:            1,
+					PerPage:         2,
+				}, nil)
+			},
+			want: []string{"sa-svc-1", "sa-svc-2"},
+		},
+		{
+			name: "should handle nil search",
+			init: func(env *TestEnv) {
+				env.SaSvc.On("SearchOrgServiceAccounts", mock.Anything, mock.MatchedBy(func(cmd *sa.SearchOrgServiceAccountsQuery) bool {
+					return cmd.OrgID == extsvcauth.TmpOrgID &&
+						cmd.Filter == sa.FilterOnlyExternal &&
+						len(cmd.SignedInUser.GetPermissions()[sa.ActionRead]) > 0
+				})).Return(nil, nil)
+			},
+			want: []string{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			env := setupTestEnv(t)
+			if tt.init != nil {
+				tt.init(env)
+			}
+
+			got, err := env.S.GetExternalServiceNames(ctx)
+			require.NoError(t, err)
+
+			require.ElementsMatch(t, tt.want, got)
 			env.SaSvc.AssertExpectations(t)
 			env.AcStore.AssertExpectations(t)
 		})
