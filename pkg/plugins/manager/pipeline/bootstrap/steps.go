@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -32,6 +33,7 @@ func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
 		AppChildDecorateFunc(cfg),
+		SkipEnvVarsDecorateFunc(cfg),
 	}
 }
 
@@ -151,5 +153,17 @@ func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plu
 		child.Module = path.Join("core:plugin", parent.ID, appSubPath)
 	} else {
 		child.Module = path.Join("/", cfg.GrafanaAppSubURL, "/public/plugins", parent.ID, appSubPath, "module.js")
+	}
+}
+
+// SkipEnvVarsDecorateFunc is a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
+// It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin does not have
+// skip_host_env_vars = false in its plugin settings.
+func SkipEnvVarsDecorateFunc(cfg *config.Cfg) DecorateFunc {
+	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		p.SkipHostEnvVars = cfg.Features != nil &&
+			cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
+			cfg.PluginSettings[p.ID]["skip_host_env_vars"] != "false"
+		return p, nil
 	}
 }
