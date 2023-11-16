@@ -65,7 +65,7 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, 
         to: toUtc('2019-01-01 16:00:00'),
         raw: { from: 'now-1h', to: 'now' },
       }}
-      logsFrames={[logs ?? testDataFrame]}
+      dataFrame={logs ?? testDataFrame}
       {...partialProps}
     />
   );
@@ -121,7 +121,7 @@ describe('LogsTable', () => {
 
   it('should render extracted labels as columns (elastic)', async () => {
     setup({
-      logsFrames: [getMockElasticFrame()],
+      dataFrame: getMockElasticFrame(),
       columnsWithMeta: {
         counter: { active: true, percentOfLinesWithLabel: 3 },
         level: { active: true, percentOfLinesWithLabel: 3 },
