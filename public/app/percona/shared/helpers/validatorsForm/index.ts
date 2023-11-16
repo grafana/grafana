@@ -10,5 +10,6 @@ export { maxLength } from './maxLength';
 export { required } from './required';
 export { requiredTrue } from './requiredTrue';
 export { minTags } from './minTags';
+export { int32 } from './int32';
 export * from './validator.types';
 export * as validators from '.';

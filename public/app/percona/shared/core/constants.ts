@@ -55,3 +55,8 @@ export const DATABASE_ICONS: Record<Databases, string> = {
   [Databases.mariadb]: 'percona-database-mysql',
   [Databases.haproxy]: 'percona-database-haproxy',
 };
+
+export const INT_32 = {
+  min: -2147483648,
+  max: 2147483647,
+};

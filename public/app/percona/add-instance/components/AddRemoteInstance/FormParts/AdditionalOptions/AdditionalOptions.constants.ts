@@ -1,5 +1,5 @@
 import { Messages } from './AdditionalOptions.messages';
-import { TablestatOptionsInterface } from './AdditionalOptions.types';
+import { AutoDiscoveryOptionsInterface, TablestatOptionsInterface } from './AdditionalOptions.types';
 
 export const tablestatOptions = [
   {
@@ -13,5 +13,20 @@ export const tablestatOptions = [
   {
     value: TablestatOptionsInterface.custom,
     label: Messages.form.tablestatOptions.custom,
+  },
+];
+
+export const autoDiscoveryOptions = [
+  {
+    value: AutoDiscoveryOptionsInterface.enabled,
+    label: Messages.form.autoDiscoveryOptions.enabled,
+  },
+  {
+    value: AutoDiscoveryOptionsInterface.disabled,
+    label: Messages.form.autoDiscoveryOptions.disabled,
+  },
+  {
+    value: AutoDiscoveryOptionsInterface.custom,
+    label: Messages.form.autoDiscoveryOptions.custom,
   },
 ];
