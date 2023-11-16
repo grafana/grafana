@@ -645,7 +645,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   - **Linear**
   - **Logarithmic** - Choose between base 2 or base 10.
-  - **Symlog** - Utilizes a symmetrical logarithmic scale. Opt for base 2 or base 10, allowing for negative values.
+  - **Symlog** - Uses a symmetrical logarithmic scale. Choose between base 2 or base 10, allowing for negative values.
 
   Assume you have the following dataset:
 
