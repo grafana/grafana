@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
+import { Table, AdHocFilterItem, PanelChrome, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import {
@@ -61,7 +62,8 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
+    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone, theme } =
+      this.props;
 
     let dataFrames = hasDeprecatedParentRowIndex(tableResult)
       ? migrateFromParentRowIndexToNestedFrames(tableResult)
@@ -94,7 +96,7 @@ export class TableContainer extends PureComponent<Props> {
           </PanelChrome>
         )}
         {frames && frames.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className={css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1) })}>
             {frames.map((data, i) => (
               <PanelChrome
                 key={data.refId || `table-${i}`}
@@ -121,4 +123,4 @@ export class TableContainer extends PureComponent<Props> {
   }
 }
 
-export default connector(TableContainer);
+export default withTheme2(connector(TableContainer));
