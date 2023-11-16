@@ -145,8 +145,12 @@ var _ accesscontrol.AccessControl = &recordingAccessControlFake{}
 type fakeRuleAccessControlService struct {
 }
 
-func (f fakeRuleAccessControlService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) bool {
-	return true
+func (f fakeRuleAccessControlService) HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error) {
+	return true, nil
+}
+
+func (f fakeRuleAccessControlService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+	return nil
 }
 
 func (f fakeRuleAccessControlService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
