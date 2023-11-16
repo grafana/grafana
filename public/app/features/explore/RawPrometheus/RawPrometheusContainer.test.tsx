@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import { FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { TABLE_RESULTS_STYLE } from 'app/types';
 
 import { RawPrometheusContainer } from './RawPrometheusContainer';
@@ -65,6 +66,10 @@ const defaultProps = {
 };
 
 describe('RawPrometheusContainer', () => {
+  beforeAll(() => {
+    getTemplateSrv();
+  });
+
   it('should render component for prometheus', () => {
     render(<RawPrometheusContainer {...defaultProps} showRawPrometheus={true} />);
 
