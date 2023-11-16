@@ -185,7 +185,7 @@ After you concatenate the fields, the data frame would be:
 | ---- | ------- | --- | ------ |
 | 15.4 | 1230233 | 3.2 | 5      |
 
-This transformation simplifies the process of merging data from different sources, providing a comprehensive view for analysis and visualization in Grafana.
+This transformation simplifies the process of merging data from different sources, providing a comprehensive view for analysis and visualization.
 
 ### Config from query results
 
@@ -326,7 +326,7 @@ This will generate the following output:
 | 1636678680000000000 | 5        |
 | 1636678620000000000 | 12       |
 
-This transformation allows you to extract and format data in various ways, enhancing your ability to visualize and analyze information. Customize the extraction format based on your specific data needs.
+This transformation allows you to extract and format data in various ways. Customize the extraction format based on your specific data needs.
 
 ### Lookup fields from resource
 
@@ -447,11 +447,11 @@ In the example above, we chose **Match all** because we wanted to include the ro
 
 Conditions that are invalid or incompletely configured are ignored.
 
-This versatile data filtering transformation empowers you to selectively include or exclude data points based on specific conditions, enhancing your control over visualizations. Experiment with different criteria to tailor your data presentation to meet your unique analytical needs.
+This versatile data filtering transformation lets you to selectively include or exclude data points based on specific conditions. Customize the criteria to tailor your data presentation to meet your unique analytical needs.
 
 ### Filter fields by name
 
-Use this transformation to selectively remove parts of your query results. You have three ways to filter field names:
+Use this transformation to selectively remove parts of your query results. There are three ways to filter field names:
 
 - [Using a regular expression](#use-a-regular-expression)
 - [Manually selecting included fields](#manually-select-included-fields)
@@ -518,7 +518,7 @@ This transformation provides a convenient way to standardize and tailor the pres
 
 ### Format time
 
-Use this transformation to customize the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For example, if you want to display only the year of a time field, the format string 'YYYY' can be used to show the calendar year (e.g., 1999, 2012, etc.).
+Use this transformation to customize the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For example, if you want to display only the year of a time field, the format string 'YYYY' can be used to show the calendar year (for example, 1999 or 2012).
 
 **Before Transformation:**
 
@@ -536,7 +536,7 @@ Use this transformation to customize the output of a time field. Output can be f
 | 2021-11-12 14:24:40 | User Login   |
 | 2021-11-12 14:23:40 | Data Updated |
 
-This transformation empowers you to tailor the time representation in your visualizations, providing flexibility and precision in displaying temporal data.
+This transformation lets you tailor the time representation in your visualizations, providing flexibility and precision in displaying temporal data.
 
 > **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
 
@@ -620,7 +620,7 @@ We can generate a matrix using the values of 'Server Status' as column names, th
 | server 2               | 88.6 |          |
 | server 3               |      | 59.6     |
 
-Utilize this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. Elevate your data visualization by presenting complex relationships in a clear and structured matrix format.
+Utilize this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. This helps you present complex relationships in a clear and structured matrix format.
 
 ### Create heatmap
 
@@ -630,7 +630,7 @@ Use this transformation to prepare histogram data for visualizing trends over ti
 
 This setting determines how the x-axis is split into buckets.
 
-- **Size** - Specify a time interval in the input field. For instance, a time range of '1h' creates cells one hour wide on the x-axis.
+- **Size** - Specify a time interval in the input field. For example, a time range of '1h' creates cells one hour wide on the x-axis.
 - **Count** - For non-time-related series, use this option to define the number of elements in a bucket.
 
 #### Y Bucket
@@ -639,7 +639,7 @@ This setting determines how the y-axis is split into buckets.
 
 - **Linear**
 - **Logarithmic** - Choose between base 2 or base 10.
-- **Symlog** - Utilizes a symmetrical logarithmic scale. Opt for base 2 or base 10, allowing for negative values.
+- **Symlog** - Uses a symmetrical logarithmic scale. Choose between base 2 or base 10, allowing for negative values.
 
 Assume you have the following dataset:
 
@@ -650,10 +650,8 @@ Assume you have the following dataset:
 | 2023-01-01 12:30:00 | 15    |
 | 2023-01-01 12:45:00 | 8     |
 
-- With X Bucket set to 'Size: 15m' and Y Bucket as 'Linear', the histogram would organize values into time intervals of 15 minutes on the x-axis and linearly on the y-axis.
-- For X Bucket as 'Count: 2' and Y Bucket as 'Logarithmic (base 10)', the histogram would group values into buckets of two on the x-axis and use a logarithmic scale on the y-axis.
-
-Enhance your data representation by leveraging histogram transformations for insightful visualizations over time.
+- With X Bucket set to 'Size: 15m' and Y Bucket as 'Linear', the histogram organizes values into time intervals of 15 minutes on the x-axis and linearly on the y-axis.
+- For X Bucket as 'Count: 2' and Y Bucket as 'Logarithmic (base 10)', the histogram groups values into buckets of two on the x-axis and use a logarithmic scale on the y-axis.
 
 ### Histogram
 
@@ -919,7 +917,7 @@ This transformation helps you tailor the visual presentation of your data to foc
 
 ### Merge
 
-Use this transformation to combine the results from multiple queries into a single result, particularly useful when using the table panel visualization. This transformation merges values into the same row if the shared fields contain the same data.
+Use this transformation to combine the results from multiple queries into a single result, which is particularly useful when using the table panel visualization. This transformation merges values into the same row if the shared fields contain the same data.
 
 Here's an example illustrating the impact of the "Merge Rows" transformation on two queries returning table data:
 
@@ -946,17 +944,17 @@ Here is the result after applying the Merge transformation.
 
 This transformation combines values from Query A and Query B into a unified table, enhancing the presentation of data for better insights.
 
-### Oraganize fields
+### Organize fields
 
 Use this transformation to provide the flexibility to rename, reorder, or hide fields returned by a single query in your panel. Please note that this transformation is applicable only to panels with a single query. If your panel has multiple queries, consider using an "Outer Join" transformation or removing extra queries.
 
-#### Transforming Fields
+#### Transforming fields
 
 Grafana conveniently displays a list of fields returned by the query, allowing you to perform the following actions:
 
 - **Change Field Order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
-- **Hide or Show a Field** - Utilize the eye icon next to the field name to toggle the visibility of a specific field.
-- **Rename Fields** - Simply type a new name in the "Rename <field>" box to customize field names according to your preferences.
+- **Hide or Show a Field** - Use the eye icon next to the field name to toggle the visibility of a specific field.
+- **Rename Fields** - Type a new name in the "Rename <field>" box to customize field names.
 
 #### Example:
 
@@ -976,7 +974,7 @@ Grafana conveniently displays a list of fields returned by the query, allowing y
 | 2020-07-07 11:34:20 | Humidity    | 22      |
 | 2020-07-07 10:32:20 | Humidity    | 29      |
 
-This transformation empowers you to tailor the display of query results, ensuring a clear and insightful representation of your data in Grafana.
+This transformation lets you to tailor the display of query results, ensuring a clear and insightful representation of your data in Grafana.
 
 ### Partition by values
 
@@ -990,13 +988,6 @@ This is particularly useful when dealing with a metrics SQL table, as illustrate
 | 2022-10-20 12:00:00 | EU     | 2936  |
 | 2022-10-20 01:00:00 | US     | 1327  |
 | 2022-10-20 01:00:00 | EU     | 912   |
-
-Prior to v9.3, if you wanted to plot a red trendline for US and a blue one for EU in the same TimeSeries panel, you would likely have to split this into two queries:
-
-'SELECT Time, Value FROM metrics WHERE Time > "2022-10-20" AND Region="US"'
-'SELECT Time, Value FROM metrics WHERE Time > "2022-10-20" AND Region="EU"'
-
-This approach also required you to know in advance which regions actually exist in the metrics table.
 
 With the "Partition by values" transformation, you can issue a single query and split the results by unique values in one or more columns ('fields') of your choosing. The following example uses 'Region':
 
@@ -1012,7 +1003,7 @@ With the "Partition by values" transformation, you can issue a single query and 
 | 2022-10-20 12:00:00 | EU     | 2936  |
 | 2022-10-20 01:00:00 | EU     | 912   |
 
-This transformation simplifies the process and enhances the flexibility of visualizing multiple series within the same TimeSeries panel.
+This transformation simplifies the process and enhances the flexibility of visualizing multiple series within the same Time Series panel.
 
 ### Prepare time series
 
