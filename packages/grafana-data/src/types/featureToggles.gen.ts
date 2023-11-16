@@ -138,6 +138,7 @@ export interface FeatureToggles {
   cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
