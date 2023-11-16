@@ -1333,7 +1333,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
       return `
   Use this transformation to sort each frame within a query result based on a specified field, making your data easier to understand and analyze. By configuring the desired field for sorting, you can control the order in which the data is presented in the table or visualization.
 
-  One notable feature of the "Sort By" transformation is the option to activate the **Reverse** switch. When turned on, this switch inversely orders the values within the specified field, providing flexibility in how the data is arranged. This functionality is particularly useful when users want to quickly toggle between ascending and descending order to suit their analytical needs.
+  Use the **Reverse** switch to inversely orders the values within the specified field. This functionality is particularly useful when you want to quickly toggle between ascending and descending order to suit your analytical needs.
   
   In practical terms, consider a scenario where time-series data is retrieved from a data source. The "Sort By" transformation can be applied to arrange the data frames based on the timestamp, either in ascending or descending order, depending on the analytical requirements. This capability ensures that users can easily navigate and interpret time-series data, gaining valuable insights from the organized and visually coherent presentation.
   `;
