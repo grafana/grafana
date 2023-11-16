@@ -930,27 +930,3 @@ func TestResponseParser_Parse(t *testing.T) {
 		})
 	}
 }
-
-func TestParseTimestamp(t *testing.T) {
-	validValue := json.Number("1609459200000") // Milliseconds since epoch (January 1, 2021)
-	invalidValue := "invalid"
-
-	t.Run("ValidTimestamp", func(t *testing.T) {
-		parsedTime, err := parseTimestamp(validValue)
-		if err != nil {
-			t.Errorf("Expected no error, got: %v", err)
-		}
-
-		expectedTime := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
-		if !parsedTime.Equal(expectedTime) {
-			t.Errorf("Expected time: %v, got: %v", expectedTime, parsedTime)
-		}
-	})
-
-	t.Run("InvalidTimestamp", func(t *testing.T) {
-		_, err := parseTimestamp(invalidValue)
-		if err == nil {
-			t.Errorf("Expected an error, got nil")
-		}
-	})
-}

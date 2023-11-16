@@ -102,6 +102,8 @@ interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
+  onClickFilterValue?: (value: string, refId?: string) => void;
+  onClickFilterOutValue?: (value: string, refId?: string) => void;
 }
 
 export type LogsVisualisationType = 'table' | 'logs';
@@ -182,6 +184,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           columns: logsPanelState.columns ?? this.props.panelState?.logs?.columns,
           visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
           labelName: logsPanelState.labelName,
+          refId: logsPanelState.refId ?? this.props.panelState?.logs?.refId,
         })
       );
     }
@@ -773,6 +776,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   scrollIntoView={this.scrollIntoView}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   containerRendered={!!this.state.logsContainer}
+                  onClickFilterValue={this.props.onClickFilterValue}
+                  onClickFilterOutValue={this.props.onClickFilterOutValue}
                 />
               </div>
             )}

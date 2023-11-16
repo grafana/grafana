@@ -30,8 +30,9 @@ const (
 var (
 	folderUIDScope        = fmt.Sprintf("folders:uid:%s", folderUID)
 	invalidFolderUIDScope = fmt.Sprintf("folders:uid:%s", invalidFolderUID)
-	dashboard             = &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: folderID}
-	fldr                  = &dashboards.Dashboard{OrgID: orgID, UID: folderUID, IsFolder: true}
+	// nolint:staticcheck
+	dashboard = &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: folderID}
+	fldr      = &dashboards.Dashboard{OrgID: orgID, UID: folderUID, IsFolder: true}
 )
 
 type accessControlGuardianTestCase struct {
@@ -79,7 +80,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 		},
 		{
 			desc:      "should be able to save dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0}, // nolint:staticcheck
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -236,7 +237,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 		},
 		{
 			desc:      "should be able to edit dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0}, // nolint:staticcheck
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -409,7 +410,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 		},
 		{
 			desc:      "should be able to view dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0}, // nolint:staticcheck
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsRead,
@@ -578,7 +579,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 		},
 		{
 			desc:      "should be able to admin dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0}, // nolint:staticcheck
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsPermissionsRead,
@@ -820,7 +821,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 		},
 		{
 			desc:      "should be able to delete dashboard under root with general folder scope",
-			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0}, // nolint:staticcheck
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsDelete,

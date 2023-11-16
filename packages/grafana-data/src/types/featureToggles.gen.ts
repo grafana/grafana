@@ -138,6 +138,7 @@ export interface FeatureToggles {
   cloudWatchBatchQueries?: boolean;
   navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
@@ -160,5 +161,8 @@ export interface FeatureToggles {
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
+  datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
+  logRowsPopoverMenu?: boolean;
+  pluginsSkipHostEnvVars?: boolean;
 }

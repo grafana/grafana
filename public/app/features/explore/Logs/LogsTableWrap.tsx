@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import {
   DataFrame,
@@ -8,11 +8,12 @@ import {
   GrafanaTheme2,
   Labels,
   LogsSortOrder,
+  SelectableValue,
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Themeable2 } from '@grafana/ui/';
+import { InlineField, Select, Themeable2 } from '@grafana/ui/';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
@@ -53,7 +54,13 @@ export function LogsTableWrap(props: Props) {
   const [searchValue, setSearchValue] = useState<string>('');
 
   const height = getTableHeight();
-  const dataFrame = logsFrames[0];
+
+  // The current dataFrame containing the refId of the current query
+  const [currentDataFrame, setCurrentDataFrame] = useState<DataFrame>(
+    logsFrames.find((f) => f.refId === props?.panelState?.refId) ?? logsFrames[0]
+  );
+  // The refId of the current frame being displayed
+  const currentFrameRefId = currentDataFrame.refId;
 
   const getColumnsFromProps = useCallback(
     (fieldNames: fieldNameMetaStore) => {
@@ -69,7 +76,7 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
-  const logsFrame = parseLogsFrame(dataFrame);
+  const logsFrame = parseLogsFrame(currentDataFrame);
 
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
@@ -114,11 +121,11 @@ export function LogsTableWrap(props: Props) {
    */
   useEffect(() => {
     // If the data frame is empty, there's nothing to viz, it could mean the user has unselected all columns
-    if (!dataFrame.length) {
+    if (!currentDataFrame.length) {
       return;
     }
-    const numberOfLogLines = dataFrame ? dataFrame.length : 0;
-    const logsFrame = parseLogsFrame(dataFrame);
+    const numberOfLogLines = currentDataFrame ? currentDataFrame.length : 0;
+    const logsFrame = parseLogsFrame(currentDataFrame);
     const labels = logsFrame?.getLogFrameLabelsAsLabels();
 
     const otherFields = [];
@@ -211,7 +218,7 @@ export function LogsTableWrap(props: Props) {
     setColumnsWithMeta(pendingLabelState);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
-  }, [dataFrame, getColumnsFromProps]);
+  }, [currentDataFrame, getColumnsFromProps]);
 
   if (!columnsWithMeta) {
     return null;
@@ -288,6 +295,7 @@ export function LogsTableWrap(props: Props) {
       ...props.panelState,
       // URL format requires our array of values be an object, so we convert it using object.assign
       columns: Object.keys(newColumns).length ? newColumns : defaultColumns,
+      refId: currentDataFrame.refId,
       visualisationType: 'table',
       labelName: logsFrame?.getLabelFieldName() ?? undefined,
     };
@@ -331,35 +339,70 @@ export function LogsTableWrap(props: Props) {
     }
   };
 
+  const onFrameSelectorChange = (value: SelectableValue<string>) => {
+    const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
+    if (matchingDataFrame) {
+      setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
+    }
+    props.updatePanelState({ refId: value.value, labelName: logsFrame?.getLabelFieldName() ?? undefined });
+  };
+
   const sidebarWidth = 220;
   const totalWidth = props.width;
   const tableWidth = totalWidth - sidebarWidth;
   const styles = getStyles(props.theme, height, sidebarWidth);
 
   return (
-    <div className={styles.wrapper}>
-      <section className={styles.sidebar}>
-        <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
-        <LogsTableMultiSelect
-          toggleColumn={toggleColumn}
-          filteredColumnsWithMeta={filteredColumnsWithMeta}
+    <>
+      <div>
+        {logsFrames.length > 1 && (
+          <div>
+            <InlineField
+              label="Select query"
+              htmlFor="explore_logs_table_frame_selector"
+              labelWidth={22}
+              tooltip="Select a query to visualize in the table."
+            >
+              <Select
+                inputId={'explore_logs_table_frame_selector'}
+                aria-label={'Select query by name'}
+                value={currentFrameRefId}
+                options={logsFrames.map((frame) => {
+                  return {
+                    label: frame.refId,
+                    value: frame.refId,
+                  };
+                })}
+                onChange={onFrameSelectorChange}
+              />
+            </InlineField>
+          </div>
+        )}
+      </div>
+      <div className={styles.wrapper}>
+        <section className={styles.sidebar}>
+          <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
+          <LogsTableMultiSelect
+            toggleColumn={toggleColumn}
+            filteredColumnsWithMeta={filteredColumnsWithMeta}
+            columnsWithMeta={columnsWithMeta}
+            clear={clearSelection}
+          />
+        </section>
+        <LogsTable
+          onClickFilterLabel={props.onClickFilterLabel}
+          onClickFilterOutLabel={props.onClickFilterOutLabel}
+          logsSortOrder={props.logsSortOrder}
+          range={props.range}
+          splitOpen={props.splitOpen}
+          timeZone={props.timeZone}
+          width={tableWidth}
+          dataFrame={currentDataFrame}
           columnsWithMeta={columnsWithMeta}
-          clear={clearSelection}
+          height={height}
         />
-      </section>
-      <LogsTable
-        onClickFilterLabel={props.onClickFilterLabel}
-        onClickFilterOutLabel={props.onClickFilterOutLabel}
-        logsSortOrder={props.logsSortOrder}
-        range={props.range}
-        splitOpen={props.splitOpen}
-        timeZone={props.timeZone}
-        width={tableWidth}
-        logsFrames={logsFrames}
-        columnsWithMeta={columnsWithMeta}
-        height={height}
-      />
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -379,9 +422,6 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
       width: width,
       paddingRight: theme.spacing(1.5),
     }),
-
-    labelCount: css({}),
-    checkbox: css({}),
   };
 }
 

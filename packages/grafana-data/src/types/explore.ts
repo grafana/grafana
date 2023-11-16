@@ -52,6 +52,8 @@ export interface ExploreLogsPanelState {
   columns?: Record<number, string>;
   visualisationType?: 'table' | 'logs';
   labelName?: string;
+  // Used for logs table visualisation, contains the refId of the dataFrame that is currently visualized
+  refId?: string;
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
