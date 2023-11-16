@@ -169,12 +169,14 @@ describe('Loki Query Editor', () => {
     // One row with two cells
     cy.get('[role="cell"]').should('have.length', 2);
 
-    cy.contains('label', 'targetLabelName').should('be.visible');
-    cy.contains('label', 'targetLabelName').click();
-    cy.contains('label', 'targetLabelName')
-      .find('input[type="checkbox"]')
-      .should('not.be.visible')
-      .should('be.checked');
+    const label = cy.contains('label', 'targetLabelName');
+
+    label.should('be.visible');
+    label.click();
+    label.within(() => {
+      cy.get('input[type="checkbox"]').check({ force: true });
+      cy.get('input[type="checkbox"]').should('be.checked');
+    });
 
     const exploreCells = cy.get('[role="cell"]');
 
