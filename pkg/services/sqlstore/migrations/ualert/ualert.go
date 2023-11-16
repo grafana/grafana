@@ -393,7 +393,6 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		if err != nil {
 			return err
 		}
-
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
 			rulesPerOrg[rule.OrgID] = make(map[*alertRule][]uidOrID)
 		}

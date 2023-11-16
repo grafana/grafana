@@ -278,14 +278,6 @@ func migrateAlertRuleQueries(l log.Logger, ruleID int64, data []alertQuery, pane
 			result = append(result, d)
 			continue
 		}
-		dsType, ok := dsTypes[d.DatasourceUID]
-		if !ok {
-			l.Error("datasource not found", "uid", d.DatasourceUID)
-			return nil, fmt.Errorf("datasource not found")
-		}
-		if dsType.Type != datasources.DS_GRAPHITE {
-			continue
-		}
 		var fixedData map[string]json.RawMessage
 		err := json.Unmarshal(d.Model, &fixedData)
 		if err != nil {
@@ -293,7 +285,17 @@ func migrateAlertRuleQueries(l log.Logger, ruleID int64, data []alertQuery, pane
 		}
 		// remove hidden tag from the query (if exists)
 		delete(fixedData, "hide")
-		fixedData = fixGraphiteReferencedSubQueries(l, fixedData, ruleID, panelID, dashboard)
+		dsType, ok := dsTypes[d.DatasourceUID]
+		if !ok {
+			l.Error("datasource not found", "uid", d.DatasourceUID)
+			return nil, fmt.Errorf("datasource not found")
+		}
+		if dsType.Type == datasources.DS_GRAPHITE {
+			fixedData = fixGraphiteReferencedSubQueries(l, fixedData, ruleID, panelID, dashboard)
+		}
+		if dsType.Type == datasources.DS_PROMETHEUS {
+			fixedData = fixPrometheusBothTypeQuery(l, fixedData)
+		}
 		updatedModel, err := json.Marshal(fixedData)
 		if err != nil {
 			return nil, err
