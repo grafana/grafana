@@ -100,6 +100,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
+import { setMonacoEnv } from './monacoEnv';
 import { configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabilty with plugins
@@ -170,7 +171,9 @@ export class GrafanaApp {
         createAdHocVariableAdapter(),
         createSystemVariableAdapter(),
       ]);
+
       monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
+      setMonacoEnv();
 
       setQueryRunnerFactory(() => new QueryRunner());
       setVariableQueryRunner(new VariableQueryRunner());
