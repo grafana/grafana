@@ -23,7 +23,7 @@ export function PluginDetailsDeprecatedWarning(props: Props): React.ReactElement
 
       {/* Additional contextual deprecation message supporting markdown */}
       {plugin.details?.statusContext && (
-        <p
+        <div
           className="markdown-html"
           dangerouslySetInnerHTML={{
             __html: renderMarkdown(plugin.details.statusContext),
