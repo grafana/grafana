@@ -158,12 +158,11 @@ func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plu
 
 // SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
 // It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin does not have
-// skip_host_env_vars = false in its plugin settings.
+// forward_host_env_vars = true in its plugin settings.
 func SkipHostEnvVarsDecorateFunc(cfg *config.Cfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.SkipHostEnvVars = cfg.Features != nil &&
-			cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
-			cfg.PluginSettings[p.ID]["skip_host_env_vars"] != "false"
+		p.SkipHostEnvVars = cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
+			cfg.PluginSettings[p.ID]["forward_host_env_vars"] != "true"
 		return p, nil
 	}
 }

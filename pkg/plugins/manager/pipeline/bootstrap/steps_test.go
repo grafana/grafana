@@ -176,22 +176,22 @@ func TestSkipEnvVarsDecorateFunc(t *testing.T) {
 				expSkipHostEnvVars bool
 			}{
 				{
-					name:               "skip_host_env_vars = true should set SkipHostEnvVars to true",
-					pluginSettings:     setting.PluginSettings{pluginID: map[string]string{"skip_host_env_vars": "true"}},
+					name:               "forward_host_env_vars = false should set SkipHostEnvVars to true",
+					pluginSettings:     setting.PluginSettings{pluginID: map[string]string{"forward_host_env_vars": "false"}},
 					expSkipHostEnvVars: true,
 				},
 				{
-					name:               "skip_host_env_vars = false should set SkipHostEnvVars to false",
-					pluginSettings:     setting.PluginSettings{pluginID: map[string]string{"skip_host_env_vars": "false"}},
+					name:               "forward_host_env_vars = true should set SkipHostEnvVars to false",
+					pluginSettings:     setting.PluginSettings{pluginID: map[string]string{"forward_host_env_vars": "true"}},
 					expSkipHostEnvVars: false,
 				},
 				{
-					name:               "invalid skip_host_env_vars should set SkipHostEnvVars to true",
-					pluginSettings:     setting.PluginSettings{pluginID: map[string]string{"skip_host_env_vars": "grilled cheese sandwich with bacon"}},
+					name:               "invalid forward_host_env_vars should set SkipHostEnvVars to true",
+					pluginSettings:     setting.PluginSettings{pluginID: map[string]string{"forward_host_env_vars": "grilled cheese sandwich with bacon"}},
 					expSkipHostEnvVars: true,
 				},
 				{
-					name:               "skip_host_env_vars absent should set SkipHostEnvVars to true",
+					name:               "forward_host_env_vars absent should set SkipHostEnvVars to true",
 					pluginSettings:     setting.PluginSettings{pluginID: nil},
 					expSkipHostEnvVars: true,
 				},
