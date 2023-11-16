@@ -956,7 +956,6 @@ export const transformationDocsContent: TransformationDocsContentType = {
     getHelperDocs: function () {
       return `
   Use this transformation to combine the results from multiple queries into a single result, which is particularly useful when using the table panel visualization. This transformation merges values into the same row if the shared fields contain the same data.
-  
   Here's an example illustrating the impact of the "Merge Rows" transformation on two queries returning table data:
 
   **Query A:**
