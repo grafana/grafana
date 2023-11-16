@@ -1024,7 +1024,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2020-07-07 11:34:20 | Humidity    | 22      |
   | 2020-07-07 10:32:20 | Humidity    | 29      |
 
-  This transformation empowers you to tailor the display of query results, ensuring a clear and insightful representation of your data in Grafana.
+  This transformation lets you to tailor the display of query results, ensuring a clear and insightful representation of your data in Grafana.
   `;
     },
   },
