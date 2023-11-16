@@ -35,13 +35,13 @@ import {
   QueryFilterOptions,
   renderLegendFormat,
   LegacyMetricFindQueryOptions,
-  AdHocVariableFilter,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
-import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { BackendSrvRequest, config, DataSourceWithBackend } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
@@ -420,20 +420,13 @@ export class LokiDatasource
    * Implemented as a part of DataSourceApi. Interpolates variables and adds ad hoc filters to a list of Loki queries.
    * @returns An array of expanded Loki queries with interpolated variables and ad hoc filters.
    */
-  interpolateVariablesInQueries(
-    queries: LokiQuery[],
-    scopedVars: ScopedVars,
-    adhocFilters?: AdHocVariableFilter[]
-  ): LokiQuery[] {
+  interpolateVariablesInQueries(queries: LokiQuery[], scopedVars: ScopedVars): LokiQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => ({
         ...query,
         datasource: this.getRef(),
-        expr: this.addAdHocFilters(
-          this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
-          adhocFilters
-        ),
+        expr: this.addAdHocFilters(this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)),
       }));
     }
 
@@ -1053,11 +1046,8 @@ export class LokiDatasource
    * @returns The query expression with ad hoc filters and correctly escaped values.
    * @todo this.templateSrv.getAdhocFilters() is deprecated
    */
-  addAdHocFilters(queryExpr: string, adhocFilters?: AdHocVariableFilter[]) {
-    if (!adhocFilters) {
-      return queryExpr;
-    }
-
+  addAdHocFilters(queryExpr: string) {
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     let expr = replaceVariables(queryExpr);
 
     expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
@@ -1095,12 +1085,12 @@ export class LokiDatasource
    * It is called from DatasourceWithBackend.
    * @returns A modified Loki query with template variables and ad hoc filters applied.
    */
-  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars, adhocFilters?: AdHocVariableFilter[]): LokiQuery {
+  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
     // We want to interpolate these variables on backend because we support using them in
     // alerting/ML queries and we want to have consistent interpolation for all queries
     const { __auto, __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
-    const exprWithAdHoc = this.addAdHocFilters(target.expr, adhocFilters);
+    const exprWithAdHoc = this.addAdHocFilters(target.expr);
 
     return {
       ...target,

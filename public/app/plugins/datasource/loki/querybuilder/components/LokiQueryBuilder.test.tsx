@@ -3,8 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { getSelectParent } from 'test/helpers/selectOptionInTest';
 
+import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+
 import { MISSING_LABEL_FILTER_ERROR_MESSAGE } from '../../../prometheus/querybuilder/shared/LabelFilters';
-import { createLokiDatasource } from '../../mocks';
+import { LokiDatasource } from '../../datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';
@@ -16,7 +18,15 @@ const defaultQuery: LokiVisualQuery = {
 };
 
 const createDefaultProps = () => {
-  const datasource = createLokiDatasource();
+  const datasource = new LokiDatasource(
+    {
+      url: '',
+      jsonData: {},
+      meta: {} as DataSourcePluginMeta,
+    } as DataSourceInstanceSettings,
+    undefined,
+    undefined
+  );
 
   const props = {
     datasource,

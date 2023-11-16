@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { DataSourcePluginMeta } from '@grafana/data';
 import { addOperation } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList.testUtils';
 
-import { createLokiDatasource } from '../../mocks';
+import { LokiDatasource } from '../../datasource';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 
@@ -14,7 +15,21 @@ describe('LokiQueryBuilderContainer', () => {
         expr: '{job="testjob"}',
         refId: 'A',
       },
-      datasource: createLokiDatasource(),
+      datasource: new LokiDatasource(
+        {
+          id: 1,
+          uid: '',
+          type: 'loki',
+          name: 'loki-test',
+          access: 'proxy',
+          url: '',
+          jsonData: {},
+          meta: {} as DataSourcePluginMeta,
+          readOnly: false,
+        },
+        undefined,
+        undefined
+      ),
       onChange: jest.fn(),
       onRunQuery: () => {},
       showExplain: false,

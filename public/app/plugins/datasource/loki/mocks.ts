@@ -35,7 +35,6 @@ const defaultTimeSrvMock = {
 
 const defaultTemplateSrvMock = {
   replace: (input: string) => input,
-  getVariables: () => [],
 };
 
 export function createLokiDatasource(
