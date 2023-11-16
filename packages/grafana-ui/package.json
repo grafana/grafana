@@ -75,7 +75,7 @@
     "lodash": "4.17.21",
     "micro-memoize": "^4.1.2",
     "moment": "2.30.1",
-    "monaco-editor": "0.44.0",
+    "monaco-editor": "0.34.0",
     "ol": "7.4.0",
     "prismjs": "1.29.0",
     "rc-cascader": "3.21.2",

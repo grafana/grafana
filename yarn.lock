@@ -4296,7 +4296,7 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     mock-raf: "npm:1.0.1"
     moment: "npm:2.30.1"
-    monaco-editor: "npm:0.44.0"
+    monaco-editor: "npm:0.34.0"
     ol: "npm:7.4.0"
     prismjs: "npm:1.29.0"
     process: "npm:^0.11.10"
@@ -18997,7 +18997,7 @@ __metadata:
     ml-regression-simple-linear: "npm:^3.0.0"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.45"
-    monaco-editor: "npm:0.44.0"
+    monaco-editor: "npm:0.34.0"
     monaco-promql: "npm:1.7.4"
     mousetrap: "npm:1.6.5"
     mousetrap-global-bind: "npm:1.1.0"
@@ -23380,13 +23380,6 @@ __metadata:
   version: 0.34.0
   resolution: "monaco-editor@npm:0.34.0"
   checksum: 10/c7c2c88bc8f83817e67ab55d84a4469af7f5f566cc3df1c27bdd00ad2071b88688b23847608e8c948a445afa543929b7bcd9b5ff5b7b53da15f6f2b628eb76ac
-  languageName: node
-  linkType: hard
-
-"monaco-editor@npm:0.44.0":
-  version: 0.44.0
-  resolution: "monaco-editor@npm:0.44.0"
-  checksum: 10/759ea7f2af47ba3dac2f3594f20b358e4633a963ccee6f21b9a55bafb5c3404fd88113f2492af291aebd7895cdb2680ca61ce54166c6e9e106c3b3edb28ed6c2
   languageName: node
   linkType: hard
 
