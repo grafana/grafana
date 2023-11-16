@@ -885,6 +885,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		SignedInUser: user,
 	})
 	require.NoError(t, err)
+	// nolint:staticcheck
 	insertTestDashboard(t, dashboardStore, "dashboard under f1", orgID, f1.ID, f1.UID, false)
 
 	subfolder, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{

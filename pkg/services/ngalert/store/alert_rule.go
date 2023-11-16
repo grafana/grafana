@@ -458,7 +458,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			namespaceMap[hit.UID] = &folder.Folder{
-				ID:    hit.ID,
+				ID:    hit.ID, // nolint:staticcheck
 				UID:   hit.UID,
 				Title: hit.Title,
 			}

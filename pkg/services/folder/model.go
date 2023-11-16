@@ -49,6 +49,7 @@ type Folder struct {
 var GeneralFolder = Folder{ID: 0, Title: "General"}
 
 func (f *Folder) IsGeneral() bool {
+	// nolint:staticcheck
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 

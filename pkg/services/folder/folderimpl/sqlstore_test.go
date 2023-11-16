@@ -70,6 +70,7 @@ func TestIntegrationCreate(t *testing.T) {
 
 		assert.Equal(t, folderTitle, f.Title)
 		assert.Equal(t, folderDsc, f.Description)
+		// nolint:staticcheck
 		assert.NotEmpty(t, f.ID)
 		assert.Equal(t, uid, f.UID)
 		assert.Empty(t, f.ParentUID)
@@ -97,6 +98,7 @@ func TestIntegrationCreate(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, "parent", parent.Title)
+		// nolint:staticcheck
 		require.NotEmpty(t, parent.ID)
 		assert.Equal(t, parentUID, parent.UID)
 		assert.NotEmpty(t, parent.URL)
@@ -123,6 +125,7 @@ func TestIntegrationCreate(t *testing.T) {
 
 		assert.Equal(t, folderTitle, f.Title)
 		assert.Equal(t, folderDsc, f.Description)
+		// nolint:staticcheck
 		assert.NotEmpty(t, f.ID)
 		assert.Equal(t, uid, f.UID)
 		assert.Equal(t, parentUID, f.ParentUID)
@@ -401,6 +404,7 @@ func TestIntegrationGet(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
+		// nolint:staticcheck
 		assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
@@ -418,6 +422,7 @@ func TestIntegrationGet(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
+		// nolint:staticcheck
 		assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
@@ -751,6 +756,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 			})
 			assert.NotEqual(t, -1, folderInResponseIdx)
 			rf := ff[folderInResponseIdx]
+			// nolint:staticcheck
 			assert.Equal(t, f.ID, rf.ID)
 			assert.Equal(t, f.OrgID, rf.OrgID)
 			assert.Equal(t, f.Title, rf.Title)
@@ -795,6 +801,7 @@ func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 		f, err := store.Create(context.Background(), cmd)
 		require.NoError(t, err)
 		require.Equal(t, title, f.Title)
+		// nolint:staticcheck
 		require.NotEmpty(t, f.ID)
 		require.NotEmpty(t, f.UID)
 
