@@ -226,7 +226,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 2019-01-01 00:00:00 | below     | 29    |
   | 2020-01-01 00:00:00 | above     | 22    |
 
-  This transformation allows you to flexibly adapt your data types, ensuring compatibility and consistency in your visualizations. Experiment with different field type conversions to suit your specific data requirements.
+  This transformation allows you to flexibly adapt your data types, ensuring compatibility and consistency in your visualizations.
   `;
     },
   },
