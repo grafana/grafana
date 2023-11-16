@@ -418,7 +418,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Filter fields by name',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
-  Use this transformation to selectively remove parts of your query results. You have three ways to filter field names:
+  Use this transformation to selectively remove parts of your query results. There are three ways to filter field names:
   
   - [Using a regular expression](#use-a-regular-expression)
   - [Manually selecting included fields](#manually-select-included-fields)
