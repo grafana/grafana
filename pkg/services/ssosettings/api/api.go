@@ -105,7 +105,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 //
 // # Remove an SSO Settings entry by Key
 //
-// If you have Fine-grained access control enabled then
+// If you have role based access control enabled then
 // you need to have a permission with action `settings:write` with scope `settings:auth.<provider>:*`.
 //
 // Responses:
