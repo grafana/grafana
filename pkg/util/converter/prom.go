@@ -1015,7 +1015,7 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 						return rspErr(err)
 					}
 
-					plabelsMap, clabelsMap, err := readCategorizedStreamField(iter)
+					parsedLabelsMap, structuredMetadataMap, err := readCategorizedStreamField(iter)
 					if err != nil {
 						return rspErr(err)
 					}
@@ -1035,14 +1035,13 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 						typeMap[k] = "I"
 					}
 
-					// then, merge the clabelMap into the labelMap
-					for k, v := range clabelsMap {
+					// merge all labels (indexed, parsed, structuredMetadata) into one dataframe field
+					for k, v := range structuredMetadataMap {
 						labels[k] = fmt.Sprintf("%s", v)
 						typeMap[k] = "S"
 					}
 
-					// then, merge the plabelMap into the labelMap
-					for k, v := range plabelsMap {
+					for k, v := range parsedLabelsMap {
 						labels[k] = fmt.Sprintf("%s", v)
 						typeMap[k] = "P"
 					}
@@ -1080,10 +1079,10 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 }
 
 func readCategorizedStreamField(iter *jsonitere.Iterator) (map[string]interface{}, map[string]interface{}, error) {
-	plabels := data.Labels{}
-	clabels := data.Labels{}
-	var plabelsMap map[string]interface{}
-	var clabelsMap map[string]interface{}
+	parsedLabels := data.Labels{}
+	structuredMetadata := data.Labels{}
+	var parsedLabelsMap map[string]interface{}
+	var structuredMetadataMap map[string]interface{}
 streamField:
 	for streamField, err := iter.ReadObject(); ; streamField, err = iter.ReadObject() {
 		if err != nil {
@@ -1091,27 +1090,27 @@ streamField:
 		}
 		switch streamField {
 		case "parsed":
-			if err = iter.ReadVal(&plabels); err != nil {
+			if err = iter.ReadVal(&parsedLabels); err != nil {
 				return nil, nil, err
 			}
 		case "structuredMetadata":
-			if err = iter.ReadVal(&clabels); err != nil {
+			if err = iter.ReadVal(&structuredMetadata); err != nil {
 				return nil, nil, err
 			}
 		case "":
 			if err != nil {
 				return nil, nil, err
 			}
-			if plabelsMap, err = labelsToMap(plabels); err != nil {
+			if parsedLabelsMap, err = labelsToMap(parsedLabels); err != nil {
 				return nil, nil, err
 			}
-			if clabelsMap, err = labelsToMap(clabels); err != nil {
+			if structuredMetadataMap, err = labelsToMap(structuredMetadata); err != nil {
 				return nil, nil, err
 			}
 			break streamField
 		}
 	}
-	return plabelsMap, clabelsMap, nil
+	return parsedLabelsMap, structuredMetadataMap, nil
 }
 
 func resultTypeToCustomMeta(resultType string) map[string]string {
