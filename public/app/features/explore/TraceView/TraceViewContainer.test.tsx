@@ -27,13 +27,7 @@ function renderTraceViewContainer(frames = [frameOld]) {
 
   const { container, baseElement } = render(
     <Provider store={store}>
-      <TraceViewContainer
-        exploreId="left"
-        dataFrames={frames}
-        splitOpenFn={() => {}}
-        queryResponse={mockPanelData}
-        width={200}
-      />
+      <TraceViewContainer exploreId="left" dataFrames={frames} splitOpenFn={() => {}} queryResponse={mockPanelData} />
     </Provider>
   );
   return {

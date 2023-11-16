@@ -35,6 +35,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     TraceTimelineViewer: css`
       label: TraceTimelineViewer;
       border-bottom: 1px solid ${autoColor(theme, '#bbb')};
+      display: contents;
 
       & .json-markup {
         line-height: 17px;
@@ -106,8 +107,8 @@ export type TProps = {
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   headerHeight: number;
-  setSelectedSpan: React.Dispatch<React.SetStateAction<TraceSpan | undefined>>;
-  selectedSpanId?: string;
+  setSelectedSpans: React.Dispatch<React.SetStateAction<TraceSpan[] | undefined>>;
+  selectedSpans?: TraceSpan[];
   criticalPath: CriticalPathSection[];
 };
 

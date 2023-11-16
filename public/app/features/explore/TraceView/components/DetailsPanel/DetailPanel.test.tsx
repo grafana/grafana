@@ -6,20 +6,19 @@ import { LinkModel } from '@grafana/data';
 
 import { getAbsoluteTime } from '../TraceTimelineViewer/SpanDetail';
 import DetailState from '../TraceTimelineViewer/SpanDetail/DetailState';
-import { TopOfViewRefType } from '../TraceTimelineViewer/VirtualizedTraceView';
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
 import { SpanLinkDef } from '../types';
 import { SpanLinkType } from '../types/links';
 import { TraceSpan } from '../types/trace';
 
-import { DetailsPanel } from './DetailsPanel';
+import { DetailPanel } from './DetailPanel';
 
 const setup = () => {
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 }))!.spans[0];
-  const detailState = new DetailState();
   const traceStartTime = 5;
 
+  span.spanID = 'test-id';
   span.kind = 'test-kind';
   span.statusCode = 2;
   span.statusMessage = 'test-message';
@@ -79,12 +78,11 @@ const setup = () => {
   const props = {
     span,
     timeZone: 'utc',
-    width: 200,
     clearSelectedSpan: jest.fn(),
-    detailState,
+    detailStates: new Map<string, DetailState>().set(span.spanID, new DetailState()),
+    width: 200,
     traceStartTime,
     detailLogItemToggle: jest.fn(),
-    detailReferenceItemToggle: jest.fn(),
     createFocusSpanLink: () => {
       return {
         title: 'Deep link to this span',
@@ -103,11 +101,11 @@ const setup = () => {
       ];
     },
     datasourceType: 'unknown',
-    topOfViewRefType: TopOfViewRefType.Explore,
+    scrollToSpan: jest.fn(),
   };
 
   return {
-    elem: render(<DetailsPanel {...props} />),
+    elem: render(<DetailPanel {...props} />),
     span,
   };
 };
@@ -212,10 +210,5 @@ describe('DetailsPanel', () => {
   it('renders logs for this span', () => {
     setup();
     expect(screen.getByText('Logs for this span')).toBeDefined();
-  });
-
-  it('renders deep link', () => {
-    setup();
-    expect(screen.getByTitle('Deep link to this span')).toBeDefined();
   });
 });

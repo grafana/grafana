@@ -19,7 +19,7 @@ export interface TracesPanelOptions {
   createSpanLink?: SpanLinkFunc;
 }
 
-export const TracesPanel = ({ data, options, width }: PanelProps<TracesPanelOptions>) => {
+export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) => {
   const topOfViewRef = createRef<HTMLDivElement>();
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const dataSource = useAsync(async () => {

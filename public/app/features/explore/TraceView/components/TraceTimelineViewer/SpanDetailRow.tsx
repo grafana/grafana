@@ -96,6 +96,9 @@ export type SpanDetailRowProps = {
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
   visibleSpanIds: string[];
+  setSelectedSpans: React.Dispatch<React.SetStateAction<TraceSpan[] | undefined>>;
+  selectedSpans?: TraceSpan[];
+  scrollToDetailsPanel: () => void;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -133,6 +136,9 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       createFocusSpanLink,
       datasourceType,
       visibleSpanIds,
+      setSelectedSpans,
+      selectedSpans,
+      scrollToDetailsPanel,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -174,6 +180,9 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
               datasourceType={datasourceType}
+              setSelectedSpans={setSelectedSpans}
+              selectedSpans={selectedSpans}
+              scrollToDetailsPanel={scrollToDetailsPanel}
             />
           </div>
         </TimelineRow.Cell>

@@ -1,7 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 
 import { DataFrame } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { DetailState } from './components';
 import { TraceLog, TraceSpanReference } from './components/types/trace';
@@ -19,23 +18,12 @@ export function useDetailState(frame: DataFrame) {
 
   const toggleDetail = useCallback(
     function toggleDetail(spanID: string) {
-      let newDetailStates = new Map(detailStates);
-
-      if (config.featureToggles.traceViewDrawer) {
-        if (newDetailStates.has(spanID)) {
-          newDetailStates = new Map();
-        } else {
-          newDetailStates = new Map();
-          newDetailStates.set(spanID, new DetailState());
-        }
+      const newDetailStates = new Map(detailStates);
+      if (newDetailStates.has(spanID)) {
+        newDetailStates.delete(spanID);
       } else {
-        if (newDetailStates.has(spanID)) {
-          newDetailStates.delete(spanID);
-        } else {
-          newDetailStates.set(spanID, new DetailState());
-        }
+        newDetailStates.set(spanID, new DetailState());
       }
-
       setDetailStates(newDetailStates);
     },
     [detailStates]

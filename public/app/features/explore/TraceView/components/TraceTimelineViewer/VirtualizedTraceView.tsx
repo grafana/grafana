@@ -22,6 +22,7 @@ import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
+import { DetailsPanel } from '../DetailsPanel/DetailsPanel';
 import { PEER_SERVICE } from '../constants/tag-keys';
 import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
@@ -49,16 +50,16 @@ const getStyles = stylesFactory(() => {
     row: css`
       width: 100%;
     `,
+    detailsPanelContainer: css({
+      label: 'DetailsPanelContainer',
+    }),
     scrollToTopButton: css`
-      display: flex;
-      flex-direction: column;
       justify-content: center;
-      align-items: center;
-      width: 40px;
-      height: 40px;
-      position: absolute;
-      bottom: 30px;
-      right: 30px;
+      width: 30px;
+      height: 30px;
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
       z-index: 1;
     `,
   };
@@ -102,8 +103,8 @@ type TVirtualizedTraceViewOwnProps = {
   topOfViewRef?: RefObject<HTMLDivElement>;
   datasourceType: string;
   headerHeight: number;
-  setSelectedSpan: React.Dispatch<React.SetStateAction<TraceSpan | undefined>>;
-  selectedSpanId?: string;
+  setSelectedSpans: React.Dispatch<React.SetStateAction<TraceSpan[] | undefined>>;
+  selectedSpans?: TraceSpan[];
   criticalPath: CriticalPathSection[];
 };
 
@@ -226,6 +227,12 @@ const memoizedChildSpansMap = memoizeOne(childSpansMap);
 export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
   listView: ListView | TNil;
   hasScrolledToSpan = false;
+  detailsPanelRef: React.RefObject<HTMLDivElement>;
+
+  constructor(props: VirtualizedTraceViewProps) {
+    super(props);
+    this.detailsPanelRef = React.createRef();
+  }
 
   componentDidMount() {
     this.scrollToSpan(this.props.headerHeight, this.props.focusedSpanId);
@@ -366,11 +373,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   getRowHeight = (index: number) => {
     const { span, isDetail } = this.getRowStates()[index];
-
-    if (config.featureToggles.traceViewDrawer) {
-      return 0;
-    }
-
     if (!isDetail) {
       return DEFAULT_HEIGHTS.bar;
     }
@@ -387,10 +389,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const start = Math.max((this.listView?.getTopVisibleIndex() || 0) - BUFFER_SIZE, 0);
     const end = (this.listView?.getBottomVisibleIndex() || 0) + BUFFER_SIZE;
     const visibleSpanIds = this.getVisibleSpanIds(start, end);
-
-    if (config.featureToggles.traceViewDrawer) {
-      return isDetail ? null : this.renderSpanBarRow(span, spanIndex, key, style, attrs, visibleSpanIds);
-    }
 
     return isDetail
       ? this.renderSpanDetailRow(span, key, style, attrs, visibleSpanIds)
@@ -435,8 +433,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       showSpanFilterMatchesOnly,
       theme,
       datasourceType,
-      setSelectedSpan,
-      selectedSpanId,
       criticalPath,
     } = this.props;
     // to avert flow error
@@ -445,9 +441,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     }
     const color = getColorByKey(serviceName, theme);
     const isCollapsed = childrenHiddenIDs.has(spanID);
-    const isDetailExpanded = config.featureToggles.traceViewDrawer
-      ? spanID === selectedSpanId
-      : detailStates.has(spanID);
+    const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
     const isFocused = spanID === focusedSpanId || spanID === focusedSpanIdForSearch;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
@@ -515,10 +509,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           isFocused={isFocused}
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
           numTicks={NUM_TICKS}
-          onDetailToggled={() => {
-            detailToggle(spanID);
-            setSelectedSpan(selectedSpanId === span.spanID ? undefined : span);
-          }}
+          onDetailToggled={detailToggle}
           onChildrenToggled={childrenToggle}
           rpc={rpc}
           noInstrumentedServer={noInstrumentedServer}
@@ -565,6 +556,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       createFocusSpanLink,
       theme,
       datasourceType,
+      setSelectedSpans,
+      selectedSpans,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -600,6 +593,9 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           createFocusSpanLink={createFocusSpanLink}
           datasourceType={datasourceType}
           visibleSpanIds={visibleSpanIds}
+          setSelectedSpans={setSelectedSpans}
+          selectedSpans={selectedSpans}
+          scrollToDetailsPanel={() => this.detailsPanelRef.current?.scrollIntoView()}
         />
       </div>
     );
@@ -629,7 +625,19 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   render() {
     const styles = getStyles();
-    const { scrollElement } = this.props;
+    const {
+      scrollElement,
+      selectedSpans,
+      headerHeight,
+      timeZone,
+      setSelectedSpans,
+      trace,
+      detailLogItemToggle,
+      createFocusSpanLink,
+      createSpanLink,
+      datasourceType,
+      detailStates,
+    } = this.props;
 
     return (
       <>
@@ -653,6 +661,26 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
             title="Scroll to top"
             icon="arrow-up"
           ></ToolbarButton>
+        )}
+        {config.featureToggles.traceViewDrawer && (
+          <div className={styles.detailsPanelContainer} ref={this.detailsPanelRef}>
+            {selectedSpans && selectedSpans.length > 0 && (
+              <DetailsPanel
+                spans={selectedSpans}
+                timeZone={timeZone}
+                clearSelectedSpan={(spanID: string) =>
+                  setSelectedSpans(selectedSpans?.filter((x) => x.spanID !== spanID))
+                }
+                detailStates={detailStates}
+                traceStartTime={trace.startTime}
+                detailLogItemToggle={detailLogItemToggle}
+                createFocusSpanLink={createFocusSpanLink}
+                createSpanLink={createSpanLink}
+                datasourceType={datasourceType}
+                scrollToSpan={(spanID: string) => this.scrollToSpan(headerHeight, spanID)}
+              />
+            )}
+          </div>
         )}
       </>
     );

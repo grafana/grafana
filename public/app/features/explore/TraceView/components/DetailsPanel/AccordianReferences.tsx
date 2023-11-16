@@ -33,10 +33,6 @@ const getStyles = () => {
       position: 'relative',
       marginBottom: '0.25rem',
     }),
-    AccordianReferencesContent: css({
-      label: 'AccordianReferencesContent',
-      padding: '0.5rem 0.5rem 0.25rem 0.5rem',
-    }),
     itemContent: css({
       padding: '0.25rem 0.5rem',
       display: 'flex',
@@ -74,18 +70,16 @@ export type AccordianReferencesProps = {
 
 type ReferenceItemProps = {
   data: TraceSpanReference[];
-  openedItems?: Set<TraceSpanReference>;
-  onItemToggle?: (reference: TraceSpanReference) => void;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel<Field>;
 };
 
 // export for test
 export function References(props: ReferenceItemProps) {
-  const { data, createFocusSpanLink, openedItems, onItemToggle } = props;
+  const { data, createFocusSpanLink } = props;
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.AccordianReferencesContent}>
+    <>
       {data.map((reference, i) => (
         <div key={i}>
           <div key={`${reference.spanID}`}>
@@ -116,30 +110,24 @@ export function References(props: ReferenceItemProps) {
                 className={i < data.length - 1 ? ubMb1 : null}
                 data={reference.tags || []}
                 highContrast
-                isOpen={openedItems ? openedItems.has(reference) : false}
+                isOpen={true}
                 label={'attributes'}
                 linksGetter={null}
-                onToggle={onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>
           )}
         </div>
       ))}
-    </div>
+    </>
   );
 }
 
-const AccordianReferences = ({ data, onItemToggle, openedItems, createFocusSpanLink }: AccordianReferencesProps) => {
+const AccordianReferences = ({ data, createFocusSpanLink }: AccordianReferencesProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.AccordianReferences}>
-      <References
-        data={data}
-        openedItems={openedItems}
-        createFocusSpanLink={createFocusSpanLink}
-        onItemToggle={onItemToggle}
-      />
+      <References data={data} createFocusSpanLink={createFocusSpanLink} />
     </div>
   );
 };

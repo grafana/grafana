@@ -19,7 +19,7 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, IconName, LinkModel, TimeZone } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 import { RelatedProfilesTitle } from 'app/plugins/datasource/tempo/resultTransformer';
 
 import { autoColor } from '../../Theme';
@@ -47,6 +47,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: 0 1rem;
       margin-bottom: 0.25rem;
     `,
+    buttons: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      flexWrap: 'wrap',
+      marginBottom: '0.25rem',
+    }),
     listWrapper: css`
       overflow: hidden;
     `,
@@ -124,6 +131,9 @@ export type SpanDetailProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
+  setSelectedSpans: React.Dispatch<React.SetStateAction<TraceSpan[] | undefined>>;
+  selectedSpans?: TraceSpan[];
+  scrollToDetailsPanel: () => void;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -143,6 +153,9 @@ export default function SpanDetail(props: SpanDetailProps) {
     createSpanLink,
     createFocusSpanLink,
     datasourceType,
+    setSelectedSpans,
+    selectedSpans,
+    scrollToDetailsPanel,
   } = props;
   const {
     isTagsOpen,
@@ -155,53 +168,25 @@ export default function SpanDetail(props: SpanDetailProps) {
   const { operationName, process, traceID, spanID, logs, tags, warnings, references, stackTraces } = span;
   const { timeZone } = props;
   const styles = useStyles2(getStyles);
+  const { logLinkButton, profileLinkButton } = getSpanLinkButtons(datasourceType, createSpanLink, span);
 
-  const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
-    return (
-      <DataLinkButton
-        link={{
-          ...link,
-          title: title,
-          target: '_blank',
-          origin: link.field,
-          onClick: (event: React.MouseEvent) => {
-            // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
-            // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
-            // this interaction will not be tracked with link right clicks
-            reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-              datasourceType: datasourceType,
-              grafana_version: config.buildInfo.version,
-              type,
-              location: 'spanDetails',
-            });
-
-            if (link.onClick) {
-              link.onClick?.(event);
-            } else {
-              locationService.push(link.href);
-            }
-          },
-        }}
-        buttonProps={{ icon }}
-      />
+  const pinClick = () => setSelectedSpans(selectedSpans ? [...selectedSpans, span] : [span]);
+  const unpinClick = () => setSelectedSpans(selectedSpans?.filter((x) => x.spanID !== span.spanID));
+  const pinButton = selectedSpans?.some((x) => x.spanID === span.spanID) ? (
+    <Button variant={'secondary'} icon="gf-pin" onClick={unpinClick} size={'sm'}>
+      Unpin from details panel
+    </Button>
+  ) : (
+    <Button variant={'secondary'} icon="gf-pin" onClick={pinClick} size={'sm'}>
+      Pin to details panel
+    </Button>
+  );
+  const scrollToButton =
+    selectedSpans && selectedSpans.length > 0 ? (
+      <Button variant={'secondary'} icon="arrow-down" onClick={scrollToDetailsPanel} size={'sm'} />
+    ) : (
+      <></>
     );
-  };
-
-  let logLinkButton: JSX.Element | null = null;
-  let profileLinkButton: JSX.Element | null = null;
-  if (createSpanLink) {
-    const links = createSpanLink(span);
-    const logsLink = links?.filter((link) => link.type === SpanLinkType.Logs);
-    if (links && logsLink && logsLink.length > 0) {
-      logLinkButton = createLinkButton(logsLink[0], SpanLinkType.Logs, 'Logs for this span', 'gf-logs');
-    }
-    const profilesLink = links?.filter(
-      (link) => link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle
-    );
-    if (links && profilesLink && profilesLink.length > 0) {
-      profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
-    }
-  }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
   return (
@@ -212,9 +197,17 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={ubTxRightAlign} divider={true} items={getOverviewItems(span, timeZone)} />
         </div>
       </div>
-      <span style={{ marginRight: '10px' }}>{logLinkButton}</span>
-      {profileLinkButton}
+
+      <div className={styles.buttons}>
+        {logLinkButton && logLinkButton}
+        {profileLinkButton && profileLinkButton}
+        <ButtonGroup>
+          {pinButton}
+          {scrollToButton}
+        </ButtonGroup>
+      </div>
       <Divider className={ubMy1} type={'horizontal'} />
+
       <div>
         <div>
           <AccordianKeyValues
@@ -396,6 +389,61 @@ export const getOverviewItems = (span: TraceSpan, timeZone: string) => {
   }
 
   return overviewItems;
+};
+
+export const getSpanLinkButtons = (
+  datasourceType: string,
+  createSpanLink: SpanLinkFunc | undefined,
+  span: TraceSpan
+) => {
+  const createLinkButton = (link: SpanLinkDef, type: SpanLinkType, title: string, icon: IconName) => {
+    return (
+      <DataLinkButton
+        link={{
+          ...link,
+          title: title,
+          target: '_blank',
+          origin: link.field,
+          onClick: (event: React.MouseEvent) => {
+            // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
+            // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
+            // this interaction will not be tracked with link right clicks
+            reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+              datasourceType: datasourceType,
+              grafana_version: config.buildInfo.version,
+              type,
+              location: 'spanDetails',
+            });
+
+            if (link.onClick) {
+              link.onClick?.(event);
+            } else {
+              locationService.push(link.href);
+            }
+          },
+        }}
+        buttonProps={{ icon }}
+      />
+    );
+  };
+
+  let logLinkButton: JSX.Element | null = null;
+  let profileLinkButton: JSX.Element | null = null;
+  if (createSpanLink) {
+    const links = createSpanLink(span);
+    const logsLink = links?.filter((link) => link.type === SpanLinkType.Logs);
+    if (links && logsLink && logsLink.length > 0) {
+      logLinkButton = createLinkButton(logsLink[0], SpanLinkType.Logs, 'Logs for this span', 'gf-logs');
+    }
+    const profilesLink = links?.filter(
+      (link) => link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle
+    );
+    if (links && profilesLink && profilesLink.length > 0) {
+      profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
+    }
+  }
+
+  return { logLinkButton, profileLinkButton };
 };
 
 export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {

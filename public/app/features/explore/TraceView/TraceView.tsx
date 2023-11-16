@@ -15,9 +15,9 @@ import {
   PanelData,
   SplitOpen,
 } from '@grafana/data';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 import { getTraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { TraceToProfilesData } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
@@ -38,7 +38,6 @@ import {
   TTraceTimeline,
 } from './components';
 import memoizedTraceCriticalPath from './components/CriticalPath';
-import { DetailsPanel } from './components/DetailsPanel/DetailsPanel';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
@@ -47,7 +46,7 @@ import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
   noDataMsg: css`
     height: 100%;
     width: 100%;
@@ -96,9 +95,10 @@ export function TraceView(props: Props) {
   const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
   const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(100);
-  const [selectedSpan, setSelectedSpan] = useState<TraceSpan | undefined>();
+  const [selectedSpans, setSelectedSpans] = useState<TraceSpan[] | undefined>();
 
-  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const styles = getStyles(theme, headerHeight);
 
   /**
    * Keeps state of resizable name column width
@@ -227,29 +227,10 @@ export function TraceView(props: Props) {
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             headerHeight={headerHeight}
-            setSelectedSpan={setSelectedSpan}
-            selectedSpanId={selectedSpan?.spanID}
+            setSelectedSpans={setSelectedSpans}
+            selectedSpans={selectedSpans}
             criticalPath={criticalPath}
           />
-          {config.featureToggles.traceViewDrawer && (
-            <DetailsPanel
-              span={selectedSpan}
-              timeZone={timeZone}
-              // width={width}
-              clearSelectedSpan={() => {
-                toggleDetail(selectedSpan?.spanID ?? '');
-                setSelectedSpan(undefined);
-              }}
-              detailState={detailStates.get(selectedSpan?.spanID ?? '')}
-              traceStartTime={traceProp.startTime}
-              detailLogItemToggle={detailLogItemToggle}
-              detailReferenceItemToggle={detailReferenceItemToggle}
-              createFocusSpanLink={createFocusSpanLink}
-              createSpanLink={createSpanLink}
-              datasourceType={datasourceType}
-              topOfViewRef={topOfViewRef}
-            />
-          )}
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>

@@ -3813,9 +3813,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
-    "public/app/features/explore/TraceView/components/DetailsPanel/DetailsDrawer.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
     "public/app/features/explore/TraceView/components/TracePageHeader/Actions/ActionButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
