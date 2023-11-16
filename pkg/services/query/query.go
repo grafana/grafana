@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -307,29 +308,69 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 
 		s.log.Debug("Processing metrics query", "query", query)
 
-		modelJSON, err := query.MarshalJSON()
+		dataQuery, err := buildDataQuery(query, timeRange)
 		if err != nil {
 			return nil, err
 		}
 
 		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], parsedQuery{
 			datasource: ds,
-			query: backend.DataQuery{
-				TimeRange: backend.TimeRange{
-					From: timeRange.GetFromAsTimeUTC(),
-					To:   timeRange.GetToAsTimeUTC(),
-				},
-				RefID:         query.Get("refId").MustString("A"),
-				MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-				Interval:      time.Duration(query.Get("intervalMs").MustInt64(1000)) * time.Millisecond,
-				QueryType:     query.Get("queryType").MustString(""),
-				JSON:          modelJSON,
-			},
-			rawQuery: query,
+			query:      dataQuery,
+			rawQuery:   query,
 		})
 	}
 
 	return req, req.validateRequest(ctx)
+}
+
+func buildDataQuery(query *simplejson.Json, legacyRange legacydata.DataTimeRange) (backend.DataQuery, error) {
+	timeRange := backend.TimeRange{
+		From: legacyRange.GetFromAsTimeUTC(),
+		To:   legacyRange.GetToAsTimeUTC(),
+	}
+
+	// if the value is missing or it's value is zero, we use the default-value
+	maxDataPoints := query.Get("maxDataPoints").MustInt64(0)
+	if maxDataPoints == 0 {
+		maxDataPoints = 100
+	}
+
+	// if the value is missing or it's value is zero, we use the default-value
+	intervalInt := query.Get("intervalMs").MustInt64(0)
+	if intervalInt == 0 {
+		intervalInt = 1000
+	}
+
+	interval := time.Duration(intervalInt) * time.Millisecond
+
+	// interval must not be too small, otherwise it would produce more data points
+	// than max-data-points
+	intervalLowerLimit := timeRange.Duration() / time.Duration(maxDataPoints)
+
+	if interval < intervalLowerLimit {
+		intervalLowerLimitRounded := intervalv2.RoundInterval(intervalLowerLimit)
+		// because how Grafana rounds things (it rounds it down),
+		// we often hit the case where it equal to the already existing interval,
+		// so i am not overwriting it in that case
+		if intervalLowerLimitRounded != interval {
+			interval = intervalLowerLimitRounded
+		}
+	}
+
+	queryBytes, err := query.MarshalJSON()
+	if err != nil {
+		return backend.DataQuery{}, err
+	}
+
+	return backend.DataQuery{
+		TimeRange:     timeRange,
+		RefID:         query.Get("refId").MustString("A"),
+		MaxDataPoints: maxDataPoints,
+		Interval:      interval,
+		QueryType:     query.Get("queryType").MustString(""),
+		JSON:          queryBytes,
+	}, nil
+
 }
 
 func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user identity.Requester, skipDSCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {

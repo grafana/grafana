@@ -78,7 +78,7 @@ func TestRoundInterval(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, roundInterval(tc.interval))
+			assert.Equal(t, tc.expected, RoundInterval(tc.interval))
 		})
 	}
 }

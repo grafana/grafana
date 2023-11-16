@@ -67,7 +67,7 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval
 		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
 	}
 
-	rounded := roundInterval(calculatedInterval)
+	rounded := RoundInterval(calculatedInterval)
 
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
@@ -77,7 +77,7 @@ func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange,
 	from := timerange.From.UnixNano()
 	safeInterval := time.Duration((to - from) / safeRes)
 
-	rounded := roundInterval(safeInterval)
+	rounded := RoundInterval(safeInterval)
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
@@ -157,7 +157,7 @@ func FormatDuration(inter time.Duration) string {
 }
 
 //nolint:gocyclo
-func roundInterval(interval time.Duration) time.Duration {
+func RoundInterval(interval time.Duration) time.Duration {
 	switch {
 	// 0.01s
 	case interval <= 10*time.Millisecond:

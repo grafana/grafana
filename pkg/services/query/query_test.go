@@ -263,6 +263,118 @@ func TestParseMetricRequest(t *testing.T) {
 		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
 		require.Error(t, err)
 	})
+
+	t.Run("Test the handling of interval and maxDataPoints", func(t *testing.T) {
+		tt := []struct {
+			name                  string
+			json                  string
+			from                  string
+			to                    string
+			expectedInterval      time.Duration
+			expectedMaxDataPoints int64
+		}{
+			{
+				name:                  "handle missing interval",
+				json:                  `{"maxDataPoints": 73, "refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second,
+				expectedMaxDataPoints: int64(73),
+			},
+			{
+				name:                  "handle missing maxdatapoints",
+				json:                  `{"intervalMs": 10000,"refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second * 10,
+				expectedMaxDataPoints: int64(100),
+			},
+			{
+				name:                  "handle missing interval and missing maxdatapoints",
+				json:                  `{"refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second,
+				expectedMaxDataPoints: int64(100),
+			},
+			{
+				name:                  "handle interval and maxdatapoints set to good values",
+				json:                  `{"intervalMs":17000, "maxDataPoints":73, "refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second * 17,
+				expectedMaxDataPoints: int64(73),
+			},
+			{
+				name:                  "handle interval set to zero",
+				json:                  `{"intervalMs":0, "maxDataPoints":73, "refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second,
+				expectedMaxDataPoints: int64(73),
+			},
+			{
+				name:                  "handle maxdatapoints set to zero",
+				json:                  `{"intervalMs":17000, "maxDataPoints":0, "refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second * 17,
+				expectedMaxDataPoints: int64(100),
+			},
+			{
+				name:                  "handle interval and maxdatapoints set to zero",
+				json:                  `{"intervalMs":0, "maxDataPoints":0, "refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second,
+				expectedMaxDataPoints: int64(100),
+			},
+			{
+				name:                  "handle interval and maxdatapoints and time-range set to conflicting values",
+				json:                  `{"intervalMs":1, "maxDataPoints":30, "refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second * 2,
+				expectedMaxDataPoints: int64(30),
+			},
+			{
+				name:                  "handle missing interval where the default-interval-value conflicts with maxdatapoints and time-range",
+				json:                  `{"maxDataPoints":3, "refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second * 20,
+				expectedMaxDataPoints: int64(3),
+			},
+			{
+				name:                  "handle when rounding the interval-lower-limit equals to the interval",
+				json:                  `{"maxDataPoints":10, "intervalMs": 5000, "refId": "A","datasource": { "uid": "gIEkMvIVz", "type": "postgres"}}`,
+				from:                  "now-60s",
+				to:                    "now",
+				expectedInterval:      time.Second * 5,
+				expectedMaxDataPoints: int64(10),
+			},
+		}
+
+		for _, test := range tt {
+			t.Run(test.name, func(t *testing.T) {
+				tc := setup(t)
+				mr := metricRequestWithQueries(t, test.json)
+				mr.From = test.from
+				mr.To = test.to
+				parsedReq, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+				require.NoError(t, err)
+				require.NotNil(t, parsedReq)
+				assert.Len(t, parsedReq.parsedQueries, 1)
+				qs := parsedReq.parsedQueries["gIEkMvIVz"]
+				assert.Len(t, qs, 1)
+				q := qs[0].query
+				assert.Equal(t, test.expectedMaxDataPoints, q.MaxDataPoints)
+				assert.Equal(t, test.expectedInterval, q.Interval)
+
+			})
+		}
+	})
+
 }
 
 func TestQueryDataMultipleSources(t *testing.T) {
