@@ -42,6 +42,7 @@ module.exports = {
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
+    '^monaco-editor$': '@monaco-editor/react',
     // near-membrane-dom won't work in a nodejs environment.
     '@locker/near-membrane-dom': '<rootDir>/public/test/mocks/nearMembraneDom.ts',
     '^@grafana/schema/dist/esm/(.*)$': '<rootDir>/packages/grafana-schema/src/$1',
