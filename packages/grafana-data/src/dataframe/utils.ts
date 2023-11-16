@@ -36,8 +36,8 @@ export function isTimeSeriesFrames(data: DataFrame[]) {
  * Determines if a field is a time field in ascending
  * order within the sampling range specified by
  * MAX_TIME_COMPARISONS
- * 
- * @param field 
+ *
+ * @param field
  * @returns boolean
  */
 export function isTimeSeriesField(field: Field) {
@@ -59,10 +59,9 @@ export function isTimeSeriesField(field: Field) {
       greatestTime = time;
     } else {
       return false;
-    } 
+    }
   }
 
-    
   return true;
 }
 

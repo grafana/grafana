@@ -93,53 +93,50 @@ describe('timeSeriesTableTransformer', () => {
     expect(results[1].fields[2].values[0].value).toEqual(4);
   });
 
-
   it('Will transform multiple data series with the same label', () => {
     const series = [
       getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
       getTimeSeries('B', { instance: 'A', pod: 'B' }, [3, 4, 5]),
       getTimeSeries('C', { instance: 'A', pod: 'B' }, [3, 4, 5]),
     ];
-  
+
     const results = timeSeriesToTableTransform({}, series);
-  
+
     // Check series A
     expect(results[0].fields).toHaveLength(3);
     expect(results[0].fields[0].values[0]).toBe('A');
     expect(results[0].fields[1].values[0]).toBe('B');
-  
+
     // Check series B
     expect(results[1].fields).toHaveLength(3);
     expect(results[1].fields[0].values[0]).toBe('A');
     expect(results[1].fields[1].values[0]).toBe('B');
-  
+
     // Check series C
     expect(results[2].fields).toHaveLength(3);
     expect(results[2].fields[0].values[0]).toBe('A');
     expect(results[2].fields[1].values[0]).toBe('B');
   });
-  
+
   it('will not transform frames with time fields that are non-timeseries', () => {
     const series = [
       getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
       getNonTimeSeries('B', { instance: 'A', pod: 'B' }, [3, 4, 5]),
     ];
-  
+
     const results = timeSeriesToTableTransform({}, series);
-  
+
     // Expect the timeseries to be transformed
     // Having a trend field will show this
     expect(results[1].fields[2].name).toBe('Trend #A');
-  
+
     // We should expect the field length to remain at
     // 2 with a time field and a value field
     expect(results[0].fields.length).toBe(2);
   });
-  
+
   it('will not transform series that have the same value for all times', () => {
-    const series = [
-      getNonTimeSeries('A', { instance: 'A' }, [4, 2, 5], [1699476339, 1699476339, 1699476339]),
-    ];
+    const series = [getNonTimeSeries('A', { instance: 'A' }, [4, 2, 5], [1699476339, 1699476339, 1699476339])];
 
     const results = timeSeriesToTableTransform({}, series);
 
@@ -152,7 +149,7 @@ describe('timeSeriesTableTransformer', () => {
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [0, 50, 90] },
-        { name: 'UpdateTime', type: FieldType.time, values: [10, 100, 100]},
+        { name: 'UpdateTime', type: FieldType.time, values: [10, 100, 100] },
         {
           name: 'Value',
           type: FieldType.number,
@@ -161,10 +158,9 @@ describe('timeSeriesTableTransformer', () => {
       ],
     });
 
-
     const results = timeSeriesToTableTransform({}, [frame]);
 
-    // We should have a created trend field 
+    // We should have a created trend field
     // with the first time field used as a time
     // and the values coming along with that
     expect(results[0].fields[0].name).toBe('Trend #A');
@@ -177,7 +173,7 @@ describe('timeSeriesTableTransformer', () => {
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [0, 50, 90] },
-        { name: 'UpdateTime', type: FieldType.time, values: [10, 100, 100]},
+        { name: 'UpdateTime', type: FieldType.time, values: [10, 100, 100] },
         {
           name: 'Value',
           type: FieldType.number,
@@ -186,21 +182,16 @@ describe('timeSeriesTableTransformer', () => {
       ],
     });
 
+    const results = timeSeriesToTableTransform({ A: { timeField: 'UpdateTime' } }, [frame]);
 
-    const results = timeSeriesToTableTransform({A: { timeField: 'UpdateTime'} }, [frame]);
-
-    // We should have a created trend field 
+    // We should have a created trend field
     // with the "UpdateTime" time field used as a time
     // and the values coming along with that
     expect(results[0].fields[0].name).toBe('Trend #A');
     expect(results[0].fields[0].values[0].fields[0].values[0]).toBe(10);
     expect(results[0].fields[0].values[0].fields[1].values[0]).toBe(2);
   });
-
 });
-
-
-
 
 function assertFieldsEqual(field1: Field, field2: Field) {
   expect(field1.type).toEqual(field2.type);
@@ -236,16 +227,15 @@ function getTimeSeries(refId: string, labels: Labels, values: number[] = [10]) {
 
 function getNonTimeSeries(refId: string, labels: Labels, values: number[], times?: number[]) {
   if (times === undefined) {
-    times = [1699476339, 1699475339, 1699476300]
+    times = [1699476339, 1699475339, 1699476300];
   }
-
 
   return toDataFrame({
     refId,
     fields: [
       // These times are in non-ascending order
       // and thus this isn't a timeseries
-      { name: 'Time', type: FieldType.time, values: times},
+      { name: 'Time', type: FieldType.time, values: times },
       {
         name: 'Value',
         type: FieldType.number,

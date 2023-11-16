@@ -9,7 +9,7 @@ import {
   SelectableValue,
   Field,
   FieldType,
-  isTimeSeriesField
+  isTimeSeriesField,
 } from '@grafana/data';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 
