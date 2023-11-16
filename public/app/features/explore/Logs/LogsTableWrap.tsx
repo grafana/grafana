@@ -55,7 +55,7 @@ export function LogsTableWrap(props: Props) {
   const height = getTableHeight();
   // The refId of the current frame being displayed
   const [currentFrameRef, setCurrentFrameRef] = useState<string | undefined>(logsFrames[0].refId);
-  const [dataFrame, setDataFrame] = useState(
+  const [currentDataFrame, setCurrentDataFrame] = useState(
     logsFrames.find((frame) => frame.refId === currentFrameRef) ?? logsFrames[0]
   );
 
@@ -113,11 +113,11 @@ export function LogsTableWrap(props: Props) {
    */
   useEffect(() => {
     // If the data frame is empty, there's nothing to viz, it could mean the user has unselected all columns
-    if (!dataFrame.length) {
+    if (!currentDataFrame.length) {
       return;
     }
-    const numberOfLogLines = dataFrame ? dataFrame.length : 0;
-    const logsFrame = parseLogsFrame(dataFrame);
+    const numberOfLogLines = currentDataFrame ? currentDataFrame.length : 0;
+    const logsFrame = parseLogsFrame(currentDataFrame);
     const labels = logsFrame?.getLogFrameLabelsAsLabels();
 
     const otherFields = [];
@@ -210,7 +210,7 @@ export function LogsTableWrap(props: Props) {
     setColumnsWithMeta(pendingLabelState);
 
     // The panel state is updated when the user interacts with the multi-select sidebar
-  }, [dataFrame, getColumnsFromProps]);
+  }, [currentDataFrame, getColumnsFromProps]);
 
   if (!columnsWithMeta) {
     return null;
@@ -272,7 +272,7 @@ export function LogsTableWrap(props: Props) {
           // Only include active filters
           .filter((key) => pendingLabelState[key]?.active)
       ),
-      refId: dataFrame.refId,
+      refId: currentDataFrame.refId,
       visualisationType: 'table',
     };
 
@@ -319,7 +319,7 @@ export function LogsTableWrap(props: Props) {
       setCurrentFrameRef(value.value);
       const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
       if (matchingDataFrame) {
-        setDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
+        setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
       }
       props.updatePanelState({ refId: value.value });
     }
@@ -374,7 +374,7 @@ export function LogsTableWrap(props: Props) {
           splitOpen={props.splitOpen}
           timeZone={props.timeZone}
           width={tableWidth}
-          dataFrame={dataFrame}
+          dataFrame={currentDataFrame}
           columnsWithMeta={columnsWithMeta}
           height={height}
         />
