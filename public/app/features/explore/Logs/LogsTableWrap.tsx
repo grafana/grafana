@@ -317,14 +317,12 @@ export function LogsTableWrap(props: Props) {
   };
 
   const onFrameSelectorChange = (value: SelectableValue<string>) => {
-    if (value) {
-      setCurrentFrameRefId(value.value);
-      const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
-      if (matchingDataFrame) {
-        setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
-      }
-      props.updatePanelState({ refId: value.value });
+    setCurrentFrameRefId(value.value);
+    const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
+    if (matchingDataFrame) {
+      setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
     }
+    props.updatePanelState({ refId: value.value });
   };
 
   const sidebarWidth = 220;
