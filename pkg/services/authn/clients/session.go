@@ -55,7 +55,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagClientTokenRotation) {
 		if token.NeedsRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
 			return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
 		}
@@ -88,7 +88,7 @@ func (s *Session) Priority() uint {
 }
 
 func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	if identity.SessionToken == nil || s.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+	if identity.SessionToken == nil || s.features.IsEnabled(ctx, featuremgmt.FlagClientTokenRotation) {
 		return nil
 	}
 
