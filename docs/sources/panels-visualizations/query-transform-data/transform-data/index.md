@@ -138,10 +138,6 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **Cumulative functions** - Apply functions on the current row and all preceding rows.
     - **Total** - Calculates the cumulative total up to and including the current row.
     - **Mean** - Calculates the mean up to and including the current row.
-      **Note:** This mode is an experimental feature. Engineering and on-call support is not available.
-      - Documentation is either limited or not provided outside of code comments. No SLA is provided.
-      - Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature.
-      - Contact Grafana Support to enable this feature in Grafana Cloud.
   - **Window functions** - Apply window functions. The window can either be **trailing** or **centered**.
     With a trailing window the current row will be the last row in the window.
     With a centered window the window will be centered on the current row.
@@ -149,10 +145,6 @@ Use this transformation to add a new field calculated from two other fields. Eac
     - **Mean** - Calculates the moving mean or running average.
     - **Stddev** - Calculates the moving standard deviation.
     - **Variance** - Calculates the moving variance.
-      **Note:** This mode is an experimental feature. Engineering and on-call support is not available.
-      - Documentation is either limited or not provided outside of code comments. No SLA is provided.
-      - Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature.
-      - Contact Grafana Support to enable this feature in Grafana Cloud.
   - **Row index** - Insert a field with the row index.
 - **Field name** - Select the names of fields you want to use in the calculation for the new field.
 - **Calculation** - If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
@@ -160,6 +152,8 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
+
+> **Note:** 'Cumulative functions' and 'Window functions' modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 In the example below, we added two fields together and named them Sum.
 
@@ -1140,7 +1134,7 @@ This transformation lets you to tailor your data to meet your visualization need
 
 Use this transformation to convert rows into separate fields. This can be useful because fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
-This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the \*Use as\*\* option). You can also choose which value to select if there are multiple rows in the returned data.
+This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the _Use as_ option). You can also choose which value to select if there are multiple rows in the returned data.
 
 This transformation requires:
 
