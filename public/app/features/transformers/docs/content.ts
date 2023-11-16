@@ -120,7 +120,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | ----- | -------- | ----- | ------ |
   | 15.4  | 1230233  | 3.2   | 5      |
 
-  This transformation simplifies the process of merging data from different sources, providing a comprehensive view for analysis and visualization in Grafana. Feel free to explore and experiment with concatenation to suit your specific data integration needs.
+  This transformation simplifies the process of merging data from different sources, providing a comprehensive view for analysis and visualization in Grafana.
   `;
     },
   },
