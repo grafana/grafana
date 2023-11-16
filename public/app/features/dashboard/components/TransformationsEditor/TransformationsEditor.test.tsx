@@ -24,12 +24,11 @@ describe('TransformationsEditor', () => {
     function renderList() {
       setup();
 
-      const addButton = screen.getAllByTestId(selectors.components.Transforms.addTransformationButton + 'i');
+      const addButton = screen.getAllByTestId(selectors.components.Transforms.addTransformationButton);
       const emptyMessage = screen.getAllByTestId(selectors.components.Transforms.noTransformationsMessage);
 
-      console.log({ addButton, emptyMessage });
-
-      expect(2).toEqual(2);
+      expect(addButton).toHaveLength(1);
+      expect(emptyMessage).toHaveLength(1);
     }
 
     it('renders trasnformation empty message', renderList);
