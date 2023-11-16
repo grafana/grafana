@@ -75,7 +75,7 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
-  const logsFrame = parseLogsFrame(dataFrame);
+  const logsFrame = parseLogsFrame(currentDataFrame);
 
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
@@ -330,7 +330,7 @@ export function LogsTableWrap(props: Props) {
     if (matchingDataFrame) {
       setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
     }
-    props.updatePanelState({ refId: value.value });
+    props.updatePanelState({ refId: value.value, labelName: logsFrame?.getLabelFieldName() ?? undefined });
   };
 
   const sidebarWidth = 220;

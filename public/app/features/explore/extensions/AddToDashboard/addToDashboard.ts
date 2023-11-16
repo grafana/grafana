@@ -82,9 +82,10 @@ function getExploreToPanelTransformations(panelType: string, options: AddPanelTo
 export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
   const panelType = getPanelType(options.queries, options.queryResponse, options?.panelState);
   let transformations = getExploreToPanelTransformations(panelType, options);
-
   const panel = {
-    targets: options.queries,
+    targets: options?.panelState?.logs?.refId
+      ? [options.queries.find((q) => q.refId === options?.panelState?.logs?.refId)]
+      : options.queries,
     type: panelType,
     title: 'New Panel',
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
