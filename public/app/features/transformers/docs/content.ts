@@ -98,7 +98,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
       return `
   Use this transformation to combine all fields from all frames into one result.
   
-  Suppose you have separate queries retrieving temperature and uptime data (Query A) and air quality index and error information (Query B). Applying the concatenate transformation would yield a consolidated data frame with all relevant information in one view.
+  For example, if you have separate queries retrieving temperature and uptime data (Query A) and air quality index and error information (Query B). Applying the concatenate transformation yields a consolidated data frame with all relevant information in one view.
 
   Consider the following:
 
