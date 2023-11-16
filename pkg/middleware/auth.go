@@ -162,20 +162,16 @@ func RoleAppPluginAuthAndSignedIn(ps pluginstore.Store) web.Handler {
 			return
 		}
 
-		normalizePath := func(p string) string {
-			return filepath.Clean(p)
-		}
-
-		//found := false
+		found := false
 		allowed := false
-		path := normalizePath(c.Req.RequestURI)
+		path := filepath.Clean(c.Req.RequestURI)
 		for _, i := range p.Includes {
 			if i.Type != "page" {
 				continue
 			}
 
-			if normalizePath(i.Path) == path {
-				//found = true
+			if filepath.Clean(i.Path) == path {
+				found = true
 				if i.Role == "" || c.HasRole(i.Role) {
 					allowed = true
 				}
@@ -183,10 +179,11 @@ func RoleAppPluginAuthAndSignedIn(ps pluginstore.Store) web.Handler {
 			}
 		}
 
-		//if !found {
-		//	c.JsonApiErr(http.StatusNotFound, "Plugin page not found", nil)
-		//	return
-		//}
+		if !found {
+			// This isn't an API request, so we probably shouldn't return a JSON error.
+			c.JsonApiErr(http.StatusNotFound, "Plugin page not found", nil)
+			return
+		}
 		if !allowed {
 			accessForbidden(c)
 			return
