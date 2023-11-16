@@ -187,7 +187,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 							{
 								Type: "page",
 								Role: tc.roleRequired,
-								Path: "/test",
+								Path: "/a/test-app/test",
 							},
 						},
 					},
@@ -223,6 +223,31 @@ func TestRoleAppPluginAuth(t *testing.T) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/test").exec()
+		assert.Equal(t, 404, sc.resp.Code)
+		assert.Equal(t, "", sc.resp.Body.String())
+	})
+
+	middlewareScenario(t, "Plugin page is not found returns a 404", func(t *testing.T, sc *scenarioContext) {
+		sc.withIdentity(&authn.Identity{
+			OrgRoles: map[int64]org.RoleType{
+				0: org.RoleViewer,
+			},
+		})
+		sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(pluginstore.NewFakePluginStore(pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID: "test-app",
+				Includes: []*plugins.Includes{
+					{
+						Type: "page",
+						Role: org.RoleViewer,
+						Path: "/a/test-app/test",
+					},
+				},
+			},
+		})), func(c *contextmodel.ReqContext) {
+			c.JSON(http.StatusOK, map[string]interface{}{})
+		})
+		sc.fakeReq("GET", "/a/test-app/notExistingPath").exec()
 		assert.Equal(t, 404, sc.resp.Code)
 		assert.Equal(t, "", sc.resp.Body.String())
 	})

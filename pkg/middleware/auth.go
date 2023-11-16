@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -162,15 +161,19 @@ func RoleAppPluginAuthAndSignedIn(ps pluginstore.Store) web.Handler {
 			return
 		}
 
+		var normalizePath = func(p string) string {
+			return strings.TrimPrefix(p, "/")
+		}
+
 		found := false
 		allowed := false
-		path := filepath.Clean(c.Req.RequestURI)
+		path := normalizePath(c.Req.URL.Path)
 		for _, i := range p.Includes {
 			if i.Type != "page" {
 				continue
 			}
 
-			if filepath.Clean(i.Path) == path {
+			if normalizePath(i.Path) == path {
 				found = true
 				if i.Role == "" || c.HasRole(i.Role) {
 					allowed = true
