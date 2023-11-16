@@ -43,7 +43,7 @@ const lokiQueryResult = {
                   value: 0.01856,
                 },
               ],
-              executedQueryString: 'Expr: {age="new"}',
+              executedQueryString: 'Expr: {targetLabelName="targetLabelValue"}',
             },
             fields: [
               {
@@ -87,7 +87,7 @@ const lokiQueryResult = {
             values: [
               [
                 {
-                  age: 'new',
+                  targetLabelName: 'targetLabelValue',
                   instance: 'server\\1',
                   job: '"grafana/data"',
                   nonIndexed: 'value',
@@ -169,18 +169,21 @@ describe('Loki Query Editor', () => {
     // One row with two cells
     cy.get('[role="cell"]').should('have.length', 2);
 
-    const label = cy.contains('label', 'age');
+    const label = cy.contains('label', 'targetLabelName');
 
     label.should('be.visible');
     label.click();
-    label.find('input[type="checkbox"]').should('be.checked');
+    label.within(() => {
+      cy.get('input[type="checkbox"]').check({ force: true });
+      cy.get('input[type="checkbox"]').should('be.checked');
+    });
 
     const exploreCells = cy.get('[role="cell"]');
 
     // Now we should have a row with 3 columns
     exploreCells.should('have.length', 3);
-    // And a value of "new"
-    exploreCells.should('contain', 'new');
+    // And a value of "targetLabelValue"
+    exploreCells.should('contain', 'targetLabelValue');
 
     const addToDashboardButton = cy.get('[aria-label="Add to dashboard"]');
 
@@ -204,7 +207,7 @@ describe('Loki Query Editor', () => {
     // Cells contain strings found in log line
     cells.contains('"wave":-0.5877852522916832');
 
-    // "age" column has correct value of "new", need to requery the DOM because of the .contains call above
-    cy.get('[data-panelid="1"]').find('[role="table"] [role="cell"]').contains('new');
+    // column has correct value of "targetLabelValue", need to requery the DOM because of the .contains call above
+    cy.get('[data-panelid="1"]').find('[role="table"] [role="cell"]').contains('targetLabelValue');
   });
 });
