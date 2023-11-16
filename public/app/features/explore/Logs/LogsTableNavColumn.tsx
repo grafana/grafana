@@ -95,11 +95,7 @@ export const LogsTableNavColumn = (props: {
               onChange={() => toggleColumn(labelName)}
               checked={labels[labelName]?.active ?? false}
             />
-            <button
-              title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
-              className={styles.labelCount}
-              onClick={() => toggleColumn(labelName)}
-            >
+            <button className={styles.labelCount} onClick={() => toggleColumn(labelName)}>
               {labels[labelName]?.percentOfLinesWithLabel}%
             </button>
           </div>
