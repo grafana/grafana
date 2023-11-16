@@ -42,7 +42,7 @@ export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRo
               inputId={inputId}
               aria-label="Role"
               value={serviceAccount.role}
-              disabled={serviceAccount.isDisabled}
+              disabled={serviceAccount.isExternal || serviceAccount.isDisabled}
               onChange={onRoleChange}
             />
           </td>
