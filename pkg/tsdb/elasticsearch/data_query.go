@@ -97,7 +97,9 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 	if isLogsQuery(q) {
 		processLogsQuery(q, b, from, to, defaultTimeField)
 	} else if isDocumentQuery(q) {
-		processDocumentQuery(q, b, from, to, defaultTimeField)
+		// For raw data query, we want to add standardized time field so we are able to correctly parse it
+		shouldAddStandardizedTimeField := isRawDataQuery(q)
+		processDocumentQuery(q, b, from, to, defaultTimeField, shouldAddStandardizedTimeField)
 	} else {
 		// Otherwise, it is a time series query and we process it
 		processTimeSeriesQuery(q, b, from, to, defaultTimeField)
@@ -384,14 +386,16 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 	_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
 }
 
-func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
+func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string, shouldAddStandardizedTimeField bool) {
 	metric := q.Metrics[0]
 	b.Sort(es.SortOrderDesc, defaultTimeField, "boolean")
 	b.Sort(es.SortOrderDesc, "_doc", "")
 	b.AddDocValueField(defaultTimeField)
-	// We need to add timeField as field with standardized time format to not receive
-	// invalid formats that elasticsearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
-	b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
+	if shouldAddStandardizedTimeField {
+		// If shouldAddStandardizedTimeField = true, we add timeField as field with standardized time format
+		// to not receive invalid formats that elasticsearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
+		b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
+	}
 	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("size").MustString(), defaultSize))
 }
 
