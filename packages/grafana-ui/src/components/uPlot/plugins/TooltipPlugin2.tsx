@@ -3,7 +3,7 @@ import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, DashboardCursorSync } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -28,6 +28,8 @@ interface TooltipPlugin2Props {
   queryZoom?: (range: { from: number; to: number }) => void;
   // y-only, via shiftKey
   clientZoom?: boolean;
+
+  sync?: () => DashboardCursorSync;
 
   render: (
     u: uPlot,
@@ -81,7 +83,14 @@ const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({
+  config,
+  hoverMode,
+  render,
+  clientZoom = false,
+  queryZoom,
+  sync,
+}: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
@@ -245,6 +254,10 @@ export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, 
           scheduleRender(true);
         }
       });
+
+      if (sync && sync() === DashboardCursorSync.Crosshair) {
+        u.root.classList.add('shared-crosshair');
+      }
     });
 
     config.addHook('setSelect', (u) => {
