@@ -221,6 +221,9 @@ export interface GrafanaConfig {
   rudderstackConfigUrl: string | undefined;
   rudderstackIntegrationsUrl: string | undefined;
   sqlConnectionLimits: SqlConnectionLimits;
+
+  // The namespace to use for kubernetes apiserver requests
+  namespace: string;
 }
 
 export interface SqlConnectionLimits {

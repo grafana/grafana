@@ -41,7 +41,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		cfg.UnifiedAlerting.BaseInterval = time.Second * 10
 	}
 	features := featuremgmt.WithFeatures()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 	alertingStore := store.DBstore{
 		SQLStore: sqlStore,
 		Cfg:      cfg.UnifiedAlerting,
@@ -64,7 +64,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	userSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamSvc, cache, quotaService, bundleregistry.ProvideService())
 	require.NoError(t, err)
 
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features)
 

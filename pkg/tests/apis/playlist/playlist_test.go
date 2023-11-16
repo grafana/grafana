@@ -26,13 +26,43 @@ func TestPlaylist(t *testing.T) {
 	}
 
 	t.Run("default setup", func(t *testing.T) {
-		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction: true, // do not start extra port 6443
 			DisableAnonymous:  true,
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServer,
 			},
 		}))
+
+		// The accepted verbs will change when dual write is enabled
+		disco := h.GetGroupVersionInfoJSON("playlist.grafana.app")
+		// fmt.Printf("%s", string(disco))
+		require.JSONEq(t, `[
+			{
+			  "version": "v0alpha1",
+			  "freshness": "Current",
+			  "resources": [
+				{
+				  "resource": "playlists",
+				  "responseKind": {
+					"group": "",
+					"kind": "Playlist",
+					"version": ""
+				  },
+				  "scope": "Namespaced",
+				  "singularResource": "playlist",
+				  "verbs": [
+					"create",
+					"delete",
+					"get",
+					"list",
+					"patch",
+					"update"
+				  ]
+				}
+			  ]
+			}
+		  ]`, disco)
 	})
 
 	t.Run("with k8s api flag", func(t *testing.T) {
@@ -41,22 +71,30 @@ func TestPlaylist(t *testing.T) {
 			DisableAnonymous:  true,
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServer,
-				featuremgmt.FlagKubernetesPlaylistsAPI, // <<< The change we are testing!
+				featuremgmt.FlagKubernetesPlaylists, // <<< The change we are testing!
+			},
+		}))
+	})
+
+	t.Run("with dual write", func(t *testing.T) {
+		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServer,
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 		}))
 	})
 }
 
-func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
 	gvr := schema.GroupVersionResource{
 		Group:    "playlist.grafana.app",
 		Version:  "v0alpha1",
 		Resource: "playlists",
 	}
-
-	defer func() {
-		helper.Shutdown()
-	}()
 
 	t.Run("Check direct List permissions from different org users", func(t *testing.T) {
 		// Check view permissions
@@ -332,6 +370,8 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
 	})
+
+	return helper
 }
 
 // typescript style map function

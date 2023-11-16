@@ -121,6 +121,10 @@ func TestParsePluginTestdata(t *testing.T) {
 			err:  ErrInvalidLineage,
 			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",
 		},
+		"pluginRootWithDist": {
+			err:  ErrNoRootFile,
+			skip: "This folder is used to test multiple plugins in the same folder",
+		},
 		"name-mismatch-panel": {
 			err: ErrInvalidGrafanaPluginInstance,
 		},

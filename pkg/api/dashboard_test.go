@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -121,8 +120,8 @@ func TestGetHomeDashboard(t *testing.T) {
 
 func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 	features := featuremgmt.WithFeatures()
-	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg := setting.NewCfg()
+	cfg.AppURL = "http://localhost:3000/"
 	gLive, err := live.ProvideService(nil, cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil, nil,
@@ -379,11 +378,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given two dashboards with the same title in different folders", func(t *testing.T) {
 		dashOne := dashboards.NewDashboard("dash")
 		dashOne.ID = 2
+		// nolint:staticcheck
 		dashOne.FolderID = 1
 		dashOne.HasACL = false
 
 		dashTwo := dashboards.NewDashboard("dash")
 		dashTwo.ID = 4
+		// nolint:staticcheck
 		dashTwo.FolderID = 3
 		dashTwo.HasACL = false
 	})
@@ -404,13 +405,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					"title": "Dash",
 				}),
 				Overwrite: true,
-				FolderID:  folderID,
+				FolderID:  folderID, // nolint:staticcheck
 				FolderUID: folderUID,
 				IsFolder:  false,
 				Message:   "msg",
 			}
 
 			dashboardService := dashboards.NewFakeDashboardService(t)
+			// nolint:staticcheck
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2, FolderUID: folderUID, FolderID: folderID}, nil)
 			mockFolderService := &foldertest.FakeService{
@@ -462,31 +464,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.Equal(t, "uid", result.Get("uid").MustString())
 				assert.Equal(t, "dash", result.Get("slug").MustString())
 				assert.Equal(t, "/d/uid/dash", result.Get("url").MustString())
-			})
-		})
-
-		t.Run("Given a request with incorrect folder uid for creating a dashboard with", func(t *testing.T) {
-			cmd := dashboards.SaveDashboardCommand{
-				OrgID:  1,
-				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]any{
-					"title": "Dash",
-				}),
-				Overwrite: true,
-				FolderUID: "folderUID",
-				IsFolder:  false,
-				Message:   "msg",
-			}
-
-			dashboardService := dashboards.NewFakeDashboardService(t)
-
-			mockFolder := &foldertest.FakeService{
-				ExpectedError: errors.New("Error while searching Folder ID"),
-			}
-
-			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolder, func(sc *scenarioContext) {
-				callPostDashboard(sc)
-				assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
 			})
 		})
 
@@ -646,6 +623,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		const folderID int64 = 1
 		fakeDash := dashboards.NewDashboard("Child dash")
 		fakeDash.ID = 2
+		// nolint:staticcheck
 		fakeDash.FolderID = folderID
 		fakeDash.HasACL = false
 
@@ -780,6 +758,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 	fakeDash := dashboards.NewDashboard("Child dash")
 	fakeDash.ID = 1
+	// nolint:staticcheck
 	fakeDash.FolderID = 1
 
 	fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
@@ -897,11 +876,12 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		provisioningService = provisioning.NewProvisioningServiceMock(context.Background())
 	}
 
+	features := featuremgmt.WithFeatures()
 	var err error
 	if dashboardStore == nil {
 		sql := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, features, tagimpl.ProvideService(sql), quotaService)
 		require.NoError(t, err)
 	}
 
@@ -911,10 +891,9 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	ac := accesscontrolmock.New()
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
-	features := featuremgmt.WithFeatures()
 
 	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
+		cfg, dashboardStore, folderStore, db.InitTestDB(t), features)
 
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(

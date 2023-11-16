@@ -33,6 +33,10 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
 
+{{% admonition type="note" %}}
+If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to enable the `viewers_can_edit` option
+{{% /admonition %}}
+
 To access Explore:
 
 1. Click on the Explore icon on the menu bar.
