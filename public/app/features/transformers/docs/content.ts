@@ -267,7 +267,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 1636678680000000000 | 5        |
   | 1636678620000000000 | 12       |
 
-  This transformation allows you to extract and format data in various ways, enhancing your ability to visualize and analyze information. Customize the extraction format based on your specific data needs.
+  This transformation allows you to extract and format data in various ways. Customize the extraction format based on your specific data needs.
   `;
     },
     links: [
@@ -410,7 +410,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   Conditions that are invalid or incompletely configured are ignored.
 
-  This versatile data filtering transformation empowers you to selectively include or exclude data points based on specific conditions, enhancing your control over visualizations. Customize the criteria to tailor your data presentation to meet your unique analytical needs.
+  This versatile data filtering transformation lets you to selectively include or exclude data points based on specific conditions. Customize the criteria to tailor your data presentation to meet your unique analytical needs.
   `;
     },
   },
@@ -622,7 +622,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | server 2                | 88.6 |          |
   | server 3                |      | 59.6     |
 
-  Utilize this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. Enhance your data visualization by presenting complex relationships in a clear and structured matrix format.
+  Utilize this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. This helps you present complex relationships in a clear and structured matrix format.
   `;
     },
   },
@@ -658,8 +658,6 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   - With X Bucket set to 'Size: 15m' and Y Bucket as 'Linear', the histogram organizes values into time intervals of 15 minutes on the x-axis and linearly on the y-axis.
   - For X Bucket as 'Count: 2' and Y Bucket as 'Logarithmic (base 10)', the histogram groups values into buckets of two on the x-axis and use a logarithmic scale on the y-axis.
-
-  Enhance your data representation by leveraging histogram transformations for insightful visualizations over time.
   `;
     },
   },
