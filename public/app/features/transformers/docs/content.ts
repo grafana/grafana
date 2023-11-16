@@ -1331,7 +1331,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Sort by',
     getHelperDocs: function () {
       return `
-  Use this transformation to enhance the organization and visual appeal of data frames within the platform. This transformation enables users to sort each frame within a query result based on a specified field, facilitating better comprehension and analysis of the data. By configuring the desired field for sorting, users can control the order in which the data is presented in the table or visualization.
+  Use this transformation to sort each frame within a query result based on a specified field, making your data easier to understand and analyze. By configuring the desired field for sorting, you can control the order in which the data is presented in the table or visualization.
 
   One notable feature of the "Sort By" transformation is the option to activate the **Reverse** switch. When turned on, this switch inversely orders the values within the specified field, providing flexibility in how the data is arranged. This functionality is particularly useful when users want to quickly toggle between ascending and descending order to suit their analytical needs.
   
