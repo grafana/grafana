@@ -1,4 +1,4 @@
-import { EngineSchema, Schema } from '@kusto/monaco-kusto';
+import { EngineSchema, Schema, getKustoWorker } from '@kusto/monaco-kusto';
 import { Uri } from 'monaco-editor';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -33,10 +33,9 @@ const QueryField = ({ query, onQueryChange, schema }: AzureQueryEditorFieldProps
 
     const setupEditor = async ({ monaco, editor }: MonacoEditorValues, schema: EngineSchema) => {
       try {
-        const languages = monaco.languages as unknown as MonacoLanguages;
         const model = editor.getModel();
         if (model) {
-          const kustoWorker = await languages.kusto.getKustoWorker();
+          const kustoWorker = await getKustoWorker();
           const kustoMode = await kustoWorker(model?.uri);
           await kustoMode.setSchema(schema);
         }
