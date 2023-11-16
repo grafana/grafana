@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse } from './datasource';
+import { DataQueryRequest, DataQueryResponse, QueryFixAction } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -283,6 +283,23 @@ export interface DataSourceWithToggleableQueryFiltersSupport<TQuery extends Data
    * Given a query, determine if it has a filter that matches the options.
    */
   queryHasFilter(query: TQuery, filter: QueryFilterOptions): boolean;
+}
+
+export interface DataSourceWithQueryModificationSupportSupport<TQuery extends DataQuery> {
+  /**
+   * Given a query, applies a query modification `action`, returning the updated query.
+   * Explore currently supports the following action types:
+   * - ADD_FILTER: adds a <key, value> filter to the query.
+   * - ADD_FILTER_OUT: adds a negative <key, value> filter to the query.
+   * - ADD_STRING_FILTER: adds a string filter to the query.
+   * - ADD_STRING_FILTER_OUT: adds a negative string filter to the query.
+   */
+  modifyQuery(query: TQuery, action: QueryFixAction): TQuery;
+
+  /**
+   * Returns a list of supported action types for `modifyQuery()`.
+   */
+  getSupportedQueryModifications(): string[];
 }
 
 /**
