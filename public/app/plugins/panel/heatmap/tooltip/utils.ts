@@ -78,6 +78,7 @@ interface DisplayValue {
   highlight: boolean;
 }
 
+// logic from DataHoverView
 export const parseSparseData = (data?: DataFrame, rowIndex?: number | null, columnIndex?: number | null) => {
   if (!data || rowIndex == null) {
     return null;
@@ -165,6 +166,7 @@ export const getFieldFromData = (data: DataFrame, fieldType: string, isSparse: b
   return field;
 };
 
+// logic copied from public/app/plugins/panel/heatmap/fields.ts#L309
 export const inferSparseDataBucketSizes = (data: HeatmapData, xVals: any[], yVals: any[]): BucketSizes => {
   const xValsLength = xVals.length;
 
