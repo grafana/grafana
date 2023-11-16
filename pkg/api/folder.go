@@ -62,7 +62,7 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 	result := make([]dtos.FolderSearchHit, 0)
 	for _, f := range folders {
 		result = append(result, dtos.FolderSearchHit{
-			Id:        f.ID,
+			Id:        f.ID, // nolint:staticcheck
 			Uid:       f.UID,
 			Title:     f.Title,
 			ParentUID: f.ParentUID,
@@ -462,7 +462,7 @@ func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folde
 
 	for _, hit := range hits {
 		folders = append(folders, &folder.Folder{
-			ID:    hit.ID,
+			ID:    hit.ID, // nolint:staticcheck
 			UID:   hit.UID,
 			Title: hit.Title,
 		})

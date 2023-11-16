@@ -26,6 +26,7 @@ const (
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
 
 type Folder struct {
+	// Deprecated: use UID instead
 	ID          int64  `xorm:"pk autoincr 'id'"`
 	OrgID       int64  `xorm:"org_id"`
 	UID         string `xorm:"uid"`

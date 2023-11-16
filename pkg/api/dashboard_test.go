@@ -416,6 +416,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			// nolint:staticcheck
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2, FolderUID: folderUID, FolderID: folderID}, nil)
+			// nolint:staticcheck
 			mockFolderService := &foldertest.FakeService{
 				ExpectedFolder: &folder.Folder{ID: 1, UID: folderUID, Title: "Folder"},
 			}
@@ -452,6 +453,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2}, nil)
 
+			// nolint:staticcheck
 			mockFolder := &foldertest.FakeService{
 				ExpectedFolder: &folder.Folder{ID: 1, UID: "folderUID", Title: "Folder"},
 			}
