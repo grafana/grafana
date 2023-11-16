@@ -177,7 +177,7 @@ export const ConvertFieldTypeTransformerEditor = ({
               />
             </InlineFieldRow>
             {c.destinationType === FieldType.enum && (
-              <EnumMappingEditor input={input} options={options} convertFieldTransformIndex={idx} onChange={onChange} />
+              <EnumMappingEditor input={input} options={options} transformIndex={idx} onChange={onChange} />
             )}
           </div>
         );

@@ -12,21 +12,19 @@ import EnumMappingRow from './EnumMappingRow';
 type EnumMappingEditorProps = {
   input: DataFrame[];
   options: ConvertFieldTypeTransformerOptions;
-  convertFieldTransformIndex: number;
+  transformIndex: number;
   onChange: (options: ConvertFieldTypeTransformerOptions) => void;
 };
 
-export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, onChange }: EnumMappingEditorProps) => {
+export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: EnumMappingEditorProps) => {
   const styles = useStyles2(getStyles);
 
-  const [enumRows, updateEnumRows] = useState<string[]>(
-    options.conversions[convertFieldTransformIndex].enumConfig?.text ?? []
-  );
+  const [enumRows, updateEnumRows] = useState<string[]>(options.conversions[transformIndex].enumConfig?.text ?? []);
 
   // Generate enum values from scratch when none exist in save model
   useEffect(() => {
     // TODO: consider case when changing target field
-    if (!options.conversions[convertFieldTransformIndex].enumConfig?.text?.length && input.length) {
+    if (!options.conversions[transformIndex].enumConfig?.text?.length && input.length) {
       generateEnumValues();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,7 +36,7 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
       const textValues = enumRows.map((value) => value);
       const conversions = options.conversions;
       const enumConfig: EnumFieldConfig = { text: textValues };
-      conversions[convertFieldTransformIndex] = { ...conversions[convertFieldTransformIndex], enumConfig };
+      conversions[transformIndex] = { ...conversions[transformIndex], enumConfig };
 
       onChange({
         ...options,
@@ -48,13 +46,13 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
 
     applyEnumConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [convertFieldTransformIndex, enumRows]);
+  }, [transformIndex, enumRows]);
 
   const generateEnumValues = () => {
     // Loop through all fields in provided data frames to find the target field
     const targetField = input
       .flatMap((inputItem) => inputItem?.fields ?? [])
-      .find((field) => field.name === options.conversions[convertFieldTransformIndex].targetField);
+      .find((field) => field.name === options.conversions[transformIndex].targetField);
 
     if (!targetField) {
       return;
@@ -141,8 +139,8 @@ export const EnumMappingEditor = ({ input, options, convertFieldTransformIndex, 
                     const mappedIndex = enumRows.length - index - 1;
                     return (
                       <EnumMappingRow
-                        key={`${convertFieldTransformIndex}/${value}`}
-                        convertFieldTransformIndex={convertFieldTransformIndex}
+                        key={`${transformIndex}/${value}`}
+                        transformIndex={transformIndex}
                         value={value}
                         index={index}
                         mappedIndex={mappedIndex}

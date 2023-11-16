@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, IconButton, HorizontalGroup, FieldValidationMessage, useStyles2 } from '@grafana/ui';
 
 type EnumMappingRowProps = {
-  convertFieldTransformIndex: number;
+  transformIndex: number;
   value: string;
   index: number;
   mappedIndex: number;
@@ -16,7 +16,7 @@ type EnumMappingRowProps = {
 };
 
 const EnumMappingRow = ({
-  convertFieldTransformIndex,
+  transformIndex,
   value,
   index,
   mappedIndex,
@@ -83,11 +83,7 @@ const EnumMappingRow = ({
   };
 
   return (
-    <Draggable
-      key={`${convertFieldTransformIndex}/${value}`}
-      draggableId={`${convertFieldTransformIndex}/${value}`}
-      index={index}
-    >
+    <Draggable key={`${transformIndex}/${value}`} draggableId={`${transformIndex}/${value}`} index={index}>
       {(provided) => (
         <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
@@ -132,18 +128,6 @@ const EnumMappingRow = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   dragHandle: css({
     cursor: 'grab',
-    // create focus ring around the whole row when the drag handle is tab-focused
-    // needs position: relative on the drag row to work correctly
-    '&:focus-visible&:after': {
-      bottom: 0,
-      content: '""',
-      left: 0,
-      position: 'absolute',
-      right: 0,
-      top: 0,
-      outline: `2px solid ${theme.colors.primary.main}`,
-      outlineOffset: '-2px',
-    },
   }),
   textAlignCenter: css({
     textAlign: 'center',
