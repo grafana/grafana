@@ -35,7 +35,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 	t.Helper()
 	db.InitTestDB(t)
 	// nolint:staticcheck
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	{
 		oldVersion := setting.BuildVersion

@@ -195,7 +195,7 @@ func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Request
 		acl = append(acl, &dashboards.DashboardACLInfoDTO{
 			OrgID:          dashboard.OrgID,
 			DashboardID:    dashboard.ID,
-			FolderID:       dashboard.FolderID,
+			FolderID:       dashboard.FolderID, // nolint:staticcheck
 			Created:        p.Created,
 			Updated:        p.Updated,
 			UserID:         p.UserId,

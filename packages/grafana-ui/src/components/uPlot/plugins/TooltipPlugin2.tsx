@@ -23,6 +23,12 @@ export const enum TooltipHoverMode {
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
   hoverMode: TooltipHoverMode;
+
+  // x only
+  queryZoom?: (range: { from: number; to: number }) => void;
+  // y-only, via shiftKey
+  clientZoom?: boolean;
+
   render: (
     u: uPlot,
     dataIdxs: Array<number | null>,
@@ -67,10 +73,15 @@ const INITIAL_STATE: TooltipContainerState = {
   dismiss: () => {},
 };
 
+// min px width that triggers zoom
+const MIN_ZOOM_DIST = 5;
+
+const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
+
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Props) => {
+export const TooltipPlugin2 = ({ config, hoverMode, render, clientZoom = false, queryZoom }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
@@ -100,6 +111,9 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
         }
       }),
     };
+
+    let yZoomed = false;
+    let yDrag = false;
 
     let _plot = plot;
     let _isHovering = isHovering;
@@ -195,6 +209,34 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
     config.addHook('init', (u) => {
       setState({ plot: (_plot = u) });
 
+      // detect shiftKey and mutate drag mode from x-only to y-only
+      if (clientZoom) {
+        u.over.addEventListener(
+          'mousedown',
+          (e) => {
+            if (!maybeZoomAction(e)) {
+              return;
+            }
+
+            if (e.button === 0 && e.shiftKey) {
+              yDrag = true;
+
+              u.cursor.drag!.x = false;
+              u.cursor.drag!.y = true;
+
+              let onUp = (e: MouseEvent) => {
+                u.cursor.drag!.x = true;
+                u.cursor.drag!.y = false;
+                document.removeEventListener('mouseup', onUp, true);
+              };
+
+              document.addEventListener('mouseup', onUp, true);
+            }
+          },
+          true
+        );
+      }
+
       // this handles pinning
       u.over.addEventListener('click', (e) => {
         // only pinnable tooltip is visible *and* is within proximity to series/point
@@ -203,6 +245,79 @@ export const TooltipPlugin2 = ({ config, hoverMode, render }: TooltipPlugin2Prop
           scheduleRender(true);
         }
       });
+    });
+
+    config.addHook('setSelect', (u) => {
+      if (clientZoom || queryZoom != null) {
+        if (maybeZoomAction(u.cursor!.event)) {
+          if (clientZoom && yDrag) {
+            if (u.select.height >= MIN_ZOOM_DIST) {
+              for (let key in u.scales!) {
+                if (key !== 'x') {
+                  const maxY = u.posToVal(u.select.top, key);
+                  const minY = u.posToVal(u.select.top + u.select.height, key);
+
+                  u.setScale(key, { min: minY, max: maxY });
+                }
+              }
+
+              yZoomed = true;
+            }
+
+            yDrag = false;
+          } else if (queryZoom != null) {
+            if (u.select.width >= MIN_ZOOM_DIST) {
+              const minX = u.posToVal(u.select.left, 'x');
+              const maxX = u.posToVal(u.select.left + u.select.width, 'x');
+
+              queryZoom({ from: minX, to: maxX });
+
+              yZoomed = false;
+            }
+          }
+        }
+      }
+
+      // manually hide selected region (since cursor.drag.setScale = false)
+      u.setSelect({ left: 0, width: 0, top: 0, height: 0 }, false);
+    });
+
+    if (clientZoom || queryZoom != null) {
+      config.setCursor({
+        bind: {
+          dblclick: (u) => () => {
+            if (!maybeZoomAction(u.cursor!.event)) {
+              return null;
+            }
+
+            if (clientZoom && yZoomed) {
+              for (let key in u.scales!) {
+                if (key !== 'x') {
+                  // @ts-ignore (this is not typed correctly in uPlot, assigning nulls means auto-scale / reset)
+                  u.setScale(key, { min: null, max: null });
+                }
+              }
+
+              yZoomed = false;
+            } else if (queryZoom != null) {
+              let xScale = u.scales.x;
+
+              const frTs = xScale.min!;
+              const toTs = xScale.max!;
+              const pad = (toTs - frTs) / 2;
+
+              queryZoom({ from: frTs - pad, to: toTs + pad });
+            }
+
+            return null;
+          },
+        },
+      });
+    }
+
+    config.addHook('setData', (u) => {
+      yZoomed = false;
+      yDrag = false;
     });
 
     // fires on data value hovers/unhovers (before setSeries)

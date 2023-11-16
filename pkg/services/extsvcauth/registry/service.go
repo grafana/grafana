@@ -90,14 +90,14 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 
 	switch provider {
 	case extsvcauth.ServiceAccounts:
-		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+		if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 			r.logger.Debug("Skipping External Service removal, flag disabled", "service", name, "flag", featuremgmt.FlagExternalServiceAccounts)
 			return nil
 		}
 		r.logger.Debug("Routing External Service removal to the External Service Account service", "service", name)
 		return r.saReg.RemoveExternalService(ctx, name)
 	case extsvcauth.OAuth2Server:
-		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) {
 			r.logger.Debug("Skipping External Service removal, flag disabled", "service", name, "flag", featuremgmt.FlagExternalServiceAccounts)
 			return nil
 		}
@@ -119,14 +119,14 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 
 	switch cmd.AuthProvider {
 	case extsvcauth.ServiceAccounts:
-		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+		if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
 			return nil, nil
 		}
 		r.logger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
 		return r.saReg.SaveExternalService(ctx, cmd)
 	case extsvcauth.OAuth2Server:
-		if !r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) {
 			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAuth)
 			return nil, nil
 		}
