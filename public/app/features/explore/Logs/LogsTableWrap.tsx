@@ -54,15 +54,12 @@ export function LogsTableWrap(props: Props) {
 
   const height = getTableHeight();
 
+  // The current dataFrame containing the refId of the current query
+  const [currentDataFrame, setCurrentDataFrame] = useState<DataFrame>(
+    logsFrames.find((f) => f.refId === props?.panelState?.refId) ?? logsFrames[0]
+  );
   // The refId of the current frame being displayed
-  const [currentFrameRefId, setCurrentFrameRefId] = useState<string | undefined>(
-    props.panelState?.refId ?? logsFrames[0].refId
-  );
-
-  // The current dataFrame containing the refId above, used to prevent the table from flashing when switching between queries
-  const [currentDataFrame, setCurrentDataFrame] = useState(
-    logsFrames.find((frame) => frame.refId === currentFrameRefId) ?? logsFrames[0]
-  );
+  const currentFrameRefId = currentDataFrame.refId;
 
   const getColumnsFromProps = useCallback(
     (fieldNames: fieldNameMetaStore) => {
@@ -313,7 +310,6 @@ export function LogsTableWrap(props: Props) {
   };
 
   const onFrameSelectorChange = (value: SelectableValue<string>) => {
-    setCurrentFrameRefId(value.value);
     const matchingDataFrame = logsFrames.find((frame) => frame.refId === value.value);
     if (matchingDataFrame) {
       setCurrentDataFrame(logsFrames.find((frame) => frame.refId === value.value) ?? logsFrames[0]);
