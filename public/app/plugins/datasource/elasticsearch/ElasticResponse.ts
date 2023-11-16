@@ -84,7 +84,7 @@ export class ElasticResponse {
         }
         case 'extended_stats': {
           for (const statName in metric.meta) {
-            if (!metric.meta[statName as ExtendedStatMetaType]) {
+            if (!metric.meta[statName]) {
               continue;
             }
 
@@ -210,7 +210,7 @@ export class ElasticResponse {
           }
           case 'extended_stats': {
             for (const statName in metric.meta) {
-              if (!metric.meta[statName as ExtendedStatMetaType]) {
+              if (!metric.meta[statName]) {
                 continue;
               }
 

@@ -79,7 +79,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 
 	quotaService := quotatest.New(false, nil)
 
-	dashboardWriteStore, err := database.ProvideDashboardStore(store, store.Cfg, features, tagimpl.ProvideService(store, store.Cfg), quotaService)
+	dashboardWriteStore, err := database.ProvideDashboardStore(store, store.Cfg, features, tagimpl.ProvideService(store), quotaService)
 	require.NoError(b, err)
 
 	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), store.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store), store, features)
@@ -132,7 +132,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 			Data:     simplejson.New(),
 			Created:  now,
 			Updated:  now,
-			FolderID: leaf.ID,
+			FolderID: leaf.ID, // nolint:staticcheck
 		})
 	}
 
@@ -176,6 +176,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 			})
 			for _, dash := range dashes {
 				// add permission to read dashboards under the general
+				// nolint:staticcheck
 				if dash.FolderID == 0 {
 					permissions = append(permissions, accesscontrol.Permission{
 						RoleID:  int64(i),

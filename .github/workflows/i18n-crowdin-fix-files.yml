@@ -1,0 +1,46 @@
+# When Crowdin creates a pull request from the crowdin-service-branch branch,
+# run `yarn i18n:extract` and commit the changed grafana.json files back into the PR
+# to reformat crowdin's changes to prevent conflicts with our CI checks.
+
+name: Fix Crowdin I18n files
+
+on:
+  pull_request:
+    paths:
+      - 'public/locales/*/grafana.json'
+    branches:
+      - main # Only run on pull requests *target* main (will be merged into main)
+
+jobs:
+  fix-files:
+    # Only run on pull requests *from* the crowdin-service-branch branch
+    if: github.head_ref == 'crowdin-service-branch'
+
+    name: Fix files
+    runs-on: ubuntu-latest
+
+    # write permission needed to commit changes back in
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.9.0
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Extract I18n files
+        run: yarn i18n:extract
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Github Action: Auto-fix i18n files"
+          file_pattern: public/locales/*/grafana.json

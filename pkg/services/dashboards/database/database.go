@@ -66,7 +66,7 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 }
 
 func (d *dashboardStore) emitEntityEvent() bool {
-	return d.features != nil && d.features.IsEnabled(featuremgmt.FlagPanelTitleSearch)
+	return d.features != nil && d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
 }
 
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashboard *dashboards.Dashboard, overwrite bool) (bool, error) {
@@ -169,36 +169,6 @@ func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveD
 		return nil, err
 	}
 	return result, err
-}
-
-func (d *dashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*dashboards.DashboardACL) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		// delete existing items
-		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
-		if err != nil {
-			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
-		}
-
-		for _, item := range items {
-			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return dashboards.ErrDashboardACLInfoMissing
-			}
-
-			if item.DashboardID == 0 {
-				return dashboards.ErrDashboardPermissionDashboardEmpty
-			}
-
-			sess.Nullable("user_id", "team_id")
-			if _, err := sess.Insert(item); err != nil {
-				return err
-			}
-		}
-
-		// Update dashboard HasACL flag
-		dashboard := dashboards.Dashboard{HasACL: true}
-		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
-		return err
-	})
 }
 
 func (d *dashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*alertmodels.Alert) error {
@@ -376,6 +346,7 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite,
 	isParentFolderChanged bool) (bool, error) {
 	var existing dashboards.Dashboard
+	// nolint:staticcheck
 	exists, err := sess.Where("org_id=? AND title=? AND (is_folder=? OR folder_id=?)", dash.OrgID, dash.Title,
 		dialect.BooleanStr(true), dash.FolderID).Get(&existing)
 	if err != nil {
@@ -390,6 +361,7 @@ func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Das
 			return isParentFolderChanged, dashboards.ErrDashboardFolderWithSameNameAsDashboard
 		}
 
+		// nolint:staticcheck
 		if !dash.IsFolder && (dash.FolderID != existing.FolderID || dash.ID == 0) {
 			isParentFolderChanged = true
 		}
@@ -884,6 +856,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 		}
 		// nolint:staticcheck
 		if query.FolderID != nil {
+			// nolint:staticcheck
 			dashboard.FolderID = *query.FolderID
 			mustCols = append(mustCols, "folder_id")
 		}
@@ -968,8 +941,8 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	if query.OrgId != 0 {
 		orgID = query.OrgId
 		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
-	} else if query.SignedInUser.OrgID != 0 {
-		orgID = query.SignedInUser.OrgID
+	} else if query.SignedInUser.GetOrgID() != 0 {
+		orgID = query.SignedInUser.GetOrgID()
 		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 	}
 
@@ -997,7 +970,12 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if len(query.FolderUIDs) > 0 {
-		filters = append(filters, searchstore.FolderUIDFilter{Dialect: d.store.GetDialect(), OrgID: orgID, UIDs: query.FolderUIDs, NestedFoldersEnabled: d.features.IsEnabled(featuremgmt.FlagNestedFolders)})
+		filters = append(filters, searchstore.FolderUIDFilter{
+			Dialect:              d.store.GetDialect(),
+			OrgID:                orgID,
+			UIDs:                 query.FolderUIDs,
+			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+		})
 	}
 
 	var res []dashboards.DashboardSearchProjection
