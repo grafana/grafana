@@ -405,7 +405,7 @@ func TestIntegrationCreate(t *testing.T) {
 		var m util.DynMap
 		err = json.Unmarshal(b, &m)
 		require.NoError(t, err)
-		assert.Equal(t, dashboards.ErrFolderNotFound, m["message"])
+		assert.Equal(t, dashboards.ErrFolderNotFound.Error(), m["message"])
 	})
 }
 
