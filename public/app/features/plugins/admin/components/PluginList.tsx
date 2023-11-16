@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { config } from '@grafana/runtime';
-import { Grid } from '@grafana/ui/src/unstable';
+import { Grid } from '@grafana/ui';
 
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
