@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, MouseEvent } from 'react';
 
 import { Field, LinkModel, LogRowModel, LogsSortOrder, dateTimeFormat, CoreApp, DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -48,6 +48,7 @@ interface Props extends Themeable2 {
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
   containerRendered?: boolean;
+  handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
 }
 
 interface State {
@@ -88,7 +89,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     this.props.onOpenContext(row, this.debouncedContextClose);
   };
 
-  toggleDetails = () => {
+  onRowClick = (e: MouseEvent<HTMLTableRowElement>) => {
+    if (this.props.handleTextSelection?.(e, this.props.row)) {
+      // Event handled by the parent.
+      return;
+    }
+
     if (!this.props.enableLogDetails) {
       return;
     }
@@ -118,6 +124,17 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     this.setState({ mouseIsOver: true });
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(this.props.row);
+    }
+  };
+
+  onMouseMove = (e: MouseEvent) => {
+    // No need to worry about text selection.
+    if (!this.props.handleTextSelection) {
+      return;
+    }
+    // The user is selecting text, so hide the log row menu so it doesn't interfere.
+    if (document.getSelection()?.toString() && e.buttons > 0) {
+      this.setState({ mouseIsOver: false });
     }
   };
 
@@ -205,9 +222,10 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         <tr
           ref={this.logLineRef}
           className={logRowBackground}
-          onClick={this.toggleDetails}
+          onClick={this.onRowClick}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
+          onMouseMove={this.onMouseMove}
           /**
            * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
            * to onBlur event in the LogRowMenuCell (to hide it). This way, the LogRowMenuCell is displayed when the user navigates

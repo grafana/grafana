@@ -487,6 +487,10 @@ const (
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
 
+	// FlagLokiStructuredMetadata
+	// Enables the loki data source to request structured metadata from the Loki server
+	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
+
 	// FlagTeamHttpHeaders
 	// Enables datasources to apply team headers to the client requests
 	FlagTeamHttpHeaders = "teamHttpHeaders"
@@ -582,6 +586,10 @@ const (
 	// FlagAlertingSimplifiedRouting
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
+
+	// FlagLogRowsPopoverMenu
+	// Enable filtering menu displayed when text of a log line is selected
+	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
 
 	// FlagPluginsSkipHostEnvVars
 	// Disables passing host environment variable to plugin processes
