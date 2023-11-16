@@ -33,13 +33,11 @@ function getStyles(theme: GrafanaTheme2) {
         top: 0,
       },
       '> span': {
-        overflow: 'scroll',
-        '&::-webkit-scrollbar': {
-          display: 'none',
-        },
-        '&::-moz-scrollbar': {
-          display: 'none',
-        },
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        display: 'block',
+        maxWidth: '100%',
       },
     }),
     columnWrapper: css({
@@ -86,7 +84,11 @@ export const LogsTableNavColumn = (props: {
     return (
       <div className={styles.columnWrapper}>
         {labelKeys.sort(sortLabels(labels)).map((labelName) => (
-          <div className={styles.wrap} key={labelName}>
+          <div
+            title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
+            className={styles.wrap}
+            key={labelName}
+          >
             <Checkbox
               className={styles.checkboxLabel}
               label={labelName}

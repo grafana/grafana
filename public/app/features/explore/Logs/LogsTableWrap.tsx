@@ -246,8 +246,6 @@ export function LogsTableWrap(props: Props) {
       }
     });
     setColumnsWithMeta(pendingLabelState);
-    setFilteredColumnsWithMeta(undefined);
-    setSearchValue('');
   };
 
   // Toggle a column on or off when the user interacts with an element in the multi-select sidebar

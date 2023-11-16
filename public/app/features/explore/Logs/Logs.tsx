@@ -602,7 +602,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           title={
             config.featureToggles.logsExploreTableVisualisation
               ? this.state.visualisationType === 'logs'
-                ? 'Logs'
+                ? 'Log lines'
                 : 'Table'
               : 'Logs'
           }
@@ -619,7 +619,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                         description: 'Show results in table visualisation',
                       },
                       {
-                        label: 'Logs',
+                        label: 'Lines',
                         value: 'logs',
                         description: 'Show results in logs visualisation',
                       },

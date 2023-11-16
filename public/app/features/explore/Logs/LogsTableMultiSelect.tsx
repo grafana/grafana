@@ -51,9 +51,9 @@ export const LogsTableMultiSelect = (props: {
       {/* Sidebar columns */}
       <>
         <div className={styles.columnHeader}>
-          Selected fields{' '}
+          Selected fields
           <button onClick={props.clear} className={styles.columnHeaderButton}>
-            Clear
+            Clear all
           </button>
         </div>
         <LogsTableNavColumn
