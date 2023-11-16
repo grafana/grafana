@@ -636,7 +636,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   This setting determines how the x-axis is split into buckets.
 
-  - **Size** - Specify a time interval in the input field. For instance, a time range of '1h' creates cells one hour wide on the x-axis.
+  - **Size** - Specify a time interval in the input field. For example, a time range of '1h' creates cells one hour wide on the x-axis.
   - **Count** - For non-time-related series, use this option to define the number of elements in a bucket.
 
   #### Y Bucket
