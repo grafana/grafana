@@ -48,9 +48,26 @@ func (r *RuleService) HasAccessOrError(ctx context.Context, user identity.Reques
 	return nil
 }
 
-// getRulesReadEvaluator constructs accesscontrol.Evaluator that checks all permission required to read all provided rules
+func getReadFolderAccessEvaluator(folderUID string) accesscontrol.Evaluator {
+	return accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ruleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
+		accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
+	)
+}
+
+// getRulesQueryEvaluator constructs accesscontrol.Evaluator that checks all permissions required to access provided rules
 func (r *RuleService) getRulesReadEvaluator(rules ...*models.AlertRule) accesscontrol.Evaluator {
-	return r.getRulesQueryEvaluator(rules...)
+	added := make(map[string]struct{}, 1)
+	evals := make([]accesscontrol.Evaluator, 0, 1)
+	for _, rule := range rules {
+		if _, ok := added[rule.NamespaceUID]; ok {
+			continue
+		}
+		added[rule.NamespaceUID] = struct{}{}
+		evals = append(evals, getReadFolderAccessEvaluator(rule.NamespaceUID))
+	}
+	dsEvals := r.getRulesQueryEvaluator(rules...)
+	return accesscontrol.EvalAll(append(evals, dsEvals)...)
 }
 
 // getRulesQueryEvaluator constructs accesscontrol.Evaluator that checks all permissions to query data sources used by the provided rules
@@ -88,13 +105,21 @@ func (r *RuleService) AuthorizeDatasourceAccessForRule(ctx context.Context, user
 	})
 }
 
-// HasAccessToRuleGroup returns false if
+// AuthorizeAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
+// - ("folders:read") read folders which contain the rules
+// - ("alert.rules:read") read alert rules in the folders
+// - ("datasources:query") query all data sources that rules refer to
+// Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
 func (r *RuleService) HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error) {
 	eval := r.getRulesReadEvaluator(rules...)
 	return r.HasAccess(ctx, user, eval)
 }
 
-// AuthorizeAccessToRuleGroup checks all rules against AuthorizeDatasourceAccessForRule and exits on the first negative result
+// AuthorizeAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
+// - ("folders:read") read folders which contain the rules
+// - ("alert.rules:read") read alert rules in the folders
+// - ("datasources:query") query all data sources that rules refer to
+// Returns error if at least one permissions is missing or if something went wrong during the permission evaluation
 func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 	eval := r.getRulesReadEvaluator(rules...)
 	return r.HasAccessOrError(ctx, user, eval, func() string {
