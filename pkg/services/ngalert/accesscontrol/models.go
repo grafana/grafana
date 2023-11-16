@@ -17,7 +17,7 @@ func NewAuthorizationErrorWithPermissions(action string, eval accesscontrol.Eval
 	err.PublicMessage = msg
 	if eval != nil {
 		err.PublicPayload = map[string]any{
-			"required_permissions": eval.GoString(),
+			"permissions": eval.GoString(),
 		}
 	}
 	return err
