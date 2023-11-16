@@ -169,7 +169,7 @@ In the example below, we added two fields together and named them Sum.
 
 Use this transformation to combine all fields from all frames into one result.
 
-Suppose you have separate queries retrieving temperature and uptime data (Query A) and air quality index and error information (Query B). Applying the concatenate transformation would yield a consolidated data frame with all relevant information in one view.
+For example, if you have separate queries retrieving temperature and uptime data (Query A) and air quality index and error information (Query B). Applying the concatenate transformation yields a consolidated data frame with all relevant information in one view.
 
 Consider the following:
 
@@ -191,7 +191,7 @@ After you concatenate the fields, the data frame would be:
 | ---- | ------- | --- | ------ |
 | 15.4 | 1230233 | 3.2 | 5      |
 
-This transformation simplifies the process of merging data from different sources, providing a comprehensive view for analysis and visualization in Grafana. Feel free to explore and experiment with concatenation to suit your specific data integration needs.
+This transformation simplifies the process of merging data from different sources, providing a comprehensive view for analysis and visualization in Grafana.
 
 ### Config from query results
 
@@ -230,11 +230,11 @@ Output (Same as Input[0] but now with config on the Value field)
 | 1626178119127 | 10                      |
 | 1626178119129 | 30                      |
 
-Each row in the source data becomes a separate field. Each field now has a maximum configuration option set. Options such as **min**, **max**, **unit**, and **thresholds** are part of the field configuration. If set, they will be used by the visualization instead of any options manually configured in the panel editor options pane.
+Each row in the source data becomes a separate field. Each field now has a maximum configuration option set. Options such as **Min**, **Max**, **Unit**, and **Thresholds** are part of the field configuration. If set, they will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
 #### Value mappings
 
-You can also transform a query result into value mappings. This is a bit different because every row in the configuration query result defines a single value mapping row. See the following example.
+You can also transform a query result into value mappings. With this option, every row in the configuration query result defines a single value mapping row. See the following example.
 
 Config query result:
 
@@ -289,7 +289,7 @@ The result:
 | 2019-01-01 00:00:00 | below | 29    |
 | 2020-01-01 00:00:00 | above | 22    |
 
-This transformation allows you to flexibly adapt your data types, ensuring compatibility and consistency in your visualizations. Experiment with different field type conversions to suit your specific data requirements.
+This transformation allows you to flexibly adapt your data types, ensuring compatibility and consistency in your visualizations.
 
 ### Extract fields
 
@@ -1134,7 +1134,7 @@ With the transformation applied, you can see we are left with just the remainder
 
 {{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-This transformation empowers you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
+This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
 
 ### Rows to fields
 
@@ -1197,7 +1197,7 @@ If you want to extract config from one query and apply it to another you should 
 
 As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
-This transformation offers a powerful way to reshape and enhance your data, providing flexibility in configuring and styling individual fields for a more customized and descriptive visualization experience.
+This transformation enables the conversion of rows into individual fields, facilitates dynamic field configuration, and maps additional fields to labels.
 
 ### Series to rows
 
@@ -1240,11 +1240,11 @@ This transformation facilitates the consolidation of results from multiple time 
 
 ### Sort by
 
-Use this transformation to enhance the organization and visual appeal of data frames within the platform. This transformation enables users to sort each frame within a query result based on a specified field, facilitating better comprehension and analysis of the data. By configuring the desired field for sorting, users can control the order in which the data is presented in the table or visualization.
+Use this transformation to sort each frame within a query result based on a specified field, making your data easier to understand and analyze. By configuring the desired field for sorting, you can control the order in which the data is presented in the table or visualization.
 
-One notable feature of the "Sort By" transformation is the option to activate the **Reverse** switch. When turned on, this switch inversely orders the values within the specified field, providing flexibility in how the data is arranged. This functionality is particularly useful when users want to quickly toggle between ascending and descending order to suit their analytical needs.
+Use the **Reverse** switch to inversely orders the values within the specified field. This functionality is particularly useful when you want to quickly toggle between ascending and descending order to suit your analytical needs.
 
-In practical terms, consider a scenario where time-series data is retrieved from a data source. The "Sort By" transformation can be applied to arrange the data frames based on the timestamp, either in ascending or descending order, depending on the analytical requirements. This capability ensures that users can easily navigate and interpret time-series data, gaining valuable insights from the organized and visually coherent presentation.
+For example, in a scenario where time-series data is retrieved from a data source, the "Sort By" transformation can be applied to arrange the data frames based on the timestamp, either in ascending or descending order, depending on the analytical requirements. This capability ensures that you can easily navigate and interpret time-series data, gaining valuable insights from the organized and visually coherent presentation.
 
 ### Spatial
 
