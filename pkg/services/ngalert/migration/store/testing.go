@@ -89,7 +89,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	err = acSvc.RegisterFixedRoles(context.Background())
 	require.NoError(t, err)
 
-	store := &migrationStore{
+	return &migrationStore{
 		log:                            &logtest.Fake{},
 		cfg:                            cfg,
 		store:                          sqlStore,
@@ -103,6 +103,4 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		orgService:                     orgService,
 		legacyAlertNotificationService: legacyalerting.ProvideService(sqlStore, encryptionservice.SetupTestService(t), nil),
 	}
-
-	return store
 }
