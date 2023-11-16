@@ -17,7 +17,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, logInfo, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   AdHocFilterItem,
@@ -316,6 +316,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   onSplitOpen = (panelType: string) => {
     return async (options?: SplitOpenOptions) => {
+      logInfo('Split Open Test', { module: 'Explore' });
       this.props.splitOpen(options);
       if (options && this.props.datasourceInstance) {
         const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
