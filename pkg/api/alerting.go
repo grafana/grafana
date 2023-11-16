@@ -921,6 +921,8 @@ type GetAlertsParams struct {
 	// required:false
 	// type array
 	// collectionFormat: multi
+	//
+	// Deprecated: use FolderUID instead
 	FolderID []string `json:"folderId"`
 	// Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.
 	// in:query

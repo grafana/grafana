@@ -51,6 +51,8 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a streams response with parse errors", filepath: "streams_parse_errors", query: streamsQuery},
 
 		{name: "parse an empty response", filepath: "empty", query: matrixQuery},
+
+		{name: "parse structured metadata", filepath: "streams_structured_metadata", query: streamsQuery},
 	}
 
 	runTest := func(folder string, path string, query lokiQuery, responseOpts ResponseOpts) {
@@ -61,14 +63,14 @@ func TestSuccessResponse(t *testing.T) {
 		bytes, err := os.ReadFile(responseFileName)
 		require.NoError(t, err)
 
-		frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &query, responseOpts, log.New("test"))
+		frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil, false), &query, responseOpts, log.New("test"))
 		require.NoError(t, err)
 
 		dr := &backend.DataResponse{
 			Frames: frames,
 			Error:  err,
 		}
-		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, dr, true)
+		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, dr, false)
 	}
 
 	for _, test := range tt {
@@ -126,7 +128,7 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, log.New("test"))
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil, false), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, log.New("test"))
 
 			require.Len(t, frames, 0)
 			require.Error(t, err)

@@ -132,6 +132,23 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
+	// Validate folder
+	if dash.FolderUID != "" {
+		folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
+		if err != nil {
+			return nil, err
+		}
+		// nolint:staticcheck
+		dash.FolderID = folder.ID
+	} else if dash.FolderID != 0 { // nolint:staticcheck
+		// nolint:staticcheck
+		folder, err := dr.folderStore.GetFolderByID(ctx, dash.OrgID, dash.FolderID)
+		if err != nil {
+			return nil, err
+		}
+		dash.FolderUID = folder.UID
+	}
+
 	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
