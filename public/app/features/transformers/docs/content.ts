@@ -622,7 +622,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | server 2                | 88.6 |          |
   | server 3                |      | 59.6     |
 
-  Utilize this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. Elevate your data visualization by presenting complex relationships in a clear and structured matrix format.
+  Utilize this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. Enhance your data visualization by presenting complex relationships in a clear and structured matrix format.
   `;
     },
   },
