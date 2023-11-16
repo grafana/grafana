@@ -140,7 +140,7 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 // retrieveExtSvcProviders fetches external services from store and map their associated provider
 func (r *Registry) retrieveExtSvcProviders(ctx context.Context) (map[string]extsvcauth.AuthProvider, error) {
 	extsvcs := map[string]extsvcauth.AuthProvider{}
-	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
+	if r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		names, err := r.saReg.GetExternalServiceNames(ctx)
 		if err != nil {
 			return nil, err
@@ -150,7 +150,7 @@ func (r *Registry) retrieveExtSvcProviders(ctx context.Context) (map[string]exts
 		}
 	}
 	// Important to run this second as the OAuth server uses External Service Accounts as well.
-	if r.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) {
 		names, err := r.oauthReg.GetExternalServiceNames(ctx)
 		if err != nil {
 			return nil, err
