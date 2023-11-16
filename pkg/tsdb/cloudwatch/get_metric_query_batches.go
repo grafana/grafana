@@ -19,12 +19,8 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 
 	logger.Debug("Separating queries into batches")
 
-	idToQuery := make(map[string]*models.CloudWatchQuery, len(queries))
-	for _, q := range queries {
-		idToQuery[q.Id] = q
-	}
-
-	mathQueryIdToReferences, referencedQueries := getIdsReferencedByMathQueries(idToQuery)
+	// get query IDs which are referenced in math expressions
+	mathQueryIdToReferences, referencedQueries := getReferencedQueries(queries)
 
 	batches := [][]*models.CloudWatchQuery{}
 	for _, query := range queries {
@@ -36,7 +32,15 @@ func getMetricQueryBatches(queries []*models.CloudWatchQuery, logger log.Logger)
 	return batches
 }
 
-func getIdsReferencedByMathQueries(idToQuery map[string]*models.CloudWatchQuery) (map[string][]*models.CloudWatchQuery, map[string]bool) {
+// getReferencedQueries gets query IDs which are referenced in math expressions
+func getReferencedQueries(queries []*models.CloudWatchQuery) (map[string][]*models.CloudWatchQuery, map[string]bool) {
+	// put queries into a set in order to facilitate lookup below
+	idToQuery := make(map[string]*models.CloudWatchQuery, len(queries))
+	for _, q := range queries {
+		idToQuery[q.Id] = q
+	}
+
+	// set up list of math expression queries since below we loop over them to get what query IDs they reference
 	var mathQueries []*models.CloudWatchQuery
 	for _, query := range idToQuery {
 		if query.GetGetMetricDataAPIMode() == models.GMDApiModeMathExpression {
