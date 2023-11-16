@@ -3,8 +3,7 @@ import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { reportInteraction } from '@grafana/runtime';
-import { Box } from '@grafana/ui';
-import { Grid } from '@grafana/ui/src/unstable';
+import { Box, Grid } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 
