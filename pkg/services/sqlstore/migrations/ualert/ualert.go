@@ -292,13 +292,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	for _, da := range dashAlerts {
 		l := mg.Logger.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
-		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
-		if err != nil {
-			return err
-		}
 
 		da.DashboardUID = dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
-
 		// get dashboard
 		dash := dashboard{}
 		exists, err := m.sess.Where("org_id=? AND uid=?", da.OrgId, da.DashboardUID).Get(&dash)
@@ -313,6 +308,27 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				Err:     fmt.Errorf("dashboard with UID %v under organisation %d not found: %w", da.DashboardUID, da.OrgId, err),
 				AlertId: da.Id,
 			}
+		}
+		var ids []int64
+		for _, d := range da.ParsedSettings.Conditions {
+			ids = append(ids, d.Query.DatasourceID)
+		}
+		dsTypes, err := m.fetchDsTypesByIDs(ids)
+		if err != nil {
+			return MigrationError{
+				Err:     err,
+				AlertId: da.Id,
+			}
+		}
+		// Make sure that targetFull is correctly set for Graphite based alerts before starting the migration
+		if err := fixBrokenGraphitePlaceholders(l, &dash, da.PanelId, da.ParsedSettings, dsTypes); err != nil {
+			l.Error("failed to fix broken graphite query", "err", err)
+			continue
+		}
+
+		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
+		if err != nil {
+			return err
 		}
 
 		var folder *dashboard
