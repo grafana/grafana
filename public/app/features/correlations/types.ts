@@ -42,7 +42,7 @@ export interface Correlation {
   label?: string;
   description?: string;
   provisioned: boolean;
-  orgId: number;
+  orgId?: number;
   config: CorrelationConfig;
 }
 
