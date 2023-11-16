@@ -26,19 +26,22 @@ type ProtoClient interface {
 
 	PID() (string, error)
 	PluginID() string
+	PluginVersion() string
 	Logger() log.Logger
 	Start(context.Context) error
 	Stop(context.Context) error
 }
 
 type protoClient struct {
-	plugin *grpcPlugin
+	plugin        *grpcPlugin
+	pluginVersion string
 
 	mu sync.RWMutex
 }
 
 type ProtoClientOpts struct {
 	PluginID       string
+	PluginVersion  string
 	ExecutablePath string
 	ExecutableArgs []string
 	Env            []string
@@ -58,7 +61,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 		func() []string { return opts.Env },
 	)
 
-	return &protoClient{plugin: p}, nil
+	return &protoClient{plugin: p, pluginVersion: opts.PluginVersion}, nil
 }
 
 func (r *protoClient) PID() (string, error) {
@@ -70,6 +73,10 @@ func (r *protoClient) PID() (string, error) {
 
 func (r *protoClient) PluginID() string {
 	return r.plugin.descriptor.pluginID
+}
+
+func (r *protoClient) PluginVersion() string {
+	return r.pluginVersion
 }
 
 func (r *protoClient) Logger() log.Logger {
