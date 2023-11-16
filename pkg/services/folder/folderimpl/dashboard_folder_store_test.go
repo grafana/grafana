@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -13,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
@@ -25,7 +26,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 	}
 	t.Run("Given dashboard and folder with the same title", func(t *testing.T) {
@@ -100,7 +101,7 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		FolderID:  folderID,
+		FolderID:  folderID, // nolint:staticcheck
 		FolderUID: folderUID,
 		IsFolder:  false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -121,7 +122,7 @@ func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, title strin
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		FolderID:  folderId,
+		FolderID:  folderId, // nolint:staticcheck
 		FolderUID: folderUID,
 		IsFolder:  true,
 		Dashboard: simplejson.NewFromAny(map[string]any{

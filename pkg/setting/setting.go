@@ -361,7 +361,7 @@ type Cfg struct {
 	ApiKeyMaxSecondsToLive int64
 
 	// Check if a feature toggle is enabled
-	// @deprecated
+	// Deprecated: use featuremgmt.FeatureFlags
 	IsFeatureToggleEnabled func(key string) bool // filled in dynamically
 
 	AnonymousEnabled     bool
@@ -980,7 +980,20 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 		Azure:  &azsettings.AzureSettings{},
+
+		// Avoid nil pointer
+		IsFeatureToggleEnabled: func(_ string) bool {
+			return false
+		},
 	}
+}
+
+// Deprecated: Avoid using IsFeatureToggleEnabled from settings.  If you need to access
+// feature flags, read them from the FeatureToggle (or FeatureManager) interface
+func NewCfgWithFeatures(features func(string) bool) *Cfg {
+	cfg := NewCfg()
+	cfg.IsFeatureToggleEnabled = features
+	return cfg
 }
 
 func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
@@ -1037,7 +1050,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	Target := valueAsString(iniFile.Section(""), "target", "all")
 	if Target != "" {
-		cfg.Target = strings.Split(Target, " ")
+		cfg.Target = util.SplitString(Target)
 	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
@@ -1155,6 +1168,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
+	// nolint:staticcheck
 	if err := cfg.readFeatureToggles(iniFile); err != nil {
 		return err
 	}
@@ -1393,6 +1407,18 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 
 	return key
+}
+
+func (s *DynamicSection) KeysHash() map[string]string {
+	hash := s.section.KeysHash()
+	for k := range hash {
+		envKey := EnvKey(s.section.Name(), k)
+		envValue := os.Getenv(envKey)
+		if len(envValue) > 0 {
+			hash[k] = envValue
+		}
+	}
+	return hash
 }
 
 // SectionWithEnvOverrides dynamically overrides keys with environment variables.

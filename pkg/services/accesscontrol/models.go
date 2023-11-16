@@ -396,7 +396,6 @@ const (
 
 	// Settings scope
 	ScopeSettingsAll  = "settings:*"
-	ScopeSettingsAuth = "settings:auth:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
 
 	// Team related actions
@@ -466,6 +465,10 @@ const (
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	ScopeSettingsOAuth = func(provider string) string {
+		return Scope("settings", "auth."+provider, "*")
+	}
 
 	// Annotation scopes
 	ScopeAnnotationsRoot             = "annotations"
