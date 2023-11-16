@@ -26,11 +26,10 @@ import (
 )
 
 type LokiAPI struct {
-	client *http.Client
-	url    string
-	log    log.Logger
-	tracer tracing.Tracer
-
+	client                    *http.Client
+	url                       string
+	log                       log.Logger
+	tracer                    tracing.Tracer
 	requestStructuredMetadata bool
 }
 
@@ -44,7 +43,7 @@ func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.
 	return &LokiAPI{client: client, url: url, log: log, tracer: tracer, requestStructuredMetadata: requestStructuredMetadata}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, requestStructuredMetadata bool) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, categorizeLabels bool) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -104,7 +103,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, req
 		}
 	}
 
-	if requestStructuredMetadata {
+	if categorizeLabels {
 		req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
 	}
 
