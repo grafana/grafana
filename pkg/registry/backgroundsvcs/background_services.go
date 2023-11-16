@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	extsvcreg "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -58,7 +59,7 @@ func ProvideBackgroundServiceRegistry(
 	bundleService *supportbundlesimpl.Service, publicDashboardsMetric *publicdashboardsmetric.Service,
 	keyRetriever *dynamic.KeyRetriever, dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
 	grafanaAPIServer grafanaapiserver.Service,
-	anon *anonimpl.AnonDeviceService,
+	anon *anonimpl.AnonDeviceService, reg *extsvcreg.Registry,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -100,6 +101,7 @@ func ProvideBackgroundServiceRegistry(
 		dynamicAngularDetectorsProvider,
 		grafanaAPIServer,
 		anon,
+		reg,
 	)
 }
 

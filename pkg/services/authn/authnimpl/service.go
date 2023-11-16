@@ -132,7 +132,7 @@ func ProvideService(
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
-	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
 		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
 	}
 
@@ -159,7 +159,7 @@ func ProvideService(
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
 	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
 
-	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
 		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
 	}
 

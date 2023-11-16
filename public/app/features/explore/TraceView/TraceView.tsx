@@ -38,7 +38,6 @@ import {
 } from './components';
 import memoizedTraceCriticalPath from './components/CriticalPath';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
-import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
@@ -67,19 +66,11 @@ type Props = {
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef?: RefObject<HTMLDivElement>;
-  topOfViewRefType?: TopOfViewRefType;
   createSpanLink?: SpanLinkFunc;
 };
 
 export function TraceView(props: Props) {
-  const {
-    traceProp,
-    datasource,
-    topOfViewRef,
-    topOfViewRefType,
-    exploreId,
-    createSpanLink: createSpanLinkFromProps,
-  } = props;
+  const { traceProp, datasource, topOfViewRef, exploreId, createSpanLink: createSpanLinkFromProps } = props;
 
   const {
     detailStates,
@@ -232,7 +223,6 @@ export function TraceView(props: Props) {
             showCriticalPathSpansOnly={showCriticalPathSpansOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
-            topOfViewRefType={topOfViewRefType}
             headerHeight={headerHeight}
             criticalPath={criticalPath}
           />
