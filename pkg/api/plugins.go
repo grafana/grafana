@@ -447,11 +447,11 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to fetch plugin json", err)
 	}
-	if jsonData.ExternalServiceRegistration != nil {
+	if jsonData.ExternalServiceRegistration != nil && len(jsonData.ExternalServiceRegistration.Permissions) > 0 {
 		hs.log.Debug("check installer's permissions, plugin wants to register an external service")
 		hasAccess := accesscontrol.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 		// TODO (gamab) single_organization setup
-		evaluator := toEvalAll(jsonData.ExternalServiceRegistration.Permissions)
+		evaluator := evalAllPermissions(jsonData.ExternalServiceRegistration.Permissions)
 		if !hasAccess(evaluator) {
 			c.JSON(http.StatusForbidden, map[string]string{
 				"title":   "Access denied",
@@ -533,11 +533,8 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 	return md.Content, nil
 }
 
-func toEvalAll(ps []plugindef.Permission) ac.Evaluator {
-	if len(ps) == 0 {
-		// TODO (gamab) this is going to fail evaluation
-		return nil
-	}
+// evalAllPermissions generates an evaluator with all permissions from the input slice
+func evalAllPermissions(ps []plugindef.Permission) ac.Evaluator {
 	res := []ac.Evaluator{}
 	for _, p := range ps {
 		scope := ""

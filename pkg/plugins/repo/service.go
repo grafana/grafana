@@ -93,13 +93,11 @@ func (m *Manager) GetPluginJson(_ context.Context, pluginID, version string, com
 	if err != nil {
 		return nil, err
 	}
-	res := struct {
-		Json plugins.JSONData
-	}{}
+	res := PluginInfo{}
 	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, err
 	}
-	return &res.Json, nil
+	return &res.JSONData, nil
 }
 
 // PluginVersion will return plugin version based on the requested information
