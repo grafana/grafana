@@ -84,7 +84,7 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 	}
 
 	var f PermissionsFilter
-	if features.IsEnabled(featuremgmt.FlagPermissionsFilterRemoveSubquery) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPermissionsFilterRemoveSubquery) {
 		f = &accessControlDashboardPermissionFilterNoFolderSubquery{
 			accessControlDashboardPermissionFilter: accessControlDashboardPermissionFilter{
 				user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
@@ -201,7 +201,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			}
 			permSelector.WriteRune(')')
 
-			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
 			case true:
 				if len(permSelectorArgs) > 0 {
 					switch f.recursiveQueriesAreSupported {
@@ -280,7 +280,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 
 			permSelector.WriteRune(')')
 
-			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			switch f.features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
 			case true:
 				if len(permSelectorArgs) > 0 {
 					switch f.recursiveQueriesAreSupported {

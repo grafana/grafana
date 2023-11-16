@@ -3,6 +3,7 @@ package extsvcaccounts
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -41,7 +42,7 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, featu
 		skvStore: kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 	}
 
-	if features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
 		// Register the metrics
 		esa.metrics = newMetrics(reg, saSvc, logger)
 
@@ -64,6 +65,18 @@ func (esa *ExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *
 	return esa.saSvc.EnableServiceAccount(ctx, cmd.OrgID, saID, cmd.Enabled)
 }
 
+// HasExternalService returns whether an external service has been saved with that name.
+func (esa *ExtSvcAccountsService) HasExternalService(ctx context.Context, name string) (bool, error) {
+	saName := sa.ExtSvcPrefix + slugify.Slugify(name)
+
+	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, extsvcauth.TmpOrgID, saName)
+	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
+		return false, errRetrieve
+	}
+
+	return saID > 0, nil
+}
+
 // RetrieveExtSvcAccount fetches an external service account by ID
 func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, orgID, saID int64) (*sa.ExtSvcAccount, error) {
 	svcAcc, err := esa.saSvc.RetrieveServiceAccount(ctx, orgID, saID)
@@ -80,10 +93,32 @@ func (esa *ExtSvcAccountsService) RetrieveExtSvcAccount(ctx context.Context, org
 	}, nil
 }
 
+// GetExternalServiceNames get the names of External Service in store
+func (esa *ExtSvcAccountsService) GetExternalServiceNames(ctx context.Context) ([]string, error) {
+	esa.logger.Debug("Get external service names from store")
+	sas, err := esa.saSvc.SearchOrgServiceAccounts(ctx, &sa.SearchOrgServiceAccountsQuery{
+		OrgID:        extsvcauth.TmpOrgID,
+		Filter:       sa.FilterOnlyExternal,
+		SignedInUser: extsvcuser,
+	})
+	if err != nil {
+		esa.logger.Error("Could not fetch external service accounts from store", "error", err.Error())
+		return nil, err
+	}
+	if sas == nil {
+		return []string{}, nil
+	}
+	res := make([]string, len(sas.ServiceAccounts))
+	for i := range sas.ServiceAccounts {
+		res[i] = strings.TrimPrefix(sas.ServiceAccounts[i].Name, sa.ExtSvcPrefix)
+	}
+	return res, nil
+}
+
 // SaveExternalService creates, updates or delete a service account (and its token) with the requested permissions.
 func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
-	if !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) && !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) && !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) {
 		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return nil, nil
 	}
@@ -123,12 +158,12 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 			"error", err.Error())
 		return nil, err
 	}
-	return &extsvcauth.ExternalService{Name: cmd.Name, ID: slug, Secret: token}, nil
+	return &extsvcauth.ExternalService{Name: slug, ID: slug, Secret: token}, nil
 }
 
 func (esa *ExtSvcAccountsService) RemoveExternalService(ctx context.Context, name string) error {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
-	if !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) && !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) && !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) {
 		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return nil
 	}
@@ -160,7 +195,7 @@ func (esa *ExtSvcAccountsService) RemoveExtSvcAccount(ctx context.Context, orgID
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
 func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *sa.ManageExtSvcAccountCmd) (int64, error) {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
-	if !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) && !esa.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) && !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) {
 		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return 0, nil
 	}

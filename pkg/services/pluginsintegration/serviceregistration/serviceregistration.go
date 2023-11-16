@@ -23,7 +23,7 @@ type Service struct {
 
 func ProvideService(cfg *config.Cfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
-		featureEnabled: cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) || cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAccounts),
+		featureEnabled: cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) || cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 		log:            log.New("plugins.external.registration"),
 		reg:            reg,
 		settingsSvc:    settingsSvc,
@@ -31,10 +31,10 @@ func ProvideService(cfg *config.Cfg, reg extsvcauth.ExternalServiceRegistry, set
 	return s
 }
 
-func (s *Service) HasExternalService(ctx context.Context, pluginID string) bool {
+func (s *Service) HasExternalService(ctx context.Context, pluginID string) (bool, error) {
 	if !s.featureEnabled {
 		s.log.Debug("Skipping HasExternalService call. The feature is behind a feature toggle and needs to be enabled.")
-		return false
+		return false, nil
 	}
 
 	return s.reg.HasExternalService(ctx, pluginID)
