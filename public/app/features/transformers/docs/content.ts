@@ -163,7 +163,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 1626178119127 | 10                      |
   | 1626178119129 | 30                      |
 
-  Each row in the source data becomes a separate field. Each field now has a maximum configuration option set. Options such as **min**, **max**, **unit**, and **thresholds** are part of the field configuration. If set, they will be used by the visualization instead of any options manually configured in the panel editor options pane.
+  Each row in the source data becomes a separate field. Each field now has a maximum configuration option set. Options such as **Min**, **Max**, **Unit**, and **Thresholds** are part of the field configuration. If set, they will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
   #### Value mappings
 
