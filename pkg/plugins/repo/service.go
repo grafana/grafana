@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"path"
 
@@ -114,6 +115,12 @@ func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts Co
 	if err != nil {
 		m.log.Error("Failed to unmarshal plugin repo response", err)
 		return nil, err
+	}
+
+	if len(v.Versions) == 0 {
+		// /plugins/{pluginId}/versions returns 200 even if the plugin doesn't exists
+		// but the response is empty. In this case we return 404.
+		return nil, newErrResponse4xx(http.StatusNotFound).withMessage("Plugin not found")
 	}
 
 	return v.Versions, nil
