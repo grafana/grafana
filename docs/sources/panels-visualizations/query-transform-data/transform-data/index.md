@@ -272,6 +272,9 @@ Use this transformation to change the field type of the specified field.
   - **Time -** attempts to parse the values as time
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean -** will make the values booleans
+  - **Enum -** will make the values enums
+    - Will show a table to manage the enums
+  - **Other -** attempts to parse the values as JSON
 
 For example, the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
 
