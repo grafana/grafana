@@ -1335,7 +1335,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   Use the **Reverse** switch to inversely orders the values within the specified field. This functionality is particularly useful when you want to quickly toggle between ascending and descending order to suit your analytical needs.
   
-  In practical terms, consider a scenario where time-series data is retrieved from a data source. The "Sort By" transformation can be applied to arrange the data frames based on the timestamp, either in ascending or descending order, depending on the analytical requirements. This capability ensures that users can easily navigate and interpret time-series data, gaining valuable insights from the organized and visually coherent presentation.
+  For example, in a scenario where time-series data is retrieved from a data source, the "Sort By" transformation can be applied to arrange the data frames based on the timestamp, either in ascending or descending order, depending on the analytical requirements. This capability ensures that you can easily navigate and interpret time-series data, gaining valuable insights from the organized and visually coherent presentation.
   `;
     },
   },
