@@ -45,31 +45,36 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
     const theme = useTheme2();
     const styles = getRadioButtonStyles(theme, size, fullWidth);
 
-    const radioButton = (
+    const inputRadioButton = (
+      <input
+        type="radio"
+        className={styles.radio}
+        onChange={onChange}
+        onClick={onClick}
+        disabled={disabled}
+        id={id}
+        checked={active}
+        name={name}
+        aria-label={ariaLabel}
+        ref={ref}
+      />
+    );
+    return description ? (
       <div className={styles.radioOption}>
-        <input
-          type="radio"
-          className={styles.radio}
-          onChange={onChange}
-          onClick={onClick}
-          disabled={disabled}
-          id={id}
-          checked={active}
-          name={name}
-          aria-label={ariaLabel}
-          ref={ref}
-        />
+        <Tooltip content={description} placement="auto">
+          {inputRadioButton}
+        </Tooltip>
         <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
           {children}
         </label>
       </div>
-    );
-    return description ? (
-      <Tooltip content={description} placement="auto">
-        {radioButton}
-      </Tooltip>
     ) : (
-      radioButton
+      <div className={styles.radioOption}>
+        {inputRadioButton}
+        <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
+          {children}
+        </label>
+      </div>
     );
   }
 );
@@ -95,9 +100,10 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
     radio: css({
       position: 'absolute',
       opacity: 0,
-      zIndex: -1000,
+      zIndex: 5,
       width: '100% !important',
       height: '100%',
+      cursor: 'pointer',
 
       '&:checked + label': {
         color: theme.colors.text.primary,
