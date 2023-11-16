@@ -506,7 +506,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Format time',
     getHelperDocs: function () {
       return `
-  Use this transformation to customize the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For example, if you want to display only the year of a time field, the format string 'YYYY' can be used to show the calendar year (e.g., 1999, 2012, etc.).
+  Use this transformation to customize the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For example, if you want to display only the year of a time field, the format string 'YYYY' can be used to show the calendar year (for example, 1999 or 2012).
 
   **Before Transformation:**
 
