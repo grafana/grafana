@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { IconName } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, config } from '@grafana/runtime';
 import { ToolbarButton, Dropdown, Menu, Stack, ToolbarButtonRow, MenuGroup } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { copyStringToClipboard } from 'app/core/utils/explore';
@@ -19,7 +19,11 @@ export function ShortLinkButtonMenu() {
       createAndCopyShortLink(url || global.location.href);
       reportInteraction('grafana_explore_shortened_link_clicked');
     } else {
-      copyStringToClipboard(url || global.location.href);
+      copyStringToClipboard(
+        url !== undefined
+          ? `${window.location.protocol}//${window.location.host}${config.appSubUrl}${url}`
+          : global.location.href
+      );
       reportInteraction('grafana_explore_copy_link_clicked');
     }
   };
@@ -85,30 +89,28 @@ export function ShortLinkButtonMenu() {
     },
   ];
 
-  const MenuActions = () => {
-    return (
-      <Menu>
-        {menuOptions.map((groupOption) => {
-          return (
-            <MenuGroup key={groupOption.key} label={groupOption.label}>
-              {groupOption.items.map((option) => {
-                return (
-                  <Menu.Item
-                    key={option.key}
-                    label={option.label}
-                    onClick={() => {
-                      const url = option.getUrl();
-                      onCopyLink(option.shorten, url);
-                    }}
-                  />
-                );
-              })}
-            </MenuGroup>
-          );
-        })}
-      </Menu>
-    );
-  };
+  const MenuActions = (
+    <Menu>
+      {menuOptions.map((groupOption) => {
+        return (
+          <MenuGroup key={groupOption.key} label={groupOption.label}>
+            {groupOption.items.map((option) => {
+              return (
+                <Menu.Item
+                  key={option.key}
+                  label={option.label}
+                  onClick={() => {
+                    const url = option.getUrl();
+                    onCopyLink(option.shorten, url);
+                  }}
+                />
+              );
+            })}
+          </MenuGroup>
+        );
+      })}
+    </Menu>
+  );
 
   const buttonMode = (() => {
     const defaultMode: ShortLinkMenuItemData = {
