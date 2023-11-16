@@ -47,7 +47,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
   }
 
-  async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
+  async metadataRequest(url: string, params?: Record<string, unknown>) {
     const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
     return res.data.data;
   }
@@ -180,11 +180,11 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     };
   }
 
-  async testDatasource(): Promise<any> {
+  async testDatasource() {
     return lastValueFrom(
       this._request('/api/services').pipe(
         map((res) => {
-          const values: any[] = res?.data?.data || [];
+          const values = res?.data?.data || [];
           const testResult =
             values.length > 0
               ? { status: 'success', message: 'Data source connected and services found.' }
@@ -195,7 +195,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
                 };
           return testResult;
         }),
-        catchError((err: any) => {
+        catchError((err) => {
           let message = 'Jaeger: ';
           if (err.statusText) {
             message += err.statusText;
@@ -230,7 +230,11 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     return query.query || '';
   }
 
-  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
+  private _request(
+    apiUrl: string,
+    data?: Record<string, unknown>,
+    options?: Partial<BackendSrvRequest>
+  ): Observable<Record<string, any>> {
     const params = data ? serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {

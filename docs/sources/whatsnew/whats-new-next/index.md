@@ -18,6 +18,18 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Contact points list view redesign
+
+<!-- Brenda Muir -->
+<!-- OSS, Enterprise from 10.3-->
+
+November 8, 2023
+
+_Generally available in Grafana Cloud_
+
+The Contact points list view has been redesigned and split into two tabs: Contact Points and
+Notification Templates, making it easier to view all contact point information at a glance. You can now search for name and type of contact points and integrations, view how many notification policies each contact point is being used for, and navigate directly to the linked notification policies.
+
 ## Export alerting resources to Terraform
 
 <!-- Yuri Tseretyan -->
@@ -38,6 +50,17 @@ October 30, 2023
 _Generally available in Grafana Cloud_
 
 Use Alerting insights to monitor your alerting data, discover key trends about your organization’s alert management performance, and find patterns in why things go wrong.
+
+## Data source Admin permission
+
+<!-- Ieva Vasiljeva -->
+<!-- Enterprise -->
+
+October 24, 2023
+
+_Generally available in Grafana Cloud_
+
+In addition to `Query` and `Edit` access, you can now grant users, teams, or basic roles `Admin` access to data sources. Users with `Admin` access to a data source can grant and revoke permissions to the data source, as well as to manage query caching settings for the data source. Users are automatically granted `Admin` access to data sources that they create.
 
 ## Configure refresh token handling separately for OAuth providers
 
@@ -228,6 +251,17 @@ _Available in private preview in Grafana Cloud_
 The Grafana Assume Role authentication provider lets Grafana Cloud users of the CloudWatch data source authenticate with AWS without having to create and maintain long term AWS Users. Using the new assume role authentication method, you no longer have to rotate access and secret keys in your CloudWatch data source. Instead, Grafana Cloud users can create an identity access and management (IAM) role that has a trust relationship with Grafana's AWS account; Grafana's AWS account will then use AWS Secure Token Service (STS) to create temporary credentials to access the user's AWS data.
 
 To learn more, refer to the [CloudWatch authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
+
+## Create alerts from panels
+
+<!-- Brenda Muir -->
+<!-- OSS, Enterprise from 10.3-->
+
+October 23, 2023
+
+_Generally available in Grafana Cloud_
+
+Create alerts from dashboard panels. You can reuse the panel queries and create alerts based on them.
 
 ## No basic role
 

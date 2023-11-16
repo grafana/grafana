@@ -198,7 +198,7 @@ func adjustDataplaneLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	}
 
 	timeField.Name = "timestamp"
-	labelsField.Name = "attributes"
+	labelsField.Name = "labels"
 	lineField.Name = "body"
 
 	if frame.Meta == nil {

@@ -15,12 +15,9 @@ describe('timeSeriesTableTransformer', () => {
     const result = results[0];
     expect(result.refId).toBe('A');
     expect(result.fields).toHaveLength(3);
-    expect(result.fields[0].values).toEqual([
-      'Value : instance=A : pod=B',
-      'Value : instance=A : pod=C',
-      'Value : instance=A : pod=D',
-    ]);
-    assertDataFrameField(result.fields[1], series);
+    expect(result.fields[0].values).toEqual(['A', 'A', 'A']);
+    expect(result.fields[1].values).toEqual(['B', 'C', 'D']);
+    assertDataFrameField(result.fields[2], series);
   });
 
   it('Will pass through non time series frames', () => {
@@ -34,9 +31,11 @@ describe('timeSeriesTableTransformer', () => {
     const results = timeSeriesToTableTransform({}, series);
     expect(results).toHaveLength(3);
     expect(results[0]).toEqual(series[0]);
-    expect(results[1].refId).toBe('A');
-    expect(results[1].fields).toHaveLength(3);
-    expect(results[2]).toEqual(series[3]);
+    expect(results[2].refId).toBe('A');
+    expect(results[2].fields).toHaveLength(3);
+    expect(results[2].fields[0].values).toEqual(['A', 'A']);
+    expect(results[2].fields[1].values).toEqual(['B', 'C']);
+    expect(results[1]).toEqual(series[3]);
   });
 
   it('Will group by refId', () => {
@@ -49,26 +48,19 @@ describe('timeSeriesTableTransformer', () => {
     ];
 
     const results = timeSeriesToTableTransform({}, series);
+
     expect(results).toHaveLength(2);
     expect(results[0].refId).toBe('A');
     expect(results[0].fields).toHaveLength(3);
-    expect(results[0].fields[0].values).toEqual([
-      'Value : instance=A : pod=B',
-      'Value : instance=A : pod=C',
-      'Value : instance=A : pod=D',
-    ]);
-    assertDataFrameField(results[0].fields[1], series.slice(0, 3));
+    expect(results[0].fields[0].values).toEqual(['A', 'A', 'A']);
+    expect(results[0].fields[1].values).toEqual(['B', 'C', 'D']);
+    assertDataFrameField(results[0].fields[2], series.slice(0, 3));
     expect(results[1].refId).toBe('B');
-    expect(results[1].fields).toHaveLength(3);
-    expect(results[1].fields[0].values).toEqual([
-      'Value : instance=B : pod=F : cluster=A',
-      'Value : instance=B : pod=G : cluster=B',
-    ]);
-    expect(results[1].fields[0].values).toEqual([
-      'Value : instance=B : pod=F : cluster=A',
-      'Value : instance=B : pod=G : cluster=B',
-    ]);
-    assertDataFrameField(results[1].fields[1], series.slice(3, 5));
+    expect(results[1].fields).toHaveLength(4);
+    expect(results[1].fields[0].values).toEqual(['B', 'B']);
+    expect(results[1].fields[1].values).toEqual(['F', 'G']);
+    expect(results[1].fields[2].values).toEqual(['A', 'B']);
+    assertDataFrameField(results[1].fields[3], series.slice(3, 5));
   });
 
   it('Will include last value by deault', () => {
@@ -78,20 +70,78 @@ describe('timeSeriesTableTransformer', () => {
     ];
 
     const results = timeSeriesToTableTransform({}, series);
-    expect(results[0].fields[1].values[0].fields[1].values[2]).toEqual(3);
-    expect(results[0].fields[1].values[1].fields[1].values[2]).toEqual(5);
+    expect(results[0].fields[2].values[0].value).toEqual(3);
+    expect(results[0].fields[2].values[1].value).toEqual(5);
   });
 
   it('Will calculate average value if configured', () => {
     const series = [
       getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
       getTimeSeries('B', { instance: 'A', pod: 'C' }, [3, 4, 5]),
+      getTimeSeries('C', { instance: 'B', pod: 'X' }, [4, 2, 0]),
+      getTimeSeries('D', { instance: 'B', pod: 'Y' }, [0, 0, 0]),
     ];
 
-    const results = timeSeriesToTableTransform({ B: { stat: ReducerID.mean } }, series);
-    expect(results[0].fields[2].values[0]).toEqual(3);
-    expect(results[1].fields[2].values[0]).toEqual(4);
+    const results = timeSeriesToTableTransform(
+      {
+        B: {
+          stat: ReducerID.mean,
+        },
+        D: {
+          stat: ReducerID.mean,
+        },
+      },
+      series
+    );
+
+    expect(results[0].fields[2].values[0].value).toEqual(3);
+    expect(results[1].fields[2].values[0].value).toEqual(4);
+    expect(results[2].fields[2].values[0].value).toEqual(0);
+    expect(results[3].fields[2].values[0].value).toEqual(0);
   });
+
+  it('calculate the value for an empty series to null', () => {
+    const series = [getTimeSeries('D', { instance: 'B', pod: 'Y' }, [])];
+
+    const results = timeSeriesToTableTransform(
+      {
+        B: {
+          stat: ReducerID.mean,
+        },
+        D: {
+          stat: ReducerID.mean,
+        },
+      },
+      series
+    );
+
+    expect(results[0].fields[2].values[0].value).toEqual(null);
+  });
+});
+
+it('Will transform multiple data series with the same label', () => {
+  const series = [
+    getTimeSeries('A', { instance: 'A', pod: 'B' }, [4, 2, 3]),
+    getTimeSeries('B', { instance: 'A', pod: 'B' }, [3, 4, 5]),
+    getTimeSeries('C', { instance: 'A', pod: 'B' }, [3, 4, 5]),
+  ];
+
+  const results = timeSeriesToTableTransform({}, series);
+
+  // Check series A
+  expect(results[0].fields).toHaveLength(3);
+  expect(results[0].fields[0].values[0]).toBe('A');
+  expect(results[0].fields[1].values[0]).toBe('B');
+
+  // Check series B
+  expect(results[1].fields).toHaveLength(3);
+  expect(results[1].fields[0].values[0]).toBe('A');
+  expect(results[1].fields[1].values[0]).toBe('B');
+
+  // Check series C
+  expect(results[2].fields).toHaveLength(3);
+  expect(results[2].fields[0].values[0]).toBe('A');
+  expect(results[2].fields[1].values[0]).toBe('B');
 });
 
 function assertFieldsEqual(field1: Field, field2: Field) {

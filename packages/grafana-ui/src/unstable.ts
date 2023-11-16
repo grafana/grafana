@@ -8,6 +8,3 @@
  * Once mature, they will be moved to the main export, be available to plugins, and
  * be subject to the standard policies
  */
-
-export { Grid } from './components/Layout/Grid/Grid';
-export { Stack } from './components/Layout/Stack/Stack';

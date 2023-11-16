@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,14 +16,13 @@ func TestNewConfig(t *testing.T) {
 	cfg.DataPath = "/tmp/grafana"
 	cfg.HTTPAddr = "10.0.0.1"
 	cfg.HTTPPort = "4000"
-	cfg.IsFeatureToggleEnabled = func(_ string) bool { return true }
 	cfg.AppURL = "http://test:4000"
 
 	section := cfg.Raw.Section("grafana-apiserver")
 	section.Key("log_level").SetValue("5")
 	section.Key("etcd_servers").SetValue("http://localhost:2379")
 
-	actual := newConfig(cfg)
+	actual := newConfig(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServer))
 
 	expected := &config{
 		enabled:     true,

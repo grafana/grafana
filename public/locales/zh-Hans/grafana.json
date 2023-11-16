@@ -2,14 +2,14 @@
   "_comment": "",
   "access-control": {
     "add-permission": {
-      "role-label": "",
+      "role-label": "角色",
       "serviceaccount-label": "",
       "team-label": "",
       "title": "",
       "user-label": ""
     },
     "add-permissions": {
-      "save": ""
+      "save": "保存"
     },
     "permission-list": {
       "permission": ""
@@ -18,7 +18,7 @@
       "add-label": "",
       "no-permissions": "",
       "permissions-change-warning": "",
-      "role": "",
+      "role": "角色",
       "serviceaccount": "",
       "team": "",
       "title": "",
@@ -27,7 +27,7 @@
   },
   "browse-dashboards": {
     "action": {
-      "cancel-button": "",
+      "cancel-button": "取消",
       "cannot-move-folders": "",
       "delete-button": "",
       "delete-modal-invalid-text": "",
@@ -54,10 +54,10 @@
     "dashboards-tree": {
       "collapse-folder-button": "",
       "expand-folder-button": "",
-      "name-column": "",
+      "name-column": "名称",
       "select-all-header-checkbox": "",
       "select-checkbox": "",
-      "tags-column": ""
+      "tags-column": "标签"
     },
     "folder-actions-button": {
       "delete": "",
@@ -67,22 +67,22 @@
     },
     "folder-picker": {
       "accessible-label": "",
-      "button-label": "",
+      "button-label": "选择文件夹",
       "empty-message": "",
       "error-title": "",
       "search-placeholder": "",
       "unknown-error": ""
     },
     "manage-folder-nav": {
-      "alert-rules": "",
-      "dashboards": "",
+      "alert-rules": "警报规则",
+      "dashboards": "仪表板",
       "panels": "",
       "permissions": "",
-      "settings": ""
+      "settings": "设置"
     },
     "new-folder-form": {
-      "cancel-label": "",
-      "create-label": "",
+      "cancel-label": "取消",
+      "create-label": "创建",
       "name-label": ""
     },
     "no-results": {
@@ -121,7 +121,7 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": ""
+      "category-header-label": "数据源"
     },
     "search": {
       "placeholder": ""
@@ -133,6 +133,16 @@
       "error-message": "",
       "title": ""
     },
+    "basic-info-form": {
+      "description-description": "",
+      "description-label": "",
+      "label-description": "",
+      "label-label": "",
+      "label-placeholder": "",
+      "label-required": "",
+      "sub-text": "",
+      "title": ""
+    },
     "list": {
       "delete": "",
       "label": "",
@@ -141,9 +151,73 @@
       "source": "",
       "target": ""
     },
+    "navigation-form": {
+      "add-button": "添加",
+      "back-button": "",
+      "next-button": "",
+      "save-button": "保存"
+    },
     "page-content": "",
     "page-heading": "",
-    "sub-title": ""
+    "query-editor": {
+      "control-rules": "",
+      "data-source-text": "",
+      "data-source-title": "",
+      "error-text": "",
+      "error-title": "",
+      "loading": "",
+      "query-description": "",
+      "query-editor-title": "",
+      "query-label": "查询"
+    },
+    "source-form": {
+      "control-required": "",
+      "description": "",
+      "heading": "",
+      "results-description": "",
+      "results-label": "",
+      "results-required": "",
+      "source-description": "",
+      "source-label": "",
+      "sub-text": "",
+      "title": ""
+    },
+    "sub-title": "",
+    "target-form": {
+      "control-rules": "",
+      "sub-text": "",
+      "target-description": "",
+      "target-label": "",
+      "title": ""
+    },
+    "trans-details": {
+      "logfmt-description": "",
+      "logfmt-label": "",
+      "regex-description": "",
+      "regex-expression": "",
+      "regex-label": "",
+      "regex-map-values": ""
+    },
+    "transform": {
+      "add-button": "",
+      "heading": "",
+      "no-transform": ""
+    },
+    "transform-row": {
+      "expression-label": "",
+      "expression-required": "",
+      "expression-tooltip": "",
+      "field-input": "",
+      "field-label": "",
+      "field-tooltip": "",
+      "map-value-label": "",
+      "map-value-tooltip": "",
+      "remove-button": "删除",
+      "remove-tooltip": "",
+      "transform-required": "",
+      "type-label": "类型",
+      "type-tooltip": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -165,7 +239,7 @@
       "add-widget-header": "",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "",
-      "import-dashboard-button": ""
+      "import-dashboard-button": "导入仪表板"
     },
     "inspect": {
       "data-tab": "数据",
@@ -246,7 +320,7 @@
       "secondary-text": ""
     },
     "form-actions": {
-      "cancel": "",
+      "cancel": "取消",
       "load": ""
     },
     "gcom-field": {
@@ -271,12 +345,12 @@
       "description-label": "",
       "editable-description": "",
       "editable-label": "",
-      "folder-label": "",
+      "folder-label": "文件夹",
       "panel-options-graph-tooltip-description": "",
       "panel-options-graph-tooltip-label": "",
       "panel-options-label": "",
-      "tags-label": "",
-      "title": "",
+      "tags-label": "标签",
+      "title": "概况",
       "title-label": ""
     },
     "json-editor": {
@@ -291,7 +365,7 @@
       "title": ""
     },
     "settings": {
-      "title": ""
+      "title": "设置"
     },
     "time-picker": {
       "hide-time-picker": "",
@@ -300,8 +374,8 @@
       "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "",
       "time-options-label": "",
-      "time-zone-label": "",
-      "week-start-label": ""
+      "time-zone-label": "时区",
+      "week-start-label": "每周开始日"
     },
     "variables": {
       "title": ""
@@ -341,13 +415,13 @@
       "newest-first": "",
       "oldest-first": "",
       "query-history": "",
-      "settings": "",
-      "starred": ""
+      "settings": "设置",
+      "starred": "已加星标"
     },
     "rich-history-card": {
       "add-comment-form": "",
       "add-comment-tooltip": "",
-      "cancel": "",
+      "cancel": "取消",
       "confirm-delete": "",
       "copy-query-tooltip": "",
       "copy-shortened-link-tooltip": "",
@@ -371,7 +445,7 @@
       "update-comment-form": ""
     },
     "rich-history-container": {
-      "loading": ""
+      "loading": "加载中..."
     },
     "rich-history-notification": {
       "query-copied": "",
@@ -384,7 +458,7 @@
       "filter-history": "",
       "filter-placeholder": "",
       "history-local": "",
-      "loading": "",
+      "loading": "加载中...",
       "loading-results": "",
       "search-placeholder": "",
       "showing-queries": "",
@@ -414,7 +488,7 @@
     "rich-history-starred-tab": {
       "filter-queries-aria-label": "",
       "filter-queries-placeholder": "",
-      "loading": "",
+      "loading": "加载中...",
       "loading-results": "",
       "local-history-message": "",
       "search-queries-placeholder": "",
@@ -451,7 +525,7 @@
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
-      "refresh-picker-cancel": "",
+      "refresh-picker-cancel": "取消",
       "refresh-picker-run": "",
       "split-close": "",
       "split-close-tooltip": "",
@@ -474,7 +548,7 @@
       "no-options": "未找到选项"
     },
     "select": {
-      "no-options-label": "",
+      "no-options-label": "未找到选项",
       "placeholder": ""
     }
   },
@@ -488,7 +562,7 @@
   },
   "help-modal": {
     "shortcuts-category": {
-      "dashboard": "",
+      "dashboard": "仪表板",
       "focused-panel": "",
       "global": "",
       "time-range": ""
@@ -496,7 +570,7 @@
     "shortcuts-description": {
       "change-theme": "",
       "collapse-all-rows": "",
-      "dashboard-settings": "",
+      "dashboard-settings": "仪表板设置",
       "duplicate-panel": "",
       "exit-edit/setting-views": "",
       "expand-all-rows": "",
@@ -511,7 +585,7 @@
       "open-shared-modal": "",
       "refresh-all-panels": "",
       "remove-panel": "",
-      "save-dashboard": "",
+      "save-dashboard": "保存仪表板",
       "show-all-shortcuts": "",
       "toggle-active-mode": "",
       "toggle-all-panel-legends": "",
@@ -522,14 +596,14 @@
       "toggle-panel-edit": "",
       "toggle-panel-fullscreen": "",
       "toggle-panel-legend": "",
-      "zoom-out-time-range": ""
+      "zoom-out-time-range": "缩放时间范围"
     },
     "title": ""
   },
   "inspector": {
     "query": {
       "collapse-all": "",
-      "copy-to-clipboard": "",
+      "copy-to-clipboard": "复制到剪贴板",
       "description": "",
       "expand-all": "",
       "no-data": "",
@@ -640,15 +714,15 @@
     },
     "config-access": {
       "subtitle": "",
-      "title": ""
+      "title": "用户和访问权限"
     },
     "config-general": {
       "subtitle": "",
-      "title": ""
+      "title": "概况"
     },
     "config-plugins": {
       "subtitle": "",
-      "title": ""
+      "title": "插件和数据"
     },
     "connect-data": {
       "title": ""
@@ -682,7 +756,7 @@
     },
     "data-sources": {
       "subtitle": "",
-      "title": ""
+      "title": "数据源"
     },
     "datasources": {
       "subtitle": "添加并配置数据源",
@@ -751,7 +825,7 @@
       "title": "新建文件夹"
     },
     "observability": {
-      "title": ""
+      "title": "可观测性"
     },
     "oncall": {
       "title": ""
@@ -857,12 +931,12 @@
     },
     "megamenu": {
       "close": "",
-      "dock": "",
-      "undock": ""
+      "dock": ""
     },
     "toolbar": {
+      "close-menu": "",
       "enable-kiosk": "启用 kiosk 模式",
-      "toggle-menu": "切换菜单",
+      "open-menu": "",
       "toggle-search-bar": "切换顶部搜索栏"
     }
   },
@@ -876,7 +950,6 @@
   "panel": {
     "header-menu": {
       "copy": "复制",
-      "create-alert": "",
       "create-library-panel": "创建库面板",
       "duplicate": "复制",
       "edit": "编辑",
@@ -887,6 +960,7 @@
       "inspect-data": "数据",
       "inspect-json": "面板 JSON",
       "more": "更多...",
+      "new-alert-rule": "新建警报规则",
       "query": "查询",
       "remove": "删除",
       "share": "分享",
@@ -901,19 +975,19 @@
       "add-tag-label": "",
       "add-tag-placeholder": "",
       "add-title-label": "",
-      "cancel": "",
+      "cancel": "取消",
       "heading": "",
       "interval-label": "",
       "interval-placeholder": "",
       "interval-required": "",
-      "name-label": "",
-      "name-placeholder": "",
-      "name-required": "",
-      "save": "",
+      "name-label": "名称",
+      "name-placeholder": "名称",
+      "name-required": "姓名是必填项",
+      "save": "保存",
       "table-delete": "",
       "table-drag": "",
       "table-empty": "",
-      "table-heading": ""
+      "table-heading": "仪表板"
     },
     "sub-title": "",
     "title": ""
@@ -941,7 +1015,7 @@
   },
   "profile": {
     "change-password": {
-      "cancel-button": "",
+      "cancel-button": "取消",
       "cannot-change-password-message": "",
       "change-password-button": "",
       "confirm-password-label": "",
@@ -954,6 +1028,19 @@
       "old-password-required": "",
       "passwords-must-match": ""
     }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "",
+      "datasource-help": "",
+      "disable-query": "",
+      "drag-and-drop": "",
+      "duplicate-query": "",
+      "expand-row": "",
+      "remove-query": "",
+      "toggle-edit-mode": ""
+    },
+    "query-editor-not-exported": ""
   },
   "refresh-picker": {
     "aria-label": {
@@ -973,7 +1060,7 @@
       "label": "关"
     },
     "tooltip": {
-      "interval-selected": "",
+      "interval-selected": "设置自动刷新间隔",
       "turned-off": ""
     }
   },
@@ -1038,7 +1125,6 @@
       "cancel-button": "取消",
       "info-text": "导出此仪表板。",
       "save-button": "保存至文件",
-      "share-default-label": "导出时清除默认值",
       "share-externally-label": "导出以供外部分享",
       "view-button": "查看 JSON"
     },
@@ -1085,6 +1171,8 @@
       "export": "导出",
       "library-panel": "库面板",
       "link": "链接",
+      "panel-embed": "嵌入",
+      "public-dashboard": "",
       "snapshot": "快照"
     },
     "theme-picker": {
@@ -1100,8 +1188,8 @@
   "share-playlist": {
     "checkbox-description": "",
     "checkbox-label": "",
-    "copy-link-button": "",
-    "link-url-label": "",
+    "copy-link-button": "复制",
+    "link-url-label": "链接网址",
     "mode": "",
     "mode-kiosk": "",
     "mode-normal": "",
@@ -1111,8 +1199,8 @@
   "shared": {
     "preferences": {
       "theme": {
-        "dark-label": "",
-        "light-label": "",
+        "dark-label": "深色",
+        "light-label": "浅色",
         "system-label": ""
       }
     }
@@ -1138,9 +1226,9 @@
   },
   "snapshot": {
     "external-badge": "",
-    "name-column-header": "",
+    "name-column-header": "名称",
     "url-column-header": "",
-    "view-button": ""
+    "view-button": "查看"
   },
   "tag-filter": {
     "loading": "加载中...",

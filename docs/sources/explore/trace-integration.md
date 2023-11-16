@@ -39,7 +39,7 @@ For information on querying each data source, refer to their documentation:
 - [Zipkin query editor]({{< relref "../datasources/zipkin/#query-the-data-source" >}})
 - [Azure Monitor Application Insights query editor]({{< relref "../datasources/azure-monitor/query-editor/#query-application-insights-traces" >}})
 
-## Trace View
+## Trace view
 
 This section explains the elements of the Trace View.
 
@@ -59,7 +59,7 @@ This section explains the elements of the Trace View.
 
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
 
-### Span Filters
+### Span filters
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png)
 
@@ -67,12 +67,14 @@ Using span filters, you can filter your spans in the trace timeline viewer. The 
 
 You can add one or more of the following filters:
 
-- Service name
+- Resource service name
 - Span name
 - Duration
 - Tags (which include tags, process tags, and log fields)
 
 To only show the spans you have matched, you can press the `Show matches only` toggle.
+
+{{< youtube id="VP2XV3IIc80" >}}
 
 ### Timeline
 
@@ -99,10 +101,6 @@ Clicking anywhere on the span row shows span details.
 
 ### Trace to logs
 
-{{% admonition type="note" %}}
-Available in Grafana 7.4 and later versions.
-{{% /admonition %}}
-
 You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-logs) for configuration instructions.
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-trace-to-logs.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
@@ -112,12 +110,21 @@ Click the document icon to open a split view in Explore with the configured data
 ### Trace to metrics
 
 {{% admonition type="note" %}}
-This feature is currently in beta & behind the `traceToMetrics` feature toggle.
+This feature is currently in beta and behind the `traceToMetrics` feature toggle.
 {{% /admonition %}}
 
-You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-metrics) for configuration instructions.
+You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source#trace-to-metrics) for configuration instructions.
 
-## Node Graph
+### Trace to profiles
+
+{{< docs/experimental product="Trace to profiles" featureFlag="traceToProfiles" >}}
+
+Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
+Refer to the [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source#trace-to-profiles) for configuration instructions.
+
+![Selecting a link in the span queries the profile data source](/static/img/docs/tempo/profiles/tempo-profiles-Span-link-profile-data-source.png)
+
+## Node graph
 
 You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service graph based on the current trace.
 

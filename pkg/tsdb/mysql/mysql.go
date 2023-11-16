@@ -15,6 +15,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -46,11 +47,11 @@ func characterEscape(s string, escapeChar string) string {
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *Service {
 	return &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings(cfg, httpClientProvider)),
+		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
 	}
 }
 
-func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
@@ -114,7 +115,7 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			return nil, err
 		}
 
-		tlsConfig, err := httpClientProvider.GetTLSConfig(opts)
+		tlsConfig, err := sdkhttpclient.GetTLSConfig(opts)
 		if err != nil {
 			return nil, err
 		}

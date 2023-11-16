@@ -127,6 +127,7 @@ You can perform the following transformations on your data.
 Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
 - **Mode -** Select a mode:
+
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
   - **Binary operation -** Apply basic binary operations (for example, sum or multiply) on values in a single row from two selected fields.
   - **Unary operation -** Apply basic unary operations on values in a single row from a selected field. The available operations are:
@@ -135,7 +136,32 @@ Use this transformation to add a new field calculated from two other fields. Eac
     - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
     - **Floor (floor)** - Returns the largest integer less than or equal to a given expression.
     - **Ceiling (ceil)** - Returns the smallest integer greater than or equal to a given expression.
+  - **Cumulative functions** - Apply functions on the current row and all preceding rows.
+
+    **Note:** This mode is an experimental feature. Engineering and on-call support is not available.
+    Documentation is either limited or not provided outside of code comments. No SLA is provided.
+    Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature.
+    Contact Grafana Support to enable this feature in Grafana Cloud.
+
+    - **Total** - Calculates the cumulative total up to and including the current row.
+    - **Mean** - Calculates the mean up to and including the current row.
+
+  - **Window functions** - Apply window functions. The window can either be **trailing** or **centered**.
+    With a trailing window the current row will be the last row in the window.
+    With a centered window the window will be centered on the current row.
+    For even window sizes, the window will be centered between the current row, and the previous row.
+
+    **Note:** This mode is an experimental feature. Engineering and on-call support is not available.
+    Documentation is either limited or not provided outside of code comments. No SLA is provided.
+    Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature.
+    Contact Grafana Support to enable this feature in Grafana Cloud.
+
+    - **Mean** - Calculates the moving mean or running average.
+    - **Stddev** - Calculates the moving standard deviation.
+    - **Variance** - Calculates the moving variance.
+
   - **Row index -** Insert a field with the row index.
+
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
 - **Operation -** If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
@@ -453,7 +479,7 @@ The result from using the regular expression 'prod.\*' would be:
 | 2023-03-04 23:56:23 | 22.2         | 20.2          |
 | 2023-03-04 23:56:23 | 22.1         | 20.1          |
 
-The regular expression can include an interpolated dashboard variable by using the ${$variableName} syntax.
+The regular expression can include an interpolated dashboard variable by using the ${variableName} syntax.
 
 #### Manually select included fields
 
