@@ -18,6 +18,8 @@ import {
   DataSourceWithLogsContextSupport,
   DataSourceApi,
   hasToggleableQueryFiltersSupport,
+  DataSourceWithQueryModificationSupport,
+  hasQueryModificationSupport,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -60,15 +62,18 @@ interface LogsContainerProps extends PropsFromRedux {
   onClickFilterOutValue: (value: string, refId?: string) => void;
 }
 
+type DataSourceInstance =
+  | DataSourceApi<DataQuery>
+  | (DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>)
+  | (DataSourceApi<DataQuery> & DataSourceWithQueryModificationSupport<DataQuery>);
+
 interface LogsContainerState {
-  logDetailsFilterAvailable: boolean;
-  logContextSupport: Record<string, DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>>;
+  dsInstances: Record<string, DataSourceInstance>;
 }
 
 class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
   state: LogsContainerState = {
-    logDetailsFilterAvailable: false,
-    logContextSupport: {},
+    dsInstances: {},
   };
 
   componentDidMount() {
@@ -76,29 +81,25 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   }
 
   componentDidUpdate(prevProps: LogsContainerProps) {
-    this.checkDataSourcesFeatures();
+    if (prevProps.logsQueries !== this.props.logsQueries) {
+      this.checkDataSourcesFeatures();
+    }
   }
 
   private checkDataSourcesFeatures() {
     const { logsQueries, datasourceInstance } = this.props;
-
     if (!logsQueries || !datasourceInstance) {
       return;
     }
 
-    let newState: LogsContainerState = { ...this.state, logDetailsFilterAvailable: false };
+    const dsInstances: Record<string, DataSourceInstance> = {};
 
     // Not in mixed mode.
     if (datasourceInstance.uid !== MIXED_DATASOURCE_NAME) {
-      if (datasourceInstance?.modifyQuery || hasToggleableQueryFiltersSupport(datasourceInstance)) {
-        newState.logDetailsFilterAvailable = true;
-      }
-      if (hasLogsContextSupport(datasourceInstance)) {
-        logsQueries.forEach(({ refId }) => {
-          newState.logContextSupport[refId] = datasourceInstance;
-        });
-      }
-      this.setState(newState);
+      logsQueries.forEach(({ refId }) => {
+        dsInstances[refId] = datasourceInstance;
+      });
+      this.setState({ dsInstances });
       return;
     }
 
@@ -109,8 +110,8 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
         continue;
       }
       const mustCheck =
-        !newState.logContextSupport[query.refId] ||
-        newState.logContextSupport[query.refId].uid !== query.datasource.uid;
+        !dsInstances[query.refId] ||
+        dsInstances[query.refId].uid !== query.datasource.uid;
       if (mustCheck) {
         dsPromises.push(
           new Promise((resolve) => {
@@ -128,18 +129,11 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       return;
     }
 
-    Promise.all(dsPromises).then((dsInstances) => {
-      dsInstances.forEach(({ ds, refId }) => {
-        newState.logDetailsFilterAvailable =
-          newState.logDetailsFilterAvailable || Boolean(ds.modifyQuery) || hasToggleableQueryFiltersSupport(ds);
-        if (hasLogsContextSupport(ds)) {
-          newState.logContextSupport[refId] = ds;
-        } else {
-          delete newState.logContextSupport[refId];
-        }
+    Promise.all(dsPromises).then((instances) => {
+      instances.forEach(({ ds, refId }) => {
+        dsInstances[refId] = ds;
       });
-
-      this.setState(newState);
+      this.setState({ dsInstances });
     });
   }
 
@@ -167,39 +161,48 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   ): Promise<DataQueryResponse | []> => {
     const { logsQueries } = this.props;
 
-    if (!origRow.dataFrame.refId || !this.state.logContextSupport[origRow.dataFrame.refId]) {
+    if (!origRow.dataFrame.refId || !this.state.dsInstances[origRow.dataFrame.refId]) {
       return Promise.resolve([]);
     }
 
-    const ds = this.state.logContextSupport[origRow.dataFrame.refId];
+    const ds = this.state.dsInstances[origRow.dataFrame.refId];
+    if (!hasLogsContextSupport(ds)) {
+      return Promise.resolve([]);
+    }
+    
     const query = this.getQuery(logsQueries, origRow, ds);
-
     return query ? ds.getLogRowContext(row, options, query) : Promise.resolve([]);
   };
 
   getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | null> => {
     const { logsQueries } = this.props;
 
-    if (!row.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
+    if (!row.dataFrame.refId || !this.state.dsInstances[row.dataFrame.refId]) {
       return Promise.resolve(null);
     }
 
-    const ds = this.state.logContextSupport[row.dataFrame.refId];
-    const query = this.getQuery(logsQueries, row, ds);
+    const ds = this.state.dsInstances[row.dataFrame.refId];
+    if (!hasLogsContextSupport(ds)) {
+      return Promise.resolve(null);
+    }
 
+    const query = this.getQuery(logsQueries, row, ds);
     return query && ds.getLogRowContextQuery ? ds.getLogRowContextQuery(row, options, query) : Promise.resolve(null);
   };
 
   getLogRowContextUi = (row: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
     const { logsQueries } = this.props;
 
-    if (!row.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
+    if (!row.dataFrame.refId || !this.state.dsInstances[row.dataFrame.refId]) {
       return <></>;
     }
 
-    const ds = this.state.logContextSupport[row.dataFrame.refId];
-    const query = this.getQuery(logsQueries, row, ds);
+    const ds = this.state.dsInstances[row.dataFrame.refId];
+    if (!hasLogsContextSupport(ds)) {
+      return <></>;
+    }
 
+    const query = this.getQuery(logsQueries, row, ds);
     return query && hasLogsContextUiSupport(ds) && ds.getLogRowContextUi ? (
       ds.getLogRowContextUi(row, runContextQuery, query)
     ) : (
@@ -208,17 +211,29 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   };
 
   showContextToggle = (row?: LogRowModel): boolean => {
-    if (!row?.dataFrame.refId || !this.state.logContextSupport[row.dataFrame.refId]) {
+    if (!row?.dataFrame.refId || !this.state.dsInstances[row.dataFrame.refId]) {
       return false;
     }
 
-    return true;
+    return hasLogsContextSupport(this.state.dsInstances[row.dataFrame.refId]);
   };
 
   getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
     const { splitOpenFn, range } = this.props;
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame });
   };
+
+  logDetailsFilterAvailable = () => {
+    return Object.values(this.state.dsInstances).some(ds => ds?.modifyQuery || hasToggleableQueryFiltersSupport(ds));
+  }
+  
+  filterValueAvailable = () => {
+    return Object.values(this.state.dsInstances).some(ds => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER'));
+  }
+
+  filterOutValueAvailable = () => {
+    return Object.values(this.state.dsInstances).some(ds => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER_OUT'));
+  }
 
   render() {
     const {
@@ -248,7 +263,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       logsVolume,
       scrollElement,
     } = this.props;
-    const { logDetailsFilterAvailable } = this.state;
 
     if (!logRows) {
       return null;
@@ -293,8 +307,8 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             loadingState={loadingState}
             loadLogsVolumeData={() => loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume)}
             onChangeTime={this.onChangeTime}
-            onClickFilterLabel={logDetailsFilterAvailable ? onClickFilterLabel : undefined}
-            onClickFilterOutLabel={logDetailsFilterAvailable ? onClickFilterOutLabel : undefined}
+            onClickFilterLabel={this.logDetailsFilterAvailable() ? onClickFilterLabel : undefined}
+            onClickFilterOutLabel={this.logDetailsFilterAvailable() ? onClickFilterOutLabel : undefined}
             onStartScanning={onStartScanning}
             onStopScanning={onStopScanning}
             absoluteRange={absoluteRange}
@@ -313,10 +327,10 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             panelState={this.props.panelState}
             logsFrames={this.props.logsFrames}
             scrollElement={scrollElement}
-            isFilterLabelActive={logDetailsFilterAvailable ? this.props.isFilterLabelActive : undefined}
+            isFilterLabelActive={this.logDetailsFilterAvailable() ? this.props.isFilterLabelActive : undefined}
             range={range}
-            onClickFilterValue={this.props.onClickFilterValue}
-            onClickFilterOutValue={this.props.onClickFilterOutValue}
+            onClickFilterValue={this.filterValueAvailable() ? this.props.onClickFilterValue : undefined}
+            onClickFilterOutValue={this.filterOutValueAvailable() ? this.props.onClickFilterOutValue : undefined}
           />
         </LogsCrossFadeTransition>
       </>
