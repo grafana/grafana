@@ -1,7 +1,34 @@
 import { DataFrame, Field, FieldType, formattedValueToString, getFieldDisplayName } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DisplayValue } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from '../fields';
+
+enum SparseDataFieldNames {
+  y = 'y',
+  yMin = 'yMin',
+  yMax = 'yMax',
+  x = 'x',
+  xMin = 'xMin',
+  xMax = 'xMax',
+  count = 'count',
+  yLayout = 'yLayout',
+  xLayout = 'xLayout',
+}
+
+type BucketSizes = {
+  xBucketCount: number;
+  yBucketCount: number;
+  xBucketSize: number;
+  yBucketSize: number;
+};
+
+type BucketsMinMax = {
+  xBucketMin: number;
+  xBucketMax: number;
+  yBucketMin: string;
+  yBucketMax: string;
+};
 
 export const xDisp = (v: number, xField?: Field) => {
   if (xField?.display) {
@@ -58,26 +85,6 @@ export const formatMilliseconds = (milliseconds: number) => {
   return `${value} ${unitString}`;
 };
 
-export enum SparseDataFieldNames {
-  y = 'y',
-  yMin = 'yMin',
-  yMax = 'yMax',
-  x = 'x',
-  xMin = 'xMin',
-  xMax = 'xMax',
-  count = 'count',
-  yLayout = 'yLayout',
-  xLayout = 'xLayout',
-}
-
-interface DisplayValue {
-  name: string;
-  fieldName: string;
-  value: unknown;
-  valueString: string;
-  highlight: boolean;
-}
-
 // logic from DataHoverView
 const parseSparseData = (data?: DataFrame, rowIndex?: number | null, columnIndex?: number | null) => {
   if (!data || rowIndex == null) {
@@ -122,21 +129,7 @@ const parseSparseData = (data?: DataFrame, rowIndex?: number | null, columnIndex
   return displayValues;
 };
 
-type BucketSizes = {
-  xBucketCount: number;
-  yBucketCount: number;
-  xBucketSize: number;
-  yBucketSize: number;
-};
-
-type BucketsMinMax = {
-  xBucketMin: number;
-  xBucketMax: number;
-  yBucketMin: string;
-  yBucketMax: string;
-};
-
-export const getInterval = (fieldValues: any[]) => {
+const getInterval = (fieldValues: any[]) => {
   const firstValue = fieldValues[0];
 
   for (let i = 1; i < fieldValues.length; i++) {

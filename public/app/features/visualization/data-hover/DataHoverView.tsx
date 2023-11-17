@@ -23,8 +23,9 @@ export interface Props {
   header?: string;
 }
 
-interface DisplayValue {
+export interface DisplayValue {
   name: string;
+  fieldName?: string;
   value: unknown;
   valueString: string;
   highlight: boolean;
