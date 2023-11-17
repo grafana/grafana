@@ -24,7 +24,7 @@ type ProtoClient interface {
 	pluginv2.DiagnosticsClient
 	pluginv2.StreamClient
 
-	PID() (string, error)
+	PID(context.Context) (string, error)
 	PluginID() string
 	PluginVersion() string
 	Logger() log.Logger
@@ -65,8 +65,8 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 	return &protoClient{plugin: p, pluginVersion: opts.PluginVersion}, nil
 }
 
-func (r *protoClient) PID() (string, error) {
-	if _, exists := r.client(); !exists {
+func (r *protoClient) PID(ctx context.Context) (string, error) {
+	if _, exists := r.client(ctx); !exists {
 		return "", errClientNotStarted
 	}
 	return r.plugin.client.ID(), nil
@@ -102,8 +102,8 @@ func (r *protoClient) Running(_ context.Context) bool {
 	return !r.plugin.Exited()
 }
 
-func (r *protoClient) client() (*ClientV2, bool) {
-	if !r.Running(context.Background()) {
+func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
+	if !r.Running(ctx) {
 		return nil, false
 	}
 
@@ -118,7 +118,7 @@ func (r *protoClient) client() (*ClientV2, bool) {
 }
 
 func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
-	c, exists := r.client()
+	c, exists := r.client(ctx)
 	if !exists {
 		return nil, errClientNotStarted
 	}
@@ -126,7 +126,7 @@ func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataReque
 }
 
 func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourceRequest, opts ...grpc.CallOption) (pluginv2.Resource_CallResourceClient, error) {
-	c, exists := r.client()
+	c, exists := r.client(ctx)
 	if !exists {
 		return nil, errClientNotStarted
 	}
@@ -134,7 +134,7 @@ func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourc
 }
 
 func (r *protoClient) CheckHealth(ctx context.Context, in *pluginv2.CheckHealthRequest, opts ...grpc.CallOption) (*pluginv2.CheckHealthResponse, error) {
-	c, exists := r.client()
+	c, exists := r.client(ctx)
 	if !exists {
 		return nil, errClientNotStarted
 	}
@@ -142,7 +142,7 @@ func (r *protoClient) CheckHealth(ctx context.Context, in *pluginv2.CheckHealthR
 }
 
 func (r *protoClient) CollectMetrics(ctx context.Context, in *pluginv2.CollectMetricsRequest, opts ...grpc.CallOption) (*pluginv2.CollectMetricsResponse, error) {
-	c, exists := r.client()
+	c, exists := r.client(ctx)
 	if !exists {
 		return nil, errClientNotStarted
 	}
@@ -150,7 +150,7 @@ func (r *protoClient) CollectMetrics(ctx context.Context, in *pluginv2.CollectMe
 }
 
 func (r *protoClient) SubscribeStream(ctx context.Context, in *pluginv2.SubscribeStreamRequest, opts ...grpc.CallOption) (*pluginv2.SubscribeStreamResponse, error) {
-	c, exists := r.client()
+	c, exists := r.client(ctx)
 	if !exists {
 		return nil, errClientNotStarted
 	}
@@ -158,7 +158,7 @@ func (r *protoClient) SubscribeStream(ctx context.Context, in *pluginv2.Subscrib
 }
 
 func (r *protoClient) RunStream(ctx context.Context, in *pluginv2.RunStreamRequest, opts ...grpc.CallOption) (pluginv2.Stream_RunStreamClient, error) {
-	c, exists := r.client()
+	c, exists := r.client(ctx)
 	if !exists {
 		return nil, errClientNotStarted
 	}
@@ -166,7 +166,7 @@ func (r *protoClient) RunStream(ctx context.Context, in *pluginv2.RunStreamReque
 }
 
 func (r *protoClient) PublishStream(ctx context.Context, in *pluginv2.PublishStreamRequest, opts ...grpc.CallOption) (*pluginv2.PublishStreamResponse, error) {
-	c, exists := r.client()
+	c, exists := r.client(ctx)
 	if !exists {
 		return nil, errClientNotStarted
 	}
