@@ -717,13 +717,11 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:           "dashgpt",
-			Description:    "Enable AI powered features in dashboards",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          grafanaDashboardsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: truePtr,
+			Name:         "dashgpt",
+			Description:  "Enable AI powered features in dashboards",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:            "reportingRetries",
@@ -877,13 +875,6 @@ var (
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:         "navAdminSubsections",
-			Description:  "Splits the administration section of the nav tree into subsections",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:            "recoveryThreshold",
