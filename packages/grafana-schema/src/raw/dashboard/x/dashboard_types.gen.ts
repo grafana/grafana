@@ -301,7 +301,7 @@ export interface DashboardLink {
   /**
    * Link URL. Only required/valid if the type is link
    */
-  url: string;
+  url?: string;
 }
 
 export const defaultDashboardLink: Partial<DashboardLink> = {

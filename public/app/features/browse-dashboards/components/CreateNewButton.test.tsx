@@ -25,18 +25,21 @@ describe('NewActionsButton', () => {
   it('should display the correct urls with a given parent folder', async () => {
     await renderAndOpen(mockParentFolder);
 
-    expect(screen.getByText('New dashboard')).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'New dashboard' })).toHaveAttribute(
       'href',
       `/dashboard/new?folderUid=${mockParentFolder.uid}`
     );
-    expect(screen.getByText('Import')).toHaveAttribute('href', `/dashboard/import?folderUid=${mockParentFolder.uid}`);
+    expect(screen.getByRole('link', { name: 'Import' })).toHaveAttribute(
+      'href',
+      `/dashboard/import?folderUid=${mockParentFolder.uid}`
+    );
   });
 
   it('should display urls without params when there is no parent folder', async () => {
     await renderAndOpen();
 
-    expect(screen.getByText('New dashboard')).toHaveAttribute('href', '/dashboard/new');
-    expect(screen.getByText('Import')).toHaveAttribute('href', '/dashboard/import');
+    expect(screen.getByRole('link', { name: 'New dashboard' })).toHaveAttribute('href', '/dashboard/new');
+    expect(screen.getByRole('link', { name: 'Import' })).toHaveAttribute('href', '/dashboard/import');
   });
 
   it('clicking the "New folder" button opens the drawer', async () => {
@@ -57,7 +60,7 @@ describe('NewActionsButton', () => {
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
 
-    expect(screen.getByText('New dashboard')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByText('Import')).toBeInTheDocument();
     expect(screen.queryByText('New folder')).not.toBeInTheDocument();
   });

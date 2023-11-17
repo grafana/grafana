@@ -166,7 +166,7 @@ Links with references to other dashboards or external resources
 | `title`       | string   | **Yes**  |         | Title to display with the link                                                                                                                                                 |
 | `tooltip`     | string   | **Yes**  |         | Tooltip to display when the user hovers their mouse over it                                                                                                                    |
 | `type`        | string   | **Yes**  |         | Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)<br/>Possible values are: `link`, `dashboards`. |
-| `url`         | string   | **Yes**  |         | Link URL. Only required/valid if the type is link                                                                                                                              |
+| `url`         | string   | No       |         | Link URL. Only required/valid if the type is link                                                                                                                              |
 
 ### Snapshot
 

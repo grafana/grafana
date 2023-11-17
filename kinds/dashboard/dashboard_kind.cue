@@ -265,7 +265,7 @@ lineage: schemas: [{
 			// Tooltip to display when the user hovers their mouse over it
 			tooltip: string
 			// Link URL. Only required/valid if the type is link
-			url: string
+			url?: string
 			// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
