@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Table, AdHocFilterItem, PanelChrome, withTheme2 } from '@grafana/ui';
+import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import {
@@ -18,7 +18,7 @@ import { MetaInfoText } from '../MetaInfoText';
 import { selectIsWaitingForData } from '../state/query';
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
-interface TableContainerProps {
+interface TableContainerProps extends Themeable2 {
   ariaLabel?: string;
   exploreId: string;
   width: number;
@@ -122,5 +122,7 @@ export class TableContainer extends PureComponent<Props> {
     );
   }
 }
+
+export const TableContainerWithTheme = withTheme2(TableContainer);
 
 export default withTheme2(connector(TableContainer));
