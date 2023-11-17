@@ -109,9 +109,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       if (!query.datasource) {
         continue;
       }
-      const mustCheck =
-        !dsInstances[query.refId] ||
-        dsInstances[query.refId].uid !== query.datasource.uid;
+      const mustCheck = !dsInstances[query.refId] || dsInstances[query.refId].uid !== query.datasource.uid;
       if (mustCheck) {
         dsPromises.push(
           new Promise((resolve) => {
@@ -169,7 +167,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     if (!hasLogsContextSupport(ds)) {
       return Promise.resolve([]);
     }
-    
+
     const query = this.getQuery(logsQueries, origRow, ds);
     return query ? ds.getLogRowContext(row, options, query) : Promise.resolve([]);
   };
@@ -223,16 +221,20 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   };
 
   logDetailsFilterAvailable = () => {
-    return Object.values(this.state.dsInstances).some(ds => ds?.modifyQuery || hasToggleableQueryFiltersSupport(ds));
-  }
-  
+    return Object.values(this.state.dsInstances).some((ds) => ds?.modifyQuery || hasToggleableQueryFiltersSupport(ds));
+  };
+
   filterValueAvailable = () => {
-    return Object.values(this.state.dsInstances).some(ds => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER'));
-  }
+    return Object.values(this.state.dsInstances).some(
+      (ds) => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER')
+    );
+  };
 
   filterOutValueAvailable = () => {
-    return Object.values(this.state.dsInstances).some(ds => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER_OUT'));
-  }
+    return Object.values(this.state.dsInstances).some(
+      (ds) => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER_OUT')
+    );
+  };
 
   render() {
     const {
