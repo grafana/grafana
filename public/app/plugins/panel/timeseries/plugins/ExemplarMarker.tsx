@@ -220,7 +220,7 @@ export const ExemplarMarker = ({
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={styles.markerWrapper}
-        aria-label={selectors.components.DataSource.Prometheus.exemplarMarker}
+        data-testid={selectors.components.DataSource.Prometheus.exemplarMarker}
         role="button"
         tabIndex={0}
       >

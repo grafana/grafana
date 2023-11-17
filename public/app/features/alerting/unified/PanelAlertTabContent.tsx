@@ -59,7 +59,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
   }
 
   return (
-    <div aria-label={selectors.components.PanelAlertTabContent.content} className={styles.noRulesWrapper}>
+    <div data-testid={selectors.components.PanelAlertTabContent.content} className={styles.noRulesWrapper}>
       {alert}
       {!!dashboard.uid && (
         <>

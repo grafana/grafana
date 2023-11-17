@@ -90,7 +90,7 @@ export class OptionsPaneItemDescriptor {
         label={this.getLabel(searchQuery)}
         description={description}
         key={key}
-        aria-label={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
+        data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
       >
         {render()}
       </Field>

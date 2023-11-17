@@ -121,7 +121,8 @@ export function Drawer({
                   variant="secondary"
                   fill="text"
                   onClick={onClose}
-                  aria-label={selectors.components.Drawer.General.close}
+                  aria-label="Close"
+                  data-testid={selectors.components.Drawer.General.close}
                 />
               </div>
               <div className={styles.titleWrapper}>

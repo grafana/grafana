@@ -38,7 +38,7 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
                 autoFocus
                 autoCapitalize="none"
                 placeholder={loginHint}
-                aria-label={selectors.pages.Login.username}
+                data-testid={selectors.pages.Login.username}
               />
             </Field>
             <Field label="Password" invalid={!!errors.password} error={errors.password?.message}>
@@ -51,7 +51,7 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
             </Field>
             <Button
               type="submit"
-              aria-label={selectors.pages.Login.submit}
+              data-testid={selectors.pages.Login.submit}
               className={submitButton}
               disabled={isLoggingIn}
             >

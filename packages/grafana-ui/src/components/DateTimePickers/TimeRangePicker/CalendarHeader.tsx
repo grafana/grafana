@@ -20,7 +20,7 @@ export function Header({ onClose }: TimePickerCalendarProps) {
         <Trans i18nKey="time-picker.calendar.select-time">Select a time range</Trans>
       </TimePickerTitle>
       <Button
-        aria-label={selectors.components.TimePicker.calendar.closeButton}
+        data-testid={selectors.components.TimePicker.calendar.closeButton}
         icon="times"
         variant="secondary"
         onClick={onClose}

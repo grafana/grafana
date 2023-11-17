@@ -91,7 +91,7 @@ const LoadingIndicator = ({ onCancel }: Pick<Props, 'onCancel'>) => {
         name="sync"
         size="sm"
         onClick={onClick}
-        aria-label={selectors.components.LoadingIndicator.icon}
+        data-testid={selectors.components.LoadingIndicator.icon}
       />
     </Tooltip>
   );

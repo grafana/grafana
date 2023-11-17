@@ -107,7 +107,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
       <div className={modalBackdrop} />
       <FocusScope contain autoFocus restoreFocus>
         <section className={styles.modal} ref={ref} {...overlayProps} {...dialogProps}>
-          <div className={styles.content} aria-label={selectors.components.TimePicker.calendar.label}>
+          <div className={styles.content} data-testid={selectors.components.TimePicker.calendar.label}>
             <Header {...props} />
             <Body {...props} />
             <Footer {...props} />

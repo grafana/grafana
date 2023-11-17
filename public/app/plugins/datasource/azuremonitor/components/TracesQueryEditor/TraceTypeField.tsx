@@ -51,7 +51,7 @@ const TraceTypeField = ({ query, variableOptionGroup, onQueryChange }: AzureQuer
         options={options}
         allowCustomValue
         isClearable
-        aria-label={selectors.components.queryEditor.tracesQueryEditor.traceTypes.select}
+        data-testid={selectors.components.queryEditor.tracesQueryEditor.traceTypes.select}
       />
     </Field>
   );

@@ -43,7 +43,7 @@ export class DebugOverlay extends PureComponent<Props, State> {
     const { zoom, center } = this.state;
 
     return (
-      <div className={this.style.infoWrap} aria-label={selectors.components.DebugOverlay.wrapper}>
+      <div className={this.style.infoWrap} data-testid={selectors.components.DebugOverlay.wrapper}>
         <table>
           <tbody>
             <tr>

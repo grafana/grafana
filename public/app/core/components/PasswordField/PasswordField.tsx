@@ -22,7 +22,7 @@ export const PasswordField = React.forwardRef<HTMLInputElement, Props>(
         {...props}
         type={showPassword ? 'text' : 'password'}
         placeholder={passwordHint}
-        aria-label={selectors.pages.Login.password}
+        data-testid={selectors.pages.Login.password}
         ref={ref}
         suffix={
           <IconButton

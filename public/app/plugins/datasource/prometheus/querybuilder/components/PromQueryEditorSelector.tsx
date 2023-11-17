@@ -116,7 +116,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
       />
       <EditorHeader>
         <Button
-          aria-label={selectors.components.QueryBuilder.queryPatterns}
+          data-testid={selectors.components.QueryBuilder.queryPatterns}
           variant="secondary"
           size="sm"
           onClick={() => setQueryPatternsModalOpen((prevValue) => !prevValue)}

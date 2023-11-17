@@ -156,7 +156,7 @@ class LegendSeriesLabel extends PureComponent<LegendSeriesLabelProps & LegendSer
         title={label}
         key="label"
         onClick={onLabelClick}
-        aria-label={selectors.components.Panels.Visualization.Graph.Legend.legendItemAlias(label)}
+        data-testid={selectors.components.Panels.Visualization.Graph.Legend.legendItemAlias(label)}
       >
         {label}
       </button>,

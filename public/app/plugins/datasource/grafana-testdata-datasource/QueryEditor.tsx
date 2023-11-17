@@ -188,7 +188,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
   return (
     <>
-      <InlineFieldRow aria-label={selectors.scenarioSelectContainer}>
+      <InlineFieldRow data-testid={selectors.scenarioSelectContainer}>
         <InlineField labelWidth={14} label="Scenario">
           <Select
             inputId={`test-data-scenario-select-${query.refId}`}

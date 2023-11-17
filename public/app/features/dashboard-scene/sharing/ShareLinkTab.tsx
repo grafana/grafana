@@ -183,7 +183,7 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
         <>
           {isDashboardSaved && (
             <div className="gf-form">
-              <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
+              <a href={imageUrl} target="_blank" rel="noreferrer" data-testid={selectors.linkToRenderedImage}>
                 <Icon name="camera" />
                 &nbsp;
                 <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>

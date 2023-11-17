@@ -150,7 +150,8 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
           <div className={styles.actionsWrapper}>
             <CardButton
               icon="file-blank"
-              aria-label={selectors.pages.AddDashboard.addNewPanel}
+              aria-label="Add new panel"
+              data-testid={selectors.pages.AddDashboard.addNewPanel}
               onClick={() => {
                 reportInteraction('Create new panel');
                 onCreateNewPanel();
@@ -160,7 +161,8 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
             </CardButton>
             <CardButton
               icon="wrap-text"
-              aria-label={selectors.pages.AddDashboard.addNewRow}
+              aria-label="Add new row"
+              data-testid={selectors.pages.AddDashboard.addNewRow}
               onClick={() => {
                 reportInteraction('Create new row');
                 onCreateNewRow();
@@ -170,7 +172,8 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
             </CardButton>
             <CardButton
               icon="book-open"
-              aria-label={selectors.pages.AddDashboard.addNewPanelLibrary}
+              aria-label="Add new library panel"
+              data-testid={selectors.pages.AddDashboard.addNewPanelLibrary}
               onClick={() => {
                 reportInteraction('Add a panel from the panel library');
                 setAddPanelView(true);
@@ -181,7 +184,8 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
             {copiedPanelPlugins.length === 1 && (
               <CardButton
                 icon="clipboard-alt"
-                aria-label={selectors.pages.AddDashboard.addNewPanelLibrary}
+                aria-label="Add new library panel from clipboard"
+                data-testid={selectors.pages.AddDashboard.addNewPanelLibrary}
                 onClick={() => {
                   reportInteraction('Paste panel from clipboard');
                   onPasteCopiedPanel(copiedPanelPlugins[0]);

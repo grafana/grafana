@@ -55,7 +55,7 @@ export function SectionNavItem({ item, isSectionRoot = false, level = 0 }: Props
         onClick={onItemClicked}
         href={item.url}
         className={linkClass}
-        aria-label={selectors.components.Tab.title(item.text)}
+        data-testid={selectors.components.Tab.title(item.text)}
         role="tab"
         aria-selected={item.active}
       >

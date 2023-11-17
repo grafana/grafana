@@ -55,7 +55,7 @@ export function VariableEditorList({
             <div className={styles.tableContainer}>
               <table
                 className="filter-table filter-table--hover"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.table}
                 role="grid"
               >
                 <thead>
@@ -91,7 +91,7 @@ export function VariableEditorList({
             <Stack>
               <VariablesDependenciesButton variables={variables} />
               <Button
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton}
                 onClick={onAdd}
                 icon="plus"
               >

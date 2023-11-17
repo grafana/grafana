@@ -65,7 +65,7 @@ export function ValuePicker<T>({
           variant={variant}
           fill={fill}
           fullWidth={isFullWidth}
-          aria-label={selectors.components.ValuePicker.button(ariaLabel ?? label)}
+          data-testid={selectors.components.ValuePicker.button(ariaLabel ?? label)}
         >
           {label}
         </Button>
@@ -76,7 +76,7 @@ export function ValuePicker<T>({
           <Select
             placeholder={label}
             options={options}
-            aria-label={selectors.components.ValuePicker.select(ariaLabel ?? label)}
+            data-testid={selectors.components.ValuePicker.select(ariaLabel ?? label)}
             isOpen
             onCloseMenu={() => setIsPicking(false)}
             autoFocus={true}

@@ -113,7 +113,7 @@ export const TimeRangeContent = (props: Props) => {
 
   const icon = (
     <Button
-      aria-label={selectors.components.TimePicker.calendar.openButton}
+      data-testid={selectors.components.TimePicker.calendar.openButton}
       icon="calendar-alt"
       variant="secondary"
       type="button"
@@ -134,7 +134,7 @@ export const TimeRangeContent = (props: Props) => {
             onChange={(event) => onChange(event.currentTarget.value, to.value)}
             addonAfter={icon}
             onKeyDown={submitOnEnter}
-            aria-label={selectors.components.TimePicker.fromField}
+            data-testid={selectors.components.TimePicker.fromField}
             value={from.value}
           />
         </Field>
@@ -147,7 +147,7 @@ export const TimeRangeContent = (props: Props) => {
             onChange={(event) => onChange(from.value, event.currentTarget.value)}
             addonAfter={icon}
             onKeyDown={submitOnEnter}
-            aria-label={selectors.components.TimePicker.toField}
+            data-testid={selectors.components.TimePicker.toField}
             value={to.value}
           />
         </Field>

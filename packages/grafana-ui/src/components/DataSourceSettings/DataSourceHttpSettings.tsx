@@ -158,7 +158,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
       className={inputStyle}
       placeholder={defaultUrl}
       value={dataSourceConfig.url}
-      aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
+      data-testid={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
       onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
       disabled={dataSourceConfig.readOnly}
     />
