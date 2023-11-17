@@ -100,7 +100,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
     radio: css({
       position: 'absolute',
       opacity: 0,
-      zIndex: 5,
+      zIndex: 2,
       width: '100% !important',
       height: '100%',
       cursor: 'pointer',
@@ -109,7 +109,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
         color: theme.colors.text.primary,
         fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.action.selected,
-        zIndex: 3,
+        zIndex: 1,
       },
 
       '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
@@ -134,7 +134,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       cursor: 'pointer',
-      zIndex: 1,
       userSelect: 'none',
       whiteSpace: 'nowrap',
       flexGrow: 1,
