@@ -292,7 +292,7 @@ export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithToggleableQueryFiltersSupport<TQuery> => {
   return (
-    datasource !== null &&
+    datasource != null &&
     typeof datasource === 'object' &&
     'toggleQueryFilter' in datasource &&
     'queryHasFilter' in datasource
@@ -323,7 +323,7 @@ export const hasQueryModificationSupport = <TQuery extends DataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryModificationSupport<TQuery> => {
   return (
-    datasource !== null &&
+    datasource != null &&
     typeof datasource === 'object' &&
     'modifyQuery' in datasource &&
     'getSupportedQueryModifications' in datasource
