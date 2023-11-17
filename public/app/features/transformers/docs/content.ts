@@ -191,12 +191,16 @@ export const transformationDocsContent: TransformationDocsContentType = {
   
   Here's a breakdown of the options:
 
-  - **Field** - Select from available fields.
-  - **as** - Choose the FieldType to convert to.
-    - **Numeric** - Attempts to make the values numbers.
-    - **String** - Converts the values to strings.
-    - **Time** - Attempts to parse the values as time. You can specify a DateFormat, e.g., yyyy-mm-dd or DD MM YYYY hh:mm:ss.
-    - **Boolean** - Converts the values to booleans.
+  - **Field** - Select from available fields
+  - **as** - Select the FieldType to convert to
+    - **Numeric** - attempts to make the values numbers
+    - **String** - will make the values strings
+    - **Time** - attempts to parse the values as time
+      - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - **Boolean** - will make the values booleans
+    - **Enum** - will make the values enums
+      - Will show a table to manage the enums
+    - **Other** - attempts to parse the values as JSON
 
   For example, consider the following query that could be modified by selecting the time field as Time and specifying Date Format as YYYY.
 
