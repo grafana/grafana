@@ -123,7 +123,7 @@ export class TemplateSrv implements BaseTemplateSrv {
    * Use filters property on the request (DataQueryRequest) or if this is called from
    * interpolateVariablesInQueries or applyTemplateVariables it is passed as a new argument
    **/
-  getAdhocFilters(datasourceName: string): AdHocVariableFilter[] {
+  getAdhocFilters(datasourceName: string, skipDeprecationWarning?: boolean): AdHocVariableFilter[] {
     let filters: any = [];
     let ds = getDataSourceSrv().getInstanceSettings(datasourceName);
 
@@ -131,7 +131,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return [];
     }
 
-    if (!this._adhocFiltersDeprecationWarningLogged.get(ds.type)) {
+    if (!this._adhocFiltersDeprecationWarningLogged.get(ds.type) && !skipDeprecationWarning) {
       if (process.env.NODE_ENV !== 'test') {
         deprecationWarning(
           `DataSource ${ds.type}`,

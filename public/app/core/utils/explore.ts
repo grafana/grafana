@@ -3,6 +3,7 @@ import { Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  AdHocVariableFilter,
   CoreApp,
   DataQuery,
   DataQueryRequest,
@@ -49,6 +50,7 @@ export interface GetExploreUrlArguments {
   dsRef: DataSourceRef | null | undefined;
   timeRange: TimeRange;
   scopedVars: ScopedVars | undefined;
+  adhocFilters?: AdHocVariableFilter[];
 }
 
 export function generateExploreId() {
@@ -72,7 +74,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
 
           return {
             // interpolate the query using its datasource `interpolateVariablesInQueries` method if defined, othewise return the query as-is.
-            ...(queryDs.interpolateVariablesInQueries?.([q], scopedVars ?? {})[0] || q),
+            ...(queryDs.interpolateVariablesInQueries?.([q], scopedVars ?? {}, args.adhocFilters)[0] || q),
             // But always set the datasource as it's  required in Explore.
             // NOTE: if for some reason the query has the "mixed" datasource, we omit the property;
             // Upon initialization, Explore use its own logic to determine the datasource.
