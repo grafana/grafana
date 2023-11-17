@@ -189,7 +189,7 @@ export const XYChartPanel = (props: Props) => {
     const legendStyle = {
       flexStart: css({
         div: {
-          justifyContent: 'flex-start !important',
+          justifyContent: 'flex-start',
         },
       }),
     };
