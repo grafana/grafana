@@ -367,6 +367,10 @@ const (
 	// Enables linking between traces and profiles
 	FlagTraceToProfiles = "traceToProfiles"
 
+	// FlagTracesEmbeddedFlameGraph
+	// Enables embedding a flame graph in traces
+	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"
+
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"

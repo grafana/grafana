@@ -242,7 +242,7 @@ describe('<SpanDetail>', () => {
   });
 
   it('renders the flame graph', async () => {
-    config.featureToggles.traceToProfiles = true;
+    config.featureToggles.tracesEmbeddedFlameGraph = true;
 
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await act(async () => {
