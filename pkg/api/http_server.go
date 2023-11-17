@@ -13,9 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 
@@ -28,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -205,8 +203,7 @@ type HTTPServer struct {
 	statsService         stats.Service
 	authnService         authn.Service
 	starApi              *starApi.API
-	promRegister         prometheus.Registerer
-	promGatherer         prometheus.Gatherer
+	promRegistry         metrics.Registry
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	namespacer           request.NamespaceMapper
 }
@@ -250,7 +247,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
-	starApi *starApi.API, promRegister prometheus.Registerer, promGatherer prometheus.Gatherer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider,
+	starApi *starApi.API, promRegistry metrics.Registry, clientConfigProvider grafanaapiserver.DirectRestConfigProvider,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -349,8 +346,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
-		promRegister:                 promRegister,
-		promGatherer:                 promGatherer,
+		promRegistry:                 promRegistry,
 		clientConfigProvider:         clientConfigProvider,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 	}
@@ -577,7 +573,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(requestmeta.SetupRequestMetadata())
 	m.Use(middleware.RequestTracing(hs.tracer))
-	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegister))
+	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegistry))
 
 	m.UseMiddleware(hs.LoggerMiddleware.Middleware())
 
@@ -650,9 +646,6 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 		return
 	}
 
-	promhttp.
-		HandlerFor(hs.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
-		ServeHTTP(ctx.Resp, ctx.Req)
 }
 
 // healthzHandler always return 200 - Ok if Grafana's web server is running
