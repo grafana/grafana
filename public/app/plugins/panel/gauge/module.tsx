@@ -51,19 +51,30 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
         defaultValue: defaultOptions.sizing,
         showIf: (options: Options) => options.orientation !== VizOrientation.Auto,
       })
-      .addNumberInput({
+
+      .addSliderInput({
         path: 'minVizWidth',
         name: 'Min width',
         description: 'Minimum column width (vertical orientation)',
         defaultValue: defaultOptions.minVizWidth,
+        settings: {
+          min: 0,
+          max: 600,
+          step: 1,
+        },
         showIf: (options: Options) =>
           options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Vertical,
       })
-      .addNumberInput({
+      .addSliderInput({
         path: 'minVizHeight',
         name: 'Min height',
         description: 'Minimum row height (horizontal orientation)',
         defaultValue: defaultOptions.minVizHeight,
+        settings: {
+          min: 0,
+          max: 600,
+          step: 1,
+        },
         showIf: (options: Options) =>
           options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
       });
