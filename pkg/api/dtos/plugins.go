@@ -47,6 +47,17 @@ type PluginListItem struct {
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
 	AngularDetected bool                    `json:"angularDetected"`
+
+	ExternalServiceRegistration *ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
+}
+
+type ExternalServiceRegistration struct {
+	Permissions []PluginPermission `json:"permissions"`
+}
+
+type PluginPermission struct {
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
 }
 
 type PluginList []PluginListItem

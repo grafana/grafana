@@ -140,6 +140,27 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			SignatureOrg:    pluginDef.SignatureOrg,
 			AccessControl:   pluginsMetadata[pluginDef.ID],
 			AngularDetected: pluginDef.Angular.Detected,
+
+			ExternalServiceRegistration: &dtos.ExternalServiceRegistration{
+				Permissions: []dtos.PluginPermission{
+					{
+						Action: "dashboards:create",
+						Scope:  "folders:*",
+					},
+					{
+						Action: "dashboards:read",
+						Scope:  "dashboards:*",
+					},
+					{
+						Action: "dashboards:read",
+						Scope:  "folders:*",
+					},
+					{
+						Action: "folders:read",
+						Scope:  "folders:*",
+					},
+				},
+			},
 		}
 
 		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
