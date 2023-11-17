@@ -61,13 +61,11 @@ func ErrVersionNotFound(pluginID, requestedVersion, systemInfo string) error {
 	return ErrVersionNotFoundBase.Errorf("%s v%s either does not exist or is not supported on your system (%s)", pluginID, requestedVersion, systemInfo)
 }
 
-type ErrArcNotFound struct {
-	pluginID   string
-	systemInfo string
-}
+var ErrArcNotFoundBase = errutil.NewBase(errutil.StatusNotFound, "plugin.archNotFound",
+	errutil.WithPublicMessage("Plugin is not compatible with your system architecture."))
 
-func (e ErrArcNotFound) Error() string {
-	return fmt.Sprintf("%s is not compatible with your system architecture: %s", e.pluginID, e.systemInfo)
+func ErrArcNotFound(pluginID, systemInfo string) error {
+	return ErrArcNotFoundBase.Errorf("%s is not compatible with your system architecture: %s", pluginID, systemInfo)
 }
 
 type ErrChecksumMismatch struct {

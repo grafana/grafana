@@ -23,10 +23,7 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 	var ver Version
 	latestForArch, exists := latestSupportedVersion(versions, compatOpts)
 	if !exists {
-		return VersionData{}, ErrArcNotFound{
-			pluginID:   pluginID,
-			systemInfo: compatOpts.OSAndArch(),
-		}
+		return VersionData{}, ErrArcNotFound(pluginID, compatOpts.OSAndArch())
 	}
 
 	if version == "" {
