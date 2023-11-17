@@ -88,6 +88,10 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 
 func (d *DashboardFolderStoreImpl) GetFolders(ctx context.Context, orgID int64, uids []string) (map[string]*folder.Folder, error) {
 	m := make(map[string]*folder.Folder, len(uids))
+	if len(uids) == 0 {
+		return m, nil
+	}
+
 	var folders []*folder.Folder
 	if err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		b := strings.Builder{}
