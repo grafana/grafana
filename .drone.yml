@@ -365,6 +365,7 @@ trigger:
     - go.sum
     - go.mod
     - public/app/plugins/**/plugin.json
+    - docs/sources/setup-grafana/configure-grafana/feature-toggles/**
     - devenv/**
 type: docker
 volumes:
@@ -4646,6 +4647,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 91bdf33c65b3a12b92d5990a6843c4e7d6ab35fd77b4ccf64da7cc8594917c45
+hmac: 4c7b649577b838d8f6590b14b52fe6b7d19859f69f70f51ea22acbe4f6c8ea5d
 
 ...
