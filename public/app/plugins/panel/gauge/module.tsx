@@ -51,7 +51,6 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
         defaultValue: defaultOptions.sizing,
         showIf: (options: Options) => options.orientation !== VizOrientation.Auto,
       })
-
       .addSliderInput({
         path: 'minVizWidth',
         name: 'Min width',
