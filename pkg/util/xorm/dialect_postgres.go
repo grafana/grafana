@@ -1039,9 +1039,9 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 		default:
 			col.SQLType = core.SQLType{Name: strings.ToUpper(dataType), DefaultLength: 0, DefaultLength2: 0}
 		}
-		if _, ok := core.SqlTypes[col.SQLType.Name]; !ok {
-			return nil, nil, fmt.Errorf("unknown colType: %v", dataType)
-		}
+		// if _, ok := core.SqlTypes[col.SQLType.Name]; !ok {
+		// 	return nil, nil, fmt.Errorf("unknown colType: %v", dataType)
+		// }
 
 		col.Length = maxLen
 

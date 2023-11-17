@@ -286,8 +286,8 @@ func (engine *Engine) loadTableInfo(table *core.Table) error {
 		for _, name := range index.Cols {
 			if col := table.GetColumn(name); col != nil {
 				col.Indexes[index.Name] = index.Type
-			} else {
-				return fmt.Errorf("unknown col %s in index %v of table %v, columns %v", name, index.Name, table.Name, table.ColumnsSeq())
+				// } else {
+				// 	return fmt.Errorf("unknown col %s in index %v of table %v, columns %v", name, index.Name, table.Name, table.ColumnsSeq())
 			}
 		}
 	}
