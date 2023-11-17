@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
@@ -28,12 +28,6 @@ export const SaveDashboardErrorProxy = ({
   onDismiss,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-
-  useEffect(() => {
-    if (error.data && proxyHandlesError(error.data.status)) {
-      error.isHandled = true;
-    }
-  }, [error]);
 
   return (
     <>
