@@ -510,27 +510,32 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 // hasPluginRequestedPermissions verifies an installer has the permissions that the plugin requests to have on Grafana.
 func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID, version string) error {
 	repoCompatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
+
 	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, version, repoCompatOpts)
 	if err != nil {
 		return err
 	}
+
+	// No registration => Early return
 	if jsonData.ExternalServiceRegistration == nil || len(jsonData.ExternalServiceRegistration.Permissions) == 0 {
 		return nil
 	}
+
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
+	evaluator := evalAllPermissions(jsonData.ExternalServiceRegistration.Permissions)
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	if !hs.Cfg.RBACSingleOrganization {
-		// If this is not in a single organization setup, the installer needs to have plugin's permissions in all orgs
+		// If this is not in a single organization setup, the installer needs to have plugin's permissions accross all orgs
 		// TODO (gamab) this is probably going to fail for a lot of permissions since we only grant server admin permissions globally.
 		hasAccess = accesscontrol.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 	}
-	evaluator := evalAllPermissions(jsonData.ExternalServiceRegistration.Permissions)
-	if !hasAccess(evaluator) {
-		return errutil.Forbidden("forbidden-access",
-			errutil.WithPublicMessage("You'll need additional permissions to install this plugin. Permissions needed: "+evaluator.String())).
-			Errorf("plugin installation forbidden")
+
+	if hasAccess(evaluator) {
+		return nil
 	}
-	return nil
+	return errutil.Forbidden("forbidden-access",
+		errutil.WithPublicMessage("You'll need additional permissions to install this plugin. Permissions needed: "+evaluator.String())).
+		Errorf("plugin installation forbidden, missing permissions (%v)", evaluator.String())
 }
 
 // evalAllPermissions generates an evaluator with all permissions from the input slice
