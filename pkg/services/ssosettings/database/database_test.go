@@ -3,14 +3,16 @@ package database
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationGetSSOSettings(t *testing.T) {
@@ -169,39 +171,83 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 	t.Run("soft deletes the settings successfully", func(t *testing.T) {
 		setup()
 
-		err := insertSSOSetting(ssoSettingsStore, "azuread", map[string]interface{}{
-			"enabled": true,
-		})
+		providers := []string{"azuread", "github", "google"}
+
+		err := populateSSOSettings(sqlStore, false, providers...)
 		require.NoError(t, err)
 
-		err = ssoSettingsStore.Delete(context.Background(), "azuread")
-
+		err = ssoSettingsStore.Delete(context.Background(), providers[0])
 		require.NoError(t, err)
 
-		var count int64
-		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			count, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(true)).Count()
-			return err
-		})
+		deleted, err := getSSOSettingsCountByDeleted(sqlStore, true)
 		require.NoError(t, err)
+		require.EqualValues(t, 1, deleted)
 
-		require.Equal(t, int64(1), count)
+		notDeleted, err := getSSOSettingsCountByDeleted(sqlStore, false)
+		require.NoError(t, err)
+		require.EqualValues(t, len(providers)-1, notDeleted)
 	})
 
-	t.Run("return without error if the integration was not found", func(t *testing.T) {
+	t.Run("return not found if the provider doesn't exist in db", func(t *testing.T) {
 		setup()
 
-		err := ssoSettingsStore.Delete(context.Background(), "azuread")
+		providers := []string{"github", "google", "okta"}
+		invalidProvider := "azuread"
+
+		err := populateSSOSettings(sqlStore, false, providers...)
 		require.NoError(t, err)
 
-		var count int64
-		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			count, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(true)).Count()
-			return err
-		})
+		err = ssoSettingsStore.Delete(context.Background(), invalidProvider)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ssosettings.ErrNotFound)
+
+		deleted, err := getSSOSettingsCountByDeleted(sqlStore, true)
+		require.NoError(t, err)
+		require.EqualValues(t, 0, deleted)
+
+		notDeleted, err := getSSOSettingsCountByDeleted(sqlStore, false)
+		require.NoError(t, err)
+		require.EqualValues(t, len(providers), notDeleted)
+	})
+
+	t.Run("return not found if the provider sso settings are already deleted", func(t *testing.T) {
+		setup()
+
+		providers := []string{"azuread", "github", "google"}
+
+		err := populateSSOSettings(sqlStore, true, providers...)
 		require.NoError(t, err)
 
-		require.Equal(t, int64(0), count)
+		err = ssoSettingsStore.Delete(context.Background(), providers[0])
+		require.Error(t, err)
+		require.ErrorIs(t, err, ssosettings.ErrNotFound)
+
+		deleted, err := getSSOSettingsCountByDeleted(sqlStore, true)
+		require.NoError(t, err)
+		require.EqualValues(t, len(providers), deleted)
+	})
+
+	t.Run("delete one record if more valid sso settings are available for a provider", func(t *testing.T) {
+		setup()
+
+		provider := "azuread"
+
+		// insert sso for the same provider 2 times in the database
+		err := populateSSOSettings(sqlStore, false, provider)
+		require.NoError(t, err)
+		err = populateSSOSettings(sqlStore, false, provider)
+		require.NoError(t, err)
+
+		err = ssoSettingsStore.Delete(context.Background(), provider)
+		require.NoError(t, err)
+
+		deleted, err := getSSOSettingsCountByDeleted(sqlStore, true)
+		require.NoError(t, err)
+		require.EqualValues(t, 1, deleted)
+
+		notDeleted, err := getSSOSettingsCountByDeleted(sqlStore, false)
+		require.NoError(t, err)
+		require.EqualValues(t, 1, notDeleted)
 	})
 }
 
@@ -212,4 +258,33 @@ func insertSSOSetting(ssoSettingsStore ssosettings.Store, provider string, setti
 		}
 	}
 	return ssoSettingsStore.Upsert(context.Background(), provider, settings)
+}
+
+func populateSSOSettings(sqlStore *sqlstore.SQLStore, deleted bool, providers ...string) error {
+	return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		for _, provider := range providers {
+			_, err := sess.Insert(&models.SSOSetting{
+				ID:        uuid.New().String(),
+				Provider:  provider,
+				Created:   time.Now().UTC(),
+				IsDeleted: deleted,
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func getSSOSettingsCountByDeleted(sqlStore *sqlstore.SQLStore, deleted bool) (int64, error) {
+	var count int64
+	var err error
+
+	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		count, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(deleted)).Count()
+		return err
+	})
+
+	return count, err
 }
