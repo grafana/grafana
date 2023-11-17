@@ -48,6 +48,8 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
   }
 }
 
+const checkedElement = new WeakSet<Element>();
+
 async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.Module> {
   return new Promise(async (resolve, reject) => {
     const generalDistortionMap = getGeneralSandboxDistortionMap();
@@ -58,9 +60,13 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
      */
     function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
       if (isDomElement(originalValue)) {
+        if (checkedElement.has(originalValue)) {
+          return originalValue;
+        }
         const element = getSafeSandboxDomElement(originalValue, meta.id);
         // the element.style attribute should be a live target to work in chrome
         markDomElementStyleAsALiveTarget(element);
+        checkedElement.add(originalValue);
         return element;
       } else {
         patchObjectAsLiveTarget(originalValue);
