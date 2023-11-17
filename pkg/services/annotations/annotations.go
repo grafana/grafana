@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	ErrTimerangeMissing     = errors.New("missing timerange")
-	ErrBaseTagLimitExceeded = errutil.BadRequest("annotations.tag-limit-exceeded", errutil.WithPublicMessage("Tags length exceeds the maximum allowed."))
+	ErrTimerangeMissing          = errors.New("missing timerange")
+	ErrStoreMethodNotImplemented = errors.New("store method not implemented")
+	ErrBaseTagLimitExceeded      = errutil.BadRequest("annotations.tag-limit-exceeded", errutil.WithPublicMessage("Tags length exceeds the maximum allowed."))
 )
 
 //go:generate mockery --name Repository --structname FakeAnnotationsRepo --inpackage --filename annotations_repository_mock.go

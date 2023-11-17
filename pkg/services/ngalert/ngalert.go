@@ -234,7 +234,7 @@ func (ng *AlertNG) init() error {
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
 	// If any are set, override the config accordingly.
-	applyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
+	ApplyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
 	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log)
 	if err != nil {
 		return err
@@ -476,8 +476,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }
 
-// applyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
-func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
+// ApplyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
+func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
 	backend, _ := historian.ParseBackendType(cfg.Backend)
 	// These feature toggles represent specific, common backend configurations.
 	// If all toggles are enabled, we listen to the state history config as written.
