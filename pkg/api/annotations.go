@@ -625,9 +625,10 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 		}
 
 		if !features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-			if annotation.GetType() == annotations.Organization {
+			switch annotation.GetType() {
+			case annotations.Organization:
 				return []string{accesscontrol.ScopeAnnotationsTypeOrganization}, nil
-			} else {
+			case annotations.Dashboard:
 				return []string{accesscontrol.ScopeAnnotationsTypeDashboard}, nil
 			}
 		}
