@@ -326,7 +326,7 @@ This will generate the following output:
 | 1636678680000000000 | 5        |
 | 1636678620000000000 | 12       |
 
-This transformation allows you to extract and format data in various ways. Customize the extraction format based on your specific data needs.
+This transformation allows you to extract and format data in various ways. You can customize the extraction format based on your specific data needs.
 
 ### Lookup fields from resource
 
@@ -638,8 +638,8 @@ This setting determines how the x-axis is split into buckets.
 This setting determines how the y-axis is split into buckets.
 
 - **Linear**
-- **Logarithmic** - Choose between base 2 or base 10.
-- **Symlog** - Uses a symmetrical logarithmic scale. Choose between base 2 or base 10, allowing for negative values.
+- **Logarithmic** - Choose between log base 2 or log base 10.
+- **Symlog** - Uses a symmetrical logarithmic scale. Choose between log base 2 or log base 10, allowing for negative values.
 
 Assume you have the following dataset:
 
@@ -1125,7 +1125,7 @@ This transformation lets you to tailor your data to meet your visualization need
 
 Use this transformation to convert rows into separate fields. This can be useful because fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
-This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the _Use as_ option). You can also choose which value to select if there are multiple rows in the returned data.
+This transformation includes a field table which lists all fields in the data returned by the configuration query. This table gives you control over what field should be mapped to each configuration property (the _Use as_ option). You can also choose which value to select if there are multiple rows in the returned data.
 
 This transformation requires:
 

@@ -644,8 +644,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
   This setting determines how the y-axis is split into buckets.
 
   - **Linear**
-  - **Logarithmic** - Choose between base 2 or base 10.
-  - **Symlog** - Uses a symmetrical logarithmic scale. Choose between base 2 or base 10, allowing for negative values.
+  - **Logarithmic** - Choose between log base 2 or log base 10.
+  - **Symlog** - Uses a symmetrical logarithmic scale. Choose between log base 2 or log base 10, allowing for negative values.
 
   Assume you have the following dataset:
 
@@ -1208,7 +1208,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
       return `
   Use this transformation to convert rows into separate fields. This can be useful because fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
-  This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the \*Use as\* option). You can also choose which value to select if there are multiple rows in the returned data.
+  This transformation includes a field table which lists all fields in the data returned by the configuration query. This table gives you control over what field should be mapped to each configuration property (the \*Use as\* option). You can also choose which value to select if there are multiple rows in the returned data.
 
   This transformation requires:
 
