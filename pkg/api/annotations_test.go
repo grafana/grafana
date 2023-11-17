@@ -8,24 +8,33 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func TestAPI_Annotations(t *testing.T) {
+	dashUID := "test-dash"
+	folderUID := "test-folder"
+
 	type testCase struct {
 		desc         string
 		path         string
 		method       string
 		body         string
 		expectedCode int
+		featureFlags []any
 		permissions  []accesscontrol.Permission
 	}
 
@@ -59,6 +68,30 @@ func TestAPI_Annotations(t *testing.T) {
 			permissions:  []accesscontrol.Permission{},
 		},
 		{
+			desc:         "should be able to fetch dashboard annotation by id with correct dashboard scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodGet,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashUID)}},
+		},
+		{
+			desc:         "should be able to fetch dashboard annotation by id with correct folder scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodGet,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+		},
+		{
+			desc:         "should not be able to fetch dashboard annotation by id with the old dashboard scope when annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodGet,
+			expectedCode: http.StatusForbidden,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+		},
+		{
 			desc:         "should be able to fetch annotation tags with correct permission",
 			path:         "/api/annotations/tags",
 			method:       http.MethodGet,
@@ -87,6 +120,30 @@ func TestAPI_Annotations(t *testing.T) {
 			permissions:  []accesscontrol.Permission{},
 		},
 		{
+			desc:         "should be able to update dashboard annotation with correct dashboard scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodPut,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashUID)}},
+		},
+		{
+			desc:         "should be able to update dashboard annotation with correct folder scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodPut,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+		},
+		{
+			desc:         "should not be able to update dashboard annotation with the old dashboard scope when annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodPut,
+			expectedCode: http.StatusForbidden,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+		},
+		{
 			desc:         "should be able to update organization annotation with correct permission",
 			path:         "/api/annotations/1",
 			method:       http.MethodPut,
@@ -113,6 +170,30 @@ func TestAPI_Annotations(t *testing.T) {
 			method:       http.MethodPatch,
 			expectedCode: http.StatusForbidden,
 			permissions:  []accesscontrol.Permission{},
+		},
+		{
+			desc:         "should be able to patch dashboard annotation with correct dashboard scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodPatch,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashUID)}},
+		},
+		{
+			desc:         "should be able to patch dashboard annotation with correct folder scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodPatch,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+		},
+		{
+			desc:         "should not be able to patch dashboard annotation with the old dashboard scope when annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodPatch,
+			expectedCode: http.StatusForbidden,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 		},
 		{
 			desc:         "should be able to patch organization annotation with correct permission",
@@ -145,6 +226,33 @@ func TestAPI_Annotations(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 		},
 		{
+			desc:         "should be able to create dashboard annotation with correct dashboard scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations",
+			method:       http.MethodPost,
+			body:         "{\"dashboardId\": 2,\"text\": \"test\"}",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashUID)}},
+		},
+		{
+			desc:         "should be able to create dashboard annotation with correct folder scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations",
+			method:       http.MethodPost,
+			body:         "{\"dashboardId\": 2,\"text\": \"test\"}",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+		},
+		{
+			desc:         "should not be able to create dashboard annotation with the old dashboard scope when annotationPermissionUpdate enabled",
+			path:         "/api/annotations",
+			method:       http.MethodPost,
+			body:         "{\"dashboardId\": 2,\"text\": \"test\"}",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			expectedCode: http.StatusForbidden,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+		},
+		{
 			desc:         "should be able to create organization annotation with correct permission",
 			path:         "/api/annotations",
 			method:       http.MethodPost,
@@ -173,6 +281,30 @@ func TestAPI_Annotations(t *testing.T) {
 			method:       http.MethodDelete,
 			expectedCode: http.StatusForbidden,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+		},
+		{
+			desc:         "should be able to delete dashboard annotation with correct dashboard scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodDelete,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashUID)}},
+		},
+		{
+			desc:         "should be able to delete dashboard annotation with correct folder scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodDelete,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+		},
+		{
+			desc:         "should not be able to delete dashboard annotation with the old dashboard scope when annotationPermissionUpdate enabled",
+			path:         "/api/annotations/2",
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			method:       http.MethodDelete,
+			expectedCode: http.StatusForbidden,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 		},
 		{
 			desc:         "should be able to delete organization annotation with correct permission",
@@ -219,11 +351,41 @@ func TestAPI_Annotations(t *testing.T) {
 			expectedCode: http.StatusForbidden,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 		},
+		{
+			desc:         "should be able to mass delete dashboard annotation with correct dashboard scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/mass-delete",
+			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
+			method:       http.MethodPost,
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashUID)}},
+		},
+		{
+			desc:         "should be able to mass delete dashboard annotation with correct folder scope with annotationPermissionUpdate enabled",
+			path:         "/api/annotations/mass-delete",
+			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
+			method:       http.MethodPost,
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+		},
+		{
+			desc:         "should not be able to mass delete dashboard annotation with the old dashboard scope when annotationPermissionUpdate enabled",
+			path:         "/api/annotations/mass-delete",
+			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
+			method:       http.MethodPost,
+			featureFlags: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			expectedCode: http.StatusForbidden,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			setUpRBACGuardian(t)
+			// Don't need access to dashboards if annotationPermissionUpdate is enabled
+			if len(tt.featureFlags) == 0 {
+				setUpRBACGuardian(t)
+			}
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				repo := annotationstest.NewFakeAnnotationsRepo()
@@ -232,6 +394,13 @@ func TestAPI_Annotations(t *testing.T) {
 				hs.annotationsRepo = repo
 				hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
 				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
+				hs.Features = featuremgmt.WithFeatures(tt.featureFlags...)
+				dashService := &dashboards.FakeDashboardService{}
+				dashService.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: dashUID, FolderUID: folderUID}, nil)
+				folderService := &foldertest.FakeService{}
+				folderService.ExpectedFolder = &folder.Folder{UID: folderUID}
+				hs.DashboardService = dashService
+				hs.folderService = folderService
 			})
 			var body io.Reader
 			if tt.body != "" {
