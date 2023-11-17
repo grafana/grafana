@@ -28,6 +28,7 @@ const (
 
 // Defines values for DataTransformerConfigTopic.
 const (
+	DataTransformerConfigTopicAlertStates DataTransformerConfigTopic = "alertStates"
 	DataTransformerConfigTopicAnnotations DataTransformerConfigTopic = "annotations"
 	DataTransformerConfigTopicSeries      DataTransformerConfigTopic = "series"
 )
