@@ -58,6 +58,11 @@ export type Props = {
    * If true only the flamegraph will be rendered.
    */
   showFlameGraphOnly?: boolean;
+
+  /**
+   * Disable behaviour where similar items in the same stack will be collapsed into single item.
+   */
+  disableCollapsing?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -71,6 +76,7 @@ const FlameGraphContainer = ({
   extraHeaderElements,
   vertical,
   showFlameGraphOnly,
+  disableCollapsing,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -89,8 +95,8 @@ const FlameGraphContainer = ({
     if (!data) {
       return;
     }
-    return new FlameGraphDataContainer(data, theme);
-  }, [data, theme]);
+    return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
+  }, [data, theme, disableCollapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme, vertical);
 
@@ -207,6 +213,7 @@ const FlameGraphContainer = ({
               onSandwichPillClick={resetSandwich}
               colorScheme={colorScheme}
               showFlameGraphOnly={showFlameGraphOnly}
+              collapsing={!disableCollapsing}
             />
           )}
         </div>
