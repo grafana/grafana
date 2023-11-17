@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
@@ -60,10 +61,14 @@ func TestSuccessResponse(t *testing.T) {
 		bytes, err := os.ReadFile(responseFileName)
 		require.NoError(t, err)
 
-		resp := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &query, responseOpts, log.New("test"))
-		require.Equal(t, nil, resp.Error)
+		frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &query, responseOpts, log.New("test"))
+		require.NoError(t, err)
 
-		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, &resp, true)
+		dr := &backend.DataResponse{
+			Frames: frames,
+			Error:  err,
+		}
+		experimental.CheckGoldenJSONResponse(t, folder, goldenFileName, dr, true)
 	}
 
 	for _, test := range tt {
@@ -121,11 +126,11 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			resp := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, log.New("test"))
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward}, ResponseOpts{}, log.New("test"))
 
-			require.Len(t, resp.Frames, 0)
-			require.Error(t, resp.Error)
-			require.EqualError(t, resp.Error, test.errorMessage)
+			require.Len(t, frames, 0)
+			require.Error(t, err)
+			require.EqualError(t, err, test.errorMessage)
 		})
 	}
 }

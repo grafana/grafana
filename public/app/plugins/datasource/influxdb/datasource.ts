@@ -793,5 +793,10 @@ export function influxRegularEscape(value: string | string[]) {
 }
 
 export function influxSpecialRegexEscape(value: string | string[]) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+  if (typeof value !== 'string') {
+    return value;
+  }
+  value = value.replace(/\\/g, '\\\\\\\\');
+  value = value.replace(/[$^*{}\[\]\'+?.()|]/g, '$&');
+  return value;
 }

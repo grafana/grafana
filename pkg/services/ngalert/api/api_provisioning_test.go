@@ -1475,7 +1475,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)

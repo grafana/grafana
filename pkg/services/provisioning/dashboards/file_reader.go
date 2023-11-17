@@ -265,6 +265,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	}
 
 	if upToDate {
+		// nolint:staticcheck
 		fr.log.Debug("provisioned dashboard is up to date", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderID, "folderUid", dash.Dashboard.FolderUID)
 		return provisioningMetadata, nil
 	}
@@ -279,6 +280,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	}
 
 	if !fr.isDatabaseAccessRestricted() {
+		// nolint:staticcheck
 		fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderID, "folderUid", dash.Dashboard.FolderUID)
 		dp := &dashboards.DashboardProvisioning{
 			ExternalID: path,
@@ -291,6 +293,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			return provisioningMetadata, err
 		}
 	} else {
+		// nolint:staticcheck
 		fr.log.Warn("Not saving new dashboard due to restricted database access", "provisioner", fr.Cfg.Name,
 			"file", path, "folderId", dash.Dashboard.FolderID)
 	}

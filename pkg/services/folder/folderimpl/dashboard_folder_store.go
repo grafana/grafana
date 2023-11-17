@@ -26,6 +26,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
+	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, Title: title}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
@@ -43,6 +44,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 }
 
 func (d *DashboardFolderStoreImpl) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
+	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, ID: id}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
@@ -67,6 +69,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
 
+	// nolint:staticcheck
 	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, UID: uid}
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)

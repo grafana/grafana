@@ -68,7 +68,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 		}
 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
-			ID: &lastInsertedID,
+			ID: &lastInsertedID, // nolint:staticcheck
 		})
 		if err != nil {
 			return err
@@ -165,6 +165,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		switch {
 		case q.UID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
+		// nolint:staticcheck
 		case q.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:

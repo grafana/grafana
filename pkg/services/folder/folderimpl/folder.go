@@ -125,6 +125,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		if err != nil {
 			return nil, err
 		}
+	// nolint:staticcheck
 	case q.ID != nil:
 		dashFolder, err = s.getFolderByID(ctx, *q.ID, q.OrgID)
 		if err != nil {
@@ -158,10 +159,11 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		return s.WithFullpath(ctx, dashFolder, q.IncludeFullpath)
 	}
 
+	// nolint:staticcheck
 	if q.ID != nil {
 		q.ID = nil
 		q.UID = &dashFolder.UID
@@ -366,7 +368,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		return nil, nil
 	}
 	return s.store.GetParents(ctx, q)
@@ -398,7 +400,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
 	dashFolder.OrgID = cmd.OrgID
 
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
@@ -736,8 +738,8 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, err
 	}
 
-	// current folder height + current folder + parent folder + parent folder depth should be less than or equal 8
-	if folderHeight+len(parents)+2 > folder.MaxNestedFolderDepth {
+	// height of the folder that is being moved + this current folder itself + depth of the NewParent folder should be less than or equal MaxNestedFolderDepth
+	if folderHeight+len(parents)+1 > folder.MaxNestedFolderDepth {
 		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
 	}
 
@@ -839,7 +841,7 @@ func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescenda
 
 	result := []string{*q.UID}
 	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		subfolders, err := s.getNestedFolders(ctx, q.OrgID, *q.UID)
 		if err != nil {
 			logger.Error("failed to get subfolders", "error", err)
@@ -894,12 +896,14 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
-	if dash.IsFolder && dash.FolderID > 0 {
-		return nil, dashboards.ErrDashboardFolderCannotHaveParent
+	if strings.EqualFold(dash.Title, dashboards.RootFolderName) {
+		return nil, dashboards.ErrDashboardFolderNameExists
 	}
 
-	if dash.IsFolder && strings.EqualFold(dash.Title, dashboards.RootFolderName) {
-		return nil, dashboards.ErrDashboardFolderNameExists
+	if dash.FolderUID != "" {
+		if _, err := s.dashboardFolderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID); err != nil {
+			return nil, err
+		}
 	}
 
 	if !util.IsValidShortUID(dash.UID) {
@@ -919,6 +923,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	}
 
 	if dash.ID == 0 {
+		// nolint:staticcheck
 		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
 			if err != nil {
 				return nil, err
@@ -951,7 +956,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
-		FolderID:  dash.FolderID,
+		FolderID:  dash.FolderID, // nolint:staticcheck
 		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
@@ -984,7 +989,7 @@ func (s *Service) WithFullpath(ctx context.Context, f *folder.Folder, includeFul
 
 	escapedTitle := withEscapedTitle(f.Title)
 
-	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		f.Fullpath = escapedTitle
 		return f, nil
 	}
@@ -1051,6 +1056,7 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashbo
 
 	if newDashboard {
 		// if it's a new dashboard/folder check the parent folder permissions
+		// nolint:staticcheck
 		guard, err := guardian.New(ctx, d.FolderID, d.OrgID, user)
 		if err != nil {
 			return nil, err
@@ -1079,7 +1085,7 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 		return fmt.Errorf("failed to get parents: %w", err)
 	}
 
-	if len(ancestors) == folder.MaxNestedFolderDepth {
+	if len(ancestors) >= folder.MaxNestedFolderDepth {
 		return folder.ErrMaximumDepthReached.Errorf("failed to validate parent folder")
 	}
 
