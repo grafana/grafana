@@ -13,6 +13,7 @@
  * This specifies where the data should be used.
  */
 export enum DataTopic {
+  AlertStates = 'alertStates',
   Annotations = 'annotations',
   Series = 'series',
 }
