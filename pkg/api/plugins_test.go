@@ -64,9 +64,10 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 	for _, tc := range tcs {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = &setting.Cfg{
-				PluginAdminEnabled:               tc.pluginAdminEnabled,
-				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled}
+			hs.Cfg = setting.NewCfg()
+			hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
+			hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
+
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.pluginInstaller = NewFakePluginInstaller()
 			hs.pluginFileStore = &fakes.FakePluginFileStore{}
@@ -482,7 +483,6 @@ func callGetPluginAsset(sc *scenarioContext) {
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
 	cfg *setting.Cfg, pluginRegistry registry.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		cfg.IsFeatureToggleEnabled = func(_ string) bool { return false }
 		hs := HTTPServer{
 			Cfg:             cfg,
 			pluginStore:     pluginstore.New(pluginRegistry, &fakes.FakeLoader{}),

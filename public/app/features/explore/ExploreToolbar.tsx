@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import React, { RefObject, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
@@ -62,16 +62,9 @@ interface Props {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
   isContentOutlineOpen: boolean;
-  topOfViewRef?: RefObject<HTMLDivElement>;
 }
 
-export function ExploreToolbar({
-  exploreId,
-  topOfViewRef,
-  onChangeTime,
-  onContentOutlineToogle,
-  isContentOutlineOpen,
-}: Props) {
+export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
   const styles = useStyles2(getStyles, splitted);
@@ -115,7 +108,7 @@ export function ExploreToolbar({
     if (!isCorrelationsEditorMode) {
       dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
     } else {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // prompt will handle datasource change if needed
         dispatch(
           changeCorrelationEditorDetails({
@@ -124,6 +117,7 @@ export function ExploreToolbar({
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
               changeDatasourceUid: dsSettings.uid,
+              isActionLeft: isLeftPane,
             },
           })
         );
@@ -162,7 +156,7 @@ export function ExploreToolbar({
 
   const onCloseSplitView = () => {
     if (isCorrelationsEditorMode) {
-      if (correlationDetails?.dirty) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
         // if dirty, prompt
         dispatch(
           changeCorrelationEditorDetails({
@@ -170,6 +164,7 @@ export function ExploreToolbar({
             postConfirmAction: {
               exploreId: exploreId,
               action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
+              isActionLeft: isLeftPane,
             },
           })
         );
@@ -223,9 +218,9 @@ export function ExploreToolbar({
   ];
 
   return (
-    <div ref={topOfViewRef}>
+    <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      <div ref={topOfViewRef}>
+      <div>
         <AppChromeUpdate actions={navBarActions} />
       </div>
       <PageToolbar

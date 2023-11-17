@@ -1,4 +1,4 @@
-import { countBy, split, trim } from 'lodash';
+import { countBy, split, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import {
@@ -7,12 +7,15 @@ import {
   GrafanaManagedReceiverConfig,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierStatus, ReceiversStateDTO } from 'app/types';
+import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types';
 
+import { OnCallIntegrationDTO } from '../../api/onCallApi';
 import { computeInheritedTree } from '../../utils/notification-policies';
 import { extractReceivers } from '../../utils/receivers';
+import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
+import { getOnCallMetadata, ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
-import { RECEIVER_STATUS_KEY } from './useContactPoints';
+import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './useContactPoints';
 
 export function isProvisioned(contactPoint: GrafanaManagedContactPoint) {
   // for some reason the provenance is on the receiver and not the entire contact point
@@ -22,7 +25,7 @@ export function isProvisioned(contactPoint: GrafanaManagedContactPoint) {
 }
 
 // TODO we should really add some type information to these receiver settings...
-export function getReceiverDescription(receiver: GrafanaManagedReceiverConfig): ReactNode | undefined {
+export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): ReactNode | undefined {
   switch (receiver.type) {
     case 'email': {
       const hasEmailAddresses = 'addresses' in receiver.settings; // when dealing with alertmanager email_configs we don't normalize the settings
@@ -40,8 +43,11 @@ export function getReceiverDescription(receiver: GrafanaManagedReceiverConfig): 
       const url = receiver.settings['url'];
       return url;
     }
+    case ReceiverTypes.OnCall: {
+      return receiver[RECEIVER_PLUGIN_META_KEY]?.description;
+    }
     default:
-      return undefined;
+      return receiver[RECEIVER_META_KEY]?.description;
   }
 }
 
@@ -64,15 +70,21 @@ function summarizeEmailAddresses(addresses: string): string {
 }
 
 // Grafana Managed contact points have receivers with additional diagnostics
-export interface ReceiverConfigWithStatus extends GrafanaManagedReceiverConfig {
+export interface ReceiverConfigWithMetadata extends GrafanaManagedReceiverConfig {
   // we're using a symbol here so we'll never have a conflict on keys for a receiver
   // we also specify that the diagnostics might be "undefined" for vanilla Alertmanager
   [RECEIVER_STATUS_KEY]?: NotifierStatus | undefined;
+  [RECEIVER_META_KEY]: {
+    name: string;
+    description?: string;
+  };
+  // optional metadata that comes from a particular plugin (like Grafana OnCall)
+  [RECEIVER_PLUGIN_META_KEY]?: ReceiverPluginMetadata;
 }
 
-export interface ContactPointWithStatus extends GrafanaManagedContactPoint {
+export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
   numberOfPolicies: number;
-  grafana_managed_receiver_configs: ReceiverConfigWithStatus[];
+  grafana_managed_receiver_configs: ReceiverConfigWithMetadata[];
 }
 
 /**
@@ -80,10 +92,12 @@ export interface ContactPointWithStatus extends GrafanaManagedContactPoint {
  * 1. we iterate over all contact points
  * 2. for each contact point we "enhance" it with the status or "undefined" for vanilla Alertmanager
  */
-export function enhanceContactPointsWithStatus(
+export function enhanceContactPointsWithMetadata(
   result: AlertManagerCortexConfig,
-  status: ReceiversStateDTO[] = []
-): ContactPointWithStatus[] {
+  status: ReceiversStateDTO[] = [],
+  notifiers: NotifierDTO[] = [],
+  onCallIntegrations: OnCallIntegrationDTO[] | undefined | null
+): ContactPointWithMetadata[] {
   const contactPoints = result.alertmanager_config.receivers ?? [];
 
   // compute the entire inherited tree before finding what notification policies are using a particular contact point
@@ -98,10 +112,17 @@ export function enhanceContactPointsWithStatus(
     return {
       ...contactPoint,
       numberOfPolicies: usedContactPointsByName[contactPoint.name] ?? 0,
-      grafana_managed_receiver_configs: receivers.map((receiver, index) => ({
-        ...receiver,
-        [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
-      })),
+      grafana_managed_receiver_configs: receivers.map((receiver, index) => {
+        const isOnCallReceiver = receiver.type === ReceiverTypes.OnCall;
+
+        return {
+          ...receiver,
+          [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
+          [RECEIVER_META_KEY]: getNotifierMetadata(notifiers, receiver),
+          // if OnCall plugin is installed, we'll add it to the receiver's plugin metadata
+          [RECEIVER_PLUGIN_META_KEY]: isOnCallReceiver ? getOnCallMetadata(onCallIntegrations, receiver) : undefined,
+        };
+      }),
     };
   });
 }
@@ -113,4 +134,13 @@ export function getUsedContactPoints(route: Route): string[] {
   }
 
   return childrenContactPoints;
+}
+
+function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedReceiverConfig) {
+  const match = notifiers.find((notifier) => notifier.type === receiver.type);
+
+  return {
+    name: match?.name ?? upperFirst(receiver.type),
+    description: match?.description,
+  };
 }

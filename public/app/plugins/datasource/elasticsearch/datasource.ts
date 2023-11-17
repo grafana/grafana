@@ -63,7 +63,13 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
-import { addAddHocFilter, addFilterToQuery, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
+import {
+  addAddHocFilter,
+  addFilterToQuery,
+  addStringFilterToQuery,
+  queryHasFilter,
+  removeFilterFromQuery,
+} from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -134,7 +140,7 @@ export class ElasticDatasource
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
     this.isProxyAccess = instanceSettings.access === 'proxy';
-    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    const settingsData = instanceSettings.jsonData || {};
 
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
@@ -191,7 +197,7 @@ export class ElasticDatasource
    * @param url the url to query the index on, for example `/_mapping`.
    */
 
-  private requestAllIndices(url: string, range = getDefaultTimeRange()): Observable<any> {
+  private requestAllIndices(url: string, range = getDefaultTimeRange()) {
     let indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (!Array.isArray(indexList)) {
       indexList = [this.indexPattern.getIndexForToday()];
@@ -499,10 +505,6 @@ export class ElasticDatasource
     }
 
     return text;
-  }
-
-  showContextToggle(): boolean {
-    return true;
   }
 
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
@@ -945,6 +947,14 @@ export class ElasticDatasource
       }
       case 'ADD_FILTER_OUT': {
         expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
+        break;
+      }
+      case 'ADD_STRING_FILTER': {
+        expression = addStringFilterToQuery(expression, action.options.value);
+        break;
+      }
+      case 'ADD_STRING_FILTER_OUT': {
+        expression = addStringFilterToQuery(expression, action.options.value, false);
         break;
       }
     }

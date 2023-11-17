@@ -4,10 +4,20 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2, InlineField } from '@grafana/ui';
+import {
+  ConfirmModal,
+  FilterInput,
+  LinkButton,
+  RadioButtonGroup,
+  useStyles2,
+  InlineField,
+  Pagination,
+  Stack,
+} from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
@@ -15,6 +25,7 @@ import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenM
 import ServiceAccountListItem from './components/ServiceAccountsListItem';
 import {
   changeQuery,
+  changePage,
   fetchACOptions,
   fetchServiceAccounts,
   deleteServiceAccount,
@@ -34,6 +45,7 @@ function mapStateToProps(state: StoreState) {
 }
 
 const mapDispatchToProps = {
+  changePage,
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
@@ -45,7 +57,20 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
+const availableFilters = [
+  { label: 'All', value: ServiceAccountStateFilter.All },
+  { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
+  { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
+];
+
+if (config.featureToggles.externalServiceAccounts || config.featureToggles.externalServiceAuth) {
+  availableFilters.push({ label: 'Managed', value: ServiceAccountStateFilter.External });
+}
+
 export const ServiceAccountsListPageUnconnected = ({
+  page,
+  changePage,
+  totalPages,
   serviceAccounts,
   isLoading,
   roleOptions,
@@ -177,11 +202,7 @@ export const ServiceAccountsListPageUnconnected = ({
             />
           </InlineField>
           <RadioButtonGroup
-            options={[
-              { label: 'All', value: ServiceAccountStateFilter.All },
-              { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
-              { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
-            ]}
+            options={availableFilters}
             onChange={onStateFilterChange}
             value={serviceAccountStateFilter}
             className={styles.filter}
@@ -220,7 +241,7 @@ export const ServiceAccountsListPageUnconnected = ({
                     <th>ID</th>
                     <th>Roles</th>
                     <th>Tokens</th>
-                    <th style={{ width: '34px' }} />
+                    <th style={{ width: '120px' }} />
                   </tr>
                 </thead>
                 <tbody>
@@ -238,6 +259,10 @@ export const ServiceAccountsListPageUnconnected = ({
                   ))}
                 </tbody>
               </table>
+
+              <Stack justifyContent="flex-end">
+                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+              </Stack>
             </div>
           </>
         )}

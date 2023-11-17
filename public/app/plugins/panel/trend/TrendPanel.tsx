@@ -3,15 +3,10 @@ import React, { useMemo } from 'react';
 import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import {
-  KeyboardPlugin,
-  preparePlotFrame,
-  TimeSeries,
-  TooltipDisplayMode,
-  TooltipPlugin,
-  usePanelContext,
-} from '@grafana/ui';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
+import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin, usePanelContext } from '@grafana/ui';
+import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
+import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
+import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';

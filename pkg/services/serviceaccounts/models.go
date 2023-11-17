@@ -158,6 +158,8 @@ type ServiceAccountProfileDTO struct {
 	Teams []string `json:"teams" xorm:"-"`
 	// example: false
 	IsExternal bool `json:"isExternal,omitempty" xorm:"-"`
+	// example: grafana-app
+	RequiredBy string `json:"requiredBy,omitempty" xorm:"-"`
 
 	Tokens        int64           `json:"tokens,omitempty"`
 	AccessControl map[string]bool `json:"accessControl,omitempty" xorm:"-"`
@@ -191,9 +193,15 @@ type ExtSvcAccount struct {
 
 type ManageExtSvcAccountCmd struct {
 	ExtSvcSlug  string
-	Enabled     bool // disabled: the service account and its permissions will be deleted
+	Enabled     bool
 	OrgID       int64
 	Permissions []accesscontrol.Permission
+}
+
+type EnableExtSvcAccountCmd struct {
+	ExtSvcSlug string
+	Enabled    bool
+	OrgID      int64
 }
 
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access

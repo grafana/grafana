@@ -108,13 +108,13 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
 	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
-	if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagStorage) {
 		r.Get("/admin/storage", reqSignedIn, hs.Index)
 		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
 	}
 
 	// feature toggle admin page
-	if hs.Features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagFeatureToggleAdminPage) {
 		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
 	}
 
@@ -156,11 +156,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
-	if hs.Features.IsEnabled(featuremgmt.FlagDashboardEmbed) {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardEmbed) {
 		r.Get("/d-embed", reqSignedIn, middleware.AddAllowEmbeddingHeader(), hs.Index)
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
 		r.Get("/public-dashboards/list", reqSignedIn, hs.Index)
 
@@ -213,10 +213,10 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
-	r.Get("/swagger-ui", swaggerUI)
-	r.Get("/openapi3", openapi3)
+	// add swagger support
+	registerSwaggerUI(r)
 
-	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagClientTokenRotation) {
 		r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
 		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 	}
@@ -277,17 +277,12 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/quotas", authorize(ac.EvalPermission(ac.ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
 
-		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagStorage) {
 			// Will eventually be replaced with the 'object' route
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
 		}
 
-		// Allow HTTP access to the entity storage feature (dev only for now)
-		if hs.Features.IsEnabled(featuremgmt.FlagEntityStore) {
-			apiRoute.Group("/entity", hs.httpEntityStore.RegisterHTTPRoutes)
-		}
-
-		if hs.Features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch) {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}
 
@@ -397,7 +392,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/plugin-proxy/:pluginId/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), hs.ProxyPluginRequest)
 		apiRoute.Any("/plugin-proxy/:pluginId", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginIDScope)), hs.ProxyPluginRequest)
 
-		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
+		if hs.Cfg.PluginAdminEnabled && (hs.Features.IsEnabledGlobally(featuremgmt.FlagManagedPluginsInstall) || !hs.Cfg.PluginAdminExternalManageEnabled) {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 				pluginRoute.Post("/:pluginId/install", authorize(ac.EvalPermission(pluginaccesscontrol.ActionInstall)), routing.Wrap(hs.InstallPlugin))
 				pluginRoute.Post("/:pluginId/uninstall", authorize(ac.EvalPermission(pluginaccesscontrol.ActionInstall)), routing.Wrap(hs.UninstallPlugin))
@@ -410,7 +405,7 @@ func (hs *HTTPServer) registerRoutes() {
 			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
 		})
 
-		if hs.Features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) {
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagFeatureToggleAdminPage) {
 			apiRoute.Group("/featuremgmt", func(featuremgmtRoute routing.RouteRegister) {
 				featuremgmtRoute.Get("/state", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.GetFeatureMgmtState)
 				featuremgmtRoute.Get("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.GetFeatureToggles)
@@ -471,7 +466,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 			dashboardRoute.Post("/calculate-diff", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/validate", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.ValidateDashboard))
-			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
 
 			dashboardRoute.Post("/db", authorize(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionDashboardsWrite))), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
@@ -499,14 +493,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// Playlist
-		apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
-			playlistRoute.Get("/", routing.Wrap(hs.SearchPlaylists))
-			playlistRoute.Get("/:uid", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylist))
-			playlistRoute.Get("/:uid/items", hs.ValidateOrgPlaylist, routing.Wrap(hs.GetPlaylistItems))
-			playlistRoute.Delete("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.DeletePlaylist))
-			playlistRoute.Put("/:uid", reqEditorRole, hs.ValidateOrgPlaylist, routing.Wrap(hs.UpdatePlaylist))
-			playlistRoute.Post("/", reqEditorRole, routing.Wrap(hs.CreatePlaylist))
-		})
+		hs.registerPlaylistAPI(apiRoute)
 
 		// Search
 		apiRoute.Get("/search/sorting", routing.Wrap(hs.ListSortOptions))
