@@ -1,4 +1,4 @@
-import { cx, css } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { ChangeEvent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { Unsubscribable } from 'rxjs';
@@ -240,30 +240,26 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderTransformationEditors = () => {
-    const styles = getStyles(config.theme2);
-    const { data, transformations, showPicker } = this.state;
-    const hide = config.featureToggles.transformationsRedesign && showPicker;
-
+    const { data, transformations } = this.state;
+    
     return (
-      <div className={cx({ [styles.hide]: hide })}>
-        <DragDropContext onDragEnd={this.onDragEnd}>
-          <Droppable droppableId="transformations-list" direction="vertical">
-            {(provided) => {
-              return (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  <TransformationOperationRows
-                    configs={transformations}
-                    data={data}
-                    onRemove={this.onTransformationRemove}
-                    onChange={this.onTransformationChange}
-                  />
-                  {provided.placeholder}
-                </div>
-              );
-            }}
-          </Droppable>
-        </DragDropContext>
-      </div>
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <Droppable droppableId="transformations-list" direction="vertical">
+          {(provided) => {
+            return (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                <TransformationOperationRows
+                  configs={transformations}
+                  data={data}
+                  onRemove={this.onTransformationRemove}
+                  onChange={this.onTransformationChange}
+                />
+                {provided.placeholder}
+              </div>
+            );
+          }}
+        </Droppable>
+      </DragDropContext>
     );
   };
 
@@ -349,9 +345,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     const { transformationsRedesign } = config.featureToggles;
     const picker = transformationsRedesign ? redesignPicker : oldPicker;
 
-    return showPicker ? (
-      picker
-    ) : (
+    return showPicker ? (picker) : (
       <Button
         icon="plus"
         variant="secondary"

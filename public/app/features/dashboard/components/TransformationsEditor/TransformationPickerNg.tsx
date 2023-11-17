@@ -4,16 +4,14 @@ import React, { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react'
 import {
   DataFrame,
   DataTransformerID,
-  DocsId,
   TransformerRegistryItem,
   TransformationApplicabilityLevels,
   GrafanaTheme2,
   standardTransformersRegistry,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Card, Button, Drawer, FilterPill, Icon, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
+import { Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { categoriesLabels } from 'app/features/transformers/utils';
 
@@ -57,26 +55,10 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
   } = props;
 
   return (
-    <Drawer onClose={() => setState({ showPicker: false })}>
-      {!noTransforms && (
-        <Button
-          variant="secondary"
-          fill="text"
-          icon="angle-left"
-          onClick={() => {
-            setState({ showPicker: false });
-          }}
+    <Drawer 
+        onClose={() => setState({ showPicker: false })}
+        title="Add another transformation"
         >
-          Go back to&nbsp;<i>Transformations in use</i>
-        </Button>
-      )}
-      <div className={styles.pickerInformationLine}>
-        <a href={getDocsLink(DocsId.Transformations)} className="external-link" target="_blank" rel="noreferrer">
-          <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
-          <Icon name="external-link-alt" />
-        </a>
-        &nbsp;allow you to manipulate your data before a visualization is applied.
-      </div>
 
       <div className={styles.searchWrapper}>
         <Input
