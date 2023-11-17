@@ -13,7 +13,7 @@ import (
 )
 
 // ExportFromPayload converts the rule groups from the argument `ruleGroupConfig` to export format. All rules are expected to be fully specified. The access to data sources mentioned in the rules is not enforced.
-// Can return 403 StatusForbidden if user is not authorized to read folder `namespaceTitle`
+// Can return 403 StatusForbidden if user is not authorized to read folder `namespaceUID`
 func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
