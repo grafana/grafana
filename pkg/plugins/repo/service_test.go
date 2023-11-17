@@ -32,7 +32,7 @@ func TestGetPluginArchive(t *testing.T) {
 		{
 			name: "Incorrect SHA returns error",
 			sha:  "1a2b3c",
-			err:  &ErrChecksumMismatch{},
+			err:  ErrChecksumMismatchBase,
 		},
 	}
 
@@ -78,7 +78,7 @@ func TestGetPluginArchive(t *testing.T) {
 			co := NewCompatOpts(grafanaVersion, opSys, arch)
 			archive, err := m.GetPluginArchive(context.Background(), pluginID, version, co)
 			if tc.err != nil {
-				require.ErrorAs(t, err, tc.err)
+				require.ErrorIs(t, err, tc.err)
 				return
 			}
 			require.NoError(t, err)

@@ -68,10 +68,9 @@ func ErrArcNotFound(pluginID, systemInfo string) error {
 	return ErrArcNotFoundBase.Errorf("%s is not compatible with your system architecture: %s", pluginID, systemInfo)
 }
 
-type ErrChecksumMismatch struct {
-	archiveURL string
-}
+var ErrChecksumMismatchBase = errutil.NewBase(errutil.StatusInternal, "plugin.checksumMismatch",
+	errutil.WithPublicMessage("Plugin SHA256 checksum does not match the downloaded archive - please contact security@grafana.com"))
 
-func (e ErrChecksumMismatch) Error() string {
-	return fmt.Sprintf("expected SHA256 checksum does not match the downloaded archive (%s) - please contact security@grafana.com", e.archiveURL)
+func ErrChecksumMismatch(archiveURL string) error {
+	return ErrChecksumMismatchBase.Errorf("expected SHA256 checksum does not match the downloaded archive (%s) - please contact security@grafana.com", archiveURL)
 }
