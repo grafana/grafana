@@ -123,6 +123,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		if err != nil {
 			return nil, err
 		}
+	// nolint:staticcheck
 	case cmd.ID != nil:
 		dashFolder, err = s.getFolderByID(ctx, *cmd.ID, cmd.OrgID)
 		if err != nil {
@@ -160,6 +161,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return dashFolder, nil
 	}
 
+	// nolint:staticcheck
 	if cmd.ID != nil {
 		cmd.ID = nil
 		cmd.UID = &dashFolder.UID
@@ -856,12 +858,14 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
-	if dash.IsFolder && dash.FolderID > 0 {
-		return nil, dashboards.ErrDashboardFolderCannotHaveParent
+	if strings.EqualFold(dash.Title, dashboards.RootFolderName) {
+		return nil, dashboards.ErrDashboardFolderNameExists
 	}
 
-	if dash.IsFolder && strings.EqualFold(dash.Title, dashboards.RootFolderName) {
-		return nil, dashboards.ErrDashboardFolderNameExists
+	if dash.FolderUID != "" {
+		if _, err := s.dashboardFolderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID); err != nil {
+			return nil, err
+		}
 	}
 
 	if !util.IsValidShortUID(dash.UID) {
@@ -881,6 +885,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	}
 
 	if dash.ID == 0 {
+		// nolint:staticcheck
 		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
 			if err != nil {
 				return nil, err
@@ -913,7 +918,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
-		FolderID:  dash.FolderID,
+		FolderID:  dash.FolderID, // nolint:staticcheck
 		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
@@ -933,6 +938,7 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashbo
 
 	if newDashboard {
 		// if it's a new dashboard/folder check the parent folder permissions
+		// nolint:staticcheck
 		guard, err := guardian.New(ctx, d.FolderID, d.OrgID, user)
 		if err != nil {
 			return nil, err

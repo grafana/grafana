@@ -65,6 +65,7 @@ func (om *OrgMigration) migratedFolder(ctx context.Context, log log.Logger, dash
 
 	dashFolder, err := om.getFolder(ctx, dash)
 	if err != nil {
+		// nolint:staticcheck
 		l.Warn("Failed to find folder for dashboard", "missing_folder_id", dash.FolderID, "error", err)
 	}
 	if dashFolder != nil {
@@ -105,6 +106,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 	permissionsToFolder, ok := om.permissionsMap[parentFolder.ID]
 	if !ok {
 		permissionsToFolder = make(map[permissionHash]*folder.Folder)
+		// nolint:staticcheck
 		om.permissionsMap[dash.FolderID] = permissionsToFolder
 
 		folderPerms, err := om.getFolderPermissions(ctx, parentFolder)
@@ -328,10 +330,12 @@ func (om *OrgMigration) getDashboardPermissions(ctx context.Context, d *dashboar
 
 // getFolder returns the parent folder for the given dashboard. If the dashboard is in the general folder, it returns the general alerting folder.
 func (om *OrgMigration) getFolder(ctx context.Context, dash *dashboards.Dashboard) (*folder.Folder, error) {
+	// nolint:staticcheck
 	if f, ok := om.folderCache[dash.FolderID]; ok {
 		return f, nil
 	}
 
+	// nolint:staticcheck
 	if dash.FolderID <= 0 {
 		// Don't use general folder since it has no uid, instead we use a new "General Alerting" folder.
 		migratedFolder, err := om.getOrCreateGeneralAlertingFolder(ctx, om.orgID)
@@ -341,13 +345,17 @@ func (om *OrgMigration) getFolder(ctx context.Context, dash *dashboards.Dashboar
 		return migratedFolder, err
 	}
 
+	// nolint:staticcheck
 	f, err := om.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{ID: &dash.FolderID, OrgID: om.orgID, SignedInUser: getMigrationUser(om.orgID)})
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			// nolint:staticcheck
 			return nil, fmt.Errorf("folder with id %v not found", dash.FolderID)
 		}
+		// nolint:staticcheck
 		return nil, fmt.Errorf("get folder %d: %w", dash.FolderID, err)
 	}
+	// nolint:staticcheck
 	om.folderCache[dash.FolderID] = f
 	return f, nil
 }

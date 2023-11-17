@@ -34,6 +34,7 @@ export interface NavModelItem extends NavLinkDTO {
   parentItem?: NavModelItem;
   onClick?: () => void;
   tabSuffix?: ComponentType<{ className?: string }>;
+  tabCounter?: number;
   hideFromBreadcrumbs?: boolean;
   emptyMessage?: string;
 }
