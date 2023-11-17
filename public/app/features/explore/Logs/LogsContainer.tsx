@@ -214,7 +214,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
     if (!row?.dataFrame.refId || !this.state.dsInstances[row.dataFrame.refId]) {
       return false;
     }
-
     return hasLogsContextSupport(this.state.dsInstances[row.dataFrame.refId]);
   };
 
