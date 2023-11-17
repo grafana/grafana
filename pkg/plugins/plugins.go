@@ -64,6 +64,8 @@ type Plugin struct {
 	client         backendplugin.Plugin
 	log            log.Logger
 
+	SkipHostEnvVars bool
+
 	mu sync.Mutex
 }
 
@@ -136,6 +138,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	case "grafana-pyroscope-datasource":
 		fallthrough
 	case "grafana-testdata-datasource":
+		fallthrough
+	case "grafana-postgresql-datasource":
 		fallthrough
 	case "annolist":
 		fallthrough
