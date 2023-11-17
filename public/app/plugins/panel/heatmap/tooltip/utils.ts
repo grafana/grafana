@@ -79,7 +79,7 @@ interface DisplayValue {
 }
 
 // logic from DataHoverView
-export const parseSparseData = (data?: DataFrame, rowIndex?: number | null, columnIndex?: number | null) => {
+const parseSparseData = (data?: DataFrame, rowIndex?: number | null, columnIndex?: number | null) => {
   if (!data || rowIndex == null) {
     return null;
   }
@@ -167,19 +167,20 @@ export const getFieldFromData = (data: DataFrame, fieldType: string, isSparse: b
 };
 
 // logic copied from public/app/plugins/panel/heatmap/fields.ts#L309
-export const inferSparseDataBucketSizes = (data: HeatmapData, xVals: any[], yVals: any[]): BucketSizes => {
-  const xValsLength = xVals.length;
+// renamed vars to match ^
+const inferSparseDataBucketSizes = (data: HeatmapData, xs: any[], ys: any[]): BucketSizes => {
+  const dlen = xs.length;
 
-  const yBucketCount = data.yBucketCount ?? xValsLength - yVals.lastIndexOf(yVals[0]);
-  const xBucketCount = data.xBucketCount ?? xValsLength / yBucketCount;
-  const yBucketSize = data.yBucketSize ?? yVals[1] - yVals[0];
-  const xBucketSize = data.xBucketSize ?? getInterval(xVals);
+  const yBinQty = data.yBucketCount ?? dlen - ys.lastIndexOf(ys[0]);
+  const xBinQty = data.xBucketCount ?? dlen / yBinQty;
+  const yBinIncr = data.yBucketSize ?? ys[1] - ys[0];
+  const xBinIncr = data.xBucketSize ?? getInterval(xs);
 
   return {
-    xBucketCount,
-    yBucketCount,
-    xBucketSize,
-    yBucketSize,
+    xBucketCount: xBinQty,
+    yBucketCount: yBinQty,
+    xBucketSize: xBinIncr,
+    yBucketSize: yBinIncr,
   };
 };
 
