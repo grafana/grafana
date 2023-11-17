@@ -729,7 +729,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
 
 		expectedGetRulesResponseBody := fmt.Sprintf(`{
-			"/default": [
+			"default": [
 				{
 					"name": "arulegroup",
 					"interval": "1m",
@@ -1194,7 +1194,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.Equal(t, resp.StatusCode, 202)
 
 		body, m := rulesNamespaceWithoutVariableValues(t, b)
-		generatedUIDs, ok := m["/default,arulegroup"]
+		generatedUIDs, ok := m["default,arulegroup"]
 		assert.True(t, ok)
 		assert.Equal(t, 2, len(generatedUIDs))
 		// assert that generated UIDs are unique
@@ -1204,7 +1204,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		ruleUID = generatedUIDs[0]
 		expectedGetNamespaceResponseBody = `
 		{
-		   "/default":[
+		   "default":[
 			  {
 				 "name":"arulegroup",
 				 "interval":"1m",
@@ -1363,7 +1363,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.Equal(t, resp.StatusCode, 202)
 
 		body, m := rulesNamespaceWithoutVariableValues(t, b)
-		returnedUIDs, ok := m["/default,arulegroup"]
+		returnedUIDs, ok := m["default,arulegroup"]
 		assert.True(t, ok)
 		assert.Equal(t, 2, len(returnedUIDs))
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
@@ -1469,7 +1469,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.Equal(t, resp.StatusCode, 202)
 
 		body, m := rulesNamespaceWithoutVariableValues(t, b)
-		returnedUIDs, ok := m["/default,arulegroup"]
+		returnedUIDs, ok := m["default,arulegroup"]
 		assert.True(t, ok)
 		assert.Equal(t, 2, len(returnedUIDs))
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
@@ -1542,13 +1542,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.Equal(t, resp.StatusCode, 202)
 
 		body, m := rulesNamespaceWithoutVariableValues(t, b)
-		returnedUIDs, ok := m["/default,arulegroup"]
+		returnedUIDs, ok := m["default,arulegroup"]
 		assert.True(t, ok)
 		assert.Equal(t, 1, len(returnedUIDs))
 		assert.Equal(t, ruleUID, returnedUIDs[0])
 		assert.JSONEq(t, `
 		{
-		   "/default":[
+		   "default":[
 		      {
 		         "name":"arulegroup",
 		         "interval":"1m",
@@ -1660,13 +1660,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.Equal(t, resp.StatusCode, 202)
 
 		body, m := rulesNamespaceWithoutVariableValues(t, b)
-		returnedUIDs, ok := m["/default,arulegroup"]
+		returnedUIDs, ok := m["default,arulegroup"]
 		assert.True(t, ok)
 		assert.Equal(t, 1, len(returnedUIDs))
 		assert.Equal(t, ruleUID, returnedUIDs[0])
 		assert.JSONEq(t, `
 			{
-			   "/default":[
+			   "default":[
 			      {
 				 "name":"arulegroup",
 				 "interval":"1m",
@@ -1749,13 +1749,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.Equal(t, resp.StatusCode, 202)
 
 		body, m := rulesNamespaceWithoutVariableValues(t, b)
-		returnedUIDs, ok := m["/default,arulegroup"]
+		returnedUIDs, ok := m["default,arulegroup"]
 		assert.True(t, ok)
 		assert.Equal(t, 1, len(returnedUIDs))
 		assert.Equal(t, ruleUID, returnedUIDs[0])
 		assert.JSONEq(t, `
 			{
-			   "/default":[
+			   "default":[
 			      {
 				 "name":"arulegroup",
 				 "interval":"1m",
@@ -1958,7 +1958,7 @@ func TestIntegrationQuota(t *testing.T) {
 		assert.Equal(t, resp.StatusCode, 202)
 
 		_, m := rulesNamespaceWithoutVariableValues(t, b)
-		generatedUIDs, ok := m["/default,arulegroup"]
+		generatedUIDs, ok := m["default,arulegroup"]
 		assert.True(t, ok)
 		assert.Equal(t, 1, len(generatedUIDs))
 		ruleUID = generatedUIDs[0]
@@ -2056,13 +2056,13 @@ func TestIntegrationQuota(t *testing.T) {
 		assert.Equal(t, resp.StatusCode, 202)
 
 		body, m := rulesNamespaceWithoutVariableValues(t, b)
-		returnedUIDs, ok := m["/default,arulegroup"]
+		returnedUIDs, ok := m["default,arulegroup"]
 		assert.True(t, ok)
 		assert.Equal(t, 1, len(returnedUIDs))
 		assert.Equal(t, ruleUID, returnedUIDs[0])
 		assert.JSONEq(t, `
 				{
-				   "/default":[
+				   "default":[
 				      {
 					 "name":"arulegroup",
 					 "interval":"1m",

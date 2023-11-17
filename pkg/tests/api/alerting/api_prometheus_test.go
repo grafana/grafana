@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"sort"
-	"strings"
 	"testing"
 	"time"
 
@@ -239,7 +238,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "arulegroup",
-			"file": "/default",
+			"file": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -297,7 +296,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "arulegroup",
-			"file": "/default",
+			"file": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -450,7 +449,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "anotherrulegroup",
-			"file": "/default",
+			"file": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -491,7 +490,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "anotherrulegroup",
-			"file": "/default",
+			"file": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -700,16 +699,14 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 
 		body := asJson(t, b)
 		// Sort, for test consistency.
-		sort.Slice(body.Data.Groups, func(i, j int) bool {
-			return strings.Split(body.Data.Groups[i].File, "/")[1] < strings.Split(body.Data.Groups[j].File, "/")[1]
-		})
+		sort.Slice(body.Data.Groups, func(i, j int) bool { return body.Data.Groups[i].File < body.Data.Groups[j].File })
 		require.Equal(t, "success", body.Status)
 		// The request should see both groups, and all rules underneath.
 		require.Len(t, body.Data.Groups, 2)
 		require.Len(t, body.Data.Groups[0].Rules, 1)
 		require.Len(t, body.Data.Groups[1].Rules, 1)
-		require.Equal(t, "/folder1", body.Data.Groups[0].File)
-		require.Equal(t, "/folder2", body.Data.Groups[1].File)
+		require.Equal(t, "folder1", body.Data.Groups[0].File)
+		require.Equal(t, "folder2", body.Data.Groups[1].File)
 	}
 
 	// remove permissions from folder2org.ROLE
@@ -734,7 +731,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, "success", body.Status)
 		require.Len(t, body.Data.Groups, 1)
 		require.Len(t, body.Data.Groups[0].Rules, 1)
-		require.Equal(t, "/folder1", body.Data.Groups[0].File)
+		require.Equal(t, "folder1", body.Data.Groups[0].File)
 	}
 
 	// remove permissions from folder1org.ROLE
