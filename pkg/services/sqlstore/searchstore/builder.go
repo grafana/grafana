@@ -67,12 +67,16 @@ func (b *Builder) buildSelect() {
 	var recQueryParams []any
 
 	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
-		if b.Dialect.DriverName() == migrator.Postgres {
+		if b.Dialect.DriverName() == migrator.MySQL {
+			b.sql.WriteString(
+				`WITH pt AS (SELECT panel.dashid FROM panel WHERE MATCH(panel.title) AGAINST (? IN NATURAL LANGUAGE MODE))`)
+		} else if b.Dialect.DriverName() == migrator.Postgres {
 			b.sql.WriteString(
 				`WITH pt AS (SELECT panel.dashid FROM panel WHERE panel.title @@ to_tsquery('english', ?))`)
 		} else {
 			b.sql.WriteString(`WITH pt AS (SELECT panel.dashid FROM panel WHERE panel.title LIKE ?)`)
 		}
+		b.sql.WriteString("\n")
 	}
 
 	b.sql.WriteString(

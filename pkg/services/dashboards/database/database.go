@@ -1053,7 +1053,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	if d.features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && len(query.PanelTitle) > 0 &&
 		query.Type == searchstore.TypePanel {
 		panelTitle := "%" + query.PanelTitle + "%"
-		if d.store.GetDialect().DriverName() == migrator.Postgres {
+		if d.store.GetDialect().DriverName() == migrator.Postgres || d.store.GetDialect().DriverName() == migrator.MySQL {
 			panelTitle = query.PanelTitle
 		}
 		params = append([]any{panelTitle}, params...)
