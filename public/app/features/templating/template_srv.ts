@@ -131,7 +131,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return [];
     }
 
-    if (!this._adhocFiltersDeprecationWarningLogged.get(ds.type) && !skipDeprecationWarning) {
+    if (!skipDeprecationWarning && !this._adhocFiltersDeprecationWarningLogged.get(ds.type)) {
       if (process.env.NODE_ENV !== 'test') {
         deprecationWarning(
           `DataSource ${ds.type}`,
