@@ -78,7 +78,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
         fields: [
           { name: xField.name, type: xField.type, values: xField.values, config: {} },
           {
-            name: yField.name,
+            name: `${yField.name} predicted`,
             type: yField.type,
             values: xField.values.map((v) => result.predict(v - lowest)),
             config: {},
