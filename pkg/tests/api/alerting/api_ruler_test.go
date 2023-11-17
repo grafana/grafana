@@ -975,7 +975,7 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 	parentFolderUID := util.GenerateShortUID()
 	client.CreateFolder(t, parentFolderUID, "parent")
 	folderUID := util.GenerateShortUID()
-	client.CreateFolder(t, folderUID, "folder1", "parent")
+	client.CreateFolder(t, folderUID, "folder1", parentFolderUID)
 
 	group1 := generateAlertRuleGroup(5, alertRuleGen())
 	group2 := generateAlertRuleGroup(5, alertRuleGen())
