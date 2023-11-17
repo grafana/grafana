@@ -28,6 +28,7 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -81,8 +82,9 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     variables = sceneVariablesSetToVariables(variablesSet);
   }
 
-  if (state.controls) {
-    for (const control of state.controls) {
+  if (state.controls && state.controls[0] instanceof DashboardControls) {
+    const variableControls = state.controls[0].state.variableControls;
+    for (const control of variableControls) {
       if (control instanceof AdHocFilterSet) {
         variables.push({
           name: control.state.name!,

@@ -17,7 +17,6 @@ import {
   SceneRefreshPicker,
   SceneGridItem,
   SceneObject,
-  SceneControlsSpacer,
   VizPanelMenu,
   behaviors,
   VizPanelState,
@@ -32,6 +31,8 @@ import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -215,23 +216,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     );
   }
 
-  let controls: SceneObject[] = [
-    new VariableValueSelectors({}),
-    ...filtersSets,
-    new SceneDataLayerControls(),
-    new SceneControlsSpacer(),
-  ];
-
-  if (!Boolean(oldModel.timepicker.hidden)) {
-    controls = controls.concat([
-      new SceneTimePicker({}),
-      new SceneRefreshPicker({
-        refresh: oldModel.refresh,
-        intervals: oldModel.timepicker.refresh_intervals,
-      }),
-    ]);
-  }
-
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
@@ -261,7 +245,24 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
             layers,
           })
         : undefined,
-    controls: controls,
+    controls: [
+      new DashboardControls({
+        variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
+        timeControls: Boolean(oldModel.timepicker.hidden)
+          ? []
+          : [
+              new SceneTimePicker({}),
+              new SceneRefreshPicker({
+                refresh: oldModel.refresh,
+                intervals: oldModel.timepicker.refresh_intervals,
+              }),
+            ],
+        linkControls: new DashboardLinksControls({
+          links: oldModel.links,
+          dashboardUID: oldModel.uid,
+        }),
+      }),
+    ],
   });
 }
 
