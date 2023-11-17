@@ -956,8 +956,7 @@ export class LokiDatasource
    * Implemented as part of `DataSourceWithQueryModificationSupport`. Returns a list of operation
    * types that are supported by `modifyQuery()`.
    */
-  getSupportedQueryModifications()
-  {
+  getSupportedQueryModifications() {
     return [
       'ADD_FILTER',
       'ADD_FILTER_OUT',
@@ -968,7 +967,7 @@ export class LokiDatasource
       'ADD_LEVEL_LABEL_FORMAT',
       'ADD_LABEL_FILTER',
       'ADD_STRING_FILTER',
-      'ADD_STRING_FILTER_OUT'
+      'ADD_STRING_FILTER_OUT',
     ];
   }
 

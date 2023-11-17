@@ -965,12 +965,7 @@ export class ElasticDatasource
   }
 
   getSupportedQueryModifications() {
-    return [
-      'ADD_FILTER',
-      'ADD_FILTER_OUT',
-      'ADD_STRING_FILTER',
-      'ADD_STRING_FILTER_OUT',
-    ];
+    return ['ADD_FILTER', 'ADD_FILTER_OUT', 'ADD_STRING_FILTER', 'ADD_STRING_FILTER_OUT'];
   }
 
   addAdHocFilters(query: string, adhocFilters?: AdHocVariableFilter[]) {
