@@ -41,10 +41,10 @@ export const transformationDocsContent: TransformationDocsContentType = {
       return `
   Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
-  - **Mode -** Select a mode:
-    - **Reduce row -** Apply selected calculation on each row of selected fields independently.
-    - **Binary operation -** Apply basic binary operations (for example, sum or multiply) on values in a single row from two selected fields.
-    - **Unary operation -** Apply basic unary operations on values in a single row from a selected field. The available operations are:
+  - **Mode** - Select a mode:
+    - **Reduce row** - Apply selected calculation on each row of selected fields independently.
+    - **Binary operation** - Apply basic binary operations (for example, sum or multiply) on values in a single row from two selected fields.
+    - **Unary operation** - Apply basic unary operations on values in a single row from a selected field. The available operations are:
       - **Absolute value (abs)** - Returns the absolute value of a given expression. It represents its distance from zero as a positive number.
       - **Natural exponential (exp)** - Returns _e_ raised to the power of a given expression.
       - **Natural logarithm (ln)** - Returns the natural logarithm of a given expression.
@@ -70,13 +70,13 @@ export const transformationDocsContent: TransformationDocsContentType = {
       - **Mean** - Calculates the moving mean or running average.
       - **Stddev** - Calculates the moving standard deviation.
       - **Variance** - Calculates the moving variance.
-    - **Row index -** Insert a field with the row index.
-  - **Field name -** Select the names of fields you want to use in the calculation for the new field.
-  - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
-  - **Operation -** If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
-  - **As percentile -** If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
-  - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
-  - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
+    - **Row index** - Insert a field with the row index.
+  - **Field name** - Select the names of fields you want to use in the calculation for the new field.
+  - **Calculation** - If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
+  - **Operation** - If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
+  - **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
+  - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
+  - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
   
   In the example below, we added two fields together and named them Sum.
 
@@ -196,13 +196,16 @@ export const transformationDocsContent: TransformationDocsContentType = {
       return `
   Use this transformation to change the field type of the specified field.
 
-  - **Field -** Select from available fields
-  - **as -** Select the FieldType to convert to
-    - **Numeric -** attempts to make the values numbers
-    - **String -** will make the values strings
-    - **Time -** attempts to parse the values as time
+  - **Field** - Select from available fields
+  - **as** - Select the FieldType to convert to
+    - **Numeric** - attempts to make the values numbers
+    - **String** - will make the values strings
+    - **Time** - attempts to parse the values as time
       - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
-    - **Boolean -** will make the values booleans
+    - **Boolean** - will make the values booleans
+    - **Enum** - will make the values enums
+      - Will show a table to manage the enums
+    - **Other** - attempts to parse the values as JSON
 
   For example, the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
 
@@ -1037,8 +1040,8 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   The reduce transformer has two modes:
 
-  - **Series to rows -** Creates a row for each field and a column for each calculation.
-  - **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
+  - **Series to rows** - Creates a row for each field and a column for each calculation.
+  - **Reduce fields** - Keeps the existing frame structure, but collapses each field into a single value.
 
   For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then
   the result would be:
