@@ -101,7 +101,7 @@ enabled = true
 enabled = false
 ```
 
-> **Note**: The next time you upgrade to Grafana Alerting, Grafana will restore your Grafana Alerting alerts and configuration to those you had before rolling back. 
+> **Note**: The next time you upgrade to Grafana Alerting, Grafana will restore your Grafana Alerting alerts and configuration to those you had before rolling back.
 
 If, after rolling back, you wish to delete any existing Grafana Alerting configuration and upgrade your legacy alerting configuration again from scratch, you can enable the `clean_upgrade` option:
 
