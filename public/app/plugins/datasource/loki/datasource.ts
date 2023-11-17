@@ -36,7 +36,6 @@ import {
   renderLegendFormat,
   LegacyMetricFindQueryOptions,
 } from '@grafana/data';
-import { intervalToMs } from '@grafana/data/src/datetime/rangeutil';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -594,7 +593,7 @@ export class LokiDatasource
       if (!!durations[idx]) {
         // if query has a duration e.g. [1m]
         end = this.getTimeRangeParams().end;
-        start = end - intervalToMs(durations[idx]) * NS_IN_MS;
+        start = end - rangeUtil.intervalToMs(durations[idx]) * NS_IN_MS;
         return { start, end };
       } else {
         // if query has no duration e.g. [$__interval]
