@@ -443,8 +443,8 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	if accessErr := hs.hasPluginRequestedPermissions(c, pluginID, dto.Version); accessErr != nil {
-		return response.Err(accessErr)
+	if err := hs.hasPluginRequestedPermissions(c, pluginID, dto.Version); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch plugin json data", err)
 	}
 
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
@@ -453,14 +453,6 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
-		}
-		var versionUnsupportedErr repo.ErrVersionUnsupported
-		if errors.As(err, &versionUnsupportedErr) {
-			return response.Error(http.StatusConflict, "Plugin version not supported", err)
-		}
-		var versionNotFoundErr repo.ErrVersionNotFound
-		if errors.As(err, &versionNotFoundErr) {
-			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
 		var clientError repo.ErrResponse4xx
 		if errors.As(err, &clientError) {
@@ -474,7 +466,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 			return response.Error(http.StatusNotFound, archError.Error(), nil)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
 	return response.JSON(http.StatusOK, []byte{})
@@ -525,7 +517,7 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 	repoCompatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, version, repoCompatOpts)
 	if err != nil {
-		return errutil.Internal("Failed to fetch plugin json").Errorf("failed to fetch plugin json: %w", err)
+		return err
 	}
 	if jsonData.ExternalServiceRegistration == nil || len(jsonData.ExternalServiceRegistration.Permissions) == 0 {
 		return nil
@@ -539,7 +531,9 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 	}
 	evaluator := evalAllPermissions(jsonData.ExternalServiceRegistration.Permissions)
 	if !hasAccess(evaluator) {
-		return errutil.Forbidden("Access denied").Errorf(fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", evaluator.String()))
+		return errutil.Forbidden("forbidden-access",
+			errutil.WithPublicMessage("You'll need additional permissions to install this plugin. Permissions needed: "+evaluator.String())).
+			Errorf("plugin installation forbidden")
 	}
 	return nil
 }

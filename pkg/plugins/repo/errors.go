@@ -1,6 +1,10 @@
 package repo
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
+)
 
 type ErrResponse4xx struct {
 	message           string
@@ -43,24 +47,18 @@ func (e ErrResponse4xx) Error() string {
 	return fmt.Sprintf("%d", e.statusCode)
 }
 
-type ErrVersionUnsupported struct {
-	pluginID         string
-	requestedVersion string
-	systemInfo       string
+var ErrVersionUnsupportedBase = errutil.NewBase(errutil.StatusConflict, "plugin.unsupportedVersion",
+	errutil.WithPublicMessage("Plugin version in not supported on your system."))
+
+func ErrVersionUnsupported(pluginID, requestedVersion, systemInfo string) error {
+	return ErrVersionUnsupportedBase.Errorf("%s v%s is not supported on your system (%s)", pluginID, requestedVersion, systemInfo)
 }
 
-func (e ErrVersionUnsupported) Error() string {
-	return fmt.Sprintf("%s v%s is not supported on your system (%s)", e.pluginID, e.requestedVersion, e.systemInfo)
-}
+var ErrVersionNotFoundBase = errutil.NewBase(errutil.StatusNotFound, "plugin.versionNotFound",
+	errutil.WithPublicMessage("Plugin version not found."))
 
-type ErrVersionNotFound struct {
-	pluginID         string
-	requestedVersion string
-	systemInfo       string
-}
-
-func (e ErrVersionNotFound) Error() string {
-	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.pluginID, e.requestedVersion, e.systemInfo)
+func ErrVersionNotFound(pluginID, requestedVersion, systemInfo string) error {
+	return ErrVersionNotFoundBase.Errorf("%s v%s either does not exist or is not supported on your system (%s)", pluginID, requestedVersion, systemInfo)
 }
 
 type ErrArcNotFound struct {
