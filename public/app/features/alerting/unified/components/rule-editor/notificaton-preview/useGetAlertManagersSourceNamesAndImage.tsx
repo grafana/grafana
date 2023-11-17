@@ -1,15 +1,10 @@
 import { AlertmanagerChoice } from '../../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import {
-  getExternalDsAlertManagers,
-  GRAFANA_RULES_SOURCE_NAME,
-  isVanillaPrometheusAlertManagerDataSource,
-} from '../../../utils/datasource';
+import { getExternalDsAlertManagers, GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 export interface AlertManagerMetaData {
   name: string;
   img: string;
-  postable: boolean;
 }
 
 export const useGetAlertManagersMetadata = () => {
@@ -19,21 +14,20 @@ export const useGetAlertManagersMetadata = () => {
   const externalDsAlertManagers = getExternalDsAlertManagers().map((ds) => ({
     name: ds.name,
     img: ds.meta.info.logos.small,
-    postable: isVanillaPrometheusAlertManagerDataSource(ds.name),
   }));
 
   const alertmanagerChoice = amConfigStatus?.alertmanagersChoice;
   const grafanaAlertManagerMetaData: AlertManagerMetaData = {
     name: GRAFANA_RULES_SOURCE_NAME,
     img: 'public/img/grafana_icon.svg',
-    postable: true,
   };
-  const alertManagerMetaData: AlertManagerMetaData[] =
-    alertmanagerChoice === AlertmanagerChoice.Internal
-      ? [grafanaAlertManagerMetaData]
-      : alertmanagerChoice === AlertmanagerChoice.External
-      ? externalDsAlertManagers
-      : [grafanaAlertManagerMetaData, ...externalDsAlertManagers];
 
-  return alertManagerMetaData;
+  switch (alertmanagerChoice) {
+    case AlertmanagerChoice.Internal:
+      return [grafanaAlertManagerMetaData];
+    case AlertmanagerChoice.External:
+      return externalDsAlertManagers;
+    default:
+      return [grafanaAlertManagerMetaData, ...externalDsAlertManagers];
+  }
 };

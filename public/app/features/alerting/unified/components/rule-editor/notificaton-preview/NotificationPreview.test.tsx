@@ -25,7 +25,7 @@ jest.mock('../../../useRouteGroupsMatcher');
 
 jest
   .spyOn(notificationPreview, 'useGetAlertManagersMetadata')
-  .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, img: '', postable: true }]);
+  .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }]);
 
 jest.spyOn(dataSource, 'getDatasourceAPIUid').mockImplementation((ds: string) => ds);
 

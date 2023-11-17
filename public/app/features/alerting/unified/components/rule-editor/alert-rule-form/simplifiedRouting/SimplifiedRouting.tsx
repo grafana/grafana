@@ -5,6 +5,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   AlertManagerDataSource,
@@ -93,11 +94,16 @@ export function SimplifiedRouting() {
             </Stack>
           )}
           <Stack direction="row" gap={1} alignItems="center">
-            <ContactPointSelector
-              selectedReceiver={alertManagerContactPoint.selectedContactPoint}
-              dispatch={dispatch}
-              alertManager={alertManagerContactPoint.alertManager}
-            />
+            <AlertmanagerProvider
+              accessType={'notification'}
+              alertmanagerSourceName={alertManagerContactPoint.alertManager.name}
+            >
+              <ContactPointSelector
+                selectedReceiver={alertManagerContactPoint.selectedContactPoint}
+                dispatch={dispatch}
+                alertManager={alertManagerContactPoint.alertManager}
+              />
+            </AlertmanagerProvider>
             <LinkToContactPoints />
           </Stack>
         </Stack>

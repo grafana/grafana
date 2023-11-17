@@ -3,12 +3,12 @@ import React from 'react';
 import { AnyAction } from 'redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, Icon, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useAlertmanagerConfig } from 'app/features/alerting/unified/hooks/useAlertmanagerConfig';
+import { Alert, Field, Icon, LoadingPlaceholder, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { INTEGRATION_ICONS } from 'app/features/alerting/unified/types/contact-points';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 import { extractReceivers } from 'app/features/alerting/unified/utils/receivers';
 
+import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 import { ReceiverMetadataBadge } from '../../../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
 
 import { selectContactPoint } from './SimplifiedRouting';
@@ -24,15 +24,17 @@ export function ContactPointSelector({ selectedReceiver, alertManager, dispatch 
   const onChange = (value: SelectableValue<string>) => {
     dispatch(selectContactPoint({ receiver: value?.value, alertManager }));
   };
-  const { currentData } = useAlertmanagerConfig(alertManager.name, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-  });
-  const config = currentData?.alertmanager_config;
-  const receivers = config?.receivers ?? [];
-  const receiversMetadata = useReceiversMetadataMapByName(config?.receivers ?? []);
+  const { isLoading, error, contactPoints: receivers } = useContactPointsWithStatus();
+  const receiversMetadata = useReceiversMetadataMapByName(receivers);
   const options = receivers.map((receiver) => ({ label: receiver.name, value: receiver.name }));
   const metadataForSelected = selectedReceiver ? receiversMetadata.get(selectedReceiver) : undefined;
+
+  if (error) {
+    return <Alert title="Failed to fetch contact points" severity="error" />;
+  }
+  if (isLoading) {
+    return <LoadingPlaceholder text={'Loading...'} />;
+  }
 
   return (
     <Stack direction="column">

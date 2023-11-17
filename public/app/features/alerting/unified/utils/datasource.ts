@@ -92,7 +92,7 @@ export function getAlertManagerDataSourcesByPermission(
       displayName: ds.name,
       imgUrl: ds.meta.info.logos.small,
       meta: ds.meta,
-      hasConfigurationAPI: !isAlertManagerWithConfigAPI(ds.jsonData),
+      hasConfigurationAPI: isAlertManagerWithConfigAPI(ds.jsonData),
     }));
     availableDataSources.push(...cloudSources);
   }
