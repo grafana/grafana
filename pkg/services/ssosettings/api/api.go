@@ -75,7 +75,30 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusNotFound, "The provider was not found", err)
 	}
 
-	return response.JSON(http.StatusOK, settings)
+	if c.QueryBool("includeDefaults") {
+		return response.JSON(200, settings)
+	}
+
+	// colinTODO: remove when defaults for each provider are implemented
+	defaults := map[string]interface{}{
+		"enabled":                    false,
+		"role_attribute_strict":      false,
+		"allow_sign_up":              true,
+		"name":                       "default name",
+		"tls_skip_verify_insecure":   false,
+		"use_pkce":                   true,
+		"use_refresh_token":          false,
+		"allow_assign_grafana_admin": false,
+		"auto_login":                 false,
+	}
+
+	for key, defaultValue := range defaults {
+		if value, exists := settings.Settings[key]; exists && value == defaultValue {
+			delete(settings.Settings, key)
+		}
+	}
+
+	return response.JSON(200, settings)
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
