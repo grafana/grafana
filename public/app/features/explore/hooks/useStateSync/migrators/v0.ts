@@ -55,7 +55,7 @@ export const v0Migrator: MigrationHandler<never, ExploreURLV0> = {
         left,
         ...(right && { right }),
       },
-      leftError || !!rightError,
+      !!leftError || !!rightError,
     ];
   },
 };

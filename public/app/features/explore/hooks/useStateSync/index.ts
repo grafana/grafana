@@ -78,7 +78,7 @@ export function useStateSync(params: ExploreQueryParams) {
           if (!isEqual(prevParams.current.panes, JSON.stringify(panesQueryParams))) {
             // If there's no previous state it means we are mounting explore for the first time,
             // in this case we want to replace the URL instead of pushing a new entry to the history.
-            // If theinitstate is 'pending' it means explore still hasn't finished initializing. in that case we skip
+            // If the init state is 'pending' it means explore still hasn't finished initializing. in that case we skip
             // pushing a new entry in the history as the first entry will be pushed after initialization.
             const replace =
               (!!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0) ||
