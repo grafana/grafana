@@ -4,12 +4,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setBuildInfo(opts ServerOptions) {
+func setBuildInfo(reg prometheus.Registerer, opts ServerOptions) {
 	buildstampInt64, err := strconv.ParseInt(opts.BuildStamp, 10, 64)
 	if err != nil || buildstampInt64 == 0 {
 		buildstampInt64 = time.Now().Unix()
@@ -22,5 +24,5 @@ func setBuildInfo(opts ServerOptions) {
 	setting.IsEnterprise = extensions.IsEnterprise
 	setting.Packaging = validPackaging(Packaging)
 
-	metrics.SetBuildInformation(opts.Version, opts.Commit, opts.BuildBranch, buildstampInt64)
+	metrics.SetBuildInformation(reg, opts.Version, opts.Commit, opts.BuildBranch, buildstampInt64)
 }

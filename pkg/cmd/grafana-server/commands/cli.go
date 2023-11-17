@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
@@ -97,9 +98,6 @@ func RunServer(opts ServerOptions) error {
 		}
 	}()
 
-	setBuildInfo(opts)
-	checkPrivileges()
-
 	configOptions := strings.Split(ConfigOverrides, " ")
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   ConfigFile,
@@ -110,6 +108,9 @@ func RunServer(opts ServerOptions) error {
 	if err != nil {
 		return err
 	}
+
+	setBuildInfo(metrics.ProvideRegistry(cfg), opts)
+	checkPrivileges()
 
 	s, err := server.Initialize(
 		cfg,
