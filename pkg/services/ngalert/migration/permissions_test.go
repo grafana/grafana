@@ -40,6 +40,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 	}
 
 	genAlert := func(title string, namespaceUID string, dashboardUID string, mutators ...func(*ngModels.AlertRule)) *ngModels.AlertRule {
+		dashTitle := "Dashboard Title " + dashboardUID
 		a := &ngModels.AlertRule{
 			ID:        1,
 			OrgID:     1,
@@ -54,7 +55,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			},
 			NamespaceUID:    namespaceUID,
 			DashboardUID:    &dashboardUID,
-			RuleGroup:       fmt.Sprintf("Dashboard Title %s - %d", dashboardUID, 1),
+			RuleGroup:       fmt.Sprintf("%s - %ds", dashTitle, 60),
 			IntervalSeconds: 60,
 			Version:         1,
 			PanelID:         pointer(int64(1)),
@@ -82,7 +83,6 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 		return func(a *ngModels.AlertRule) {
 			a.PanelID = pointer(id)
 			a.Annotations["__panelId__"] = fmt.Sprintf("%d", id)
-			a.RuleGroup = fmt.Sprintf("Dashboard Title %s - %d", *a.DashboardUID, id)
 		}
 	}
 

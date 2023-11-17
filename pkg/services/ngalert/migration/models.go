@@ -29,7 +29,6 @@ type OrgMigration struct {
 	seenUIDs            Deduplicator
 	silences            []*pb.MeshSilence
 	alertRuleTitleDedup map[string]Deduplicator // Folder -> Deduplicator (Title).
-	alertRuleGroupDedup map[string]Deduplicator // Folder -> Deduplicator (Group).
 
 	// Migrated folder for a dashboard based on permissions. Parent Folder ID -> unique dashboard permission -> custom folder.
 	permissionsMap        map[int64]map[permissionHash]*folder.Folder
@@ -55,9 +54,6 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 		silences:            make([]*pb.MeshSilence, 0),
 		alertRuleTitleDedup: make(map[string]Deduplicator),
 
-		// We deduplicate alert rule groups so that we don't have to ensure that the alerts rules have the same interval.
-		alertRuleGroupDedup: make(map[string]Deduplicator),
-
 		permissionsMap:        make(map[int64]map[permissionHash]*folder.Folder),
 		folderCache:           make(map[int64]*folder.Folder),
 		folderPermissionCache: make(map[string][]accesscontrol.ResourcePermission),
@@ -78,17 +74,6 @@ func (om *OrgMigration) AlertTitleDeduplicator(folderUID string) Deduplicator {
 		}
 	}
 	return om.alertRuleTitleDedup[folderUID]
-}
-
-func (om *OrgMigration) AlertGroupDeduplicator(folderUID string) Deduplicator {
-	if _, ok := om.alertRuleGroupDedup[folderUID]; !ok {
-		om.alertRuleGroupDedup[folderUID] = Deduplicator{
-			set:             make(map[string]struct{}),
-			caseInsensitive: om.migrationStore.CaseInsensitive(),
-			maxLen:          store.AlertRuleMaxRuleGroupNameLength,
-		}
-	}
-	return om.alertRuleGroupDedup[folderUID]
 }
 
 type AlertPair struct {

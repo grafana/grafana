@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -713,7 +714,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			mutator(rule)
 		}
 
-		rule.RuleGroup = fmt.Sprintf("%s - %d", *rule.DashboardUID, *rule.PanelID)
+		rule.RuleGroup = fmt.Sprintf("%s - %ds", *rule.DashboardUID, rule.IntervalSeconds)
 
 		rule.Annotations["__dashboardUid__"] = *rule.DashboardUID
 		rule.Annotations["__panelId__"] = strconv.FormatInt(*rule.PanelID, 10)

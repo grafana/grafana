@@ -68,24 +68,23 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 	titleDedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
 	name := truncate(da.Name, store.AlertDefinitionMaxTitleLength)
 	if titleDedupSet.contains(name) {
-		dedupedName := titleDedupSet.deduplicate(name)
-		l.Debug("Duplicate alert rule name detected, renaming", "oldName", name, "newName", dedupedName)
+		// This should work most of the time and will give a much better alert name than a random uid.
+		dedupedName := simpleTitleDedup(da, name)
+		if titleDedupSet.contains(dedupedName) {
+			// If we still have a duplicate, we'll just have to use a random uid.
+			dedupedName = titleDedupSet.deduplicate(name)
+		}
+		l.Debug("Duplicate alert rule name detected, renaming", "oldName", da.Name, "newName", dedupedName)
 		name = dedupedName
 	}
 	titleDedupSet.add(name)
 
-	// Here we ensure that the alert rule group is unique within the folder.
-	// This is so that we don't have to ensure that the alerts rules have the same interval.
-	groupDedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
-	panelSuffix := fmt.Sprintf(" - %d", da.PanelID)
+	// We need to ensure that all rules in a group have the same interval but would also like the group to contain useful information.
+	// To do this, we construct the group name from the dashboard title and the interval.
+	interval := ruleAdjustInterval(da.Frequency)
+	panelSuffix := fmt.Sprintf(" - %ds", interval)
 	truncatedDashboard := truncate(info.DashboardName, store.AlertRuleMaxRuleGroupNameLength-len(panelSuffix))
-	groupName := fmt.Sprintf("%s%s", truncatedDashboard, panelSuffix) // Unique to this dash alert but still contains useful info.
-	if groupDedupSet.contains(groupName) {
-		dedupedGroupName := groupDedupSet.deduplicate(groupName)
-		l.Debug("Duplicate alert rule group name detected, renaming", "oldGroup", groupName, "newGroup", dedupedGroupName)
-		groupName = dedupedGroupName
-	}
-	groupDedupSet.add(groupName)
+	groupName := fmt.Sprintf("%s%s", truncatedDashboard, panelSuffix)
 
 	dashUID := info.DashboardUID
 	ar := &ngmodels.AlertRule{
@@ -303,4 +302,13 @@ func extractChannelIDs(d *migrationStore.DashAlert) (channelUids []migrationStor
 	}
 
 	return channelUids
+}
+
+// simpleTitleDedup truncates the given title to the maximum length and appends a simple suffix based on dashboard and panel id to make it unique.
+// This could fail to be unique if identically named alerts in different dashboards are migrating to the same folder. However, in most cases
+// this is sufficient and more readable appending a random uid.
+func simpleTitleDedup(da *migrationStore.DashAlert, title string) string {
+	suffix := fmt.Sprintf("_%d-%d", da.DashboardID, da.PanelID)
+	truncatedName := truncate(title, store.AlertDefinitionMaxTitleLength-len(suffix))
+	return fmt.Sprintf("%s%s", truncatedName, suffix)
 }
