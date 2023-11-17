@@ -70,6 +70,7 @@ describe('<SpanDetail>', () => {
     referencesToggle: jest.fn(),
     createFocusSpanLink: jest.fn().mockReturnValue({}),
     traceFlameGraphs: { [span.spanID]: createDataFrame(data) },
+    setRedrawListView: jest.fn(),
   };
 
   span.tags = [

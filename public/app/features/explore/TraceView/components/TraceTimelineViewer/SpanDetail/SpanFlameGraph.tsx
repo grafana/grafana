@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect } from 'react';
+import { useMeasure } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -31,10 +32,12 @@ export type SpanFlameGraphProps = {
   timeZone: TimeZone;
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
+  setRedrawListView: (redraw: {}) => void;
 };
 
 export default function SpanFlameGraph(props: SpanFlameGraphProps) {
-  const { span, traceToProfilesOptions, timeZone, traceFlameGraphs, setTraceFlameGraphs } = props;
+  const { span, traceToProfilesOptions, timeZone, traceFlameGraphs, setTraceFlameGraphs, setRedrawListView } = props;
+  const [sizeRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
   const styles = useStyles2(getStyles);
 
   const profileTag = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
@@ -130,16 +133,23 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
     profileTagValue,
   ]);
 
+  useEffect(() => {
+    setRedrawListView({});
+  }, [containerHeight, setRedrawListView]);
+
   if (!traceFlameGraphs[profileTagValue]) {
     return <></>;
   }
 
   return (
-    <div className={styles.flameGraph}>
-      <>
-        <div className={styles.flameGraphTitle}>Flame graph</div>
-        <FlameGraph data={traceFlameGraphs[profileTagValue]} getTheme={() => config.theme2} showFlameGraphOnly={true} />
-      </>
+    <div className={styles.flameGraph} ref={sizeRef}>
+      <div className={styles.flameGraphTitle}>Flame graph</div>
+      <FlameGraph
+        data={traceFlameGraphs[profileTagValue]}
+        getTheme={() => config.theme2}
+        showFlameGraphOnly={true}
+        disableCollapsing={true}
+      />
     </div>
   );
 }

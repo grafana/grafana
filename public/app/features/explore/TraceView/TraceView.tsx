@@ -94,6 +94,7 @@ export function TraceView(props: Props) {
   const [showCriticalPathSpansOnly, setShowCriticalPathSpansOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(100);
   const [traceFlameGraphs, setTraceFlameGraphs] = useState<TraceFlameGraphs>({});
+  const [redrawListView, setRedrawListView] = useState({});
 
   const styles = useStyles2(getStyles);
 
@@ -228,6 +229,8 @@ export function TraceView(props: Props) {
             criticalPath={criticalPath}
             traceFlameGraphs={traceFlameGraphs}
             setTraceFlameGraphs={setTraceFlameGraphs}
+            redrawListView={redrawListView}
+            setRedrawListView={setRedrawListView}
           />
         </>
       ) : (

@@ -100,6 +100,7 @@ export type SpanDetailRowProps = {
   visibleSpanIds: string[];
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
+  setRedrawListView: (redraw: {}) => void;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -140,6 +141,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       visibleSpanIds,
       traceFlameGraphs,
       setTraceFlameGraphs,
+      setRedrawListView,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -184,6 +186,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               datasourceType={datasourceType}
               traceFlameGraphs={traceFlameGraphs}
               setTraceFlameGraphs={setTraceFlameGraphs}
+              setRedrawListView={setRedrawListView}
             />
           </div>
         </TimelineRow.Cell>

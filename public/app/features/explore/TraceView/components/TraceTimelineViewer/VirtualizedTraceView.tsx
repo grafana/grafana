@@ -108,6 +108,8 @@ type TVirtualizedTraceViewOwnProps = {
   criticalPath: CriticalPathSection[];
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
+  redrawListView: {};
+  setRedrawListView: (redraw: {}) => void;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
@@ -555,6 +557,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       datasourceType,
       traceFlameGraphs,
       setTraceFlameGraphs,
+      setRedrawListView,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -593,6 +596,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           visibleSpanIds={visibleSpanIds}
           traceFlameGraphs={traceFlameGraphs}
           setTraceFlameGraphs={setTraceFlameGraphs}
+          setRedrawListView={setRedrawListView}
         />
       </div>
     );
@@ -622,7 +626,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   render() {
     const styles = getStyles();
-    const { scrollElement } = this.props;
+    const { scrollElement, redrawListView } = this.props;
 
     return (
       <>
@@ -638,6 +642,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           getIndexFromKey={this.getIndexFromKey}
           windowScroller={false}
           scrollElement={scrollElement}
+          redraw={redrawListView}
         />
         {this.props.topOfViewRef && ( // only for panel as explore uses content outline to scroll to top
           <ToolbarButton

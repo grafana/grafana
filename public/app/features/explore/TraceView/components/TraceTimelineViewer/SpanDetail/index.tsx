@@ -134,6 +134,7 @@ export type SpanDetailProps = {
   datasourceType: string;
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
+  setRedrawListView: (redraw: {}) => void;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -156,6 +157,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     traceFlameGraphs,
     setTraceFlameGraphs,
     traceToProfilesOptions,
+    setRedrawListView,
   } = props;
   const {
     isTagsOpen,
@@ -397,6 +399,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             traceFlameGraphs={traceFlameGraphs}
             setTraceFlameGraphs={setTraceFlameGraphs}
             traceToProfilesOptions={traceToProfilesOptions}
+            setRedrawListView={setRedrawListView}
           />
         )}
         <small className={styles.debugInfo}>

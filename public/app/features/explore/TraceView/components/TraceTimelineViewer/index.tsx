@@ -112,6 +112,8 @@ export type TProps = {
   criticalPath: CriticalPathSection[];
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
+  redrawListView: {};
+  setRedrawListView: (redraw: {}) => void;
 };
 
 type State = {
