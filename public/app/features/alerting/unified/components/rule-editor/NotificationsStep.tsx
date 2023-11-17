@@ -229,7 +229,7 @@ export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDes
     <div className={styles.notificationsOptionDescription}>
       <Text variant="bodySmall" color="secondary">
         {manualRouting
-          ? 'Notifications for firing alerts are routed a selected contact point.'
+          ? 'Notifications for firing alerts are routed to a selected contact point.'
           : 'Notifications for firing alerts are routed to contact points based on matching labels.'}
       </Text>
       {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}

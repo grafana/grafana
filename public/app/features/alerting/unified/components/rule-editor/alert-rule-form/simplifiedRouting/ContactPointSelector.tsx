@@ -6,16 +6,16 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Icon, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAlertmanagerConfig } from 'app/features/alerting/unified/hooks/useAlertmanagerConfig';
 import { INTEGRATION_ICONS } from 'app/features/alerting/unified/types/contact-points';
+import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 import { extractReceivers } from 'app/features/alerting/unified/utils/receivers';
 
 import { ReceiverMetadataBadge } from '../../../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
-import { AlertManagerMetaData } from '../../notificaton-preview/useGetAlertManagersSourceNamesAndImage';
 
 import { selectContactPoint } from './SimplifiedRouting';
 import { useReceiversMetadataMapByName } from './useReceiverMetadataByName';
 
 export interface ContactPointSelectorProps {
-  alertManager: AlertManagerMetaData;
+  alertManager: AlertManagerDataSource;
   selectedReceiver?: string;
   dispatch: React.Dispatch<AnyAction>;
 }

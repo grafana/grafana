@@ -261,7 +261,7 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
 
   return (
     <div>
-      <div className={styles.labelsDescription}>
+      <Stack direction="column" gap={1}>
         <Text element="h5">Labels</Text>
         <Stack direction={'row'} gap={1}>
           <Text variant="bodySmall" color="secondary">
@@ -273,7 +273,7 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
             title="Labels"
           />
         </Stack>
-      </div>
+      </Stack>
       <div className={styles.labelsContainer}></div>
       {dataSourceName ? <LabelsWithSuggestions dataSourceName={dataSourceName} /> : <LabelsWithoutSuggestions />}
     </div>
@@ -323,12 +323,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     labelsContainer: css({
       marginBottom: theme.spacing(3),
-    }),
-    labelsDescription: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-      marginTop: theme.spacing(2),
     }),
   };
 };

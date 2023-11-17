@@ -5,6 +5,8 @@ import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/
 import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
 
+import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
+
 import { instancesPermissions, notificationsPermissions } from './access-control';
 import { getAllDataSources } from './config';
 
@@ -21,6 +23,7 @@ export interface AlertManagerDataSource {
   name: string;
   imgUrl: string;
   meta?: DataSourceInstanceSettings['meta'];
+  hasConfigurationAPI?: boolean;
 }
 
 export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
@@ -54,6 +57,7 @@ export function getExternalDsAlertManagers() {
 const grafanaAlertManagerDataSource: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
   imgUrl: 'public/img/grafana_icon.svg',
+  hasConfigurationAPI: true,
 };
 
 // Used only as a fallback for Alert Group plugin
@@ -88,6 +92,7 @@ export function getAlertManagerDataSourcesByPermission(
       displayName: ds.name,
       imgUrl: ds.meta.info.logos.small,
       meta: ds.meta,
+      hasConfigurationAPI: !isAlertManagerWithConfigAPI(ds.jsonData),
     }));
     availableDataSources.push(...cloudSources);
   }

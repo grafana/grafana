@@ -6,21 +6,20 @@ import { useFormContext } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
-
 import {
-  AlertManagerMetaData,
-  useGetAlertManagersMetadata,
-} from '../../notificaton-preview/useGetAlertManagersSourceNamesAndImage';
+  AlertManagerDataSource,
+  getAlertManagerDataSourcesByPermission,
+} from 'app/features/alerting/unified/utils/datasource';
+import { createUrl } from 'app/features/alerting/unified/utils/url';
 
 import { ContactPointSelector } from './ContactPointSelector';
 
 export interface AMContactPoint {
-  alertManager: AlertManagerMetaData;
+  alertManager: AlertManagerDataSource;
   selectedContactPoint?: string;
 }
 
-export const selectContactPoint = createAction<{ receiver: string | undefined; alertManager: AlertManagerMetaData }>(
+export const selectContactPoint = createAction<{ receiver: string | undefined; alertManager: AlertManagerDataSource }>(
   'simplifiedRouting/selectContactPoint'
 );
 
@@ -43,12 +42,13 @@ export function SimplifiedRouting() {
   const styles = useStyles2(getStyles);
   const contactPointsInAlert = getValues('contactPoints');
 
-  const alertManagerMetaData = useGetAlertManagersMetadata();
+  const alertManagerMetaData = getAlertManagerDataSourcesByPermission('notification');
+  console.log('alertManagerMetaData', alertManagerMetaData);
 
-  const alertManagerMetaDataPostable = alertManagerMetaData.filter((am) => am.postable);
+  const alertManagerMetaDataWithConfigAPI = alertManagerMetaData.filter((am) => am.hasConfigurationAPI);
 
   // we merge the selected contact points with the alert manager meta data
-  const alertManagersWithSelectedContactPoints = alertManagerMetaDataPostable.map((am) => {
+  const alertManagersWithSelectedContactPoints = alertManagerMetaDataWithConfigAPI.map((am) => {
     const selectedContactPoint = contactPointsInAlert?.find((cp) => cp.alertManager === am.name);
     return { alertManager: am, selectedContactPoint: selectedContactPoint?.selectedContactPoint };
   });
@@ -66,8 +66,7 @@ export function SimplifiedRouting() {
   useEffect(() => {
     const contactPointsForForm = getContactPointsForForm(alertManagersWithCPState);
     setValue('contactPoints', contactPointsForForm, { shouldValidate: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alertManagersWithCPState]);
+  }, [alertManagersWithCPState, setValue]);
 
   //todo: decide what to do when there some alert managers not postable
   //const shouldShowAM = alertManagerMetaDataPostable.length > 1;
@@ -83,7 +82,11 @@ export function SimplifiedRouting() {
               <div className={styles.alertManagerName}>
                 {' '}
                 Alert manager:
-                <img src={alertManagerContactPoint.alertManager.img} alt="" className={styles.img} />
+                <img
+                  src={alertManagerContactPoint.alertManager.imgUrl}
+                  alt="Alert manager logo"
+                  className={styles.img}
+                />
                 {alertManagerContactPoint.alertManager.name}
               </div>
               <div className={styles.secondAlertManagerLine}></div>
