@@ -267,7 +267,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   | 1636678680000000000 | 5        |
   | 1636678620000000000 | 12       |
 
-  This transformation allows you to extract and format data in various ways. Customize the extraction format based on your specific data needs.
+  This transformation allows you to extract and format data in various ways. You can customize the extraction format based on your specific data needs.
   `;
     },
     links: [
