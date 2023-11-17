@@ -148,12 +148,6 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
 
-### force_migration
-
-Force migration will run migrations that might cause data loss. Default is `false`.
-
-Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data. Any alert rules created while using Unified Alerting will be deleted by rolling back.
-
 <hr />
 
 ## [paths]
@@ -1489,7 +1483,7 @@ For more information about the Grafana alerts, refer to [About Grafana Alerting]
 
 ### enabled
 
-Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
+Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
@@ -1626,6 +1620,20 @@ For more information about Grafana Reserved Labels, refer to [Labels in Grafana 
 Comma-separated list of reserved labels added by the Grafana Alerting engine that should be disabled.
 
 For example: `disabled_labels=grafana_folder`
+
+<hr>
+
+## [unified_alerting.upgrade]
+
+For more information about upgrading to Grafana Alerting, refer to [Upgrade Alerting](/docs/grafana/next/alerting/set-up/migrating-alerts/)
+
+### clean_upgrade
+
+When restarting Grafana to upgrade from legacy alerting to Grafana Alerting, first delete any existing Grafana Alerting data from a previous upgrade such as alert rules, contact points, and notification policies. Default is `false`.
+
+If `false` or unset, existing Grafana Alerting data will not be changed or deleted when switching between legacy and Unified Alerting.
+
+> **Note.** Should be kept false when not needed as it may cause unintended data-loss if left enabled.
 
 <hr>
 

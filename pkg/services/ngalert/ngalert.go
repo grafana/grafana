@@ -104,8 +104,9 @@ func ProvideService(
 		upgradeService:       upgradeService,
 	}
 
-	// Migration is called even if UA is disabled. If UA is disabled, this will do nothing except handle logic around
-	// reverting the migration.
+	// Migration is called, even if UA is disabled. If UA is disabled though, this will do nothing except set the
+	// instance-wide migration state to false. This is necessary to allow clean_upgrade to revert UA only when moving
+	// from legacy to UA.
 	err := ng.upgradeService.Run(context.Background())
 	if err != nil {
 		return nil, err

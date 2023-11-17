@@ -16,9 +16,6 @@ import (
 // actionName is the unique row-level lock name for serverlock.ServerLockService.
 const actionName = "alerting migration"
 
-//nolint:stylecheck
-var ForceMigrationError = fmt.Errorf("Grafana has already been migrated to Unified Alerting. Any alert rules created while using Unified Alerting will be deleted by rolling back. Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
-
 type UpgradeService interface {
 	Run(ctx context.Context) error
 }
@@ -81,17 +78,17 @@ func newTransition(currentType migrationStore.AlertingType, cfg *setting.Cfg) tr
 		desiredType = migrationStore.UnifiedAlerting
 	}
 	return transition{
-		CurrentType:      currentType,
-		DesiredType:      desiredType,
-		CleanOnDowngrade: cfg.ForceMigration,
+		CurrentType:    currentType,
+		DesiredType:    desiredType,
+		CleanOnUpgrade: cfg.UnifiedAlerting.Upgrade.CleanUpgrade,
 	}
 }
 
 // transition represents a migration from one alerting type to another.
 type transition struct {
-	CurrentType      migrationStore.AlertingType
-	DesiredType      migrationStore.AlertingType
-	CleanOnDowngrade bool
+	CurrentType    migrationStore.AlertingType
+	DesiredType    migrationStore.AlertingType
+	CleanOnUpgrade bool
 }
 
 // isNoChange returns true if the migration is a no-op.
@@ -111,28 +108,23 @@ func (t transition) isDowngrading() bool {
 
 // shouldClean returns true if the migration should delete all unified alerting data.
 func (t transition) shouldClean() bool {
-	return t.isDowngrading() && t.CleanOnDowngrade
+	return t.isUpgrading() && t.CleanOnUpgrade
 }
 
 // applyTransition applies the transition to the database.
 // If the transition is a no-op, nothing will be done.
-// If the transition is a downgrade and CleanOnDowngrade is true, all unified alerting data will be deleted.
-// If the transition is a downgrade and CleanOnDowngrade is false, an error will be returned.
+// If the transition is a downgrade, nothing will be done.
 // If the transition is an upgrade, all orgs will be migrated.
+// If the transition is an upgrade and CleanOnUpgrade is true, all unified alerting data will be deleted and then all orgs will be migrated.
 func (ms *migrationService) applyTransition(ctx context.Context, t transition) error {
 	l := ms.log.New(
 		"CurrentType", t.CurrentType,
 		"DesiredType", t.DesiredType,
-		"CleanOnDowngrade", t.CleanOnDowngrade,
+		"CleanOnUpgrade", t.CleanOnUpgrade,
 	)
 	if t.isNoChange() {
 		l.Info("Migration already complete")
 		return nil
-	}
-
-	// Safeguard to prevent accidental data loss when reverting from UA to LA.
-	if t.isDowngrading() && !ms.cfg.ForceMigration {
-		return ForceMigrationError
 	}
 
 	if t.shouldClean() {
