@@ -146,7 +146,7 @@ func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Conte
 		return nil, errors.New("no fallback strategy found for provider: " + provider)
 	}
 
-	settingsFromSystem, err := loadStrategy.ParseConfigFromSystem(ctx)
+	settingsFromSystem, err := loadStrategy.ParseConfigFromSystem(ctx, provider)
 	if err != nil {
 		return nil, err
 	}
