@@ -21,9 +21,12 @@ const (
 
 func TestGetPluginArchive(t *testing.T) {
 	tcs := []struct {
-		name string
-		sha  string
-		err  error
+		name     string
+		sha      string
+		apiOpSys string
+		apiArch  string
+		apiUrl   string
+		err      error
 	}{
 		{
 			name: "Happy path",
@@ -33,6 +36,18 @@ func TestGetPluginArchive(t *testing.T) {
 			name: "Incorrect SHA returns error",
 			sha:  "1a2b3c",
 			err:  &ErrChecksumMismatch{},
+		},
+		{
+			name:     "Core plugin",
+			sha:      "69f698961b6ea651211a187874434821c4727cc22de022e3a7059116d21c75b1",
+			apiOpSys: "any",
+			apiUrl:   "https://github.com/grafana/grafana/tree/main/public/app/plugins/test",
+			err:      &ErrCorePlugin{},
+		},
+		{
+			name:   "Decoupled core plugin",
+			sha:    "69f698961b6ea651211a187874434821c4727cc22de022e3a7059116d21c75b1",
+			apiUrl: "https://github.com/grafana/grafana/tree/main/public/app/plugins/test",
 		},
 	}
 
@@ -57,17 +72,23 @@ func TestGetPluginArchive(t *testing.T) {
 				grafanaVersion = "10.0.0"
 			)
 
-			srv := mockPluginVersionsAPI(t,
-				srvData{
-					pluginID:       pluginID,
-					version:        version,
-					opSys:          opSys,
-					arch:           arch,
-					grafanaVersion: grafanaVersion,
-					sha:            tc.sha,
-					archive:        d,
-				},
-			)
+			srvd := srvData{
+				pluginID:       pluginID,
+				version:        version,
+				opSys:          tc.apiOpSys,
+				arch:           tc.apiArch,
+				url:            tc.apiUrl,
+				grafanaVersion: grafanaVersion,
+				sha:            tc.sha,
+				archive:        d,
+			}
+			if srvd.opSys == "" {
+				srvd.opSys = opSys
+			}
+			if srvd.arch == "" && srvd.opSys != "any" {
+				srvd.arch = arch
+			}
+			srv := mockPluginVersionsAPI(t, srvd)
 			t.Cleanup(srv.Close)
 
 			m := NewManager(ManagerCfg{
@@ -125,6 +146,7 @@ type srvData struct {
 	sha            string
 	grafanaVersion string
 	archive        []byte
+	url            string
 }
 
 func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
@@ -139,18 +161,23 @@ func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 
+		platform := data.opSys
+		if data.arch != "" {
+			platform += "-" + data.arch
+		}
 		_, _ = w.Write([]byte(fmt.Sprintf(`
 				{
 					"items": [{
 						"version": "%s",
 						"packages": {
-							"%s-%s": {
+							"%s": {
 								"sha256": "%s"
 							}
-						}
+						},
+						"url": "%s"
 					}]
 				}
-			`, data.version, data.opSys, data.arch, data.sha),
+			`, data.version, platform, data.sha, data.url),
 		))
 	})
 

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -88,7 +89,19 @@ func (m *Manager) PluginVersion(pluginID, version string, compatOpts CompatOpts)
 		return VersionData{}, errors.New("no system compatibility requirements set")
 	}
 
-	return SelectSystemCompatibleVersion(m.log, versions, pluginID, version, sysCompatOpts)
+	compatibleVer, err := SelectSystemCompatibleVersion(m.log, versions, pluginID, version, sysCompatOpts)
+	if err != nil {
+		return VersionData{}, err
+	}
+
+	isGrafanaCorePlugin := strings.HasPrefix(compatibleVer.URL, "https://github.com/grafana/grafana/tree/main/public/app/plugins/")
+	_, hasAnyArch := compatibleVer.Arch["any"]
+	if isGrafanaCorePlugin && hasAnyArch {
+		// Trying to install a coupled core plugin
+		return VersionData{}, ErrCorePlugin{id: pluginID}
+	}
+
+	return compatibleVer, nil
 }
 
 func (m *Manager) downloadURL(pluginID, version string) string {
