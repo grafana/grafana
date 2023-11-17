@@ -17,7 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Icon } from '@grafana/ui';
 
@@ -26,7 +26,7 @@ import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../typ
 
 import FlameGraphCanvas from './FlameGraphCanvas';
 import FlameGraphMetadata from './FlameGraphMetadata';
-import { CollapsedMap, FlameGraphDataContainer } from './dataTransform';
+import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -66,29 +66,41 @@ const FlameGraph = ({
 }: Props) => {
   const styles = getStyles();
 
-  const [collapsedMap, setCollapsedMap] = useState<CollapsedMap>(data ? data.getCollapsedMap() : new Map());
+  const [collapsedMap, setCollapsedMap] = useState<CollapsedMap>(new Map());
+  const [levels, setLevels] = useState<LevelItem[][]>();
+  const [levelsCallers, setLevelsCallers] = useState<LevelItem[][]>();
+  const [totalProfileTicks, setTotalProfileTicks] = useState<number>(0);
+  const [totalProfileTicksRight, setTotalProfileTicksRight] = useState<number>();
+  const [totalViewTicks, setTotalViewTicks] = useState<number>(0);
+
   useEffect(() => {
     if (data) {
       setCollapsedMap(data.getCollapsedMap());
-    }
-  }, [data]);
 
-  const [levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks] = useMemo(() => {
-    let levels = data.getLevels();
-    let totalProfileTicks = levels.length ? levels[0][0].value : 0;
-    let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
-    let totalViewTicks = totalProfileTicks;
-    let levelsCallers = undefined;
+      let levels = data.getLevels();
+      let totalProfileTicks = levels.length ? levels[0][0].value : 0;
+      let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
+      let totalViewTicks = totalProfileTicks;
+      let levelsCallers = undefined;
 
-    if (sandwichItem) {
-      const [callers, callees] = data.getSandwichLevels(sandwichItem);
-      levels = callees;
-      levelsCallers = callers;
-      // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
-      totalViewTicks = callees[0]?.[0]?.value ?? 0;
+      if (sandwichItem) {
+        const [callers, callees] = data.getSandwichLevels(sandwichItem);
+        levels = callees;
+        levelsCallers = callers;
+        // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
+        totalViewTicks = callees[0]?.[0]?.value ?? 0;
+      }
+      setLevels(levels);
+      setLevelsCallers(levelsCallers);
+      setTotalProfileTicks(totalProfileTicks);
+      setTotalProfileTicksRight(totalProfileTicksRight);
+      setTotalViewTicks(totalViewTicks);
     }
-    return [levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks];
   }, [data, sandwichItem]);
+
+  if (!levels) {
+    return null;
+  }
 
   const commonCanvasProps = {
     data,

@@ -43,13 +43,11 @@ func (api *Api) RegisterAPIEndpoints() {
 		auth := ac.Middleware(api.AccessControl)
 
 		scopeKey := ac.Parameter(":key")
-		settingsScope := ac.Scope("settings", "auth."+scopeKey, "*")
+		settingsScope := ac.ScopeSettingsOAuth(scopeKey)
 
-		reqWriteAccess := auth(ac.EvalAny(
-			ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAuth),
-			ac.EvalPermission(ac.ActionSettingsWrite, settingsScope)))
+		reqWriteAccess := auth(ac.EvalPermission(ac.ActionSettingsWrite, settingsScope))
 
-		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth)), routing.Wrap(api.listAllProvidersSettings))
+		router.Get("/", auth(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(api.listAllProvidersSettings))
 		router.Get("/:key", auth(ac.EvalPermission(ac.ActionSettingsRead, settingsScope)), routing.Wrap(api.getProviderSettings))
 		router.Put("/:key", reqWriteAccess, routing.Wrap(api.updateProviderSettings))
 		router.Delete("/:key", reqWriteAccess, routing.Wrap(api.removeProviderSettings))

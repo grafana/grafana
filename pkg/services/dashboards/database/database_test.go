@@ -1188,21 +1188,6 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store,
 	return dash
 }
 
-func updateDashboardACL(t *testing.T, dashboardStore dashboards.Store, dashboardID int64,
-	items ...dashboards.DashboardACL) error {
-	t.Helper()
-
-	var itemPtrs []*dashboards.DashboardACL
-	for _, it := range items {
-		item := it
-		item.Created = time.Now()
-		item.Updated = time.Now()
-		itemPtrs = append(itemPtrs, &item)
-	}
-
-	return dashboardStore.UpdateDashboardACL(context.Background(), dashboardID, itemPtrs)
-}
-
 // testSearchDashboards is a (near) copy of the dashboard service
 // SearchDashboards, which is a wrapper around FindDashboards.
 func testSearchDashboards(d dashboards.Store, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
