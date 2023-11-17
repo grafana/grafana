@@ -19,6 +19,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   const previous = dashboard.getOriginalDashboard();
   const isProvisioned = dashboard.meta.provisioned;
   const isNew = dashboard.version === 0;
+  const [errorIsHandled, setErrorIsHandled] = useState(false);
 
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone({
@@ -89,13 +90,14 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   };
 
-  if (state.error && isFetchError(state.error) && proxyHandlesError(state.error.data.status)) {
+  if (state.error && !errorIsHandled && isFetchError(state.error) && proxyHandlesError(state.error.data.status)) {
     return (
       <SaveDashboardErrorProxy
         error={state.error}
         dashboard={dashboard}
         dashboardSaveModel={data.clone}
         onDismiss={onDismiss}
+        setErrorIsHandled={setErrorIsHandled}
       />
     );
   }

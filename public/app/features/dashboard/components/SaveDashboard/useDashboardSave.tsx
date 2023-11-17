@@ -23,7 +23,7 @@ const saveDashboard = async (
 ) => {
   const query = await saveDashboardRtkQuery({
     dashboard: saveModel,
-    folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta.folderUid,
+    folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta?.folderUid,
     message: options.message,
     overwrite: options.overwrite,
   });
