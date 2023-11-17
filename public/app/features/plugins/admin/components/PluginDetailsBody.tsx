@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { CatalogPlugin, PluginTabIds } from '../types';
+import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
@@ -45,6 +45,30 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     return (
       <div className={styles.container}>
         <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
+      </div>
+    );
+  }
+
+  if (pageId === PluginTabIds.IAM) {
+    return (
+      <div className={styles.container}>
+        The {plugin.name} plugin requires the following permissions on your instance:
+        <table className="filter-table">
+          <thead>
+            <tr>
+              <th className="admin-settings-section">Action</th>
+              <th className="admin-settings-section">Scope</th>
+            </tr>
+          </thead>
+          <tbody>
+            {plugin.externalServiceRegistration?.permissions.map((permission: Permission, i: number) => (
+              <tr key={`property-${i}`}>
+                <td>{permission.action}</td>
+                <td>{permission.scope}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }

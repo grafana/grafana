@@ -41,6 +41,16 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
       return navModelChildren;
     }
 
+    if (plugin?.externalServiceRegistration) {
+      navModelChildren.push({
+        text: PluginTabLabels.IAM,
+        icon: 'shield',
+        id: PluginTabIds.IAM,
+        url: `${pathname}?page=${PluginTabIds.IAM}`,
+        active: PluginTabIds.IAM === currentPageId,
+      });
+    }
+
     if (config.featureToggles.panelTitleSearch && pluginConfig.meta.type === PluginType.panel) {
       navModelChildren.push({
         text: PluginTabLabels.USAGE,

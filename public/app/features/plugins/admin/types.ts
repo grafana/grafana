@@ -181,10 +181,12 @@ export type LocalPlugin = WithAccessControlMetadata & {
 };
 
 interface ExternalServiceRegistration {
-  permissions: Array<{
-    action: string;
-    scope: string;
-  }>;
+  permissions: Permission[];
+}
+
+export interface Permission {
+  action: string;
+  scope: string;
 }
 
 interface Rel {
