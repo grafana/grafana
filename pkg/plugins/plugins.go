@@ -64,6 +64,8 @@ type Plugin struct {
 	client         backendplugin.Plugin
 	log            log.Logger
 
+	SkipHostEnvVars bool
+
 	mu sync.Mutex
 }
 
