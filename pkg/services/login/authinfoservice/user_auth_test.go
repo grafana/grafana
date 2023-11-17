@@ -520,9 +520,6 @@ func newFakeAuthInfoStore() *FakeAuthInfoStore {
 	return &FakeAuthInfoStore{}
 }
 
-func (f *FakeAuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*login.ExternalUserInfo, error) {
-	return nil, f.ExpectedError
-}
 func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
 	return f.ExpectedOAuth, f.ExpectedError
 }
