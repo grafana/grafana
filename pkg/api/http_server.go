@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 
@@ -646,6 +648,9 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 		return
 	}
 
+	promhttp.
+		HandlerFor(hs.promRegistry, promhttp.HandlerOpts{EnableOpenMetrics: true}).
+		ServeHTTP(ctx.Resp, ctx.Req)
 }
 
 // healthzHandler always return 200 - Ok if Grafana's web server is running
