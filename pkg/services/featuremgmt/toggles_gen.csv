@@ -117,8 +117,8 @@ formatString,experimental,@grafana/grafana-bi-squad,false,false,false,true
 transformationsVariableSupport,experimental,@grafana/grafana-bi-squad,false,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,false,false,true,false
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false,false
-navAdminSubsections,experimental,@grafana/grafana-frontend-platform,false,false,false,false
 recoveryThreshold,experimental,@grafana/alerting-squad,false,false,true,false
+lokiStructuredMetadata,experimental,@grafana/observability-logs,false,false,false,false
 teamHttpHeaders,experimental,@grafana/identity-access-team,false,false,false,false
 awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,false,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false,false
