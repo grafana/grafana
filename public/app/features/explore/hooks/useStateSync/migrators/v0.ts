@@ -14,8 +14,8 @@ export const v0Migrator: MigrationHandler<never, ExploreURLV0> = {
     // If no params are provided, return the default state without errors
     // This means the user accessed the explore page without any params
     if (!params.left && !params.right) {
-      return [
-        {
+      return {
+        to: {
           left: {
             datasource: null,
             queries: [],
@@ -26,8 +26,8 @@ export const v0Migrator: MigrationHandler<never, ExploreURLV0> = {
           },
           schemaVersion: 0,
         },
-        false,
-      ];
+        error: false,
+      };
     }
 
     let left: ExploreUrlState | undefined;
@@ -49,14 +49,14 @@ export const v0Migrator: MigrationHandler<never, ExploreURLV0> = {
       left = FALLBACK_PANE_VALUE;
     }
 
-    return [
-      {
+    return {
+      to: {
         schemaVersion: 0,
         left,
         ...(right && { right }),
       },
-      !!leftError || !!rightError,
-    ];
+      error: !!leftError || !!rightError,
+    };
   },
 };
 

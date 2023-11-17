@@ -17,15 +17,15 @@ export interface ExploreURLV1 extends BaseExploreURL {
 export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
   parse: (params) => {
     if (!params || !params.panes || typeof params.panes !== 'string') {
-      return [
-        {
+      return {
+        to: {
           schemaVersion: 1,
           panes: {
             [generateExploreId()]: DEFAULT_STATE,
           },
         },
-        false,
-      ];
+        error: false,
+      };
     }
 
     let rawPanes: unknown;
@@ -34,15 +34,15 @@ export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
     } catch {}
 
     if (rawPanes == null || typeof rawPanes !== 'object') {
-      return [
-        {
+      return {
+        to: {
           schemaVersion: 1,
           panes: {
             [generateExploreId()]: DEFAULT_STATE,
           },
         },
-        true,
-      ];
+        error: true,
+      };
     }
 
     const panes = Object.entries(rawPanes)
@@ -58,13 +58,13 @@ export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
       panes[generateExploreId()] = DEFAULT_STATE;
     }
 
-    return [
-      {
+    return {
+      to: {
         schemaVersion: 1,
         panes,
       },
-      false,
-    ];
+      error: false,
+    };
   },
   migrate: (params) => {
     return {

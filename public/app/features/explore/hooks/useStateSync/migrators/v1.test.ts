@@ -10,7 +10,7 @@ jest.mock('app/core/utils/explore', () => ({
 describe('v1 migrator', () => {
   describe('parse', () => {
     it('correctly returns default state when no params are provided', () => {
-      expect(v1Migrator.parse({})[0]).toMatchObject({
+      expect(v1Migrator.parse({}).to).toMatchObject({
         panes: {
           ID: {
             datasource: null,
@@ -22,7 +22,7 @@ describe('v1 migrator', () => {
     });
 
     it('correctly returns default state when panes param is an empty object', () => {
-      expect(v1Migrator.parse({ panes: '{}' })[0]).toMatchObject({
+      expect(v1Migrator.parse({ panes: '{}' }).to).toMatchObject({
         panes: {
           ID: {
             datasource: null,
@@ -34,7 +34,7 @@ describe('v1 migrator', () => {
     });
 
     it('correctly returns default state when panes param is not a valid JSON object', () => {
-      expect(v1Migrator.parse({ panes: '{a malformed json}' })[0]).toMatchObject({
+      expect(v1Migrator.parse({ panes: '{a malformed json}' }).to).toMatchObject({
         panes: {
           ID: {
             datasource: null,
@@ -46,7 +46,7 @@ describe('v1 migrator', () => {
     });
 
     it('correctly returns default state when a pane in panes params is an empty object', () => {
-      expect(v1Migrator.parse({ panes: '{"aaa": {}}' })[0]).toMatchObject({
+      expect(v1Migrator.parse({ panes: '{"aaa": {}}' }).to).toMatchObject({
         panes: {
           aaa: {
             datasource: null,
@@ -58,7 +58,7 @@ describe('v1 migrator', () => {
     });
 
     it('correctly returns default state when a pane in panes params is not a valid JSON object', () => {
-      expect(v1Migrator.parse({ panes: '{"aaa": "NOT A VALID URL STATE"}' })[0]).toMatchObject({
+      expect(v1Migrator.parse({ panes: '{"aaa": "NOT A VALID URL STATE"}' }).to).toMatchObject({
         panes: {
           aaa: {
             datasource: null,
@@ -86,7 +86,7 @@ describe('v1 migrator', () => {
               }
             }
           }`,
-        })[0]
+        }).to
       ).toMatchObject({
         panes: {
           aaa: {

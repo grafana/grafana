@@ -16,13 +16,13 @@ const migrate = (params: ExploreQueryParams): [ExploreURL, boolean] => {
 
   const [parser, ...migratorsToRun] = migrators.slice(schemaVersion);
 
-  const [parsedUrl, error] = parser.parse(params);
+  const { error, to } = parser.parse(params);
 
   // @ts-expect-error
   const final: ExploreURL = migratorsToRun.reduce((acc, migrator) => {
     // @ts-expect-error
     return migrator.migrate ? migrator.migrate(acc) : acc;
-  }, parsedUrl);
+  }, to);
 
   return [final, error];
 };
