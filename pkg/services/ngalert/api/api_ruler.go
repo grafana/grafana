@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -27,8 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-const NAMESPACE_SEPARATOR = "/"
 
 type ConditionValidator interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
@@ -578,8 +577,5 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, c *contextmo
 }
 
 func getNamespaceKey(namespace *folder.Folder) string {
-	if namespace.ParentUID == "" {
-		return namespace.Title
-	}
-	return strings.Join([]string{namespace.ParentUID, namespace.Title}, NAMESPACE_SEPARATOR)
+	return path.Join(namespace.ParentUID, namespace.Title)
 }
