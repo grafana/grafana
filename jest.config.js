@@ -15,6 +15,9 @@ const esModules = [
   'leven',
   'nanoid',
   'monaco-promql',
+  '@kusto/monaco-kusto',
+  'monaco-editor',
+  'lodash-es',
 ].join('|');
 
 module.exports = {
@@ -41,8 +44,9 @@ module.exports = {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
-    'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
-    '^monaco-editor$': '@monaco-editor/react',
+    // resolve directly as monaco and kusto don't have main property in package.json which jest needs
+    '^monaco-editor$': 'monaco-editor/esm/vs/editor/editor.api.js',
+    '@kusto/monaco-kusto': '@kusto/monaco-kusto/release/esm/monaco.contribution.js',
     // near-membrane-dom won't work in a nodejs environment.
     '@locker/near-membrane-dom': '<rootDir>/public/test/mocks/nearMembraneDom.ts',
     '^@grafana/schema/dist/esm/(.*)$': '<rootDir>/packages/grafana-schema/src/$1',
