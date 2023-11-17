@@ -53,15 +53,8 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 	// #TODO for FTS
 	// #TODO figure out if there's a better way overall to update the query
 	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
-		b.sql.WriteString("\n" + `LEFT OUTER JOIN panel ON dashboard.id = panel.dashid`)
-		b.sql.WriteString("\n")
-
-		// // this where clause should come after all joins
-		if b.Dialect.DriverName() == migrator.Postgres {
-			b.sql.WriteString(`WHERE panel.title @@ to_tsquery('english', ?)`)
-		} else {
-			b.sql.WriteString(`WHERE panel.title LIKE ?`)
-		}
+		// #TODO make sure that inner join is ok
+		b.sql.WriteString("\n" + `INNER JOIN pt ON dashboard.id = pt.dashid`)
 	}
 	b.sql.WriteString("\n")
 	b.sql.WriteString(orderQuery)
@@ -72,6 +65,15 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 func (b *Builder) buildSelect() {
 	var recQuery string
 	var recQueryParams []any
+
+	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
+		if b.Dialect.DriverName() == migrator.Postgres {
+			b.sql.WriteString(
+				`WITH pt AS (SELECT panel.dashid FROM panel WHERE panel.title @@ to_tsquery('english', ?))`)
+		} else {
+			b.sql.WriteString(`WITH pt AS (SELECT panel.dashid FROM panel WHERE panel.title LIKE ?)`)
+		}
+	}
 
 	b.sql.WriteString(
 		`SELECT
@@ -93,7 +95,7 @@ func (b *Builder) buildSelect() {
 	}
 	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
 		b.sql.WriteString(`
-			panel.title,`)
+			pt.dashid,`)
 	}
 	b.sql.WriteString(`
 			folder.title AS folder_title `)

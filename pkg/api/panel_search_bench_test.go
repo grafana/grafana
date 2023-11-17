@@ -28,8 +28,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const dashNum = 10
-const panelNum = 2
+const dashNum = 10000
+const panelNum = 250
 const panelQuery = "apple"
 
 func BenchmarkPanelTitleSearch(b *testing.B) {
@@ -52,7 +52,7 @@ func BenchmarkPanelTitleSearch(b *testing.B) {
 		},
 		{
 			desc:        "search specific panel with panel title feature enabled",
-			url:         "/api/search?type=dash-panel&panelTitle=" + panelQuery,
+			url:         fmt.Sprintf("/api/search?type=dash-panel&panelTitle=%s&limit=%d", panelQuery, dashNum),
 			expectedLen: 1,
 			features: featuremgmt.WithFeatures(
 				featuremgmt.FlagPanelTitleSearchInV1,
