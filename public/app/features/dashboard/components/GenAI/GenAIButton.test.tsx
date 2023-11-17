@@ -67,7 +67,6 @@ describe('GenAIButton', () => {
     const setMessagesMock = jest.fn();
     beforeEach(() => {
       setMessagesMock.mockClear();
-      setShouldStopMock.mockClear();
 
       jest.mocked(useOpenAIStream).mockReturnValue({
         messages: [],
@@ -182,7 +181,6 @@ describe('GenAIButton', () => {
     const setMessagesMock = jest.fn();
     beforeEach(() => {
       setMessagesMock.mockClear();
-      setShouldStopMock.mockClear();
 
       jest.mocked(useOpenAIStream).mockReturnValue({
         messages: [],
