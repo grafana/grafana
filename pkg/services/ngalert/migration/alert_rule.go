@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -235,7 +236,7 @@ func isPrometheusQuery(queryData map[string]json.RawMessage) (bool, error) {
 	if datasource.Type == "" {
 		return false, fmt.Errorf("missing type field '%s'", string(ds))
 	}
-	return datasource.Type == "prometheus", nil
+	return datasource.Type == datasources.DS_PROMETHEUS, nil
 }
 
 func ruleAdjustInterval(freq int64) int64 {

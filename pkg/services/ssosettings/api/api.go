@@ -99,6 +99,20 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(http.StatusNoContent, nil)
 }
 
+// swagger:route DELETE /v1/sso-settings/{key} sso_settings removeProviderSettings
+//
+// # Remove SSO Settings
+//
+// # Remove an SSO Settings entry by Key
+//
+// You need to have a permission with action `settings:write` with scope `settings:auth.<provider>:*`.
+//
+// Responses:
+// 204: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Response {
 	key, ok := web.Params(c.Req)[":key"]
 	if !ok {
@@ -111,4 +125,11 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 	}
 
 	return response.JSON(http.StatusNoContent, nil)
+}
+
+// swagger:parameters removeProviderSettings
+type RemoveProviderSettingsParams struct {
+	// in:path
+	// required:true
+	Key string `json:"key"`
 }
