@@ -15,6 +15,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -131,7 +132,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		} else if err != nil {
 			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
 		} else {
-			response.Error(http.StatusForbidden, "Access denied to save the annotation", nil)
+			return response.Error(http.StatusForbidden, "Access denied to save the annotation", nil)
 		}
 	}
 
@@ -451,7 +452,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 		} else if err != nil {
 			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
 		} else {
-			response.Error(http.StatusForbidden, "Access denied to mass delete annotations", nil)
+			return response.Error(http.StatusForbidden, "Access denied to mass delete annotations", nil)
 		}
 	}
 
@@ -597,7 +598,9 @@ func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Res
 // AnnotationTypeScopeResolver provides an ScopeAttributeResolver able to
 // resolve annotation types. Scope "annotations:id:<id>" will be translated to "annotations:type:<type>,
 // where <type> is the type of annotation with id <id>.
-func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository) (string, accesscontrol.ScopeAttributeResolver) {
+// If annotationPermissionUpdate feature toggle is enabled, dashboard annotation scope will be resolved to the corresponding
+// dashboard and folder scopes (eg, "dashboards:uid:<annotation_dashboard_uid>", "folders:uid:<parent_folder_uid>" etc).
+func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features *featuremgmt.FeatureManager, dashSvc dashboards.DashboardService, folderSvc folder.Service) (string, accesscontrol.ScopeAttributeResolver) {
 	prefix := accesscontrol.ScopeAnnotationsProvider.GetResourceScope("")
 	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		scopeParts := strings.Split(initialScope, ":")
@@ -623,15 +626,51 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository) (string
 			},
 		}
 
+		if features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
+			tempUser = &user.SignedInUser{
+				OrgID: orgID,
+				Permissions: map[int64]map[string][]string{
+					orgID: {
+						accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeDashboardsAll},
+					},
+				},
+			}
+		}
+
 		annotation, resp := findAnnotationByID(ctx, annotationsRepo, int64(annotationId), tempUser)
 		if resp != nil {
 			return nil, errors.New("could not resolve annotation type")
 		}
 
-		if annotation.GetType() == annotations.Organization {
+		if !features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
+			switch annotation.GetType() {
+			case annotations.Organization:
+				return []string{accesscontrol.ScopeAnnotationsTypeOrganization}, nil
+			case annotations.Dashboard:
+				return []string{accesscontrol.ScopeAnnotationsTypeDashboard}, nil
+			}
+		}
+
+		if annotation.DashboardID == 0 {
 			return []string{accesscontrol.ScopeAnnotationsTypeOrganization}, nil
 		} else {
-			return []string{accesscontrol.ScopeAnnotationsTypeDashboard}, nil
+			dashboard, err := dashSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: annotation.DashboardID, OrgID: orgID})
+			if err != nil {
+				return nil, err
+			}
+			scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}
+			// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
+			if dashboard.FolderUID != "" {
+				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
+				inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
+				if err != nil {
+					return nil, err
+				}
+				scopes = append(scopes, inheritedScopes...)
+			} else {
+				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+			}
+			return scopes, nil
 		}
 	})
 }

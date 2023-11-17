@@ -7,6 +7,7 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
   const crumbs: Breadcrumb[] = [];
   let foundHome = false;
   let lastPath: string | undefined = undefined;
+  let lastText: string | undefined = undefined;
 
   function addCrumbs(node: NavModelItem) {
     if (foundHome) {
@@ -33,10 +34,14 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
 
     // This enabled app plugins to control breadcrumbs of their root pages
     const isSamePathAsLastBreadcrumb = urlToMatch.length > 0 && lastPath === urlToMatch;
+    const isSameTextAsLastBreadcrumb = node.text === lastText;
+
     // Remember this path for the next breadcrumb
     lastPath = urlToMatch;
+    lastText = node.text;
 
-    if (!node.hideFromBreadcrumbs && !isSamePathAsLastBreadcrumb) {
+    const shouldMergeBreadcrumb = isSamePathAsLastBreadcrumb && isSameTextAsLastBreadcrumb;
+    if (!node.hideFromBreadcrumbs && !shouldMergeBreadcrumb) {
       crumbs.unshift({ text: node.text, href: node.url ?? '' });
     }
 

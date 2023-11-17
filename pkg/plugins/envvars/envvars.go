@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const (
@@ -86,10 +85,10 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
 	hostEnv = append(hostEnv, s.tracingEnvVars(p)...)
 
-	// If FlagPluginsSkipHostEnvVars is enabled, get some allowed variables from the current process and pass
-	// them down to the plugin. If the feature flag is not enabled, do not add anything else because ALL env vars
+	// If SkipHostEnvVars is enabled, get some allowed variables from the current process and pass
+	// them down to the plugin. If the flag is not set, do not add anything else because ALL env vars
 	// from the current process (os.Environ()) will be forwarded to the plugin's process by go-plugin
-	if s.cfg.Features != nil && s.cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) {
+	if p.SkipHostEnvVars {
 		hostEnv = append(hostEnv, s.allowedHostEnvVars()...)
 	}
 
