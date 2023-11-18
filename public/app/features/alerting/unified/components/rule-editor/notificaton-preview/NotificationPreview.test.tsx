@@ -13,24 +13,26 @@ import { mockApi, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/alertRuleApi';
 import * as dataSource from '../../../utils/datasource';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import {
+  AlertManagerDataSource,
+  GRAFANA_RULES_SOURCE_NAME,
+  getAlertManagerDataSourcesByPermission,
+} from '../../../utils/datasource';
 import { Folder } from '../RuleFolderPicker';
 
 import { NotificationPreview } from './NotificationPreview';
 import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
-import * as notificationPreview from './useGetAlertManagersSourceNamesAndImage';
-import { useGetAlertManagersMetadata } from './useGetAlertManagersSourceNamesAndImage';
 
 jest.mock('../../../useRouteGroupsMatcher');
 
 jest
-  .spyOn(notificationPreview, 'useGetAlertManagersMetadata')
-  .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }]);
+  .spyOn(dataSource, 'getAlertManagerDataSourcesByPermission')
+  .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }]);
 
 jest.spyOn(dataSource, 'getDatasourceAPIUid').mockImplementation((ds: string) => ds);
 
-const useGetAlertManagersMetaDataMock = useGetAlertManagersMetadata as jest.MockedFunction<
-  typeof useGetAlertManagersMetadata
+const getAlertManagerDataSourcesByPermissionMock = getAlertManagerDataSourcesByPermission as jest.MockedFunction<
+  typeof getAlertManagerDataSourcesByPermission
 >;
 
 const ui = {
@@ -57,14 +59,14 @@ beforeEach(() => {
 
 const alertQuery = mockAlertQuery({ datasourceUid: 'whatever', refId: 'A' });
 
-const grafanaAlertManagerMetaData = {
+const grafanaAlertManagerMetaData: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
-  img: '',
-  postable: true,
+  imgUrl: '',
+  hasConfigurationAPI: true,
 };
 
 function mockOneAlertManager() {
-  useGetAlertManagersMetaDataMock.mockReturnValue([grafanaAlertManagerMetaData]);
+  getAlertManagerDataSourcesByPermissionMock.mockReturnValue([grafanaAlertManagerMetaData]);
   mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
     amConfigBuilder
       .withRoute((routeBuilder) =>
@@ -80,9 +82,9 @@ function mockOneAlertManager() {
 }
 
 function mockTwoAlertManagers() {
-  useGetAlertManagersMetaDataMock.mockReturnValue([
+  getAlertManagerDataSourcesByPermissionMock.mockReturnValue([
     grafanaAlertManagerMetaData,
-    { name: 'OTHER_AM', img: '', postable: true },
+    { name: 'OTHER_AM', imgUrl: '', hasConfigurationAPI: true },
   ]);
   mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
     amConfigBuilder

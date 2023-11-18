@@ -8,9 +8,8 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { getAlertManagerDataSourcesByPermission } from '../../../utils/datasource';
 import { Folder } from '../RuleFolderPicker';
-
-import { useGetAlertManagersMetadata } from './useGetAlertManagersSourceNamesAndImage';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 
@@ -63,8 +62,8 @@ export const NotificationPreview = ({
     });
   };
 
-  // Get list of alert managers source name + image
-  const alertManagerMetaData = useGetAlertManagersMetadata();
+  //  Get alert managers's source name + image
+  const alertManagerMetaData = getAlertManagerDataSourcesByPermission('notification');
 
   const onlyOneAM = alertManagerMetaData.length === 1;
 
