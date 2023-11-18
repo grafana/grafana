@@ -34,31 +34,6 @@ func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service, userSe
 	return store
 }
 
-func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*login.ExternalUserInfo, error) {
-	userQuery := user.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	usr, err := s.userService.GetByLogin(ctx, &userQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.ID}
-	authInfo, err := s.GetAuthInfo(ctx, authInfoQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &login.ExternalUserInfo{
-		UserId:     usr.ID,
-		Login:      usr.Login,
-		Email:      usr.Email,
-		Name:       usr.Name,
-		IsDisabled: usr.IsDisabled,
-		AuthModule: authInfo.AuthModule,
-		AuthId:     authInfo.AuthId,
-	}
-	return result, nil
-}
-
 // GetAuthInfo returns the auth info for a user
 // It will return the latest auth info for a user
 func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {

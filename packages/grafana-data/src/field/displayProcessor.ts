@@ -222,7 +222,7 @@ export function getRawDisplayProcessor(): DisplayProcessor {
 
 const getCircularReplacer = () => {
   const seen = new WeakSet();
-  return (_key: any, value: object | null) => {
+  return (_key: string, value: object | null) => {
     if (typeof value === 'object' && value !== null) {
       if (seen.has(value)) {
         return;

@@ -52,9 +52,17 @@ export function LabelFilterItem({
 
   const getSelectOptionsFromString = (item?: string): string[] => {
     if (item) {
+      const regExp = /\(([^)]+)\)/;
+      const matches = item?.match(regExp);
+
+      if (matches && matches[0].indexOf('|') > 0) {
+        return [item];
+      }
+
       if (item.indexOf('|') > 0) {
         return item.split('|');
       }
+
       return [item];
     }
     return [];

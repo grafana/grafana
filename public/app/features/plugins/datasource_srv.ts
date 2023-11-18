@@ -356,7 +356,7 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
   return isString ? ref : ref?.uid;
 }
 
-export function variableInterpolation(value: any[]) {
+export function variableInterpolation<T>(value: T | T[]) {
   if (Array.isArray(value)) {
     return value[0];
   }
