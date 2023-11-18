@@ -137,8 +137,8 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   cloudWatchBatchQueries?: boolean;
-  navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
@@ -163,5 +163,6 @@ export interface FeatureToggles {
   alertingDetailsViewV2?: boolean;
   datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
+  logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
 }

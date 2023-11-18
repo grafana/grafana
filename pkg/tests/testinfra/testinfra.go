@@ -347,6 +347,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = section.NewKey("storage_type", o.APIServerStorageType)
 			require.NoError(t, err)
+
+			// Hardcoded local etcd until this is needed to run in CI
+			if o.APIServerStorageType == "etcd" {
+				_, err = section.NewKey("etcd_servers", "localhost:2379")
+				require.NoError(t, err)
+			}
 		}
 
 		if o.GRPCServerAddress != "" {
