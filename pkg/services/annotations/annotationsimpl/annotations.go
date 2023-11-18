@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl/loki"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,13 +27,23 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
 ) *RepositoryImpl {
+	var s store
 	l := log.New("annotations")
+
+	l.Debug("Initializing sql store")
+	s = NewXormStore(cfg, l.New("sql"), db, tagService)
+
+	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, l.New("loki"))
+	if historianStore != nil {
+		l.Debug("Initializing composite store")
+		s = NewCompositeStore(s, historianStore)
+	}
 
 	return &RepositoryImpl{
 		db:       db,
 		features: features,
 		authZ:    accesscontrol.NewAuthService(db, features),
-		store:    NewXormStore(cfg, l, db, tagService),
+		store:    s,
 	}
 }
 
