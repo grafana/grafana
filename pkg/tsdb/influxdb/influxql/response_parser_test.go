@@ -813,10 +813,12 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 func TestResponseParser_table_format(t *testing.T) {
 	t.Run("test table result format parsing", func(t *testing.T) {
 		resp := ResponseParse(prepare(tableResultFormatInfluxResponse1), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
-		// ff :=
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		assert.Equal(t, 3, len(resp.Frames[0].Fields))
+		for i := range resp.Frames[0].Fields {
+			assert.Equal(t, resp.Frames[0].Fields[0].Len(), resp.Frames[0].Fields[i].Len())
+		}
 		assert.Equal(t, "Time", resp.Frames[0].Fields[0].Name)
 		assert.Equal(t, "usage_idle", resp.Frames[0].Fields[1].Name)
 		assert.Equal(t, toPtr(99.09456740445926), resp.Frames[0].Fields[1].At(2))
@@ -828,6 +830,9 @@ func TestResponseParser_table_format(t *testing.T) {
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		assert.Equal(t, 7, len(resp.Frames[0].Fields))
+		for i := range resp.Frames[0].Fields {
+			assert.Equal(t, resp.Frames[0].Fields[0].Len(), resp.Frames[0].Fields[i].Len())
+		}
 		assert.Equal(t, "Time", resp.Frames[0].Fields[0].Name)
 		assert.Equal(t, "cpu", resp.Frames[0].Fields[1].Name)
 		assert.Equal(t, toPtr("cpu-total"), resp.Frames[0].Fields[1].At(0))
@@ -838,6 +843,21 @@ func TestResponseParser_table_format(t *testing.T) {
 		assert.Equal(t, "p90", resp.Frames[0].Fields[4].Name)
 		assert.Equal(t, "p95", resp.Frames[0].Fields[5].Name)
 		assert.Equal(t, "max", resp.Frames[0].Fields[6].Name)
+	})
+
+	t.Run("parse result as table group by tag", func(t *testing.T) {
+		resp := ResponseParse(prepare(tableResultFormatInfluxResponse3), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		assert.Equal(t, 1, len(resp.Frames))
+		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
+		for i := range resp.Frames[0].Fields {
+			assert.Equal(t, resp.Frames[0].Fields[0].Len(), resp.Frames[0].Fields[i].Len())
+		}
+		assert.Equal(t, "Time", resp.Frames[0].Fields[0].Name)
+		assert.Equal(t, "cpu", resp.Frames[0].Fields[1].Name)
+		assert.Equal(t, toPtr("cpu-total"), resp.Frames[0].Fields[1].At(0))
+		assert.Equal(t, toPtr("cpu0"), resp.Frames[0].Fields[1].At(5))
+		assert.Equal(t, toPtr("cpu2"), resp.Frames[0].Fields[1].At(12))
+		assert.Equal(t, "mean", resp.Frames[0].Fields[2].Name)
 	})
 }
 
@@ -1276,6 +1296,157 @@ const tableResultFormatInfluxResponse2 = `{
               99.39759036146867,
               99.39819458377468,
               99.59839357421622
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}
+`
+
+const tableResultFormatInfluxResponse3 = `{
+  "results": [
+    {
+      "statement_id": 0,
+      "series": [
+        {
+          "name": "cpu",
+          "tags": {
+            "cpu": "cpu-total"
+          },
+          "columns": [
+            "time",
+            "mean"
+          ],
+          "values": [
+            [
+              1700046000000,
+              99.06919189833442
+            ],
+            [
+              1700047200000,
+              99.13105510262923
+            ],
+            [
+              1700048400000,
+              98.99236330721192
+            ],
+            [
+              1700049600000,
+              98.80510091380069
+            ]
+          ]
+        },
+        {
+          "name": "cpu",
+          "tags": {
+            "cpu": "cpu0"
+          },
+          "columns": [
+            "time",
+            "mean"
+          ],
+          "values": [
+            [
+              1700046000000,
+              99.01372119142576
+            ],
+            [
+              1700047200000,
+              99.00430308480553
+            ],
+            [
+              1700048400000,
+              98.9737996641964
+            ],
+            [
+              1700049600000,
+              98.79638916754935
+            ]
+          ]
+        },
+        {
+          "name": "cpu",
+          "tags": {
+            "cpu": "cpu1"
+          },
+          "columns": [
+            "time",
+            "mean"
+          ],
+          "values": [
+            [
+              1700046000000,
+              99.04949983158023
+            ],
+            [
+              1700047200000,
+              99.06989461231551
+            ],
+            [
+              1700048400000,
+              98.97954813782476
+            ],
+            [
+              1700049600000,
+              98.49246231161365
+            ]
+          ]
+        },
+        {
+          "name": "cpu",
+          "tags": {
+            "cpu": "cpu2"
+          },
+          "columns": [
+            "time",
+            "mean"
+          ],
+          "values": [
+            [
+              1700046000000,
+              99.11296419686643
+            ],
+            [
+              1700047200000,
+              99.01817278917116
+            ],
+            [
+              1700048400000,
+              98.96847021232013
+            ],
+            [
+              1700049600000,
+              98.192771084406
+            ]
+          ]
+        },
+        {
+          "name": "cpu",
+          "tags": {
+            "cpu": "cpu3"
+          },
+          "columns": [
+            "time",
+            "mean"
+          ],
+          "values": [
+            [
+              1700046000000,
+              99.0742704326151
+            ],
+            [
+              1700047200000,
+              99.17835628293322
+            ],
+            [
+              1700048400000,
+              98.98968994907334
+            ],
+            [
+              1700049600000,
+              98.69215291745849
             ]
           ]
         }

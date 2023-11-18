@@ -137,8 +137,10 @@ func newTagField(rows []models.Row) []*data.Field {
 	for key := range rows[0].Tags {
 		field := data.NewField(key, rows[0].Tags, []*string{})
 		for _, row := range rows {
-			value := row.Tags[key]
-			field.Append(&value)
+			for range row.Values {
+				value := row.Tags[key]
+				field.Append(&value)
+			}
 		}
 		fields = append(fields, field)
 	}
