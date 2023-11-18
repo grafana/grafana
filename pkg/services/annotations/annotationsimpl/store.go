@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+//go:generate mockery --name store --structname fakeStore --inpackage --with-expecter --filename store_mock.go
 type store interface {
 	Add(ctx context.Context, items *annotations.Item) error
 	AddMany(ctx context.Context, items []annotations.Item) error
