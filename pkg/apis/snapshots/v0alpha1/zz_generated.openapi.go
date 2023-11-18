@@ -18,10 +18,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.DashboardSnapshot":      schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshot(ref),
 		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.DashboardSnapshotList":  schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshotList(ref),
+		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SharingOptions":         schema_pkg_apis_snapshots_v0alpha1_SharingOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SharingOptionsList":     schema_pkg_apis_snapshots_v0alpha1_SharingOptionsList(ref),
 		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotInfo":           schema_pkg_apis_snapshots_v0alpha1_SnapshotInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotSharingConfig":  schema_pkg_apis_snapshots_v0alpha1_SnapshotSharingConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotSharingOptions": schema_pkg_apis_snapshots_v0alpha1_SnapshotSharingOptions(ref),
-		"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotSummary":        schema_pkg_apis_snapshots_v0alpha1_SnapshotSummary(ref),
 	}
 }
 
@@ -60,7 +60,8 @@ func schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshot(ref common.ReferenceCa
 					},
 					"dashboard": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The raw dashboard (??? openapi ???)",
+							Description: "The raw dashboard (??? openapi ???) This will not be included in list commands",
+							// ANY OBJECT
 						},
 					},
 					"deleteKey": {
@@ -71,7 +72,7 @@ func schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshot(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"info", "dashboard"},
+				Required: []string{"info"},
 			},
 		},
 		Dependencies: []string{
@@ -112,7 +113,7 @@ func schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshotList(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotSummary"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.DashboardSnapshot"),
 									},
 								},
 							},
@@ -122,7 +123,98 @@ func schema_pkg_apis_snapshots_v0alpha1_DashboardSnapshotList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotSummary", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.DashboardSnapshot", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_snapshots_v0alpha1_SharingOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Represents an options object that must be named for each namespace/team/user",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Show the options inline",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotSharingOptions"),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SnapshotSharingOptions", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_snapshots_v0alpha1_SharingOptionsList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Represents a list of namespaced options",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SharingOptions"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1.SharingOptions", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -168,66 +260,6 @@ func schema_pkg_apis_snapshots_v0alpha1_SnapshotInfo(ref common.ReferenceCallbac
 	}
 }
 
-func schema_pkg_apis_snapshots_v0alpha1_SnapshotSharingConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"snapshotEnabled": {
-						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
-					"externalSnapshotURL": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"externalSnapshotName": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"externalEnabled": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"snapshotEnabled"},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
 func schema_pkg_apis_snapshots_v0alpha1_SnapshotSharingOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -264,70 +296,5 @@ func schema_pkg_apis_snapshots_v0alpha1_SnapshotSharingOptions(ref common.Refere
 				Required: []string{"snapshotEnabled"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_snapshots_v0alpha1_SnapshotSummary(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Standard object's metadata More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"expires": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"externalUrl": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"originalUrl": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"timestamp": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }

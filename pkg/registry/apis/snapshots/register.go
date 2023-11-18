@@ -59,26 +59,26 @@ func (b *SnapshotsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
 }
 
-func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(b.gv,
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
 		&snapshots.DashboardSnapshot{},
 		&snapshots.DashboardSnapshotList{},
-		&snapshots.SnapshotSharingConfig{},
+		&snapshots.SharingOptions{},
+		&snapshots.SharingOptionsList{},
 		&metav1.Status{},
 	)
+}
+
+func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	addKnownTypes(scheme, b.gv)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
-	scheme.AddKnownTypes(schema.GroupVersion{
+	addKnownTypes(scheme, schema.GroupVersion{
 		Group:   b.gv.Group,
 		Version: runtime.APIVersionInternal,
-	},
-		&snapshots.DashboardSnapshot{},
-		&snapshots.DashboardSnapshotList{},
-		&snapshots.SnapshotSharingConfig{},
-		&metav1.Status{},
-	)
+	})
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {
@@ -116,14 +116,6 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 					m.Name,
 					m.Info.Title,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			}
-			c, ok := obj.(*snapshots.SnapshotSummary)
-			if ok {
-				return []interface{}{
-					c.Name,
-					c.Title,
-					c.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			}
 			return nil, fmt.Errorf("expected snapshot")

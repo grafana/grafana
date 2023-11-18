@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
-func convertDTOToSummary(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *snapshots.SnapshotSummary {
+func convertDTOToSummary(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *snapshots.DashboardSnapshot {
 	meta := kinds.GrafanaResourceMetadata{}
 	if v.Updated != v.Created {
 		meta.SetUpdatedTimestamp(&v.Updated)
@@ -21,7 +21,7 @@ func convertDTOToSummary(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer 
 	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
 		expires = 0 // ignore things expiring long into the future
 	}
-	return &snapshots.SnapshotSummary{
+	return &snapshots.DashboardSnapshot{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Key,
 			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
@@ -29,7 +29,7 @@ func convertDTOToSummary(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer 
 			Namespace:         namespacer(v.OrgID),
 			Annotations:       meta.Annotations,
 		},
-		SnapshotInfo: snapshots.SnapshotInfo{
+		Info: snapshots.SnapshotInfo{
 			Title:       v.Name,
 			ExternalURL: v.ExternalURL,
 			Expires:     expires,

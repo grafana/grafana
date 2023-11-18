@@ -17,7 +17,8 @@ type DashboardSnapshot struct {
 
 	// The raw dashboard (??? openapi ???)
 	// TODO: openapi annotations for codegen?
-	Dashboard *simplejson.Json `json:"dashboard"`
+	// This will not be included in list commands
+	Dashboard *simplejson.Json `json:"dashboard,omitempty"`
 
 	// The delete key is only returned when the item is created.  It is not returned from a get request
 	DeleteKey string `json:"deleteKey,omitempty"`
@@ -29,17 +30,7 @@ type DashboardSnapshotList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []SnapshotSummary `json:"items,omitempty"`
-}
-
-type SnapshotSummary struct {
-	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	SnapshotInfo `json:",inline"`
+	Items []DashboardSnapshot `json:"items,omitempty"`
 }
 
 type SnapshotInfo struct {
@@ -60,11 +51,22 @@ type SnapshotSharingOptions struct {
 	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
 }
 
+// Represents an options object that must be named for each namespace/team/user
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type SnapshotSharingConfig struct {
+type SharingOptions struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// Show the options inline
-	SnapshotSharingOptions `json:",inline"`
+	Spec SnapshotSharingOptions `json:"spec"`
+}
+
+// Represents a list of namespaced options
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type SharingOptionsList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []SharingOptions `json:"items,omitempty"`
 }
