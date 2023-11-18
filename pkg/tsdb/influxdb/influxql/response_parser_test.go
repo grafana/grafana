@@ -854,10 +854,12 @@ func TestResponseParser_table_format(t *testing.T) {
 		}
 		assert.Equal(t, "Time", resp.Frames[0].Fields[0].Name)
 		assert.Equal(t, "cpu", resp.Frames[0].Fields[1].Name)
+		assert.Equal(t, resp.Frames[0].Fields[1].Name, resp.Frames[0].Fields[1].Config.DisplayNameFromDS)
 		assert.Equal(t, toPtr("cpu-total"), resp.Frames[0].Fields[1].At(0))
 		assert.Equal(t, toPtr("cpu0"), resp.Frames[0].Fields[1].At(5))
 		assert.Equal(t, toPtr("cpu2"), resp.Frames[0].Fields[1].At(12))
 		assert.Equal(t, "mean", resp.Frames[0].Fields[2].Name)
+		assert.Equal(t, resp.Frames[0].Fields[2].Name, resp.Frames[0].Fields[2].Config.DisplayNameFromDS)
 	})
 }
 

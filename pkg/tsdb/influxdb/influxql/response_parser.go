@@ -75,10 +75,10 @@ func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
 	}
 
 	frames := make([]*data.Frame, 0, 1)
-
-	// frameName is pre-allocated. So we can reuse it, saving memory.
-	// It's sized for a reasonably-large name, but will grow if needed.
-	frameName := make([]byte, 0, 128)
+	//
+	// // frameName is pre-allocated. So we can reuse it, saving memory.
+	// // It's sized for a reasonably-large name, but will grow if needed.
+	// frameName := make([]byte, 0, 128)
 
 	hasTags := false
 	hasTimeColumn := false
@@ -102,12 +102,12 @@ func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
 	if hasTimeColumn {
 		newFrame.Fields = append(newFrame.Fields, newTimeField(rows))
 	} else {
-		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, query, frameName[:])...)
+		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil)...)
 	}
 	if hasTags {
-		newFrame.Fields = append(newFrame.Fields, newTagField(rows)...)
+		newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
 	}
-	newFrame.Fields = append(newFrame.Fields, newValueFields(rows, query, frameName[:])...)
+	newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil)...)
 
 	frames = append(frames, newFrame)
 	return frames
@@ -131,24 +131,25 @@ func newTimeField(rows []models.Row) *data.Field {
 	return timeField
 }
 
-func newTagField(rows []models.Row) []*data.Field {
+func newTagField(rows []models.Row, labels data.Labels) []*data.Field {
 	fields := make([]*data.Field, 0, len(rows[0].Tags))
 
 	for key := range rows[0].Tags {
-		field := data.NewField(key, rows[0].Tags, []*string{})
+		tagField := data.NewField(key, labels, []*string{})
 		for _, row := range rows {
 			for range row.Values {
 				value := row.Tags[key]
-				field.Append(&value)
+				tagField.Append(&value)
 			}
 		}
-		fields = append(fields, field)
+		tagField.SetConfig(&data.FieldConfig{DisplayNameFromDS: key})
+		fields = append(fields, tagField)
 	}
 
 	return fields
 }
 
-func newValueFields(rows []models.Row, query models.Query, frameName []byte) []*data.Field {
+func newValueFields(rows []models.Row, labels data.Labels) []*data.Field {
 
 	fields := make([]*data.Field, 0)
 
@@ -190,13 +191,13 @@ func newValueFields(rows []models.Row, query models.Query, frameName []byte) []*
 
 			switch valType {
 			case "string":
-				valueField = data.NewField(row.Columns[colIdx], row.Tags, stringArray)
+				valueField = data.NewField(row.Columns[colIdx], labels, stringArray)
 			case "json.Number":
-				valueField = data.NewField(row.Columns[colIdx], row.Tags, floatArray)
+				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
 			case "bool":
-				valueField = data.NewField(row.Columns[colIdx], row.Tags, boolArray)
+				valueField = data.NewField(row.Columns[colIdx], labels, boolArray)
 			case "null":
-				valueField = data.NewField(row.Columns[colIdx], row.Tags, floatArray)
+				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
 			}
 
 			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: row.Columns[colIdx]})
