@@ -109,7 +109,7 @@ func RunServer(opts ServerOptions) error {
 		return err
 	}
 
-	setBuildInfo(metrics.ProvideRegistry(cfg), opts)
+	setBuildInfo(metrics.ProvideRegisterer(cfg), opts)
 	checkPrivileges()
 
 	s, err := server.Initialize(

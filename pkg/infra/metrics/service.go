@@ -12,15 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type Registry interface {
-	prometheus.Registerer
-	prometheus.Gatherer
-}
-
-type registry struct {
-	Registry
-}
-
 var metricsLogger log.Logger = log.New("metrics")
 
 type logWrapper struct {
@@ -65,13 +56,26 @@ func (im *InternalMetricsService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func ProvideRegistry(cfg *setting.Cfg) *registry {
+func ProvideRegisterer(cfg *setting.Cfg) prometheus.Registerer {
 	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		return &registry{legacyregistry.Registerer().(Registry)}
+		return legacyregistry.Registerer()
 	}
-	return &registry{prometheus.DefaultRegisterer.(Registry)}
+	return prometheus.DefaultRegisterer
 }
 
-func ProvideRegistryForTest() *registry {
-	return &registry{prometheus.NewRegistry()}
+func ProvideGatherer(cfg *setting.Cfg) prometheus.Gatherer {
+	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer) {
+		return legacyregistry.DefaultGatherer
+	}
+	return prometheus.DefaultGatherer
+}
+
+func ProvideRegistererForTest() prometheus.Registerer {
+	return prometheus.NewRegistry()
+}
+
+func ProvideGathererForTest(reg prometheus.Registerer) prometheus.Gatherer {
+	// the registerer provided by ProvideRegistererForTest
+	// is a *prometheus.Registry, so it also implements prometheus.Gatherer
+	return reg.(*prometheus.Registry)
 }
