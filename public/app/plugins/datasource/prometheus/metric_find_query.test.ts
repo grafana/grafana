@@ -107,9 +107,10 @@ describe('PrometheusMetricFindQuery', () => {
     const emptyFilters = ['{}', '{   }', ' {   }  ', '   {}  '];
 
     emptyFilters.forEach((emptyFilter) => {
-      it(`Empty filter, label_values(${emptyFilter}, resource), should just generate label search query`, async () => {
+      const queryString = `label_values(${emptyFilter}, resource)`;
+      it(`Empty filter, query, ${queryString} should just generate label search query`, async () => {
         const query = setupMetricFindQuery({
-          query: 'label_values({}, resource)',
+          query: queryString,
           response: {
             data: ['value1', 'value2', 'value3'],
           },
