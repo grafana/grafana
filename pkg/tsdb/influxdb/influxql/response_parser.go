@@ -75,23 +75,11 @@ func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
 	}
 
 	frames := make([]*data.Frame, 0, 1)
-	//
-	// // frameName is pre-allocated. So we can reuse it, saving memory.
-	// // It's sized for a reasonably-large name, but will grow if needed.
-	// frameName := make([]byte, 0, 128)
 
-	hasTags := false
 	hasTimeColumn := false
-	var cols []string
-	cols = append(cols, rows[0].Columns[:1]...)
-	if cols[0] == "time" {
+	if rows[0].Columns[0] == "time" {
 		hasTimeColumn = true
 	}
-	for tagKey, _ := range rows[0].Tags {
-		hasTags = true
-		cols = append(cols, tagKey)
-	}
-	cols = append(cols, rows[0].Columns[1:]...)
 
 	newFrame := data.NewFrame(rows[0].Name)
 	newFrame.Meta = &data.FrameMeta{
@@ -104,9 +92,7 @@ func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
 	} else {
 		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil)...)
 	}
-	if hasTags {
-		newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
-	}
+	newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
 	newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil)...)
 
 	frames = append(frames, newFrame)
@@ -150,7 +136,6 @@ func newTagField(rows []models.Row, labels data.Labels) []*data.Field {
 }
 
 func newValueFields(rows []models.Row, labels data.Labels) []*data.Field {
-
 	fields := make([]*data.Field, 0)
 
 	for colIdx := 1; colIdx < len(rows[0].Columns); colIdx++ {

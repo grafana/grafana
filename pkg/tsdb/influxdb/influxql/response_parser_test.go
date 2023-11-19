@@ -861,6 +861,18 @@ func TestResponseParser_table_format(t *testing.T) {
 		assert.Equal(t, "mean", resp.Frames[0].Fields[2].Name)
 		assert.Equal(t, resp.Frames[0].Fields[2].Name, resp.Frames[0].Fields[2].Config.DisplayNameFromDS)
 	})
+
+	t.Run("parse result without tags as table", func(t *testing.T) {
+		resp := ResponseParse(prepare(tableResultFormatInfluxResponse4), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		assert.Equal(t, 1, len(resp.Frames))
+		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
+		for i := range resp.Frames[0].Fields {
+			assert.Equal(t, resp.Frames[0].Fields[0].Len(), resp.Frames[0].Fields[i].Len())
+		}
+		assert.Equal(t, "Time", resp.Frames[0].Fields[0].Name)
+		assert.Equal(t, "mean", resp.Frames[0].Fields[1].Name)
+		assert.Equal(t, resp.Frames[0].Fields[1].Name, resp.Frames[0].Fields[1].Config.DisplayNameFromDS)
+	})
 }
 
 func TestResponseParser_Parse(t *testing.T) {
@@ -1457,3 +1469,38 @@ const tableResultFormatInfluxResponse3 = `{
   ]
 }
 `
+
+const tableResultFormatInfluxResponse4 = `{
+  "results": [
+    {
+      "statement_id": 0,
+      "series": [
+        {
+          "name": "cpu",
+          "columns": [
+            "time",
+            "mean"
+          ],
+          "values": [
+            [
+              1700046000000,
+              99.0693929754458
+            ],
+            [
+              1700047200000,
+              99.13073313839024
+            ],
+            [
+              1700048400000,
+              98.99278645182834
+            ],
+            [
+              1700049600000,
+              98.77818123433566
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}`
