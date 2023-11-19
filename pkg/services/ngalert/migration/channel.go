@@ -141,9 +141,9 @@ func createRoute(channel *legacymodels.AlertNotification, receiverName string) (
 	//
 	// For example, if an alert needs to send to channel1 and channel2 it will have one label to route to the nested
 	// policy and two channel-specific labels to route to the correct contact points:
-	// - __use_legacy_channels__="true"
-	// - __contact_channel1__="true"
-	// - __contact_channel2__="true"
+	// - __legacy_use_channels__="true"
+	// - __legacy_c_channel1__="true"
+	// - __legacy_c_channel2__="true"
 	//
 	// If an alert needs to send to channel1 and the default channel, it will have one label to route to the nested
 	// policy and one channel-specific label to route to channel1, and a catch-all policy will ensure it also routes to
@@ -175,7 +175,7 @@ func createRoute(channel *legacymodels.AlertNotification, receiverName string) (
 
 // contactLabel creates a label matcher key used to route alerts to a contact point.
 func contactLabel(name string) string {
-	return fmt.Sprintf(ngmodels.MigratedContactLabelTemplate, name)
+	return ngmodels.MigratedContactLabelPrefix + name + "__"
 }
 
 var secureKeysToMigrate = map[string][]string{
