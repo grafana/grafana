@@ -238,16 +238,53 @@ func TestMakeAlertRule(t *testing.T) {
 		require.Equal(t, expected, ar.Annotations["message"])
 	})
 
-	t.Run("create unique group from dashboard title and interval", func(t *testing.T) {
+	t.Run("create unique group from dashboard title and humanized interval", func(t *testing.T) {
 		service := NewTestMigrationService(t, sqlStore, nil)
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 		da.PanelID = 42
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		intervalTests := []struct {
+			interval int64
+			expected string
+		}{
+			{interval: 10, expected: "10s"},
+			{interval: 30, expected: "30s"},
+			{interval: 60, expected: "1m"},
+			{interval: 120, expected: "2m"},
+			{interval: 3600, expected: "1h"},
+			{interval: 7200, expected: "2h"},
+			{interval: 86400, expected: "1d"},
+			{interval: 172800, expected: "2d"},
+			{interval: 604800, expected: "1w"},
+			{interval: 1209600, expected: "2w"},
+			{interval: 31536000, expected: "1y"},
+			{interval: 63072000, expected: "2y"},
+			{interval: 60 + 30, expected: "1m30s"},
+			{interval: 3600 + 10, expected: "1h10s"},
+			{interval: 3600 + 60, expected: "1h1m"},
+			{interval: 3600 + 60 + 10, expected: "1h1m10s"},
+			{interval: 86400 + 10, expected: "1d10s"},
+			{interval: 86400 + 60, expected: "1d1m"},
+			{interval: 86400 + 3600, expected: "1d1h"},
+			{interval: 86400 + 3600 + 60, expected: "1d1h1m"},
+			{interval: 86400 + 3600 + 10, expected: "1d1h10s"},
+			{interval: 86400 + 60 + 10, expected: "1d1m10s"},
+			{interval: 86400 + 3600 + 60 + 10, expected: "1d1h1m10s"},
+			{interval: 604800 + 86400 + 3600 + 60 + 10, expected: "8d1h1m10s"},
+			{interval: 31536000 + 604800 + 86400 + 3600 + 60 + 10, expected: "373d1h1m10s"},
+		}
 
-		require.NoError(t, err)
-		require.Equal(t, fmt.Sprintf("%s - %ds", info.DashboardName, ar.IntervalSeconds), ar.RuleGroup)
+		for _, test := range intervalTests {
+			t.Run(fmt.Sprintf("interval %ds should be %s", test.interval, test.expected), func(t *testing.T) {
+				da.Frequency = test.interval
+
+				ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+
+				require.NoError(t, err)
+				require.Equal(t, fmt.Sprintf("%s - %s", info.DashboardName, test.expected), ar.RuleGroup)
+			})
+		}
 	})
 
 	t.Run("truncate rule group if dashboard name + panel id is too long", func(t *testing.T) {

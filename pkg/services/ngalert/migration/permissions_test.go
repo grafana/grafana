@@ -55,7 +55,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			},
 			NamespaceUID:    namespaceUID,
 			DashboardUID:    &dashboardUID,
-			RuleGroup:       fmt.Sprintf("%s - %ds", dashTitle, 60),
+			RuleGroup:       fmt.Sprintf("%s - 1m", dashTitle),
 			IntervalSeconds: 60,
 			Version:         1,
 			PanelID:         pointer(int64(1)),

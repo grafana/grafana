@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
@@ -74,13 +76,6 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 		l.Info(fmt.Sprintf("Alert rule title modified to be unique within the folder and fit within the maximum length of %d", store.AlertDefinitionMaxTitleLength), "old", da.Name, "new", name)
 	}
 
-	// We need to ensure that all rules in a group have the same interval but would also like the group to contain useful information.
-	// To do this, we construct the group name from the dashboard title and the interval.
-	interval := ruleAdjustInterval(da.Frequency)
-	panelSuffix := fmt.Sprintf(" - %ds", interval)
-	truncatedDashboard := truncate(info.DashboardName, store.AlertRuleMaxRuleGroupNameLength-len(panelSuffix))
-	groupName := fmt.Sprintf("%s%s", truncatedDashboard, panelSuffix)
-
 	dashUID := info.DashboardUID
 	ar := &ngmodels.AlertRule{
 		OrgID:           da.OrgID,
@@ -93,7 +88,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 		NamespaceUID:    info.NewFolderUID,
 		DashboardUID:    &dashUID,
 		PanelID:         &da.PanelID,
-		RuleGroup:       groupName,
+		RuleGroup:       groupName(ruleAdjustInterval(da.Frequency), info.DashboardName),
 		For:             da.For,
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
@@ -297,4 +292,13 @@ func extractChannelIDs(d *migrationStore.DashAlert) (channelUids []migrationStor
 	}
 
 	return channelUids
+}
+
+// groupName constructs a group name from the dashboard title and the interval. It truncates the dashboard title
+// if necessary to ensure that the group name is not longer than the maximum allowed length.
+func groupName(interval int64, dashboardTitle string) string {
+	duration := model.Duration(time.Duration(interval) * time.Second) // Humanize.
+	panelSuffix := fmt.Sprintf(" - %s", duration.String())
+	truncatedDashboard := truncate(dashboardTitle, store.AlertRuleMaxRuleGroupNameLength-len(panelSuffix))
+	return fmt.Sprintf("%s%s", truncatedDashboard, panelSuffix)
 }
