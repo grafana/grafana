@@ -175,8 +175,6 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 				}
 			}
 
-			// name := string(formatFrameName(row, row.Columns[colIdx], query, frameName[:]))
-
 			switch valType {
 			case "string":
 				valueField = data.NewField(row.Columns[colIdx], labels, stringArray)
