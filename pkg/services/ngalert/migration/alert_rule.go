@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardUID string, channels []string) (data.Labels, data.Labels) {
+func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardUID string, channels []*legacymodels.AlertNotification) (data.Labels, data.Labels) {
 	tags := alert.GetTagsFromSettings()
 	lbls := make(data.Labels, len(tags)+len(channels)+1)
 
@@ -30,7 +30,7 @@ func addLabelsAndAnnotations(l log.Logger, alert *legacymodels.Alert, dashboardU
 	// Add a label for routing
 	lbls[ngmodels.MigratedUseLegacyChannelsLabel] = "true"
 	for _, c := range channels {
-		lbls[fmt.Sprintf(ngmodels.MigratedContactLabelTemplate, c)] = "true"
+		lbls[contactLabel(c.Name)] = "true"
 	}
 
 	annotations := make(data.Labels, 4)
@@ -61,7 +61,7 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		return nil, fmt.Errorf("transform conditions: %w", err)
 	}
 
-	channels := om.extractChannelUIDs(ctx, l, alert.OrgID, parsedSettings)
+	channels := om.extractChannels(l, parsedSettings)
 
 	lbls, annotations := addLabelsAndAnnotations(l, alert, info.DashboardUID, channels)
 
@@ -286,24 +286,29 @@ func truncate(daName string, length int) string {
 	return daName
 }
 
-// extractChannelUIDs extracts the notification channel UIDs from the given legacy dashboard alert parsed settings.
-func (om *OrgMigration) extractChannelUIDs(ctx context.Context, l log.Logger, orgID int64, parsedSettings dashAlertSettings) (channelUids []string) {
-	// Extracting channel UID/ID.
-	for _, ui := range parsedSettings.Notifications {
+// extractChannels extracts notification channels from the given legacy dashboard alert parsed settings.
+func (om *OrgMigration) extractChannels(l log.Logger, parsedSettings dashAlertSettings) []*legacymodels.AlertNotification {
+	// Extracting channels.
+	channels := make([]*legacymodels.AlertNotification, 0, len(parsedSettings.Notifications))
+	for _, key := range parsedSettings.Notifications {
 		// Either id or uid can be defined in the dashboard alert notification settings. See alerting.NewRuleFromDBAlert.
-		if ui.ID > 0 {
-			uid, err := om.migrationStore.GetAlertNotificationUidWithId(ctx, orgID, ui.ID)
-			if err != nil {
-				l.Warn("Failed to get alert notification UID, skipping", "notificationId", ui.ID, "err", err)
+		if key.ID > 0 {
+			if c, ok := om.channelCache.GetChannelByID(key.ID); ok {
+				channels = append(channels, c)
 				continue
 			}
-			channelUids = append(channelUids, uid)
-		} else if ui.UID != "" {
-			channelUids = append(channelUids, ui.UID)
 		}
-	}
 
-	return channelUids
+		if key.UID != "" {
+			if c, ok := om.channelCache.GetChannelByUID(key.UID); ok {
+				channels = append(channels, c)
+				continue
+			}
+		}
+
+		l.Warn("Failed to get alert notification, skipping", "notificationKey", key)
+	}
+	return channels
 }
 
 // groupName constructs a group name from the dashboard title and the interval. It truncates the dashboard title

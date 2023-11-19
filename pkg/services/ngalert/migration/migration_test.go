@@ -182,9 +182,9 @@ func TestAMConfigMigration(t *testing.T) {
 									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier3", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier3"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier3", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier3"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -208,8 +208,8 @@ func TestAMConfigMigration(t *testing.T) {
 									Continue:       true,
 									Routes: []*apimodels.Route{
 										{Receiver: "notifier6", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchRegexp, Name: model.AlertNameLabel, Value: ".+"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier4", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier4"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier5", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier5"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier4", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier4"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier5", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier5"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -241,7 +241,7 @@ func TestAMConfigMigration(t *testing.T) {
 									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -308,8 +308,8 @@ func TestAMConfigMigration(t *testing.T) {
 									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-										{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -340,7 +340,7 @@ func TestAMConfigMigration(t *testing.T) {
 									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -372,7 +372,7 @@ func TestAMConfigMigration(t *testing.T) {
 									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -405,7 +405,7 @@ func TestAMConfigMigration(t *testing.T) {
 									ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 									Continue:       true,
 									Routes: []*apimodels.Route{
-										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+										{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 									},
 								},
 							},
@@ -417,6 +417,17 @@ func TestAMConfigMigration(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "failed channel migration fails upgrade",
+			legacyChannels: []*models.AlertNotification{
+				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
+				createAlertNotification(t, int64(1), "notifier2", "slack", brokenSettings, false),
+			},
+			alerts: []*models.Alert{
+				createAlert(t, 1, 1, 1, "alert1", []string{"notifier1"}),
+			},
+			expErrors: []string{"channel 'notifier2'"},
 		},
 	}
 
@@ -479,17 +490,15 @@ func TestAMConfigMigration(t *testing.T) {
 
 // TestDashAlertMigration tests the execution of the migration specifically for alert rules.
 func TestDashAlertMigration(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
-	x := sqlStore.GetEngine()
-	service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
-
 	withDefaults := func(lbls map[string]string) map[string]string {
 		lbls[ngModels.MigratedUseLegacyChannelsLabel] = "true"
 		return lbls
 	}
 
 	t.Run("when DashAlertMigration create ContactLabel on migrated AlertRules", func(t *testing.T) {
-		defer teardown(t, x, service)
+		sqlStore := db.InitTestDB(t)
+		x := sqlStore.GetEngine()
+		service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
 		legacyChannels := []*models.AlertNotification{
 			createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
@@ -508,14 +517,14 @@ func TestDashAlertMigration(t *testing.T) {
 		}
 		expected := map[int64]map[string]*ngModels.AlertRule{
 			int64(1): {
-				"alert1": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier1"): "true"})},
-				"alert2": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier2"): "true", fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier3"): "true"})},
-				"alert3": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier3"): "true"})},
+				"alert1": {Labels: withDefaults(map[string]string{contactLabel("notifier1"): "true"})},
+				"alert2": {Labels: withDefaults(map[string]string{contactLabel("notifier2"): "true", contactLabel("notifier3"): "true"})},
+				"alert3": {Labels: withDefaults(map[string]string{contactLabel("notifier3"): "true"})},
 			},
 			int64(2): {
 				// Don't include default channels.
-				"alert4": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier4"): "true"})},
-				"alert5": {Labels: withDefaults(map[string]string{fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier4"): "true", fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "notifier5"): "true"})},
+				"alert4": {Labels: withDefaults(map[string]string{contactLabel("notifier4"): "true"})},
+				"alert5": {Labels: withDefaults(map[string]string{contactLabel("notifier4"): "true", contactLabel("notifier5"): "true"})},
 				"alert6": {Labels: withDefaults(map[string]string{})},
 			},
 		}
@@ -549,7 +558,9 @@ func TestDashAlertMigration(t *testing.T) {
 	})
 
 	t.Run("when folder is missing put alert in General folder", func(t *testing.T) {
-		defer teardown(t, x, service)
+		sqlStore := db.InitTestDB(t)
+		x := sqlStore.GetEngine()
+		service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
 		o := createOrg(t, 1)
 		folder1 := createFolder(t, 1, o.ID, "folder-1")
 		dash1 := createDashboard(t, 3, o.ID, "dash1", folder1.ID, nil)
@@ -581,6 +592,75 @@ func TestDashAlertMigration(t *testing.T) {
 				expectedFolder = generalFolder
 			}
 			require.Equal(t, expectedFolder.UID, rule.NamespaceUID)
+		}
+	})
+
+	t.Run("when alert notification settings contain different combinations of id and uid", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		x := sqlStore.GetEngine()
+		service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
+		legacyChannels := []*models.AlertNotification{
+			createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
+			createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
+			createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, false),
+			createAlertNotification(t, int64(2), "notifier4", "email", emailSettings, false),
+			createAlertNotification(t, int64(2), "notifier5", "slack", slackSettings, false),
+			createAlertNotification(t, int64(2), "notifier6", "opsgenie", opsgenieSettings, true), // default
+		}
+		alerts := []*models.Alert{
+			createAlert(t, 1, 1, 1, "alert1", nil),
+			createAlert(t, 1, 1, 2, "alert2", nil),
+			createAlert(t, 1, 2, 3, "alert3", nil),
+			createAlert(t, 2, 3, 1, "alert4", nil),
+			createAlert(t, 2, 3, 2, "alert5", nil),
+			createAlert(t, 2, 4, 3, "alert6", nil),
+		}
+		alerts[0].Settings.Set("notifications", []notificationKey{{UID: "notifier1"}})
+		alerts[1].Settings.Set("notifications", []notificationKey{{ID: 2}, {UID: "notifier3"}})
+		alerts[2].Settings.Set("notifications", []notificationKey{{ID: 3, UID: "notifier4"}})                                // This shouldn't happen, but if it does we choose the ID.
+		alerts[3].Settings.Set("notifications", []notificationKey{{ID: -99}})                                                // Unknown ID
+		alerts[4].Settings.Set("notifications", []notificationKey{{UID: "unknown"}})                                         // Unknown UID
+		alerts[5].Settings.Set("notifications", []notificationKey{{ID: -99}, {UID: "unknown"}, {UID: "notifier4"}, {ID: 5}}) // Mixed unknown and known.
+
+		expected := map[int64]map[string]*ngModels.AlertRule{
+			int64(1): {
+				"alert1": {Labels: withDefaults(map[string]string{contactLabel("notifier1"): "true"})},
+				"alert2": {Labels: withDefaults(map[string]string{contactLabel("notifier2"): "true", contactLabel("notifier3"): "true"})},
+				"alert3": {Labels: withDefaults(map[string]string{contactLabel("notifier3"): "true"})},
+			},
+			int64(2): {
+				// Don't include default channels.
+				"alert4": {Labels: withDefaults(map[string]string{})},
+				"alert5": {Labels: withDefaults(map[string]string{})},
+				"alert6": {Labels: withDefaults(map[string]string{contactLabel("notifier4"): "true", contactLabel("notifier5"): "true"})},
+			},
+		}
+		dashes := []*dashboards.Dashboard{
+			createDashboard(t, 1, 1, "dash1-1", 5, nil),
+			createDashboard(t, 2, 1, "dash2-1", 5, nil),
+			createDashboard(t, 3, 2, "dash3-2", 6, nil),
+			createDashboard(t, 4, 2, "dash4-2", 6, nil),
+		}
+		folders := []*dashboards.Dashboard{
+			createFolder(t, 5, 1, "folder5-1"),
+			createFolder(t, 6, 2, "folder6-2"),
+		}
+		setupLegacyAlertsTables(t, x, legacyChannels, alerts, folders, dashes)
+		err := service.Run(context.Background())
+		require.NoError(t, err)
+
+		for orgId := range expected {
+			rules := getAlertRules(t, x, orgId)
+			expectedRulesMap := expected[orgId]
+			require.Len(t, rules, len(expectedRulesMap))
+			for _, r := range rules {
+				delete(r.Labels, "rule_uid") // Not checking this here.
+				exp := expectedRulesMap[r.Title].Labels
+				require.Lenf(t, r.Labels, len(exp), "rule doesn't have correct number of labels: %s", r.Title)
+				for l := range r.Labels {
+					require.Equal(t, exp[l], r.Labels[l])
+				}
+			}
 		}
 	})
 }
@@ -686,6 +766,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 
 		expectedFolder *dashboards.Dashboard
 		expected       map[int64][]*ngModels.AlertRule
+		expErrors      []string
 	}
 
 	tc := []testcase{
@@ -961,6 +1042,14 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			},
 		},
 		{
+			name: "failed alert migration fails upgrade",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]dashAlertCondition{{}}),
+			},
+			expErrors: []string{"migrate alert 'alert1'"},
+		},
+		{
 			name: "simple query with interval, calculates intervalMs using it as min interval",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
@@ -1028,6 +1117,12 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			setupLegacyAlertsTables(t, x, nil, tt.alerts, folders, dashes)
 
 			err := service.Run(context.Background())
+			if len(tt.expErrors) > 0 {
+				for _, expErr := range tt.expErrors {
+					require.ErrorContains(t, err, expErr)
+				}
+				return
+			}
 			require.NoError(t, err)
 
 			for orgId, expected := range tt.expected {
@@ -1072,6 +1167,7 @@ const (
 	emailSettings    = `{"addresses": "test"}`
 	slackSettings    = `{"recipient": "test", "token": "test"}`
 	opsgenieSettings = `{"apiKey": "test"}`
+	brokenSettings   = `[{"unknown": 1.5}]`
 )
 
 var (
@@ -1159,9 +1255,7 @@ func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int,
 	if len(notifierUids) != 0 {
 		notifiers := make([]any, 0)
 		for _, n := range notifierUids {
-			notifiers = append(notifiers, struct {
-				Uid string
-			}{Uid: n})
+			notifiers = append(notifiers, notificationKey{UID: n})
 		}
 
 		settings.Set("notifications", notifiers)

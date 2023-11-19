@@ -73,6 +73,9 @@ func (om *OrgMigration) migrateOrgChannels(ctx context.Context) (*migmodels.Aler
 		return nil, fmt.Errorf("load notification channels: %w", err)
 	}
 
+	// Cache for later use by alerts
+	om.channelCache.LoadChannels(channels)
+
 	amConfig, err := om.migrateChannels(channels)
 	if err != nil {
 		return nil, err
@@ -83,16 +86,14 @@ func (om *OrgMigration) migrateOrgChannels(ctx context.Context) (*migmodels.Aler
 func (om *OrgMigration) migrateOrg(ctx context.Context) error {
 	om.log.Info("Migrating alerts for organisation")
 
-	err := om.migrateOrgAlerts(ctx)
-	if err != nil {
-		return fmt.Errorf("migrate alerts: %w", err)
-	}
-
-	// This must happen before we insert the rules into the database because it modifies the alert labels. This will
-	// be changed in the future when we improve how notification policies are created.
 	amConfig, err := om.migrateOrgChannels(ctx)
 	if err != nil {
 		return fmt.Errorf("migrate channels: %w", err)
+	}
+
+	err = om.migrateOrgAlerts(ctx)
+	if err != nil {
+		return fmt.Errorf("migrate alerts: %w", err)
 	}
 
 	if err := om.writeSilencesFile(); err != nil {

@@ -34,11 +34,11 @@ func TestCreateRoute(t *testing.T) {
 	}{
 		{
 			name:    "when a receiver is passed in, the route should exact match based on channel uid with continue=true",
-			channel: &legacymodels.AlertNotification{UID: "uid1"},
-			recv:    createPostableApiReceiver("uid1", "recv1", nil),
+			channel: &legacymodels.AlertNotification{UID: "uid1", Name: "recv1"},
+			recv:    createPostableApiReceiver("uid1", "recv1"),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -46,12 +46,12 @@ func TestCreateRoute(t *testing.T) {
 			},
 		},
 		{
-			name:    "notification channel should be escaped for regex in the matcher",
-			channel: &legacymodels.AlertNotification{UID: "uid1"},
-			recv:    createPostableApiReceiver("uid1", `. ^ $ * + - ? ( ) [ ] { } \ |`, nil),
+			name:    "notification channel labels matcher should work with special characters",
+			channel: &legacymodels.AlertNotification{UID: "uid1", Name: `. ^ $ * + - ? ( ) [ ] { } \ |`},
+			recv:    createPostableApiReceiver("uid1", `. ^ $ * + - ? ( ) [ ] { } \ |`),
 			expected: &apimodels.Route{
 				Receiver:       `. ^ $ * + - ? ( ) [ ] { } \ |`,
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel(`. ^ $ * + - ? ( ) [ ] { } \ |`), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -60,11 +60,11 @@ func TestCreateRoute(t *testing.T) {
 		},
 		{
 			name:    "when a channel has sendReminder=true, the route should use the frequency in repeat interval",
-			channel: &legacymodels.AlertNotification{SendReminder: true, Frequency: time.Duration(42) * time.Hour, UID: "uid1"},
-			recv:    createPostableApiReceiver("uid1", "recv1", nil),
+			channel: &legacymodels.AlertNotification{SendReminder: true, Frequency: time.Duration(42) * time.Hour, UID: "uid1", Name: "recv1"},
+			recv:    createPostableApiReceiver("uid1", "recv1"),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -73,11 +73,11 @@ func TestCreateRoute(t *testing.T) {
 		},
 		{
 			name:    "when a channel has sendReminder=false, the route should ignore the frequency in repeat interval and use DisabledRepeatInterval",
-			channel: &legacymodels.AlertNotification{SendReminder: false, Frequency: time.Duration(42) * time.Hour, UID: "uid1"},
-			recv:    createPostableApiReceiver("uid1", "recv1", nil),
+			channel: &legacymodels.AlertNotification{SendReminder: false, Frequency: time.Duration(42) * time.Hour, UID: "uid1", Name: "recv1"},
+			recv:    createPostableApiReceiver("uid1", "recv1"),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("recv1"), Value: "true"}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -143,7 +143,7 @@ func TestCreateReceivers(t *testing.T) {
 		{
 			name:    "when given notification channels migrate them to receivers",
 			channel: createNotChannel(t, "uid1", int64(1), "name1", false, 0),
-			expRecv: createPostableApiReceiver("uid1", "name1", []string{"name1"}),
+			expRecv: createPostableApiReceiver("uid1", "name1"),
 		},
 		{
 			name:    "when given hipchat return discontinued error",
@@ -374,16 +374,16 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 								ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 								Continue:       true,
 								Routes: []*apimodels.Route{
-									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 								},
 							},
 						},
 					}},
 					Receivers: []*apimodels.PostableApiReceiver{
 						{Receiver: config.Receiver{Name: "autogen-contact-point-default"}, PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{}}},
-						createPostableApiReceiver("uid1", "notifier1", []string{"notifier1"}),
-						createPostableApiReceiver("uid2", "notifier2", []string{"notifier2"}),
+						createPostableApiReceiver("uid1", "notifier1"),
+						createPostableApiReceiver("uid2", "notifier2"),
 					},
 				},
 			},
@@ -402,15 +402,15 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 								Continue:       true,
 								Routes: []*apimodels.Route{
 									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchRegexp, Name: model.AlertNameLabel, Value: ".+"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
-									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 								},
 							},
 						},
 					}},
 					Receivers: []*apimodels.PostableApiReceiver{
 						{Receiver: config.Receiver{Name: "autogen-contact-point-default"}, PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{}}},
-						createPostableApiReceiver("uid1", "notifier1", []string{"notifier1"}),
-						createPostableApiReceiver("uid2", "notifier2", []string{"notifier2"}),
+						createPostableApiReceiver("uid1", "notifier1"),
+						createPostableApiReceiver("uid2", "notifier2"),
 					},
 				},
 			},
@@ -428,16 +428,16 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 								ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: ngModels.MigratedUseLegacyChannelsLabel, Value: "true"}},
 								Continue:       true,
 								Routes: []*apimodels.Route{
-									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(42)},
-									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: fmt.Sprintf(ngModels.MigratedContactLabelTemplate, "uid2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(43)},
+									{Receiver: "notifier1", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier1"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(42)},
+									{Receiver: "notifier2", ObjectMatchers: apimodels.ObjectMatchers{{Type: labels.MatchEqual, Name: contactLabel("notifier2"), Value: "true"}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(43)},
 								},
 							},
 						},
 					}},
 					Receivers: []*apimodels.PostableApiReceiver{
 						{Receiver: config.Receiver{Name: "autogen-contact-point-default"}, PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{}}},
-						createPostableApiReceiver("uid1", "notifier1", []string{"notifier1"}),
-						createPostableApiReceiver("uid2", "notifier2", []string{"notifier2"})},
+						createPostableApiReceiver("uid1", "notifier1"),
+						createPostableApiReceiver("uid2", "notifier2")},
 				},
 			},
 		},
@@ -469,23 +469,21 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 	}
 }
 
-func createPostableApiReceiver(uid string, name string, integrationNames []string) *apimodels.PostableApiReceiver {
-	integrations := make([]*apimodels.PostableGrafanaReceiver, 0, len(integrationNames))
-	for _, integrationName := range integrationNames {
-		integrations = append(integrations, &apimodels.PostableGrafanaReceiver{
-			UID:            uid,
-			Type:           "email",
-			Name:           integrationName,
-			Settings:       apimodels.RawMessage("{}"),
-			SecureSettings: map[string]string{},
-		})
-	}
+func createPostableApiReceiver(uid string, name string) *apimodels.PostableApiReceiver {
 	return &apimodels.PostableApiReceiver{
 		Receiver: config.Receiver{
 			Name: name,
 		},
 		PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: integrations,
+			GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
+				{
+					UID:            uid,
+					Type:           "email",
+					Name:           name,
+					Settings:       apimodels.RawMessage("{}"),
+					SecureSettings: map[string]string{},
+				},
+			},
 		},
 	}
 }

@@ -41,7 +41,6 @@ type Store interface {
 
 	GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester) (*datasources.DataSource, error)
 
-	GetAlertNotificationUidWithId(ctx context.Context, orgID int64, id int64) (string, error)
 	GetNotificationChannels(ctx context.Context, orgID int64) ([]*legacymodels.AlertNotification, error)
 
 	GetOrgDashboardAlerts(ctx context.Context, orgID int64) (map[int64][]*legacymodels.Alert, int, error)
@@ -81,7 +80,6 @@ type migrationStore struct {
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	orgService           org.Service
 
-	legacyAlertStore               legacyalerting.AlertStore
 	legacyAlertNotificationService *legacyalerting.AlertNotificationService
 }
 
@@ -99,7 +97,6 @@ func ProvideMigrationStore(
 	folderPermissions accesscontrol.FolderPermissionsService,
 	dashboardPermissions accesscontrol.DashboardPermissionsService,
 	orgService org.Service,
-	legacyAlertStore legacyalerting.AlertStore,
 	legacyAlertNotificationService *legacyalerting.AlertNotificationService,
 ) (Store, error) {
 	return &migrationStore{
@@ -114,7 +111,6 @@ func ProvideMigrationStore(
 		folderPermissions:              folderPermissions,
 		dashboardPermissions:           dashboardPermissions,
 		orgService:                     orgService,
-		legacyAlertStore:               legacyAlertStore,
 		legacyAlertNotificationService: legacyAlertNotificationService,
 	}, nil
 }
@@ -257,6 +253,7 @@ func (ms *migrationStore) InsertAlertRules(ctx context.Context, rules ...models.
 	return nil
 }
 
+// SaveAlertmanagerConfiguration saves the alertmanager configuration for the given org.
 func (ms *migrationStore) SaveAlertmanagerConfiguration(ctx context.Context, orgID int64, amConfig *apimodels.PostableUserConfig) error {
 	rawAmConfig, err := json.Marshal(amConfig)
 	if err != nil {
@@ -411,25 +408,20 @@ func (ms *migrationStore) DeleteFolders(ctx context.Context, orgID int64, uids .
 	return nil
 }
 
+// GetDashboard returns a single dashboard for the given org and dashboard id.
 func (ms *migrationStore) GetDashboard(ctx context.Context, orgID int64, id int64) (*dashboards.Dashboard, error) {
 	return ms.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: id, OrgID: orgID})
 }
 
+// GetAllOrgs returns all orgs.
 func (ms *migrationStore) GetAllOrgs(ctx context.Context) ([]*org.OrgDTO, error) {
 	orgQuery := &org.SearchOrgsQuery{}
 	return ms.orgService.Search(ctx, orgQuery)
 }
 
+// GetDatasource returns a single datasource for the given org and datasource id.
 func (ms *migrationStore) GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester) (*datasources.DataSource, error) {
 	return ms.dataSourceCache.GetDatasource(ctx, datasourceID, user, false)
-}
-
-func (ms *migrationStore) GetAlertNotificationUidWithId(ctx context.Context, orgID int64, id int64) (string, error) {
-	cmd := legacymodels.GetAlertNotificationUidQuery{
-		ID:    id,
-		OrgID: orgID,
-	}
-	return ms.legacyAlertStore.GetAlertNotificationUidWithId(ctx, &cmd)
 }
 
 // GetNotificationChannels returns all channels for this org.

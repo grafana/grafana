@@ -133,21 +133,23 @@ func (om *OrgMigration) createReceiver(channel *legacymodels.AlertNotification) 
 
 // createRoute creates a route from a legacy notification channel, and matches using a label based on the channel UID.
 func createRoute(channel *legacymodels.AlertNotification, receiverName string) (*apimodels.Route, error) {
-	// We create a matchers based on channel UID so that we only need a single route per channel.
-	// All routes are stored in a nested route under the root. This is so we can keep the migrated channels separate
+	// We create a matchers based on channel name so that we only need a single route per channel.
+	// All channel routes are nested in a single route under the root. This is so we can keep the migrated channels separate
 	// and organized.
-	// The matchers are created using a label that is unique to the channel UID. So, each migrated alert rule can define
-	// one label per migrated channel that it should send to.
-	// Default channels are matched using a catch-all matcher, because in legacy alerting they are attached to all
-	// alerts automatically.
+	// Since default channels are attached to all alerts in legacy, we use  a catch-all matcher after migration instead
+	// of a specific label matcher.
 	//
-	// For example, if an alert needs to send to channel1 and channel2 it will have two labels:
+	// For example, if an alert needs to send to channel1 and channel2 it will have one label to route to the nested
+	// policy and two channel-specific labels to route to the correct contact points:
+	// - __use_legacy_channels__="true"
 	// - __contact_channel1__="true"
 	// - __contact_channel2__="true"
 	//
-	// These will match two routes as they are all defined with Continue=true.
+	// If an alert needs to send to channel1 and the default channel, it will have one label to route to the nested
+	// policy and one channel-specific label to route to channel1, and a catch-all policy will ensure it also routes to
+	// the default channel.
 
-	label := fmt.Sprintf(ngmodels.MigratedContactLabelTemplate, channel.UID)
+	label := contactLabel(channel.Name)
 	mat, err := labels.NewMatcher(labels.MatchEqual, label, "true")
 	if err != nil {
 		return nil, err
@@ -169,6 +171,11 @@ func createRoute(channel *legacymodels.AlertNotification, receiverName string) (
 		Continue:       true, // We continue so that each sibling contact point route can separately match.
 		RepeatInterval: &repeatInterval,
 	}, nil
+}
+
+// contactLabel creates a label matcher key used to route alerts to a contact point.
+func contactLabel(name string) string {
+	return fmt.Sprintf(ngmodels.MigratedContactLabelTemplate, name)
 }
 
 var secureKeysToMigrate = map[string][]string{
