@@ -81,6 +81,8 @@ func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
 		hasTimeColumn = true
 	}
 
+	conLen := len(rows[0].Columns)
+
 	newFrame := data.NewFrame(rows[0].Name)
 	newFrame.Meta = &data.FrameMeta{
 		ExecutedQueryString:    query.RawQuery,
@@ -89,11 +91,13 @@ func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
 
 	if hasTimeColumn {
 		newFrame.Fields = append(newFrame.Fields, newTimeField(rows))
+		newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
+		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 1, conLen)...)
 	} else {
-		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil)...)
+		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 0, 1)...)
+		newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
+		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 1, conLen)...)
 	}
-	newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
-	newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil)...)
 
 	frames = append(frames, newFrame)
 	return frames
@@ -135,10 +139,10 @@ func newTagField(rows []models.Row, labels data.Labels) []*data.Field {
 	return fields
 }
 
-func newValueFields(rows []models.Row, labels data.Labels) []*data.Field {
+func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEnd int) []*data.Field {
 	fields := make([]*data.Field, 0)
 
-	for colIdx := 1; colIdx < len(rows[0].Columns); colIdx++ {
+	for colIdx := colIdxStart; colIdx < colIdxEnd; colIdx++ {
 		var valueField *data.Field
 		var floatArray []*float64
 		var stringArray []*string

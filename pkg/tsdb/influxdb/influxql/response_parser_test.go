@@ -873,6 +873,32 @@ func TestResponseParser_table_format(t *testing.T) {
 		assert.Equal(t, "mean", resp.Frames[0].Fields[1].Name)
 		assert.Equal(t, resp.Frames[0].Fields[1].Name, resp.Frames[0].Fields[1].Config.DisplayNameFromDS)
 	})
+
+	t.Run("parse show measurements response as table", func(t *testing.T) {
+		resp := ResponseParse(prepare(showMeasurementsResponse), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		assert.Equal(t, 1, len(resp.Frames))
+		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
+		for i := range resp.Frames[0].Fields {
+			assert.Equal(t, resp.Frames[0].Fields[0].Len(), resp.Frames[0].Fields[i].Len())
+		}
+		assert.Equal(t, 1, len(resp.Frames[0].Fields))
+		assert.Equal(t, "name", resp.Frames[0].Fields[0].Name)
+	})
+
+	t.Run("parse retention policy response as table", func(t *testing.T) {
+		resp := ResponseParse(prepare(showRetentionPolicyResponse), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		assert.Equal(t, 1, len(resp.Frames))
+		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
+		for i := range resp.Frames[0].Fields {
+			assert.Equal(t, resp.Frames[0].Fields[0].Len(), resp.Frames[0].Fields[i].Len())
+		}
+		assert.Equal(t, 5, len(resp.Frames[0].Fields))
+		assert.Equal(t, "name", resp.Frames[0].Fields[0].Name)
+		assert.Equal(t, "duration", resp.Frames[0].Fields[1].Name)
+		assert.Equal(t, "shardGroupDuration", resp.Frames[0].Fields[2].Name)
+		assert.Equal(t, "replicaN", resp.Frames[0].Fields[3].Name)
+		assert.Equal(t, "default", resp.Frames[0].Fields[4].Name)
+	})
 }
 
 func TestResponseParser_Parse(t *testing.T) {
@@ -1497,6 +1523,71 @@ const tableResultFormatInfluxResponse4 = `{
             [
               1700049600000,
               98.77818123433566
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}`
+
+const showMeasurementsResponse = `{
+  "results": [
+    {
+      "statement_id": 0,
+      "series": [
+        {
+          "name": "measurements",
+          "columns": [
+            "name"
+          ],
+          "values": [
+            [
+              "cpu"
+            ],
+            [
+              "disk"
+            ],
+            [
+              "diskio"
+            ],
+            [
+              "kernel"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}`
+
+const showRetentionPolicyResponse = `{
+  "results": [
+    {
+      "statement_id": 0,
+      "series": [
+        {
+          "columns": [
+            "name",
+            "duration",
+            "shardGroupDuration",
+            "replicaN",
+            "default"
+          ],
+          "values": [
+            [
+              "default",
+              "0s",
+              "168h0m0s",
+              1,
+              true
+            ],
+            [
+              "autogen",
+              "0s",
+              "168h0m0s",
+              1,
+              false
             ]
           ]
         }
