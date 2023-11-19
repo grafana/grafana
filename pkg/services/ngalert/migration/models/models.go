@@ -14,7 +14,7 @@ const MaxIncrementDeduplicationAttempts = 10
 // Deduplicator is a utility for deduplicating strings. It keeps track of the strings it has seen and appends a unique
 // suffix to strings that have already been seen. It can optionally truncate strings before appending the suffix to
 // ensure that the resulting string is not longer than maxLen.
-// This implementation will first try to deduplicate via an auto-incrementing suffix of the form "_2", "_3", etc.
+// This implementation will first try to deduplicate via a sequential index suffix of the form " #2", " #3", etc.
 // If after MaxIncrementDeduplicationAttempts attempts it still cannot find a unique string, it will generate a new
 // unique uid and append that to the string.
 type Deduplicator struct {

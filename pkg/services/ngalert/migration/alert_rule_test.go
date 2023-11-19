@@ -287,7 +287,7 @@ func TestMakeAlertRule(t *testing.T) {
 		}
 	})
 
-	t.Run("truncate rule group if dashboard name + panel id is too long", func(t *testing.T) {
+	t.Run("truncate dashboard name part of rule group if too long", func(t *testing.T) {
 		service := NewTestMigrationService(t, sqlStore, nil)
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
