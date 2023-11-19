@@ -76,20 +76,14 @@ func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
 
 	frames := make([]*data.Frame, 0, 1)
 
-	hasTimeColumn := false
-	if rows[0].Columns[0] == "time" {
-		hasTimeColumn = true
-	}
-
-	conLen := len(rows[0].Columns)
-
 	newFrame := data.NewFrame(rows[0].Name)
 	newFrame.Meta = &data.FrameMeta{
 		ExecutedQueryString:    query.RawQuery,
 		PreferredVisualization: getVisType(query.ResultFormat),
 	}
 
-	if hasTimeColumn {
+	conLen := len(rows[0].Columns)
+	if rows[0].Columns[0] == "time" {
 		newFrame.Fields = append(newFrame.Fields, newTimeField(rows))
 	} else {
 		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 0, 1)...)
