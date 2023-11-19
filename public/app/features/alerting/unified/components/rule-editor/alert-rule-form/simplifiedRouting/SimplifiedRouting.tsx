@@ -4,7 +4,7 @@ import React, { useEffect, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
@@ -113,22 +113,15 @@ export function SimplifiedRouting() {
 }
 
 function LinkToContactPoints() {
-  const styles = useStyles2(getStyles);
   const hrefToContactPoints = '/alerting/notifications';
   return (
-    <div className={styles.contactPointsLinkRow}>
-      <Text color="secondary">To browse contact points and create new ones go to</Text>
-      <a
-        href={createUrl(hrefToContactPoints)}
-        target="__blank"
-        className={styles.link}
-        rel="noopener"
-        aria-label="View alert rule"
-      >
-        Contact points
-        <Icon name={'external-link-alt'} size="sm" />
-      </a>
-    </div>
+    <Link target="_blank" href={createUrl(hrefToContactPoints)} rel="noopener" aria-label="View alert rule">
+      <Stack direction="row" gap={1} alignItems="center" justifyContent="center">
+        <Text color="secondary">To browse contact points and create new ones go to</Text>
+        <Text color="link">Contact points</Text>
+        <Icon name={'external-link-alt'} size="sm" color="link" />
+      </Stack>
+    </Link>
   );
 }
 
@@ -152,19 +145,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: theme.spacing(3),
     height: theme.spacing(3),
     marginRight: theme.spacing(1),
-  }),
-  link: css({
-    color: theme.colors.primary.text,
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  contactPointsLinkRow: css({
-    display: 'flex',
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: theme.spacing(1),
-    paddingTop: theme.spacing(2),
-    paddingLeft: theme.spacing(2),
   }),
 });
