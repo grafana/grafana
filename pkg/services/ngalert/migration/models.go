@@ -23,7 +23,6 @@ type OrgMigration struct {
 	encryptionService secrets.Service
 
 	orgID                      int64
-	seenUIDs                   *migmodels.Deduplicator
 	silences                   []*pb.MeshSilence
 	titleDeduplicatorForFolder func(folderUID string) *migmodels.Deduplicator
 
@@ -46,9 +45,7 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 		migrationStore:    ms.migrationStore,
 		encryptionService: ms.encryptionService,
 
-		orgID: orgID,
-		// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
-		seenUIDs: migmodels.NewDeduplicator(ms.store.GetDialect().SupportEngine(), 0),
+		orgID:    orgID,
 		silences: make([]*pb.MeshSilence, 0),
 		titleDeduplicatorForFolder: func(folderUID string) *migmodels.Deduplicator {
 			if _, ok := titlededuplicatorPerFolder[folderUID]; !ok {
