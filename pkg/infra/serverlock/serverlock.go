@@ -2,6 +2,8 @@ package serverlock
 
 import (
 	"context"
+	"errors"
+	"math/rand"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -162,6 +164,66 @@ func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionNa
 	ctxLogger.Debug("LockExecuteAndRelease finished", "actionName", actionName, "duration", time.Since(start))
 
 	return nil
+}
+
+// LockExecuteAndReleaseWithRetries mimics LockExecuteAndRelease but waits for the lock to be released if it is already taken.
+func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Context, actionName string, waitMin time.Duration, waitMax time.Duration, maxInterval time.Duration, fn func(ctx context.Context), retryOpts ...func(int) error) error {
+	start := time.Now()
+	ctx, span := sl.tracer.Start(ctx, "ServerLockService.LockExecuteAndReleaseWithRetries")
+	span.SetAttributes(attribute.String("serverlock.actionName", actionName))
+	defer span.End()
+
+	ctxLogger := sl.log.FromContext(ctx)
+	ctxLogger.Debug("Start LockExecuteAndReleaseWithRetries", "actionName", actionName)
+
+	lockChecks := 0
+
+	for {
+		lockChecks++
+		err := sl.acquireForRelease(ctx, actionName, maxInterval)
+		// could not get the lock
+		if err != nil {
+			var lockedErr *ServerLockExistsError
+			if errors.As(err, &lockedErr) {
+				// if the lock is already taken, wait and try again
+				if lockChecks == 1 { // only warn on first lock check
+					ctxLogger.Warn("another instance has the lock, waiting for it to be released", "actionName", actionName)
+				}
+
+				for _, op := range retryOpts {
+					err := op(lockChecks)
+					if err != nil {
+						return err
+					}
+				}
+
+				time.Sleep(lockWait(waitMin, waitMax))
+				continue
+			}
+			span.RecordError(err)
+			return err
+		}
+
+		// lock was acquired and released successfully
+		break
+	}
+
+	sl.executeFunc(ctx, actionName, fn)
+
+	err := sl.releaseLock(ctx, actionName)
+	if err != nil {
+		span.RecordError(err)
+		ctxLogger.Error("Failed to release the lock", "error", err)
+	}
+
+	ctxLogger.Debug("LockExecuteAndReleaseWithRetries finished", "actionName", actionName, "duration", time.Since(start))
+
+	return nil
+}
+
+// generate a random duration between lockWaitMin and lockWaitMax to ensure instances unlock gradually
+func lockWait(waitMin time.Duration, waitMax time.Duration) time.Duration {
+	return time.Duration(rand.Int63n(int64(waitMax-waitMin)) + int64(waitMin))
 }
 
 // acquireForRelease will check if the lock is already on the database, if it is, will check with maxInterval if it is
