@@ -91,13 +91,12 @@ func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
 
 	if hasTimeColumn {
 		newFrame.Fields = append(newFrame.Fields, newTimeField(rows))
-		newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
-		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 1, conLen)...)
 	} else {
 		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 0, 1)...)
-		newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
-		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 1, conLen)...)
 	}
+
+	newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
+	newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 1, conLen)...)
 
 	frames = append(frames, newFrame)
 	return frames
