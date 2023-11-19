@@ -20,8 +20,8 @@ type NotificationsStepProps = {
 };
 
 enum RoutingOptions {
-  'notification policy' = 'notification policy',
-  'contact point' = 'contact point',
+  NotificationPolicy = 'notification policy',
+  ContactPoint = 'contact point',
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
@@ -43,12 +43,12 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const shouldRenderPreview = type === RuleFormType.grafana;
 
   const routingOptions = [
-    { label: 'Manually selected contact point', value: RoutingOptions['contact point'] },
-    { label: 'Auto-select contact point', value: RoutingOptions['notification policy'] },
+    { label: 'Manually selected contact point', value: RoutingOptions.ContactPoint },
+    { label: 'Auto-select contact point', value: RoutingOptions.NotificationPolicy },
   ];
 
   const onRoutingOptionChange = (option: RoutingOptions) => {
-    setValue('manualRouting', option === RoutingOptions['contact point']);
+    setValue('manualRouting', option === RoutingOptions.ContactPoint);
   };
 
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
@@ -117,7 +117,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         <Stack direction="column">
           <RadioButtonGroup
             options={routingOptions}
-            value={manualRouting ? RoutingOptions['contact point'] : RoutingOptions['notification policy']}
+            value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
             onChange={onRoutingOptionChange}
             className={styles.routingOptions}
           />
