@@ -61,8 +61,6 @@ type Store interface {
 	SetOrgMigrationState(ctx context.Context, orgID int64, summary *migmodels.OrgMigrationState) error
 
 	RevertAllOrgs(ctx context.Context) error
-
-	CaseInsensitive() bool
 }
 
 type migrationStore struct {
@@ -435,8 +433,4 @@ func (ms *migrationStore) SetFolderPermissions(ctx context.Context, orgID int64,
 
 func (ms *migrationStore) MapActions(permission accesscontrol.ResourcePermission) string {
 	return ms.dashboardPermissions.MapActions(permission)
-}
-
-func (ms *migrationStore) CaseInsensitive() bool {
-	return ms.store.GetDialect().SupportEngine()
 }

@@ -177,10 +177,7 @@ func TestMakeAlertRule(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
-			parts := strings.SplitN(ar.Title, "_", 2)
-			require.Len(t, parts, 2)
-			require.Equal(t, ar.Title, fmt.Sprintf("%s_%d-%d", strings.Repeat("a", store.AlertDefinitionMaxTitleLength-4), da.DashboardID, da.PanelID))
-			require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
+			require.Equal(t, ar.Title, fmt.Sprintf("%s #2", strings.Repeat("a", store.AlertDefinitionMaxTitleLength-3)))
 		})
 	})
 

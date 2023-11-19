@@ -65,19 +65,14 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, da *migr
 	}
 
 	// Here we ensure that the alert rule title is unique within the folder.
-	titleDedupSet := om.AlertTitleDeduplicator(info.NewFolderUID)
-	name := truncate(da.Name, store.AlertDefinitionMaxTitleLength)
-	if titleDedupSet.contains(name) {
-		// This should work most of the time and will give a much better alert name than a random uid.
-		dedupedName := simpleTitleDedup(da, name)
-		if titleDedupSet.contains(dedupedName) {
-			// If we still have a duplicate, we'll just have to use a random uid.
-			dedupedName = titleDedupSet.deduplicate(name)
-		}
-		l.Debug("Duplicate alert rule name detected, renaming", "oldName", da.Name, "newName", dedupedName)
-		name = dedupedName
+	titleDeduplicator := om.titleDeduplicatorForFolder(info.NewFolderUID)
+	name, err := titleDeduplicator.Deduplicate(da.Name)
+	if err != nil {
+		return nil, err
 	}
-	titleDedupSet.add(name)
+	if name != da.Name {
+		l.Info(fmt.Sprintf("Alert rule title modified to be unique within the folder and fit within the maximum length of %d", store.AlertDefinitionMaxTitleLength), "old", da.Name, "new", name)
+	}
 
 	// We need to ensure that all rules in a group have the same interval but would also like the group to contain useful information.
 	// To do this, we construct the group name from the dashboard title and the interval.
@@ -302,13 +297,4 @@ func extractChannelIDs(d *migrationStore.DashAlert) (channelUids []migrationStor
 	}
 
 	return channelUids
-}
-
-// simpleTitleDedup truncates the given title to the maximum length and appends a simple suffix based on dashboard and panel id to make it unique.
-// This could fail to be unique if identically named alerts in different dashboards are migrating to the same folder. However, in most cases
-// this is sufficient and more readable appending a random uid.
-func simpleTitleDedup(da *migrationStore.DashAlert, title string) string {
-	suffix := fmt.Sprintf("_%d-%d", da.DashboardID, da.PanelID)
-	truncatedName := truncate(title, store.AlertDefinitionMaxTitleLength-len(suffix))
-	return fmt.Sprintf("%s%s", truncatedName, suffix)
 }
