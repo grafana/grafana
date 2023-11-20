@@ -843,8 +843,6 @@ export class LokiDatasource
   toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
 
-    let forceLabelFilter =
-      this.getLabelTypeFromFrame(filter.options.key, filter.frame, filter.frameIndex) !== 'indexed';
     switch (filter.type) {
       case 'FILTER_FOR': {
         if (filter.options?.key && filter.options?.value) {
@@ -853,7 +851,7 @@ export class LokiDatasource
           // This gives the user the ability to toggle a filter on and off.
           expression = queryHasFilter(expression, filter.options.key, '=', value)
             ? removeLabelFromQuery(expression, filter.options.key, '=', value)
-            : addLabelToQuery(expression, filter.options.key, '=', value, forceLabelFilter);
+            : addLabelToQuery(expression, filter.options.key, '=', value);
         }
         break;
       }
@@ -870,7 +868,7 @@ export class LokiDatasource
             expression = removeLabelFromQuery(expression, filter.options.key, '=', value);
           }
 
-          expression = addLabelToQuery(expression, filter.options.key, '!=', value, forceLabelFilter);
+          expression = addLabelToQuery(expression, filter.options.key, '!=', value);
         }
         break;
       }

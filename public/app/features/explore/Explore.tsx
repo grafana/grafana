@@ -11,6 +11,7 @@ import {
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
+  LogRowModel,
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
@@ -269,8 +270,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return ds.toggleQueryFilter(query, {
           type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
           options: modification.options ?? {},
-          frame: modification.frame,
-          frameIndex: modification.frameIndex,
         });
       }
       if (ds.modifyQuery) {

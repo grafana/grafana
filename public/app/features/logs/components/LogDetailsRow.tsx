@@ -16,8 +16,8 @@ export interface Props extends Themeable2 {
   disableActions: boolean;
   wrapLogMessage?: boolean;
   isLabel?: boolean;
-  onClickFilterLabel?: (key: string, value: string, refId?: string, row?: LogRowModel) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string, row?: LogRowModel) => void;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
@@ -143,7 +143,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterLabel = () => {
     const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId, row);
+      onClickFilterLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
