@@ -148,18 +148,6 @@ export function buildQueryTransaction(
 
 export const clearQueryKeys: (query: DataQuery) => DataQuery = ({ key, ...rest }) => rest;
 
-export const safeParseJson = (text?: string): any | undefined => {
-  if (!text) {
-    return;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    console.error(error);
-  }
-};
-
 export const safeStringifyValue = (value: unknown, space?: number) => {
   if (value === undefined || value === null) {
     return '';

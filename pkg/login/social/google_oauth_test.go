@@ -14,8 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSocialGoogle_retrieveGroups(t *testing.T) {
@@ -180,21 +181,23 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &SocialGoogle{
-				SocialBase: &SocialBase{
-					Config:                  &oauth2.Config{Scopes: tt.fields.Scopes},
-					log:                     log.NewNopLogger(),
-					allowSignup:             false,
-					allowAssignGrafanaAdmin: false,
-					allowedDomains:          []string{},
-					roleAttributePath:       "",
-					roleAttributeStrict:     false,
-					autoAssignOrgRole:       "",
-					skipOrgRoleSync:         false,
+			s, err := NewGoogleProvider(map[string]any{
+				"api_url":                    "",
+				"scopes":                     tt.fields.Scopes,
+				"hosted_domain":              "",
+				"allowed_domains":            []string{},
+				"allow_sign_up":              false,
+				"role_attribute_path":        "",
+				"role_attribute_strict":      false,
+				"allow_assign_grafana_admin": false,
+			},
+				&setting.Cfg{
+					AutoAssignOrgRole:     "",
+					GoogleSkipOrgRoleSync: false,
 				},
-				hostedDomain: "",
-				apiUrl:       "",
-			}
+				featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
 			got, err := s.retrieveGroups(context.Background(), tt.args.client, tt.args.userData)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SocialGoogle.retrieveGroups() error = %v, wantErr %v", err, tt.wantErr)
@@ -632,19 +635,20 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &SocialGoogle{
-				apiUrl: tt.fields.apiURL,
-				SocialBase: &SocialBase{
-					Config:                  &oauth2.Config{Scopes: tt.fields.Scopes},
-					log:                     log.NewNopLogger(),
-					allowSignup:             false,
-					allowedGroups:           tt.fields.allowedGroups,
-					roleAttributePath:       tt.fields.roleAttributePath,
-					roleAttributeStrict:     tt.fields.roleAttributeStrict,
-					allowAssignGrafanaAdmin: tt.fields.allowAssignGrafanaAdmin,
+			s, err := NewGoogleProvider(map[string]any{
+				"api_url":                    tt.fields.apiURL,
+				"scopes":                     tt.fields.Scopes,
+				"allowed_groups":             tt.fields.allowedGroups,
+				"allow_sign_up":              false,
+				"role_attribute_path":        tt.fields.roleAttributePath,
+				"role_attribute_strict":      tt.fields.roleAttributeStrict,
+				"allow_assign_grafana_admin": tt.fields.allowAssignGrafanaAdmin,
+			},
+				&setting.Cfg{
+					GoogleSkipOrgRoleSync: tt.fields.skipOrgRoleSync,
 				},
-				skipOrgRoleSync: tt.fields.skipOrgRoleSync,
-			}
+				featuremgmt.WithFeatures())
+			require.NoError(t, err)
 
 			gotData, err := s.UserInfo(context.Background(), tt.args.client, tt.args.token)
 			if tt.wantErr {

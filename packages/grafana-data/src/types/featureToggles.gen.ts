@@ -136,7 +136,6 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   cloudWatchBatchQueries?: boolean;
-  navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
