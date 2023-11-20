@@ -46,19 +46,14 @@
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
-      "alertRule_many": "",
       "alertRule_other": "{{count}} reglas de alerta",
       "dashboard_one": "{{count}} panel de control",
-      "dashboard_many": "",
       "dashboard_other": "{{count}} paneles de control",
       "folder_one": "{{count}} carpeta",
-      "folder_many": "",
       "folder_other": "{{count}} carpetas",
       "libraryPanel_one": "{{count}} panel de librería",
-      "libraryPanel_many": "",
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
-      "total_many": "",
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
@@ -205,8 +200,8 @@
       "logfmt-label": "Logfm",
       "regex-description": "",
       "regex-expression": "",
-      "regex-label": "",
-      "regex-map-values": ""
+      "regex-label": "Expresión regular",
+      "regex-map-values": "Define el nombre de la variable si el grupo de captura no se nombra."
     },
     "transform": {
       "add-button": "Añadir transformación",
@@ -216,17 +211,17 @@
     "transform-row": {
       "expression-label": "Expresión",
       "expression-required": "Por favor, defina una expresión",
-      "expression-tooltip": "",
+      "expression-tooltip": "Se requiere para la expresión regular. La expresión que usará la transformación. Logfmt no utiliza más especificaciones.",
       "field-input": "campo",
       "field-label": "Campo",
-      "field-tooltip": "",
+      "field-tooltip": "Opcional. El campo a transformar. Si no se especifica, la transformación se aplicará al campo de resultados.",
       "map-value-label": "Valor del mapa",
-      "map-value-tooltip": "",
+      "map-value-tooltip": "Opcional. Define el nombre de la variable. Actualmente solo es válido para expresiones regulares con un único grupo de captura sin nombre.",
       "remove-button": "Eliminar",
-      "remove-tooltip": "",
-      "transform-required": "",
+      "remove-tooltip": "Eliminar transformacin",
+      "transform-required": "Por favor, seleccione un tipo de transformación",
       "type-label": "Tipo",
-      "type-tooltip": ""
+      "type-tooltip": "El tipo de transformación que se aplicará a los datos de origen."
     }
   },
   "dashboard": {
@@ -238,17 +233,17 @@
       "widget": "Widget"
     },
     "empty": {
-      "add-library-panel-body": "",
-      "add-library-panel-button": "",
-      "add-library-panel-header": "",
+      "add-library-panel-body": "Añadir las visualizaciones que se comparten con otros paneles.",
+      "add-library-panel-button": "Añadir panel de biblioteca",
+      "add-library-panel-header": "Añadir un panel de biblioteca",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
       "add-widget-body": "",
       "add-widget-button": "Añadir widget",
       "add-widget-header": "Añadir un widget",
-      "import-a-dashboard-body": "",
-      "import-a-dashboard-header": "",
+      "import-a-dashboard-body": "Importar el panel desde el archivo o <1>grafana.com</1>.",
+      "import-a-dashboard-header": "Importar un panel",
       "import-dashboard-button": "Importar panel de control"
     },
     "inspect": {
@@ -318,58 +313,58 @@
       "unmark-favorite": "Deshacer marca como favorito"
     },
     "validation": {
-      "invalid-dashboard-id": "",
-      "invalid-json": "",
-      "tags-expected-array": "",
-      "tags-expected-strings": ""
+      "invalid-dashboard-id": "No se ha podido encontrar un ID de Grafana.com válido",
+      "invalid-json": "JSON no válido",
+      "tags-expected-array": "etiquetas de matriz prevista",
+      "tags-expected-strings": "matrices de cadenas de las etiquetas previstas"
     }
   },
   "dashboard-import": {
     "file-dropzone": {
-      "primary-text": "",
-      "secondary-text": ""
+      "primary-text": "Subir archivo JSON del panel",
+      "secondary-text": "Arrastrar y soltar aquí o hacer clic para navegar"
     },
     "form-actions": {
       "cancel": "Cancelar",
-      "load": ""
+      "load": "Cargar"
     },
     "gcom-field": {
-      "label": "",
-      "load-button": "",
-      "placeholder": "",
-      "validation-required": ""
+      "label": "Buscar e importar paneles para las aplicaciones comunes en <1></1>",
+      "load-button": "Cargar",
+      "placeholder": "URL o ID del panel de Grafana.com",
+      "validation-required": "Se requiere una URL o ID del panel de Grafana"
     },
     "json-field": {
-      "label": "",
-      "validation-required": ""
+      "label": "Importar a través del modelo JSON del panel",
+      "validation-required": "Se necesita un modelo JSON del panel"
     }
   },
   "dashboard-settings": {
     "annotations": {
-      "title": ""
+      "title": "Anotaciones"
     },
-    "dashboard-delete-button": "",
+    "dashboard-delete-button": "Eliminar panel",
     "general": {
-      "auto-refresh-description": "",
-      "auto-refresh-label": "",
-      "description-label": "",
-      "editable-description": "",
-      "editable-label": "",
+      "auto-refresh-description": "Definir los intervalos de actualización automática que deberían estar disponibles en la lista de actualización automática.",
+      "auto-refresh-label": "Actualización automática",
+      "description-label": "Descripción",
+      "editable-description": "Establecer como de solo lectura para desactivar toda la edición. Recargar el panel para que los cambios surtan efecto",
+      "editable-label": "Editable",
       "folder-label": "Carpeta",
-      "panel-options-graph-tooltip-description": "",
-      "panel-options-graph-tooltip-label": "",
-      "panel-options-label": "",
+      "panel-options-graph-tooltip-description": "Controla la descripción y el comportamiento de resaltado en diferentes paneles. Recargar el panel para que los cambios surtan efecto",
+      "panel-options-graph-tooltip-label": "Descripción gráfica",
+      "panel-options-label": "Opciones del panel",
       "tags-label": "Etiquetas",
       "title": "General",
-      "title-label": ""
+      "title-label": "Título"
     },
     "json-editor": {
-      "save-button": "",
+      "save-button": "Guardar cambios",
       "subtitle": "",
       "title": ""
     },
     "links": {
-      "title": ""
+      "title": "Enlaces"
     },
     "permissions": {
       "title": "Permisos"
@@ -382,7 +377,7 @@
       "now-delay-description": "Excluir los datos recientes que puedan estar incompletos.",
       "now-delay-label": "Retraso ahora",
       "refresh-live-dashboards-description": "",
-      "refresh-live-dashboards-label": "",
+      "refresh-live-dashboards-label": "Actualizar los paneles activos",
       "time-options-label": "Opciones de tiempo",
       "time-zone-label": "Huso horario",
       "week-start-label": "Inicio de la semana"
@@ -399,7 +394,7 @@
     "built-in-list": {
       "description-dashboard": "Reutilizar los resultados de la consulta de otras visualizaciones",
       "description-grafana": "Descubrir las visualizaciones usando datos simulados",
-      "description-mixed": ""
+      "description-mixed": "Usar múltiples fuentes de datos"
     },
     "list": {
       "no-data-source-message": "No se ha encontrado ninguna fuente de datos"
@@ -529,15 +524,15 @@
     },
     "table": {
       "no-data": "",
-      "title": "",
-      "title-with-name": ""
+      "title": "Tabla",
+      "title-with-name": "Tabla - {{name}}"
     },
     "toolbar": {
-      "aria-label": "",
-      "copy-shortened-link": "",
+      "aria-label": "Explorar la barra de herramientas",
+      "copy-shortened-link": "Copiar enlace abreviado",
       "refresh-picker-cancel": "Cancelar",
-      "refresh-picker-run": "",
-      "split-close": "",
+      "refresh-picker-run": "Ejecutar consulta",
+      "split-close": "Cerrar",
       "split-close-tooltip": "",
       "split-narrow": "",
       "split-title": "",
@@ -550,7 +545,7 @@
   },
   "grafana-ui": {
     "modal": {
-      "close-tooltip": ""
+      "close-tooltip": "Cerrar"
     },
     "segment-async": {
       "error": "No se han podido cargar las opciones",
@@ -559,48 +554,48 @@
     },
     "select": {
       "no-options-label": "No se ha encontrado ninguna opción",
-      "placeholder": ""
+      "placeholder": "Elegir"
     }
   },
   "graph": {
     "container": {
-      "content": "",
-      "show-all-series": "",
-      "show-only-series": "",
-      "title": ""
+      "content": "Renderizar demasiadas series en un solo panel puede afectar al rendimiento y hacer que los datos sean más difíciles de leer. Considere refinar sus consultas.",
+      "show-all-series": "Mostrar todo {{length}}",
+      "show-only-series": "Mostrando solo la serie {{MAX_NUMBER_OF_TIME_SERIES}}",
+      "title": "Gráfico"
     }
   },
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Panel de control",
-      "focused-panel": "",
-      "global": "",
-      "time-range": ""
+      "focused-panel": "Panel centrado",
+      "global": "Global",
+      "time-range": "Rango de tiempo"
     },
     "shortcuts-description": {
-      "change-theme": "",
-      "collapse-all-rows": "",
+      "change-theme": "Cambiar tema",
+      "collapse-all-rows": "Contraer todas las filas",
       "dashboard-settings": "Ajustes del panel de control",
-      "duplicate-panel": "",
-      "exit-edit/setting-views": "",
-      "expand-all-rows": "",
-      "go-to-dashboards": "",
-      "go-to-explore": "",
-      "go-to-home-dashboard": "",
-      "go-to-profile": "",
-      "make-time-range-permanent": "",
-      "move-time-range-back": "",
-      "move-time-range-forward": "",
-      "open-search": "",
-      "open-shared-modal": "",
-      "refresh-all-panels": "",
-      "remove-panel": "",
+      "duplicate-panel": "Duplicar panel",
+      "exit-edit/setting-views": "Salir de las vistas de edición/ajuste",
+      "expand-all-rows": "Expandir todas las filas",
+      "go-to-dashboards": "Ir a los paneles",
+      "go-to-explore": "Ir a Explorar",
+      "go-to-home-dashboard": "Ir al panel de inicio",
+      "go-to-profile": "Ir al perfil",
+      "make-time-range-permanent": "Hacer que el rango de tiempo sea absoluto/permanente",
+      "move-time-range-back": "Mover el rango de tiempo hacia atrás",
+      "move-time-range-forward": "Mover el rango de tiempo hacia delante",
+      "open-search": "Abrir la búsqueda",
+      "open-shared-modal": "Abrir el modo de panel compartido",
+      "refresh-all-panels": "Actualizar todos los paneles",
+      "remove-panel": "Eliminar panel",
       "save-dashboard": "Guardar panel de control",
-      "show-all-shortcuts": "",
-      "toggle-active-mode": "",
-      "toggle-all-panel-legends": "",
-      "toggle-auto-fit": "",
-      "toggle-exemplars": "",
+      "show-all-shortcuts": "Mostrar todos los accesos directos del teclado",
+      "toggle-active-mode": "Cambiar el modo activo/vista",
+      "toggle-all-panel-legends": "Cambiar todas las leyendas del panel",
+      "toggle-auto-fit": "Cambiar los paneles de ajuste automático (característica experimental)",
+      "toggle-exemplars": "Cambiar los ejemplares en todo el panel",
       "toggle-graph-crosshair": "",
       "toggle-kiosk": "",
       "toggle-panel-edit": "",
@@ -608,13 +603,13 @@
       "toggle-panel-legend": "",
       "zoom-out-time-range": "Reducir el intervalo de tiempo"
     },
-    "title": ""
+    "title": "Accesos directos"
   },
   "inspector": {
     "query": {
-      "collapse-all": "",
+      "collapse-all": "Contraer todo",
       "copy-to-clipboard": "Copiar al portapapeles",
-      "description": "",
+      "description": "El inspector de consultas le permite ver la solicitud y la respuesta en bruto. Para recopilar estos datos, Grafana necesita emitir una nueva consulta. Haga clic en el botón actualizar situado debajo para activar una nueva consulta.",
       "expand-all": "",
       "no-data": "",
       "refresh": ""
@@ -635,16 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "",
-      "body_many": "",
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_one": "",
+      "body_other": ""
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -1116,8 +1110,8 @@
   },
   "search-view": {
     "no-results": {
-      "clear": "",
-      "text": ""
+      "clear": "Borrar la búsqueda y los filtros",
+      "text": "No se ha encontrado ningún resultado para su consulta."
     }
   },
   "share-modal": {
@@ -1133,7 +1127,7 @@
       "time-range-description": "Transforma el intervalo de tiempo relativo actual en un intervalo de tiempo absoluto"
     },
     "export": {
-      "back-button": "",
+      "back-button": "Volver a la configuración de exportación",
       "cancel-button": "Cancelar",
       "info-text": "Exporte este panel de control.",
       "save-button": "Guardar en archivo",
@@ -1184,7 +1178,7 @@
       "library-panel": "Panel de librería",
       "link": "Enlace",
       "panel-embed": "Incrustar",
-      "public-dashboard": "",
+      "public-dashboard": "Panel público",
       "snapshot": "Instantánea"
     },
     "theme-picker": {
@@ -1198,15 +1192,15 @@
     }
   },
   "share-playlist": {
-    "checkbox-description": "",
-    "checkbox-label": "",
+    "checkbox-description": "La altura del panel se ajustará para adecuarse al tamaño de la pantalla",
+    "checkbox-label": "Ajuste automático",
     "copy-link-button": "Copiar",
     "link-url-label": "URL del enlace",
     "mode": "Modo",
     "mode-kiosk": "Kiosco",
     "mode-normal": "Normal",
     "mode-tv": "TV",
-    "title": ""
+    "title": "Compartir la lista"
   },
   "shared": {
     "preferences": {
@@ -1239,7 +1233,7 @@
   "snapshot": {
     "external-badge": "Externo",
     "name-column-header": "Nombre",
-    "url-column-header": "",
+    "url-column-header": "Imagen de la URL",
     "view-button": "Vista"
   },
   "tag-filter": {
