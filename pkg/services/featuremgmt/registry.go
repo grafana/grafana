@@ -717,13 +717,11 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:           "dashgpt",
-			Description:    "Enable AI powered features in dashboards",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          grafanaDashboardsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: truePtr,
+			Name:         "dashgpt",
+			Description:  "Enable AI powered features in dashboards",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:            "reportingRetries",
