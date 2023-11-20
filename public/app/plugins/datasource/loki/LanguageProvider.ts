@@ -11,7 +11,7 @@ import {
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
 import syntax from './syntax';
-import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType } from './types';
+import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from './types';
 
 const NS_IN_MS = 1000000;
 
@@ -285,7 +285,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     return {
       extractedLabelKeys: extractLabelKeysFromDataFrame(series[0]),
-      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], 'S'),
+      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LabelType.structuredMetadata),
       unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
       hasJSON,
       hasPack,

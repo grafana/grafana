@@ -13,6 +13,7 @@ import {
 
 import { isBytesString } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
+import { LabelType } from './types';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values ?? [];
@@ -54,7 +55,7 @@ export function extractLogParserFromDataFrame(frame: DataFrame): {
   return { hasLogfmt, hasJSON, hasPack };
 }
 
-export function extractLabelKeysFromDataFrame(frame: DataFrame, type = 'I'): string[] {
+export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType = LabelType.indexed): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
     frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
   const labelTypeArray: Array<{ [key: string]: string }> | undefined =

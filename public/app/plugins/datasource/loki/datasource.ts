@@ -129,8 +129,6 @@ export function makeRequest(
   };
 }
 
-type LabelType = 'indexed' | 'structuredMetadata' | 'parsed';
-
 export class LokiDatasource
   extends DataSourceWithBackend<LokiQuery, LokiOptions>
   implements
@@ -814,27 +812,6 @@ export class LokiDatasource
     return escapedValues.join('|');
   }
 
-  getLabelTypeFromFrame(labelKey: string, frame?: DataFrame, index?: number): null | LabelType {
-    if (!frame || !index) {
-      return null;
-    }
-
-    const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
-    if (typeField) {
-      switch (typeField[labelKey]) {
-        case 'I':
-          return 'indexed';
-        case 'S':
-          return 'structuredMetadata';
-        case 'P':
-          return 'parsed';
-        default:
-          return null;
-      }
-    }
-    return null;
-  }
-
   /**
    * Implemented for `DataSourceWithToggleableQueryFiltersSupport`. Toggles a filter on or off based on the provided filter action.
    * It is used for example in Explore to toggle fields on and off trough log details.
@@ -842,7 +819,6 @@ export class LokiDatasource
    */
   toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
-
     switch (filter.type) {
       case 'FILTER_FOR': {
         if (filter.options?.key && filter.options?.value) {
