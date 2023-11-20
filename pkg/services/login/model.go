@@ -135,10 +135,6 @@ type UserLookupParams struct {
 	Login  *string // if set, will try to find the user by login
 }
 
-type GetExternalUserInfoByLoginQuery struct {
-	LoginOrEmail string
-}
-
 type GetAuthInfoQuery struct {
 	UserId     int64
 	AuthModule string

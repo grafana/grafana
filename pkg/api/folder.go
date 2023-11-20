@@ -514,6 +514,8 @@ type UpdateFolderParams struct {
 type GetFolderByIDParams struct {
 	// in:path
 	// required:true
+	//
+	// Deprecated: use FolderUID instead
 	FolderID int64 `json:"folder_id"`
 }
 
