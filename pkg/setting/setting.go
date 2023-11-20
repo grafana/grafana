@@ -1471,7 +1471,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
 
-	disableFrontendSandboxForPlugins := security.Key("frontend_sandbox_disable_for_plugins").MustString("")
+	disableFrontendSandboxForPlugins := security.Key("disable_frontend_sandbox_for_plugins").MustString("")
 	for _, plug := range strings.Split(disableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.DisableFrontendSandboxForPlugins = append(cfg.DisableFrontendSandboxForPlugins, plug)

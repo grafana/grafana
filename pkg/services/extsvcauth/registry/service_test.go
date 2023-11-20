@@ -113,7 +113,7 @@ func TestRegistry_GetExternalServiceNames(t *testing.T) {
 
 			names, err := env.r.GetExternalServiceNames(context.Background())
 			require.NoError(t, err)
-			require.EqualValues(t, tt.want, names)
+			require.ElementsMatch(t, tt.want, names)
 
 			env.oauthReg.AssertExpectations(t)
 			env.saReg.AssertExpectations(t)

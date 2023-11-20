@@ -201,10 +201,6 @@ func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfo
 	return s.authInfoStore.SetAuthInfo(ctx, cmd)
 }
 
-func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*login.ExternalUserInfo, error) {
-	return s.authInfoStore.GetExternalUserInfoByLogin(ctx, query)
-}
-
 func (s *Implementation) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return s.authInfoStore.DeleteUserAuthInfo(ctx, userID)
 }

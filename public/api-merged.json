@@ -10861,6 +10861,41 @@
           }
         }
       }
+    },
+    "/v1/sso-settings/{key}": {
+      "delete": {
+        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "tags": [
+          "sso_settings"
+        ],
+        "summary": "Remove SSO Settings",
+        "operationId": "removeProviderSettings",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "key",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
     }
   },
   "definitions": {
