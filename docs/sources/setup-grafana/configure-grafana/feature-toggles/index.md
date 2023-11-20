@@ -164,6 +164,7 @@ Experimental features might be changed or removed without prior notice.
 | `flameGraphItemCollapsing`                  | Allow collapsing of flame graph items                                                                                                                                                                                                                                             |
 | `logRowsPopoverMenu`                        | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                                                                               |
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
+| `tableSharedCrosshair`                      | Enables shared crosshair in table panel                                                                                                                                                                                                                                           |
 
 ## Development feature toggles
 

@@ -1075,6 +1075,13 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:         "tableSharedCrosshair",
+			Description:  "Enables shared crosshair in table panel",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )
 

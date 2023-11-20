@@ -590,4 +590,8 @@ const (
 	// FlagPluginsSkipHostEnvVars
 	// Disables passing host environment variable to plugin processes
 	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
+
+	// FlagTableSharedCrosshair
+	// Enables shared crosshair in table panel
+	FlagTableSharedCrosshair = "tableSharedCrosshair"
 )

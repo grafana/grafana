@@ -11,11 +11,10 @@ import {
   FieldMatcherID,
   FieldType,
   getFrameDisplayName,
-  isTimeSeriesFrames,
   PanelProps,
   SelectableValue,
 } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { hasTimeField } from '@grafana/ui/src/components/Table/utils';
@@ -42,10 +41,14 @@ export function TablePanel(props: Props) {
   let tableHeight = height;
 
   useEffect(() => {
+    if (!config.featureToggles.tableSharedCrosshair) {
+      return;
+    }
+
     if (
       !panelContext.sync ||
       panelContext.sync() === DashboardCursorSync.Off ||
-      !isTimeSeriesFrames(frames) ||
+      !hasTimeField(main) ||
       options.footer?.enablePagination
     ) {
       return;
@@ -76,6 +79,10 @@ export function TablePanel(props: Props) {
         .pipe(throttleTime(50))
         .subscribe({
           next: (evt) => {
+            if (panelContext.eventBus === evt.origin) {
+              return;
+            }
+
             setRowHighlightTimeValue(undefined);
           },
         })
@@ -84,7 +91,7 @@ export function TablePanel(props: Props) {
     return () => {
       subs.unsubscribe();
     };
-  }, [panelContext, frames, options.footer?.enablePagination]);
+  }, [panelContext, frames, options.footer?.enablePagination, main]);
 
   const onRowHover = useCallback(
     (idx: number, frame: DataFrame) => {
@@ -140,8 +147,8 @@ export function TablePanel(props: Props) {
       enablePagination={options.footer?.enablePagination}
       cellHeight={options.cellHeight}
       timeRange={timeRange}
-      onRowHover={onRowHover}
-      onRowLeave={onRowLeave}
+      onRowHover={config.featureToggles.tableSharedCrosshair ? onRowHover : undefined}
+      onRowLeave={config.featureToggles.tableSharedCrosshair ? onRowLeave : undefined}
       rowHighlightTimeValue={rowHighlightTimeValue}
     />
   );
