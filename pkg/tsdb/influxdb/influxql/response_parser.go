@@ -145,7 +145,6 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 			valType := typeof(row.Values, colIdx)
 
 			for _, valuePair := range row.Values {
-
 				switch valType {
 				case "string":
 					value, ok := valuePair[colIdx].(string)
