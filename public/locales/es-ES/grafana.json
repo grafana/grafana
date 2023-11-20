@@ -1,5 +1,5 @@
 {
-  "_comment": "",
+  "_comment": "Este archivo es la fuente de información para las cadenas en inglés. Edítelo para cambiar los plurales y otras frases de la interfaz de usuario.",
   "access-control": {
     "add-permission": {
       "role-label": "Rol",
@@ -17,7 +17,7 @@
     "permissions": {
       "add-label": "Añadir un permiso",
       "no-permissions": "No hay ningún permiso",
-      "permissions-change-warning": "",
+      "permissions-change-warning": "Esto cambiará los permisos para esta carpeta y todos sus descendientes. En total, esto afectará:",
       "role": "Rol",
       "serviceaccount": "Cuenta de servicio",
       "team": "Equipo",
@@ -46,19 +46,14 @@
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
-      "alertRule_many": "",
       "alertRule_other": "{{count}} reglas de alerta",
       "dashboard_one": "{{count}} panel de control",
-      "dashboard_many": "",
       "dashboard_other": "{{count}} paneles de control",
       "folder_one": "{{count}} carpeta",
-      "folder_many": "",
       "folder_other": "{{count}} carpetas",
       "libraryPanel_one": "{{count}} panel de librería",
-      "libraryPanel_many": "",
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
-      "total_many": "",
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
@@ -148,7 +143,7 @@
       "description-label": "Descripción",
       "label-description": "Este nombre se utilizará como etiqueta para la correlación. Esta se mostrará como el texto del botón, un elemento del menú o el texto del cursor en un enlace.",
       "label-label": "Etiqueta",
-      "label-placeholder": "",
+      "label-placeholder": "p. ej. seguimiento de Tempo",
       "label-required": "Este campo es obligatorio.",
       "sub-text": "<0>Defina el texto que describirá la correlación.</0>",
       "title": "Definir la etiqueta de correlación (paso 1 de 3)"
@@ -192,7 +187,7 @@
       "sub-text": "<0>Defina qué fuente de datos mostrará la correlación y qué datos reemplazarán a las variables previamente definidas.</0>",
       "title": "Configurar la fuente de datos que se enlazará a {{dataSourceName}} (paso 3 de 3)"
     },
-    "sub-title": "Defina cómo se relacionan los datos que viven en diferentes fuentes de datos. Más información en la <2>documentación<1></1></2>",
+    "sub-title": "Defina cómo se relacionan los datos que se encuentran en diferentes fuentes de datos. Más información en la <2>documentación<1></1></2>",
     "target-form": {
       "control-rules": "Este campo es obligatorio.",
       "sub-text": "<0>Defina a qué fuente de datos enlazará la correlación y qué consulta se ejecutará cuando se haga clic en la correlación.</0>",
@@ -203,10 +198,10 @@
     "trans-details": {
       "logfmt-description": "Analice el campo proporcionado con logfmt para obtener variables",
       "logfmt-label": "Logfm",
-      "regex-description": "",
-      "regex-expression": "",
+      "regex-description": "El campo se analizará con regex. Utilice grupos de captura con nombre para devolver múltiples variables o un solo grupo de captura sin nombre para agregar una variable al valor de mapa con nombre. Regex no distingue entre mayúsculas y minúsculas.",
+      "regex-expression": "Utilice los grupos de captura para extraer una porción del campo.",
       "regex-label": "Expresión regular",
-      "regex-map-values": "Define el nombre de la variable si el grupo de captura no se nombra."
+      "regex-map-values": "Define el nombre de la variable si el grupo de captura no tiene nombre."
     },
     "transform": {
       "add-button": "Añadir transformación",
@@ -223,7 +218,7 @@
       "map-value-label": "Valor del mapa",
       "map-value-tooltip": "Opcional. Define el nombre de la variable. Actualmente solo es válido para expresiones regulares con un único grupo de captura sin nombre.",
       "remove-button": "Eliminar",
-      "remove-tooltip": "Eliminar transformacin",
+      "remove-tooltip": "Eliminar transformación",
       "transform-required": "Por favor, seleccione un tipo de transformación",
       "type-label": "Tipo",
       "type-tooltip": "El tipo de transformación que se aplicará a los datos de origen."
@@ -235,20 +230,20 @@
       "paste-panel": "Pegar panel",
       "row": "Fila",
       "visualization": "Visualización",
-      "widget": "Widget"
+      "widget": "«Widget»"
     },
     "empty": {
-      "add-library-panel-body": "Añadir las visualizaciones que se comparten con otros paneles.",
+      "add-library-panel-body": "Añadir las visualizaciones que se comparten con otros tableros.",
       "add-library-panel-button": "Añadir panel de biblioteca",
       "add-library-panel-header": "Añadir un panel de biblioteca",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
-      "add-widget-body": "Crear listas, descuentos y otros «widgets»",
-      "add-widget-button": "Añadir widget",
-      "add-widget-header": "Añadir un widget",
-      "import-a-dashboard-body": "Importar el panel desde el archivo o <1>grafana.com</1>.",
-      "import-a-dashboard-header": "Importar un panel",
+      "add-widget-body": "Crear listas, reducciones y otros «widgets»",
+      "add-widget-button": "Añadir «widget»",
+      "add-widget-header": "Añadir un «widget»",
+      "import-a-dashboard-body": "Importar el tablero desde el archivo o <1>grafana.com</1>.",
+      "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control"
     },
     "inspect": {
@@ -326,7 +321,7 @@
   },
   "dashboard-import": {
     "file-dropzone": {
-      "primary-text": "Subir archivo JSON del panel",
+      "primary-text": "Subir archivo JSON del tablero",
       "secondary-text": "Arrastrar y soltar aquí o hacer clic para navegar"
     },
     "form-actions": {
@@ -334,29 +329,29 @@
       "load": "Cargar"
     },
     "gcom-field": {
-      "label": "Buscar e importar paneles para las aplicaciones comunes en <1></1>",
+      "label": "Buscar e importar tableros para las aplicaciones comunes en <1></1>",
       "load-button": "Cargar",
-      "placeholder": "URL o ID del panel de Grafana.com",
-      "validation-required": "Se requiere una URL o ID del panel de Grafana"
+      "placeholder": "URL o ID del tablero de Grafana.com",
+      "validation-required": "Se requiere una URL o ID del tablero de Grafana"
     },
     "json-field": {
-      "label": "Importar a través del modelo JSON del panel",
-      "validation-required": "Se necesita un modelo JSON del panel"
+      "label": "Importar a través del modelo JSON del tablero",
+      "validation-required": "Se necesita un modelo JSON del tablero"
     }
   },
   "dashboard-settings": {
     "annotations": {
       "title": "Anotaciones"
     },
-    "dashboard-delete-button": "Eliminar panel",
+    "dashboard-delete-button": "Eliminar tablero",
     "general": {
       "auto-refresh-description": "Definir los intervalos de actualización automática que deberían estar disponibles en la lista de actualización automática.",
       "auto-refresh-label": "Actualización automática",
       "description-label": "Descripción",
-      "editable-description": "Establecer como de solo lectura para desactivar toda la edición. Recargar el panel para que los cambios surtan efecto",
+      "editable-description": "Establecer como de solo lectura para desactivar toda la edición. Recargar el tablero para que los cambios surtan efecto",
       "editable-label": "Editable",
       "folder-label": "Carpeta",
-      "panel-options-graph-tooltip-description": "Controla la descripción y el comportamiento de resaltado en diferentes paneles. Recargar el panel para que los cambios surtan efecto",
+      "panel-options-graph-tooltip-description": "Controla la descripción y el comportamiento de resaltado en diferentes paneles. Recargar el tablero para que los cambios surtan efecto",
       "panel-options-graph-tooltip-label": "Descripción gráfica",
       "panel-options-label": "Opciones del panel",
       "tags-label": "Etiquetas",
@@ -382,7 +377,7 @@
       "now-delay-description": "Excluir los datos recientes que puedan estar incompletos.",
       "now-delay-label": "Retraso ahora",
       "refresh-live-dashboards-description": "Redibujar continuamente los paneles en los que el rango de tiempo hace referencia a «ahora»",
-      "refresh-live-dashboards-label": "Actualizar los paneles activos",
+      "refresh-live-dashboards-label": "Actualizar los tableros activos",
       "time-options-label": "Opciones de tiempo",
       "time-zone-label": "Huso horario",
       "week-start-label": "Inicio de la semana"
@@ -417,7 +412,7 @@
     }
   },
   "explore": {
-    "add-to-dashboard": "Añadir al panel",
+    "add-to-dashboard": "Añadir al tablero",
     "rich-history": {
       "close-tooltip": "Cerrar el historial de consultas",
       "datasource-a-z": "Fuente de datos A-Z",
@@ -441,7 +436,7 @@
       "delete-query-confirmation-title": "Eliminar",
       "delete-query-title": "Eliminar consulta",
       "delete-query-tooltip": "Eliminar consulta",
-      "delete-starred-query-confirmation-text": "¿Seguro que desea eliminar permanentemente su consulta favorita?",
+      "delete-starred-query-confirmation-text": "¿Seguro que desea eliminar permanentemente su consulta destacada?",
       "edit-comment-tooltip": "Editar comentario",
       "loading-text": "cargando...",
       "optional-description": "Una descripción opcional de lo que hace la consulta.",
@@ -449,7 +444,7 @@
       "query-text-label": "Texto de la consulta",
       "run-query-button": "Ejecutar consulta",
       "save-comment": "Guardar comentario",
-      "star-query-tooltip": "Consulta favorita",
+      "star-query-tooltip": "Consulta destacada",
       "switch-datasource-button": "Cambiar la fuente de datos y ejecutar la consulta",
       "unstar-query-tooltip": "Desmarcar consulta",
       "update-comment-form": "Actualizar el formulario de comentario"
@@ -477,7 +472,7 @@
     },
     "rich-history-settings-tab": {
       "alert-info": "Grafana mantendrá las entradas hasta {{optionLabel}}. Las entradas destacadas no se eliminarán.",
-      "change-default-tab": "Cambiar la pestaña activa por defecto de «Historial de consultas» a «Destacados»",
+      "change-default-tab": "Cambiar la pestaña activa por defecto de «Historial de consultas» a «Destacadas»",
       "clear-history-info": "Eliminar todo su historial de consultas de forma permanente.",
       "clear-query-history": "Borrar historial de consultas",
       "clear-query-history-button": "Borrar historial de consultas",
@@ -496,39 +491,39 @@
       }
     },
     "rich-history-starred-tab": {
-      "filter-queries-aria-label": "",
-      "filter-queries-placeholder": "",
+      "filter-queries-aria-label": "Filtrar consultas para la(s) fuente(s) de datos",
+      "filter-queries-placeholder": "Filtrar consultas para la(s) fuente(s) de datos",
       "loading": "Cargando...",
-      "loading-results": "",
-      "local-history-message": "",
-      "search-queries-placeholder": "",
-      "showing-queries": "",
-      "sort-queries-aria-label": "",
-      "sort-queries-placeholder": ""
+      "loading-results": "Cargando resultados...",
+      "local-history-message": "El historial es local para su navegador y no se comparte con otras personas.",
+      "search-queries-placeholder": "Buscar consultas",
+      "showing-queries": "Mostrando {{ shown }} de {{ total }} <0>Cargar más</0>",
+      "sort-queries-aria-label": "Ordenar consultas",
+      "sort-queries-placeholder": "Ordenar consultas por"
     },
     "rich-history-utils": {
-      "a-week-ago": "",
-      "days-ago": "",
-      "default-from": "",
-      "default-to": "",
-      "today": "",
-      "two-weeks-ago": "",
-      "yesterday": ""
+      "a-week-ago": "hace una semana",
+      "days-ago": "hace {{num}} días",
+      "default-from": "ahora-1 h",
+      "default-to": "ahora",
+      "today": "hoy",
+      "two-weeks-ago": "hace dos semanas",
+      "yesterday": "ayer"
     },
     "rich-history-utils-notification": {
-      "saving-failed": "",
-      "update-failed": ""
+      "saving-failed": "Error al guardar el historial enriquecido",
+      "update-failed": "Error al actualizar el historial enriquecido"
     },
     "secondary-actions": {
-      "query-add-button": "",
-      "query-add-button-aria-label": "",
-      "query-history-button": "",
-      "query-history-button-aria-label": "",
-      "query-inspector-button": "",
-      "query-inspector-button-aria-label": ""
+      "query-add-button": "Añadir consulta",
+      "query-add-button-aria-label": "Añadir consulta",
+      "query-history-button": "Historial de consultas",
+      "query-history-button-aria-label": "Historial de consultas",
+      "query-inspector-button": "Inspector de consultas",
+      "query-inspector-button-aria-label": "Inspector de consultas"
     },
     "table": {
-      "no-data": "",
+      "no-data": "0 series devueltas",
       "title": "Tabla",
       "title-with-name": "Tabla - {{name}}"
     },
@@ -584,9 +579,9 @@
       "duplicate-panel": "Duplicar panel",
       "exit-edit/setting-views": "Salir de las vistas de edición/ajuste",
       "expand-all-rows": "Expandir todas las filas",
-      "go-to-dashboards": "Ir a los paneles",
+      "go-to-dashboards": "Ir a los tableros",
       "go-to-explore": "Ir a Explorar",
-      "go-to-home-dashboard": "Ir al panel de inicio",
+      "go-to-home-dashboard": "Ir al tablero de inicio",
       "go-to-profile": "Ir al perfil",
       "make-time-range-permanent": "Hacer que el rango de tiempo sea absoluto/permanente",
       "move-time-range-back": "Mover el rango de tiempo hacia atrás",
@@ -601,8 +596,8 @@
       "toggle-all-panel-legends": "Cambiar todas las leyendas del panel",
       "toggle-auto-fit": "Cambiar los paneles de ajuste automático (característica experimental)",
       "toggle-exemplars": "Cambiar los ejemplares en todo el panel",
-      "toggle-graph-crosshair": "",
-      "toggle-kiosk": "",
+      "toggle-graph-crosshair": "Cambiar la retícula del gráfico compartido",
+      "toggle-kiosk": "Cambiar al modo de kiosco (oculta la navegación superior)",
       "toggle-panel-edit": "Cambiar la vista de edición del panel",
       "toggle-panel-fullscreen": "Cambiar la vista de pantalla completa del panel",
       "toggle-panel-legend": "Cambiar leyenda del panel",
@@ -616,7 +611,7 @@
       "copy-to-clipboard": "Copiar al portapapeles",
       "description": "El inspector de consultas le permite ver la solicitud y la respuesta en bruto. Para recopilar estos datos, Grafana necesita emitir una nueva consulta. Haga clic en el botón actualizar situado debajo para activar una nueva consulta.",
       "expand-all": "Expandir todo",
-      "no-data": "",
+      "no-data": "Aún no se ha recogido ninguna solicitud o respuesta. Pulse el botón para actualizar",
       "refresh": "Actualizar"
     }
   },
@@ -635,16 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
-      "body_many": "",
-      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:",
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Ver panel en {{label}}...",
       "button-view-panel2": "Ver panel en el tablero...",
       "panel-not-linked": "El panel no está enlazado a un tablero. Añada el panel a un tablero y vuelva a intentarlo.",
       "select-no-options-message": "No se ha encontrado ningún tablero",
       "select-placeholder": "Empezar a escribir para buscar el tablero",
-      "title": "Ver el panel en el tablero"
+      "title": "Ver el panel en el tablero",
+      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
+      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:"
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -988,7 +982,7 @@
       "add-tag-placeholder": "Seleccionar una etiqueta",
       "add-title-label": "Añadir por título",
       "cancel": "Cancelar",
-      "heading": "Añadir paneles",
+      "heading": "Añadir tableros",
       "interval-label": "Intervalo",
       "interval-placeholder": "5 min",
       "interval-required": "El intervalo es obligatorio",
@@ -996,12 +990,12 @@
       "name-placeholder": "Nombre",
       "name-required": "El nombre es obligatorio",
       "save": "Guardar",
-      "table-delete": "Eliminar elemento de la lista",
+      "table-delete": "Eliminar elemento de la lista de reproducción",
       "table-drag": "Arrastrar y soltar para reordenar",
-      "table-empty": "La lista está vacía. Añadir paneles a continuación.",
+      "table-empty": "La lista de reproducción está vacía. Añadir tableros a continuación.",
       "table-heading": "Paneles de control"
     },
-    "sub-title": "La lista de reproducción gira a través de una lista de paneles preseleccionados. Una lista de reproducción puede ser una buena manera de crear conciencia de situaciones, o simplemente de mostrar sus métricas a su equipo o visitantes.",
+    "sub-title": "La lista de reproducción gira a través de una lista de tableros preseleccionados. Una lista de reproducción puede ser una buena manera de crear conciencia de situaciones, o simplemente de mostrar sus métricas a su equipo o visitantes.",
     "title": "Editar lista de reproducción"
   },
   "playlist-page": {
@@ -1020,7 +1014,7 @@
     },
     "empty": {
       "button": "Crear lista de reproducción",
-      "pro-tip": "Puede usar las listas de reproducción para crear ciclos de paneles en televisiones sin control de usuario",
+      "pro-tip": "Puede usar las listas de reproducción para crear ciclos de tableros en televisiones sin control de usuario",
       "pro-tip-link-title": "Más información",
       "title": "Aún no se ha creado ninguna lista de reproducción"
     }
@@ -1184,7 +1178,7 @@
       "library-panel": "Panel de librería",
       "link": "Enlace",
       "panel-embed": "Incrustar",
-      "public-dashboard": "Panel público",
+      "public-dashboard": "Tablero público",
       "snapshot": "Instantánea"
     },
     "theme-picker": {
@@ -1206,7 +1200,7 @@
     "mode-kiosk": "Kiosco",
     "mode-normal": "Normal",
     "mode-tv": "TV",
-    "title": "Compartir la lista"
+    "title": "Compartir lista de reproducción"
   },
   "shared": {
     "preferences": {
