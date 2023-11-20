@@ -143,6 +143,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         onClose={() => setLabelBrowserVisible(false)}
         onChange={onChangeInternal}
         onRunQuery={onRunQuery}
+        timeRange={timeRange}
       />
       <EditorHeader>
         <Stack gap={1}>

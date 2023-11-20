@@ -29,7 +29,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
   async componentDidMount() {
     this._isMounted = true;
-    await this.props.datasource.languageProvider.start();
+    await this.props.datasource.languageProvider.start(this.props.range);
     if (this._isMounted) {
       this.setState({ labelsLoaded: true });
     }

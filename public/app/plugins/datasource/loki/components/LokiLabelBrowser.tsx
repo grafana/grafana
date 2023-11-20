@@ -3,7 +3,7 @@ import { sortBy } from 'lodash';
 import React, { ChangeEvent } from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -34,6 +34,7 @@ export interface BrowserProps {
   theme: GrafanaTheme2;
   app?: CoreApp;
   autoSelect?: number;
+  timeRange?: TimeRange;
   hide?: () => void;
   lastUsedLabels: string[];
   storeLastUsedLabels: (labels: string[]) => void;
@@ -283,10 +284,10 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 
   componentDidMount() {
-    const { languageProvider, autoSelect = MAX_AUTO_SELECT, lastUsedLabels } = this.props;
+    const { languageProvider, autoSelect = MAX_AUTO_SELECT, lastUsedLabels, timeRange } = this.props;
     if (languageProvider) {
       const selectedLabels: string[] = lastUsedLabels;
-      languageProvider.start().then(() => {
+      languageProvider.start(timeRange).then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
         if (rawLabels.length > MAX_LABEL_COUNT) {
           const error = `Too many labels found (showing only ${MAX_LABEL_COUNT} of ${rawLabels.length})`;
