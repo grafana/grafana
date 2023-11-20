@@ -312,11 +312,11 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 		return nil, err
 	}
 
-	getTeamsByUserQuery := &team.GetTeamIDsByUserIDQuery{
+	getTeamsByUserQuery := &team.GetTeamIDsByUserQuery{
 		OrgID:  signedInUser.OrgID,
 		UserID: signedInUser.UserID,
 	}
-	signedInUser.Teams, err = s.teamService.GetIDsByUser(ctx, getTeamsByUserQuery)
+	signedInUser.Teams, err = s.teamService.GetTeamIDsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return nil, err
 	}

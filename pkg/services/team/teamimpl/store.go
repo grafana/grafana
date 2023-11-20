@@ -23,7 +23,7 @@ type store interface {
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
-	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserIDQuery) ([]int64, error)
+	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
 	AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error
 	UpdateMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error
@@ -338,7 +338,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 }
 
 // GetIDsByUser is used by the Guardian when checking a users' permissions
-func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserIDQuery) ([]int64, error) {
+func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
 	queryResult := make([]int64, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var params []any

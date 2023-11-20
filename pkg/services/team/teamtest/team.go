@@ -76,7 +76,7 @@ func (s *FakeService) GetTeamMembers(ctx context.Context, query *team.GetTeamMem
 func (s *FakeService) RegisterDelete(query string) {
 }
 
-func (s *FakeService) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserIDQuery) ([]int64, error) {
+func (s *FakeService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
 	result := make([]int64, 0)
 	for _, team := range s.ExpectedTeamsByUser {
 		result = append(result, team.ID)

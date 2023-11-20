@@ -126,8 +126,8 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, team1.OrgID, testOrgID)
 				require.EqualValues(t, team1.MemberCount, 2)
 
-				getIDsQuery := &team.GetTeamIDsByUserIDQuery{OrgID: testOrgID, UserID: userIds[0]}
-				getIDResult, err := teamSvc.GetIDsByUser(context.Background(), getIDsQuery)
+				getIDsQuery := &team.GetTeamIDsByUserQuery{OrgID: testOrgID, UserID: userIds[0]}
+				getIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
 				require.NoError(t, err)
 
 				require.Equal(t, len(getIDResult), 1)
