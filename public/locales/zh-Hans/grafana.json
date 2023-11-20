@@ -1,21 +1,21 @@
 {
-  "_comment": "",
+  "_comment": "此文件是英文字符串的真实来源。编辑此文件可更改用户界面的复数形式和其他短语。",
   "access-control": {
     "add-permission": {
       "role-label": "角色",
-      "serviceaccount-label": "",
-      "team-label": "",
-      "title": "",
-      "user-label": ""
+      "serviceaccount-label": "服务帐户",
+      "team-label": "团队",
+      "title": "添加权限：",
+      "user-label": "用户"
     },
     "add-permissions": {
       "save": "保存"
     },
     "permission-list": {
-      "permission": ""
+      "permission": "权限"
     },
     "permissions": {
-      "add-label": "",
+      "add-label": "添加权限",
       "no-permissions": "",
       "permissions-change-warning": "",
       "role": "角色",
@@ -625,14 +625,14 @@
   },
   "library-panels": {
     "modal": {
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_other": ""
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
