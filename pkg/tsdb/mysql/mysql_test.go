@@ -81,15 +81,12 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	sess := x.NewSession()
 	t.Cleanup(sess.Close)
+	db := sess.DB()
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
-		exists, err := sess.IsTableExist("mysql_types")
+		_, err = db.Exec("DROP TABLE IF EXISTS mysql_types")
 		require.NoError(t, err)
-		if exists {
-			err := sess.DropTable("mysql_types")
-			require.NoError(t, err)
-		}
 
 		sql := "CREATE TABLE `mysql_types` ("
 		sql += "`atinyint` tinyint(1) NOT NULL,"
@@ -124,7 +121,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		sql += "`avarcharnull` varchar(3),"
 		sql += "`adecimalnull` decimal(10,2)"
 		sql += ") ENGINE=InnoDB DEFAULT CHARSET=latin1;"
-		_, err = sess.Exec(sql)
+		_, err = db.Exec(sql)
 		require.NoError(t, err)
 
 		sql = "INSERT INTO `mysql_types` "
@@ -136,7 +133,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		sql += "2.22, 3.33, current_timestamp(), now(), '11:11:11', '2018', 1, 'tinytext', "
 		sql += "'tinyblob', 'text', 'blob', 'mediumtext', 'mediumblob', 'longtext', 'longblob', "
 		sql += "'val2', 'a,b', curdate(), '2018-01-01 00:01:01.123456');"
-		_, err = sess.Exec(sql)
+		_, err = db.Exec(sql)
 		require.NoError(t, err)
 
 		t.Run("Query with Table format should map MySQL column types to Go types", func(t *testing.T) {
@@ -202,13 +199,10 @@ func TestIntegrationMySQL(t *testing.T) {
 			Value int64
 		}
 
-		exists, err := sess.IsTableExist(metric{})
+		_, err := db.Exec("DROP TABLE IF EXISTS metric")
 		require.NoError(t, err)
-		if exists {
-			err := sess.DropTable(metric{})
-			require.NoError(t, err)
-		}
-		err = sess.CreateTable(metric{})
+
+		_, err = db.Exec("CREATE TABLE IF NOT EXISTS metric (time DATETIME NULL, value BIGINT(20) NULL)")
 		require.NoError(t, err)
 
 		series := []*metric{}
@@ -229,8 +223,10 @@ func TestIntegrationMySQL(t *testing.T) {
 			})
 		}
 
-		_, err = sess.InsertMulti(series)
-		require.NoError(t, err)
+		for _, m := range series {
+			_, err = db.Exec("INSERT INTO metric (`time`, `value`) VALUES (?, ?)", m.Time, m.Value)
+			require.NoError(t, err)
+		}
 
 		t.Run("When doing a metric query using timeGroup", func(t *testing.T) {
 			query := &backend.QueryDataRequest{
@@ -442,13 +438,29 @@ func TestIntegrationMySQL(t *testing.T) {
 			ValueFour           int64 `xorm:"smallint(1) null 'valueFour'"`
 		}
 
-		exists, err := sess.IsTableExist(metric_values{})
+		_, err := db.Exec("DROP TABLE IF EXISTS metric_values")
 		require.NoError(t, err)
-		if exists {
-			err := sess.DropTable(metric_values{})
-			require.NoError(t, err)
-		}
-		err = sess.CreateTable(metric_values{})
+
+		// the strings contain backticks, so i cannot use a raw go string
+		sqlCreateTable := "CREATE TABLE metric_values ("
+		sqlCreateTable += " `time` DATETIME NOT NULL,"
+		sqlCreateTable += "	`timeNullable` DATETIME(6) NULL,"
+		sqlCreateTable += "	`timeInt64` BIGINT(20) NOT NULL,"
+		sqlCreateTable += "	`timeInt64Nullable` BIGINT(20) NULL,"
+		sqlCreateTable += "	`timeFloat64` DOUBLE NOT NULL,"
+		sqlCreateTable += "	`timeFloat64Nullable` DOUBLE NULL,"
+		sqlCreateTable += "	`timeInt32` INT(11) NOT NULL,"
+		sqlCreateTable += "	`timeInt32Nullable` INT(11) NULL,"
+		sqlCreateTable += "	`timeFloat32` DOUBLE NOT NULL,"
+		sqlCreateTable += "	`timeFloat32Nullable` DOUBLE NULL,"
+		sqlCreateTable += "	`measurement` VARCHAR(255) NULL,"
+		sqlCreateTable += "	`valueOne` INTEGER NULL,"
+		sqlCreateTable += "	`valueTwo` INTEGER NULL,"
+		sqlCreateTable += "	`valueThree` TINYINT(1) NULL,"
+		sqlCreateTable += "	`valueFour` SMALLINT(1) NULL"
+		sqlCreateTable += ")"
+
+		_, err = db.Exec(sqlCreateTable)
 		require.NoError(t, err)
 
 		rng := rand.New(rand.NewSource(time.Now().Unix()))
@@ -497,8 +509,24 @@ func TestIntegrationMySQL(t *testing.T) {
 			series = append(series, &second)
 		}
 
-		_, err = sess.InsertMulti(series)
-		require.NoError(t, err)
+		sqlInsertSeries := "INSERT INTO `metric_values` ("
+		sqlInsertSeries += " 	 	`time`, `timeNullable`,"
+		sqlInsertSeries += "		`timeInt64`, `timeInt64Nullable`,"
+		sqlInsertSeries += "		`timeFloat64`, `timeFloat64Nullable`,"
+		sqlInsertSeries += "		`timeInt32`, `timeInt32Nullable`,"
+		sqlInsertSeries += "		`timeFloat32`, `timeFloat32Nullable`,"
+		sqlInsertSeries += "		`measurement`, `valueOne`, `valueTwo`, `valueThree`, `valueFour`)"
+		sqlInsertSeries += "	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		for _, m := range series {
+			_, err = db.Exec(sqlInsertSeries,
+				m.Time, m.TimeNullable,
+				m.TimeInt64, m.TimeInt64Nullable,
+				m.TimeFloat64, m.TimeFloat64Nullable,
+				m.TimeInt32, m.TimeInt32Nullable,
+				m.TimeFloat32, m.TimeFloat32Nullable,
+				m.Measurement, m.ValueOne, m.ValueTwo, m.ValueThree, m.ValueFour)
+			require.NoError(t, err)
+		}
 
 		t.Run("When doing a metric query using time as time column should return metric with time in time.Time", func(t *testing.T) {
 			query := &backend.QueryDataRequest{
@@ -896,13 +924,10 @@ func TestIntegrationMySQL(t *testing.T) {
 			Tags        string
 		}
 
-		exists, err := sess.IsTableExist(event{})
+		_, err := db.Exec("DROP TABLE IF EXISTS event")
 		require.NoError(t, err)
-		if exists {
-			err := sess.DropTable(event{})
-			require.NoError(t, err)
-		}
-		err = sess.CreateTable(event{})
+
+		_, err = db.Exec("CREATE TABLE IF NOT EXISTS event (time_sec BIGINT(20) NULL, description VARCHAR(255) NULL, tags VARCHAR(255) NULL)")
 		require.NoError(t, err)
 
 		events := []*event{}
@@ -920,7 +945,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		}
 
 		for _, e := range events {
-			_, err := sess.Insert(e)
+			_, err := db.Exec("INSERT INTO event (time_sec, description, tags) VALUES (?, ?, ?)", e.TimeSec, e.Description, e.Tags)
 			require.NoError(t, err)
 		}
 
@@ -1232,18 +1257,10 @@ func TestIntegrationMySQL(t *testing.T) {
 	})
 
 	t.Run("Given an empty table", func(t *testing.T) {
-		type emptyObj struct {
-			EmptyKey string
-			EmptyVal int64
-		}
-
-		exists, err := sess.IsTableExist(emptyObj{})
+		_, err := db.Exec("DROP TABLE IF EXISTS empty_obj")
 		require.NoError(t, err)
-		if exists {
-			err := sess.DropTable(emptyObj{})
-			require.NoError(t, err)
-		}
-		err = sess.CreateTable(emptyObj{})
+
+		_, err = db.Exec("CREATE TABLE empty_obj (empty_key VARCHAR(255) NULL, empty_val BIGINT(20) NULL)")
 		require.NoError(t, err)
 
 		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {

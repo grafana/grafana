@@ -10,17 +10,32 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const (
 	customConfigPrefix = "GF_PLUGIN"
 )
+
+// allowedHostEnvVarNames is the list of environment variables that can be passed from Grafana's process to the
+// plugin's process
+var allowedHostEnvVarNames = []string{
+	// Env vars used by net/http (Go stdlib) for http/https proxy
+	// https://github.com/golang/net/blob/fbaf41277f28102c36926d1368dafbe2b54b4c1d/http/httpproxy/proxy.go#L91-L93
+	"HTTP_PROXY",
+	"http_proxy",
+	"HTTPS_PROXY",
+	"https_proxy",
+	"NO_PROXY",
+	"no_proxy",
+}
 
 type Provider interface {
 	Get(ctx context.Context, p *plugins.Plugin) []string
@@ -71,13 +86,25 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
 	hostEnv = append(hostEnv, s.tracingEnvVars(p)...)
 
+	// If FlagPluginsSkipHostEnvVars is enabled, get some allowed variables from the current process and pass
+	// them down to the plugin. If the feature flag is not enabled, do not add anything else because ALL env vars
+	// from the current process (os.Environ()) will be forwarded to the plugin's process by go-plugin
+	if s.cfg.Features != nil && s.cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) {
+		hostEnv = append(hostEnv, s.allowedHostEnvVars()...)
+	}
+
 	ev := getPluginSettings(p.ID, s.cfg).asEnvVar(customConfigPrefix, hostEnv...)
+
 	return ev
 }
 
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
 func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
+
+	if s.cfg.GrafanaAppURL != "" {
+		m[backend.AppURL] = s.cfg.GrafanaAppURL
+	}
 
 	// TODO add support via plugin SDK
 	//if externalService != nil {
@@ -174,6 +201,10 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 	vars := []string{
 		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", s.cfg.Tracing.OpenTelemetry.Address),
 		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", s.cfg.Tracing.OpenTelemetry.Propagation),
+
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_TYPE=%s", s.cfg.Tracing.OpenTelemetry.Sampler),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%.6f", s.cfg.Tracing.OpenTelemetry.SamplerParam),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=%s", s.cfg.Tracing.OpenTelemetry.SamplerRemoteURL),
 	}
 	if plugin.Info.Version != "" {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
@@ -227,6 +258,19 @@ func (s *Service) secureSocksProxyEnvVars() []string {
 		}
 	}
 	return nil
+}
+
+// allowedHostEnvVars returns the variables that can be passed from Grafana's process
+// (current process, also known as: "host") to the plugin process.
+// A string in format "k=v" is returned for each variable in allowedHostEnvVarNames, if it's set.
+func (s *Service) allowedHostEnvVars() []string {
+	var r []string
+	for _, envVarName := range allowedHostEnvVarNames {
+		if envVarValue, ok := os.LookupEnv(envVarName); ok {
+			r = append(r, envVarName+"="+envVarValue)
+		}
+	}
+	return r
 }
 
 type pluginSettings map[string]string

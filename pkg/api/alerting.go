@@ -112,7 +112,7 @@ func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 			OrgId:        c.SignedInUser.GetOrgID(),
 			DashboardIds: dashboardIDs,
 			Type:         string(model.DashHitDB),
-			FolderIds:    folderIDs,
+			FolderIds:    folderIDs, // nolint:staticcheck
 			Permission:   dashboards.PERMISSION_VIEW,
 		}
 
@@ -921,6 +921,8 @@ type GetAlertsParams struct {
 	// required:false
 	// type array
 	// collectionFormat: multi
+	//
+	// Deprecated: use FolderUID instead
 	FolderID []string `json:"folderId"`
 	// Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.
 	// in:query

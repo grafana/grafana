@@ -4,8 +4,19 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Button, Field, Input, InputControl, Label, Modal, Text, useStyles2 } from '@grafana/ui';
+import {
+  AsyncSelect,
+  Box,
+  Button,
+  Field,
+  Input,
+  InputControl,
+  Label,
+  Modal,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
@@ -134,7 +145,7 @@ export function FolderAndGroup({
 
   return (
     <div className={styles.container}>
-      <div>
+      <Stack alignItems="center">
         {
           <Field
             label={
@@ -191,50 +202,52 @@ export function FolderAndGroup({
         {isCreatingFolder && (
           <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
         )}
-      </div>
+      </Stack>
 
-      <div>
-        <Field
-          label="Evaluation group"
-          data-testid="group-picker"
-          description="Rules within the same group are evaluated sequentially over the same time interval."
-          className={styles.formInput}
-          error={errors.group?.message}
-          invalid={!!errors.group?.message}
-        >
-          <Stack direction="row" alignItems="center">
+      {isCreatingFolder && (
+        <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
+      )}
+
+      <Stack alignItems="center">
+        <div style={{ width: 420 }}>
+          <Field
+            label="Evaluation group"
+            data-testid="group-picker"
+            description="Rules within the same group are evaluated sequentially over the same time interval."
+            className={styles.formInput}
+            error={errors.group?.message}
+            invalid={!!errors.group?.message}
+          >
             <InputControl
               render={({ field: { ref, ...field }, fieldState }) => (
-                <div style={{ width: 420 }}>
-                  <AsyncSelect
-                    disabled={!folder || loading}
-                    inputId="group"
-                    key={uniqueId()}
-                    {...field}
-                    onChange={(group) => {
-                      field.onChange(group.label ?? '');
-                    }}
-                    isLoading={loading}
-                    invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
-                    loadOptions={debouncedSearch}
-                    cacheOptions
-                    loadingMessage={'Loading groups...'}
-                    defaultValue={defaultGroupValue}
-                    defaultOptions={groupOptions}
-                    getOptionLabel={(option: SelectableValue<string>) => (
-                      <div>
-                        <span>{option.label}</span>
-                        {option['isProvisioned'] && (
-                          <>
-                            {' '}
-                            <ProvisioningBadge />
-                          </>
-                        )}
-                      </div>
-                    )}
-                    placeholder={'Select an evaluation group...'}
-                  />
-                </div>
+                <AsyncSelect
+                  disabled={!folder || loading}
+                  inputId="group"
+                  key={uniqueId()}
+                  {...field}
+                  onChange={(group) => {
+                    field.onChange(group.label ?? '');
+                  }}
+                  isLoading={loading}
+                  invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
+                  loadOptions={debouncedSearch}
+                  cacheOptions
+                  loadingMessage={'Loading groups...'}
+                  defaultValue={defaultGroupValue}
+                  defaultOptions={groupOptions}
+                  getOptionLabel={(option: SelectableValue<string>) => (
+                    <div>
+                      <span>{option.label}</span>
+                      {option['isProvisioned'] && (
+                        <>
+                          {' '}
+                          <ProvisioningBadge />
+                        </>
+                      )}
+                    </div>
+                  )}
+                  placeholder={'Select an evaluation group...'}
+                />
               )}
               name="group"
               control={control}
@@ -245,19 +258,21 @@ export function FolderAndGroup({
                 },
               }}
             />
-            <Text color="secondary">or</Text>
-            <Button
-              onClick={onOpenEvaluationGroupCreationModal}
-              type="button"
-              icon="plus"
-              fill="outline"
-              variant="secondary"
-              disabled={!folder}
-            >
-              New evaluation group
-            </Button>
-          </Stack>
-        </Field>
+          </Field>
+        </div>
+        <Box marginTop={4} gap={1} display={'flex'} alignItems={'center'}>
+          <Text color="secondary">or</Text>
+          <Button
+            onClick={onOpenEvaluationGroupCreationModal}
+            type="button"
+            icon="plus"
+            fill="outline"
+            variant="secondary"
+            disabled={!folder}
+          >
+            New evaluation group
+          </Button>
+        </Box>
         {isCreatingEvaluationGroup && (
           <EvaluationGroupCreationModal
             onCreate={handleEvalGroupCreation}
@@ -265,7 +280,7 @@ export function FolderAndGroup({
             groupfoldersForGrafana={groupfoldersForGrafana}
           />
         )}
-      </div>
+      </Stack>
     </div>
   );
 }

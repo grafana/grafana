@@ -1,4 +1,4 @@
-import { waitFor, within } from '@testing-library/dom';
+import { ByRoleMatcher, waitFor, within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { fromPairs } from 'lodash';
@@ -287,3 +287,13 @@ const exploreTestsHelper: { setupExplore: typeof setupExplore; tearDownExplore?:
     setupExplore,
     tearDownExplore: undefined,
   };
+
+/**
+ * Optimized version of getAllByRole to avoid timeouts in tests. Please check #70158, #59116 and #47635, #78236.
+ */
+export const getAllByRoleInQueryHistoryTab = (exploreId: string, role: ByRoleMatcher, name: string | RegExp) => {
+  const selector = withinExplore(exploreId);
+  // Test ID is used to avoid test timeouts reported in
+  const queriesContainer = selector.getByTestId('query-history-queries-tab');
+  return within(queriesContainer).getAllByRole(role, { name });
+};

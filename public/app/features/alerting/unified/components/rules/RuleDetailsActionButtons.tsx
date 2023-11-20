@@ -4,7 +4,7 @@ import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -238,17 +238,11 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
     }
 
     if (isGrafanaRulerRule(rulerRule)) {
-      moreActionsButtons.push(
-        <Menu.Item
-          label="Modify export"
-          icon="edit"
-          onClick={() =>
-            locationService.push(
-              createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`)
-            )
-          }
-        />
+      const modifyUrl = createUrl(
+        `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`
       );
+
+      moreActionsButtons.push(<Menu.Item label="Modify export" icon="edit" url={modifyUrl} />);
     }
 
     if (hasCreateRulePermission && !isFederated) {

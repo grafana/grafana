@@ -128,7 +128,7 @@ describe('alertmanager abilities', () => {
     expect(abilities.result.current).toHaveLength(3);
     expect(abilities.result.current[0]).toStrictEqual([true, true]);
     expect(abilities.result.current[1]).toStrictEqual([true, false]);
-    expect(abilities.result.current[2]).toStrictEqual([true, false]);
+    expect(abilities.result.current[2]).toStrictEqual([true, true]);
   });
 });
 

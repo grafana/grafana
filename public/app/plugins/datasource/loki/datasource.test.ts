@@ -676,6 +676,50 @@ describe('LokiDatasource', () => {
         });
       });
     });
+
+    describe('when called with ADD_LINE_FILTER', () => {
+      let ds: LokiDatasource;
+      const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+      beforeEach(() => {
+        ds = createLokiDatasource(templateSrvStub);
+        ds.languageProvider.labelKeys = ['bar', 'job'];
+      });
+
+      it('adds a line filter', () => {
+        const action = { options: {}, type: 'ADD_LINE_FILTER' };
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.expr).toEqual('{bar="baz"} |= ``');
+      });
+      it('adds a line filter with a value', () => {
+        const action = { options: { value: 'value' }, type: 'ADD_LINE_FILTER' };
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.expr).toEqual('{bar="baz"} |= `value`');
+      });
+    });
+
+    describe('when called with ADD_LINE_FILTER_OUT', () => {
+      let ds: LokiDatasource;
+      const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+      beforeEach(() => {
+        ds = createLokiDatasource(templateSrvStub);
+        ds.languageProvider.labelKeys = ['bar', 'job'];
+      });
+
+      it('adds a line filter', () => {
+        const action = { options: {}, type: 'ADD_LINE_FILTER_OUT' };
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.expr).toEqual('{bar="baz"} != ``');
+      });
+      it('adds a line filter with a value', () => {
+        const action = { options: { value: 'value' }, type: 'ADD_LINE_FILTER_OUT' };
+        const result = ds.modifyQuery(query, action);
+
+        expect(result.expr).toEqual('{bar="baz"} != `value`');
+      });
+    });
   });
 
   describe('toggleQueryFilter', () => {
@@ -1254,6 +1298,15 @@ describe('LokiDatasource', () => {
         })
       );
     });
+    it('sets the supporting query type in the request', () => {
+      const spy = jest.spyOn(ds, 'query').mockImplementation(() => of({} as DataQueryResponse));
+      ds.getDataSamples({ expr: '{job="bar"}', refId: 'A' });
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targets: [expect.objectContaining({ supportingQueryType: SupportingQueryType.DataSample })],
+        })
+      );
+    });
   });
 
   describe('Query splitting', () => {
@@ -1576,14 +1629,6 @@ describe('Variable support', () => {
     const ds = createLokiDatasource(templateSrvStub);
 
     expect(ds.variables).toBeInstanceOf(LokiVariableSupport);
-  });
-});
-
-describe('showContextToggle()', () => {
-  it('always displays logs context', () => {
-    const ds = createLokiDatasource(templateSrvStub);
-
-    expect(ds.showContextToggle()).toBe(true);
   });
 });
 

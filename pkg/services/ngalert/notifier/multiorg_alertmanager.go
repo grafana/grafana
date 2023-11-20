@@ -30,6 +30,7 @@ var (
 	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
 )
 
+//go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
 type Alertmanager interface {
 	// Configuration
 	ApplyConfig(context.Context, *models.AlertConfiguration) error
@@ -54,11 +55,9 @@ type Alertmanager interface {
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
 	// State
+	CleanUp()
 	StopAndWait()
 	Ready() bool
-	FileStore() *FileStore
-	OrgID() int64
-	ConfigHash() [16]byte
 }
 
 type MultiOrgAlertmanager struct {
@@ -314,8 +313,8 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Info("Stopping Alertmanager", "org", orgID)
 		am.StopAndWait()
 		moa.logger.Info("Stopped Alertmanager", "org", orgID)
-		// Cleanup all the remaining resources from this alertmanager.
-		am.FileStore().CleanUp()
+		// Clean up all the remaining resources from this alertmanager.
+		am.CleanUp()
 	}
 
 	// We look for orphan directories and remove them. Orphan directories can
@@ -350,7 +349,7 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 			moa.logger.Info("Found orphan organization directory", "orgID", orgID)
 			workingDirPath := filepath.Join(dataDir, strconv.FormatInt(orgID, 10))
 			fileStore := NewFileStore(orgID, moa.kvStore, workingDirPath)
-			// Cleanup all the remaining resources from this alertmanager.
+			// Clean up all the remaining resources from this alertmanager.
 			fileStore.CleanUp()
 		}
 	}

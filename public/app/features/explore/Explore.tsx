@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { get, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { createRef } from 'react';
+import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -17,7 +17,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   AdHocFilterItem,
@@ -151,7 +151,6 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
 
 export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
-  topOfViewRef = createRef<HTMLDivElement>();
   graphEventBus: EventBus;
   logsEventBus: EventBus;
   memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
@@ -206,9 +205,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * @alpha
    */
   isFilterLabelActive = async (key: string, value: string, refId?: string) => {
-    if (!config.featureToggles.toggleLabelsInLogsUI) {
-      return false;
-    }
     const query = this.props.queries.find((q) => q.refId === refId);
     if (!query) {
       return false;
@@ -234,6 +230,20 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } }, refId);
   };
 
+  /**
+   * Used by Logs Popover Menu.
+   */
+  onClickFilterValue = (value: string, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_STRING_FILTER', options: { value } }, refId);
+  };
+
+  /**
+   * Used by Logs Popover Menu.
+   */
+  onClickFilterOutValue = (value: string, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_STRING_FILTER_OUT', options: { value } }, refId);
+  };
+
   onClickAddQueryRowButton = () => {
     const { exploreId, queryKeys } = this.props;
     this.props.addQueryRow(exploreId, queryKeys.length);
@@ -254,7 +264,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return query;
       }
       const ds = await getDataSourceSrv().get(datasource);
-      if (hasToggleableQueryFiltersSupport(ds) && config.featureToggles.toggleLabelsInLogsUI) {
+      const toggleableFilters = ['ADD_FILTER', 'ADD_FILTER_OUT'];
+      if (hasToggleableQueryFiltersSupport(ds) && toggleableFilters.includes(modification.type)) {
         return ds.toggleQueryFilter(query, {
           type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
           options: modification.options ?? {},
@@ -439,6 +450,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           splitOpenFn={this.onSplitOpen('logs')}
           scrollElement={this.scrollElement}
           isFilterLabelActive={this.isFilterLabelActive}
+          onClickFilterValue={this.onClickFilterValue}
+          onClickFilterOutValue={this.onClickFilterOutValue}
         />
       </ContentOutlineItem>
     );
@@ -504,7 +517,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             splitOpenFn={this.onSplitOpen('traceView')}
             scrollElement={this.scrollElement}
             queryResponse={queryResponse}
-            topOfViewRef={this.topOfViewRef}
           />
         </ContentOutlineItem>
       )
@@ -553,9 +565,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     let correlationsBox = undefined;
     const isCorrelationsEditorMode = correlationEditorDetails?.editorMode;
-    const showCorrelationHelper = Boolean(isCorrelationsEditorMode || correlationEditorDetails?.dirty);
+    const showCorrelationHelper = Boolean(isCorrelationsEditorMode || correlationEditorDetails?.correlationDirty);
     if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
-      correlationsBox = <CorrelationHelper correlations={correlationEditorHelperData} />;
+      correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
 
     return (
@@ -584,7 +596,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
               hideHorizontalTrack
             >
-              <div className={styles.exploreContainer} ref={this.topOfViewRef}>
+              <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
                   <>
                     <ContentOutlineItem title="Queries" icon="arrow">

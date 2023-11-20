@@ -22,6 +22,7 @@ import {
 
 import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
+import { mockSearchApi } from './mockApi';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -31,7 +32,6 @@ import {
   mockStore,
 } from './mocks';
 import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
-import { mockSearchApiResponse } from './mocks/grafanaApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { RuleFormValues } from './types/rule-form';
@@ -157,7 +157,7 @@ describe('CloneRuleEditor', function () {
         'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
       });
 
-      mockSearchApiResponse(server, [
+      mockSearchApi(server).search([
         mockDashboardSearchItem({ title: 'folder-one', uid: '123', type: DashboardSearchItemType.DashDB }),
       ]);
       mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
@@ -212,7 +212,7 @@ describe('CloneRuleEditor', function () {
         rules: [originRule],
       });
 
-      mockSearchApiResponse(server, [
+      mockSearchApi(server).search([
         mockDashboardSearchItem({
           title: 'folder-one',
           uid: '123',
@@ -226,7 +226,6 @@ describe('CloneRuleEditor', function () {
       render(
         <CloneRuleEditor
           sourceRuleId={{
-            uid: 'prom-rule-1',
             ruleSourceName: 'my-prom-ds',
             namespace: 'namespace-one',
             groupName: 'group1',

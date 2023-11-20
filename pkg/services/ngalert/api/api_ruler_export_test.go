@@ -202,7 +202,6 @@ func TestExportRules(t *testing.T) {
 	f2 := randFolder()
 
 	ruleStore := fakes.NewRuleStore(t)
-	ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], f1, f2)
 
 	hasAccessKey1 := ngmodels.AlertRuleGroupKey{
 		OrgID:        orgID,
@@ -253,12 +252,16 @@ func TestExportRules(t *testing.T) {
 		))
 	ruleStore.PutRule(context.Background(), hasAccess2...)
 
-	_, noAccess2 := ngmodels.GenerateUniqueAlertRules(10,
+	_, noAccessByFolder := ngmodels.GenerateUniqueAlertRules(10,
 		ngmodels.AlertRuleGen(
 			ngmodels.WithUniqueUID(&uids),
 			ngmodels.WithQuery(accessQuery), // no access because of folder
+			ngmodels.WithNamespaceUIDNotIn(f1.UID, f2.UID),
 		))
-	ruleStore.PutRule(context.Background(), noAccess2...)
+
+	ruleStore.PutRule(context.Background(), noAccessByFolder...)
+	// overwrite the folders visible to user because PutRule automatically creates folders in the fake store.
+	ruleStore.Folders[orgID] = []*folder2.Folder{f1, f2}
 
 	srv := createService(ruleStore)
 
@@ -351,7 +354,7 @@ func TestExportRules(t *testing.T) {
 		{
 			title: "unauthorized if folders are not accessible",
 			params: url.Values{
-				"folderUid": []string{noAccess2[0].NamespaceUID},
+				"folderUid": []string{noAccessByFolder[0].NamespaceUID},
 			},
 			expectedStatus: 401,
 			expectedRules:  nil,
