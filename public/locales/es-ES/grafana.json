@@ -2,102 +2,102 @@
   "_comment": "",
   "access-control": {
     "add-permission": {
-      "role-label": "",
-      "serviceaccount-label": "",
-      "team-label": "",
-      "title": "",
-      "user-label": ""
+      "role-label": "Rol",
+      "serviceaccount-label": "Cuenta de servicio",
+      "team-label": "Equipo",
+      "title": "Añadir permiso para",
+      "user-label": "Usuario"
     },
     "add-permissions": {
-      "save": ""
+      "save": "Guardar"
     },
     "permission-list": {
-      "permission": ""
+      "permission": "Permiso"
     },
     "permissions": {
-      "add-label": "",
-      "no-permissions": "",
+      "add-label": "Añadir un permiso",
+      "no-permissions": "No hay ningún permiso",
       "permissions-change-warning": "",
-      "role": "",
-      "serviceaccount": "",
-      "team": "",
-      "title": "",
-      "user": ""
+      "role": "Rol",
+      "serviceaccount": "Cuenta de servicio",
+      "team": "Equipo",
+      "title": "Permisos",
+      "user": "Usuario"
     }
   },
   "browse-dashboards": {
     "action": {
-      "cancel-button": "",
-      "cannot-move-folders": "",
-      "delete-button": "",
-      "delete-modal-invalid-text": "",
-      "delete-modal-invalid-title": "",
-      "delete-modal-text": "",
-      "delete-modal-title": "",
-      "deleting": "",
-      "manage-permissions-button": "",
-      "move-button": "",
-      "move-modal-alert": "",
-      "move-modal-field-label": "",
-      "move-modal-text": "",
-      "move-modal-title": "",
-      "moving": "",
-      "new-folder-name-required-phrase": ""
+      "cancel-button": "Cancelar",
+      "cannot-move-folders": "Las carpetas no se pueden mover",
+      "delete-button": "Eliminar",
+      "delete-modal-invalid-text": "Una o más carpetas contienen paneles de la biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
+      "delete-modal-invalid-title": "No se puede eliminar la carpeta",
+      "delete-modal-text": "Esta acción eliminará el siguiente contenido:",
+      "delete-modal-title": "Eliminar",
+      "deleting": "Eliminando...",
+      "manage-permissions-button": "Administrar permisos",
+      "move-button": "Mover",
+      "move-modal-alert": "Al mover este elemento puede cambiar sus permisos.",
+      "move-modal-field-label": "Nombre de la carpeta",
+      "move-modal-text": "Esta acción moverá el siguiente contenido:",
+      "move-modal-title": "Mover",
+      "moving": "Moviendo...",
+      "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta."
     },
     "counts": {
-      "alertRule_one": "",
+      "alertRule_one": "{{count}} regla de alerta",
       "alertRule_many": "",
-      "alertRule_other": "",
-      "dashboard_one": "",
+      "alertRule_other": "{{count}} reglas de alerta",
+      "dashboard_one": "{{count}} panel de control",
       "dashboard_many": "",
-      "dashboard_other": "",
-      "folder_one": "",
+      "dashboard_other": "{{count}} paneles de control",
+      "folder_one": "{{count}} carpeta",
       "folder_many": "",
-      "folder_other": "",
-      "libraryPanel_one": "",
+      "folder_other": "{{count}} carpetas",
+      "libraryPanel_one": "{{count}} panel de librería",
       "libraryPanel_many": "",
-      "libraryPanel_other": "",
-      "total_one": "",
+      "libraryPanel_other": "{{count}} paneles de librería",
+      "total_one": "{{count}} elemento",
       "total_many": "",
-      "total_other": ""
+      "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
-      "collapse-folder-button": "",
-      "expand-folder-button": "",
-      "name-column": "",
-      "select-all-header-checkbox": "",
-      "select-checkbox": "",
-      "tags-column": ""
+      "collapse-folder-button": "Contraer la carpeta {{title}}",
+      "expand-folder-button": "Expandir la carpeta {{title}}",
+      "name-column": "Nombre",
+      "select-all-header-checkbox": "Seleccionar todo",
+      "select-checkbox": "Seleccionar",
+      "tags-column": "Etiquetas"
     },
     "folder-actions-button": {
-      "delete": "",
-      "folder-actions": "",
-      "manage-permissions": "",
-      "move": ""
+      "delete": "Eliminar",
+      "folder-actions": "Acciones de la carpeta",
+      "manage-permissions": "Administrar permisos",
+      "move": "Mover"
     },
     "folder-picker": {
-      "accessible-label": "",
-      "button-label": "",
-      "empty-message": "",
-      "error-title": "",
-      "search-placeholder": "",
-      "unknown-error": ""
+      "accessible-label": "Seleccionar carpeta: {{ label }} seleccionada actualmente",
+      "button-label": "Seleccionar carpeta",
+      "empty-message": "No se ha encontrado ninguna carpeta",
+      "error-title": "Error al cargar las carpetas",
+      "search-placeholder": "Buscar carpetas",
+      "unknown-error": "Error desconocido"
     },
     "manage-folder-nav": {
-      "alert-rules": "",
-      "dashboards": "",
-      "panels": "",
-      "permissions": "",
-      "settings": ""
+      "alert-rules": "Reglas de alerta",
+      "dashboards": "Paneles de control",
+      "panels": "Paneles",
+      "permissions": "Permisos",
+      "settings": "Configuración"
     },
     "new-folder-form": {
-      "cancel-label": "",
-      "create-label": "",
-      "name-label": ""
+      "cancel-label": "Cancelar",
+      "create-label": "Crear",
+      "name-label": "Nombre de la carpeta"
     },
     "no-results": {
-      "clear": "",
-      "text": ""
+      "clear": "Borrar la búsqueda y los filtros",
+      "text": "No se ha encontrado ningún resultado para su consulta."
     }
   },
   "clipboard-button": {
@@ -131,29 +131,103 @@
   },
   "connections": {
     "connect-data": {
-      "category-header-label": ""
+      "category-header-label": "Orígenes de datos"
     },
     "search": {
-      "placeholder": ""
+      "placeholder": "Buscar todo"
     }
   },
   "correlations": {
-    "add-new": "",
+    "add-new": "Añadir nuevo",
     "alert": {
-      "error-message": "",
-      "title": ""
+      "error-message": "Se ha producido un error desconocido al recuperar los datos de correlación. Por favor, inténtelo de nuevo.",
+      "title": "Error al recuperar los datos de correlación"
+    },
+    "basic-info-form": {
+      "description-description": "Descripción opcional con más información sobre el enlace",
+      "description-label": "Descripción",
+      "label-description": "Este nombre se utilizará como etiqueta para la correlación. Esta se mostrará como el texto del botón, un elemento del menú o el texto del cursor en un enlace.",
+      "label-label": "Etiqueta",
+      "label-placeholder": "",
+      "label-required": "Este campo es obligatorio.",
+      "sub-text": "<0>Defina el texto que describirá la correlación.</0>",
+      "title": "Definir la etiqueta de correlación (paso 1 de 3)"
     },
     "list": {
-      "delete": "",
-      "label": "",
-      "loading": "",
-      "read-only": "",
-      "source": "",
-      "target": ""
+      "delete": "eliminar correlación",
+      "label": "Etiqueta",
+      "loading": "cargando...",
+      "read-only": "Solo lectura",
+      "source": "Fuente",
+      "target": "Destino"
     },
-    "page-content": "",
-    "page-heading": "",
-    "sub-title": ""
+    "navigation-form": {
+      "add-button": "Añadir",
+      "back-button": "Atrás",
+      "next-button": "Siguiente",
+      "save-button": "Guardar"
+    },
+    "page-content": "Para habilitar las correlaciones, añádala en la configuración de Grafana:",
+    "page-heading": "Las correlaciones están deshabilitadas",
+    "query-editor": {
+      "control-rules": "La fuente de datos de destino seleccionada debe exportar un editor de consultas.",
+      "data-source-text": "Seleccione primero una fuente de datos de destino.",
+      "data-source-title": "No se ha seleccionado ninguna fuente de datos",
+      "error-text": "No se ha podido cargar la fuente de datos seleccionada.",
+      "error-title": "Error al cargar la fuente de datos",
+      "loading": "Cargando el editor de consultas...",
+      "query-description": "Defina la consulta que se ejecuta cuando se hace clic en el enlace. Puede usar <2>variables</2> para acceder a los valores de campo específicos.",
+      "query-editor-title": "La fuente de datos no exporta un editor de consultas.",
+      "query-label": "Consulta"
+    },
+    "source-form": {
+      "control-required": "Este campo es obligatorio.",
+      "description": "Ha utilizado las siguientes variables en la consulta de destino: <1></1><2></2>Un punto de datos necesita proporcionar valores a todas las variables como campos o como salida de transformaciones para hacer que el botón de correlación aparezca en la visualización. 4></4>Nota: No todas las variables deben definirse explícitamente a continuación. Una transformación como <7>logfmt</7> creará variables para cada par clave/valor.",
+      "heading": "Variables utilizadas en la consulta de destino",
+      "results-description": "El enlace se mostrará junto al valor de este campo",
+      "results-label": "Campo de resultados",
+      "results-required": "Este campo es obligatorio.",
+      "source-description": "Los resultados de la fuente de datos seleccionada tienen enlaces que se muestran en el panel",
+      "source-label": "Fuente",
+      "sub-text": "<0>Defina qué fuente de datos mostrará la correlación y qué datos reemplazarán a las variables previamente definidas.</0>",
+      "title": "Configurar la fuente de datos que se enlazará a {{dataSourceName}} (paso 3 de 3)"
+    },
+    "sub-title": "Defina cómo se relacionan los datos que viven en diferentes fuentes de datos. Más información en la <2>documentación<1></1></2>",
+    "target-form": {
+      "control-rules": "Este campo es obligatorio.",
+      "sub-text": "<0>Defina a qué fuente de datos enlazará la correlación y qué consulta se ejecutará cuando se haga clic en la correlación.</0>",
+      "target-description": "Especifique qué fuente de datos se consulta cuando se hace clic en el enlace",
+      "target-label": "Destino",
+      "title": "Configurar el destino de la correlación (paso 2 de 3)"
+    },
+    "trans-details": {
+      "logfmt-description": "Analice el campo proporcionado con logfmt para obtener variables",
+      "logfmt-label": "Logfm",
+      "regex-description": "",
+      "regex-expression": "",
+      "regex-label": "",
+      "regex-map-values": ""
+    },
+    "transform": {
+      "add-button": "Añadir transformación",
+      "heading": "Transformaciones",
+      "no-transform": "No se ha definido ninguna transformación."
+    },
+    "transform-row": {
+      "expression-label": "Expresión",
+      "expression-required": "Por favor, defina una expresión",
+      "expression-tooltip": "",
+      "field-input": "campo",
+      "field-label": "Campo",
+      "field-tooltip": "",
+      "map-value-label": "Valor del mapa",
+      "map-value-tooltip": "",
+      "remove-button": "Eliminar",
+      "remove-tooltip": "",
+      "transform-required": "",
+      "type-label": "Tipo",
+      "type-tooltip": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -161,7 +235,7 @@
       "paste-panel": "Pegar panel",
       "row": "Fila",
       "visualization": "Visualización",
-      "widget": ""
+      "widget": "Widget"
     },
     "empty": {
       "add-library-panel-body": "",
@@ -171,11 +245,11 @@
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
       "add-widget-body": "",
-      "add-widget-button": "",
-      "add-widget-header": "",
+      "add-widget-button": "Añadir widget",
+      "add-widget-header": "Añadir un widget",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "",
-      "import-dashboard-button": ""
+      "import-dashboard-button": "Importar panel de control"
     },
     "inspect": {
       "data-tab": "Datos",
@@ -256,7 +330,7 @@
       "secondary-text": ""
     },
     "form-actions": {
-      "cancel": "",
+      "cancel": "Cancelar",
       "load": ""
     },
     "gcom-field": {
@@ -281,12 +355,12 @@
       "description-label": "",
       "editable-description": "",
       "editable-label": "",
-      "folder-label": "",
+      "folder-label": "Carpeta",
       "panel-options-graph-tooltip-description": "",
       "panel-options-graph-tooltip-label": "",
       "panel-options-label": "",
-      "tags-label": "",
-      "title": "",
+      "tags-label": "Etiquetas",
+      "title": "General",
       "title-label": ""
     },
     "json-editor": {
@@ -298,33 +372,33 @@
       "title": ""
     },
     "permissions": {
-      "title": ""
+      "title": "Permisos"
     },
     "settings": {
-      "title": ""
+      "title": "Configuración"
     },
     "time-picker": {
-      "hide-time-picker": "",
-      "now-delay-description": "",
-      "now-delay-label": "",
+      "hide-time-picker": "Ocultar el selector de tiempo",
+      "now-delay-description": "Excluir los datos recientes que puedan estar incompletos.",
+      "now-delay-label": "Retraso ahora",
       "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "",
-      "time-options-label": "",
-      "time-zone-label": "",
-      "week-start-label": ""
+      "time-options-label": "Opciones de tiempo",
+      "time-zone-label": "Huso horario",
+      "week-start-label": "Inicio de la semana"
     },
     "variables": {
-      "title": ""
+      "title": "Variables"
     },
     "versions": {
-      "title": ""
+      "title": "Versiones"
     }
   },
   "data-source-picker": {
-    "add-new-data-source": "",
+    "add-new-data-source": "Configurar una nueva fuente de datos",
     "built-in-list": {
-      "description-dashboard": "",
-      "description-grafana": "",
+      "description-dashboard": "Reutilizar los resultados de la consulta de otras visualizaciones",
+      "description-grafana": "Descubrir las visualizaciones usando datos simulados",
       "description-mixed": ""
     },
     "list": {
@@ -351,13 +425,13 @@
       "newest-first": "",
       "oldest-first": "",
       "query-history": "",
-      "settings": "",
-      "starred": ""
+      "settings": "Configuración",
+      "starred": "Destacado"
     },
     "rich-history-card": {
       "add-comment-form": "",
       "add-comment-tooltip": "",
-      "cancel": "",
+      "cancel": "Cancelar",
       "confirm-delete": "",
       "copy-query-tooltip": "",
       "copy-shortened-link-tooltip": "",
@@ -381,7 +455,7 @@
       "update-comment-form": ""
     },
     "rich-history-container": {
-      "loading": ""
+      "loading": "Cargando..."
     },
     "rich-history-notification": {
       "query-copied": "",
@@ -394,7 +468,7 @@
       "filter-history": "",
       "filter-placeholder": "",
       "history-local": "",
-      "loading": "",
+      "loading": "Cargando...",
       "loading-results": "",
       "search-placeholder": "",
       "showing-queries": "",
@@ -424,7 +498,7 @@
     "rich-history-starred-tab": {
       "filter-queries-aria-label": "",
       "filter-queries-placeholder": "",
-      "loading": "",
+      "loading": "Cargando...",
       "loading-results": "",
       "local-history-message": "",
       "search-queries-placeholder": "",
@@ -461,7 +535,7 @@
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
-      "refresh-picker-cancel": "",
+      "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "",
       "split-close": "",
       "split-close-tooltip": "",
@@ -484,7 +558,7 @@
       "no-options": "No se ha encontrado ninguna opción"
     },
     "select": {
-      "no-options-label": "",
+      "no-options-label": "No se ha encontrado ninguna opción",
       "placeholder": ""
     }
   },
@@ -498,7 +572,7 @@
   },
   "help-modal": {
     "shortcuts-category": {
-      "dashboard": "",
+      "dashboard": "Panel de control",
       "focused-panel": "",
       "global": "",
       "time-range": ""
@@ -506,7 +580,7 @@
     "shortcuts-description": {
       "change-theme": "",
       "collapse-all-rows": "",
-      "dashboard-settings": "",
+      "dashboard-settings": "Ajustes del panel de control",
       "duplicate-panel": "",
       "exit-edit/setting-views": "",
       "expand-all-rows": "",
@@ -521,7 +595,7 @@
       "open-shared-modal": "",
       "refresh-all-panels": "",
       "remove-panel": "",
-      "save-dashboard": "",
+      "save-dashboard": "Guardar panel de control",
       "show-all-shortcuts": "",
       "toggle-active-mode": "",
       "toggle-all-panel-legends": "",
@@ -532,14 +606,14 @@
       "toggle-panel-edit": "",
       "toggle-panel-fullscreen": "",
       "toggle-panel-legend": "",
-      "zoom-out-time-range": ""
+      "zoom-out-time-range": "Reducir el intervalo de tiempo"
     },
     "title": ""
   },
   "inspector": {
     "query": {
       "collapse-all": "",
-      "copy-to-clipboard": "",
+      "copy-to-clipboard": "Copiar al portapapeles",
       "description": "",
       "expand-all": "",
       "no-data": "",
@@ -652,15 +726,15 @@
     },
     "config-access": {
       "subtitle": "",
-      "title": ""
+      "title": "Usuarios y acceso"
     },
     "config-general": {
       "subtitle": "",
-      "title": ""
+      "title": "General"
     },
     "config-plugins": {
       "subtitle": "",
-      "title": ""
+      "title": "Complementos y datos"
     },
     "connect-data": {
       "title": ""
@@ -694,7 +768,7 @@
     },
     "data-sources": {
       "subtitle": "",
-      "title": ""
+      "title": "Orígenes de datos"
     },
     "datasources": {
       "subtitle": "Añadir y configurar orígenes de datos",
@@ -763,7 +837,7 @@
       "title": "Nueva carpeta"
     },
     "observability": {
-      "title": ""
+      "title": "Observabilidad"
     },
     "oncall": {
       "title": ""
@@ -898,7 +972,7 @@
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
-      "new-alert-rule": "",
+      "new-alert-rule": "Nueva regla de alerta",
       "query": "Consulta",
       "remove": "Eliminar",
       "share": "Compartir",
@@ -913,19 +987,19 @@
       "add-tag-label": "",
       "add-tag-placeholder": "",
       "add-title-label": "",
-      "cancel": "",
+      "cancel": "Cancelar",
       "heading": "",
       "interval-label": "",
       "interval-placeholder": "",
       "interval-required": "",
-      "name-label": "",
-      "name-placeholder": "",
-      "name-required": "",
-      "save": "",
+      "name-label": "Nombre",
+      "name-placeholder": "Nombre",
+      "name-required": "El nombre es obligatorio",
+      "save": "Guardar",
       "table-delete": "",
       "table-drag": "",
       "table-empty": "",
-      "table-heading": ""
+      "table-heading": "Paneles de control"
     },
     "sub-title": "",
     "title": ""
@@ -942,22 +1016,22 @@
     },
     "delete-modal": {
       "body": "",
-      "confirm-text": ""
+      "confirm-text": "Eliminar"
     },
     "empty": {
       "button": "",
       "pro-tip": "",
-      "pro-tip-link-title": "",
+      "pro-tip-link-title": "Más información",
       "title": ""
     }
   },
   "profile": {
     "change-password": {
-      "cancel-button": "",
+      "cancel-button": "Cancelar",
       "cannot-change-password-message": "",
-      "change-password-button": "",
-      "confirm-password-label": "",
-      "confirm-password-required": "",
+      "change-password-button": "Cambiar contraseña",
+      "confirm-password-label": "Confirmar contraseña",
+      "confirm-password-required": "Se requiere confirmación de la nueva contraseña",
       "ldap-auth-proxy-message": "",
       "new-password-label": "",
       "new-password-required": "",
@@ -998,7 +1072,7 @@
       "label": "Apagado"
     },
     "tooltip": {
-      "interval-selected": "",
+      "interval-selected": "Establecer intervalo de actualización automática",
       "turned-off": ""
     }
   },
@@ -1109,7 +1183,8 @@
       "export": "Exportar",
       "library-panel": "Panel de librería",
       "link": "Enlace",
-      "panel-embed": "",
+      "panel-embed": "Incrustar",
+      "public-dashboard": "",
       "snapshot": "Instantánea"
     },
     "theme-picker": {
@@ -1125,20 +1200,20 @@
   "share-playlist": {
     "checkbox-description": "",
     "checkbox-label": "",
-    "copy-link-button": "",
-    "link-url-label": "",
-    "mode": "",
-    "mode-kiosk": "",
-    "mode-normal": "",
-    "mode-tv": "",
+    "copy-link-button": "Copiar",
+    "link-url-label": "URL del enlace",
+    "mode": "Modo",
+    "mode-kiosk": "Kiosco",
+    "mode-normal": "Normal",
+    "mode-tv": "TV",
     "title": ""
   },
   "shared": {
     "preferences": {
       "theme": {
-        "dark-label": "",
-        "light-label": "",
-        "system-label": ""
+        "dark-label": "Oscuro",
+        "light-label": "Claro",
+        "system-label": "Preferencias del sistema"
       }
     }
   },
@@ -1162,10 +1237,10 @@
     "title": "Preferencias"
   },
   "snapshot": {
-    "external-badge": "",
-    "name-column-header": "",
+    "external-badge": "Externo",
+    "name-column-header": "Nombre",
     "url-column-header": "",
-    "view-button": ""
+    "view-button": "Vista"
   },
   "tag-filter": {
     "loading": "Cargando...",

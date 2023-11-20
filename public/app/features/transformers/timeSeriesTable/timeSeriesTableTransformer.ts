@@ -12,6 +12,7 @@ import {
   ReducerID,
   reduceField,
   TransformationApplicabilityLevels,
+  isTimeSeriesField,
 } from '@grafana/data';
 
 /**
@@ -145,20 +146,21 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     for (let i = 0; i < framesForRef.length; i++) {
       const frame = framesForRef[i];
 
+      // Retrieve the time field that's been configured
+      // If one isn't configured then use the first found
+      let timeField = null;
+      let timeFieldName = options[refId]?.timeField;
+      if (timeFieldName && timeFieldName.length > 0) {
+        timeField = frame.fields.find((field) => field.name === timeFieldName);
+      } else {
+        timeField = frame.fields.find((field) => isTimeSeriesField(field));
+      }
+
       // If it's not a time series frame we add
       // it unmodified to the result
       if (!isTimeSeriesFrame(frame)) {
         result.push(frame);
         continue;
-      }
-
-      // Retrieve the time field that's been configured
-      // If one isn't configured then use the first found
-      let timeField = null;
-      if (options[refId]?.timeField !== undefined) {
-        timeField = frame.fields.find((field) => field.name === options[refId]?.timeField);
-      } else {
-        timeField = frame.fields.find((field) => field.type === FieldType.time);
       }
 
       for (const field of frame.fields) {
@@ -172,7 +174,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         // and push the frame with reduction
         // into the the appropriate field
         const reducerId = options[refId]?.stat ?? ReducerID.lastNotNull;
-        const value = reduceField({ field, reducers: [reducerId] })[reducerId] || null;
+        const value = reduceField({ field, reducers: [reducerId] })[reducerId] ?? null;
 
         // Push the appropriate time and value frame
         // to the trend frame for the sparkline

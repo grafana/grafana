@@ -140,7 +140,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	))
 	defer span.End()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, false)
 
 	rawLokiResponse, err := api.RawQuery(ctx, lokiURL)
 	if err != nil {
@@ -173,17 +173,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	responseOpts := ResponseOpts{
-		metricDataplane: s.features.IsEnabled(featuremgmt.FlagLokiMetricDataplane),
-		logsDataplane:   s.features.IsEnabled(featuremgmt.FlagLokiLogsDataplane),
+		metricDataplane: s.features.IsEnabled(ctx, featuremgmt.FlagLokiMetricDataplane),
+		logsDataplane:   s.features.IsEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
 	}
 
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, s.features.IsEnabled(featuremgmt.FlagLokiRunQueriesInParallel))
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
 }
 
-func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, requestStructuredMetadata)
 
 	start := time.Now()
 	queries, err := parseQuery(req)

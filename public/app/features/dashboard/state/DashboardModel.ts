@@ -18,7 +18,7 @@ import {
   UrlQueryValue,
 } from '@grafana/data';
 import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { Dashboard, DashboardLink } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -55,20 +55,6 @@ export interface CloneOptions {
 }
 
 export type DashboardLinkType = 'link' | 'dashboards';
-
-export interface DashboardLink {
-  icon: string;
-  title: string;
-  tooltip: string;
-  type: DashboardLinkType;
-  url: string;
-  asDropdown: boolean;
-  tags: any[];
-  searchHits?: any[];
-  targetBlank: boolean;
-  keepTime: boolean;
-  includeVars: boolean;
-}
 
 export class DashboardModel implements TimeModel {
   /** @deprecated use UID */
@@ -171,7 +157,7 @@ export class DashboardModel implements TimeModel {
     this.version = data.version ?? 0;
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
-    this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
+    this.panels = map(data.panels ?? [], (panelData) => new PanelModel(panelData));
     // Deep clone original dashboard to avoid mutations by object reference
     this.originalDashboard = cloneDeep(data);
     this.originalTemplating = cloneDeep(this.templating);
@@ -345,7 +331,7 @@ export class DashboardModel implements TimeModel {
 
         return panel.getSaveModel();
       })
-      .map((model: any) => {
+      .map((model) => {
         if (this.isSnapshotTruthy()) {
           return model;
         }
