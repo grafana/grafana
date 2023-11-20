@@ -175,7 +175,7 @@ const FlameGraphContainer = ({
             <FlameGraphTopTableContainer
               data={dataContainer}
               onSymbolClick={onSymbolClick}
-              height={selectedView === SelectedView.TopTable ? 600 : undefined}
+              height={(selectedView === SelectedView.TopTable || vertical) ? 600 : undefined}
               search={search}
               sandwichItem={sandwichItem}
               onSandwich={setSandwichItem}
@@ -241,6 +241,7 @@ function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
       display: 'flex',
       flexGrow: 1,
       minHeight: 0,
+      height: vertical ? undefined : '100vh',
       flexDirection: vertical ? 'column-reverse' : 'row',
       columnGap: theme.spacing(1),
     }),
