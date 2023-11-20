@@ -6,6 +6,7 @@ import { EditorField } from '@grafana/experimental';
 import { InlineField, Select } from '@grafana/ui';
 
 import { VariableQueryType } from '../../types';
+import { removeMarginBottom } from '../styles';
 
 const LABEL_WIDTH = 20;
 
@@ -31,7 +32,7 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
   newFormStylingEnabled,
 }: VariableQueryFieldProps<T>) => {
   return newFormStylingEnabled ? (
-    <EditorField label={label} htmlFor={inputId} className={css({ marginBottom: 8 })}>
+    <EditorField label={label} htmlFor={inputId} className={removeMarginBottom}>
       <Select
         aria-label={label}
         allowCustomValue={allowCustomValue}

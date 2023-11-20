@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 
 import { EditorField } from '@grafana/experimental';
 import { InlineField, Input, PopoverContent } from '@grafana/ui';
+import { removeMarginBottom } from '../styles';
 
 const LABEL_WIDTH = 20;
 
@@ -27,7 +28,7 @@ export const VariableTextField = ({
 }: Props) => {
   const [localValue, setLocalValue] = useState(value);
   return newFormStylingEnabled ? (
-    <EditorField label={label} tooltip={tooltip} tooltipInteractive={interactive} className={css({ marginBottom: 8 })}>
+    <EditorField label={label} tooltip={tooltip} tooltipInteractive={interactive} className={removeMarginBottom}>
       <Input
         aria-label={label}
         placeholder={placeholder}

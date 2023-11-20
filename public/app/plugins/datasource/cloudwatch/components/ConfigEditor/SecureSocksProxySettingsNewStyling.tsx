@@ -23,7 +23,7 @@ export function SecureSocksProxySettingsNewStyling<T extends SecureSocksProxyCon
           onChange={(event) =>
             onOptionsChange({
               ...options,
-              jsonData: { ...options.jsonData, enableSecureSocksProxy: event!.currentTarget.checked },
+              jsonData: { ...options.jsonData, enableSecureSocksProxy: event.currentTarget.checked },
             })
           }
         />
