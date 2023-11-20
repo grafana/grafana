@@ -3,16 +3,13 @@ import React from 'react';
 import { AnyAction } from 'redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Field, Icon, LoadingPlaceholder, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { INTEGRATION_ICONS } from 'app/features/alerting/unified/types/contact-points';
+import { Alert, Field, LoadingPlaceholder, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
-import { extractReceivers } from 'app/features/alerting/unified/utils/receivers';
 
+import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints.v2';
 import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
-import { ReceiverMetadataBadge } from '../../../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
 
 import { selectContactPoint } from './SimplifiedRouting';
-import { useReceiversMetadataMapByName } from './useReceiverMetadataByName';
 
 export interface ContactPointSelectorProps {
   alertManager: AlertManagerDataSource;
@@ -25,9 +22,7 @@ export function ContactPointSelector({ selectedReceiver, alertManager, dispatch 
     dispatch(selectContactPoint({ receiver: value?.value, alertManager }));
   };
   const { isLoading, error, contactPoints: receivers } = useContactPointsWithStatus();
-  const receiversMetadata = useReceiversMetadataMapByName(receivers);
   const options = receivers.map((receiver) => ({ label: receiver.name, value: receiver.name }));
-  const metadataForSelected = selectedReceiver ? receiversMetadata.get(selectedReceiver) : undefined;
 
   if (error) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
@@ -48,37 +43,21 @@ export function ContactPointSelector({ selectedReceiver, alertManager, dispatch 
             value={selectedReceiver}
             getOptionLabel={(option: SelectableValue<string>) => {
               const receiver = option?.value;
-              const receiverMetadata = receiver ? receiversMetadata.get(receiver) : undefined;
               const selectedReceiverData = receivers.find((r) => r.name === receiver);
+              const integrations = selectedReceiverData?.grafana_managed_receiver_configs;
 
-              const integrations = selectedReceiverData && extractReceivers(selectedReceiverData);
               return (
-                <Stack direction="row" gap={1} alignItems="center">
-                  <Text color="primary">{receiver ?? ''}</Text>
-                  {integrations?.map((integration, index) => {
-                    const iconName =
-                      INTEGRATION_ICONS[selectedReceiverData?.grafana_managed_receiver_configs?.[index]?.type ?? ''];
-                    return (
-                      <div key={index}>
-                        <Stack direction="row" alignItems="center" gap={0.5}>
-                          {receiverMetadata ? (
-                            <ReceiverMetadataBadge metadata={receiverMetadata} />
-                          ) : iconName ? (
-                            <Icon name={iconName} />
-                          ) : (
-                            <Text color="secondary">{integration.name}</Text>
-                          )}
-                        </Stack>
-                      </div>
-                    );
-                  })}
+                <Stack direction="column" gap={0}>
+                  <Text color="primary">{selectedReceiverData?.name ?? 'Unknown'}</Text>
+                  <Text color="secondary">
+                    <ContactPointReceiverSummary receivers={integrations ?? []} />
+                  </Text>
                 </Stack>
               );
             }}
           />
         </div>
       </Field>
-      {metadataForSelected && <ReceiverMetadataBadge metadata={metadataForSelected} />}
     </Stack>
   );
 }
