@@ -126,9 +126,6 @@ func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore
 
 			if normalizeIncludePath(i.Path) == path {
 				found = true
-				if i.Role == "" || c.HasRole(i.Role) {
-					allowed = true
-				}
 
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
 				if useRBAC && !hasAccess(ac.EvalPermission(i.Action)) {
