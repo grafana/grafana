@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { EditorField } from '@grafana/experimental';
 import { InlineField, Input, PopoverContent } from '@grafana/ui';
+
 import { removeMarginBottom } from '../styles';
 
 const LABEL_WIDTH = 20;
