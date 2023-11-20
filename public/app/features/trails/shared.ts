@@ -23,6 +23,9 @@ export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
 
 export const trailDS = { uid: VAR_DATASOURCE_EXPR };
 
+// Local storage keys
+export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
+
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
 export function getVariablesWithMetricConstant(metric: string) {
@@ -43,4 +46,8 @@ export class MetricSelectedEvent extends BusEventWithPayload<string> {
 
 export class OpenEmbeddedTrailEvent extends BusEventBase {
   public static type = 'open-embedded-trail-event';
+}
+
+export class NewStepTrailEvent extends BusEventBase {
+  public static type = 'new-step-trail-event';
 }

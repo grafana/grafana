@@ -84,7 +84,6 @@ export function getDataTrailsApp() {
     dataTrailsApp = new DataTrailsApp({
       trail: newMetricsTrail(),
       home: new DataTrailsHome({
-        recent: [],
         bookmarks: [],
       }),
     });

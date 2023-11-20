@@ -81,6 +81,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   public goBackToStep(step: DataTrailHistoryStep) {
+    console.log('goBackToStep', step);
     if (!this.state.embedded) {
       getUrlSyncManager().cleanUp(this);
     }

@@ -6,14 +6,15 @@ import {
   SceneObjectState,
   SceneObjectBase,
   SceneComponentProps,
-  sceneUtils,
   SceneVariableValueChangedEvent,
   SceneObjectStateChangedEvent,
   SceneTimeRange,
+  sceneUtils,
 } from '@grafana/scenes';
 import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
 import { DataTrail, DataTrailState } from './DataTrail';
+import { getLocalStorageSyncManager } from './LocalStorageSyncManager';
 import { VAR_FILTERS } from './shared';
 import { getTrailFor } from './utils';
 
@@ -80,6 +81,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         },
       ],
     });
+    getLocalStorageSyncManager().setRecentTrail(trail);
   }
 
   renderStepTooltip(step: DataTrailHistoryStep) {
