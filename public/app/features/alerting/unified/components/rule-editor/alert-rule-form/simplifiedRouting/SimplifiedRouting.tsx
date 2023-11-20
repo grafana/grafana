@@ -44,7 +44,6 @@ export function SimplifiedRouting() {
   const contactPointsInAlert = getValues('contactPoints');
 
   const alertManagerMetaData = getAlertManagerDataSourcesByPermission('notification');
-  console.log('alertManagerMetaData', alertManagerMetaData);
 
   const alertManagerMetaDataWithConfigAPI = alertManagerMetaData.filter((am) => am.hasConfigurationAPI);
 
