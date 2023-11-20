@@ -252,6 +252,15 @@ func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
 }
 
+func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
+	return func(c *contextmodel.ReqContext) (int64, error) {
+		if cfg.RBACSingleOrganization {
+			return c.GetOrgID(), nil
+		}
+		return GlobalOrgID, nil
+	}
+}
+
 // scopeParams holds the parameters used to fill in scope templates
 type scopeParams struct {
 	OrgID     int64
