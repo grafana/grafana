@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -18,28 +19,31 @@ func TestIntegrationAuthInfoStore(t *testing.T) {
 	}
 
 	sql := db.InitTestDB(t)
-
 	store := ProvideAuthInfoStore(sql, secretstest.NewFakeSecretsService(), nil)
 
 	t.Run("should remove duplicates on update", func(t *testing.T) {
+		ctx := context.Background()
 		setCmd := &login.SetAuthInfoCommand{
 			AuthModule: login.GenericOAuthModule,
 			AuthId:     "1",
 			UserId:     1,
-			OAuthToken: &oauth2.Token{},
 		}
 
-		require.NoError(t, store.SetAuthInfo(context.Background(), setCmd))
-		require.NoError(t, store.SetAuthInfo(context.Background(), setCmd))
+		require.NoError(t, store.SetAuthInfo(ctx, setCmd))
+		require.NoError(t, store.SetAuthInfo(ctx, setCmd))
 
 		count := countEntries(t, sql, setCmd.AuthModule, setCmd.AuthId, setCmd.UserId)
 		require.Equal(t, 2, count)
 
-		err := store.UpdateAuthInfo(context.Background(), &login.UpdateAuthInfoCommand{
+		err := store.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
 			AuthModule: setCmd.AuthModule,
 			AuthId:     setCmd.AuthId,
 			UserId:     setCmd.UserId,
-			OAuthToken: &oauth2.Token{},
+			OAuthToken: &oauth2.Token{
+				AccessToken:  "atoken",
+				RefreshToken: "rtoken",
+				Expiry:       time.Now(),
+			},
 		})
 		require.NoError(t, err)
 
