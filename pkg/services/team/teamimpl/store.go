@@ -337,18 +337,19 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 	return queryResult, nil
 }
 
-// GetIDsByUser is used by the Guardian when checking a users' permissions
+// GetIDsByUser returns a list of team IDs for the given user
 func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
 	queryResult := make([]int64, 0)
+
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(`SELECT tm.team_id
 FROM team_member as tm
 WHERE tm.user_id=? AND tm.org_id=?;`, query.UserID, query.OrgID).Find(&queryResult)
 	})
-
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get team IDs by user: %w", err)
 	}
+
 	return queryResult, nil
 }
 
