@@ -9,7 +9,7 @@ import { useSelector } from 'app/types';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { AnnotationsEditView } from './AnnotationsEditView';
-import { GeneralSettings } from './GeneralSettings';
+import { GeneralSettingsEditView } from './GeneralSettings';
 import { VariablesEditView } from './VariablesEditView';
 
 export interface DashboardEditView extends SceneObject {
@@ -55,6 +55,6 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
       return new VariablesEditView({});
     case 'settings':
     default:
-      return new GeneralSettings({});
+      return new GeneralSettingsEditView({});
   }
 }

@@ -7,16 +7,19 @@ import { Page } from 'app/core/components/Page/Page';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardEditView, useDashboardEditPageNav } from './DashboardEditView';
+import { DashboardEditView, useDashboardEditPageNav } from './utils';
 
-export interface GeneralSettingsState extends SceneObjectState {}
+export interface GeneralSettingsEditViewState extends SceneObjectState {}
 
-export class GeneralSettings extends SceneObjectBase<GeneralSettingsState> implements DashboardEditView {
+export class GeneralSettingsEditView
+  extends SceneObjectBase<GeneralSettingsEditViewState>
+  implements DashboardEditView
+{
   public getUrlKey(): string {
     return 'settings';
   }
 
-  static Component = ({ model }: SceneComponentProps<GeneralSettings>) => {
+  static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const dashboard = getDashboardSceneFor(model);
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
 

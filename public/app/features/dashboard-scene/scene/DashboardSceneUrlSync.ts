@@ -6,7 +6,7 @@ import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
-import { createDashboardEditViewFor } from '../settings/DashboardEditView';
+import { createDashboardEditViewFor } from '../settings/utils';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';

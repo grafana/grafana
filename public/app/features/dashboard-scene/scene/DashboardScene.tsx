@@ -25,7 +25,7 @@ import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
-import { DashboardEditView } from '../settings/DashboardEditView';
+import { DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
