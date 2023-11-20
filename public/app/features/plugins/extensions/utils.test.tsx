@@ -6,7 +6,14 @@ import { type PluginExtensionLinkConfig, PluginExtensionTypes, dateTime, usePlug
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn, getReadOnlyProxy, getEventHelpers } from './utils';
+import {
+  deepFreeze,
+  isPluginExtensionLinkConfig,
+  handleErrorsInFn,
+  getReadOnlyProxy,
+  getEventHelpers,
+  wrapWithPluginContext,
+} from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   ...jest.requireActual('app/features/plugins/pluginSettings'),
@@ -434,6 +441,28 @@ describe('Plugin Extensions / Utils', () => {
         const { context } = getEventHelpers(pluginId, source);
         expect(context).toBe(source);
       });
+    });
+  });
+
+  describe('wrapExtensionComponentWithContext()', () => {
+    const ExampleComponent = () => {
+      const { meta } = usePluginContext();
+
+      return (
+        <div>
+          <h1>Hello Grafana!</h1> Version: {meta.info.version}
+        </div>
+      );
+    };
+
+    it('should make the plugin context available for the wrapped component', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent);
+
+      render(<Component />);
+
+      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
+      expect(screen.getByText('Version: 1.0.0')).toBeVisible();
     });
   });
 });
