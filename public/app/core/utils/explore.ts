@@ -61,7 +61,7 @@ export function generateExploreId() {
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
-  const { queries, dsRef, timeRange, scopedVars } = args;
+  const { queries, dsRef, timeRange, scopedVars, adhocFilters } = args;
   const interpolatedQueries = (
     await Promise.allSettled(
       queries
@@ -74,7 +74,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
 
           return {
             // interpolate the query using its datasource `interpolateVariablesInQueries` method if defined, othewise return the query as-is.
-            ...(queryDs.interpolateVariablesInQueries?.([q], scopedVars ?? {}, args.adhocFilters)[0] || q),
+            ...(queryDs.interpolateVariablesInQueries?.([q], scopedVars ?? {}, adhocFilters)[0] || q),
             // But always set the datasource as it's  required in Explore.
             // NOTE: if for some reason the query has the "mixed" datasource, we omit the property;
             // Upon initialization, Explore use its own logic to determine the datasource.
