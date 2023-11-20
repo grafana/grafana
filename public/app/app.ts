@@ -56,6 +56,7 @@ import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
+import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
@@ -100,7 +101,6 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
-import { setMonacoEnv } from './monacoEnv';
 import { configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabilty with plugins
