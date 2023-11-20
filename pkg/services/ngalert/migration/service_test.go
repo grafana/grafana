@@ -2,10 +2,13 @@ package migration
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
@@ -44,26 +47,23 @@ func TestServiceRevert(t *testing.T) {
 		// Run migration.
 		ctx := context.Background()
 		cfg := &setting.Cfg{
-			ForceMigration: true,
 			UnifiedAlerting: setting.UnifiedAlertingSettings{
 				Enabled: pointer(true),
 			},
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
 
-		err = service.migrationStore.SetMigrated(ctx, false)
+		err = service.migrationStore.SetMigrated(ctx, anyOrg, false)
 		require.NoError(t, err)
 
-		err = service.Run(ctx)
-		require.NoError(t, err)
+		require.NoError(t, service.Run(ctx))
 
 		// Verify migration was run.
-		migrated, err := service.migrationStore.IsMigrated(ctx)
-		require.NoError(t, err)
-		require.Equal(t, true, migrated)
+		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkMigrationStatus(t, ctx, service, 1, true)
 
 		// Currently, we fill in some random data for tables that aren't populated during migration.
-		_, err = x.Table("ngalert_configuration").Insert(models.AdminConfiguration{})
+		_, err = x.Table("ngalert_configuration").Insert(models.AdminConfiguration{OrgID: 1})
 		require.NoError(t, err)
 		_, err = x.Table("alert_instance").Insert(models.AlertInstance{
 			AlertInstanceKey: models.AlertInstanceKey{
@@ -79,34 +79,32 @@ func TestServiceRevert(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify various UA resources exist
-		tables := []string{
-			"alert_rule",
-			"alert_rule_version",
-			"alert_configuration",
-			"ngalert_configuration",
-			"alert_instance",
+		tables := [][2]string{
+			{"alert_rule", "org_id"},
+			{"alert_rule_version", "rule_org_id"},
+			{"alert_configuration", "org_id"},
+			{"ngalert_configuration", "org_id"},
+			{"alert_instance", "rule_org_id"},
 		}
 		for _, table := range tables {
-			count, err := x.Table(table).Count()
-			require.NoError(t, err)
-			require.True(t, count > 0, "table %s should have at least one row", table)
+			count, err := x.Table(table[0]).Where(fmt.Sprintf("%s=?", table[1]), 1).Count()
+			require.NoErrorf(t, err, "table %s error", table[0])
+			require.True(t, count > 0, "table %s should have at least one row", table[0])
 		}
 
 		// Revert migration.
-		service.cfg.UnifiedAlerting.Enabled = pointer(false)
-		err = service.Run(context.Background())
+		err = service.migrationStore.RevertAllOrgs(context.Background())
 		require.NoError(t, err)
 
 		// Verify revert was run.
-		migrated, err = service.migrationStore.IsMigrated(ctx)
-		require.NoError(t, err)
-		require.Equal(t, false, migrated)
+		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkMigrationStatus(t, ctx, service, 1, false)
 
 		// Verify various UA resources are gone
 		for _, table := range tables {
-			count, err := x.Table(table).Count()
-			require.NoError(t, err)
-			require.Equal(t, int64(0), count, "table %s should have no rows", table)
+			count, err := x.Table(table[0]).Where(fmt.Sprintf("%s=?", table[1]), 1).Count()
+			require.NoErrorf(t, err, "table %s error", table[0])
+			require.Equal(t, int64(0), count, "table %s should have no rows", table[0])
 		}
 	})
 
@@ -125,23 +123,20 @@ func TestServiceRevert(t *testing.T) {
 		// Run migration.
 		ctx := context.Background()
 		cfg := &setting.Cfg{
-			ForceMigration: true,
 			UnifiedAlerting: setting.UnifiedAlertingSettings{
 				Enabled: pointer(true),
 			},
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
 
-		err = service.migrationStore.SetMigrated(ctx, false)
+		err = service.migrationStore.SetMigrated(ctx, anyOrg, false)
 		require.NoError(t, err)
 
-		err = service.Run(ctx)
-		require.NoError(t, err)
+		require.NoError(t, service.Run(ctx))
 
 		// Verify migration was run.
-		migrated, err := service.migrationStore.IsMigrated(ctx)
-		require.NoError(t, err)
-		require.Equal(t, true, migrated)
+		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkMigrationStatus(t, ctx, service, 1, true)
 
 		// Verify we created some folders.
 		newDashCount, err := x.Table("dashboard").Count(&dashboards.Dashboard{})
@@ -163,14 +158,12 @@ func TestServiceRevert(t *testing.T) {
 		}
 
 		// Revert migration.
-		service.cfg.UnifiedAlerting.Enabled = pointer(false)
-		err = service.Run(context.Background())
+		err = service.migrationStore.RevertAllOrgs(context.Background())
 		require.NoError(t, err)
 
-		// Verify revert was run.
-		migrated, err = service.migrationStore.IsMigrated(ctx)
-		require.NoError(t, err)
-		require.Equal(t, false, migrated)
+		// Verify revert was run. Should only set migration status for org.
+		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkMigrationStatus(t, ctx, service, 1, false)
 
 		// Verify we are back to the original count.
 		newDashCount, err = x.Table("dashboard").Count(&dashboards.Dashboard{})
@@ -210,19 +203,17 @@ func TestServiceRevert(t *testing.T) {
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
 
-		err = service.migrationStore.SetMigrated(ctx, false)
+		err = service.migrationStore.SetMigrated(ctx, anyOrg, false)
 		require.NoError(t, err)
 
-		err = service.Run(ctx)
-		require.NoError(t, err)
+		require.NoError(t, service.Run(ctx))
 
 		// Verify migration was run.
-		migrated, err := service.migrationStore.IsMigrated(ctx)
-		require.NoError(t, err)
-		require.Equal(t, true, migrated)
+		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkMigrationStatus(t, ctx, service, 1, true)
 
 		// Verify we created some folders.
-		newDashCount, err := x.Table("dashboard").Count(&dashboards.Dashboard{})
+		newDashCount, err := x.Table("dashboard").Count(&dashboards.Dashboard{OrgID: 1})
 		require.NoError(t, err)
 		require.Truef(t, newDashCount > dashCount, "newDashCount: %d should be greater than dashCount: %d", newDashCount, dashCount)
 
@@ -257,17 +248,15 @@ func TestServiceRevert(t *testing.T) {
 		require.NotNil(t, newF)
 
 		// Revert migration.
-		service.cfg.UnifiedAlerting.Enabled = pointer(false)
-		err = service.Run(ctx)
+		err = service.migrationStore.RevertAllOrgs(context.Background())
 		require.NoError(t, err)
 
-		// Verify revert was run.
-		migrated, err = service.migrationStore.IsMigrated(ctx)
-		require.NoError(t, err)
-		require.Equal(t, false, migrated)
+		// Verify revert was run. Should only set migration status for org.
+		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkMigrationStatus(t, ctx, service, 1, false)
 
 		// Verify we are back to the original count + 2.
-		newDashCount, err = x.Table("dashboard").Count(&dashboards.Dashboard{})
+		newDashCount, err = x.Table("dashboard").Count(&dashboards.Dashboard{OrgID: 1})
 		require.NoError(t, err)
 		require.Equalf(t, dashCount+2, newDashCount, "newDashCount: %d should be equal to dashCount + 2: %d after revert", newDashCount, dashCount)
 
@@ -289,4 +278,70 @@ func TestServiceRevert(t *testing.T) {
 			require.Nil(t, getDashboard(t, x, 1, uid))
 		}
 	})
+
+	t.Run("ForceMigration story", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		x := sqlStore.GetEngine()
+
+		setupLegacyAlertsTables(t, x, channels, alerts, folders, dashes)
+
+		ctx := context.Background()
+		cfg := &setting.Cfg{
+			UnifiedAlerting: setting.UnifiedAlertingSettings{
+				Enabled: pointer(true),
+			},
+		}
+		service := NewTestMigrationService(t, sqlStore, cfg)
+		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkMigrationStatus(t, ctx, service, 1, false)
+		checkAlertRulesCount(t, x, 1, 0)
+
+		// Enable UA.
+		// First run should migrate org.
+		require.NoError(t, service.Run(ctx))
+		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkMigrationStatus(t, ctx, service, 1, true)
+		checkAlertRulesCount(t, x, 1, 1)
+
+		// Disable UA without ForceMigration.
+		// This run should throw an error.
+		service.cfg.UnifiedAlerting.Enabled = pointer(false)
+		require.ErrorContains(t, service.Run(ctx), ForceMigrationError.Error())
+		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkMigrationStatus(t, ctx, service, 1, true)
+		checkAlertRulesCount(t, x, 1, 1)
+
+		// Disable UA with force flag.
+		// This run should not revert UA data.
+		service.cfg.UnifiedAlerting.Enabled = pointer(false)
+		service.cfg.ForceMigration = true
+		require.NoError(t, service.Run(ctx))
+		checkMigrationStatus(t, ctx, service, anyOrg, false)
+		checkMigrationStatus(t, ctx, service, 1, false)
+		checkAlertRulesCount(t, x, 1, 0) // Alerts are gone.
+
+		// Add another alert.
+		_, alertErr := x.Insert(createAlert(t, 1, 1, 2, "alert2", []string{"notifier1"}))
+		require.NoError(t, alertErr)
+
+		// Enable UA.
+		// This run should remigrate org, new alert is migrated.
+		service.cfg.UnifiedAlerting.Enabled = pointer(true)
+		require.NoError(t, service.Run(ctx))
+		checkMigrationStatus(t, ctx, service, anyOrg, true)
+		checkMigrationStatus(t, ctx, service, 1, true)
+		checkAlertRulesCount(t, x, 1, 2) // Now we have 2
+	})
+}
+
+func checkMigrationStatus(t *testing.T, ctx context.Context, service *migrationService, orgID int64, expected bool) {
+	migrated, err := service.migrationStore.IsMigrated(ctx, orgID)
+	require.NoError(t, err)
+	require.Equal(t, expected, migrated)
+}
+
+func checkAlertRulesCount(t *testing.T, x *xorm.Engine, orgID int64, count int) {
+	cnt, err := x.Table("alert_rule").Where("org_id=?", orgID).Count()
+	require.NoError(t, err, "table alert_rule error")
+	require.Equal(t, int(cnt), count, "table alert_rule should have no rows")
 }

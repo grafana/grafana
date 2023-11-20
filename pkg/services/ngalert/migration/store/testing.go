@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -36,7 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *migrationStore {
+func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *migrationStore {
 	if cfg.UnifiedAlerting.BaseInterval == 0 {
 		cfg.UnifiedAlerting.BaseInterval = time.Second * 10
 	}
@@ -45,6 +45,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 	alertingStore := store.DBstore{
 		SQLStore: sqlStore,
 		Cfg:      cfg.UnifiedAlerting,
+		Logger:   &logtest.Fake{},
 	}
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
@@ -90,7 +91,7 @@ func NewTestMigrationStore(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setti
 		log:                            &logtest.Fake{},
 		cfg:                            cfg,
 		store:                          sqlStore,
-		kv:                             fakes.NewFakeKVStore(t),
+		kv:                             kvstore.ProvideService(sqlStore),
 		alertingStore:                  &alertingStore,
 		dashboardService:               dashboardService,
 		folderService:                  folderService,

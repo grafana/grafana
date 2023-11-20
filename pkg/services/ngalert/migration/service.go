@@ -16,6 +16,8 @@ import (
 // actionName is the unique row-level lock name for serverlock.ServerLockService.
 const actionName = "alerting migration"
 
+const anyOrg = 0
+
 //nolint:stylecheck
 var ForceMigrationError = fmt.Errorf("Grafana has already been migrated to Unified Alerting. Any alert rules created while using Unified Alerting will be deleted by rolling back. Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
 
@@ -58,7 +60,7 @@ func (ms *migrationService) Run(ctx context.Context) error {
 	errLock := ms.lock.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(ctx context.Context) {
 		ms.log.Info("Starting")
 		errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
-			migrated, err := ms.migrationStore.IsMigrated(ctx)
+			migrated, err := ms.migrationStore.IsMigrated(ctx, anyOrg)
 			if err != nil {
 				return fmt.Errorf("getting migration status: %w", err)
 			}
@@ -95,7 +97,7 @@ func (ms *migrationService) Run(ctx context.Context) error {
 				return fmt.Errorf("executing migration: %w", err)
 			}
 
-			err = ms.migrationStore.SetMigrated(ctx, true)
+			err = ms.migrationStore.SetMigrated(ctx, anyOrg, true)
 			if err != nil {
 				return fmt.Errorf("setting migration status: %w", err)
 			}
@@ -123,6 +125,15 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 
 	for _, o := range orgs {
 		om := ms.newOrgMigration(o.ID)
+		migrated, err := ms.migrationStore.IsMigrated(ctx, o.ID)
+		if err != nil {
+			return fmt.Errorf("getting migration status for org %d: %w", o.ID, err)
+		}
+		if migrated {
+			om.log.Info("Org already migrated, skipping")
+			continue
+		}
+
 		if err := om.migrateOrg(ctx); err != nil {
 			return fmt.Errorf("migrate org %d: %w", o.ID, err)
 		}
@@ -130,6 +141,11 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 		err = om.migrationStore.SetOrgMigrationState(ctx, o.ID, om.state)
 		if err != nil {
 			return fmt.Errorf("set org migration state: %w", err)
+		}
+
+		err = ms.migrationStore.SetMigrated(ctx, o.ID, true)
+		if err != nil {
+			return fmt.Errorf("setting migration status: %w", err)
 		}
 	}
 	return nil

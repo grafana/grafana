@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -99,7 +100,7 @@ func TestServiceStart(t *testing.T) {
 			ctx := context.Background()
 			service := NewTestMigrationService(t, sqlStore, tt.config)
 
-			err := service.migrationStore.SetMigrated(ctx, tt.isMigrationRun)
+			err := service.migrationStore.SetMigrated(ctx, anyOrg, tt.isMigrationRun)
 			require.NoError(t, err)
 
 			err = service.Run(ctx)
@@ -109,7 +110,7 @@ func TestServiceStart(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			migrated, err := service.migrationStore.IsMigrated(ctx)
+			migrated, err := service.migrationStore.IsMigrated(ctx, anyOrg)
 			require.NoError(t, err)
 			require.Equal(t, tt.expected, migrated)
 		})
