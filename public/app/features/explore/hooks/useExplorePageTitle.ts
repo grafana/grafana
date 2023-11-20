@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react';
 import { NavModel } from '@grafana/data';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { safeParseJson } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ExploreQueryParams } from 'app/types';
 
@@ -19,8 +18,19 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
       return;
     }
 
+    let panesObject: unknown;
+    try {
+      panesObject = JSON.parse(params.panes);
+    } catch {
+      return;
+    }
+
+    if (typeof panesObject !== 'object' || panesObject === null) {
+      return;
+    }
+
     Promise.allSettled(
-      Object.values(safeParseJson(params.panes)).map((pane) => {
+      Object.values(panesObject).map((pane) => {
         if (
           !pane ||
           typeof pane !== 'object' ||
