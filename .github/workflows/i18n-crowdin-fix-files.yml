@@ -41,13 +41,13 @@ jobs:
         run: yarn i18n:extract
 
       - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@8756aa072ef5b4a080af5dc8fef36c5d586e521d # v5.0.0
         with:
           commit_message: "Github Action: Auto-fix i18n files"
           file_pattern: public/locales/*/grafana.json
 
       - name: Update PR description
-        uses: devindford/Append_PR_Comment@v1.1.2
+        uses: devindford/Append_PR_Comment@32dd2619cd96ac8da9907c416c992fe265233ca8 # v1.1.3
         if: ${{ ! contains(github.event.pull_request.body, 'Steps for merging') }}
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
