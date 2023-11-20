@@ -32,8 +32,11 @@ type Mimir struct {
 }
 
 type Config struct {
-	Address string
-	Logger  log.Logger
+	Address  string
+	TenantID string
+	Password string
+
+	Logger log.Logger
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -63,7 +66,15 @@ func New(cfg *Config) (*Mimir, error) {
 		return nil, err
 	}
 
-	c := http.Client{}
+	rt := &MimirAuthRoundTripper{
+		TenantID: cfg.TenantID,
+		Password: cfg.Password,
+		Next:     http.DefaultTransport,
+	}
+
+	c := http.Client{
+		Transport: rt,
+	}
 
 	return &Mimir{
 		endpoint: endpoint,
@@ -133,7 +144,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 		if jsonErr == nil && errResponse.Error() != "" {
 			msg := "error response from the Mimir API"
 			logger.Error(msg, "err", errResponse)
-			return nil, fmt.Errorf("%s: %w", msg, errResponse)
+			return nil, fmt.Errorf("%s: %w", msg, &errResponse)
 		}
 
 		msg := "failed to decode non-2xx JSON response"
