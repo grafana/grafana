@@ -155,7 +155,6 @@ export function FolderAndGroup({
             }
             className={styles.formInput}
             error={errors.folder?.message}
-            invalid={!!errors.folder?.message}
             data-testid="folder-picker"
           >
             <Stack direction="row" alignItems="center">
@@ -166,6 +165,7 @@ export function FolderAndGroup({
                       <div style={{ width: 420 }}>
                         <RuleFolderPicker
                           inputId="folder"
+                          invalid={!!errors.folder?.message}
                           {...field}
                           enableReset={true}
                           onChange={({ title, uid }) => {
