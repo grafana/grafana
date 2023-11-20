@@ -1,6 +1,6 @@
 import { DataFrame, Field, FieldType, formattedValueToString, getFieldDisplayName } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DisplayValue } from 'app/features/visualization/data-hover/DataHoverView';
+import { DisplayValue, getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from '../fields';
 
@@ -71,48 +71,18 @@ export const formatMilliseconds = (milliseconds: number) => {
   return `${value} ${unitString}`;
 };
 
-// logic from DataHoverView
 const parseSparseData = (data?: DataFrame, rowIndex?: number | null, columnIndex?: number | null) => {
   if (!data || rowIndex == null) {
-    return null;
+    return [];
   }
 
-  const fields = data.fields.map((f, idx) => {
-    return { ...f, hovered: idx === columnIndex };
-  });
+  const dispValuesAndLinks = getDisplayValuesAndLinks(data, rowIndex, columnIndex);
 
-  const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
-  const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
-  const orderedVisibleFields = [];
-  // Only include traceID if it's visible and put it in front.
-  if (visibleFields.filter((field) => traceIDField === field).length > 0) {
-    orderedVisibleFields.push(traceIDField);
-  }
-  orderedVisibleFields.push(...visibleFields.filter((field) => traceIDField !== field));
-
-  if (orderedVisibleFields.length === 0) {
-    return null;
+  if (dispValuesAndLinks == null) {
+    return [];
   }
 
-  const displayValues: DisplayValue[] = [];
-
-  for (const field of orderedVisibleFields) {
-    const value = field.values[rowIndex];
-    const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
-
-    // Sanitize field by removing hovered property to fix unique display name issue
-    const { hovered, ...sanitizedField } = field;
-
-    displayValues.push({
-      name: getFieldDisplayName(sanitizedField, data),
-      fieldName: sanitizedField.name,
-      value,
-      valueString: formattedValueToString(fieldDisplay),
-      highlight: field.hovered,
-    });
-  }
-
-  return displayValues;
+  return dispValuesAndLinks.displayValues;
 };
 
 const getInterval = (fieldValues: any[]) => {

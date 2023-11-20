@@ -32,15 +32,17 @@ export interface DisplayValue {
   highlight: boolean;
 }
 
-export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header, padding = 0 }: Props) => {
-  const styles = useStyles2(getStyles, padding);
-
-  if (!data || rowIndex == null) {
-    return null;
-  }
+export function getDisplayValuesAndLinks(
+  data: DataFrame,
+  rowIndex: number,
+  columnIndex?: number | null,
+  sortOrder?: SortOrder,
+  mode?: TooltipDisplayMode | null
+) {
   const fields = data.fields.map((f, idx) => {
     return { ...f, hovered: idx === columnIndex };
   });
+
   const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
   const orderedVisibleFields = [];
@@ -90,6 +92,24 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   if (sortOrder && sortOrder !== SortOrder.None) {
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
   }
+
+  return { displayValues, links };
+}
+
+export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header, padding = 0 }: Props) => {
+  const styles = useStyles2(getStyles, padding);
+
+  if (!data || rowIndex == null) {
+    return null;
+  }
+
+  const dispValuesAndLinks = getDisplayValuesAndLinks(data, rowIndex, columnIndex, sortOrder, mode);
+
+  if (dispValuesAndLinks == null) {
+    return null;
+  }
+
+  const { displayValues, links } = dispValuesAndLinks;
 
   return (
     <div className={styles.wrapper}>
