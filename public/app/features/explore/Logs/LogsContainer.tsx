@@ -77,16 +77,16 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   };
 
   componentDidMount() {
-    this.checkDataSourcesFeatures();
+    this.updateDataSourceInstances();
   }
 
   componentDidUpdate(prevProps: LogsContainerProps) {
     if (prevProps.logsQueries !== this.props.logsQueries) {
-      this.checkDataSourcesFeatures();
+      this.updateDataSourceInstances();
     }
   }
 
-  private checkDataSourcesFeatures() {
+  private updateDataSourceInstances() {
     const { logsQueries, datasourceInstance } = this.props;
     if (!logsQueries || !datasourceInstance) {
       return;
