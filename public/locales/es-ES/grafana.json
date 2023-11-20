@@ -3,40 +3,40 @@
   "access-control": {
     "add-permission": {
       "role-label": "Rol",
-      "serviceaccount-label": "",
-      "team-label": "",
-      "title": "",
-      "user-label": ""
+      "serviceaccount-label": "Cuenta de servicio",
+      "team-label": "Equipo",
+      "title": "Añadir permiso para",
+      "user-label": "Usuario"
     },
     "add-permissions": {
       "save": "Guardar"
     },
     "permission-list": {
-      "permission": ""
+      "permission": "Permiso"
     },
     "permissions": {
-      "add-label": "",
-      "no-permissions": "",
+      "add-label": "Añadir un permiso",
+      "no-permissions": "No hay ningún permiso",
       "permissions-change-warning": "",
       "role": "Rol",
-      "serviceaccount": "",
-      "team": "",
-      "title": "",
-      "user": ""
+      "serviceaccount": "Cuenta de servicio",
+      "team": "Equipo",
+      "title": "Permisos",
+      "user": "Usuario"
     }
   },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancelar",
-      "cannot-move-folders": "",
-      "delete-button": "",
-      "delete-modal-invalid-text": "",
-      "delete-modal-invalid-title": "",
-      "delete-modal-text": "",
-      "delete-modal-title": "",
-      "deleting": "",
-      "manage-permissions-button": "",
-      "move-button": "",
+      "cannot-move-folders": "Las carpetas no se pueden mover",
+      "delete-button": "Eliminar",
+      "delete-modal-invalid-text": "Una o más carpetas contienen paneles de la biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
+      "delete-modal-invalid-title": "No se puede eliminar la carpeta",
+      "delete-modal-text": "Esta acción eliminará el siguiente contenido:",
+      "delete-modal-title": "Eliminar",
+      "deleting": "Eliminando...",
+      "manage-permissions-button": "Administrar permisos",
+      "move-button": "Mover",
       "move-modal-alert": "",
       "move-modal-field-label": "",
       "move-modal-text": "",
@@ -46,19 +46,14 @@
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
-      "alertRule_many": "",
       "alertRule_other": "{{count}} reglas de alerta",
       "dashboard_one": "{{count}} panel de control",
-      "dashboard_many": "",
       "dashboard_other": "{{count}} paneles de control",
       "folder_one": "{{count}} carpeta",
-      "folder_many": "",
       "folder_other": "{{count}} carpetas",
       "libraryPanel_one": "{{count}} panel de librería",
-      "libraryPanel_many": "",
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
-      "total_many": "",
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
@@ -635,16 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "",
-      "body_many": "",
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_one": "",
+      "body_other": ""
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
