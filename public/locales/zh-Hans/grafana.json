@@ -39,55 +39,55 @@
       "move-button": "移动",
       "move-modal-alert": "移动此项目可能会改变其权限。",
       "move-modal-field-label": "文件夹名称",
-      "move-modal-text": "",
-      "move-modal-title": "",
-      "moving": "",
-      "new-folder-name-required-phrase": ""
+      "move-modal-text": "此操作将移动以下内容：",
+      "move-modal-title": "移动",
+      "moving": "正在移动...",
+      "new-folder-name-required-phrase": "文件夹名称是必需项。"
     },
     "counts": {
-      "alertRule_other": "",
-      "dashboard_other": "",
-      "folder_other": "",
-      "libraryPanel_other": "",
-      "total_other": ""
+      "alertRule_other": "{{count}} 条警告规则",
+      "dashboard_other": "{{count}} 个仪表板",
+      "folder_other": "{{count}} 个文件夹",
+      "libraryPanel_other": "{{count}} 个库面板",
+      "total_other": "{{count}} 个项目"
     },
     "dashboards-tree": {
-      "collapse-folder-button": "",
-      "expand-folder-button": "",
+      "collapse-folder-button": "折叠文件夹 {{title}}",
+      "expand-folder-button": "展开文件夹 {{title}}",
       "name-column": "名称",
-      "select-all-header-checkbox": "",
-      "select-checkbox": "",
+      "select-all-header-checkbox": "全选",
+      "select-checkbox": "选择",
       "tags-column": "标签"
     },
     "folder-actions-button": {
-      "delete": "",
-      "folder-actions": "",
-      "manage-permissions": "",
-      "move": ""
+      "delete": "删除",
+      "folder-actions": "文件夹操作",
+      "manage-permissions": "管理权限",
+      "move": "移动"
     },
     "folder-picker": {
-      "accessible-label": "",
+      "accessible-label": "选择文件夹：{{ label }} 当前已选择",
       "button-label": "选择文件夹",
-      "empty-message": "",
-      "error-title": "",
-      "search-placeholder": "",
-      "unknown-error": ""
+      "empty-message": "未找到文件夹",
+      "error-title": "加载文件夹时出错",
+      "search-placeholder": "搜索文件夹",
+      "unknown-error": "未知错误"
     },
     "manage-folder-nav": {
       "alert-rules": "警报规则",
       "dashboards": "仪表板",
-      "panels": "",
-      "permissions": "",
+      "panels": "面板",
+      "permissions": "权限",
       "settings": "设置"
     },
     "new-folder-form": {
       "cancel-label": "取消",
       "create-label": "创建",
-      "name-label": ""
+      "name-label": "文件夹名称"
     },
     "no-results": {
-      "clear": "",
-      "text": ""
+      "clear": "清除搜索和筛选条件",
+      "text": "您的查询未找到结果。"
     }
   },
   "clipboard-button": {
@@ -124,14 +124,14 @@
       "category-header-label": "数据源"
     },
     "search": {
-      "placeholder": ""
+      "placeholder": "搜索全部"
     }
   },
   "correlations": {
-    "add-new": "",
+    "add-new": "添加新的",
     "alert": {
-      "error-message": "",
-      "title": ""
+      "error-message": "获取关联数据时发生未知错误。请重试。",
+      "title": "获取关联数据时出错"
     },
     "basic-info-form": {
       "description-description": "",
@@ -195,7 +195,7 @@
       "logfmt-label": "",
       "regex-description": "",
       "regex-expression": "",
-      "regex-label": "",
+      "regex-label": "正则表达式",
       "regex-map-values": ""
     },
     "transform": {
@@ -625,14 +625,14 @@
   },
   "library-panels": {
     "modal": {
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_other": ""
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
