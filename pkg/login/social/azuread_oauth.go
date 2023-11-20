@@ -19,6 +19,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
+var (
+	AzureADDefaultSettings = map[string]string{
+		"use_pkce":          "true",
+		"use_refresh_token": "true",
+		"name":              "Microsoft",
+		"icon":              "microsoft",
+		"enabled":           "false",
+		"allow_sign_up":     "true",
+		"auto_login":        "false",
+		"scopes":            "openid email profile",
+	}
+
+	ExtraAzureADSettingKeys = []string{"force_use_graph_api"}
+)
+
 type SocialAzureAD struct {
 	*SocialBase
 	cache                remotecache.CacheStorage
