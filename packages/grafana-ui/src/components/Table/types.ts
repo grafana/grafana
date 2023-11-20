@@ -96,7 +96,8 @@ export interface Props {
   timeRange?: TimeRange;
   onRowHover?: (idx: number, frame: DataFrame) => void;
   onRowLeave?: () => void;
-  rowTimeValue?: number;
+  /** Used to highlight rows with the given time value. Used with DataHoverEvent */
+  rowHighlightTimeValue?: number;
 }
 
 /**

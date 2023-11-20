@@ -657,4 +657,78 @@ describe('Table', () => {
       expect(subTable.style.height).toBe('108px');
     });
   });
+
+  describe('when data hover events are emitted', () => {
+    it('should highlight the row', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000] },
+          { name: 'val', type: FieldType.number, values: [1, 2, 3, 4] },
+        ],
+      });
+
+      getTestContext({ data: frame, rowHighlightTimeValue: 10000 });
+
+      let rows = within(getTable()).getAllByRole('row');
+
+      // if not set, returns an empty string
+      expect(rows[1].style.backgroundColor).toBeTruthy();
+
+      expect(rows[2].style.backgroundColor).toBeFalsy();
+      expect(rows[3].style.backgroundColor).toBeFalsy();
+      expect(rows[4].style.backgroundColor).toBeFalsy();
+    });
+    it('should highlight all rows that match the time value', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000, 10000, 10000] },
+          { name: 'val', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+        ],
+      });
+
+      getTestContext({ data: frame, rowHighlightTimeValue: 10000 });
+
+      let rows = within(getTable()).getAllByRole('row');
+
+      // if not set, returns an empty string
+      expect(rows[1].style.backgroundColor).toBeTruthy();
+      expect(rows[5].style.backgroundColor).toBeTruthy();
+      expect(rows[6].style.backgroundColor).toBeTruthy();
+
+      expect(rows[2].style.backgroundColor).toBeFalsy();
+      expect(rows[3].style.backgroundColor).toBeFalsy();
+      expect(rows[4].style.backgroundColor).toBeFalsy();
+    });
+    it('should highlight the row with the closest time value', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000] },
+          { name: 'val', type: FieldType.number, values: [1, 2, 3, 4] },
+        ],
+      });
+
+      getTestContext({ data: frame, rowHighlightTimeValue: 9500 });
+
+      let rows = within(getTable()).getAllByRole('row');
+
+      expect(rows[1].style.backgroundColor).toBeTruthy();
+    });
+    it('should not highlight the row if there is no time value around row time value', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000] },
+          { name: 'val', type: FieldType.number, values: [1, 2, 3, 4] },
+        ],
+      });
+
+      getTestContext({ data: frame, rowHighlightTimeValue: 15000 });
+
+      let rows = within(getTable()).getAllByRole('row');
+
+      expect(rows[2].style.backgroundColor).toBeFalsy();
+      expect(rows[2].style.backgroundColor).toBeFalsy();
+      expect(rows[3].style.backgroundColor).toBeFalsy();
+      expect(rows[4].style.backgroundColor).toBeFalsy();
+    });
+  });
 });

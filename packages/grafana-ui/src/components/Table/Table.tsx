@@ -12,7 +12,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { DataFrame, FieldType, ReducerID } from '@grafana/data';
+import { FieldType, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -28,7 +28,14 @@ import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
-import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
+import {
+  getColumns,
+  sortCaseInsensitive,
+  sortNumber,
+  getFooterItems,
+  createFooterCalculationValues,
+  isPointTimeValAroundTableTimeVal,
+} from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
@@ -52,7 +59,7 @@ export const Table = memo((props: Props) => {
     timeRange,
     onRowHover,
     onRowLeave,
-    rowTimeValue
+    rowHighlightTimeValue,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -231,6 +238,18 @@ export const Table = memo((props: Props) => {
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
+  let scrollTop = undefined;
+  if (rowHighlightTimeValue) {
+    const timeFieldIndex = data.fields.findIndex((f) => f.type === FieldType.time);
+    const firstMatchedRowIndex = rows.findIndex((row) =>
+      isPointTimeValAroundTableTimeVal(rowHighlightTimeValue, row.values[timeFieldIndex])
+    );
+
+    if (firstMatchedRowIndex !== -1) {
+      scrollTop = headerHeight + (firstMatchedRowIndex - 1) * tableStyles.rowHeight;
+    }
+  }
+
   useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
@@ -241,27 +260,6 @@ export const Table = memo((props: Props) => {
     [state.pageIndex, state.pageSize]
   );
 
-  const onRowMouseEnter = useCallback((idx: number, frame: DataFrame) => {
-    if (!onRowHover) {
-      return;
-    }
-
-    onRowHover(idx, frame);
-  }, [onRowHover])
-
-  const onRowMouseLeave = useCallback(() => {
-    if (!onRowLeave) {
-      return;
-    }
-
-    onRowLeave();
-  }, [onRowLeave])
-
-  const aroundMilisecond = (n: number, m: number) => {
-    const floored = Math.floor(n);
-    return m - 1000 < floored && floored < m + 1000;
-  }
-
   const RenderRow = useCallback(
     ({ index, style }: { index: number; style: CSSProperties }) => {
       const indexForPagination = rowIndexForPagination(index);
@@ -270,21 +268,22 @@ export const Table = memo((props: Props) => {
       prepareRow(row);
 
       const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
-      let sharedCrosshairStyle = {};
-      // const timeField = data.fields.find((f) => f.type === FieldType.time);
-      // console.log(rowTimeValue, timeField?.values[indexForPagination]);
 
-      if (rowTimeValue) {
-        const timeField = data.fields.find((f) => f.type === FieldType.time);
+      if (rowHighlightTimeValue) {
+        const timeFieldIndex = data.fields.findIndex((f) => f.type === FieldType.time);
 
-        console.log(aroundMilisecond(rowTimeValue, timeField?.values[indexForPagination]));
-        if (aroundMilisecond(rowTimeValue, timeField?.values[indexForPagination])) {
-          sharedCrosshairStyle = css({ '&:hover': { background: 'inherit' } });
+        if (isPointTimeValAroundTableTimeVal(rowHighlightTimeValue, row.values[timeFieldIndex])) {
+          style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
         }
       }
 
       return (
-        <div {...row.getRowProps({ style })} className={cx(tableStyles.row, sharedCrosshairStyle, expandedRowStyle)} onMouseEnter={() => onRowMouseEnter(index, data)} onMouseLeave={onRowMouseLeave}>
+        <div
+          {...row.getRowProps({ style })}
+          className={cx(tableStyles.row, expandedRowStyle)}
+          onMouseEnter={() => (onRowHover ? onRowHover(index, data) : null)}
+          onMouseLeave={() => (onRowLeave ? onRowLeave() : null)}
+        >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {nestedDataField && state.expanded[row.index] && (
             <ExpandedRow
@@ -315,16 +314,17 @@ export const Table = memo((props: Props) => {
       rows,
       prepareRow,
       state.expanded,
+      rowHighlightTimeValue,
       tableStyles,
       nestedDataField,
       width,
       cellHeight,
+      data,
+      theme.components.table.rowHoverBackground,
+      onRowHover,
+      onRowLeave,
       onCellFilterAdded,
       timeRange,
-      data,
-      onRowMouseEnter,
-      onRowMouseLeave,
-      rowTimeValue
     ]
   );
 
@@ -395,7 +395,7 @@ export const Table = memo((props: Props) => {
           )}
           {itemCount > 0 ? (
             <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
-              <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
+              <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
                 <VariableSizeList
                   // This component needs an unmount/remount when row height or page changes
                   key={tableStyles.rowHeight + state.pageIndex}

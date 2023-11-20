@@ -45,6 +45,7 @@ import {
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
+export const POINT_THRESHOLD_MS = 1000;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -536,4 +537,11 @@ export function getAlignmentFactor(
 
 export function hasTimeField(data: DataFrame): boolean {
   return data.fields.some((field) => field.type === FieldType.time);
+}
+
+// since the conversion from timeseries panel crosshair to time is pixel based, we need
+// to set a threshold where the table row highlights when the crosshair is within a certain point
+// because multiple pixels (converted to times) may represent the same point/row in table
+export function isPointTimeValAroundTableTimeVal(pointTime: number, rowTime: number) {
+  return Math.abs(Math.floor(pointTime) - rowTime) < POINT_THRESHOLD_MS;
 }

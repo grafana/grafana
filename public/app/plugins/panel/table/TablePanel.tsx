@@ -1,8 +1,20 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect } from 'react';
-import { throttleTime } from 'rxjs';
+import { Subscription, throttleTime } from 'rxjs';
 
-import { DashboardCursorSync, DataFrame, DataHoverClearEvent, DataHoverEvent, Field, FieldMatcherID, FieldType, getFrameDisplayName, isTimeSeriesFrames, PanelProps, SelectableValue } from '@grafana/data';
+import {
+  DashboardCursorSync,
+  DataFrame,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  Field,
+  FieldMatcherID,
+  FieldType,
+  getFrameDisplayName,
+  isTimeSeriesFrames,
+  PanelProps,
+  SelectableValue,
+} from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
@@ -15,7 +27,7 @@ interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id, timeRange } = props;
-  const [rowTimeValue, setRowTimeValue] = React.useState<number | undefined>(undefined);
+  const [rowHighlightTimeValue, setRowHighlightTimeValue] = React.useState<number | undefined>(undefined);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -30,28 +42,49 @@ export function TablePanel(props: Props) {
   let tableHeight = height;
 
   useEffect(() => {
-    if (!panelContext.sync || panelContext.sync() === DashboardCursorSync.Off || !isTimeSeriesFrames(frames)) {
+    if (
+      !panelContext.sync ||
+      panelContext.sync() === DashboardCursorSync.Off ||
+      !isTimeSeriesFrames(frames) ||
+      options.footer?.enablePagination
+    ) {
       return;
     }
 
-    const sub = panelContext.eventBus.getStream(DataHoverEvent)
-    .pipe(throttleTime(50))
-    .subscribe({
-      next: (evt) => {
-        if (panelContext.eventBus === evt.origin) {
-          return;
-        }
+    const subs = new Subscription();
 
-        if (evt.payload.point.time) {
-          setRowTimeValue(evt.payload.point.time);
-        }
-      },
-    })
+    subs.add(
+      panelContext.eventBus
+        .getStream(DataHoverEvent)
+        .pipe(throttleTime(50))
+        .subscribe({
+          next: (evt) => {
+            if (panelContext.eventBus === evt.origin) {
+              return;
+            }
+
+            if (evt.payload.point?.time) {
+              setRowHighlightTimeValue(evt.payload.point.time);
+            }
+          },
+        })
+    );
+
+    subs.add(
+      panelContext.eventBus
+        .getStream(DataHoverClearEvent)
+        .pipe(throttleTime(50))
+        .subscribe({
+          next: (evt) => {
+            setRowHighlightTimeValue(undefined);
+          },
+        })
+    );
 
     return () => {
-      sub.unsubscribe();
+      subs.unsubscribe();
     };
-  }, [panelContext, frames]);
+  }, [panelContext, frames, options.footer?.enablePagination]);
 
   const onRowHover = useCallback(
     (idx: number, frame: DataFrame) => {
@@ -59,7 +92,7 @@ export function TablePanel(props: Props) {
         return;
       }
 
-      if (!hasTimeField(frame!)) {
+      if (!hasTimeField(frame)) {
         return;
       }
 
@@ -68,7 +101,7 @@ export function TablePanel(props: Props) {
       panelContext.eventBus.publish(
         new DataHoverEvent({
           point: {
-            time: timeField.values[idx]
+            time: timeField.values[idx],
           },
         })
       );
@@ -109,7 +142,7 @@ export function TablePanel(props: Props) {
       timeRange={timeRange}
       onRowHover={onRowHover}
       onRowLeave={onRowLeave}
-      rowTimeValue={rowTimeValue}
+      rowHighlightTimeValue={rowHighlightTimeValue}
     />
   );
 
