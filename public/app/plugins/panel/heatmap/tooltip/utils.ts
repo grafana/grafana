@@ -30,20 +30,6 @@ type BucketsMinMax = {
   yBucketMax: string;
 };
 
-export const xDisp = (v: number, xField?: Field) => {
-  if (xField?.display) {
-    return formattedValueToString(xField.display(v));
-  }
-
-  if (xField?.type === FieldType.time) {
-    const tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
-    const dashboard = getDashboardSrv().getCurrent();
-    return dashboard?.formatDate(v, tooltipTimeFormat);
-  }
-
-  return `${v}`;
-};
-
 export const getHoverCellColor = (data: HeatmapData, index: number) => {
   const colorPalette = data.heatmapColors?.palette!;
   const colorIndex = data.heatmapColors?.values[index];

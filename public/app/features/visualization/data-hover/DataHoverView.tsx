@@ -21,6 +21,7 @@ export interface Props {
   sortOrder?: SortOrder;
   mode?: TooltipDisplayMode | null;
   header?: string;
+  padding?: number;
 }
 
 export interface DisplayValue {
@@ -31,8 +32,8 @@ export interface DisplayValue {
   highlight: boolean;
 }
 
-export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
-  const styles = useStyles2(getStyles);
+export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header, padding = 0 }: Props) => {
+  const styles = useStyles2(getStyles, padding);
 
   if (!data || rowIndex == null) {
     return null;
@@ -120,9 +121,10 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     </div>
   );
 };
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, padding = 0) => {
   return {
     wrapper: css`
+      padding: ${padding}px;
       background: ${theme.components.tooltip.background};
       border-radius: ${theme.shape.borderRadius(2)};
     `,

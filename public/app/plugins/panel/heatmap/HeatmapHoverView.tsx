@@ -39,6 +39,11 @@ export const HeatmapHoverView = (props: Props) => {
 
 const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars }: Props) => {
   const index = hover.dataIdx;
+
+  const [isSparse] = useState(
+    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
+  );
+
   const xField = data.heatmap?.fields[0];
   const yField = data.heatmap?.fields[1];
   const countField = data.heatmap?.fields[2];
@@ -217,10 +222,6 @@ const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars 
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [index]
-  );
-
-  const [isSparse] = useState(
-    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
   );
 
   if (isSparse) {

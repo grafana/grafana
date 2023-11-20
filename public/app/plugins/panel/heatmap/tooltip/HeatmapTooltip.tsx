@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { ReactElement, useEffect, useRef, useState } from 'react';
+import uPlot from 'uplot';
 
 import {
   DataFrameType,
@@ -12,20 +13,22 @@ import {
   PanelData,
   LinkModel,
   Field,
+  FieldType,
 } from '@grafana/data';
-import { HeatmapCellLayout } from '@grafana/schema/dist/esm/common/common.gen';
+import { HeatmapCellLayout } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from '../fields';
 
-import { calculateSparseBucketMinMax, formatMilliseconds, getFieldFromData, getHoverCellColor, xDisp } from './utils';
+import { calculateSparseBucketMinMax, formatMilliseconds, getFieldFromData, getHoverCellColor } from './utils';
 
 interface Props {
   dataIdxs: Array<number | null>;
@@ -42,14 +45,14 @@ interface Props {
 }
 
 export const HeatmapTooltip = (props: Props) => {
-  const styles = useStyles2(getStyles);
-
-  // exemplars
   if (props.seriesIdx === 2) {
     return (
-      <div className={styles.exemplarsWrapper}>
-        <DataHoverView data={props.dataRef.current!.exemplars} rowIndex={props.dataIdxs[2]} header={'Exemplar'} />
-      </div>
+      <DataHoverView
+        data={props.dataRef.current!.exemplars}
+        rowIndex={props.dataIdxs[2]}
+        header={'Exemplar'}
+        padding={8}
+      />
     );
   }
 
@@ -68,11 +71,8 @@ const HeatmapTooltipHover = ({
   replaceVars,
   dismiss,
 }: Props) => {
-  const data = dataRef.current;
-
-  const styles = useStyles2(getStyles);
-
   const index = dataIdxs[1]!;
+  const data = dataRef.current;
 
   const [isSparse] = useState(
     () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
@@ -82,6 +82,18 @@ const HeatmapTooltipHover = ({
   const yField = getFieldFromData(data.heatmap!, 'y', isSparse);
   const countField = getFieldFromData(data.heatmap!, 'count', isSparse);
 
+  const xDisp = (v: number) => {
+    if (xField?.display) {
+      return formattedValueToString(xField.display(v));
+    }
+    if (xField?.type === FieldType.time) {
+      const tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
+      const dashboard = getDashboardSrv().getCurrent();
+      return dashboard?.formatDate(v, tooltipTimeFormat);
+    }
+    return `${v}`;
+  };
+
   const xVals = xField?.values;
   const yVals = yField?.values;
   const countVals = countField?.values;
@@ -90,7 +102,8 @@ const HeatmapTooltipHover = ({
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
   const yDisp = yField?.display ? (v: string) => formattedValueToString(yField.display!(v)) : (v: string) => `${v}`;
 
-  const count = countVals?.[index];
+  const yValueIdx = index % data.yBucketCount! ?? 0;
+
   let interval = xField?.config.interval;
 
   let yBucketMin: string;
@@ -110,8 +123,6 @@ const HeatmapTooltipHover = ({
       yBucketMax = bucketsMinMax.yBucketMax;
     }
   } else {
-    const yValueIdx = index % data.yBucketCount! ?? 0;
-
     if (meta.yOrdinalDisplay) {
       const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
       const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
@@ -157,6 +168,8 @@ const HeatmapTooltipHover = ({
     }
   }
 
+  const count = countVals?.[index];
+
   const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
@@ -165,7 +178,7 @@ const HeatmapTooltipHover = ({
     const hasLinks = field.config.links && field.config.links.length > 0;
 
     if (hasLinks && data.heatmap) {
-      const appropriateScopedVars = scopedVars?.find(
+      const appropriateScopedVars = scopedVars.find(
         (scopedVar) =>
           scopedVar && scopedVar.__dataContext && scopedVar.__dataContext.value.field.name === nonNumericOrdinalDisplay
       );
@@ -189,16 +202,10 @@ const HeatmapTooltipHover = ({
 
   let can = useRef<HTMLCanvasElement>(null);
 
-  let histCssWidth = 132;
-  let histCssHeight = 32;
-  let histCanWidth = Math.round(histCssWidth * devicePixelRatio);
-  let histCanHeight = Math.round(histCssHeight * devicePixelRatio);
-
-  const minCanWidth = 264;
-  const minCanHeight = 64;
-
-  histCanWidth = histCanWidth < minCanWidth ? minCanWidth : histCanWidth;
-  histCanHeight = histCanHeight < minCanHeight ? minCanHeight : histCanHeight;
+  let histCssWidth = 264;
+  let histCssHeight = 64;
+  let histCanWidth = Math.round(histCssWidth * uPlot.pxRatio);
+  let histCanHeight = Math.round(histCssHeight * uPlot.pxRatio);
 
   useEffect(
     () => {
@@ -251,19 +258,10 @@ const HeatmapTooltipHover = ({
 
           histCtx.clearRect(0, 0, histCanWidth, histCanHeight);
 
-          // create gradient
-          const lGradient1 = histCtx.createLinearGradient(0, 0, 0, 150);
-          lGradient1.addColorStop(0.5, '#2E3036');
-          lGradient1.addColorStop(1, '#2E303600');
-
-          histCtx.fillStyle = lGradient1;
+          histCtx.fillStyle = '#2E3036';
           histCtx.fill(pRest);
 
-          const lGradient2 = histCtx.createLinearGradient(0, 0, 0, 150);
-          lGradient2.addColorStop(0, '#5794F2');
-          lGradient2.addColorStop(1, '#2E303600');
-
-          histCtx.fillStyle = lGradient2;
+          histCtx.fillStyle = '#5794F2';
           histCtx.fill(pHov);
         }
       }
@@ -322,12 +320,12 @@ const HeatmapTooltipHover = ({
     let fromToInt = [
       {
         label: 'From',
-        value: xDisp(xBucketMin, xField)!,
+        value: xDisp(xBucketMin)!,
       },
     ];
 
     if (data.xLayout !== HeatmapCellLayout.unknown) {
-      fromToInt.push({ label: 'To', value: xDisp(xBucketMax, xField)! });
+      fromToInt.push({ label: 'To', value: xDisp(xBucketMax)! });
 
       if (interval) {
         const formattedString = formatMilliseconds(interval);
@@ -345,7 +343,7 @@ const HeatmapTooltipHover = ({
           width={histCanWidth}
           height={histCanHeight}
           ref={can}
-          style={{ width: histCanWidth + 'px', height: histCanHeight + 'px' }}
+          style={{ width: histCssWidth + 'px', height: histCssHeight + 'px' }}
         />
       );
     }
@@ -355,6 +353,8 @@ const HeatmapTooltipHover = ({
 
   // @TODO remove this when adding annotations support
   canAnnotate = false;
+
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
@@ -370,9 +370,6 @@ const HeatmapTooltipHover = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  exemplarsWrapper: css({
-    padding: '8px',
-  }),
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
