@@ -127,8 +127,8 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 	}
 
 	if resp.StatusCode/100 != 2 {
-		var errResponse errorResponse
-		jsonErr := json.Unmarshal(body, &errResponse)
+		errResponse := &errorResponse{}
+		jsonErr := json.Unmarshal(body, errResponse)
 
 		if jsonErr == nil && errResponse.Error() != "" {
 			msg := "error response from the Mimir API"
