@@ -229,7 +229,7 @@ export const Components = {
   Transforms: {
     card: (name: string) => `data-testid New transform ${name}`,
     Reduce: {
-      modeLabel: 'Transform mode label',
+      modeLabel: 'data-testid Transform mode label',
       calculationsLabel: 'data-testid Transform calculations label',
     },
     SpatialOperations: {
