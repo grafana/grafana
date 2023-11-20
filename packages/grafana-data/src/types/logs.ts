@@ -299,6 +299,12 @@ export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
   );
 };
 
+/**
+ * Data sources that support query modification actions from Log Details (ADD_FILTER, ADD_FILTER_OUT),
+ * and Popover Menu (ADD_STRING_FILTER, ADD_STRING_FILTER_OUT) in Explore.
+ * @internal
+ * @alpha
+ */
 export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery> {
   /**
    * Given a query, applies a query modification `action`, returning the updated query.
