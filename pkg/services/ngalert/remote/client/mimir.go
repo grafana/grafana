@@ -3,11 +3,13 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -34,14 +36,25 @@ type Config struct {
 	Logger  log.Logger
 }
 
+// successResponse represents a successful response from the Mimir API.
 type successResponse struct {
 	Status string `json:"status"`
 	Data   any    `json:"data"`
 }
 
+// errorResponse represents an error from the Mimir API.
 type errorResponse struct {
 	Status string `json:"status"`
-	Error  string `json:"error"`
+	Error1 string `json:"error"`
+	Error2 string `json:"Error"`
+}
+
+func (e *errorResponse) Error() string {
+	if e.Error1 != "" {
+		return e.Error1
+	}
+
+	return e.Error2
 }
 
 func New(cfg *Config) (*Mimir, error) {
@@ -57,13 +70,13 @@ func New(cfg *Config) (*Mimir, error) {
 		client:   c,
 		logger:   cfg.Logger,
 	}, nil
-
 }
 
-func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, contentLength int64, out any) error {
+// do execute an HTTP requests against the specified path and method using the specified payload. It returns the HTTP response.
+func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, contentLength int64, out any) (*http.Response, error) {
 	pathURL, err := url.Parse(p)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	endpoint := *mc.endpoint
@@ -71,48 +84,82 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 
 	r, err := http.NewRequestWithContext(ctx, method, endpoint.String(), payload)
 	if err != nil {
-		return nil
+		return nil, err
 	}
+
+	r.Header.Set("Accept", "application/json")
+	r.Header.Set("Content-Type", "application/json")
 
 	if contentLength > 0 {
 		r.ContentLength = contentLength
 	}
 
 	logger := mc.logger.New("url", r.URL.String(), "method", r.Method)
-
 	resp, err := mc.client.Do(r)
 	if err != nil {
-		logger.Debug("unable to fulfill request to the Mimir API", "err", err)
-		return nil
+		msg := "unable to fulfill request to the Mimir API"
+		logger.Error(msg, "err", err)
+		return nil, fmt.Errorf("%s: %w", msg, err)
+	}
+	defer resp.Body.Close() // go:nolint
+
+	logger = logger.New("status", resp.StatusCode)
+	ct := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(ct, "application/json") {
+		msg := "response content-type is not application/json"
+		logger.Error(msg, "err", err)
+		return nil, fmt.Errorf("%s: %w", msg, err)
+	}
+
+	if out == nil {
+		return resp, nil
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		msg := "failed to read the request body"
+		logger.Error(msg, "err", err)
+		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 
 	if resp.StatusCode/100 != 2 {
-		errResponse := &errorResponse{}
-		if jsonErr := json.NewDecoder(resp.Body).Decode(errResponse); jsonErr != nil {
-			logger.Error("unable to decode JSON error response", "err", jsonErr)
-			return nil
+		var errResponse errorResponse
+		jsonErr := json.Unmarshal(body, &errResponse)
+
+		if jsonErr == nil && errResponse.Error() != "" {
+			msg := "error response from the Mimir API"
+			logger.Error(msg, "err", errResponse)
+			return nil, fmt.Errorf("%s: %w", msg, errResponse)
 		}
 
-		return nil
+		msg := "failed to decode non-2xx JSON response"
+		logger.Error(msg, "err", jsonErr)
+		return nil, fmt.Errorf("%s: %w", msg, jsonErr)
 	}
 
-	sr := successResponse{
-		Data: out,
+	if err = json.Unmarshal(body, &out); err != nil {
+		msg := "failed to decode 2xx JSON response"
+		logger.Error(msg, "err", err)
+		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&sr); err != nil {
-		logger.Error("unable to decode JSON success response", "err", err)
-		return nil
+
+	return resp, nil
+}
+
+func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader, contentLength int64) error {
+	var sr successResponse
+	resp, err := mc.do(ctx, p, method, payload, contentLength, sr)
+	if err != nil {
+		return err
 	}
+	defer resp.Body.Close()
 
 	switch sr.Status {
 	case "success":
-		out = sr.Data
 		return nil
 	case "error":
-		logger.Error("received a 2xx status code but no success response")
+		return errors.New("received an 2xx status code but the request body reflected an error")
 	default:
-		return fmt.Errorf("received a 2xx status code but no success or error status: %s", sr.Status)
+		return fmt.Errorf("received an unknown status from the request body: %s", sr.Status)
 	}
-
-	return nil
 }
