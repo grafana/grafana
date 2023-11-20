@@ -1,93 +1,93 @@
 {
-  "_comment": "",
+  "_comment": "此文件是英文字符串的真实来源。编辑此文件可更改用户界面的复数形式和其他短语。",
   "access-control": {
     "add-permission": {
       "role-label": "角色",
-      "serviceaccount-label": "",
-      "team-label": "",
-      "title": "",
-      "user-label": ""
+      "serviceaccount-label": "服务帐户",
+      "team-label": "团队",
+      "title": "添加权限：",
+      "user-label": "用户"
     },
     "add-permissions": {
       "save": "保存"
     },
     "permission-list": {
-      "permission": ""
+      "permission": "权限"
     },
     "permissions": {
-      "add-label": "",
-      "no-permissions": "",
-      "permissions-change-warning": "",
+      "add-label": "添加权限",
+      "no-permissions": "没有任何权限",
+      "permissions-change-warning": "这将更改此文件夹及其所有子文件夹的权限。总体而言，这将影响：",
       "role": "角色",
-      "serviceaccount": "",
-      "team": "",
-      "title": "",
-      "user": ""
+      "serviceaccount": "服务帐户",
+      "team": "团队",
+      "title": "权限",
+      "user": "用户"
     }
   },
   "browse-dashboards": {
     "action": {
       "cancel-button": "取消",
-      "cannot-move-folders": "",
-      "delete-button": "",
-      "delete-modal-invalid-text": "",
-      "delete-modal-invalid-title": "",
-      "delete-modal-text": "",
-      "delete-modal-title": "",
-      "deleting": "",
-      "manage-permissions-button": "",
-      "move-button": "",
-      "move-modal-alert": "",
-      "move-modal-field-label": "",
-      "move-modal-text": "",
-      "move-modal-title": "",
-      "moving": "",
-      "new-folder-name-required-phrase": ""
+      "cannot-move-folders": "文件夹无法移动",
+      "delete-button": "删除",
+      "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
+      "delete-modal-invalid-title": "无法删除文件夹",
+      "delete-modal-text": "此操作将删除以下内容：",
+      "delete-modal-title": "删除",
+      "deleting": "正在删除...",
+      "manage-permissions-button": "管理权限",
+      "move-button": "移动",
+      "move-modal-alert": "移动此项目可能会改变其权限。",
+      "move-modal-field-label": "文件夹名称",
+      "move-modal-text": "此操作将移动以下内容：",
+      "move-modal-title": "移动",
+      "moving": "正在移动...",
+      "new-folder-name-required-phrase": "文件夹名称是必需项。"
     },
     "counts": {
-      "alertRule_other": "",
-      "dashboard_other": "",
-      "folder_other": "",
-      "libraryPanel_other": "",
-      "total_other": ""
+      "alertRule_other": "{{count}} 条警告规则",
+      "dashboard_other": "{{count}} 个仪表板",
+      "folder_other": "{{count}} 个文件夹",
+      "libraryPanel_other": "{{count}} 个库面板",
+      "total_other": "{{count}} 个项目"
     },
     "dashboards-tree": {
-      "collapse-folder-button": "",
-      "expand-folder-button": "",
+      "collapse-folder-button": "折叠文件夹 {{title}}",
+      "expand-folder-button": "展开文件夹 {{title}}",
       "name-column": "名称",
-      "select-all-header-checkbox": "",
-      "select-checkbox": "",
+      "select-all-header-checkbox": "全选",
+      "select-checkbox": "选择",
       "tags-column": "标签"
     },
     "folder-actions-button": {
-      "delete": "",
-      "folder-actions": "",
-      "manage-permissions": "",
-      "move": ""
+      "delete": "删除",
+      "folder-actions": "文件夹操作",
+      "manage-permissions": "管理权限",
+      "move": "移动"
     },
     "folder-picker": {
-      "accessible-label": "",
+      "accessible-label": "选择文件夹：{{ label }} 当前已选择",
       "button-label": "选择文件夹",
-      "empty-message": "",
-      "error-title": "",
-      "search-placeholder": "",
-      "unknown-error": ""
+      "empty-message": "未找到文件夹",
+      "error-title": "加载文件夹时出错",
+      "search-placeholder": "搜索文件夹",
+      "unknown-error": "未知错误"
     },
     "manage-folder-nav": {
       "alert-rules": "警报规则",
       "dashboards": "仪表板",
-      "panels": "",
-      "permissions": "",
+      "panels": "面板",
+      "permissions": "权限",
       "settings": "设置"
     },
     "new-folder-form": {
       "cancel-label": "取消",
       "create-label": "创建",
-      "name-label": ""
+      "name-label": "文件夹名称"
     },
     "no-results": {
-      "clear": "",
-      "text": ""
+      "clear": "清除搜索和筛选条件",
+      "text": "您的查询未找到结果。"
     }
   },
   "clipboard-button": {
@@ -124,63 +124,63 @@
       "category-header-label": "数据源"
     },
     "search": {
-      "placeholder": ""
+      "placeholder": "搜索全部"
     }
   },
   "correlations": {
-    "add-new": "",
+    "add-new": "添加新的",
     "alert": {
-      "error-message": "",
-      "title": ""
+      "error-message": "获取关联数据时发生未知错误。请重试。",
+      "title": "获取关联数据时出错"
     },
     "basic-info-form": {
-      "description-description": "",
-      "description-label": "",
-      "label-description": "",
-      "label-label": "",
-      "label-placeholder": "",
-      "label-required": "",
-      "sub-text": "",
-      "title": ""
+      "description-description": "可选描述，包含关于链接的更多信息",
+      "description-label": "描述",
+      "label-description": "此名称将被用作关联的标签。这将显示为按钮文本、菜单项或在链接上悬停文本。",
+      "label-label": "标签",
+      "label-placeholder": "例如：Tempo traces",
+      "label-required": "此字段是必填字段。",
+      "sub-text": "<0>定义将会描述关联的文本。</0>",
+      "title": "定义关联标签（第 1 步，共 3 步）"
     },
     "list": {
-      "delete": "",
-      "label": "",
-      "loading": "",
-      "read-only": "",
-      "source": "",
-      "target": ""
+      "delete": "删除关联",
+      "label": "标签",
+      "loading": "正在加载...",
+      "read-only": "只读",
+      "source": "源",
+      "target": "目标"
     },
     "navigation-form": {
       "add-button": "添加",
-      "back-button": "",
-      "next-button": "",
+      "back-button": "上一步",
+      "next-button": "下一步",
       "save-button": "保存"
     },
-    "page-content": "",
-    "page-heading": "",
+    "page-content": "要启用 Correlations，请将其在 Grafana 配置中添加：",
+    "page-heading": "Correlations 已禁用",
     "query-editor": {
-      "control-rules": "",
-      "data-source-text": "",
-      "data-source-title": "",
-      "error-text": "",
-      "error-title": "",
-      "loading": "",
-      "query-description": "",
-      "query-editor-title": "",
+      "control-rules": "选定的目标数据源必须导出查询编辑器。",
+      "data-source-text": "请首先选择目标数据源。",
+      "data-source-title": "没有选择数据源",
+      "error-text": "无法加载所选的数据源。",
+      "error-title": "加载数据源时出错",
+      "loading": "正在加载查询编辑器...",
+      "query-description": "定义点击链接时运行的查询。您可以使用<2>变量</2>访问特定的字段值。",
+      "query-editor-title": "数据源未导出查询编辑器。",
       "query-label": "查询"
     },
     "source-form": {
-      "control-required": "",
-      "description": "",
-      "heading": "",
-      "results-description": "",
-      "results-label": "",
-      "results-required": "",
-      "source-description": "",
-      "source-label": "",
-      "sub-text": "",
-      "title": ""
+      "control-required": "此字段是必填字段。",
+      "description": "您在目标查询中使用了以下变量：<1></1><2></2>数据点需要为所有变量提供作为字段或转换输出的值，以使关联按钮出现在可视化中。 <4></4>注意：并非每个变量都需要在下面明确定义。<7>logfmt</7>等变换将为每个键/值对创建变量。",
+      "heading": "目标查询中使用的变量",
+      "results-description": "此链接将显示在此字段的值旁边",
+      "results-label": "结果字段",
+      "results-required": "此字段是必填字段。",
+      "source-description": "所选源数据源得到的结果有在面板中显示的链接",
+      "source-label": "源",
+      "sub-text": "<0>定义哪些数据源将显示关联，以及哪些数据将取代先前定义的变量。</0>",
+      "title": "配置将链接到 {{dataSourceName}} 的数据源（第 3 步，共 3 步）。"
     },
     "sub-title": "",
     "target-form": {
@@ -195,7 +195,7 @@
       "logfmt-label": "",
       "regex-description": "",
       "regex-expression": "",
-      "regex-label": "",
+      "regex-label": "正则表达式",
       "regex-map-values": ""
     },
     "transform": {

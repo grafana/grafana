@@ -165,6 +165,7 @@ func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *login.
 	}
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Cols("created").Update(authInfo, cond)
+
 		return err
 	})
 }
@@ -208,8 +209,32 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAut
 
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		upd, err := sess.MustCols("o_auth_expiry").Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).Update(authUser)
-		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId,
-			"auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
+
+		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
+
+		// Clean up duplicated entries
+		if upd > 1 {
+			var id int64
+			ok, err := sess.SQL(
+				"SELECT id FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ?",
+				cmd.UserId, cmd.AuthModule, cmd.AuthId,
+			).Get(&id)
+
+			if err != nil {
+				return err
+			}
+
+			if !ok {
+				return nil
+			}
+
+			_, err = sess.Exec(
+				"DELETE FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ? AND id != ?",
+				cmd.UserId, cmd.AuthModule, cmd.AuthId, id,
+			)
+			return err
+		}
+
 		return err
 	})
 }
