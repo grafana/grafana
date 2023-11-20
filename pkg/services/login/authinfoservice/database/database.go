@@ -213,8 +213,6 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAut
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
 
 		if upd > 1 {
-			// there are some cases with duplicated entries, especially before we used a
-
 			var id int64
 			ok, err := sess.SQL(
 				"SELECT id FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ?",
