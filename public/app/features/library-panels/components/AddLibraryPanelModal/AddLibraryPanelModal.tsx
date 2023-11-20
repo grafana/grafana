@@ -12,7 +12,7 @@ import { LibraryElementDTO } from '../../types';
 import { usePanelSave } from '../../utils/usePanelSave';
 
 interface AddLibraryPanelContentsProps {
-  onDismiss: () => void;
+  onDismiss?: () => void;
   panel: PanelModel;
   initialFolderUid?: string;
 }
@@ -31,7 +31,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
     panel.libraryPanel = { uid: '', name: panelName };
     saveLibraryPanel(panel, folderUid!).then((res: LibraryElementDTO | FetchError) => {
       if (!isFetchError(res)) {
-        onDismiss();
+        onDismiss?.();
       } else {
         panel.libraryPanel = undefined;
       }
