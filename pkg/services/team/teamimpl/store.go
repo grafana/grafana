@@ -342,14 +342,10 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 	queryResult := make([]int64, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var params []any
-		params = append(params, query.UserID, query.OrgID, query.OrgID)
-		return sess.SQL(`SELECT t.id
-FROM team as t
-INNER JOIN team_member as tm ON t.id = tm.team_id
-WHERE
-tm.user_id=?
-AND tm.org_id=?
-AND t.org_id=?;`, params...).Find(&queryResult)
+		params = append(params, query.UserID, query.OrgID)
+		return sess.SQL(`SELECT tm.team_id
+FROM team_member as tm
+WHERE tm.user_id=? AND tm.org_id=?;`, params...).Find(&queryResult)
 	})
 
 	if err != nil {
