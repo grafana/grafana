@@ -29,7 +29,8 @@
 
 ### Breaking changes
 
-For the existing backend mode users who have table visualization might see some inconsistencies on their panels. We have updated the table column naming. This will potentially affect field transformations and/or field overrides.  To resolve this either:
+For the existing backend mode users who have table visualization might see some inconsistencies on their panels. We have updated the table column naming. This will potentially affect field transformations and/or field overrides. To resolve this either:
+
 - Update transformation
 - Update field override Issue [#76990](https://github.com/grafana/grafana/issues/76990)
 
