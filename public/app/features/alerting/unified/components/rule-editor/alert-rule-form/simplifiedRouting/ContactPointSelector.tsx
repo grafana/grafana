@@ -3,7 +3,7 @@ import React from 'react';
 import { AnyAction } from 'redux';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Field, LoadingPlaceholder, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Field, LoadingPlaceholder, Select, Stack, useStyles2 } from '@grafana/ui';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
 import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints.v2';
@@ -22,7 +22,12 @@ export function ContactPointSelector({ selectedReceiver, alertManager, dispatch 
     dispatch(selectContactPoint({ receiver: value?.value, alertManager }));
   };
   const { isLoading, error, contactPoints: receivers } = useContactPointsWithStatus();
-  const options = receivers.map((receiver) => ({ label: receiver.name, value: receiver.name }));
+  const options = receivers.map((receiver) => {
+    const integrations = receiver?.grafana_managed_receiver_configs;
+    const description = <ContactPointReceiverSummary receivers={integrations ?? []} />;
+
+    return { label: receiver.name, value: receiver.name, description };
+  });
 
   if (error) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
@@ -38,23 +43,14 @@ export function ContactPointSelector({ selectedReceiver, alertManager, dispatch 
           <Select
             aria-label="Contact point"
             onChange={onChange}
+            // We are passing a JSX.Element into the "description" for options, which isn't how the TS typings are defined.
+            // The regular Select component will render it just fine, but we can't update the typings because SelectableValue
+            // is shared with other components where the "description" _has_ to be a string.
+            // I've tried unsuccessfully to separate the typings just I'm giving up :'(
+            // @ts-ignore
             options={options}
             width={50}
             value={selectedReceiver}
-            getOptionLabel={(option: SelectableValue<string>) => {
-              const receiver = option?.value;
-              const selectedReceiverData = receivers.find((r) => r.name === receiver);
-              const integrations = selectedReceiverData?.grafana_managed_receiver_configs;
-
-              return (
-                <Stack direction="column" gap={0}>
-                  <Text color="primary">{selectedReceiverData?.name ?? 'Unknown'}</Text>
-                  <Text color="secondary">
-                    <ContactPointReceiverSummary receivers={integrations ?? []} />
-                  </Text>
-                </Stack>
-              );
-            }}
           />
         </div>
       </Field>
