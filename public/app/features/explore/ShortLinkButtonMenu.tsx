@@ -11,9 +11,32 @@ import { useSelector } from 'app/types';
 import { selectPanes } from './state/selectors';
 import { constructAbsoluteUrl } from './utils/links';
 
+interface ShortLinkGroupData {
+  key: string;
+  label: string;
+  items: ShortLinkMenuItemData[];
+}
+
+interface ShortLinkMenuItemData {
+  key: string;
+  label: string;
+  icon: IconName;
+  getUrl: Function;
+  shorten: boolean;
+}
+
+const defaultMode: ShortLinkMenuItemData = {
+  key: 'copy-link',
+  label: t('explore.toolbar.copy-shortened-link', 'Copy shortened link'),
+  icon: 'share-alt',
+  getUrl: () => undefined,
+  shorten: true,
+};
+
 export function ShortLinkButtonMenu() {
   const panes = useSelector(selectPanes);
   const [isOpen, setIsOpen] = useState(false);
+  const [lastSelected, setLastSelected] = useState(defaultMode);
   const onCopyLink = (shorten: boolean, url?: string) => {
     if (shorten) {
       createAndCopyShortLink(url || global.location.href);
@@ -27,20 +50,6 @@ export function ShortLinkButtonMenu() {
       reportInteraction('grafana_explore_copy_link_clicked');
     }
   };
-
-  interface ShortLinkGroupData {
-    key: string;
-    label: string;
-    items: ShortLinkMenuItemData[];
-  }
-
-  interface ShortLinkMenuItemData {
-    key: string;
-    label: string;
-    icon: IconName;
-    getUrl: Function;
-    shorten: boolean;
-  }
 
   const menuOptions: ShortLinkGroupData[] = [
     {
@@ -99,9 +108,11 @@ export function ShortLinkButtonMenu() {
                 <Menu.Item
                   key={option.key}
                   label={option.label}
+                  icon={option.icon}
                   onClick={() => {
                     const url = option.getUrl();
                     onCopyLink(option.shorten, url);
+                    setLastSelected(option);
                   }}
                 />
               );
@@ -112,29 +123,18 @@ export function ShortLinkButtonMenu() {
     </Menu>
   );
 
-  const buttonMode = (() => {
-    const defaultMode: ShortLinkMenuItemData = {
-      key: 'copy-link',
-      label: t('explore.toolbar.copy-shortened-link', 'Copy shortened link'),
-      icon: 'share-alt',
-      getUrl: () => undefined,
-      shorten: true,
-    };
-    return defaultMode;
-  })();
-
   // we need the Toolbar button click to be an action separate from opening/closing the menu
   return (
     <ToolbarButtonRow>
       <Stack gap={0} direction="row" alignItems="center" wrap="nowrap">
         <ToolbarButton
-          tooltip={buttonMode.label}
-          icon={buttonMode.icon}
+          tooltip={lastSelected.label}
+          icon={lastSelected.icon}
           iconOnly={true}
           narrow={true}
           onClick={() => {
-            const url = buttonMode.getUrl();
-            onCopyLink(buttonMode.shorten, url);
+            const url = lastSelected.getUrl();
+            onCopyLink(lastSelected.shorten, url);
           }}
           aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
         />
