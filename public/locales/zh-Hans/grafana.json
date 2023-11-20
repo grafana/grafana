@@ -16,29 +16,29 @@
     },
     "permissions": {
       "add-label": "添加权限",
-      "no-permissions": "",
-      "permissions-change-warning": "",
+      "no-permissions": "没有任何权限",
+      "permissions-change-warning": "这将更改此文件夹及其所有子文件夹的权限。总体而言，这将影响：",
       "role": "角色",
-      "serviceaccount": "",
-      "team": "",
-      "title": "",
-      "user": ""
+      "serviceaccount": "服务帐户",
+      "team": "团队",
+      "title": "权限",
+      "user": "用户"
     }
   },
   "browse-dashboards": {
     "action": {
       "cancel-button": "取消",
-      "cannot-move-folders": "",
-      "delete-button": "",
-      "delete-modal-invalid-text": "",
-      "delete-modal-invalid-title": "",
-      "delete-modal-text": "",
-      "delete-modal-title": "",
-      "deleting": "",
-      "manage-permissions-button": "",
-      "move-button": "",
-      "move-modal-alert": "",
-      "move-modal-field-label": "",
+      "cannot-move-folders": "文件夹无法移动",
+      "delete-button": "删除",
+      "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
+      "delete-modal-invalid-title": "无法删除文件夹",
+      "delete-modal-text": "此操作将删除以下内容：",
+      "delete-modal-title": "删除",
+      "deleting": "正在删除...",
+      "manage-permissions-button": "管理权限",
+      "move-button": "移动",
+      "move-modal-alert": "移动此项目可能会改变其权限。",
+      "move-modal-field-label": "文件夹名称",
       "move-modal-text": "",
       "move-modal-title": "",
       "moving": "",
@@ -625,14 +625,14 @@
   },
   "library-panels": {
     "modal": {
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_other": ""
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
