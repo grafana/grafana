@@ -101,7 +101,11 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 		logger.Error(msg, "err", err)
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
-	defer resp.Body.Close() // go:nolint
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("error closing HTTP body", "err", err)
+		}
+	}()
 
 	logger = logger.New("status", resp.StatusCode)
 	ct := resp.Header.Get("Content-Type")
@@ -152,7 +156,11 @@ func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader, 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			mc.logger.Error("error closing HTTP body", "err", err)
+		}
+	}()
 
 	switch sr.Status {
 	case "success":
