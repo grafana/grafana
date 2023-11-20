@@ -12542,13 +12542,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"command-score@npm:^0.1.2":
-  version: 0.1.2
-  resolution: "command-score@npm:0.1.2"
-  checksum: 84f6a69e6b215d3fc8c9ed402d109587f511e4cc84cd5da10a7857b50fb1638953e32dcce8ed8f3549b0bfe499e82601fb7fb6891c9c71b48933d4bb8bac238a
-  languageName: node
-  linkType: hard
-
 "commander@npm:2.11.x":
   version: 2.11.0
   resolution: "commander@npm:2.11.0"
@@ -16707,6 +16700,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fuse.js@npm:^6.6.2":
+  version: 6.6.2
+  resolution: "fuse.js@npm:6.6.2"
+  checksum: 4768725963ee07dacfcb4abb001a12ea5e6e44c95d4e0918fcbfe0469107c5ad3ece2f1930396eb6c210383edf4c14ca083b91a2fc54950c5d021935a63d89de
+  languageName: node
+  linkType: hard
+
 "gauge@npm:^4.0.3":
   version: 4.0.4
   resolution: "gauge@npm:4.0.4"
@@ -17515,7 +17515,7 @@ __metadata:
     json-markup: "npm:^1.1.0"
     json-source-map: "npm:0.6.1"
     jsurl: "npm:^0.1.5"
-    kbar: "npm:0.1.0-beta.40"
+    kbar: "npm:0.1.0-beta.44"
     lerna: "npm:7.4.1"
     lodash: "npm:4.17.21"
     logfmt: "npm:^1.3.2"
@@ -20909,19 +20909,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"kbar@npm:0.1.0-beta.40":
-  version: 0.1.0-beta.40
-  resolution: "kbar@npm:0.1.0-beta.40"
+"kbar@npm:0.1.0-beta.44":
+  version: 0.1.0-beta.44
+  resolution: "kbar@npm:0.1.0-beta.44"
   dependencies:
     "@radix-ui/react-portal": "npm:^1.0.1"
-    command-score: "npm:^0.1.2"
     fast-equals: "npm:^2.0.3"
+    fuse.js: "npm:^6.6.2"
     react-virtual: "npm:^2.8.2"
     tiny-invariant: "npm:^1.2.0"
   peerDependencies:
     react: ^16.0.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: d9c19e1c22e518e5db531fdcee7a33864d64cb13f820e2b4a4bcf09fde2bc070df56a34212c6aff2c728a9b6b5288f3146d3f1931fa68d69a2c9f60482676d0d
+  checksum: 2d22a5d4ac348647b6fe2222f36a8023b8ebcfaccef18b84ac1173c6532a31fab5ce8795ce5a422fca1499265a6d0f0b2c8c233e9008e6782b0805a1707f6ba7
   languageName: node
   linkType: hard
 
