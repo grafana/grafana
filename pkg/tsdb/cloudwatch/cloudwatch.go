@@ -170,7 +170,11 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
 	fromExpression := req.GetHTTPHeader(query.HeaderFromExpression) != ""
-	isSyncLogQuery := ((fromAlert || fromExpression) && model.QueryMode == logsQueryMode) || (model.Type == "" && model.QueryMode == logsQueryMode)
+	// Public dashboard queries execute like alert queries, i.e. they execute on the backend, therefore, we need to handle them synchronously.
+	// Since `model.Type` is set during execution on the frontend by the query runner and isn't saved with the query, we are checking here is
+	// missing the `model.Type` property and if it is a log query in order to determine if it is a public dashboard query.
+	fromPublicDashboard := (model.Type == "" && model.QueryMode == logsQueryMode)
+	isSyncLogQuery := ((fromAlert || fromExpression) && model.QueryMode == logsQueryMode) || fromPublicDashboard
 	if isSyncLogQuery {
 		return executeSyncLogQuery(ctx, e, req)
 	}
