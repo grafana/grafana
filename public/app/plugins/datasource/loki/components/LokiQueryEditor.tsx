@@ -197,6 +197,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
             showExplain={explain}
+            timeRange={timeRange}
           />
         )}
         <LokiQueryBuilderOptions

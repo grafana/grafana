@@ -34,11 +34,11 @@ export const LabelBrowserModal = (props: Props) => {
       return;
     }
 
-    datasource.languageProvider.fetchLabels().then((labels) => {
+    datasource.languageProvider.fetchLabels({ timeRange }).then((labels) => {
       setLabelsLoaded(true);
       setHasLogLabels(labels.length > 0);
     });
-  }, [datasource, isOpen]);
+  }, [datasource, isOpen, timeRange]);
 
   const changeQuery = (value: string) => {
     const { query, onChange, onRunQuery } = props;
