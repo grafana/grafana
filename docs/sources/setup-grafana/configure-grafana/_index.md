@@ -1625,15 +1625,18 @@ For example: `disabled_labels=grafana_folder`
 
 ## [unified_alerting.upgrade]
 
-For more information about upgrading to Grafana Alerting, refer to [Upgrade Alerting](/docs/grafana/next/alerting/set-up/migrating-alerts/)
+For more information about upgrading to Grafana Alerting, refer to [Upgrade Alerting](/docs/grafana/next/alerting/set-up/migrating-alerts/).
 
 ### clean_upgrade
 
-When restarting Grafana to upgrade from legacy alerting to Grafana Alerting, first delete any existing Grafana Alerting data from a previous upgrade such as alert rules, contact points, and notification policies. Default is `false`.
+When you restart Grafana to upgrade from legacy alerting to Grafana Alerting, delete any existing Grafana Alerting data from a previous upgrade, such as alert rules, contact points, and notification policies. Default is `false`.
 
-If `false` or unset, existing Grafana Alerting data will not be changed or deleted when switching between legacy and Unified Alerting.
+If `false` or unset, existing Grafana Alerting data is not changed or deleted when you switch between legacy and Unified Alerting.
 
-> **Note.** Should be kept false when not needed as it may cause unintended data-loss if left enabled.
+{{% admonition type="note" %}}
+It should be kept false when not needed, as it may cause unintended data loss if left enabled.
+{{% /admonition %}}
+
 
 <hr>
 
