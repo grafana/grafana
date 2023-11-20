@@ -625,14 +625,14 @@
   },
   "library-panels": {
     "modal": {
+      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": "",
-      "body_other": ""
+      "title": ""
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
