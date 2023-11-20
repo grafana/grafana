@@ -13,6 +13,7 @@ import { EventTrackingSrc } from './tracking';
 import { Role } from './utils';
 
 const mockedUseOpenAiStreamState = {
+  messages: [],
   setMessages: jest.fn(),
   reply: 'I am a robot',
   streamStatus: StreamStatus.IDLE,
@@ -43,6 +44,7 @@ describe('GenAIButton', () => {
   describe('when LLM plugin is not configured', () => {
     beforeAll(() => {
       jest.mocked(useOpenAIStream).mockReturnValue({
+        messages: [],
         error: undefined,
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
@@ -64,7 +66,10 @@ describe('GenAIButton', () => {
   describe('when LLM plugin is properly configured, so it is enabled', () => {
     const setMessagesMock = jest.fn();
     beforeEach(() => {
+      setMessagesMock.mockClear();
+
       jest.mocked(useOpenAIStream).mockReturnValue({
+        messages: [],
         error: undefined,
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
@@ -100,6 +105,20 @@ describe('GenAIButton', () => {
       expect(setMessagesMock).toHaveBeenCalledWith([{ content: 'Generate X', role: 'system' as Role }]);
     });
 
+    it('should call the messages when they are provided as callback', async () => {
+      const onGenerate = jest.fn();
+      const messages = jest.fn().mockReturnValue([{ content: 'Generate X', role: 'system' as Role }]);
+      const onClick = jest.fn();
+      setup({ onGenerate, messages, temperature: 3, onClick, eventTrackingSrc });
+
+      const generateButton = await screen.findByRole('button');
+      await fireEvent.click(generateButton);
+
+      expect(messages).toHaveBeenCalledTimes(1);
+      expect(setMessagesMock).toHaveBeenCalledTimes(1);
+      expect(setMessagesMock).toHaveBeenCalledWith([{ content: 'Generate X', role: 'system' as Role }]);
+    });
+
     it('should call the onClick callback', async () => {
       const onGenerate = jest.fn();
       const onClick = jest.fn();
@@ -116,6 +135,7 @@ describe('GenAIButton', () => {
   describe('when it is generating data', () => {
     beforeEach(() => {
       jest.mocked(useOpenAIStream).mockReturnValue({
+        messages: [],
         error: undefined,
         streamStatus: StreamStatus.GENERATING,
         reply: 'Some incomplete generated text',
@@ -160,7 +180,10 @@ describe('GenAIButton', () => {
   describe('when there is an error generating data', () => {
     const setMessagesMock = jest.fn();
     beforeEach(() => {
+      setMessagesMock.mockClear();
+
       jest.mocked(useOpenAIStream).mockReturnValue({
+        messages: [],
         error: new Error('Something went wrong'),
         streamStatus: StreamStatus.IDLE,
         reply: '',
@@ -223,6 +246,20 @@ describe('GenAIButton', () => {
       await fireEvent.click(generateButton);
 
       await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
+    });
+
+    it('should call the messages when they are provided as callback', async () => {
+      const onGenerate = jest.fn();
+      const messages = jest.fn().mockReturnValue([{ content: 'Generate X', role: 'system' as Role }]);
+      const onClick = jest.fn();
+      setup({ onGenerate, messages, temperature: 3, onClick, eventTrackingSrc });
+
+      const generateButton = await screen.findByRole('button');
+      await fireEvent.click(generateButton);
+
+      expect(messages).toHaveBeenCalledTimes(1);
+      expect(setMessagesMock).toHaveBeenCalledTimes(1);
+      expect(setMessagesMock).toHaveBeenCalledWith([{ content: 'Generate X', role: 'system' as Role }]);
     });
   });
 });

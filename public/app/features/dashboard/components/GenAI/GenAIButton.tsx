@@ -18,7 +18,7 @@ export interface GenAIButtonProps {
   // Button click handler
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   // Messages to send to the LLM plugin
-  messages: Message[];
+  messages: Message[] | (() => Message[]);
   // Callback function that the LLM plugin streams responses to
   onGenerate: (response: string) => void;
   // Temperature for the LLM plugin. Default is 1.
@@ -43,8 +43,14 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  const { setMessages, reply, value, error, streamStatus } = useOpenAIStream(OPEN_AI_MODEL, temperature);
-
+  const {
+    messages: streamMessages,
+    setMessages,
+    reply,
+    value,
+    error,
+    streamStatus,
+  } = useOpenAIStream(OPEN_AI_MODEL, temperature);
   const [history, setHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(true);
 
@@ -56,7 +62,7 @@ export const GenAIButton = ({
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!hasHistory) {
       onClickProp?.(e);
-      setMessages(messages);
+      setMessages(typeof messages === 'function' ? messages() : messages);
     } else {
       if (setShowHistory) {
         setShowHistory(true);
@@ -154,7 +160,7 @@ export const GenAIButton = ({
           content={
             <GenAIHistory
               history={history}
-              messages={messages}
+              messages={streamMessages}
               onApplySuggestion={onApplySuggestion}
               updateHistory={pushHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}

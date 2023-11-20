@@ -26,6 +26,7 @@ export function useOpenAIStream(
   temperature = 1
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  messages: Message[];
   reply: string;
   streamStatus: StreamStatus;
   error: Error | undefined;
@@ -138,6 +139,7 @@ export function useOpenAIStream(
 
   return {
     setMessages,
+    messages,
     reply,
     streamStatus,
     error,
