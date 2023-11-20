@@ -1,7 +1,13 @@
 package api
 
 import (
+<<<<<<< HEAD
 	"errors"
+=======
+	"crypto/sha1"
+	"encoding/json"
+	"fmt"
+>>>>>>> c5669dab80 (basic secret removal and etag implementation)
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -98,7 +104,20 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 		}
 	}
 
-	return response.JSON(200, settings)
+	if _, exists := settings.Settings["client_secret"]; exists {
+		settings.Settings["client_secret"] = "*********"
+	}
+
+	etag := generateSHA1ETag(settings.Settings)
+
+	return response.JSON(200, settings).SetHeader("ETag", etag)
+}
+
+func generateSHA1ETag(settings map[string]interface{}) string {
+	hasher := sha1.New()
+	data, _ := json.Marshal(settings)
+	hasher.Write(data)
+	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
 
 func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Response {
