@@ -577,5 +577,5 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, c *contextmo
 }
 
 func getNamespaceKey(namespace *folder.Folder) string {
-	return path.Join(namespace.ParentUID, namespace.Title)
+	return path.Join(namespace.ParentUID, strings.ReplaceAll(namespace.Title, "/", "\\/"))
 }
