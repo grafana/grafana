@@ -212,6 +212,7 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAut
 
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
 
+		# Clean up duplicated entries
 		if upd > 1 {
 			var id int64
 			ok, err := sess.SQL(
