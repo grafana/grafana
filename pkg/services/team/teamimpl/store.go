@@ -341,11 +341,9 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
 	queryResult := make([]int64, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var params []any
-		params = append(params, query.UserID, query.OrgID)
 		return sess.SQL(`SELECT tm.team_id
 FROM team_member as tm
-WHERE tm.user_id=? AND tm.org_id=?;`, params...).Find(&queryResult)
+WHERE tm.user_id=? AND tm.org_id=?;`, query.UserID, query.OrgID).Find(&queryResult)
 	})
 
 	if err != nil {
