@@ -707,7 +707,7 @@ describe('Table', () => {
         ],
       });
 
-      getTestContext({ data: frame, rowHighlightTimeValue: 9500 });
+      getTestContext({ data: frame, rowHighlightTimeValue: 9600 });
 
       let rows = within(getTable()).getAllByRole('row');
 
