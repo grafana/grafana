@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
@@ -175,16 +175,20 @@ function LogsNavigation({
 
   return (
     <div className={styles.navContainer}>
-      {oldestLogsFirst ? olderLogsButton : newerLogsButton}
-      <LogsNavigationPages
-        pages={pages}
-        currentPageIndex={currentPageIndex}
-        oldestLogsFirst={oldestLogsFirst}
-        timeZone={timeZone}
-        loading={loading}
-        onClick={onPageClick}
-      />
-      {oldestLogsFirst ? newerLogsButton : olderLogsButton}
+      {!config.featureToggles.logsInfiniteScrolling && (
+        <>
+          {oldestLogsFirst ? olderLogsButton : newerLogsButton}
+          <LogsNavigationPages
+            pages={pages}
+            currentPageIndex={currentPageIndex}
+            oldestLogsFirst={oldestLogsFirst}
+            timeZone={timeZone}
+            loading={loading}
+            onClick={onPageClick}
+          />
+          {oldestLogsFirst ? newerLogsButton : olderLogsButton}
+        </>
+      )}
       <Button
         data-testid="scrollToTop"
         className={styles.scrollToTopButton}
@@ -207,7 +211,11 @@ const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
       max-height: ${navContainerHeight};
       display: flex;
       flex-direction: column;
-      justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};
+      ${config.featureToggles.logsInfiniteScrolling ? (
+        `justify-content: flex-end;`
+      ) : (
+        `justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};`
+      )}
       position: sticky;
       top: ${theme.spacing(2)};
       right: 0;
