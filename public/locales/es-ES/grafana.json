@@ -244,7 +244,7 @@
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
-      "add-widget-body": "",
+      "add-widget-body": "Crear listas, descuentos y otros «widgets»",
       "add-widget-button": "Añadir widget",
       "add-widget-header": "Añadir un widget",
       "import-a-dashboard-body": "Importar el panel desde el archivo o <1>grafana.com</1>.",
@@ -365,8 +365,8 @@
     },
     "json-editor": {
       "save-button": "Guardar cambios",
-      "subtitle": "",
-      "title": ""
+      "subtitle": "El siguiente modelo JSON es la estructura de datos que define el tablero. Incluye ajustes del tablero, ajustes del panel, diseño, consultas, etc.",
+      "title": "Modelo JSON"
     },
     "links": {
       "title": "Enlaces"
@@ -381,7 +381,7 @@
       "hide-time-picker": "Ocultar el selector de tiempo",
       "now-delay-description": "Excluir los datos recientes que puedan estar incompletos.",
       "now-delay-label": "Retraso ahora",
-      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-description": "Redibujar continuamente los paneles en los que el rango de tiempo hace referencia a «ahora»",
       "refresh-live-dashboards-label": "Actualizar los paneles activos",
       "time-options-label": "Opciones de tiempo",
       "time-zone-label": "Huso horario",
@@ -467,32 +467,32 @@
       "filter-aria-label": "Filtrar consultas para la(s) fuente(s) de datos",
       "filter-history": "Filtrar historial",
       "filter-placeholder": "Filtrar consultas para la(s) fuente(s) de datos",
-      "history-local": "",
+      "history-local": "El historial es local para su navegador y no se comparte con otras personas.",
       "loading": "Cargando...",
       "loading-results": "Cargando resultados...",
       "search-placeholder": "Buscar consultas",
-      "showing-queries": "",
+      "showing-queries": "Mostrando {{ shown }} de {{ total }} <0>Cargar más</0>",
       "sort-aria-label": "Ordenar consultas",
       "sort-placeholder": "Ordenar consultas por"
     },
     "rich-history-settings-tab": {
       "alert-info": "Grafana mantendrá las entradas hasta {{optionLabel}}. Las entradas destacadas no se eliminarán.",
-      "change-default-tab": "",
-      "clear-history-info": "",
-      "clear-query-history": "",
-      "clear-query-history-button": "",
-      "delete-confirm": "",
-      "delete-confirm-text": "",
-      "delete-title": "",
-      "history-time-span": "",
-      "history-time-span-description": "",
-      "only-show-active-datasource": "",
-      "query-history-deleted": "",
+      "change-default-tab": "Cambiar la pestaña activa por defecto de «Historial de consultas» a «Destacados»",
+      "clear-history-info": "Eliminar todo su historial de consultas de forma permanente.",
+      "clear-query-history": "Borrar historial de consultas",
+      "clear-query-history-button": "Borrar historial de consultas",
+      "delete-confirm": "Eliminar",
+      "delete-confirm-text": "¿Seguro que desea eliminar permanentemente su historial de consultas?",
+      "delete-title": "Eliminar",
+      "history-time-span": "Rango de tiempo del historial",
+      "history-time-span-description": "Seleccione el periodo de tiempo durante el cual Grafana guardará su historial de búsquedas. Se almacenarán hasta {{MAX_HISTORY_ITEMS}} entradas.",
+      "only-show-active-datasource": "Mostrar solo las consultas para la fuente de datos actualmente activa en Explorar",
+      "query-history-deleted": "Historial de consultas borrado",
       "retention-period": {
-        "1-week": "",
-        "2-days": "",
-        "2-weeks": "",
-        "5-days": ""
+        "1-week": "1 semana",
+        "2-days": "2 días",
+        "2-weeks": "2 semanas",
+        "5-days": "5 días"
       }
     },
     "rich-history-starred-tab": {
@@ -538,11 +538,11 @@
       "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "Ejecutar consulta",
       "split-close": "Cerrar",
-      "split-close-tooltip": "",
-      "split-narrow": "",
-      "split-title": "",
-      "split-tooltip": "",
-      "split-widen": ""
+      "split-close-tooltip": "Cerrar panel dividido",
+      "split-narrow": "Estrechar panel",
+      "split-title": "Dividir",
+      "split-tooltip": "Dividir el panel",
+      "split-widen": "Ensanchar panel"
     }
   },
   "folder-picker": {
@@ -603,9 +603,9 @@
       "toggle-exemplars": "Cambiar los ejemplares en todo el panel",
       "toggle-graph-crosshair": "",
       "toggle-kiosk": "",
-      "toggle-panel-edit": "",
-      "toggle-panel-fullscreen": "",
-      "toggle-panel-legend": "",
+      "toggle-panel-edit": "Cambiar la vista de edición del panel",
+      "toggle-panel-fullscreen": "Cambiar la vista de pantalla completa del panel",
+      "toggle-panel-legend": "Cambiar leyenda del panel",
       "zoom-out-time-range": "Reducir el intervalo de tiempo"
     },
     "title": "Accesos directos"
@@ -615,9 +615,9 @@
       "collapse-all": "Contraer todo",
       "copy-to-clipboard": "Copiar al portapapeles",
       "description": "El inspector de consultas le permite ver la solicitud y la respuesta en bruto. Para recopilar estos datos, Grafana necesita emitir una nueva consulta. Haga clic en el botón actualizar situado debajo para activar una nueva consulta.",
-      "expand-all": "",
+      "expand-all": "Expandir todo",
       "no-data": "",
-      "refresh": ""
+      "refresh": "Actualizar"
     }
   },
   "library-panel": {
@@ -635,16 +635,16 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "",
+      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
       "body_many": "",
-      "body_other": "",
-      "button-cancel": "",
-      "button-view-panel1": "",
-      "button-view-panel2": "",
-      "panel-not-linked": "",
-      "select-no-options-message": "",
-      "select-placeholder": "",
-      "title": ""
+      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:",
+      "button-cancel": "<0>Cancelar</0>",
+      "button-view-panel1": "Ver panel en {{label}}...",
+      "button-view-panel2": "Ver panel en el tablero...",
+      "panel-not-linked": "El panel no está enlazado a un tablero. Añada el panel a un tablero y vuelva a intentarlo.",
+      "select-no-options-message": "No se ha encontrado ningún tablero",
+      "select-placeholder": "Empezar a escribir para buscar el tablero",
+      "title": "Ver el panel en el tablero"
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -653,15 +653,15 @@
   },
   "login": {
     "error": {
-      "blocked": "",
-      "invalid-user-or-password": "",
-      "title": "",
-      "unknown": ""
+      "blocked": "Ha excedido el número de intentos de inicio de sesión para este usuario. Por favor, inténtelo de nuevo más tarde.",
+      "invalid-user-or-password": "Nombre de usuario o contraseña no válidos",
+      "title": "Error al iniciar sesión",
+      "unknown": "Se ha producido un error desconocido"
     }
   },
   "nav": {
     "add-new-connections": {
-      "title": ""
+      "title": "Añadir nueva conexión"
     },
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
@@ -712,36 +712,36 @@
       "title": "Claves API"
     },
     "application": {
-      "title": ""
+      "title": "Aplicación"
     },
     "apps": {
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
       "title": "Aplicaciones"
     },
     "authentication": {
-      "title": ""
+      "title": "Autenticación"
     },
     "config": {
       "title": "Administración"
     },
     "config-access": {
-      "subtitle": "",
+      "subtitle": "Configurar el acceso para usuarios individuales, equipos y cuentas de servicio",
       "title": "Usuarios y acceso"
     },
     "config-general": {
-      "subtitle": "",
+      "subtitle": "Administrar las preferencias y ajustes por defecto en Grafana",
       "title": "General"
     },
     "config-plugins": {
-      "subtitle": "",
+      "subtitle": "Instalar complementos y definir las relaciones entre los datos",
       "title": "Complementos y datos"
     },
     "connect-data": {
-      "title": ""
+      "title": "Conectar datos"
     },
     "connections": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Navegar y crear nuevas conexiones",
+      "title": "Conexiones"
     },
     "correlations": {
       "subtitle": "Añadir y configurar correlaciones",
@@ -767,7 +767,7 @@
       "title": "Paneles de control"
     },
     "data-sources": {
-      "subtitle": "",
+      "subtitle": "Ver y administrar las conexiones de sus fuentes de datos",
       "title": "Orígenes de datos"
     },
     "datasources": {
@@ -775,13 +775,13 @@
       "title": "Orígenes de datos"
     },
     "detect": {
-      "title": ""
+      "title": "Detectar"
     },
     "explore": {
       "title": "Explorar"
     },
     "frontend": {
-      "title": ""
+      "title": "Interfaz"
     },
     "global-orgs": {
       "subtitle": "Instancias aisladas de Grafana ejecutándose en el mismo servidor",
@@ -792,7 +792,7 @@
       "title": "Usuarios"
     },
     "grafana-quaderno": {
-      "title": ""
+      "title": "Cuaderno de Grafana"
     },
     "help": {
       "title": "Ayuda"
@@ -805,20 +805,20 @@
       "title": "Inicio"
     },
     "incidents": {
-      "title": ""
+      "title": "Incidentes"
     },
     "infrastructure": {
-      "title": ""
+      "title": "Integraciones"
     },
     "kubernetes": {
-      "title": ""
+      "title": "Kubernetes"
     },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de librería"
     },
     "machine-learning": {
-      "title": ""
+      "title": "Aprendizaje automático"
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
@@ -840,14 +840,14 @@
       "title": "Observabilidad"
     },
     "oncall": {
-      "title": ""
+      "title": "OnCall"
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
       "title": "Preferencias por defecto"
     },
     "performance-testing": {
-      "title": ""
+      "title": "Prueba de rendimiento"
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -867,16 +867,16 @@
       "title": "Perfil"
     },
     "profiles": {
-      "title": ""
+      "title": "Perfiles"
     },
     "public": {
       "title": "Paneles de control públicos"
     },
     "recorded-queries": {
-      "title": ""
+      "title": "Consultas grabadas"
     },
     "reporting": {
-      "title": ""
+      "title": "Cración de informes"
     },
     "scenes": {
       "title": "Escenas"
@@ -899,7 +899,7 @@
       "title": "Cerrar sesión"
     },
     "slo": {
-      "title": ""
+      "title": "SLO"
     },
     "snapshots": {
       "subtitle": "Representaciones interactivas, públicamente disponibles y puntuales de los paneles de control",
@@ -912,7 +912,7 @@
       "title": "Tus paneles de control destacados aparecerán aquí"
     },
     "statistics-and-licensing": {
-      "title": ""
+      "title": "Estadísticas y licencias"
     },
     "storage": {
       "subtitle": "Gestionar el almacenamiento de archivos",
@@ -923,7 +923,7 @@
       "title": "Paquetes de apoyo"
     },
     "synthetics": {
-      "title": ""
+      "title": "Síntesis"
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
@@ -942,13 +942,13 @@
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
     },
     "megamenu": {
-      "close": "",
-      "dock": ""
+      "close": "Cerrar menú",
+      "dock": "Menú de base"
     },
     "toolbar": {
-      "close-menu": "",
+      "close-menu": "Cerrar menú",
       "enable-kiosk": "Activar el modo de quiosco",
-      "open-menu": "",
+      "open-menu": "Abrir menú",
       "toggle-search-bar": "Activar o desactivar la barra de búsqueda superior"
     }
   },
@@ -982,57 +982,57 @@
     }
   },
   "playlist-edit": {
-    "error-prefix": "",
+    "error-prefix": "Error al cargar la lista de reproducción:",
     "form": {
-      "add-tag-label": "",
-      "add-tag-placeholder": "",
-      "add-title-label": "",
+      "add-tag-label": "Añadir por etiqueta",
+      "add-tag-placeholder": "Seleccionar una etiqueta",
+      "add-title-label": "Añadir por título",
       "cancel": "Cancelar",
-      "heading": "",
-      "interval-label": "",
-      "interval-placeholder": "",
-      "interval-required": "",
+      "heading": "Añadir paneles",
+      "interval-label": "Intervalo",
+      "interval-placeholder": "5 min",
+      "interval-required": "El intervalo es obligatorio",
       "name-label": "Nombre",
       "name-placeholder": "Nombre",
       "name-required": "El nombre es obligatorio",
       "save": "Guardar",
-      "table-delete": "",
-      "table-drag": "",
-      "table-empty": "",
+      "table-delete": "Eliminar elemento de la lista",
+      "table-drag": "Arrastrar y soltar para reordenar",
+      "table-empty": "La lista está vacía. Añadir paneles a continuación.",
       "table-heading": "Paneles de control"
     },
-    "sub-title": "",
-    "title": ""
+    "sub-title": "La lista de reproducción gira a través de una lista de paneles preseleccionados. Una lista de reproducción puede ser una buena manera de crear conciencia de situaciones, o simplemente de mostrar sus métricas a su equipo o visitantes.",
+    "title": "Editar lista de reproducción"
   },
   "playlist-page": {
     "card": {
-      "delete": "",
-      "edit": "",
-      "start": "",
-      "tooltip": ""
+      "delete": "Eliminar lista de reproducción",
+      "edit": "Editar lista de reproducción",
+      "start": "Iniciar lista de reproducción",
+      "tooltip": "Compartir lista de reproducción"
     },
     "create-button": {
-      "title": ""
+      "title": "Nueva lista de reproducción"
     },
     "delete-modal": {
-      "body": "",
+      "body": "¿Seguro que desea eliminar la lista de reproducción {{name}}?",
       "confirm-text": "Eliminar"
     },
     "empty": {
-      "button": "",
-      "pro-tip": "",
+      "button": "Crear lista de reproducción",
+      "pro-tip": "Puede usar las listas de reproducción para crear ciclos de paneles en televisiones sin control de usuario",
       "pro-tip-link-title": "Más información",
-      "title": ""
+      "title": "Aún no se ha creado ninguna lista de reproducción"
     }
   },
   "profile": {
     "change-password": {
       "cancel-button": "Cancelar",
-      "cannot-change-password-message": "",
+      "cannot-change-password-message": "La contraseña no se puede cambiar aquí.",
       "change-password-button": "Cambiar contraseña",
       "confirm-password-label": "Confirmar contraseña",
       "confirm-password-required": "Se requiere confirmación de la nueva contraseña",
-      "ldap-auth-proxy-message": "",
+      "ldap-auth-proxy-message": "No puede cambiar la contraseña al iniciar sesión con LDAP o «proxy» de autenticación.",
       "new-password-label": "Nueva contraseña",
       "new-password-required": "Se requiere una nueva contraseña",
       "new-password-same-as-old": "La nueva contraseña no puede ser la misma que la antigua.",
