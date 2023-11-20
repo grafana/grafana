@@ -3,7 +3,6 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneDebugger } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -14,19 +13,20 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, viewPanelKey: viewPanelId, overlay } = model.useState();
+  const { controls, viewPanelKey, overlay, editview } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
-  const bodyToRender = model.getBodyToRender(viewPanelId);
+  const bodyToRender = model.getBodyToRender(viewPanelKey);
+  const navModel = getNavModel(navIndex, 'dashboards/browse');
 
-  const navProps = config.featureToggles.dashboardSceneForViewers
-    ? { navModel: getNavModel(navIndex, 'dashboards/browse') }
-    : { navId: 'scenes' };
+  if (editview) {
+    return <editview.Component model={editview} />;
+  }
 
   return (
-    <Page {...navProps} pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className={styles.canvasContent}>
           <NavToolbarActions dashboard={model} />

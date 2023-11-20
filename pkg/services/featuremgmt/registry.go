@@ -359,10 +359,12 @@ var (
 			AllowSelfServe: falsePtr,
 		},
 		{
-			Name:        "clientTokenRotation",
-			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
-			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
+			Name:           "clientTokenRotation",
+			Description:    "Replaces the current in-request token rotation so that the client initiates the rotation",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true",
+			Owner:          identityAccessTeam,
+			AllowSelfServe: falsePtr,
 		},
 		{
 			Name:           "prometheusDataplane",
