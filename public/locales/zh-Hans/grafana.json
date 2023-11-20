@@ -182,13 +182,13 @@
       "sub-text": "<0>定义哪些数据源将显示关联，以及哪些数据将取代先前定义的变量。</0>",
       "title": "配置将链接到 {{dataSourceName}} 的数据源（第 3 步，共 3 步）。"
     },
-    "sub-title": "",
+    "sub-title": "定义不同数据源中存在的数据如何相互关联。详细信息请参阅<2>文档<1></1></2>。",
     "target-form": {
-      "control-rules": "",
-      "sub-text": "",
-      "target-description": "",
-      "target-label": "",
-      "title": ""
+      "control-rules": "此字段是必填字段。",
+      "sub-text": "<0>定义关联将链接到哪个数据源，以及点击关联时将会运行什么查询。</0>",
+      "target-description": "指定点击链接时查询哪个数据源",
+      "target-label": "目标",
+      "title": "设置关联的目标（第 2 步，共 3 步）"
     },
     "trans-details": {
       "logfmt-description": "",
@@ -625,14 +625,14 @@
   },
   "library-panels": {
     "modal": {
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_other": ""
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
@@ -936,7 +936,7 @@
     "toolbar": {
       "close-menu": "",
       "enable-kiosk": "启用 kiosk 模式",
-      "open-menu": "",
+      "open-menu": "打开菜单",
       "toggle-search-bar": "切换顶部搜索栏"
     }
   },
@@ -970,23 +970,23 @@
     }
   },
   "playlist-edit": {
-    "error-prefix": "",
+    "error-prefix": "加载播放列表时发生错误：",
     "form": {
-      "add-tag-label": "",
-      "add-tag-placeholder": "",
-      "add-title-label": "",
+      "add-tag-label": "按标签添加",
+      "add-tag-placeholder": "选择一个标签",
+      "add-title-label": "按标题添加",
       "cancel": "取消",
-      "heading": "",
-      "interval-label": "",
-      "interval-placeholder": "",
-      "interval-required": "",
+      "heading": "添加仪表板",
+      "interval-label": "间隔",
+      "interval-placeholder": "5m",
+      "interval-required": "间隔是必需项",
       "name-label": "名称",
       "name-placeholder": "名称",
       "name-required": "姓名是必填项",
       "save": "保存",
-      "table-delete": "",
-      "table-drag": "",
-      "table-empty": "",
+      "table-delete": "删除播放列表项",
+      "table-drag": "拖放以重新排序",
+      "table-empty": "播放列表为空。请在下方添加仪表板。",
       "table-heading": "仪表板"
     },
     "sub-title": "",
@@ -1186,22 +1186,22 @@
     }
   },
   "share-playlist": {
-    "checkbox-description": "",
-    "checkbox-label": "",
+    "checkbox-description": "将调整面板高度以适应屏幕大小",
+    "checkbox-label": "自动调整",
     "copy-link-button": "复制",
     "link-url-label": "链接网址",
-    "mode": "",
-    "mode-kiosk": "",
-    "mode-normal": "",
-    "mode-tv": "",
-    "title": ""
+    "mode": "模式",
+    "mode-kiosk": "Kiosk",
+    "mode-normal": "正常",
+    "mode-tv": "电视",
+    "title": "共享播放列表"
   },
   "shared": {
     "preferences": {
       "theme": {
         "dark-label": "深色",
         "light-label": "浅色",
-        "system-label": ""
+        "system-label": "系统首选项"
       }
     }
   },
@@ -1225,9 +1225,9 @@
     "title": "首选项"
   },
   "snapshot": {
-    "external-badge": "",
+    "external-badge": "外部",
     "name-column-header": "名称",
-    "url-column-header": "",
+    "url-column-header": "快照网址",
     "view-button": "查看"
   },
   "tag-filter": {
