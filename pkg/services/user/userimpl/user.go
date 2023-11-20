@@ -312,29 +312,15 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 		return nil, err
 	}
 
-	// tempUser is used to retrieve the teams for the signed in user for internal use.
-	tempUser := &user.SignedInUser{
-		OrgID: signedInUser.OrgID,
-		Permissions: map[int64]map[string][]string{
-			signedInUser.OrgID: {
-				ac.ActionTeamsRead: {ac.ScopeTeamsAll},
-			},
-		},
+	getTeamsByUserQuery := &team.GetTeamIDsByUserIDQuery{
+		OrgID:  signedInUser.OrgID,
+		UserID: signedInUser.UserID,
 	}
-	getTeamsByUserQuery := &team.GetTeamsByUserQuery{
-		OrgID:        signedInUser.OrgID,
-		UserID:       signedInUser.UserID,
-		SignedInUser: tempUser,
-	}
-	getTeamsByUserQueryResult, err := s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
+	signedInUser.Teams, err = s.teamService.GetIDsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	signedInUser.Teams = make([]int64, len(getTeamsByUserQueryResult))
-	for i, t := range getTeamsByUserQueryResult {
-		signedInUser.Teams[i] = t.ID
-	}
 	return signedInUser, err
 }
 

@@ -23,6 +23,7 @@ type store interface {
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
+	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserIDQuery) ([]int64, error)
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
 	AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error
 	UpdateMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error
@@ -330,6 +331,27 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 		err = sess.SQL(sql.String(), params...).Find(&queryResult)
 		return err
 	})
+	if err != nil {
+		return nil, err
+	}
+	return queryResult, nil
+}
+
+// GetIDsByUser is used by the Guardian when checking a users' permissions
+func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserIDQuery) ([]int64, error) {
+	queryResult := make([]int64, 0)
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		var params []any
+		params = append(params, query.UserID, query.OrgID, query.OrgID)
+		return sess.SQL(`SELECT t.id
+FROM team as t
+INNER JOIN team_member as tm ON t.id = tm.team_id
+WHERE
+tm.user_id=?
+AND tm.org_id=?
+AND t.org_id=?;`, params...).Find(&queryResult)
+	})
+
 	if err != nil {
 		return nil, err
 	}
