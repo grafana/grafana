@@ -46,19 +46,14 @@
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
-      "alertRule_many": "",
       "alertRule_other": "{{count}} reglas de alerta",
       "dashboard_one": "{{count}} panel de control",
-      "dashboard_many": "",
       "dashboard_other": "{{count}} paneles de control",
       "folder_one": "{{count}} carpeta",
-      "folder_many": "",
       "folder_other": "{{count}} carpetas",
       "libraryPanel_one": "{{count}} panel de librería",
-      "libraryPanel_many": "",
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
-      "total_many": "",
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
@@ -402,81 +397,81 @@
       "description-mixed": ""
     },
     "list": {
-      "no-data-source-message": ""
+      "no-data-source-message": "No se ha encontrado ninguna fuente de datos"
     },
     "modal": {
-      "configure-new-data-source": "",
-      "input-placeholder": "",
-      "title": ""
+      "configure-new-data-source": "Abrir una nueva pestaña y configurar una fuente de datos",
+      "input-placeholder": "Seleccionar fuente de datos",
+      "title": "Seleccionar fuente de datos"
     },
-    "open-advanced-button": ""
+    "open-advanced-button": "Abrir selector avanzado de fuentes de datos"
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": ""
+      "label": "Añadir nueva fuente de datos"
     }
   },
   "explore": {
-    "add-to-dashboard": "",
+    "add-to-dashboard": "Añadir al panel",
     "rich-history": {
-      "close-tooltip": "",
-      "datasource-a-z": "",
-      "datasource-z-a": "",
-      "newest-first": "",
-      "oldest-first": "",
-      "query-history": "",
+      "close-tooltip": "Cerrar el historial de consultas",
+      "datasource-a-z": "Fuente de datos A-Z",
+      "datasource-z-a": "Fuente de datos Z-A",
+      "newest-first": "El más reciente primero",
+      "oldest-first": "El más antiguo primero",
+      "query-history": "Historial de consultas",
       "settings": "Configuración",
       "starred": "Destacado"
     },
     "rich-history-card": {
-      "add-comment-form": "",
-      "add-comment-tooltip": "",
+      "add-comment-form": "Añadir formulario de comentario",
+      "add-comment-tooltip": "Añadir comentario",
       "cancel": "Cancelar",
-      "confirm-delete": "",
-      "copy-query-tooltip": "",
-      "copy-shortened-link-tooltip": "",
-      "datasource-icon-label": "",
-      "datasource-name-label": "",
-      "datasource-not-exist": "",
-      "delete-query-confirmation-title": "",
-      "delete-query-title": "",
-      "delete-query-tooltip": "",
-      "delete-starred-query-confirmation-text": "",
-      "edit-comment-tooltip": "",
-      "loading-text": "",
-      "optional-description": "",
-      "query-comment-label": "",
-      "query-text-label": "",
-      "run-query-button": "",
-      "save-comment": "",
-      "star-query-tooltip": "",
-      "switch-datasource-button": "",
-      "unstar-query-tooltip": "",
-      "update-comment-form": ""
+      "confirm-delete": "Eliminar",
+      "copy-query-tooltip": "Copiar consulta al portapapeles",
+      "copy-shortened-link-tooltip": "Copiar enlace abreviado al portapapeles",
+      "datasource-icon-label": "Icono de fuente de datos",
+      "datasource-name-label": "Nombre de fuente de datos",
+      "datasource-not-exist": "La fuente de datos ya no existe",
+      "delete-query-confirmation-title": "Eliminar",
+      "delete-query-title": "Eliminar consulta",
+      "delete-query-tooltip": "Eliminar consulta",
+      "delete-starred-query-confirmation-text": "¿Seguro que desea eliminar permanentemente su consulta favorita?",
+      "edit-comment-tooltip": "Editar comentario",
+      "loading-text": "cargando...",
+      "optional-description": "Una descripción opcional de lo que hace la consulta.",
+      "query-comment-label": "Comentario de la consulta",
+      "query-text-label": "Texto de la consulta",
+      "run-query-button": "Ejecutar consulta",
+      "save-comment": "Guardar comentario",
+      "star-query-tooltip": "Consulta favorita",
+      "switch-datasource-button": "Cambiar la fuente de datos y ejecutar la consulta",
+      "unstar-query-tooltip": "Desmarcar consulta",
+      "update-comment-form": "Actualizar el formulario de comentario"
     },
     "rich-history-container": {
       "loading": "Cargando..."
     },
     "rich-history-notification": {
-      "query-copied": "",
-      "query-deleted": ""
+      "query-copied": "Consulta copiada al portapapeles",
+      "query-deleted": "Consulta eliminada"
     },
     "rich-history-queries-tab": {
-      "displaying-partial-queries": "",
-      "displaying-queries": "",
-      "filter-aria-label": "",
-      "filter-history": "",
-      "filter-placeholder": "",
+      "displaying-partial-queries": "Mostrando {{ count }} consultas",
+      "displaying-queries": "{{ count }} consultas",
+      "filter-aria-label": "Filtrar consultas para la(s) fuente(s) de datos",
+      "filter-history": "Filtrar historial",
+      "filter-placeholder": "Filtrar consultas para la(s) fuente(s) de datos",
       "history-local": "",
       "loading": "Cargando...",
-      "loading-results": "",
-      "search-placeholder": "",
+      "loading-results": "Cargando resultados...",
+      "search-placeholder": "Buscar consultas",
       "showing-queries": "",
-      "sort-aria-label": "",
-      "sort-placeholder": ""
+      "sort-aria-label": "Ordenar consultas",
+      "sort-placeholder": "Ordenar consultas por"
     },
     "rich-history-settings-tab": {
-      "alert-info": "",
+      "alert-info": "Grafana mantendrá las entradas hasta {{optionLabel}}. Las entradas destacadas no se eliminarán.",
       "change-default-tab": "",
       "clear-history-info": "",
       "clear-query-history": "",
@@ -635,16 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "",
-      "body_many": "",
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_one": "",
+      "body_other": ""
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -1033,26 +1027,26 @@
       "confirm-password-label": "Confirmar contraseña",
       "confirm-password-required": "Se requiere confirmación de la nueva contraseña",
       "ldap-auth-proxy-message": "",
-      "new-password-label": "",
-      "new-password-required": "",
-      "new-password-same-as-old": "",
-      "old-password-label": "",
-      "old-password-required": "",
-      "passwords-must-match": ""
+      "new-password-label": "Nueva contraseña",
+      "new-password-required": "Se requiere una nueva contraseña",
+      "new-password-same-as-old": "La nueva contraseña no puede ser la misma que la antigua.",
+      "old-password-label": "Contraseña antigua",
+      "old-password-required": "Se requiere la contraseña antigua",
+      "passwords-must-match": "Las contraseñas deben coincidir"
     }
   },
   "query-operation": {
     "header": {
-      "collapse-row": "",
-      "datasource-help": "",
-      "disable-query": "",
-      "drag-and-drop": "",
-      "duplicate-query": "",
-      "expand-row": "",
-      "remove-query": "",
-      "toggle-edit-mode": ""
+      "collapse-row": "Contraer la fila de la consulta",
+      "datasource-help": "Mostrar la ayuda de la fuente de datos",
+      "disable-query": "Deshabilitar consulta",
+      "drag-and-drop": "Arrastrar y soltar para reordenar",
+      "duplicate-query": "Duplicar consulta",
+      "expand-row": "Expandir la fila de la consulta",
+      "remove-query": "Eliminar consulta",
+      "toggle-edit-mode": "Cambiar el modo de edición de texto"
     },
-    "query-editor-not-exported": ""
+    "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
   },
   "refresh-picker": {
     "aria-label": {
@@ -1073,7 +1067,7 @@
     },
     "tooltip": {
       "interval-selected": "Establecer intervalo de actualización automática",
-      "turned-off": ""
+      "turned-off": "Actualización automática desactivada"
     }
   },
   "search": {
