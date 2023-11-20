@@ -17,7 +17,6 @@ import {
   fuzzyMatch,
 } from '@grafana/ui';
 
-import PromQlLanguageProvider from '../../prometheus/language_provider';
 import LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';
 
@@ -28,8 +27,7 @@ const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
 
 export interface BrowserProps {
-  // TODO #33976: Is it possible to use a common interface here? For example: LabelsLanguageProvider
-  languageProvider: LokiLanguageProvider | PromQlLanguageProvider;
+  languageProvider: LokiLanguageProvider;
   onChange: (selector: string) => void;
   theme: GrafanaTheme2;
   app?: CoreApp;
@@ -370,12 +368,12 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 
   async fetchSeries(selector: string, lastFacetted?: string) {
-    const { languageProvider } = this.props;
+    const { languageProvider, timeRange } = this.props;
     if (lastFacetted) {
       this.updateLabelState(lastFacetted, { loading: true }, `Loading labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
+      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, { timeRange });
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         if (lastFacetted) {

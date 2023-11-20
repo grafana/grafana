@@ -100,7 +100,16 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   };
 };
 
-const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource, placeholder, onChange }: Props) => {
+const MonacoQueryField = ({
+  history,
+  onBlur,
+  onRunQuery,
+  initialValue,
+  datasource,
+  placeholder,
+  onChange,
+  timeRange,
+}: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
@@ -203,7 +212,11 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
             onTypeDebounced(query);
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
-          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
+          const dataProvider = new CompletionDataProvider(
+            langProviderRef.current,
+            historyRef,
+            timeRange ?? langProviderRef.current.getDefaultTimeRange()
+          );
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

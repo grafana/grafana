@@ -1,4 +1,4 @@
-import { HistoryItem } from '@grafana/data';
+import { HistoryItem, dateTime } from '@grafana/data';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
 import { LokiDatasource } from '../../../datasource';
@@ -63,7 +63,15 @@ describe('CompletionDataProvider', () => {
     datasource = createLokiDatasource();
     languageProvider = new LokiLanguageProvider(datasource);
     historyRef.current = history;
-    completionProvider = new CompletionDataProvider(languageProvider, historyRef);
+    const mockTimeRange = {
+      from: dateTime(1546372800000),
+      to: dateTime(1546380000000),
+      raw: {
+        from: dateTime(1546372800000),
+        to: dateTime(1546380000000),
+      },
+    };
+    completionProvider = new CompletionDataProvider(languageProvider, historyRef, mockTimeRange);
 
     jest.spyOn(languageProvider, 'getLabelKeys').mockReturnValue(labelKeys);
     jest.spyOn(languageProvider, 'fetchLabelValues').mockResolvedValue(labelValues);

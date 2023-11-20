@@ -1,6 +1,6 @@
 import { chain } from 'lodash';
 
-import { HistoryItem } from '@grafana/data';
+import { HistoryItem, TimeRange } from '@grafana/data';
 import { escapeLabelValueInExactSelector } from 'app/plugins/datasource/prometheus/language_utils';
 
 import LanguageProvider from '../../../LanguageProvider';
@@ -15,7 +15,8 @@ interface HistoryRef {
 export class CompletionDataProvider {
   constructor(
     private languageProvider: LanguageProvider,
-    private historyRef: HistoryRef = { current: [] }
+    private historyRef: HistoryRef = { current: [] },
+    private timeRange: TimeRange
   ) {
     this.queryToLabelKeysCache = new Map();
   }
@@ -90,6 +91,8 @@ export class CompletionDataProvider {
   }
 
   async getSeriesLabels(labels: Label[]) {
-    return await this.languageProvider.fetchSeriesLabels(this.buildSelector(labels)).then((data) => data ?? {});
+    return await this.languageProvider
+      .fetchSeriesLabels(this.buildSelector(labels), { timeRange: this.timeRange })
+      .then((data) => data ?? {});
   }
 }

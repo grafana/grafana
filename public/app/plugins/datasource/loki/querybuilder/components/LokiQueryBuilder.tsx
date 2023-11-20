@@ -55,7 +55,7 @@ export const LokiQueryBuilder = React.memo<Props>(
       }
 
       const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-      const series = await datasource.languageProvider.fetchSeriesLabels(expr);
+      const series = await datasource.languageProvider.fetchSeriesLabels(expr, { timeRange });
       const labelsNamesToConsider = labelsToConsider.map((l) => l.label);
 
       const labelNames = Object.keys(series)
