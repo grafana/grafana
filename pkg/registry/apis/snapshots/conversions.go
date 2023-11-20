@@ -22,6 +22,10 @@ func convertDTOToSummary(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer 
 		expires = 0 // ignore things expiring long into the future
 	}
 	return &snapshots.DashboardSnapshot{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "DashboardSnapshot",
+			APIVersion: VersionID,
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Key,
 			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),

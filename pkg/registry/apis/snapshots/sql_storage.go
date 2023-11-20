@@ -14,6 +14,7 @@ import (
 
 	snapshots "github.com/grafana/grafana/pkg/apis/snapshots/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/util"
@@ -114,6 +115,18 @@ func (s *legacyStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	if info.OrgID < 1 {
+		return nil, fmt.Errorf("invalid namespace")
+	}
+
 	snap, ok := obj.(*snapshots.DashboardSnapshot)
 	if !ok {
 		return nil, fmt.Errorf("expected playlist?")
@@ -124,8 +137,27 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if snap.DeleteKey == "" {
 		snap.DeleteKey = util.GenerateShortUID()
 	}
+
+	userID, err := identity.UserIdentifier(user.GetNamespacedID())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get user id")
+	}
+
+	// Create the dashboard on the external server
+	if snap.Info.External {
+		return nil, fmt.Errorf("not implemented yet")
+	}
+
 	out, err := s.service.CreateDashboardSnapshot(ctx, &dashboardsnapshots.CreateDashboardSnapshotCommand{
-		// TODO
+		Name:      snap.Info.Title,
+		OrgID:     info.OrgID,
+		UserID:    userID,
+		Key:       snap.Name,
+		DeleteKey: snap.DeleteKey,
+		Expires:   snap.Info.Expires,
+
+		// encrypted?
+		Dashboard: snap.Dashboard,
 	})
 	if err != nil {
 		return nil, err

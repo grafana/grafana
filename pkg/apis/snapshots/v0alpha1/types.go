@@ -34,11 +34,17 @@ type DashboardSnapshotList struct {
 }
 
 type SnapshotInfo struct {
-	Title       string `json:"title,omitempty"`
-	Expires     int64  `json:"expires,omitempty"`
+	Title string `json:"title,omitempty"`
+	// Optionally auto-remove the snapshot at a future date
+	Expires int64 `json:"expires,omitempty"`
+	// When set to true, the snapshot exists in a remote server
+	External bool `json:"external,omitempty"`
+	// The external URL where the snapshot can be seen
 	ExternalURL string `json:"externalUrl,omitempty"`
+	// The URL that created the dashboard originally
 	OriginalUrl string `json:"originalUrl,omitempty"`
-	Timestamp   string `json:"timestamp,omitempty"`
+	// Snapshot creation timestamp
+	Timestamp string `json:"timestamp,omitempty"`
 }
 
 // Each tenant, may have different sharing options

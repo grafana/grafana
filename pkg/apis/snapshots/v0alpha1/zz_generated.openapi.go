@@ -232,26 +232,37 @@ func schema_pkg_apis_snapshots_v0alpha1_SnapshotInfo(ref common.ReferenceCallbac
 					},
 					"expires": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
+							Description: "Optionally auto-remove the snapshot at a future date",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When set to true, the snapshot exists in a remote server",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"externalUrl": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The external URL where the snapshot can be seen",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"originalUrl": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The URL that created the dashboard originally",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"timestamp": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Snapshot creation timestamp",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
