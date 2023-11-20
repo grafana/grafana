@@ -1,97 +1,97 @@
 {
-  "_comment": "",
+  "_comment": "Diese Datei ist die Quelle für englische Strings. Bearbeiten Sie diese, um die Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
-      "serviceaccount-label": "",
-      "team-label": "",
-      "title": "",
-      "user-label": ""
+      "serviceaccount-label": "Service-Konto",
+      "team-label": "Team",
+      "title": "Berechtigung hinzufügen für",
+      "user-label": "Nutzer"
     },
     "add-permissions": {
       "save": "Speichern"
     },
     "permission-list": {
-      "permission": ""
+      "permission": "Berechtigung"
     },
     "permissions": {
-      "add-label": "",
-      "no-permissions": "",
-      "permissions-change-warning": "",
+      "add-label": "Berechtigung hinzufügen",
+      "no-permissions": "Keine Berechtigungen vorhanden",
+      "permissions-change-warning": "Dadurch werden die Berechtigungen für diesen Ordner und alle seine Unterordner geändert. Insgesamt betrifft dies Folgendes:",
       "role": "Rolle",
-      "serviceaccount": "",
-      "team": "",
-      "title": "",
-      "user": ""
+      "serviceaccount": "Service-Konto",
+      "team": "Team",
+      "title": "Berechtigung",
+      "user": "Nutzer"
     }
   },
   "browse-dashboards": {
     "action": {
       "cancel-button": "Abbrechen",
-      "cannot-move-folders": "",
-      "delete-button": "",
-      "delete-modal-invalid-text": "",
-      "delete-modal-invalid-title": "",
-      "delete-modal-text": "",
-      "delete-modal-title": "",
-      "deleting": "",
-      "manage-permissions-button": "",
-      "move-button": "",
-      "move-modal-alert": "",
-      "move-modal-field-label": "",
-      "move-modal-text": "",
-      "move-modal-title": "",
-      "moving": "",
-      "new-folder-name-required-phrase": ""
+      "cannot-move-folders": "Ordner können nicht verschoben werden",
+      "delete-button": "Löschen",
+      "delete-modal-invalid-text": "Ein oder mehrere Ordner enthalten Bibliotheksfenster oder Alarmierungsregeln. Löschen Sie diese zuerst, um fortzufahren.",
+      "delete-modal-invalid-title": "Ordner kann nicht gelöscht werden",
+      "delete-modal-text": "Diese Aktion wird folgenden Inhalt löschen:",
+      "delete-modal-title": "Löschen",
+      "deleting": "Löschen...",
+      "manage-permissions-button": "Berechtigungen verwalten",
+      "move-button": "Verschieben",
+      "move-modal-alert": "Das Verschieben dieses Elements kann seine Berechtigungen ändern.",
+      "move-modal-field-label": "Ordnername",
+      "move-modal-text": "Diese Aktion wird folgenden Inhalt verschieben:",
+      "move-modal-title": "Verschieben",
+      "moving": "Verschieben...",
+      "new-folder-name-required-phrase": "Ordnername ist erforderlich."
     },
     "counts": {
       "alertRule_one": "",
-      "alertRule_other": "",
+      "alertRule_other": "{{count}} Alamierungsregeln",
       "dashboard_one": "",
-      "dashboard_other": "",
+      "dashboard_other": "{{count}} Dashboards",
       "folder_one": "",
-      "folder_other": "",
+      "folder_other": "{{count}} Ordner",
       "libraryPanel_one": "",
-      "libraryPanel_other": "",
-      "total_one": "",
-      "total_other": ""
+      "libraryPanel_other": "{{count}} Bibliotheksfenster",
+      "total_one": "{{count}} Element",
+      "total_other": "{{count}} Elemente"
     },
     "dashboards-tree": {
-      "collapse-folder-button": "",
-      "expand-folder-button": "",
+      "collapse-folder-button": "Ordner einklappen {{title}}",
+      "expand-folder-button": "Ordner ausklappen {{title}}",
       "name-column": "Name",
-      "select-all-header-checkbox": "",
-      "select-checkbox": "",
+      "select-all-header-checkbox": "Alle auswählen",
+      "select-checkbox": "Auswählen",
       "tags-column": "Tags"
     },
     "folder-actions-button": {
-      "delete": "",
-      "folder-actions": "",
-      "manage-permissions": "",
-      "move": ""
+      "delete": "Löschen",
+      "folder-actions": "Ordneraktionen",
+      "manage-permissions": "Berechtigungen verwalten",
+      "move": "Verschieben"
     },
     "folder-picker": {
-      "accessible-label": "",
+      "accessible-label": "Ordner auswählen: {{ label }} aktuell ausgewählt",
       "button-label": "Ordner auswählen",
-      "empty-message": "",
-      "error-title": "",
-      "search-placeholder": "",
-      "unknown-error": ""
+      "empty-message": "Keine Ordner gefunden",
+      "error-title": "Fehler beim Laden der Ordner",
+      "search-placeholder": "Ordner suchen",
+      "unknown-error": "Unbekannter Fehler"
     },
     "manage-folder-nav": {
       "alert-rules": "Warnregeln",
       "dashboards": "Dashboards",
-      "panels": "",
-      "permissions": "",
+      "panels": "Fenster",
+      "permissions": "Berechtigungen",
       "settings": "Einstellungen"
     },
     "new-folder-form": {
       "cancel-label": "Abbrechen",
       "create-label": "Erstellen",
-      "name-label": ""
+      "name-label": "Ordnername"
     },
     "no-results": {
-      "clear": "",
+      "clear": "Suche und Filter löschen",
       "text": ""
     }
   },
@@ -199,29 +199,29 @@
       "logfmt-description": "",
       "logfmt-label": "",
       "regex-description": "",
-      "regex-expression": "",
-      "regex-label": "",
-      "regex-map-values": ""
+      "regex-expression": "Verwenden Sie Erfassungsgruppen, um einen Teil des Feldes zu extrahieren.",
+      "regex-label": "Regulärer Ausdruck",
+      "regex-map-values": "Definiert den Namen der Variable, wenn die Erfassungsgruppe nicht benannt ist."
     },
     "transform": {
-      "add-button": "",
-      "heading": "",
-      "no-transform": ""
+      "add-button": "Transformation hinzufügen",
+      "heading": "Transformationen",
+      "no-transform": "Keine Transformationen definiert."
     },
     "transform-row": {
-      "expression-label": "",
-      "expression-required": "",
-      "expression-tooltip": "",
-      "field-input": "",
-      "field-label": "",
-      "field-tooltip": "",
-      "map-value-label": "",
-      "map-value-tooltip": "",
+      "expression-label": "Ausdruck",
+      "expression-required": "Bitte definieren Sie einen Ausdruck",
+      "expression-tooltip": "Erforderlich für regulären Ausdruck. Der Ausdruck, den die Transformation verwenden wird. Logfmt verwendet keine weiteren Spezifikationen.",
+      "field-input": "Feld",
+      "field-label": "Feld",
+      "field-tooltip": "Optional. Das zu transformierende Feld. Wenn nicht angegeben, wird die Transformation auf das Ergebnisfeld angewendet.",
+      "map-value-label": "Kartenwert",
+      "map-value-tooltip": "Optional. Definiert den Namen der Variablen. Dies ist derzeit nur für reguläre Ausdrücke mit einer einzigen, unbenannten Erfassungsgruppe gültig.",
       "remove-button": "Entfernen",
-      "remove-tooltip": "",
-      "transform-required": "",
+      "remove-tooltip": "Transformation entfernen",
+      "transform-required": "Bitte wählen Sie einen Transformationstyp",
       "type-label": "Typ",
-      "type-tooltip": ""
+      "type-tooltip": "Die Art der Transformation, die auf die Quelldaten angewendet wird."
     }
   },
   "dashboard": {
@@ -230,20 +230,20 @@
       "paste-panel": "Panel einfügen",
       "row": "Zeile",
       "visualization": "Visualisierung",
-      "widget": ""
+      "widget": "Widget"
     },
     "empty": {
-      "add-library-panel-body": "",
-      "add-library-panel-button": "",
-      "add-library-panel-header": "",
+      "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
+      "add-library-panel-button": "Bibliotheksfenster hinzufügen",
+      "add-library-panel-header": "Ein Bibliotheksfenster hinzufügen",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
-      "add-widget-body": "",
-      "add-widget-button": "",
-      "add-widget-header": "",
-      "import-a-dashboard-body": "",
-      "import-a-dashboard-header": "",
+      "add-widget-body": "Listen, Markdowns und andere Widgets erstellen",
+      "add-widget-button": "Widget hinzufügen",
+      "add-widget-header": "Widget hinzufügen",
+      "import-a-dashboard-body": "Dashboard aus Datei oder <1>grafana.com</1> importieren.",
+      "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren"
     },
     "inspect": {
@@ -313,50 +313,50 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     },
     "validation": {
-      "invalid-dashboard-id": "",
-      "invalid-json": "",
-      "tags-expected-array": "",
-      "tags-expected-strings": ""
+      "invalid-dashboard-id": "Konnte keine gültige Grafana.com-ID finden",
+      "invalid-json": "JSON ungültig",
+      "tags-expected-array": "Array der jeweiligen Tags",
+      "tags-expected-strings": "String-Array der jeweiligen Tags"
     }
   },
   "dashboard-import": {
     "file-dropzone": {
-      "primary-text": "",
-      "secondary-text": ""
+      "primary-text": "Dashboard JSON-Datei hochladen",
+      "secondary-text": "Ziehen Sie hierher oder klicken Sie zum Durchsuchen"
     },
     "form-actions": {
       "cancel": "Abbrechen",
-      "load": ""
+      "load": "Laden"
     },
     "gcom-field": {
-      "label": "",
-      "load-button": "",
-      "placeholder": "",
-      "validation-required": ""
+      "label": "Dashboards für gängige Anwendungen finden und importieren unter <1></1>",
+      "load-button": "Laden",
+      "placeholder": "Grafana.com Dashboard URL oder ID",
+      "validation-required": "Eine Grafana Dashboard URL oder ID ist erforderlich"
     },
     "json-field": {
-      "label": "",
-      "validation-required": ""
+      "label": "Import per Dashboard JSON-Modell",
+      "validation-required": "Benötigt ein Dashboard JSON-Modell"
     }
   },
   "dashboard-settings": {
     "annotations": {
-      "title": ""
+      "title": "Anmerkungen"
     },
-    "dashboard-delete-button": "",
+    "dashboard-delete-button": "Dashboard löschen",
     "general": {
-      "auto-refresh-description": "",
-      "auto-refresh-label": "",
-      "description-label": "",
-      "editable-description": "",
-      "editable-label": "",
+      "auto-refresh-description": "Definieren Sie die automatischen Aktualisierungsintervalle, die in der Liste der automatischen Aktualisierungen verfügbar sein sollen.",
+      "auto-refresh-label": "Automatisch aktualisieren",
+      "description-label": "Beschreibung",
+      "editable-description": "Schreibgeschützt um alle Bearbeitung zu deaktivieren. Aktualisieren Sie das Dashboard, damit Änderungen wirksam werden",
+      "editable-label": "Editierbar",
       "folder-label": "Ordner",
-      "panel-options-graph-tooltip-description": "",
-      "panel-options-graph-tooltip-label": "",
-      "panel-options-label": "",
+      "panel-options-graph-tooltip-description": "Steuert das Tooltip- und Hover-Highlight-Verhalten in verschiedenen Bereichen. Laden Sie das Dashboard neu, damit die Änderungen wirksam werden",
+      "panel-options-graph-tooltip-label": "Graph-Tooltip",
+      "panel-options-label": "Fenster-Optionen",
       "tags-label": "Tags",
       "title": "Allgemein",
-      "title-label": ""
+      "title-label": "Titel"
     },
     "json-editor": {
       "save-button": "",
@@ -445,58 +445,58 @@
       "run-query-button": "",
       "save-comment": "",
       "star-query-tooltip": "",
-      "switch-datasource-button": "",
-      "unstar-query-tooltip": "",
-      "update-comment-form": ""
+      "switch-datasource-button": "Datenquelle wechseln und Abfrage ausführen",
+      "unstar-query-tooltip": "Abfrage abwählen",
+      "update-comment-form": "Kommentarformular aktualisieren"
     },
     "rich-history-container": {
       "loading": "Wird geladen ..."
     },
     "rich-history-notification": {
-      "query-copied": "",
-      "query-deleted": ""
+      "query-copied": "Abfrage in Zwischenablage kopiert",
+      "query-deleted": "Abfrage gelöscht"
     },
     "rich-history-queries-tab": {
-      "displaying-partial-queries": "",
-      "displaying-queries": "",
-      "filter-aria-label": "",
-      "filter-history": "",
-      "filter-placeholder": "",
-      "history-local": "",
+      "displaying-partial-queries": "{{ count }} Abfragen anzeigen",
+      "displaying-queries": "{{ count }} Abfragen",
+      "filter-aria-label": "Filterabfragen nach Datenquelle(n)",
+      "filter-history": "Filterverlauf",
+      "filter-placeholder": "Filterabfragen nach Datenquelle(n)",
+      "history-local": "Der Verlauf ist lokal in Ihrem Browser gespeichert und wird nicht mit anderen geteilt.",
       "loading": "Wird geladen ...",
-      "loading-results": "",
-      "search-placeholder": "",
-      "showing-queries": "",
-      "sort-aria-label": "",
-      "sort-placeholder": ""
+      "loading-results": "Ergebnisse werden geladen...",
+      "search-placeholder": "Suchabfragen",
+      "showing-queries": "Zeige {{ shown }} von {{ total }} <0>Mehr laden</0>",
+      "sort-aria-label": "Abfragen sortieren",
+      "sort-placeholder": "Abfragen sortieren nach"
     },
     "rich-history-settings-tab": {
-      "alert-info": "",
-      "change-default-tab": "",
-      "clear-history-info": "",
-      "clear-query-history": "",
-      "clear-query-history-button": "",
-      "delete-confirm": "",
-      "delete-confirm-text": "",
-      "delete-title": "",
-      "history-time-span": "",
-      "history-time-span-description": "",
-      "only-show-active-datasource": "",
-      "query-history-deleted": "",
+      "alert-info": "Grafana hält Einträge bis {{optionLabel}}. Markierte Einträge werden nicht gelöscht.",
+      "change-default-tab": "Ändern Sie den aktiven Standard-Tab von „Abfragehistorie“ zu „Markiert“",
+      "clear-history-info": "Lösche den gesamten Abfrageverlauf dauerhaft.",
+      "clear-query-history": "Abfrageverlauf löschen",
+      "clear-query-history-button": "Abfrageverlauf löschen",
+      "delete-confirm": "Löschen",
+      "delete-confirm-text": "Sind Sie sicher, dass Sie Ihren Abfrageverlauf dauerhaft löschen möchten?",
+      "delete-title": "Löschen",
+      "history-time-span": "Verlauf Zeitspanne",
+      "history-time-span-description": "Wählen Sie den Zeitraum, für den Grafana Ihren Abfrageverlauf speichern wird. Bis zu {{MAX_HISTORY_ITEMS}} Einträge werden gespeichert.",
+      "only-show-active-datasource": "Nur Abfragen für derzeit aktive Datenquelle anzeigen",
+      "query-history-deleted": "Abfrageverlauf gelöscht",
       "retention-period": {
-        "1-week": "",
-        "2-days": "",
-        "2-weeks": "",
-        "5-days": ""
+        "1-week": "1 Woche",
+        "2-days": "2 Tage",
+        "2-weeks": "2 Wochen",
+        "5-days": "5 Tage"
       }
     },
     "rich-history-starred-tab": {
-      "filter-queries-aria-label": "",
-      "filter-queries-placeholder": "",
+      "filter-queries-aria-label": "Filterabfragen für Datenquelle(n)",
+      "filter-queries-placeholder": "Filterabfragen für Datenquelle(n)",
       "loading": "Wird geladen ...",
-      "loading-results": "",
-      "local-history-message": "",
-      "search-queries-placeholder": "",
+      "loading-results": "Ergebnisse werden geladen...",
+      "local-history-message": "Der Verlauf ist lokal in Ihrem Browser gespeichert und wird nicht mit anderen geteilt.",
+      "search-queries-placeholder": "Suchabfragen",
       "showing-queries": "",
       "sort-queries-aria-label": "",
       "sort-queries-placeholder": ""
@@ -630,15 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "",
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_one": "",
+      "body_other": ""
     },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
