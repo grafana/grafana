@@ -510,9 +510,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
           top: 0,
         });
       }
-    } else {
-      this.topLogsRef.current?.scrollIntoView();
     }
+    this.topLogsRef.current?.scrollIntoView();
   };
 
   render() {
@@ -833,20 +832,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 </div>
               </div>
             )}
-            {!config.featureToggles.logsInfiniteScrolling && (
-              <LogsNavigation
-                logsSortOrder={logsSortOrder}
-                visibleRange={navigationRange ?? absoluteRange}
-                absoluteRange={absoluteRange}
-                timeZone={timeZone}
-                onChangeTime={onChangeTime}
-                loading={loading}
-                queries={logsQueries ?? []}
-                scrollToTopLogs={this.scrollToTopLogs}
-                addResultsToCache={addResultsToCache}
-                clearCache={clearCache}
-              />
-            )}
+            <LogsNavigation
+              logsSortOrder={logsSortOrder}
+              visibleRange={navigationRange ?? absoluteRange}
+              absoluteRange={absoluteRange}
+              timeZone={timeZone}
+              onChangeTime={onChangeTime}
+              loading={loading}
+              queries={logsQueries ?? []}
+              scrollToTopLogs={this.scrollToTopLogs}
+              addResultsToCache={addResultsToCache}
+              clearCache={clearCache}
+            />
           </div>
         </PanelChrome>
       </>
