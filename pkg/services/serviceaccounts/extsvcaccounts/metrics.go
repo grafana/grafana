@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -30,15 +29,10 @@ func newMetrics(reg prometheus.Registerer, saSvc serviceaccounts.Service, logger
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			res, err := saSvc.SearchOrgServiceAccounts(ctx, &serviceaccounts.SearchOrgServiceAccountsQuery{
-				OrgID:     extsvcauth.TmpOrgID,
-				Filter:    serviceaccounts.FilterOnlyExternal,
-				CountOnly: true,
-				SignedInUser: &user.SignedInUser{
-					OrgID: extsvcauth.TmpOrgID,
-					Permissions: map[int64]map[string][]string{
-						extsvcauth.TmpOrgID: {serviceaccounts.ActionRead: {"serviceaccounts:id:*"}},
-					},
-				},
+				OrgID:        extsvcauth.TmpOrgID,
+				Filter:       serviceaccounts.FilterOnlyExternal,
+				CountOnly:    true,
+				SignedInUser: extsvcuser,
 			})
 			if err != nil {
 				logger.Error("Could not compute extsvc_total metric", "error", err)
