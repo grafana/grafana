@@ -65,10 +65,10 @@ export function LabelFilterItem({
     debounceDuration
   );
 
-  const itemValue = item?.value ? item?.value : '';
+  const itemValue = item?.value ?? '';
 
   return (
-    <div data-testid="prometheus-dimensions-filter-item">
+    <div key={itemValue} data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         {/* Label name select, loads all values at once */}
         <Select
