@@ -145,8 +145,6 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 
 			if tc.expectedCode == http.StatusOK {
-				// nolint:staticcheck
-				assert.Equal(t, int64(1), folder.Id)
 				assert.Equal(t, "uid", folder.Uid)
 				assert.Equal(t, "Folder", folder.Title)
 			}
@@ -250,8 +248,6 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 
 			if tc.expectedCode == http.StatusOK {
-				// nolint:staticcheck
-				assert.Equal(t, int64(1), folder.Id)
 				assert.Equal(t, "uid", folder.Uid)
 				assert.Equal(t, "Folder upd", folder.Title)
 			}
