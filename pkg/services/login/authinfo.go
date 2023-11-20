@@ -29,7 +29,6 @@ type Store interface {
 	GetUserByEmail(ctx context.Context, email string) (*user.User, error)
 	CollectLoginStats(ctx context.Context) (map[string]any, error)
 	RunMetricsCollection(ctx context.Context) error
-	GetLoginStats(ctx context.Context) (LoginStats, error)
 }
 
 const (

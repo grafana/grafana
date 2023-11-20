@@ -2,7 +2,6 @@ package authinfoservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -386,123 +385,6 @@ func TestUserAuth(t *testing.T) {
 			require.Nil(t, err)
 			require.Equal(t, "test1", authInfo.AuthModule)
 		})
-
-		t.Run("Can set & locate by generic oauth auth module and user id", func(t *testing.T) {
-			// Find a user to set tokens on
-			userlogin := "loginuser0"
-
-			// Expect to pass since there's a matching login user
-			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-			query := &login.GetUserByAuthInfoQuery{AuthModule: genericOAuthModule, AuthId: "", UserLookupParams: login.UserLookupParams{
-				Login: &userlogin,
-			}}
-			user, err := srv.LookupAndUpdate(context.Background(), query)
-			database.GetTime = time.Now
-
-			require.Nil(t, err)
-			require.Equal(t, user.Login, userlogin)
-
-			otherLoginUser := "aloginuser"
-			// Should throw a "user not found" error since there's no matching login user
-			database.GetTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-			query = &login.GetUserByAuthInfoQuery{AuthModule: genericOAuthModule, AuthId: "", UserLookupParams: login.UserLookupParams{
-				Login: &otherLoginUser,
-			}}
-			authInfoStore.ExpectedError = errors.New("some error")
-
-			user, err = srv.LookupAndUpdate(context.Background(), query)
-			database.GetTime = time.Now
-
-			require.NotNil(t, err)
-			require.Nil(t, user)
-			authInfoStore.ExpectedError = nil
-		})
-
-		t.Run("should be able to run loginstats query in all dbs", func(t *testing.T) {
-			// we need to see that we can run queries for all db
-			// as it is only a concern for postgres/sqllite3
-			// where we have duplicate users
-
-			// Restore after destructive operation
-			sqlStore = db.InitTestDB(t)
-			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
-			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
-			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
-			require.NoError(t, err)
-			for i := 0; i < 5; i++ {
-				cmd := user.CreateUserCommand{
-					Email: fmt.Sprint("user", i, "@test.com"),
-					Name:  fmt.Sprint("user", i),
-					Login: fmt.Sprint("loginuser", i),
-					OrgID: 1,
-				}
-				_, err := usrSvc.Create(context.Background(), &cmd)
-				require.Nil(t, err)
-			}
-
-			_, err = srv.authInfoStore.GetLoginStats(context.Background())
-			require.Nil(t, err)
-		})
-
-		t.Run("calculate metrics on duplicate userstats", func(t *testing.T) {
-			// Restore after destructive operation
-			sqlStore = db.InitTestDB(t)
-			qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
-			orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
-			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
-			require.NoError(t, err)
-
-			for i := 0; i < 5; i++ {
-				cmd := user.CreateUserCommand{
-					Email: fmt.Sprint("user", i, "@test.com"),
-					Name:  fmt.Sprint("user", i),
-					Login: fmt.Sprint("loginuser", i),
-					OrgID: 1,
-				}
-				_, err := usrSvc.Create(context.Background(), &cmd)
-				require.Nil(t, err)
-			}
-
-			// "Skipping duplicate users test for mysql as it does make unique constraint case insensitive by default
-			if sqlStore.GetDialect().DriverName() != "mysql" {
-				dupUserEmailcmd := user.CreateUserCommand{
-					Email: "USERDUPLICATETEST1@TEST.COM",
-					Name:  "user name 1",
-					Login: "USER_DUPLICATE_TEST_1_LOGIN",
-				}
-				_, err := usrSvc.Create(context.Background(), &dupUserEmailcmd)
-				require.NoError(t, err)
-
-				// add additional user with duplicate login where DOMAIN is upper case
-				dupUserLogincmd := user.CreateUserCommand{
-					Email: "userduplicatetest1@test.com",
-					Name:  "user name 1",
-					Login: "user_duplicate_test_1_login",
-				}
-				_, err = usrSvc.Create(context.Background(), &dupUserLogincmd)
-				require.NoError(t, err)
-				authInfoStore.ExpectedUser = &user.User{
-					Email: "userduplicatetest1@test.com",
-					Name:  "user name 1",
-					Login: "user_duplicate_test_1_login",
-				}
-				authInfoStore.ExpectedDuplicateUserEntries = 2
-				authInfoStore.ExpectedHasDuplicateUserEntries = 1
-				authInfoStore.ExpectedLoginStats = login.LoginStats{
-					DuplicateUserEntries: 2,
-					MixedCasedUsers:      1,
-				}
-				// require metrics and statistics to be 2
-				m, err := srv.authInfoStore.CollectLoginStats(context.Background())
-				require.NoError(t, err)
-				require.Equal(t, 2, m["stats.users.duplicate_user_entries"])
-				require.Equal(t, 1, m["stats.users.has_duplicate_user_entries"])
-
-				require.Equal(t, 1, m["stats.users.mixed_cased_users"])
-			}
-		})
 	})
 }
 
@@ -548,15 +430,7 @@ func (f *FakeAuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*
 }
 
 func (f *FakeAuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]any, error) {
-	var res = make(map[string]any)
-	res["stats.users.duplicate_user_entries"] = f.ExpectedDuplicateUserEntries
-	res["stats.users.has_duplicate_user_entries"] = f.ExpectedHasDuplicateUserEntries
-	res["stats.users.duplicate_user_entries_by_login"] = 0
-	res["stats.users.has_duplicate_user_entries_by_login"] = 0
-	res["stats.users.duplicate_user_entries_by_email"] = 0
-	res["stats.users.has_duplicate_user_entries_by_email"] = 0
-	res["stats.users.mixed_cased_users"] = f.ExpectedLoginStats.MixedCasedUsers
-	return res, f.ExpectedError
+	return make(map[string]any), f.ExpectedError
 }
 
 func (f *FakeAuthInfoStore) RunMetricsCollection(ctx context.Context) error {

@@ -42,7 +42,7 @@ func InitDuplicateUserMetrics() {
 }
 
 func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
-	// 	if _, err := s.GetLoginStats(ctx); err != nil {
+	// 	if _, err := s.getLoginStats(ctx); err != nil {
 	// 		s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
 	// 	}
 	updateStatsTicker := time.NewTicker(login.MetricsCollectionInterval)
@@ -51,7 +51,7 @@ func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
 	for {
 		select {
 		case <-updateStatsTicker.C:
-			// if _, err := s.GetLoginStats(ctx); err != nil {
+			// if _, err := s.getLoginStats(ctx); err != nil {
 			// s.logger.Warn("Failed to get authinfo metrics", "error", nil)
 			// }
 		case <-ctx.Done():
@@ -60,7 +60,26 @@ func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
 	}
 }
 
-func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, error) {
+func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
+
+	loginStats, err := s.getLoginStats(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get login stats", "error", err)
+		return nil, err
+	}
+	m["stats.users.duplicate_user_entries"] = loginStats.DuplicateUserEntries
+	if loginStats.DuplicateUserEntries > 0 {
+		m["stats.users.has_duplicate_user_entries"] = 1
+	} else {
+		m["stats.users.has_duplicate_user_entries"] = 0
+	}
+	m["stats.users.mixed_cased_users"] = loginStats.MixedCasedUsers
+
+	return m, nil
+}
+
+func (s *AuthInfoStore) getLoginStats(ctx context.Context) (login.LoginStats, error) {
 	var stats login.LoginStats
 	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		rawSQL := `SELECT
@@ -84,25 +103,6 @@ func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, er
 
 	login.MStatMixedCasedUsers.Set(float64(stats.MixedCasedUsers))
 	return stats, nil
-}
-
-func (s *AuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]any, error) {
-	m := map[string]any{}
-
-	loginStats, err := s.GetLoginStats(ctx)
-	if err != nil {
-		s.logger.Error("Failed to get login stats", "error", err)
-		return nil, err
-	}
-	m["stats.users.duplicate_user_entries"] = loginStats.DuplicateUserEntries
-	if loginStats.DuplicateUserEntries > 0 {
-		m["stats.users.has_duplicate_user_entries"] = 1
-	} else {
-		m["stats.users.has_duplicate_user_entries"] = 0
-	}
-	m["stats.users.mixed_cased_users"] = loginStats.MixedCasedUsers
-
-	return m, nil
 }
 
 func (s *AuthInfoStore) duplicateUserEntriesSQL(ctx context.Context) string {
