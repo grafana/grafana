@@ -110,7 +110,7 @@ export const TimePickerFooter = (props: Props) => {
             </section>
           ) : (
             <section
-              aria-label={selectors.components.TimeZonePicker.containerV2}
+              data-testid={selectors.components.TimeZonePicker.containerV2}
               className={cx(style.timeZoneContainer, style.timeSettingContainer)}
             >
               <Field
