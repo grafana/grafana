@@ -10,8 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -201,7 +203,11 @@ func TestRoleAppPluginAuth(t *testing.T) {
 							},
 						})
 					}
-					sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ps), func(c *contextmodel.ReqContext) {
+					features := featuremgmt.WithFeatures()
+					logger := &logtest.Fake{}
+					ac := &actest.FakeAccessControl{}
+
+					sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
 						c.JSON(http.StatusOK, map[string]interface{}{})
 					})
 					sc.fakeReq("GET", "/a/test-app/test").exec()
@@ -219,7 +225,10 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				0: org.RoleViewer,
 			},
 		})
-		sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(&pluginstore.FakePluginStore{}), func(c *contextmodel.ReqContext) {
+		features := featuremgmt.WithFeatures()
+		logger := &logtest.Fake{}
+		ac := &actest.FakeAccessControl{}
+		sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ac, &pluginstore.FakePluginStore{}, features, logger), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/test").exec()
@@ -233,7 +242,10 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				0: org.RoleViewer,
 			},
 		})
-		sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(pluginstore.NewFakePluginStore(pluginstore.Plugin{
+		features := featuremgmt.WithFeatures()
+		logger := &logtest.Fake{}
+		ac := &actest.FakeAccessControl{}
+		sc.m.Get("/a/:id/*", RoleAppPluginAuthAndSignedIn(ac, pluginstore.NewFakePluginStore(pluginstore.Plugin{
 			JSONData: plugins.JSONData{
 				ID: "test-app",
 				Includes: []*plugins.Includes{
@@ -244,7 +256,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				},
 			},
-		})), func(c *contextmodel.ReqContext) {
+		}), features, logger), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/notExistingPath").exec()

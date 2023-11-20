@@ -61,7 +61,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
-	reqRoleForAppRoute := middleware.RoleAppPluginAuthAndSignedIn(hs.pluginStore)
+	reqRoleForAppRoute := middleware.RoleAppPluginAuthAndSignedIn(hs.AccessControl, hs.pluginStore, hs.Features, hs.log)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)

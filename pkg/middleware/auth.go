@@ -8,11 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -98,6 +100,68 @@ func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *c
 	}
 }
 
+func RoleAppPluginAuthAndSignedIn(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles, logger log.Logger) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
+		if !c.IsSignedIn {
+			notAuthorized(c)
+			return
+		}
+
+		pluginID := web.Params(c.Req)[":id"]
+		p, exists := ps.Plugin(c.Req.Context(), pluginID)
+		if !exists {
+			c.JsonApiErr(http.StatusNotFound, "Plugin not found", nil)
+			return
+		}
+
+		found := false
+		allowed := false
+		path := normalizeIncludePath(c.Req.URL.Path)
+
+		hasAccess := ac.HasAccess(accessControl, c)
+		for _, i := range p.Includes {
+			if i.Type != "page" {
+				continue
+			}
+
+			if normalizeIncludePath(i.Path) == path {
+				found = true
+				if i.Role == "" || c.HasRole(i.Role) {
+					allowed = true
+				}
+
+				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
+				if useRBAC && !hasAccess(ac.EvalPermission(i.Action)) {
+					logger.Debug("plugin include is covered by RBAC, user doesn't have access",
+						"plugin", pluginID,
+						"include", i.Name)
+					allowed = false
+					break
+				} else if !useRBAC && !c.HasUserRole(i.Role) {
+					allowed = false
+					break
+				}
+				allowed = true
+			}
+		}
+
+		if !found {
+			// This isn't an API request, so we probably shouldn't return a JSON error.
+			c.JsonApiErr(http.StatusNotFound, "Plugin page not found", nil)
+			return
+		}
+
+		if !allowed {
+			accessForbidden(c)
+			return
+		}
+	}
+}
+
+func normalizeIncludePath(p string) string {
+	return strings.TrimPrefix(p, "/")
+}
+
 func RoleAuth(roles ...org.RoleType) web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		ok := false
@@ -141,53 +205,6 @@ func Auth(options *AuthOptions) web.Handler {
 		}
 
 		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
-			accessForbidden(c)
-			return
-		}
-	}
-}
-
-func RoleAppPluginAuthAndSignedIn(ps pluginstore.Store) web.Handler {
-	return func(c *contextmodel.ReqContext) {
-		if !c.IsSignedIn {
-			notAuthorized(c)
-			return
-		}
-
-		pluginID := web.Params(c.Req)[":id"]
-		p, exists := ps.Plugin(c.Req.Context(), pluginID)
-		if !exists {
-			c.JsonApiErr(http.StatusNotFound, "Plugin not found", nil)
-			return
-		}
-
-		var normalizePath = func(p string) string {
-			return strings.TrimPrefix(p, "/")
-		}
-
-		found := false
-		allowed := false
-		path := normalizePath(c.Req.URL.Path)
-		for _, i := range p.Includes {
-			if i.Type != "page" {
-				continue
-			}
-
-			if normalizePath(i.Path) == path {
-				found = true
-				if i.Role == "" || c.HasRole(i.Role) {
-					allowed = true
-				}
-				break
-			}
-		}
-
-		if !found {
-			// This isn't an API request, so we probably shouldn't return a JSON error.
-			c.JsonApiErr(http.StatusNotFound, "Plugin page not found", nil)
-			return
-		}
-		if !allowed {
 			accessForbidden(c)
 			return
 		}
