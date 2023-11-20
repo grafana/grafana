@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -12,15 +13,22 @@ const (
 )
 
 type UserGrafanaConfig struct {
+	successResponse
 	TemplateFiles             map[string]string `json:"template_files"`
 	GrafanaAlertmanagerConfig string            `json:"grafana_alertmanager_config"`
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {
 	var config UserGrafanaConfig
-	err := mc.do(ctx, grafanaAlertmanagerConfigPath, http.MethodGet, nil, -1, &config)
+	// nolint:bodyclose
+	// closed within `do`
+	_, err := mc.do(ctx, grafanaAlertmanagerConfigPath, http.MethodGet, nil, -1, &config)
 	if err != nil {
 		return nil, err
+	}
+
+	if config.Status != "success" {
+		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", config.Status)
 	}
 
 	return &config, nil
@@ -31,19 +39,13 @@ func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg string
 		GrafanaAlertmanagerConfig: cfg,
 		TemplateFiles:             templates,
 	})
-
 	if err != nil {
 		return err
 	}
 
-	err = mc.do(ctx, grafanaAlertmanagerConfigPath, http.MethodPost, bytes.NewBuffer(payload), int64(len(payload)), nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodPost, bytes.NewBuffer(payload), int64(len(payload)))
 }
 
-func (mc *Mimir) DeleteGrafanaAlertmanagerConfig() {
-
+func (mc *Mimir) DeleteGrafanaAlertmanagerConfig(ctx context.Context) error {
+	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodDelete, nil, -1)
 }
