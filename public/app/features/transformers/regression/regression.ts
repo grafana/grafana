@@ -20,6 +20,7 @@ export interface RegressionTransformerOptions {
   order?: number;
   xFieldName?: string;
   yFieldName?: string;
+  resolution?: number;
 }
 
 export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTransformerOptions> = {
@@ -29,6 +30,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
     source.pipe(map((data) => RegressionTransformer.transformer(options, ctx)(data))),
   transformer: (options, ctx) => {
     return (frames: DataFrame[]) => {
+      const { resolution = 100 } = options;
       if (frames.length === 0) {
         return frames;
       }
@@ -36,15 +38,13 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
       let xField;
       let yField;
       for (const frame of frames) {
-        const f = frame.fields.find((f) => options.xFieldName === getFieldDisplayName(f, frame, frames));
-        if (f) {
-          xField = f;
+        const fx = frame.fields.find((f) => options.xFieldName === getFieldDisplayName(f, frame, frames));
+        if (fx) {
+          xField = fx;
         }
-      }
-      for (const frame of frames) {
-        const f = frame.fields.find((f) => options.yFieldName === getFieldDisplayName(f, frame, frames));
-        if (f) {
-          yField = f;
+        const fy = frame.fields.find((f) => options.yFieldName === getFieldDisplayName(f, frame, frames));
+        if (fy) {
+          yField = fy;
         }
       }
 
@@ -52,13 +52,25 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
         return frames;
       }
 
-      // If x is a time field we normalize the time to the start of the timeseries
-      const lowest = xField.type === FieldType.time ? xField.values[0] : 0;
+      // If x is a time field we normalize the time to the start of the timeseries data
+      const xFieldIsTime = xField.type === FieldType.time;
 
-      const yValues = yField.values;
-      const xValues = xField.values.map((x) => {
-        return x - lowest;
-      });
+      const lowest = Math.min(...xField.values);
+      const highest = Math.max(...xField.values);
+
+      const xToRes = (highest - lowest) / resolution;
+
+      const points = [...[...Array(resolution).keys()].map((_, i) => i * xToRes + lowest), highest];
+
+      const yValues = [];
+      const xValues = [];
+
+      for (let i = 0; i < xField.values.length; i++) {
+        if (yField.values[i] !== null) {
+          xValues.push(xField.values[i] - (xFieldIsTime ? lowest : 0));
+          yValues.push(yField.values[i]);
+        }
+      }
 
       let result: PolynomialRegression | SimpleLinearRegression;
       switch (options.modelType) {
@@ -74,13 +86,13 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
 
       const newFrame: DataFrame = {
         name: `${options.modelType} regression`,
-        length: xField.values.length,
+        length: points.length,
         fields: [
-          { name: xField.name, type: xField.type, values: xField.values, config: {} },
+          { name: `${xField.name} predicted`, type: xField.type, values: points, config: {} },
           {
             name: `${yField.name} predicted`,
             type: yField.type,
-            values: xField.values.map((v) => result.predict(v - lowest)),
+            values: points.map((x) => result.predict(x - (xFieldIsTime ? lowest : 0))),
             config: {},
           },
         ],

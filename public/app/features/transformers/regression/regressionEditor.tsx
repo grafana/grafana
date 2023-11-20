@@ -50,6 +50,14 @@ export const RegressionTransformerEditor = ({
           options={modelTypeOptions}
         ></Select>
       </InlineField>
+      <InlineField label="Resolution">
+        <NumberInput
+          value={options.resolution}
+          onChange={(v) => {
+            onChange({ ...options, resolution: v });
+          }}
+        ></NumberInput>
+      </InlineField>
       {options.modelType === ModelType.polynomial && (
         <InlineField label="Order">
           <NumberInput
