@@ -46,7 +46,7 @@ lokiQuerySplittingConfig,experimental,@grafana/observability-logs,false,false,fa
 individualCookiePreferences,experimental,@grafana/backend-platform,false,false,false,false
 prometheusMetricEncyclopedia,GA,@grafana/observability-metrics,false,false,false,true
 influxdbBackendMigration,GA,@grafana/observability-metrics,false,false,false,true
-clientTokenRotation,experimental,@grafana/identity-access-team,false,false,false,false
+clientTokenRotation,GA,@grafana/identity-access-team,false,false,false,false
 prometheusDataplane,GA,@grafana/observability-metrics,false,false,false,false
 lokiMetricDataplane,GA,@grafana/observability-logs,false,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false,false

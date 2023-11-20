@@ -125,6 +125,13 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, team1.Email, "test1@test.com")
 				require.Equal(t, team1.OrgID, testOrgID)
 				require.EqualValues(t, team1.MemberCount, 2)
+
+				getIDsQuery := &team.GetTeamIDsByUserQuery{OrgID: testOrgID, UserID: userIds[0]}
+				getIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
+				require.NoError(t, err)
+
+				require.Equal(t, len(getIDResult), 1)
+				require.Equal(t, getIDResult[0], team1.ID)
 			})
 
 			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
