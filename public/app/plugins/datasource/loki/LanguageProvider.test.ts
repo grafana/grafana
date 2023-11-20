@@ -1,4 +1,4 @@
-import { AbstractLabelOperator, DataFrame } from '@grafana/data';
+import { AbstractLabelOperator, DataFrame, dateTime } from '@grafana/data';
 
 import LanguageProvider from './LanguageProvider';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
@@ -149,7 +149,15 @@ describe('Language completion provider', () => {
 describe('Request URL', () => {
   it('should contain range params', async () => {
     const datasourceWithLabels = setup({ other: [] });
-    const rangeParams = datasourceWithLabels.getTimeRangeParams();
+    const mockTimeRange = {
+      from: dateTime(1546372800000),
+      to: dateTime(1546380000000),
+      raw: {
+        from: dateTime(1546372800000),
+        to: dateTime(1546380000000),
+      },
+    };
+    const rangeParams = datasourceWithLabels.getTimeRangeParams(mockTimeRange);
     const datasourceSpy = jest.spyOn(datasourceWithLabels, 'metadataRequest');
 
     const instance = new LanguageProvider(datasourceWithLabels);
@@ -286,11 +294,14 @@ describe('Query imports', () => {
         hasLogfmt: false,
         hasPack: false,
       });
-      expect(datasource.getDataSamples).toHaveBeenCalledWith({
-        expr: '{place="luna"}',
-        maxLines: DEFAULT_MAX_LINES_SAMPLE,
-        refId: 'data-samples',
-      });
+      expect(datasource.getDataSamples).toHaveBeenCalledWith(
+        {
+          expr: '{place="luna"}',
+          maxLines: DEFAULT_MAX_LINES_SAMPLE,
+          refId: 'data-samples',
+        },
+        undefined
+      );
     });
 
     it('calls dataSample with correctly set sampleSize', async () => {
@@ -303,11 +314,14 @@ describe('Query imports', () => {
         hasLogfmt: false,
         hasPack: false,
       });
-      expect(datasource.getDataSamples).toHaveBeenCalledWith({
-        expr: '{place="luna"}',
-        maxLines: 5,
-        refId: 'data-samples',
-      });
+      expect(datasource.getDataSamples).toHaveBeenCalledWith(
+        {
+          expr: '{place="luna"}',
+          maxLines: 5,
+          refId: 'data-samples',
+        },
+        undefined
+      );
     });
   });
 });

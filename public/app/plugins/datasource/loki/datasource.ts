@@ -454,9 +454,9 @@ export class LokiDatasource
    * Retrieve the current time range as Loki parameters.
    * @returns An object containing the start and end times in nanoseconds since the Unix epoch.
    */
-  getTimeRangeParams() {
-    const timeRange = this.getTimeRange();
-    return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
+  getTimeRangeParams(timeRange?: TimeRange) {
+    const range = timeRange ?? this.getTimeRange();
+    return { start: range.from.valueOf() * NS_IN_MS, end: range.to.valueOf() * NS_IN_MS };
   }
 
   /**
@@ -751,7 +751,7 @@ export class LokiDatasource
    * Currently, it works for logs data only.
    * @returns A Promise that resolves to an array of DataFrames containing data samples.
    */
-  async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
+  async getDataSamples(query: LokiQuery, timeRange?: TimeRange): Promise<DataFrame[]> {
     // Currently works only for logs sample
     if (!isLogsQuery(query.expr) || isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return [];
@@ -765,8 +765,8 @@ export class LokiDatasource
       supportingQueryType: SupportingQueryType.DataSample,
     };
 
-    const timeRange = this.getTimeRange();
-    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
+    const range = timeRange ?? this.getTimeRange();
+    const request = makeRequest(lokiLogsQuery, range, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }
 
