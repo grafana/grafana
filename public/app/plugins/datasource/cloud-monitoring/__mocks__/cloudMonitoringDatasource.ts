@@ -1,6 +1,4 @@
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
+import { getTimeSrv, TemplateSrv, TemplateSrvMock } from '@grafana/runtime';
 
 import Datasource from '../datasource';
 

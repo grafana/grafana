@@ -2,17 +2,19 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
-
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
 import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
 import { MetricKind, ValueTypes } from '../types/query';
 
 import { Preprocessor } from './Preprocessor';
 
+const defaultTemplateSrvMock = {
+  replace: (input: string) => input,
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => new TemplateSrvMock({}),
+  getTemplateSrv: () => defaultTemplateSrvMock({}),
 }));
 
 describe('Preprocessor', () => {

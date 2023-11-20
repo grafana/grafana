@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu } from 'react-select-event';
 
-import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
+import { TemplateSrvMock } from '@grafana/runtime';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';

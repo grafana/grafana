@@ -19,7 +19,7 @@ import { MetricQueryEditor, SLOQueryEditor } from './';
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
 export const QueryEditor = (props: Props) => {
-  const { datasource, query: oldQ, onRunQuery, onChange } = props;
+  const { datasource, query: oldQ, onRunQuery, onChange, range } = props;
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   // Migrate query if needed
   const [migrated, setMigrated] = useState(false);

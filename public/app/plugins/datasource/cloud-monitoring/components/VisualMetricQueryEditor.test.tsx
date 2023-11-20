@@ -3,8 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
@@ -168,7 +167,7 @@ describe('VisualMetricQueryEditor', () => {
           createMockMetricDescriptor({ type: 'type2', displayName: 'metricName2', metricKind: MetricKind.GAUGE }),
         ]),
       getLabels: jest.fn().mockResolvedValue({ 'metric.test_groupby': '' }),
-      templateSrv: new TemplateSrv(),
+      templateSrv: getTemplateSrv(),
     });
     const defaultQuery = { ...query, ...defaultTimeSeriesList(datasource), filters: query.filters };
 
@@ -203,7 +202,7 @@ describe('VisualMetricQueryEditor', () => {
         .mockResolvedValue(
           timeSrv.time.from === 'now-6h' ? { 'metric.test_groupby': '' } : { 'metric.test_groupby_1': '' }
         ),
-      templateSrv: new TemplateSrv(),
+      templateSrv: getTemplateSrv(),
       timeSrv,
     });
 

@@ -1,7 +1,7 @@
 import { get } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { createMockInstanceSetttings } from './__mocks__/cloudMonitoringInstanceSettings';
 import { createMockQuery } from './__mocks__/cloudMonitoringQuery';
@@ -19,7 +19,7 @@ describe('Cloud Monitoring Datasource', () => {
     });
 
     it('should correctly apply template variables for metricQuery (deprecated)', () => {
-      const templateSrv = new TemplateSrv();
+      const templateSrv = getTemplateSrv();
       templateSrv.replace = jest.fn().mockReturnValue('project-variable');
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings, templateSrv);
@@ -30,7 +30,7 @@ describe('Cloud Monitoring Datasource', () => {
     });
 
     it('should correctly apply template variables for timeSeriesList', () => {
-      const templateSrv = new TemplateSrv();
+      const templateSrv = getTemplateSrv();
       templateSrv.replace = jest.fn().mockReturnValue('project-variable');
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings, templateSrv);
@@ -41,7 +41,7 @@ describe('Cloud Monitoring Datasource', () => {
     });
 
     it('should correctly apply template variables for timeSeriesQuery', () => {
-      const templateSrv = new TemplateSrv();
+      const templateSrv = getTemplateSrv();
       templateSrv.replace = jest.fn().mockReturnValue('project-variable');
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings, templateSrv);
