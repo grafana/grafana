@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, UrlQueryMap } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
