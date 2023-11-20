@@ -132,13 +132,17 @@ export const getFieldFromData = (data: DataFrame, fieldType: string, isSparse: b
 
   switch (fieldType) {
     case 'x':
-      field = isSparse ? data?.fields.find((field) => ['x', 'xMin', 'xMax'].includes(field.name)) : data?.fields[0];
+      field = isSparse
+        ? data?.fields.find(({ name }) => name === 'x' || name === 'xMin' || name === 'xMax')
+        : data?.fields[0];
       break;
     case 'y':
-      field = isSparse ? data?.fields.find((field) => ['y', 'yMin', 'yMax'].includes(field.name)) : data?.fields[1];
+      field = isSparse
+        ? data?.fields.find(({ name }) => name === 'y' || name === 'yMin' || name === 'yMax')
+        : data?.fields[1];
       break;
     case 'count':
-      field = isSparse ? data?.fields.find((field) => field.name === 'count') : data?.fields[2];
+      field = isSparse ? data?.fields.find(({ name }) => name === 'count') : data?.fields[2];
       break;
   }
 
