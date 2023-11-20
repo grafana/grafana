@@ -1249,6 +1249,7 @@
     "calendar": {
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
+      "close": "Close calendar",
       "select-time": "Select a time range"
     },
     "content": {
@@ -1268,6 +1269,7 @@
       "default-error": "Please enter a past date or \"now\"",
       "fiscal-year": "Fiscal year",
       "from-input": "From",
+      "open-input-calendar": "Open calendar",
       "range-error": "\"From\" can't be after \"To\"",
       "to-input": "To"
     },

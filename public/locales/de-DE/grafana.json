@@ -1249,6 +1249,7 @@
     "calendar": {
       "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
+      "close": "",
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
@@ -1268,6 +1269,7 @@
       "default-error": "Ein vergangenes Datum oder \"heutiges\" eingeben",
       "fiscal-year": "Geschäftsjahr",
       "from-input": "Von",
+      "open-input-calendar": "",
       "range-error": "„Von“ darf nicht nach „Bis“ sein",
       "to-input": "Bis"
     },
