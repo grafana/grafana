@@ -10,6 +10,7 @@
 
 - **Dashboards:** Fix dashboard listing when user can't list any folders. [#77988](https://github.com/grafana/grafana/issues/77988), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **Search:** Modify query for better performance. [#77713](https://github.com/grafana/grafana/issues/77713), [@papagian](https://github.com/papagian)
+- **Dashboards:** Fix issue causing crashes when saving new dashboard. [#77641](https://github.com/grafana/grafana/issues/77641), [@kaydelaney](https://github.com/kaydelaney)
 - **RBAC:** Allow scoping access to root level dashboards. [#77608](https://github.com/grafana/grafana/issues/77608), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **CloudWatch Logs:** Add labels to alert and expression queries. [#77594](https://github.com/grafana/grafana/issues/77594), [@iwysiu](https://github.com/iwysiu)
 - **Bug Fix:** Respect data source version when provisioning. [#77542](https://github.com/grafana/grafana/issues/77542), [@andresmgot](https://github.com/andresmgot)
@@ -28,8 +29,7 @@
 
 ### Breaking changes
 
-For the existing backend mode users who have table visualization might see some inconsistencies on their panels. We have updated the table column naming. This will potentially affect field transformations and/or field overrides. To resolve this either:
-
+For the existing backend mode users who have table visualization might see some inconsistencies on their panels. We have updated the table column naming. This will potentially affect field transformations and/or field overrides.  To resolve this either:
 - Update transformation
 - Update field override Issue [#76990](https://github.com/grafana/grafana/issues/76990)
 
