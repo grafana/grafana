@@ -52,13 +52,14 @@ export function LogsTableWrap(props: Props) {
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
-  const height = getTableHeight();
-  const panelStateRefId = props?.panelState?.refId;
+  const height = getLogsTableHeight();
 
   // The current dataFrame containing the refId of the current query
   const [currentDataFrame, setCurrentDataFrame] = useState<DataFrame>(
-    logsFrames.find((f) => f.refId === panelStateRefId) ?? logsFrames[0]
+    logsFrames.find((f) => f.refId === props?.panelState?.refId) ?? logsFrames[0]
   );
+  // The refId of the current frame being displayed
+  const currentFrameRefId = currentDataFrame.refId;
 
   const getColumnsFromProps = useCallback(
     (fieldNames: fieldNameMetaStore) => {
@@ -74,16 +75,6 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
-
-  /**
-   * When logs frame updates (e.g. query|range changes), we need to set the selected frame to state
-   */
-  useEffect(() => {
-    const newFrame = logsFrames.find((f) => f.refId === panelStateRefId) ?? logsFrames[0];
-    if (newFrame) {
-      setCurrentDataFrame(newFrame);
-    }
-  }, [logsFrames, panelStateRefId]);
 
   /**
    * Keeps the filteredColumnsWithMeta state in sync with the columnsWithMeta state,
@@ -345,7 +336,7 @@ export function LogsTableWrap(props: Props) {
               <Select
                 inputId={'explore_logs_table_frame_selector'}
                 aria-label={'Select query by name'}
-                value={currentDataFrame.refId}
+                value={currentFrameRefId}
                 options={logsFrames.map((frame) => {
                   return {
                     label: frame.refId,
@@ -403,7 +394,7 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
   };
 }
 
-const getTableHeight = () => {
+export const getLogsTableHeight = () => {
   // Instead of making the height of the table based on the content (like in the table panel itself), let's try to use the vertical space that is available.
   // Since this table is in explore, we can expect the user to be running multiple queries that return disparate numbers of rows and labels in the same session
   // Also changing the height of the table between queries can be and cause content to jump, so we'll set a minimum height of 500px, and a max based on the innerHeight
