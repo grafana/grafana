@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Subscription, throttleTime } from 'rxjs';
 
 import {
@@ -17,7 +17,11 @@ import {
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import { hasTimeField, isPointTimeValAroundTableTimeVal } from '@grafana/ui/src/components/Table/utils';
+import {
+  calculateAroundPointThreshold,
+  hasTimeField,
+  isPointTimeValAroundTableTimeVal,
+} from '@grafana/ui/src/components/Table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
@@ -39,6 +43,46 @@ export function TablePanel(props: Props) {
   const main = frames[currentIndex];
 
   let tableHeight = height;
+
+  const threshold = useMemo(() => {
+    const timeField = main.fields.find((f) => f.type === FieldType.time);
+
+    if (!timeField) {
+      return 0;
+    }
+
+    return calculateAroundPointThreshold(timeField);
+  }, [main]);
+
+  const onDataHoverEvent = useCallback(
+    (evt: DataHoverEvent) => {
+      if (evt.payload.point?.time && evt.payload.rowIndex !== undefined) {
+        const timeField = main.fields.find((f) => f.type === FieldType.time);
+        const time = timeField!.values[evt.payload.rowIndex];
+
+        // If the time value of the hovered point is around the time value of the
+        // row with same index, highlight the row
+        if (isPointTimeValAroundTableTimeVal(evt.payload.point.time, time, threshold)) {
+          setRowHighlightIndex(evt.payload.rowIndex);
+          return;
+        }
+
+        // If the time value of the hovered point is not around the time value of the
+        // row with same index, try to find a row with same time value
+        const matchedRowIndex = timeField!.values.findIndex((t) =>
+          isPointTimeValAroundTableTimeVal(evt.payload.point.time, t, threshold)
+        );
+
+        if (matchedRowIndex !== -1) {
+          setRowHighlightIndex(matchedRowIndex);
+          return;
+        }
+
+        setRowHighlightIndex(undefined);
+      }
+    },
+    [main.fields, threshold]
+  );
 
   useEffect(() => {
     if (!config.featureToggles.tableSharedCrosshair) {
@@ -66,26 +110,7 @@ export function TablePanel(props: Props) {
               return;
             }
 
-            if (evt.payload.point?.time && evt.payload.rowIndex !== undefined) {
-              const timeField = main.fields.find((f) => f.type === FieldType.time);
-              const time = timeField!.values[evt.payload.rowIndex];
-
-              if (isPointTimeValAroundTableTimeVal(evt.payload.point.time, time)) {
-                setRowHighlightIndex(evt.payload.rowIndex);
-                return;
-              }
-
-              const matchedRowIndex = timeField!.values.findIndex((t) =>
-                isPointTimeValAroundTableTimeVal(evt.payload.point.time, t)
-              );
-
-              if (matchedRowIndex !== -1) {
-                setRowHighlightIndex(matchedRowIndex);
-                return;
-              }
-
-              setRowHighlightIndex(undefined);
-            }
+            onDataHoverEvent(evt);
           },
         })
     );
@@ -108,7 +133,16 @@ export function TablePanel(props: Props) {
     return () => {
       subs.unsubscribe();
     };
-  }, [panelContext, frames, options.footer?.enablePagination, main]);
+  }, [
+    panelContext,
+    frames,
+    options.footer?.enablePagination,
+    main,
+    timeRange.to,
+    timeRange.from,
+    threshold,
+    onDataHoverEvent,
+  ]);
 
   const onRowHover = useCallback(
     (idx: number, frame: DataFrame) => {
