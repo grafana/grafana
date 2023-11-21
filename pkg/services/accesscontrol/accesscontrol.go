@@ -105,7 +105,7 @@ type User struct {
 func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
 	return func(evaluator Evaluator) bool {
 		var targetOrgID int64 = GlobalOrgID
-		tmpUser, err := makeTmpUser(c.Req.Context(), service, nil, c.SignedInUser, targetOrgID)
+		tmpUser, err := makeTmpUser(c.Req.Context(), service, nil, nil, c.SignedInUser, targetOrgID)
 		if err != nil {
 			deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 		}

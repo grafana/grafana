@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -179,7 +180,11 @@ type userCache interface {
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }
 
-func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(OrgIDGetter, Evaluator) web.Handler {
+type teamService interface {
+	GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
+}
+
+func AuthorizeInOrgMiddleware(ac AccessControl, service Service, userService userCache, teamService teamService) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
 			targetOrgID, err := getTargetOrg(c)
@@ -188,7 +193,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 				return
 			}
 
-			tmpUser, err := makeTmpUser(c.Req.Context(), service, cache, c.SignedInUser, targetOrgID)
+			tmpUser, err := makeTmpUser(c.Req.Context(), service, userService, teamService, c.SignedInUser, targetOrgID)
 			if err != nil {
 				deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 				return
@@ -206,7 +211,8 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 }
 
 // makeTmpUser creates a temporary user that can be used to evaluate access across orgs.
-func makeTmpUser(ctx context.Context, service Service, cache userCache, reqUser identity.Requester, targetOrgID int64) (identity.Requester, error) {
+func makeTmpUser(ctx context.Context, service Service, cache userCache,
+	teamService teamService, reqUser identity.Requester, targetOrgID int64) (identity.Requester, error) {
 	tmpUser := &user.SignedInUser{
 		OrgID:          reqUser.GetOrgID(),
 		OrgName:        reqUser.GetOrgName(),
@@ -237,6 +243,7 @@ func makeTmpUser(ctx context.Context, service Service, cache userCache, reqUser 
 			tmpUser.OrgID = GlobalOrgID
 			tmpUser.OrgRole = org.RoleNone
 			tmpUser.OrgName = ""
+			tmpUser.Teams = []int64{}
 		default:
 			if cache == nil {
 				return nil, errors.New("user cache is nil")
@@ -249,6 +256,14 @@ func makeTmpUser(ctx context.Context, service Service, cache userCache, reqUser 
 			tmpUser.OrgID = queryResult.OrgID
 			tmpUser.OrgName = queryResult.OrgName
 			tmpUser.OrgRole = queryResult.OrgRole
+
+			if teamService != nil {
+				teamIDs, err := teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{OrgID: targetOrgID, UserID: tmpUser.UserID})
+				if err != nil {
+					return nil, err
+				}
+				tmpUser.Teams = teamIDs
+			}
 		}
 	}
 
