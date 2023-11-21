@@ -35,7 +35,7 @@
       "delete-modal-text": "Esta acción eliminará el siguiente contenido:",
       "delete-modal-title": "Eliminar",
       "deleting": "Eliminando...",
-      "manage-permissions-button": "Administrar permisos",
+      "manage-permissions-button": "Gestionar permisos",
       "move-button": "Mover",
       "move-modal-alert": "Al mover este elemento puede cambiar sus permisos.",
       "move-modal-field-label": "Nombre de la carpeta",
@@ -46,19 +46,14 @@
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
-      "alertRule_many": "",
       "alertRule_other": "{{count}} reglas de alerta",
       "dashboard_one": "{{count}} panel de control",
-      "dashboard_many": "",
       "dashboard_other": "{{count}} paneles de control",
       "folder_one": "{{count}} carpeta",
-      "folder_many": "",
       "folder_other": "{{count}} carpetas",
       "libraryPanel_one": "{{count}} panel de librería",
-      "libraryPanel_many": "",
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
-      "total_many": "",
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
@@ -72,7 +67,7 @@
     "folder-actions-button": {
       "delete": "Eliminar",
       "folder-actions": "Acciones de la carpeta",
-      "manage-permissions": "Administrar permisos",
+      "manage-permissions": "Gestionar permisos",
       "move": "Mover"
     },
     "folder-picker": {
@@ -635,16 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
-      "body_many": "",
-      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:",
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Ver panel en {{label}}...",
       "button-view-panel2": "Ver panel en el panel de control...",
       "panel-not-linked": "El panel no está vinculado a un panel de control. Añádelo a un panel de control y vuelva a intentarlo.",
       "select-no-options-message": "No se ha encontrado ningún tablero",
       "select-placeholder": "Empezar a escribir para buscar el panel de control",
-      "title": "Ver el panel en el tablero"
+      "title": "Ver el panel en el tablero",
+      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
+      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:"
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -729,7 +723,7 @@
       "title": "Usuarios y acceso"
     },
     "config-general": {
-      "subtitle": "Administrar las preferencias y ajustes por defecto en Grafana",
+      "subtitle": "Gestionar las preferencias y ajustes por defecto en Grafana",
       "title": "General"
     },
     "config-plugins": {
@@ -767,7 +761,7 @@
       "title": "Paneles de control"
     },
     "data-sources": {
-      "subtitle": "Ver y administrar las conexiones de sus fuentes de datos",
+      "subtitle": "Ver y gestionar las conexiones de sus fuentes de datos",
       "title": "Orígenes de datos"
     },
     "datasources": {
@@ -847,7 +841,7 @@
       "title": "Preferencias por defecto"
     },
     "performance-testing": {
-      "title": "Prueba de rendimiento"
+      "title": "Pruebas de rendimiento"
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -923,7 +917,7 @@
       "title": "Paquetes de apoyo"
     },
     "synthetics": {
-      "title": "Síntesis"
+      "title": "Sintéticos"
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
@@ -943,7 +937,7 @@
     },
     "megamenu": {
       "close": "Cerrar menú",
-      "dock": "Menú de base"
+      "dock": "Menú base"
     },
     "toolbar": {
       "close-menu": "Cerrar menú",
@@ -988,7 +982,7 @@
       "add-tag-placeholder": "Seleccionar una etiqueta",
       "add-title-label": "Añadir por título",
       "cancel": "Cancelar",
-      "heading": "Añadir tableros",
+      "heading": "Añadir paneles de control",
       "interval-label": "Intervalo",
       "interval-placeholder": "5 min",
       "interval-required": "El intervalo es obligatorio",
@@ -1001,7 +995,7 @@
       "table-empty": "La lista de reproducción está vacía. Añadir tableros a continuación.",
       "table-heading": "Paneles de control"
     },
-    "sub-title": "La lista de reproducción gira a través de una lista de tableros preseleccionados. Una lista de reproducción puede ser una buena manera de crear conciencia de situaciones, o simplemente de mostrar sus métricas a su equipo o visitantes.",
+    "sub-title": "Una lista de reproducción rota a través de una lista de paneles de control preseleccionada. Una lista de reproducción puede ser una buena manera de crear conciencia sobre una situación, o simplemente una forma de mostrar sus métricas a su equipo o a demás visitantes.",
     "title": "Editar lista de reproducción"
   },
   "playlist-page": {
@@ -1050,7 +1044,7 @@
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir la fila de la consulta",
       "remove-query": "Eliminar consulta",
-      "toggle-edit-mode": "Cambiar el modo de edición de texto"
+      "toggle-edit-mode": "Alternar el modo de edición de texto"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
   },
@@ -1203,7 +1197,7 @@
     "copy-link-button": "Copiar",
     "link-url-label": "URL del enlace",
     "mode": "Modo",
-    "mode-kiosk": "Kiosco",
+    "mode-kiosk": "Quiosco",
     "mode-normal": "Normal",
     "mode-tv": "TV",
     "title": "Compartir lista de reproducción"
