@@ -33,7 +33,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	userProtection := &authinfoservice.OSSUserProtectionImpl{}
 
 	authFakeNil := &logintest.AuthInfoServiceFake{
-		ExpectedUser:  nil,
 		ExpectedError: user.ErrUserNotFound,
 		SetAuthInfoFn: func(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 			return nil
