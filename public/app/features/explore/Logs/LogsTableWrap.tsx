@@ -52,7 +52,7 @@ export function LogsTableWrap(props: Props) {
   // Filtered copy of columnsWithMeta that only includes matching results
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
-  const height = getLogsTableHeight();
+  const height = getTableHeight();
 
   // The current dataFrame containing the refId of the current query
   const [currentDataFrame, setCurrentDataFrame] = useState<DataFrame>(
@@ -394,7 +394,7 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
   };
 }
 
-export const getLogsTableHeight = () => {
+const getTableHeight = () => {
   // Instead of making the height of the table based on the content (like in the table panel itself), let's try to use the vertical space that is available.
   // Since this table is in explore, we can expect the user to be running multiple queries that return disparate numbers of rows and labels in the same session
   // Also changing the height of the table between queries can be and cause content to jump, so we'll set a minimum height of 500px, and a max based on the innerHeight
