@@ -173,8 +173,20 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.cancelFlippingTimer) {
       window.clearTimeout(this.cancelFlippingTimer);
     }
+    // Delete url state on unmount
+    if (this.props?.panelState?.logs?.columns) {
+      delete this.props.panelState.logs.columns;
+    }
+    if (this.props?.panelState?.logs?.refId) {
+      delete this.props.panelState.logs.refId;
+    }
+    if (this.props?.panelState?.logs?.labelName) {
+      delete this.props.panelState.logs.labelName;
+    }
+    if (this.props?.panelState?.logs?.visualisationType) {
+      delete this.props.panelState.logs.visualisationType;
+    }
   }
-
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
     if (state?.panelsState) {
@@ -194,6 +206,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete this.props.panelState.logs.id;
+
       dispatch(
         changePanelState(this.props.exploreId, 'logs', {
           ...this.props.panelState,
