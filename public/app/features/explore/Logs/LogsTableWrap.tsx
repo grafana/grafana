@@ -53,13 +53,12 @@ export function LogsTableWrap(props: Props) {
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<fieldNameMetaStore | undefined>(undefined);
 
   const height = getLogsTableHeight();
+  const panelStateRefId = props?.panelState?.refId;
 
   // The current dataFrame containing the refId of the current query
   const [currentDataFrame, setCurrentDataFrame] = useState<DataFrame>(
-    logsFrames.find((f) => f.refId === props?.panelState?.refId) ?? logsFrames[0]
+    logsFrames.find((f) => f.refId === panelStateRefId) ?? logsFrames[0]
   );
-  // The refId of the current frame being displayed
-  const currentFrameRefId = currentDataFrame.refId;
 
   const getColumnsFromProps = useCallback(
     (fieldNames: fieldNameMetaStore) => {
@@ -75,6 +74,16 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
+
+  /**
+   * When logs frame updates (e.g. query|range changes), we need to set the selected frame to state
+   */
+  useEffect(() => {
+    const newFrame = logsFrames.find((f) => f.refId === panelStateRefId) ?? logsFrames[0];
+    if (newFrame) {
+      setCurrentDataFrame(newFrame);
+    }
+  }, [logsFrames, panelStateRefId]);
 
   /**
    * Keeps the filteredColumnsWithMeta state in sync with the columnsWithMeta state,
@@ -336,7 +345,7 @@ export function LogsTableWrap(props: Props) {
               <Select
                 inputId={'explore_logs_table_frame_selector'}
                 aria-label={'Select query by name'}
-                value={currentFrameRefId}
+                value={currentDataFrame.refId}
                 options={logsFrames.map((frame) => {
                   return {
                     label: frame.refId,

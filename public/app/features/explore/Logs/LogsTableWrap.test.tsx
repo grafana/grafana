@@ -140,7 +140,7 @@ describe('LogsTableWrap', () => {
   });
 
   it('should update selected dataframe when dataFrames update', async () => {
-    const initialProps = { logsFrames: [getMockLokiFrameDataPlane()] };
+    const initialProps = { logsFrames: [getMockLokiFrameDataPlane(undefined, 3)] };
     const render = setup(initialProps);
     await waitFor(() => {
       const rows = render.getAllByRole('row');
@@ -156,6 +156,8 @@ describe('LogsTableWrap', () => {
 
     await waitFor(() => {
       const rows = render.getAllByRole('row');
+      console.log();
+      console.log(render.debug(undefined, Infinity));
       expect(rows.length).toBe(5);
     });
   });
