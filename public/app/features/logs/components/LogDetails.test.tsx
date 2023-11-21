@@ -2,7 +2,16 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme, FieldType } from '@grafana/data';
+import {
+  Field,
+  LogLevel,
+  LogRowModel,
+  MutableDataFrame,
+  createTheme,
+  FieldType,
+  createDataFrame,
+  DataFrameType,
+} from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
@@ -172,5 +181,67 @@ describe('LogDetails', () => {
     const link = within(traceIdRow!).getByRole('link', { name: 'link' });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', 'localhost:3210/1234');
+  });
+
+  it('should show correct log details fields, links and labels for DataFrameType.LogLines frames', () => {
+    const entry = 'test';
+    const dataFrame = createDataFrame({
+      fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
+        { name: 'body', type: FieldType.string, values: [entry] },
+        {
+          name: 'labels',
+          type: FieldType.other,
+          values: [
+            {
+              label1: 'value1',
+            },
+          ],
+        },
+        {
+          name: 'shouldNotShowFieldName',
+          type: FieldType.string,
+          values: ['shouldNotShowFieldValue'],
+        },
+        {
+          name: 'shouldShowLinkName',
+          type: FieldType.string,
+          values: ['shouldShowLinkValue'],
+          config: { links: [{ title: 'link', url: 'localhost:3210/${__value.text}' }] },
+        },
+      ],
+      meta: {
+        type: DataFrameType.LogLines,
+      },
+    });
+
+    setup(
+      {
+        getFieldLinks: (field: Field, rowIndex: number) => {
+          if (field.config && field.config.links) {
+            return field.config.links.map((link) => {
+              return {
+                href: link.url.replace('${__value.text}', field.values[rowIndex]),
+                title: link.title,
+                target: '_blank',
+                origin: field,
+              };
+            });
+          }
+          return [];
+        },
+      },
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0, labels: { label1: 'value1' } }
+    );
+
+    // Don't show additional fields for DataFrameType.LogLines
+    expect(screen.queryByText('shouldNotShowFieldName')).not.toBeInTheDocument();
+    expect(screen.queryByText('shouldNotShowFieldValue')).not.toBeInTheDocument();
+
+    // Show labels and links
+    expect(screen.getByText('label1')).toBeInTheDocument();
+    expect(screen.getByText('value1')).toBeInTheDocument();
+    expect(screen.getByText('shouldShowLinkName')).toBeInTheDocument();
+    expect(screen.getByText('shouldShowLinkValue')).toBeInTheDocument();
   });
 });

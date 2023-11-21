@@ -37,7 +37,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	api.RouteRegister.Group("/api/access-control", func(rr routing.RouteRegister) {
 		rr.Get("/user/actions", middleware.ReqSignedIn, routing.Wrap(api.getUserActions))
 		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
-		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
+		if api.features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userID"))
 			rr.Get("/users/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
 			rr.Get("/user/:userID/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead, userIDScope)), routing.Wrap(api.searchUserPermissions))

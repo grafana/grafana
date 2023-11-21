@@ -1,18 +1,18 @@
 import React, { useMemo } from 'react';
 
 import {
-  InteractiveTable,
+  Avatar,
   CellProps,
-  Tooltip,
-  Icon,
-  Tag,
-  Pagination,
   Column,
   FetchDataFunc,
+  Icon,
+  InteractiveTable,
+  Pagination,
+  Stack,
+  Tag,
   Text,
-  Avatar,
+  Tooltip,
 } from '@grafana/ui';
-import { Stack } from '@grafana/ui/src/unstable';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
@@ -143,7 +143,7 @@ export const UsersTable = ({
     [showLicensedRole]
   );
   return (
-    <Stack gap={2}>
+    <Stack direction={'column'} gap={2}>
       <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
       {showPaging && (
         <Stack justifyContent={'flex-end'}>

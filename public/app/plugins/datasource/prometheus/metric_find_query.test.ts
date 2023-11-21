@@ -20,7 +20,6 @@ const instanceSettings = {
   url: 'proxied',
   id: 1,
   uid: 'ABCDEF',
-  directUrl: 'direct',
   user: 'test',
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },
@@ -102,6 +101,30 @@ describe('PrometheusMetricFindQuery', () => {
         url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
+      });
+    });
+
+    const emptyFilters = ['{}', '{   }', ' {   }  ', '   {}  '];
+
+    emptyFilters.forEach((emptyFilter) => {
+      const queryString = `label_values(${emptyFilter}, resource)`;
+      it(`Empty filter, query, ${queryString} should just generate label search query`, async () => {
+        const query = setupMetricFindQuery({
+          query: queryString,
+          response: {
+            data: ['value1', 'value2', 'value3'],
+          },
+        });
+        const results = await query.process(raw);
+
+        expect(results).toHaveLength(3);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledWith({
+          method: 'GET',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+          hideFromInspector: true,
+          headers: {},
+        });
       });
     });
 
@@ -226,9 +249,10 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${raw.to.unix()}`,
-        requestId: undefined,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric`,
         headers: {},
+        hideFromInspector: true,
+        showErrorAlert: false,
       });
     });
 
@@ -248,9 +272,10 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
-        requestId: undefined,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1`,
         headers: {},
+        hideFromInspector: true,
+        showErrorAlert: false,
       });
     });
 

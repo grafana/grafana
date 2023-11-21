@@ -15,6 +15,7 @@ export const Components = {
   },
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
+    overlayContent: 'data-testid TimePicker Overlay Content',
     fromField: 'Time Range from field',
     toField: 'Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
@@ -30,6 +31,9 @@ export const Components = {
     roleType: 'Role to add new permission to',
     rolePicker: 'Built-in role picker',
     permissionLevel: 'Permission Level',
+  },
+  DateTimePicker: {
+    input: 'data-testid date-time-input',
   },
   DataSource: {
     TestData: {
@@ -225,8 +229,8 @@ export const Components = {
   Transforms: {
     card: (name: string) => `data-testid New transform ${name}`,
     Reduce: {
-      modeLabel: 'Transform mode label',
-      calculationsLabel: 'Transform calculations label',
+      modeLabel: 'data-testid Transform mode label',
+      calculationsLabel: 'data-testid Transform calculations label',
     },
     SpatialOperations: {
       actionLabel: 'root Action field property editor',
@@ -257,7 +261,7 @@ export const Components = {
       button: 'Configuration',
     },
     Toggle: {
-      button: 'Toggle menu',
+      button: 'data-testid Toggle menu',
     },
     Reporting: {
       button: 'Reporting',

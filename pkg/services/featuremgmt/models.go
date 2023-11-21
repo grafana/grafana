@@ -2,11 +2,21 @@ package featuremgmt
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 )
 
 type FeatureToggles interface {
-	IsEnabled(flag string) bool
+	// Check if a feature is enabled for a given context.
+	// The settings may be per user, tenant, or globally set in the cloud
+	IsEnabled(ctx context.Context, flag string) bool
+
+	// Check if a flag is configured globally.  For now, this is the same
+	// as the function above, however it will move to only checking flags that
+	// are configured by the operator and shared across all tenants.
+	// Use of global feature flags should be limited and careful as they require
+	// a full server restart for a change to take place.
+	IsEnabledGlobally(flag string) bool
 }
 
 // FeatureFlagStage indicates the quality level
@@ -110,10 +120,12 @@ type FeatureFlag struct {
 	// Special behavior flags
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
 	// This flag is currently unused.
-	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initialized with the value
-	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
-	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
-	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
+	RequiresRestart   bool  `json:"requiresRestart,omitempty"`   // The server must be initialized with the value
+	RequiresLicense   bool  `json:"requiresLicense,omitempty"`   // Must be enabled in the license
+	FrontendOnly      bool  `json:"frontend,omitempty"`          // change is only seen in the frontend
+	HideFromDocs      bool  `json:"hideFromDocs,omitempty"`      // don't add the values to docs
+	HideFromAdminPage bool  `json:"hideFromAdminPage,omitempty"` // don't display the feature in the admin page - add a comment with the reasoning
+	AllowSelfServe    *bool `json:"allowSelfServe,omitempty"`    // allow admin users to toggle the feature state from the admin page; this is required for GA toggles only
 
 	// This field is only for the feature management API. To enable your feature toggle by default, use `Expression`.
 	Enabled bool `json:"enabled,omitempty"`

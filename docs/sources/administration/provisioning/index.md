@@ -157,6 +157,8 @@ datasources:
       password:
       # <string> Sets the basic authorization password.
       basicAuthPassword:
+    # <int> Sets the version. Used to compare versions when
+    # updating. Ignored when creating a new data source.
     version: 1
     # <bool> Allows users to edit data sources from the
     # Grafana UI.

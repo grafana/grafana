@@ -1,16 +1,25 @@
 import { take } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { DateTime, InterpolateFunction, PanelProps, textUtil, UrlQueryValue, urlUtil } from '@grafana/data';
+import {
+  DataLinkBuiltInVars,
+  DateTime,
+  InterpolateFunction,
+  PanelProps,
+  textUtil,
+  UrlQueryValue,
+  urlUtil,
+} from '@grafana/data';
 import { CustomScrollbar, useStyles2, IconButton } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
+import { appEvents } from 'app/core/core';
+import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
+import { VariablesChanged } from 'app/features/variables/types';
 import { useDispatch } from 'app/types';
 
 import { Options } from './panelcfg.gen';
@@ -26,6 +35,7 @@ interface DashboardGroup {
 
 async function fetchDashboards(options: Options, replaceVars: InterpolateFunction) {
   let starredDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
+
   if (options.showStarred) {
     const params = { limit: options.maxItems, starred: 'true' };
     starredDashboards = getBackendSrv().search(params);
@@ -92,6 +102,7 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
 export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
   const dispatch = useDispatch();
+
   useEffect(() => {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
       setDashboards(dashes);
@@ -140,27 +151,14 @@ export function DashList(props: PanelProps<Options>) {
   ];
 
   const css = useStyles2(getStyles);
+  const urlParams = useDashListUrlParams(props);
 
   const renderList = (dashboards: Dashboard[]) => (
     <ul>
       {dashboards.map((dash) => {
         let url = dash.url;
-        let params: { [key: string]: string | DateTime | UrlQueryValue } = {};
 
-        if (props.options.keepTime) {
-          const range = getTimeSrv().timeRangeForUrl();
-          params['from'] = range.from;
-          params['to'] = range.to;
-        }
-
-        if (props.options.includeVars) {
-          params = {
-            ...params,
-            ...getVariablesUrlParams(),
-          };
-        }
-
-        url = urlUtil.appendQueryToUrl(url, urlUtil.toUrlParams(params));
+        url = urlUtil.appendQueryToUrl(url, urlParams);
         url = getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
 
         return (
@@ -198,4 +196,23 @@ export function DashList(props: PanelProps<Options>) {
       )}
     </CustomScrollbar>
   );
+}
+
+function useDashListUrlParams(props: PanelProps<Options>) {
+  // We don't care about the payload just want to get re-render when this event is published
+  useBusEvent(appEvents, VariablesChanged);
+
+  let params: { [key: string]: string | DateTime | UrlQueryValue } = {};
+
+  if (props.options.keepTime) {
+    params[`\$${DataLinkBuiltInVars.keepTime}`] = true;
+  }
+
+  if (props.options.includeVars) {
+    params[`\$${DataLinkBuiltInVars.includeVars}`] = true;
+  }
+
+  const urlParms = props.replaceVariables(urlUtil.toUrlParams(params));
+
+  return urlParms;
 }

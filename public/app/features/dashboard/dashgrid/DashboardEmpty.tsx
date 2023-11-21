@@ -4,8 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box } from '@grafana/ui';
-import { Stack } from '@grafana/ui/src/unstable';
+import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onImportDashboard } from 'app/features/dashboard/utils/dashboard';
@@ -60,7 +59,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           </Box>
           <Stack direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             {config.featureToggles.vizAndWidgetSplit && (
-              <Box borderColor="strong" borderStyle="dashed" padding={3} grow={1}>
+              <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
                 <Stack direction="column" alignItems="center" gap={1}>
                   <Text element="h3" textAlignment="center" weight="medium">
                     <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
@@ -85,7 +84,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 </Stack>
               </Box>
             )}
-            <Box borderColor="strong" borderStyle="dashed" padding={3} grow={1}>
+            <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>
                 <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.add-library-panel-header">Import panel</Trans>
@@ -111,7 +110,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 </Button>
               </Stack>
             </Box>
-            <Box borderColor="strong" borderStyle="dashed" padding={3} grow={1}>
+            <Box borderColor="strong" borderStyle="dashed" padding={3} flex={1}>
               <Stack direction="column" alignItems="center" gap={1}>
                 <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.import-a-dashboard-header">Import a dashboard</Trans>

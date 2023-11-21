@@ -1,107 +1,118 @@
 import {
-  SceneVariableSet,
   QueryVariable,
   CustomVariable,
   DataSourceVariable,
   ConstantVariable,
   IntervalVariable,
+  SceneVariables,
 } from '@grafana/scenes';
 import { VariableModel, VariableHide, VariableRefresh, VariableSort } from '@grafana/schema';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-export function sceneVariablesSetToVariables(set: SceneVariableSet) {
+export function sceneVariablesSetToVariables(set: SceneVariables) {
   const variables: VariableModel[] = [];
   for (const variable of set.state.variables) {
+    const type = variable.state.type;
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
       description: variable.state.description,
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: variable.state.hide || VariableHide.dontHide,
-      type: variable.state.type,
+      type,
     };
-    if (variable instanceof QueryVariable) {
+    if (type === 'query') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const queryVariable = variable as QueryVariable;
       variables.push({
         ...commonProperties,
         current: {
           // @ts-expect-error
-          value: variable.state.value,
+          value: queryVariable.state.value,
           // @ts-expect-error
-          text: variable.state.text,
+          text: queryVariable.state.text,
         },
         options: [],
-        query: variable.state.query,
-        datasource: variable.state.datasource,
-        sort: variable.state.sort,
-        refresh: variable.state.refresh,
-        regex: variable.state.regex,
-        allValue: variable.state.allValue,
-        includeAll: variable.state.includeAll,
-        multi: variable.state.isMulti,
-        skipUrlSync: variable.state.skipUrlSync,
-        hide: variable.state.hide || VariableHide.dontHide,
+        query: queryVariable.state.query,
+        datasource: queryVariable.state.datasource,
+        sort: queryVariable.state.sort,
+        refresh: queryVariable.state.refresh,
+        regex: queryVariable.state.regex,
+        allValue: queryVariable.state.allValue,
+        includeAll: queryVariable.state.includeAll,
+        multi: queryVariable.state.isMulti,
+        skipUrlSync: queryVariable.state.skipUrlSync,
+        hide: queryVariable.state.hide || VariableHide.dontHide,
       });
-    } else if (variable instanceof CustomVariable) {
+    } else if (type === 'custom') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const customVariable = variable as CustomVariable;
       variables.push({
         ...commonProperties,
         current: {
           // @ts-expect-error
-          text: variable.state.value,
+          text: customVariable.state.value,
           // @ts-expect-error
-          value: variable.state.value,
+          value: customVariable.state.value,
         },
         options: [],
-        query: variable.state.query,
-        multi: variable.state.isMulti,
-        allValue: variable.state.allValue,
-        includeAll: variable.state.includeAll,
+        query: customVariable.state.query,
+        multi: customVariable.state.isMulti,
+        allValue: customVariable.state.allValue,
+        includeAll: customVariable.state.includeAll,
       });
-    } else if (variable instanceof DataSourceVariable) {
+    } else if (type === 'datasource') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const datasourceVariable = variable as DataSourceVariable;
       variables.push({
         ...commonProperties,
         current: {
           // @ts-expect-error
-          value: variable.state.value,
+          value: datasourceVariable.state.value,
           // @ts-expect-error
-          text: variable.state.text,
+          text: datasourceVariable.state.text,
         },
         options: [],
-        regex: variable.state.regex,
+        regex: datasourceVariable.state.regex,
         refresh: VariableRefresh.onDashboardLoad,
-        query: variable.state.pluginId,
-        multi: variable.state.isMulti,
-        allValue: variable.state.allValue,
-        includeAll: variable.state.includeAll,
+        query: datasourceVariable.state.pluginId,
+        multi: datasourceVariable.state.isMulti,
+        allValue: datasourceVariable.state.allValue,
+        includeAll: datasourceVariable.state.includeAll,
       });
-    } else if (variable instanceof ConstantVariable) {
+    } else if (type === 'constant') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const constantVariable = variable as ConstantVariable;
       variables.push({
         ...commonProperties,
         current: {
           // @ts-expect-error
-          value: variable.state.value,
+          value: constantVariable.state.value,
           // @ts-expect-error
-          text: variable.state.value,
+          text: constantVariable.state.value,
         },
         // @ts-expect-error
-        query: variable.state.value,
+        query: constantVariable.state.value,
         hide: VariableHide.hideVariable,
       });
-    } else if (variable instanceof IntervalVariable) {
-      const intervals = getIntervalsQueryFromNewIntervalModel(variable.state.intervals);
+    } else if (type === 'interval') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const intervalVariable = variable as IntervalVariable;
+      const intervals = getIntervalsQueryFromNewIntervalModel(intervalVariable.state.intervals);
       variables.push({
         ...commonProperties,
         current: {
-          text: variable.state.value,
-          value: variable.state.value,
+          text: intervalVariable.state.value,
+          value: intervalVariable.state.value,
         },
         query: intervals,
         hide: VariableHide.hideVariable,
-        refresh: variable.state.refresh,
+        refresh: intervalVariable.state.refresh,
         // @ts-expect-error ?? how to fix this without adding the ts-expect-error
-        auto: variable.state.autoEnabled,
-        auto_min: variable.state.autoMinInterval,
-        auto_count: variable.state.autoStepCount,
+        auto: intervalVariable.state.autoEnabled,
+        auto_min: intervalVariable.state.autoMinInterval,
+        auto_count: intervalVariable.state.autoStepCount,
       });
     } else {
       throw new Error('Unsupported variable type');

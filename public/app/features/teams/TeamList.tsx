@@ -2,19 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import {
-  LinkButton,
-  FilterInput,
-  InlineField,
-  CellProps,
-  DeleteButton,
-  InteractiveTable,
-  Icon,
-  Tooltip,
-  Column,
-  Pagination,
   Avatar,
+  CellProps,
+  Column,
+  DeleteButton,
+  FilterInput,
+  Icon,
+  InlineField,
+  InteractiveTable,
+  LinkButton,
+  Pagination,
+  Stack,
+  Tooltip,
 } from '@grafana/ui';
-import { Stack } from '@grafana/ui/src/unstable';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -22,7 +22,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
-import { TableWrapper } from '../admin/Users/TableWrapper';
 
 import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
@@ -172,23 +171,16 @@ export const TeamList = ({
                 New Team
               </LinkButton>
             </div>
-            <Stack gap={2}>
-              <TableWrapper>
-                <InteractiveTable
-                  columns={columns}
-                  data={teams}
-                  getRowId={(team) => String(team.id)}
-                  fetchData={changeSort}
-                />
-                <Stack justifyContent="flex-end">
-                  <Pagination
-                    hideWhenSinglePage
-                    currentPage={page}
-                    numberOfPages={totalPages}
-                    onNavigate={changePage}
-                  />
-                </Stack>
-              </TableWrapper>
+            <Stack direction={'column'} gap={2}>
+              <InteractiveTable
+                columns={columns}
+                data={teams}
+                getRowId={(team) => String(team.id)}
+                fetchData={changeSort}
+              />
+              <Stack justifyContent="flex-end">
+                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+              </Stack>
             </Stack>
           </>
         )}

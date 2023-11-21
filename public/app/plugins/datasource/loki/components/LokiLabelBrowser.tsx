@@ -188,7 +188,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, BrowserState> {
   state: BrowserState = {
-    labels: [] as SelectableLabel[],
+    labels: [],
     searchTerm: '',
     status: 'Ready',
     error: '',
@@ -350,7 +350,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     const { languageProvider } = this.props;
     this.updateLabelState(name, { loading: true }, `Fetching values for ${name}`);
     try {
-      let rawValues = await languageProvider.getLabelValues(name);
+      let rawValues = await languageProvider.fetchLabelValues(name);
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         this.updateLabelState(name, { loading: false }, '');
@@ -497,7 +497,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                     height={200}
                     itemCount={label.values?.length || 0}
                     itemSize={28}
-                    itemKey={(i) => (label.values as FacettableValue[])[i].name}
+                    itemKey={(i) => label.values?.[i].name ?? i}
                     width={200}
                     className={styles.valueList}
                   >
