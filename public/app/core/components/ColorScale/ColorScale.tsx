@@ -159,9 +159,9 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     position: 'absolute',
     height: '14px',
     width: '14px',
-    borderRadius: '50%',
+    borderRadius: theme.shape.radius.default,
     transform: 'translateX(-50%) translateY(-50%)',
     border: `2px solid ${theme.colors.text.primary}`,
-    marginTop: `5px`,
+    marginTop: '5px',
   }),
 });
