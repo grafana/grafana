@@ -37,7 +37,7 @@ export class AppChromeService {
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     megaMenu:
       config.featureToggles.dockedMegaMenu &&
-      store.getBool(DOCKED_LOCAL_STORAGE_KEY, window.innerWidth >= config.theme2.breakpoints.values.xl)
+      store.getBool(DOCKED_LOCAL_STORAGE_KEY, window.innerWidth >= config.theme2.breakpoints.values.xxl)
         ? 'docked'
         : 'closed',
     kioskMode: null,
