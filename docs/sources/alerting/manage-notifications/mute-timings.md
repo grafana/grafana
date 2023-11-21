@@ -67,7 +67,7 @@ Supported time interval options are:
 - Months: The months of the year in either numerical or the full calendar month. For example: `1, may:august`.
 - Years: The year or years for the interval. For example: `2021:2024`.
 
-All fields are lists, and at least one list element must be satisfied to match the field. Fields also support ranges using `:` (ex: `monday:thursday`).
+All fields are lists; to match the field, at least one list element must be satisfied. Fields also support ranges using `:` (e.g., `monday:thursday`).
 
 If a field is left blank, any moment of time will match the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
 
