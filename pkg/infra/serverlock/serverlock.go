@@ -220,8 +220,7 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 
 	sl.executeFunc(ctx, actionName, fn)
 
-	err := sl.releaseLock(ctx, actionName)
-	if err != nil {
+	if err := sl.releaseLock(ctx, actionName); err != nil {
 		span.RecordError(err)
 		ctxLogger.Error("Failed to release the lock", "error", err)
 	}
