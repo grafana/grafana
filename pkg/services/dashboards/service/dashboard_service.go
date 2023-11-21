@@ -546,7 +546,7 @@ func (dr *DashboardServiceImpl) GetUserDashboards(ctx context.Context, query *da
 
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	if len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, "sharedwithme") {
-		userDashboards, err := dr.GetUserDashboards(ctx, &dashboards.GetUserDashboardsQuery{User: query.SignedInUser, OrgID: query.OrgId})
+		userDashboards, err := dr.GetUserDashboards(ctx, &dashboards.GetUserDashboardsQuery{User: query.SignedInUser, OrgID: query.SignedInUser.OrgID})
 		if err != nil {
 			return nil, err
 		}
