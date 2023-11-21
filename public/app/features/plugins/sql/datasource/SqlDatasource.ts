@@ -217,7 +217,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   // NOTE: this always runs with the `@grafana/data/getDefaultTimeRange` time range
-  async runSql<T>(query: string, options?: RunSQLOptions) {
+  async runSql<T extends object>(query: string, options?: RunSQLOptions) {
     const range = getDefaultTimeRange();
     const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, range);
     return new DataFrameView<T>(frame);

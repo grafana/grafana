@@ -83,9 +83,6 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 	// It's sized for a reasonably-large name, but will grow if needed.
 	frameName := make([]byte, 0, 128)
 
-	retentionPolicyQuery := isRetentionPolicyQuery(query)
-	tagValuesQuery := isTagValuesQuery(query)
-
 	for _, row := range rows {
 		var hasTimeCol = false
 
@@ -96,7 +93,7 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 		}
 
 		if !hasTimeCol {
-			newFrame := newFrameWithoutTimeField(row, retentionPolicyQuery, tagValuesQuery)
+			newFrame := newFrameWithoutTimeField(row, query)
 			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
@@ -170,34 +167,13 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 	return newDataFrame(name, query.RawQuery, timeField, valueField, getVisType(query.ResultFormat))
 }
 
-func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
+func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	var values []string
 
-	if retentionPolicyQuery {
-		values = make([]string, 1, len(row.Values))
-	} else {
-		values = make([]string, 0, len(row.Values))
-	}
-
 	for _, valuePair := range row.Values {
-		if tagValuesQuery {
+		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
 			if len(valuePair) >= 2 {
 				values = append(values, valuePair[1].(string))
-			}
-		} else if retentionPolicyQuery {
-			// We want to know whether the given retention policy is the default one or not.
-			// If it is default policy then we should add it to the beginning.
-			// The index 4 gives us if that policy is default or not.
-			// https://docs.influxdata.com/influxdb/v1.8/query_language/explore-schema/#show-retention-policies
-			// Only difference is v0.9. In that version we don't receive shardGroupDuration value.
-			// https://archive.docs.influxdata.com/influxdb/v0.9/query_language/schema_exploration/#show-retention-policies
-			// Since it is always the last value we will check that last value always.
-			if len(valuePair) >= 1 {
-				if valuePair[len(row.Columns)-1].(bool) {
-					values[0] = valuePair[0].(string)
-				} else {
-					values = append(values, valuePair[0].(string))
-				}
 			}
 		} else {
 			if len(valuePair) >= 1 {
@@ -348,12 +324,4 @@ func getVisType(resFormat string) data.VisType {
 	default:
 		return graphVisType
 	}
-}
-
-func isTagValuesQuery(query models.Query) bool {
-	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES"))
-}
-
-func isRetentionPolicyQuery(query models.Query) bool {
-	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW RETENTION POLICIES"))
 }

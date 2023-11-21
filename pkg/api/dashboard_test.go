@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -416,6 +415,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			// nolint:staticcheck
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2, FolderUID: folderUID, FolderID: folderID}, nil)
+			// nolint:staticcheck
 			mockFolderService := &foldertest.FakeService{
 				ExpectedFolder: &folder.Folder{ID: 1, UID: folderUID, Title: "Folder"},
 			}
@@ -452,6 +452,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2}, nil)
 
+			// nolint:staticcheck
 			mockFolder := &foldertest.FakeService{
 				ExpectedFolder: &folder.Folder{ID: 1, UID: "folderUID", Title: "Folder"},
 			}
@@ -465,31 +466,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.Equal(t, "uid", result.Get("uid").MustString())
 				assert.Equal(t, "dash", result.Get("slug").MustString())
 				assert.Equal(t, "/d/uid/dash", result.Get("url").MustString())
-			})
-		})
-
-		t.Run("Given a request with incorrect folder uid for creating a dashboard with", func(t *testing.T) {
-			cmd := dashboards.SaveDashboardCommand{
-				OrgID:  1,
-				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]any{
-					"title": "Dash",
-				}),
-				Overwrite: true,
-				FolderUID: "folderUID",
-				IsFolder:  false,
-				Message:   "msg",
-			}
-
-			dashboardService := dashboards.NewFakeDashboardService(t)
-
-			mockFolder := &foldertest.FakeService{
-				ExpectedError: errors.New("Error while searching Folder ID"),
-			}
-
-			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolder, func(sc *scenarioContext) {
-				callPostDashboard(sc)
-				assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
 			})
 		})
 
