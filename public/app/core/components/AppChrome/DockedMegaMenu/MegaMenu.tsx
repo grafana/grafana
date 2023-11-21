@@ -35,7 +35,7 @@ export const MegaMenu = React.memo(
     const activeItem = getActiveItem(navItems, location.pathname);
 
     const handleDockedMenu = () => {
-      chrome.setMegaMenu(state.megaMenu === 'docked' ? 'closed' : 'docked');
+      chrome.setMegaMenu(state.megaMenu === 'docked' ? 'open' : 'docked');
     };
 
     return (
@@ -60,10 +60,14 @@ export const MegaMenu = React.memo(
                     onClick={state.megaMenu === 'open' ? onClose : undefined}
                     activeItem={activeItem}
                   />
-                  {index === 0 && Boolean(state.megaMenu === 'open') && (
+                  {index === 0 && (
                     <IconButton
                       className={styles.dockMenuButton}
-                      tooltip={t('navigation.megamenu.dock', 'Dock menu')}
+                      tooltip={
+                        state.megaMenu === 'docked'
+                          ? t('navigation.megamenu.undock', 'Undock menu')
+                          : t('navigation.megamenu.dock', 'Dock menu')
+                      }
                       name="web-section-alt"
                       onClick={handleDockedMenu}
                       variant="secondary"
