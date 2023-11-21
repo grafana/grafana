@@ -83,7 +83,7 @@ export class CompletionDataProvider {
         this.queryToLabelKeysCache.delete(firstKey);
       }
       // Fetch a fresh result from the backend
-      const labelKeys = await this.languageProvider.getParserAndLabelKeys(logQuery);
+      const labelKeys = await this.languageProvider.getParserAndLabelKeys(logQuery, { timeRange: this.timeRange });
       // Add the result to the cache
       this.queryToLabelKeysCache.set(logQuery, labelKeys);
       return labelKeys;
