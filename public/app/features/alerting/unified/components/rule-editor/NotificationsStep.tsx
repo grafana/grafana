@@ -25,7 +25,7 @@ enum RoutingOptions {
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const { watch, setValue } = useFormContext<RuleFormValues & { location?: string }>();
+  const { watch, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
   const [type, labels, queries, condition, folder, alertName, manualRouting] = watch([

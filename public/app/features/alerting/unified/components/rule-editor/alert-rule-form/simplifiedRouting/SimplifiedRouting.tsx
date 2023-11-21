@@ -39,7 +39,7 @@ export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) =>
 });
 
 export function SimplifiedRouting() {
-  const { getValues, setValue } = useFormContext<RuleFormValues & { location?: string }>();
+  const { getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
   const contactPointsInAlert = getValues('contactPoints');
 
