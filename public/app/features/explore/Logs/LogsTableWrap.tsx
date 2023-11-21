@@ -80,7 +80,6 @@ export function LogsTableWrap(props: Props) {
    */
   useEffect(() => {
     const newFrame = logsFrames.find((f) => f.refId === panelStateRefId) ?? logsFrames[0];
-    console.log('newFrame', newFrame);
     if (newFrame) {
       setCurrentDataFrame(newFrame);
     }
