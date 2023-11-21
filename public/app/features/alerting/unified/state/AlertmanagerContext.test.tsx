@@ -43,12 +43,10 @@ describe('useAlertmanager', () => {
   });
 
   it('Should return Grafana AM when it is available and no alert manager query param exists', () => {
-    jest
-      .spyOn(useAlertManagerSources, 'useAlertManagersByPermission')
-      .mockReturnValueOnce({
-        availableExternalDataSources: [],
-        availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
-      });
+    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+      availableExternalDataSources: [],
+      availableInternalDataSources: [{ name: GRAFANA_RULES_SOURCE_NAME, imgUrl: '', hasConfigurationAPI: true }],
+    });
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <MemoryRouter>
@@ -114,12 +112,10 @@ describe('useAlertmanager', () => {
   });
 
   it('Should prioritize the alert manager from query over store', () => {
-    jest
-      .spyOn(useAlertManagerSources, 'useAlertManagersByPermission')
-      .mockReturnValueOnce({
-        availableExternalDataSources: [externalAmProm, externalAmMimir],
-        availableInternalDataSources: [],
-      });
+    jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce({
+      availableExternalDataSources: [externalAmProm, externalAmMimir],
+      availableInternalDataSources: [],
+    });
 
     const history = createMemoryHistory();
     history.push({ search: `alertmanager=${externalAmProm.name}` });
