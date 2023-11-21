@@ -4,29 +4,18 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type AuthInfoServiceFake struct {
 	login.AuthInfoService
 	LatestUserID         int64
 	ExpectedUserAuth     *login.UserAuth
-	ExpectedUser         *user.User
 	ExpectedExternalUser *login.ExternalUserInfo
 	ExpectedError        error
 	ExpectedLabels       map[int64]string
 
 	SetAuthInfoFn    func(ctx context.Context, cmd *login.SetAuthInfoCommand) error
 	UpdateAuthInfoFn func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error
-}
-
-func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *login.GetUserByAuthInfoQuery) (*user.User, error) {
-	if query.UserLookupParams.UserID != nil {
-		a.LatestUserID = *query.UserLookupParams.UserID
-	} else {
-		a.LatestUserID = 0
-	}
-	return a.ExpectedUser, a.ExpectedError
 }
 
 func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {

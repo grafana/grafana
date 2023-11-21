@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/socialtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -66,9 +65,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, secretsService, userMock)
 		srv := authinfoservice.ProvideAuthInfoService(
-			&authinfoservice.OSSUserProtectionImpl{},
 			authInfoStore,
-			&usagestats.UsageStatsMock{},
 		)
 		hs.authInfoService = srv
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
