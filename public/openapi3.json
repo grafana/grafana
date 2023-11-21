@@ -3262,6 +3262,9 @@
           },
           "username": {
             "type": "string"
+          },
+          "username_file": {
+            "type": "string"
           }
         },
         "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -6690,7 +6693,7 @@
       },
       "MatchRegexps": {
         "additionalProperties": {
-          "$ref": "#/components/schemas/Regexp"
+          "type": "string"
         },
         "title": "MatchRegexps represents a map of Regexp.",
         "type": "object"
@@ -8693,11 +8696,6 @@
             "type": "string"
           }
         },
-        "type": "object"
-      },
-      "Regexp": {
-        "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-        "title": "Regexp is the representation of a compiled regular expression.",
         "type": "object"
       },
       "RelativeTimeRange": {
@@ -11447,6 +11445,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11631,6 +11630,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -11691,6 +11691,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -11900,7 +11901,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",

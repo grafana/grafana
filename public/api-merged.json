@@ -12225,6 +12225,9 @@
         },
         "username": {
           "type": "string"
+        },
+        "username_file": {
+          "type": "string"
         }
       }
     },
@@ -15653,7 +15656,7 @@
       "type": "object",
       "title": "MatchRegexps represents a map of Regexp.",
       "additionalProperties": {
-        "$ref": "#/definitions/Regexp"
+        "type": "string"
       }
     },
     "MatchType": {
@@ -17656,11 +17659,6 @@
           "type": "string"
         }
       }
-    },
-    "Regexp": {
-      "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-      "type": "object",
-      "title": "Regexp is the representation of a compiled regular expression."
     },
     "RelativeTimeRange": {
       "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
@@ -20410,6 +20408,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -20594,6 +20593,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -20654,6 +20654,7 @@
       }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -20863,7 +20864,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
