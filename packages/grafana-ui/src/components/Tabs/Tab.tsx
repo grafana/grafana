@@ -39,6 +39,14 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
 
     const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
+    // wraps the onClick handler with "event.preventDefault" – prevents a rare race condition between navigating to the "href" and "onClick" handler
+    const onClickHandler = onChangeTab
+      ? (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+          event.preventDefault();
+          onChangeTab(event);
+        }
+      : () => {};
+
     return (
       <div className={tabsStyles.item}>
         <a
@@ -46,7 +54,7 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
           href={href ? href : '#'}
           className={linkClass}
           {...otherProps}
-          onClick={onChangeTab}
+          onClick={onClickHandler}
           aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
           role="tab"
           aria-selected={active}
