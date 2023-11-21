@@ -64,6 +64,7 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 		"allow_assign_grafana_admin": parseDataFromKey("allow_assign_grafana_admin", section, defaultSettings),
 		"auto_login":                 parseDataFromKey("auto_login", section, defaultSettings),
 		"allowed_groups":             parseDataFromKey("allowed_groups", section, defaultSettings),
+		// "skip_org_role_sync":         parseDataFromKey("skip_org_role_sync", section, defaultSettings),
 	}
 
 	extraFields := getExtraKeysForProvider(provider)
@@ -72,7 +73,7 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 	}
 
 	// when empty_scopes parameter exists and is true, overwrite scope with empty value
-	if parseDataFromKey("empty_scopes", section, defaultSettings) == "true" {
+	if section.Key("empty_scopes").MustBool(false) {
 		result["scopes"] = ""
 	}
 

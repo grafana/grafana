@@ -1,4 +1,6 @@
-import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import React from 'react';
+
+import { PluginExtensionComponentConfig, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import { createPluginExtensionRegistry } from './createPluginExtensionRegistry';
@@ -16,8 +18,10 @@ jest.mock('@grafana/runtime', () => {
 describe('getPluginExtensions()', () => {
   const extensionPoint1 = 'grafana/dashboard/panel/menu';
   const extensionPoint2 = 'plugins/myorg-basic-app/start';
+  const extensionPoint3 = 'grafana/datasources/config';
   const pluginId = 'grafana-basic-app';
-  let link1: PluginExtensionLinkConfig, link2: PluginExtensionLinkConfig;
+  // Sample extension configs that are used in the tests below
+  let link1: PluginExtensionLinkConfig, link2: PluginExtensionLinkConfig, component1: PluginExtensionComponentConfig;
 
   beforeEach(() => {
     link1 = {
@@ -35,6 +39,15 @@ describe('getPluginExtensions()', () => {
       path: `/a/${pluginId}/declare-incident`,
       extensionPointId: extensionPoint2,
       configure: jest.fn().mockImplementation((context) => ({ title: context?.title })),
+    };
+    component1 = {
+      type: PluginExtensionTypes.component,
+      title: 'Component 1',
+      description: 'Component 1 description',
+      extensionPointId: extensionPoint3,
+      component: (context) => {
+        return <div>Hello world!</div>;
+      },
     };
 
     global.console.warn = jest.fn();
@@ -408,5 +421,21 @@ describe('getPluginExtensions()', () => {
       title: extension.title,
       category: extension.category,
     });
+  });
+
+  test('should be possible to register and get component type extensions', () => {
+    const extension = component1;
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [extension] }]);
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extension.extensionPointId });
+
+    expect(extensions).toHaveLength(1);
+    expect(extensions[0]).toEqual(
+      expect.objectContaining({
+        pluginId,
+        type: PluginExtensionTypes.component,
+        title: extension.title,
+        description: extension.description,
+      })
+    );
   });
 });

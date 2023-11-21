@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange, EventBusSrv } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -31,6 +32,7 @@ export function useStateSync(params: ExploreQueryParams) {
   const orgId = useSelector((state) => state.user.orgId);
   const prevParams = useRef(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
+  const { warning } = useAppNotification();
 
   useEffect(() => {
     // This happens when the user navigates to an explore "empty page" while within Explore.
@@ -76,8 +78,11 @@ export function useStateSync(params: ExploreQueryParams) {
           if (!isEqual(prevParams.current.panes, JSON.stringify(panesQueryParams))) {
             // If there's no previous state it means we are mounting explore for the first time,
             // in this case we want to replace the URL instead of pushing a new entry to the history.
+            // If the init state is 'pending' it means explore still hasn't finished initializing. in that case we skip
+            // pushing a new entry in the history as the first entry will be pushed after initialization.
             const replace =
-              !!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0;
+              (!!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0) ||
+              initState.current === 'pending';
 
             prevParams.current = {
               panes: JSON.stringify(panesQueryParams),
@@ -96,7 +101,12 @@ export function useStateSync(params: ExploreQueryParams) {
   useEffect(() => {
     const isURLOutOfSync = prevParams.current?.panes !== params.panes;
 
-    const urlState = parseURL(params);
+    const [urlState, hasParseError] = parseURL(params);
+    hasParseError &&
+      warning(
+        'Could not parse Explore URL',
+        'The requested URL contains invalid parameters, a default Explore state has been loaded.'
+      );
 
     async function sync() {
       // if navigating the history causes one of the time range to not being equal to all the other ones,
@@ -225,42 +235,45 @@ export function useStateSync(params: ExploreQueryParams) {
           })
         );
 
-        const newParams = initializedPanes.reduce(
-          (acc, { exploreId, state }) => {
-            return {
-              ...acc,
-              panes: {
-                ...acc.panes,
-                [exploreId]: getUrlStateFromPaneState(state),
-              },
-            };
-          },
-          {
-            panes: {},
-          }
-        );
-        initState.current = 'done';
+        const panesObj = initializedPanes.reduce((acc, { exploreId, state }) => {
+          return {
+            ...acc,
+            [exploreId]: getUrlStateFromPaneState(state),
+          };
+        }, {});
+
         // we need to use partial here beacuse replace doesn't encode the query params.
-        location.partial(
-          {
-            // partial doesn't remove other parameters, so we delete (by setting them to undefined) all the current one before adding the new ones.
-            ...Object.keys(location.getSearchObject()).reduce<Record<string, unknown>>((acc, key) => {
-              acc[key] = undefined;
-              return acc;
-            }, {}),
-            panes: JSON.stringify(newParams.panes),
-            schemaVersion: urlState.schemaVersion,
-            orgId,
-          },
-          true
-        );
+        const oldQuery = location.getSearchObject();
+
+        // we create the default query params from the current URL, omitting all the properties we know should be in the final url.
+        // This includes params from previous schema versions and 'schemaVersion', 'panes', 'orgId' as we want to replace those.
+        let defaults: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(oldQuery).filter(
+          ([key]) => !['schemaVersion', 'panes', 'orgId', 'left', 'right'].includes(key)
+        )) {
+          defaults[key] = value;
+        }
+
+        const searchParams = new URLSearchParams({
+          // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
+          schemaVersion: `${urlState.schemaVersion}`,
+          panes: JSON.stringify(panesObj),
+          orgId: `${orgId}`,
+          ...defaults,
+        });
+
+        location.replace({
+          pathname: location.getLocation().pathname,
+          search: searchParams.toString(),
+        });
+        initState.current = 'done';
       });
     }
 
     prevParams.current = params;
 
     isURLOutOfSync && initState.current === 'done' && sync();
-  }, [dispatch, panesState, orgId, location, params]);
+  }, [dispatch, panesState, orgId, location, params, warning]);
 }
 
 function getDefaultQuery(ds: DataSourceApi) {
