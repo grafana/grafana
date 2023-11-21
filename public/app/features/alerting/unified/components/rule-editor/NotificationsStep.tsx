@@ -43,7 +43,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const shouldRenderPreview = type === RuleFormType.grafana;
 
   const routingOptions = [
-    { label: 'Manually selected contact point', value: RoutingOptions.ContactPoint },
+    { label: 'Manually select contact point', value: RoutingOptions.ContactPoint },
     { label: 'Auto-select contact point', value: RoutingOptions.NotificationPolicy },
   ];
 
