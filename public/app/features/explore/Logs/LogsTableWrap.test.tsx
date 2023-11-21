@@ -156,8 +156,6 @@ describe('LogsTableWrap', () => {
 
     await waitFor(() => {
       const rows = render.getAllByRole('row');
-      console.log();
-      console.log(render.debug(undefined, Infinity));
       expect(rows.length).toBe(5);
     });
   });
