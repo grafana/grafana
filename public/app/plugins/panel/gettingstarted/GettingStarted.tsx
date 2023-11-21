@@ -1,10 +1,9 @@
-// Libraries
-import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { css } from '@emotion/css';
+import React, { PureComponent, useRef } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Spinner, stylesFactory } from '@grafana/ui';
+import { Button, Spinner, stylesFactory, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -77,9 +76,8 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   };
 
   render() {
-    const { checksDone, currentStep, steps } = this.state;
+    const { checksDone, steps } = this.state;
     const styles = getStyles();
-    const step = steps[currentStep];
 
     return (
       <div className={styles.container}>
@@ -89,59 +87,134 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
             <Spinner size="xl" inline />
           </div>
         ) : (
-          <>
-            <Button variant="secondary" fill="text" className={styles.dismiss} onClick={this.dismiss}>
-              Remove this panel
-            </Button>
-            {currentStep === steps.length - 1 && (
-              <Button
-                className={cx(styles.backForwardButtons, styles.previous)}
-                onClick={this.onPreviousClick}
-                aria-label="To advanced tutorials"
-                icon="angle-left"
-                variant="secondary"
-              />
-            )}
-            <div className={styles.content}>
-              <Step step={step} />
-            </div>
-            {currentStep < steps.length - 1 && (
-              <Button
-                className={cx(styles.backForwardButtons, styles.forward)}
-                onClick={this.onForwardClick}
-                aria-label="To basic tutorials"
-                icon="angle-right"
-                variant="secondary"
-              />
-            )}
-          </>
+          <StepCarousel steps={steps} />
         )}
       </div>
     );
   }
 }
 
+function getElementWidth(el: HTMLElement): number {
+  const baseWidth = el.clientWidth;
+  const computedStyles = window.getComputedStyle(el);
+  const pageWidth =
+    baseWidth - parseFloat(computedStyles.paddingLeft || '0') - parseFloat(computedStyles.paddingRight || '0');
+
+  return pageWidth;
+}
+
+/**
+ * Scrolls an element by a given percentage of its width
+ * @param element Element to scroll
+ * @param scrollBy Percentage of the element's width to scroll. Positive values scroll right, negative values scroll left
+ */
+function scrollElement(element: HTMLElement, scrollBy: number) {
+  const scrollByPx = getElementWidth(element) * scrollBy;
+
+  element.scrollTo({
+    left: element.scrollLeft + scrollByPx,
+    behavior: 'smooth',
+  });
+}
+
+function StepCarousel({ steps }: { steps: SetupStep[] }) {
+  const styles = useStyles2(getStyles);
+
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = React.useState(0);
+
+  const calcScrollProgress = (el: HTMLDivElement) => {
+    const { scrollWidth, offsetWidth, scrollLeft } = el;
+    const scrollableWidth = scrollWidth - offsetWidth;
+    setScrollProgress(scrollLeft / scrollableWidth);
+  };
+
+  React.useEffect(() => {
+    carouselRef.current && calcScrollProgress(carouselRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carouselRef.current]);
+
+  const handleScroll = (ev: React.UIEvent<HTMLDivElement>) => {
+    calcScrollProgress(ev.target as HTMLDivElement);
+  };
+
+  return (
+    <div className={styles.carouselWrapper}>
+      <Button
+        className={styles.prevButton}
+        variant="secondary"
+        icon="angle-left"
+        tooltip="Previous"
+        disabled={scrollProgress === 0}
+        onClick={() => carouselRef.current && scrollElement(carouselRef.current, -1)}
+      />
+      <Button
+        className={styles.nextButton}
+        variant="secondary"
+        icon="angle-right"
+        tooltip="Next"
+        disabled={scrollProgress === 1}
+        onClick={() => carouselRef.current && scrollElement(carouselRef.current, 1)}
+      />
+
+      <div className={styles.stepCarousel} ref={carouselRef} onScroll={handleScroll}>
+        {steps.map((step, index) => {
+          return (
+            <div key={index} className={styles.step}>
+              <Step step={step} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const getStyles = stylesFactory(() => {
   const theme = config.theme2;
+  const buttonBase = {
+    position: 'absolute',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    zIndex: 2,
+
+    ['&:disabled']: {
+      opacity: 0,
+      pointerEvents: 'none',
+    },
+  } as const;
+
   return {
     container: css`
       display: flex;
       flex-direction: column;
       height: 100%;
-      // background: url(public/img/getting_started_bg_${theme.colors.mode}.svg) no-repeat;
       background-size: cover;
-      padding: ${theme.spacing(4)} ${theme.spacing(2)} 0;
     `,
-    content: css`
-      label: content;
-      display: flex;
-      justify-content: center;
-
-      ${theme.breakpoints.down('xxl')} {
-        margin-left: ${theme.spacing(3)};
-        justify-content: flex-start;
-      }
-    `,
+    carouselWrapper: css({
+      position: 'relative',
+    }),
+    nextButton: css(buttonBase, {
+      right: theme.spacing(1),
+    }),
+    prevButton: css(buttonBase, {
+      left: theme.spacing(1),
+    }),
+    stepCarousel: css({
+      position: 'relative',
+      zIndex: 1,
+      overflowX: 'auto',
+      display: 'flex',
+      flexWrap: 'nowrap',
+      scrollSnapType: 'x proximity',
+      paddingBottom: theme.spacing(2),
+    }),
+    step: css({
+      padding: theme.spacing(2, 2, 0, 2),
+      scrollSnapAlign: 'start',
+      flexShrink: 0,
+      minWidth: '100%',
+    }),
     header: css`
       label: header;
       margin-bottom: ${theme.spacing(3)};

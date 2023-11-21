@@ -11,16 +11,11 @@ export const cardStyle = (theme: GrafanaTheme2, complete: boolean) => {
 
   return `
       background-color: ${theme.colors.background.secondary};
-      margin-right: ${theme.spacing(4)};
       border: 1px solid ${theme.colors.border.weak};
       border-bottom-left-radius: ${theme.shape.borderRadius(2)};
       border-bottom-right-radius: ${theme.shape.borderRadius(2)};
       position: relative;
-      max-height: 230px;
 
-      ${theme.breakpoints.down('xxl')} {
-        margin-right: ${theme.spacing(2)};
-      }
       &::before {
         display: block;
         content: ' ';
