@@ -1,7 +1,9 @@
 package remote
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +15,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
@@ -23,33 +25,49 @@ import (
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 )
 
-const readyPath = "/-/ready"
+const (
+	readyEndpoint         = "/-/ready"
+	defaultConfigEndpoint = "/api/v1/alerts"
+
+	senderStartTimeout = 10 * time.Second
+)
+
+type configStore interface {
+	SaveAlertmanagerConfiguration(ctx context.Context, cmd *ngmodels.SaveAlertmanagerConfigurationCmd) error
+}
 
 type Alertmanager struct {
-	log      log.Logger
-	orgID    int64
-	tenantID string
-	url      string
+	log            log.Logger
+	orgID          int64
+	tenantID       string
+	url            string
+	configEndpoint string
 
-	amClient   *amclient.AlertmanagerAPI
-	httpClient *http.Client
-	ready      bool
-	sender     *sender.ExternalAlertmanager
+	amClient    *amclient.AlertmanagerAPI
+	configStore configStore
+	httpClient  *http.Client
+	ready       bool
+	sender      *sender.ExternalAlertmanager
 }
 
 type AlertmanagerConfig struct {
 	URL               string
 	TenantID          string
 	BasicAuthPassword string
+	ConfigEndpoint    string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store configStore) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &roundTripper{
 			tenantID:          cfg.TenantID,
 			basicAuthPassword: cfg.BasicAuthPassword,
 			next:              http.DefaultTransport,
 		},
+	}
+
+	if cfg.ConfigEndpoint == "" {
+		cfg.ConfigEndpoint = defaultConfigEndpoint
 	}
 
 	if cfg.URL == "" {
@@ -79,17 +97,22 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 	}
 
 	return &Alertmanager{
-		amClient:   amclient.New(transport, nil),
-		httpClient: &client,
-		log:        log.New("ngalert.remote.alertmanager"),
-		sender:     s,
-		orgID:      orgID,
-		tenantID:   cfg.TenantID,
-		url:        cfg.URL,
+		amClient:       amclient.New(transport, nil),
+		configStore:    store,
+		httpClient:     &client,
+		log:            log.New("ngalert.remote.alertmanager"),
+		sender:         s,
+		orgID:          orgID,
+		tenantID:       cfg.TenantID,
+		url:            cfg.URL,
+		configEndpoint: cfg.ConfigEndpoint,
 	}, nil
 }
 
-func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+// ApplyConfig is called at startup to apply the configuration stored in the database
+// to the internal Alertmanager. We don't need to do this in the remote Alertmanager,
+// the only thing we need to do here is a readiness check and start our alerts sender.
+func (am *Alertmanager) ApplyConfig(ctx context.Context, _ *ngmodels.AlertConfiguration) error {
 	if am.ready {
 		return nil
 	}
@@ -98,7 +121,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 }
 
 func (am *Alertmanager) checkReadiness(ctx context.Context) error {
-	readyURL := strings.TrimSuffix(am.url, "/") + readyPath
+	readyURL := strings.TrimSuffix(am.url, "/") + readyEndpoint
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL, nil)
 	if err != nil {
 		return fmt.Errorf("error creating readiness request: %w", err)
@@ -119,7 +142,7 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 		return fmt.Errorf("%w, status code: %d", notifier.ErrAlertmanagerNotReady, res.StatusCode)
 	}
 
-	// Wait for active senders.
+	// Wait for sender.
 	var attempts int
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -133,18 +156,44 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 				am.ready = true
 				return nil
 			}
-		case <-time.After(10 * time.Second):
+		case <-time.After(senderStartTimeout):
 			return notifier.ErrAlertmanagerNotReady
 		}
 	}
 }
 
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	return nil
+	if err := am.postConfig(ctx, cfg); err != nil {
+		return err
+	}
+	return am.saveConfig(ctx, cfg)
 }
 
+func (am *Alertmanager) saveConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to serialize the Alertmanager configuration: %w", err)
+	}
+
+	cmd := ngmodels.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(b),
+		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                     am.orgID,
+		LastApplied:               time.Now().UTC().Unix(),
+	}
+	return am.configStore.SaveAlertmanagerConfiguration(ctx, &cmd)
+}
+
+// Whenever we can't find configuration in the database for the internal Alertmanager,
+// we reset the configuration to its default state. The Cloud Alertmanager applies the fallback configuration on its own,
+// so fetching and saving the configuration locally would have the same effect.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return nil
+	cfg, err := am.getConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	return am.saveConfig(ctx, cfg)
 }
 
 func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
@@ -315,20 +364,38 @@ func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 // TODO: change implementation, this is only useful for testing other methods.
-func (am *Alertmanager) postConfig(ctx context.Context, rawConfig string) error {
-	alertsURL := strings.TrimSuffix(am.url, "/alertmanager") + "/api/v1/alerts"
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, alertsURL, strings.NewReader(rawConfig))
+// TODO: decrypt data.
+func (am *Alertmanager) postConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	cfgBytes, err := json.Marshal(cfg.AlertmanagerConfig)
+	if err != nil {
+		return err
+	}
+	config := struct {
+		TemplateFiles      map[string]string `json:"template_files"`
+		AlertmanagerConfig string            `json:"grafana_alertmanager_config"`
+	}{
+		TemplateFiles:      cfg.TemplateFiles,
+		AlertmanagerConfig: string(cfgBytes),
+	}
+
+	b, err := json.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("error marshaling Alertmanager configuration: %w", err)
+	}
+
+	url := strings.TrimSuffix(am.url, "/alertmanager") + am.configEndpoint
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(b))
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err)
 	}
-
+	am.log.Debug("Sending request to external Alertmanager", "method", http.MethodPost, "url", url)
 	res, err := am.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 
-	if res.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("config not found")
+	if res.StatusCode != http.StatusCreated {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
 
 	defer func() {
@@ -346,4 +413,58 @@ func (am *Alertmanager) postConfig(ctx context.Context, rawConfig string) error 
 		return fmt.Errorf("setting config failed with status code %d", res.StatusCode)
 	}
 	return nil
+}
+
+func (am *Alertmanager) getConfig(ctx context.Context) (*apimodels.PostableUserConfig, error) {
+	url := strings.TrimSuffix(am.url, "/alertmanager") + am.configEndpoint
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %v", err)
+	}
+
+	am.log.Debug("Sending request to external Alertmanager", "method", http.MethodGet, "url", url)
+	res, err := am.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		if res.StatusCode == http.StatusNotFound {
+			return nil, fmt.Errorf("config not found")
+		}
+		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.log.Warn("Error while closing body", "err", err)
+		}
+	}()
+
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading request response: %w", err)
+	}
+
+	type data struct {
+		TemplateFiles      map[string]string `json:"template_files"`
+		AlertmanagerConfig string            `json:"grafana_alertmanager_config"`
+	}
+	var body struct {
+		Data data `json:"data"`
+	}
+	if err := json.Unmarshal(b, &body); err != nil {
+		return nil, fmt.Errorf("error unmarshaling remote Alertmanager configuration: %w", err)
+	}
+
+	var amConfig apimodels.PostableApiAlertingConfig
+	if err := json.Unmarshal([]byte(body.Data.AlertmanagerConfig), &amConfig); err != nil {
+		return nil, err
+	}
+
+	postableConfig := apimodels.PostableUserConfig{
+		TemplateFiles:      body.Data.TemplateFiles,
+		AlertmanagerConfig: amConfig,
+	}
+	return &postableConfig, nil
 }
