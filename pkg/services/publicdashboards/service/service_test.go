@@ -372,6 +372,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 					Updated:                d.Updated,
 					Version:                d.Version,
 					IsFolder:               false,
+					FolderUid:              d.FolderUID,
 					PublicDashboardEnabled: true,
 				},
 			},
