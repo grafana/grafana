@@ -316,7 +316,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
         const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
         const searchQuery = this.buildSearchQuery(query, timeRange);
-        // Params can't have undefined values
+        // Params can't have undefined values that are possible in SearchQueryParams
         const params: Record<string, string | number> = {};
         for (const key in searchQuery) {
           const value = searchQuery[key];
