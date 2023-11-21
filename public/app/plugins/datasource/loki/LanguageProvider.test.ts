@@ -411,6 +411,19 @@ describe('Query imports', () => {
         undefined
       );
     });
+
+    it('calls dataSample with correctly set time range', async () => {
+      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
+      languageProvider.getParserAndLabelKeys('{place="luna"}', { timeRange: mockTimeRange });
+      expect(datasource.getDataSamples).toHaveBeenCalledWith(
+        {
+          expr: '{place="luna"}',
+          maxLines: 10,
+          refId: 'data-samples',
+        },
+        mockTimeRange
+      );
+    });
   });
 });
 
