@@ -65,6 +65,6 @@ var SecretsManagerProvider PluginBackendProvider = func(_ context.Context, p *pl
 	)
 }
 
-var DefaultProvider PluginBackendProvider = func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	return grpcplugin.NewBackendPlugin(p.ID, p.ExecutablePath())
-}
+var DefaultProvider = PluginBackendProvider(func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+	return grpcplugin.NewBackendPlugin(p.ID, p.ExecutablePath(), p.SkipHostEnvVars)
+})

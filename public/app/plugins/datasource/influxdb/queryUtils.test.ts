@@ -147,6 +147,18 @@ describe('InfluxDB query utils', () => {
               operator: '!~',
               value: '/cpu0/',
             },
+            {
+              condition: 'AND',
+              key: 'cpu',
+              operator: 'Is',
+              value: 'false',
+            },
+            {
+              condition: 'AND',
+              key: 'cpu',
+              operator: 'Is Not',
+              value: 'false',
+            },
           ],
           groupBy: [],
         })
@@ -154,7 +166,7 @@ describe('InfluxDB query utils', () => {
         `SELECT "value" ` +
           `FROM "autogen"."measurement" ` +
           `WHERE ("cpu" = 'cpu0' AND "cpu" != 'cpu0' AND "cpu" <> 'cpu0' AND "cpu" < cpu0 AND ` +
-          `"cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/) AND $timeFilter`
+          `"cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/ AND "cpu" = false AND "cpu" != false) AND $timeFilter`
       );
     });
     it('should handle a complex query', () => {

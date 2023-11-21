@@ -7,6 +7,7 @@ package file
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -55,6 +56,9 @@ func readDirRecursive(codec runtime.Codec, path string, newFunc func() runtime.O
 		return nil
 	})
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return objs, nil
+		}
 		return nil, err
 	}
 	return objs, nil
