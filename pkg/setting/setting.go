@@ -548,7 +548,7 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
-	// RBAC single organization
+	// RBAC single organization. This configuration option is subject to change.
 	RBACSingleOrganization bool
 
 	// GRPC Server.
