@@ -183,9 +183,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props?.panelState?.logs?.labelName) {
       delete this.props.panelState.logs.labelName;
     }
-    if (this.props?.panelState?.logs?.visualisationType) {
-      delete this.props.panelState.logs.visualisationType;
-    }
   }
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
