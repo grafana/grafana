@@ -956,7 +956,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     },
   },
   merge: {
-    name: 'Merge',
+    name: 'Merge series/tables',
     getHelperDocs: function () {
       return `
   Use this transformation to combine the results from multiple queries into a single result, which is particularly useful when using the table panel visualization. This transformation merges values into the same row if the shared fields contain the same data.
@@ -995,7 +995,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     ],
   },
   organize: {
-    name: 'Organize fields',
+    name: 'Organize fields by name',
     getHelperDocs: function () {
       return `
   Use this transformation to provide the flexibility to rename, reorder, or hide fields returned by a single query in your panel. This transformation is applicable only to panels with a single query. If your panel has multiple queries, consider using an "Outer join" transformation or removing extra queries.
