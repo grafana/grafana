@@ -17,7 +17,7 @@ import {
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import { hasTimeField } from '@grafana/ui/src/components/Table/utils';
+import { hasTimeField, isPointTimeValAroundTableTimeVal } from '@grafana/ui/src/components/Table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
@@ -26,7 +26,7 @@ interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id, timeRange } = props;
-  const [rowHighlightTimeValue, setRowHighlightTimeValue] = React.useState<number | undefined>(undefined);
+  const [rowHighlightIndex, setRowHighlightIndex] = React.useState<number | undefined>(undefined);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -66,8 +66,25 @@ export function TablePanel(props: Props) {
               return;
             }
 
-            if (evt.payload.point?.time) {
-              setRowHighlightTimeValue(evt.payload.point.time);
+            if (evt.payload.point?.time && evt.payload.rowIndex !== undefined) {
+              const timeField = main.fields.find((f) => f.type === FieldType.time);
+              const time = timeField!.values[evt.payload.rowIndex];
+
+              if (isPointTimeValAroundTableTimeVal(evt.payload.point.time, time)) {
+                setRowHighlightIndex(evt.payload.rowIndex);
+                return;
+              }
+
+              const matchedRowIndex = timeField!.values.findIndex((t) =>
+                isPointTimeValAroundTableTimeVal(evt.payload.point.time, t)
+              );
+
+              if (matchedRowIndex !== -1) {
+                setRowHighlightIndex(matchedRowIndex);
+                return;
+              }
+
+              setRowHighlightIndex(undefined);
             }
           },
         })
@@ -83,7 +100,7 @@ export function TablePanel(props: Props) {
               return;
             }
 
-            setRowHighlightTimeValue(undefined);
+            setRowHighlightIndex(undefined);
           },
         })
     );
@@ -149,7 +166,7 @@ export function TablePanel(props: Props) {
       timeRange={timeRange}
       onRowHover={config.featureToggles.tableSharedCrosshair ? onRowHover : undefined}
       onRowLeave={config.featureToggles.tableSharedCrosshair ? onRowLeave : undefined}
-      rowHighlightTimeValue={rowHighlightTimeValue}
+      rowHighlightIndex={rowHighlightIndex}
     />
   );
 

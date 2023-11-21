@@ -45,7 +45,7 @@ import {
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
-export const POINT_THRESHOLD_MS = 500;
+export const POINT_THRESHOLD_MS = 200;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {

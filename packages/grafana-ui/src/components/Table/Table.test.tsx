@@ -667,7 +667,7 @@ describe('Table', () => {
         ],
       });
 
-      getTestContext({ data: frame, rowHighlightTimeValue: 10000 });
+      getTestContext({ data: frame, rowHighlightIndex: 0 });
 
       let rows = within(getTable()).getAllByRole('row');
 
@@ -678,7 +678,7 @@ describe('Table', () => {
       expect(rows[3].style.backgroundColor).toBeFalsy();
       expect(rows[4].style.backgroundColor).toBeFalsy();
     });
-    it('should highlight all rows that match the time value', () => {
+    it('should highlight the first row that matches the time value', () => {
       const frame = toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000, 10000, 10000] },
@@ -686,20 +686,20 @@ describe('Table', () => {
         ],
       });
 
-      getTestContext({ data: frame, rowHighlightTimeValue: 10000 });
+      getTestContext({ data: frame, rowHighlightIndex: 0 });
 
       let rows = within(getTable()).getAllByRole('row');
 
       // if not set, returns an empty string
       expect(rows[1].style.backgroundColor).toBeTruthy();
-      expect(rows[5].style.backgroundColor).toBeTruthy();
-      expect(rows[6].style.backgroundColor).toBeTruthy();
 
       expect(rows[2].style.backgroundColor).toBeFalsy();
       expect(rows[3].style.backgroundColor).toBeFalsy();
       expect(rows[4].style.backgroundColor).toBeFalsy();
+      expect(rows[5].style.backgroundColor).toBeFalsy();
+      expect(rows[6].style.backgroundColor).toBeFalsy();
     });
-    it('should highlight the row with the closest time value', () => {
+    it('should not highlight the row if wrong index', () => {
       const frame = toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000] },
@@ -707,21 +707,7 @@ describe('Table', () => {
         ],
       });
 
-      getTestContext({ data: frame, rowHighlightTimeValue: 9600 });
-
-      let rows = within(getTable()).getAllByRole('row');
-
-      expect(rows[1].style.backgroundColor).toBeTruthy();
-    });
-    it('should not highlight the row if there is no time value around row time value', () => {
-      const frame = toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000] },
-          { name: 'val', type: FieldType.number, values: [1, 2, 3, 4] },
-        ],
-      });
-
-      getTestContext({ data: frame, rowHighlightTimeValue: 15000 });
+      getTestContext({ data: frame, rowHighlightIndex: 6 });
 
       let rows = within(getTable()).getAllByRole('row');
 

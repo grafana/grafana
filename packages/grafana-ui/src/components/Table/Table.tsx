@@ -28,14 +28,7 @@ import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
-import {
-  getColumns,
-  sortCaseInsensitive,
-  sortNumber,
-  getFooterItems,
-  createFooterCalculationValues,
-  isPointTimeValAroundTableTimeVal,
-} from './utils';
+import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
@@ -59,7 +52,7 @@ export const Table = memo((props: Props) => {
     timeRange,
     onRowHover,
     onRowLeave,
-    rowHighlightTimeValue,
+    rowHighlightIndex,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -239,11 +232,8 @@ export const Table = memo((props: Props) => {
   }, [pageSize, setPageSize]);
 
   let scrollTop = undefined;
-  if (rowHighlightTimeValue) {
-    const timeFieldIndex = data.fields.findIndex((f) => f.type === FieldType.time);
-    const firstMatchedRowIndex = rows.findIndex((row) =>
-      isPointTimeValAroundTableTimeVal(rowHighlightTimeValue, row.values[timeFieldIndex])
-    );
+  if (rowHighlightIndex !== undefined) {
+    const firstMatchedRowIndex = rows.findIndex((row) => row.index === rowHighlightIndex);
 
     if (firstMatchedRowIndex !== -1) {
       scrollTop = headerHeight + (firstMatchedRowIndex - 1) * tableStyles.rowHeight;
@@ -269,12 +259,8 @@ export const Table = memo((props: Props) => {
 
       const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
 
-      if (rowHighlightTimeValue) {
-        const timeFieldIndex = data.fields.findIndex((f) => f.type === FieldType.time);
-
-        if (isPointTimeValAroundTableTimeVal(rowHighlightTimeValue, row.values[timeFieldIndex])) {
-          style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
-        }
+      if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
+        style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
       }
 
       return (
@@ -314,14 +300,14 @@ export const Table = memo((props: Props) => {
       rows,
       prepareRow,
       state.expanded,
-      rowHighlightTimeValue,
+      rowHighlightIndex,
       tableStyles,
       nestedDataField,
       width,
       cellHeight,
-      data,
       theme.components.table.rowHoverBackground,
       onRowHover,
+      data,
       onRowLeave,
       onCellFilterAdded,
       timeRange,
