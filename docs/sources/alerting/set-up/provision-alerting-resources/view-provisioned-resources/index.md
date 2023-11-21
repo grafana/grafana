@@ -65,8 +65,8 @@ To edit provisioned alerting alert rules from the Grafana UI, complete the follo
 1. From the Alert Rule form, edit the fields you want to change.
 1. Click **Export** to export all alert rules within the group.
 
-     You can only export groups of rules; not single rules.
-     The exported rule data appears in different formats - HTML, JSON, Terraform.
+   You can only export groups of rules; not single rules.
+   The exported rule data appears in different formats - HTML, JSON, Terraform.
 
 1. Choose the format to export in.
 1. Click **Copy Code** or **Download**.
