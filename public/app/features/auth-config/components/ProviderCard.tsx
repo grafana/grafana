@@ -14,6 +14,7 @@ type Props = {
   onClick?: () => void;
 };
 
+// TODO Remove when this is available from API
 const UIMap: Record<string, [IconName, string]> = {
   github: ['github', 'GitHub'],
   gitlab: ['gitlab', 'GitLab'],
