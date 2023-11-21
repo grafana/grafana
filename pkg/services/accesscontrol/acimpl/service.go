@@ -115,7 +115,11 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		}
 	}
 
-	userID, _ := identity.UserIdentifier(user.GetNamespacedID())
+	userID, err := identity.UserIdentifier(user.GetNamespacedID())
+	if err != nil {
+		return nil, err
+	}
+
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:        user.GetOrgID(),
 		UserID:       userID,
