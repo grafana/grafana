@@ -53,7 +53,7 @@ export const LogsTableMultiSelect = (props: {
         <div className={styles.columnHeader}>
           Selected fields
           <button onClick={props.clear} className={styles.columnHeaderButton}>
-            Clear all
+            Reset
           </button>
         </div>
         <LogsTableNavColumn
