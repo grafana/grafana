@@ -303,7 +303,7 @@ Use this transformation to select a source of data and extract content from it i
 
 Consider the following dataset:
 
-#### Data Set Example
+#### Dataset Example
 
 | Timestamp           | json_data     |
 | ------------------- | ------------- |
@@ -345,7 +345,7 @@ This transformation currently supports spatial data.
 
 For example, if you have this data:
 
-#### Data Set Example
+#### Dataset Example
 
 | Location  | Values |
 | --------- | ------ |
@@ -410,7 +410,7 @@ The available conditions for number fields are:
 
 Consider the following dataset:
 
-#### Data Set Example
+#### Dataset Example
 
 | Time                | Temperature | Altitude |
 | ------------------- | ----------- | -------- |
