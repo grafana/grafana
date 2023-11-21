@@ -175,7 +175,7 @@ const FlameGraphContainer = ({
             <FlameGraphTopTableContainer
               data={dataContainer}
               onSymbolClick={onSymbolClick}
-              height={(selectedView === SelectedView.TopTable || vertical) ? 600 : undefined}
+              height={selectedView === SelectedView.TopTable || vertical ? 600 : undefined}
               search={search}
               sandwichItem={sandwichItem}
               onSandwich={setSandwichItem}
