@@ -1,13 +1,10 @@
 package api
 
 import (
-<<<<<<< HEAD
-	"errors"
-=======
 	"crypto/sha1"
 	"encoding/json"
+	"errors"
 	"fmt"
->>>>>>> c5669dab80 (basic secret removal and etag implementation)
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
