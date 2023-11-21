@@ -46,19 +46,14 @@
     },
     "counts": {
       "alertRule_one": "",
-      "alertRule_many": "",
       "alertRule_other": "",
       "dashboard_one": "",
-      "dashboard_many": "",
       "dashboard_other": "",
       "folder_one": "",
-      "folder_many": "",
       "folder_other": "",
       "libraryPanel_one": "",
-      "libraryPanel_many": "",
       "libraryPanel_other": "",
       "total_one": "",
-      "total_many": "",
       "total_other": ""
     },
     "dashboards-tree": {
@@ -81,22 +76,22 @@
       "empty-message": "",
       "error-title": "",
       "search-placeholder": "",
-      "unknown-error": ""
+      "unknown-error": "Erreur inconnue"
     },
     "manage-folder-nav": {
       "alert-rules": "Règles d'alerte",
       "dashboards": "Tableaux de bord",
-      "panels": "",
-      "permissions": "",
+      "panels": "Panneaux",
+      "permissions": "Permissions",
       "settings": "Paramètres"
     },
     "new-folder-form": {
       "cancel-label": "Annuler",
       "create-label": "Créer",
-      "name-label": ""
+      "name-label": "Nom du dossier"
     },
     "no-results": {
-      "clear": "",
+      "clear": "Effacer la recherche et les filtres",
       "text": ""
     }
   },
@@ -259,7 +254,7 @@
       "query-tab": "Requête",
       "stats-tab": "Statistiques",
       "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
-      "title": "Inspecter\u00a0: {{panelTitle}}"
+      "title": "Inspecter : {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "Options de données",
@@ -289,7 +284,7 @@
       "panel-json-description": "Le modèle enregistré dans le tableau de bord JSON qui configure comment tout fonctionne.",
       "panel-json-label": "Panneau JSON",
       "select-source": "Sélectionner la source",
-      "unknown": "Objet inconnu\u00a0: {{show}}"
+      "unknown": "Objet inconnu : {{show}}"
     },
     "inspect-meta": {
       "no-inspector": "Pas d'inspecteur de métadonnées"
@@ -615,7 +610,7 @@
       "collapse-all": "",
       "copy-to-clipboard": "Copier dans le presse-papiers",
       "description": "",
-      "expand-all": "",
+      "expand-all": "Développer tout",
       "no-data": "",
       "refresh": ""
     }
@@ -635,19 +630,18 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "",
-      "body_many": "",
-      "body_other": "",
       "button-cancel": "",
       "button-view-panel1": "",
       "button-view-panel2": "",
       "panel-not-linked": "",
       "select-no-options-message": "",
       "select-placeholder": "",
-      "title": ""
+      "title": "",
+      "body_one": "",
+      "body_other": ""
     },
     "save": {
-      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
+      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
     }
   },
@@ -988,8 +982,8 @@
       "add-tag-placeholder": "",
       "add-title-label": "",
       "cancel": "Annuler",
-      "heading": "",
-      "interval-label": "",
+      "heading": "Ajouter des tableaux de bord",
+      "interval-label": "Intervalle",
       "interval-placeholder": "",
       "interval-required": "",
       "name-label": "Nom",
@@ -1029,27 +1023,27 @@
     "change-password": {
       "cancel-button": "Annuler",
       "cannot-change-password-message": "",
-      "change-password-button": "",
-      "confirm-password-label": "",
-      "confirm-password-required": "",
-      "ldap-auth-proxy-message": "",
-      "new-password-label": "",
-      "new-password-required": "",
-      "new-password-same-as-old": "",
-      "old-password-label": "",
-      "old-password-required": "",
-      "passwords-must-match": ""
+      "change-password-button": "Modifier le mot de passe",
+      "confirm-password-label": "Confirmer le mot de passe",
+      "confirm-password-required": "Vous devez confirmer le nouveau mot de passe",
+      "ldap-auth-proxy-message": "Vous ne pouvez pas modifier le mot de passe lorsque vous êtes connecté avec un proxy LDAP ou authentifié.",
+      "new-password-label": "Nouveau mot de passe",
+      "new-password-required": "Vous devez saisir un nouveau mot de passe",
+      "new-password-same-as-old": "Le nouveau mot de passe ne peut pas être le même que l'ancien.",
+      "old-password-label": "Ancien mot de passe",
+      "old-password-required": "Vous devez saisir l'ancien mot de passe",
+      "passwords-must-match": "Les mots de passe doivent être identiques"
     }
   },
   "query-operation": {
     "header": {
-      "collapse-row": "",
-      "datasource-help": "",
-      "disable-query": "",
-      "drag-and-drop": "",
-      "duplicate-query": "",
-      "expand-row": "",
-      "remove-query": "",
+      "collapse-row": "Réduire la ligne de requête",
+      "datasource-help": "Afficher l'aide de la source de données",
+      "disable-query": "Désactiver la requête",
+      "drag-and-drop": "Glisser et déposer pour réorganiser",
+      "duplicate-query": "Dupliquer la requête",
+      "expand-row": "Développer la ligne de requête",
+      "remove-query": "Supprimer la requête",
       "toggle-edit-mode": ""
     },
     "query-editor-not-exported": ""
@@ -1172,7 +1166,7 @@
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
       "local-button": "Instantané local",
-      "mistake-message": "Avez-vous commis une erreur\u00a0? ",
+      "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
       "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
