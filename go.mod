@@ -293,7 +293,7 @@ require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
 
 require github.com/oklog/ulid/v2 v2.1.0 // @grafana/grafana-app-platform-squad
 
-require github.com/bwmarrin/snowflake v0.3.0
+require github.com/bwmarrin/snowflake v0.3.0 // @grafana/grafana-app-platform-squad
 
 require (
 	cloud.google.com/go v0.110.8 // indirect
