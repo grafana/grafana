@@ -1,4 +1,4 @@
-package logintest
+package authinfotest
 
 import (
 	"context"
