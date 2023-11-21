@@ -164,7 +164,7 @@ type scenarioContext struct {
 	url                     string
 	userAuthTokenService    *authtest.FakeUserAuthTokenService
 	sqlStore                db.DB
-	authInfoService         *authinfotest.AuthInfoServiceFake
+	authInfoService         *authinfotest.FakeService
 	dashboardVersionService dashver.Service
 	userService             user.Service
 	ctxHdlr                 *contexthandler.ContextHandler
@@ -236,7 +236,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		License:         &licensing.OSSLicensingService{},
 		AccessControl:   acimpl.ProvideAccessControl(cfg),
 		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
-		authInfoService: &authinfotest.AuthInfoServiceFake{
+		authInfoService: &authinfotest.FakeService{
 			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
 		},
 	}

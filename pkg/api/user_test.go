@@ -291,7 +291,7 @@ func Test_GetUserByID(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			userAuth := &login.UserAuth{AuthModule: tc.authModule}
-			authInfoService := &authinfotest.AuthInfoServiceFake{ExpectedUserAuth: userAuth}
+			authInfoService := &authinfotest.FakeService{ExpectedUserAuth: userAuth}
 			socialService := &socialtest.FakeSocialService{}
 			userService := &usertest.FakeUserService{ExpectedUserProfileDTO: &user.UserProfileDTO{}}
 			cfg := setting.NewCfg()
@@ -375,7 +375,7 @@ func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
 	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
 		sc := setupScenarioContext(t, ctx.url)
 
-		sc.authInfoService = &authinfotest.AuthInfoServiceFake{}
+		sc.authInfoService = &authinfotest.FakeService{}
 		hs.authInfoService = sc.authInfoService
 
 		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -428,7 +428,7 @@ func updateSignedInUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPSer
 	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
 		sc := setupScenarioContext(t, ctx.url)
 
-		sc.authInfoService = &authinfotest.AuthInfoServiceFake{}
+		sc.authInfoService = &authinfotest.FakeService{}
 		hs.authInfoService = sc.authInfoService
 
 		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {

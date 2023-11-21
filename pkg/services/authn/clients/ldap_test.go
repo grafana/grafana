@@ -192,7 +192,7 @@ func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 			return nil
 		},
 	}
-	authInfoService := &authinfotest.AuthInfoServiceFake{
+	authInfoService := &authinfotest.FakeService{
 		ExpectedUserAuth: &tt.expectedAuthInfo,
 		ExpectedError:    tt.expectedAuthInfoErr,
 	}

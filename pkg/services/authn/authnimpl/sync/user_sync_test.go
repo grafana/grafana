@@ -32,7 +32,7 @@ func ptrInt64(i int64) *int64 {
 func TestUserSync_SyncUserHook(t *testing.T) {
 	userProtection := &authinfoimpl.OSSUserProtectionImpl{}
 
-	authFakeNil := &authinfotest.AuthInfoServiceFake{
+	authFakeNil := &authinfotest.FakeService{
 		ExpectedError: user.ErrUserNotFound,
 		SetAuthInfoFn: func(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 			return nil
@@ -41,7 +41,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			return nil
 		},
 	}
-	authFakeUserID := &authinfotest.AuthInfoServiceFake{
+	authFakeUserID := &authinfotest.FakeService{
 		ExpectedError: nil,
 		ExpectedUserAuth: &login.UserAuth{
 			AuthModule: "oauth",

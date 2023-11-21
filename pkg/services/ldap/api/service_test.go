@@ -67,7 +67,7 @@ func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Se
 		router,
 		acimpl.ProvideAccessControl(cfg),
 		usertest.NewUserServiceFake(),
-		&authinfotest.AuthInfoServiceFake{},
+		&authinfotest.FakeService{},
 		ldap.ProvideGroupsService(),
 		&authntest.FakeService{},
 		&orgtest.FakeOrgService{},
@@ -507,7 +507,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 
 	_, server := setupAPITest(t, func(a *Service) {
 		a.userService = userServiceMock
-		a.authInfoService = &authinfotest.AuthInfoServiceFake{ExpectedExternalUser: &login.ExternalUserInfo{IsDisabled: true, UserId: 34}}
+		a.authInfoService = &authinfotest.FakeService{ExpectedExternalUser: &login.ExternalUserInfo{IsDisabled: true, UserId: 34}}
 		a.ldapService = &service.LDAPFakeService{
 			ExpectedClient: &LDAPMock{UserSearchError: multildap.ErrDidNotFindUser},
 			ExpectedConfig: &ldap.Config{},
