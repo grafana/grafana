@@ -56,7 +56,7 @@ The following table highlights the key differences between mute timings and sile
 
 ## Time intervals
 
-A time interval is a specific duration when alerts are suppressed from firing. The duration typically consists of a specific time range along with days of a week, month, or year.
+A time interval is a specific duration during which alerts are suppressed. The duration typically consists of a specific time range and the days of the week, month, or year.
 
 Supported time interval options are:
 
