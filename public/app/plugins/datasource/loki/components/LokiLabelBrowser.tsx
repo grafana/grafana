@@ -346,10 +346,10 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   async fetchValues(name: string, selector: string) {
-    const { languageProvider } = this.props;
+    const { languageProvider, timeRange } = this.props;
     this.updateLabelState(name, { loading: true }, `Fetching values for ${name}`);
     try {
-      let rawValues = await languageProvider.fetchLabelValues(name);
+      let rawValues = await languageProvider.fetchLabelValues(name, { timeRange });
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         this.updateLabelState(name, { loading: false }, '');
@@ -396,9 +396,9 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 
   async validateSelector(selector: string) {
-    const { languageProvider } = this.props;
+    const { languageProvider, timeRange } = this.props;
     this.setState({ validationStatus: `Validating selector ${selector}`, error: '' });
-    const streams = await languageProvider.fetchSeries(selector);
+    const streams = await languageProvider.fetchSeries(selector, { timeRange });
     this.setState({ validationStatus: `Selector is valid (${streams.length} streams found)` });
   }
 

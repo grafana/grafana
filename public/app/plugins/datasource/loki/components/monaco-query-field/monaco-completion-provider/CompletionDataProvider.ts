@@ -52,7 +52,7 @@ export class CompletionDataProvider {
   async getLabelValues(labelName: string, otherLabels: Label[]) {
     if (otherLabels.length === 0) {
       // if there is no filtering, we have to use a special endpoint
-      return await this.languageProvider.fetchLabelValues(labelName);
+      return await this.languageProvider.fetchLabelValues(labelName, { timeRange: this.timeRange });
     }
 
     const data = await this.getSeriesLabels(otherLabels);
