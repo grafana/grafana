@@ -3,7 +3,6 @@ package login
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,12 +19,7 @@ type Store interface {
 	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
-	UpdateAuthInfoDate(ctx context.Context, authInfo *UserAuth) error
-	DeleteAuthInfo(ctx context.Context, cmd *DeleteAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
-	GetUserById(ctx context.Context, id int64) (*user.User, error)
-	GetUserByLogin(ctx context.Context, login string) (*user.User, error)
-	GetUserByEmail(ctx context.Context, email string) (*user.User, error)
 	CollectLoginStats(ctx context.Context) (map[string]any, error)
 	RunMetricsCollection(ctx context.Context) error
 }

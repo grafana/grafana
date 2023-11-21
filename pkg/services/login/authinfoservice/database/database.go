@@ -153,23 +153,6 @@ func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoC
 	})
 }
 
-// UpdateAuthInfoDate updates the auth info for the user with the latest date.
-// Avoids overlapping entries hiding the last used one (ex: LDAP->SAML->LDAP).
-func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *login.UserAuth) error {
-	authInfo.Created = GetTime()
-
-	cond := &login.UserAuth{
-		Id:         authInfo.Id,
-		UserId:     authInfo.UserId,
-		AuthModule: authInfo.AuthModule,
-	}
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Cols("created").Update(authInfo, cond)
-
-		return err
-	})
-}
-
 func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	authUser := &login.UserAuth{
 		UserId:     cmd.UserId,
@@ -239,49 +222,12 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAut
 	})
 }
 
-func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(cmd.UserAuth)
-		return err
-	})
-}
-
 func (s *AuthInfoStore) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "DELETE FROM user_auth WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})
-}
-
-func (s *AuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
-	query := user.GetUserByIDQuery{ID: id}
-	user, err := s.userService.GetByID(ctx, &query)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (s *AuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
-	query := user.GetUserByLoginQuery{LoginOrEmail: login}
-	usr, err := s.userService.GetByLogin(ctx, &query)
-	if err != nil {
-		return nil, err
-	}
-
-	return usr, nil
-}
-
-func (s *AuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
-	query := user.GetUserByEmailQuery{Email: email}
-	usr, err := s.userService.GetByEmail(ctx, &query)
-	if err != nil {
-		return nil, err
-	}
-
-	return usr, nil
 }
 
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it
