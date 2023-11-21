@@ -153,7 +153,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
-> **Note:** 'Cumulative functions' and 'Window functions' modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+> **Note:** **Cumulative functions** and **Window functions** modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the **addFieldFromCalculationStatFunctions** feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 In the example below, we added two fields together and named them Sum.
 
@@ -163,7 +163,7 @@ In the example below, we added two fields together and named them Sum.
 
 Use this transformation to combine all fields from all frames into one result.
 
-For example, if you have separate queries retrieving temperature and uptime data (Query A) and air quality index and error information (Query B). Applying the concatenate transformation yields a consolidated data frame with all relevant information in one view.
+For example, if you have separate queries retrieving temperature and uptime data (Query A) and air quality index and error information (Query B), applying the concatenate transformation yields a consolidated data frame with all relevant information in one view.
 
 Consider the following:
 
@@ -193,13 +193,13 @@ Use this transformation to select a query and extract standard options, such as 
 
 #### Options
 
-- **Config query:** Select the query that returns the data you want to use as configuration.
-- **Apply to:** Select the fields or series to which the configuration should be applied.
-- **Apply to options:** Specify a field type or use a field name regex, depending on your selection in **Apply to**.
+- **Config query** - Select the query that returns the data you want to use as configuration.
+- **Apply to** - Select the fields or series to which the configuration should be applied.
+- **Apply to options** - Specify a field type or use a field name regex, depending on your selection in **Apply to**.
 
 #### Field mapping table
 
-Below the configuration options, you'll find the field mapping table. This table lists all fields found in the data returned by the config query, along with a **Use as** and **Select** option. It provides control over mapping fields to config properties, and for multiple rows, it allows you to choose which value to select.
+Below the configuration options, you'll find the field mapping table. This table lists all fields found in the data returned by the config query, along with **Use as** and **Select** options. It provides control over mapping fields to config properties, and for multiple rows, it allows you to choose which value to select.
 
 #### Example
 
@@ -224,7 +224,7 @@ Output (Same as Input[0] but now with config on the Value field)
 | 1626178119127 | 10                      |
 | 1626178119129 | 30                      |
 
-Each row in the source data becomes a separate field. Each field now has a maximum configuration option set. Options such as **Min**, **Max**, **Unit**, and **Thresholds** are part of the field configuration. If set, they will be used by the visualization instead of any options manually configured in the panel editor options pane.
+Each row in the source data becomes a separate field. Each field now has a maximum configuration option set. Options such as **Min**, **Max**, **Unit**, and **Thresholds** are part of the field configuration. If set, they are used by the visualization instead of any options manually configured in the panel editor options pane.
 
 #### Value mappings
 
@@ -252,7 +252,7 @@ Grafana builds value mappings from your query result and applies them to the rea
 
 Use this transformation to modify the field type of a specified field.
 
-Here's a breakdown of the options:
+This transformation has the following options:
 
 - **Field** - Select from available fields
 - **as** - Select the FieldType to convert to
@@ -291,17 +291,17 @@ This transformation allows you to flexibly adapt your data types, ensuring compa
 
 ### Extract fields
 
-Use this transformation to select a source of data and extract content from it in different formats. Set the following fields:
+Use this transformation to select a source of data and extract content from it in different formats. This transformation has the following fields:
 
 - **Source** - Select the field for the source of data.
 - **Format** - Choose one of the following:
-  - **JSON** - To parse JSON content from the source.
-  - **Key+Value Parse** - To parse content in the format 'a=b' or 'c:d' from the source.
-  - **Auto** - To discover fields automatically.
-- **Replace All Fields** - _(Optional)_ Select this option to hide all other fields and display only your calculated field in the visualization.
-- **Keep Time** - _(Optional)_ Available only if **Replace All Fields** is true. Keeps the time field in the output.
+  - **JSON** - Parse JSON content from the source.
+  - **Key+value pairs** - Parse content in the format 'a=b' or 'c:d' from the source.
+  - **Auto** - Discover fields automatically.
+- **Replace All Fields** - (Optional) Select this option to hide all other fields and display only your calculated field in the visualization.
+- **Keep Time** - (Optional) Available only if **Replace All Fields** is true. Keeps the time field in the output.
 
-Consider the following data set:
+Consider the following dataset:
 
 #### Data Set Example
 
@@ -336,7 +336,7 @@ This transformation allows you to extract and format data in various ways. You c
 
 Use this transformation to enrich a field value by looking up additional fields from an external source.
 
-Here's how to configure it:
+This transformation has the following fields:
 
 - **Field** - Select a text field from your dataset.
 - **Lookup** - Choose from **Countries**, **USA States**, and **Airports**.
@@ -372,11 +372,11 @@ You'll get the following output:
 | Arkansas  |     |          |             |           | 1      |
 | Somewhere |     |          |             |           | 5      |
 
-This transformation enables you to augment your data by fetching additional information from external sources, providing a more comprehensive dataset for analysis and visualization.
+This transformation lets you augment your data by fetching additional information from external sources, providing a more comprehensive dataset for analysis and visualization.
 
 ### Filter data by query refId
 
-Use this transformation in panels that have multiple queries if you want to hide one or more of the queries.
+Use this transformation to hide one or more queries in panels that have multiple queries.
 
 Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
 
@@ -408,7 +408,7 @@ The available conditions for number fields are:
 - **Lower or equal** - Match if the value is lower or equal.
 - **Range** - Match a range between a specified minimum and maximum, min and max included.
 
-Consider the following data set:
+Consider the following dataset:
 
 #### Data Set Example
 
@@ -503,7 +503,7 @@ This transformation provides flexibility in tailoring your query results to focu
 
 ### Format string
 
-Use this transformation to customize the output of a string field. You can format the output in the following ways:
+Use this transformation to customize the output of a string field. This transformation has the following fields:
 
 - **Upper case** - Formats the entire string in uppercase characters.
 - **Lower case** - Formats the entire string in lowercase characters.
@@ -518,7 +518,7 @@ Use this transformation to customize the output of a string field. You can forma
 
 This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
 
-> **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'formatString' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+> **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the **formatString** feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 ### Format time
 
@@ -604,7 +604,7 @@ This transformation allows you to extract essential information from your time s
 
 ### Grouping to matrix
 
-Use this transformation to combine three fields, which will be used as input for the **Column**, **Row**, and **Cell value** fields from the query output, and generate a matrix. The matrix is calculated as follows:
+Use this transformation to combine three fields—which are used as input for the **Column**, **Row**, and **Cell value** fields from the query output—and generate a matrix. The matrix is calculated as follows:
 
 **Original data**
 
@@ -624,11 +624,11 @@ We can generate a matrix using the values of 'Server Status' as column names, th
 | server 2               | 88.6 |          |
 | server 3               |      | 59.6     |
 
-Utilize this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. This helps you present complex relationships in a clear and structured matrix format.
+Use this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. This helps you present complex relationships in a clear and structured matrix format.
 
 ### Create heatmap
 
-Use this transformation to prepare histogram data for visualizing trends over time. Similar to the Heatmap panel, this transformation converts histogram metrics into temporal buckets.
+Use this transformation to prepare histogram data for visualizing trends over time. Similar to the heatmap visualization, this transformation converts histogram metrics into temporal buckets.
 
 #### X Bucket
 
@@ -898,7 +898,7 @@ Convert your time series data into a structured table format for a clearer and m
 
 Use this transformation to restrict the number of rows displayed, providing a more focused view of your data. This is particularly useful when dealing with large datasets.
 
-Below is an example illustrating the impact of the "Limit Rows" transformation on a response from a data source:
+Below is an example illustrating the impact of the **Limit** transformation on a response from a data source:
 
 | Time                | Metric      | Value |
 | ------------------- | ----------- | ----- |
@@ -919,11 +919,11 @@ Here is the result after adding a Limit transformation with a value of '3':
 
 This transformation helps you tailor the visual presentation of your data to focus on the most relevant information.
 
-### Merge
+### Merge series/tables
 
 Use this transformation to combine the results from multiple queries into a single result, which is particularly useful when using the table panel visualization. This transformation merges values into the same row if the shared fields contain the same data.
 
-Here's an example illustrating the impact of the "Merge Rows" transformation on two queries returning table data:
+Here's an example illustrating the impact of the **Merge series/tables** transformation on two queries returning table data:
 
 **Query A:**
 
@@ -948,17 +948,17 @@ Here is the result after applying the Merge transformation.
 
 This transformation combines values from Query A and Query B into a unified table, enhancing the presentation of data for better insights.
 
-### Organize fields
+### Organize fields by name
 
-Use this transformation to provide the flexibility to rename, reorder, or hide fields returned by a single query in your panel. Please note that this transformation is applicable only to panels with a single query. If your panel has multiple queries, consider using an "Outer Join" transformation or removing extra queries.
+Use this transformation to provide the flexibility to rename, reorder, or hide fields returned by a single query in your panel. This transformation is applicable only to panels with a single query. If your panel has multiple queries, consider using an "Outer join" transformation or removing extra queries.
 
 #### Transforming fields
 
-Grafana conveniently displays a list of fields returned by the query, allowing you to perform the following actions:
+Grafana displays a list of fields returned by the query, allowing you to perform the following actions:
 
-- **Change Field Order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
-- **Hide or Show a Field** - Use the eye icon next to the field name to toggle the visibility of a specific field.
-- **Rename Fields** - Type a new name in the "Rename <field>" box to customize field names.
+- **Change field order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
+- **Hide or show a field** - Use the eye icon next to the field name to toggle the visibility of a specific field.
+- **Rename fields** - Type a new name in the "Rename <field>" box to customize field names.
 
 #### Example:
 
@@ -993,7 +993,7 @@ This is particularly useful when dealing with a metrics SQL table, as illustrate
 | 2022-10-20 01:00:00 | US     | 1327  |
 | 2022-10-20 01:00:00 | EU     | 912   |
 
-With the "Partition by values" transformation, you can issue a single query and split the results by unique values in one or more columns ('fields') of your choosing. The following example uses 'Region':
+With the **Partition by values** transformation, you can issue a single query and split the results by unique values in one or more columns (fields) of your choosing. The following example uses 'Region':
 
 'SELECT Time, Region, Value FROM metrics WHERE Time > "2022-10-20"'
 
@@ -1007,19 +1007,19 @@ With the "Partition by values" transformation, you can issue a single query and 
 | 2022-10-20 12:00:00 | EU     | 2936  |
 | 2022-10-20 01:00:00 | EU     | 912   |
 
-This transformation simplifies the process and enhances the flexibility of visualizing multiple series within the same Time Series panel.
+This transformation simplifies the process and enhances the flexibility of visualizing multiple series within the same time series visualization.
 
 ### Prepare time series
 
-Use this transformation to address issues when a data source returns time series data in a format that isn't compatible with the desired panel. This transformation allows you to convert time series data between wide and long formats, providing flexibility in data frame structures.
+Use this transformation to address issues when a data source returns time series data in a format that isn't compatible with the desired visualization. This transformation allows you to convert time series data between wide and long formats, providing flexibility in data frame structures.
 
-#### Available Options
+#### Available options
 
-##### Multi-frame Time Series
+##### Multi-frame time series
 
-Use this option to transform the time series data frame from the wide format to the long format. This is particularly helpful when your data source delivers time series information in a format that needs to be reshaped for optimal compatibility with your visualization panel.
+Use this option to transform the time series data frame from the wide format to the long format. This is particularly helpful when your data source delivers time series information in a format that needs to be reshaped for optimal compatibility with your visualization.
 
-**Example: Converting from Wide to Long Format**
+**Example: Converting from wide to long format**
 
 | Timestamp           | Value1 | Value2 |
 | ------------------- | ------ | ------ |
@@ -1035,11 +1035,11 @@ Use this option to transform the time series data frame from the wide format to 
 | 2023-01-01 01:00:00 | Value1   | 15    |
 | 2023-01-01 01:00:00 | Value2   | 25    |
 
-##### Wide Time Series
+##### Wide time series
 
-Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization panel requires a wide format, this transformation simplifies the process.
+Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization requires a wide format, this transformation simplifies the process.
 
-**Example: Converting from Long to Wide Format**
+**Example: Converting from long to wide format**
 
 | Timestamp           | Variable | Value |
 | ------------------- | -------- | ----- |
@@ -1129,7 +1129,7 @@ This transformation lets you to tailor your data to meet your visualization need
 
 Use this transformation to convert rows into separate fields. This can be useful because fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
-This transformation includes a field table which lists all fields in the data returned by the configuration query. This table gives you control over what field should be mapped to each configuration property (the _Use as_ option). You can also choose which value to select if there are multiple rows in the returned data.
+This transformation includes a field table which lists all fields in the data returned by the configuration query. This table gives you control over what field should be mapped to each configuration property (the **Use as** option). You can also choose which value to select if there are multiple rows in the returned data.
 
 This transformation requires:
 
@@ -1231,9 +1231,9 @@ This transformation facilitates the consolidation of results from multiple time 
 
 Use this transformation to sort each frame within a query result based on a specified field, making your data easier to understand and analyze. By configuring the desired field for sorting, you can control the order in which the data is presented in the table or visualization.
 
-Use the **Reverse** switch to inversely orders the values within the specified field. This functionality is particularly useful when you want to quickly toggle between ascending and descending order to suit your analytical needs.
+Use the **Reverse** switch to inversely order the values within the specified field. This functionality is particularly useful when you want to quickly toggle between ascending and descending order to suit your analytical needs.
 
-For example, in a scenario where time-series data is retrieved from a data source, the "Sort By" transformation can be applied to arrange the data frames based on the timestamp, either in ascending or descending order, depending on the analytical requirements. This capability ensures that you can easily navigate and interpret time-series data, gaining valuable insights from the organized and visually coherent presentation.
+For example, in a scenario where time-series data is retrieved from a data source, the **Sort by** transformation can be applied to arrange the data frames based on the timestamp, either in ascending or descending order, depending on the analytical requirements. This capability ensures that you can easily navigate and interpret time-series data, gaining valuable insights from the organized and visually coherent presentation.
 
 ### Spatial
 
@@ -1241,7 +1241,7 @@ Use this transformation to apply spatial operations to query results.
 
 - **Action** - Select an action:
   - **Prepare spatial field** - Set a geometry field based on the results of other fields.
-    - **Location mode** - Select a location mode (these options are shared in **Calculate value** and **Transform** modes):
+    - **Location mode** - Select a location mode (these options are shared by the **Calculate value** and **Transform** modes):
       - **Auto** - Automatically identify location data based on default field names.
       - **Coords** - Specify latitude and longitude fields.
       - **Geohash** - Specify a geohash field.
@@ -1260,9 +1260,9 @@ This transformation allows you to manipulate and analyze geospatial data, enabli
 
 ### Time series to table transform
 
-Use this transformation to convert time series results into a table, transforming a time series data frame into a "Trend" field. The "Trend" field can then be rendered using the [sparkline cell type][], generating an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+Use this transformation to convert time series results into a table, transforming a time series data frame into a **Trend** field. The **Trend** field can then be rendered using the [sparkline cell type][], generating an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
-For each generated "Trend" field value, a calculation function can be selected. The default is "last non-null value." This value will be displayed next to the sparkline and used for sorting table rows.
+For each generated **Trend** field value, a calculation function can be selected. The default is **Last non-null value**. This value is displayed next to the sparkline and used for sorting table rows.
 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
 
