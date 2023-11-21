@@ -112,6 +112,8 @@ const (
 	MigratedUseLegacyChannelsLabel = MigratedLabelPrefix + "use_channels__"
 	// MigratedContactLabelPrefix is created during legacy migration to route a migrated alert rule to a specific migrated channel.
 	MigratedContactLabelPrefix = MigratedLabelPrefix + "c_"
+	// MigratedSilenceLabelPrefix is created during legacy migration to ensure a migrated alert rule is silenced.
+	MigratedSilenceLabelPrefix = MigratedLabelPrefix + "silence_"
 	// MigratedAlertIdAnnotation is created during legacy migration to store the ID of the migrated legacy alert rule.
 	MigratedAlertIdAnnotation = "__alertId__"
 	// MigratedMessageAnnotation is created during legacy migration to store the migrated alert message.

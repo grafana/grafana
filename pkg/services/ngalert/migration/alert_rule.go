@@ -94,20 +94,15 @@ func (om *OrgMigration) migrateAlert(ctx context.Context, l log.Logger, alert *l
 		ExecErrState:    transExecErr(l, parsedSettings.ExecutionErrorState),
 	}
 
-	// Label for routing and silences.
-	n, v := getLabelForSilenceMatching(ar.UID)
-	ar.Labels[n] = v
-
-	if parsedSettings.ExecutionErrorState == string(legacymodels.ExecutionErrorKeepState) {
-		if err := om.addErrorSilence(ar); err != nil {
-			om.log.Error("Alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
-		}
+	if parsedSettings.ExecutionErrorState == "keep_state" {
+		om.rulesWithErrorSilenceLabels++
+		n, v := getLabelForErrorSilenceMatching()
+		ar.Labels[n] = v
 	}
-
-	if parsedSettings.NoDataState == string(legacymodels.NoDataKeepState) {
-		if err := om.addNoDataSilence(ar); err != nil {
-			om.log.Error("Alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
-		}
+	if parsedSettings.NoDataState == "keep_state" {
+		om.rulesWithNoDataSilenceLabels++
+		n, v := getLabelForNoDataSilenceMatching()
+		ar.Labels[n] = v
 	}
 
 	// We do some validation and pre-save operations early in order to track these errors as part of the migration state.

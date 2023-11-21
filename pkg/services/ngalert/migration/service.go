@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	alertingModels "github.com/grafana/alerting/models"
 	v2 "github.com/prometheus/alertmanager/api/v2"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -47,6 +49,7 @@ type migrationService struct {
 	migrationStore migrationStore.Store
 
 	encryptionService secrets.Service
+	silenceFile       func(filename string) (io.WriteCloser, error)
 }
 
 func ProvideService(
@@ -63,6 +66,7 @@ func ProvideService(
 		store:             store,
 		migrationStore:    migrationStore,
 		encryptionService: encryptionService,
+		silenceFile:       openReplace,
 	}, nil
 }
 
@@ -486,9 +490,18 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 			return err
 		}
 
-		if len(om.silences) > 0 {
-			om.log.Debug("Writing silences file", "silences", len(om.silences))
-			if err := writeSilencesFile(ms.cfg.DataPath, o.ID, om.silences); err != nil {
+		var silences []*pb.MeshSilence
+		if om.rulesWithErrorSilenceLabels > 0 {
+			om.log.Info("Creating silence for rules with ExecutionErrorState = keep_state", "rules", om.rulesWithErrorSilenceLabels)
+			silences = append(silences, errorSilence())
+		}
+		if om.rulesWithNoDataSilenceLabels > 0 {
+			om.log.Info("Creating silence for rules with NoDataState = keep_state", "rules", om.rulesWithNoDataSilenceLabels)
+			silences = append(silences, noDataSilence())
+		}
+		if len(silences) > 0 {
+			om.log.Debug("Writing silences file", "silences", len(silences))
+			if err := ms.writeSilencesFile(om.orgID, silences); err != nil {
 				return fmt.Errorf("write silence file for org %d: %w", o.ID, err)
 			}
 		}
