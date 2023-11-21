@@ -7,9 +7,10 @@ import { DataTrail } from './DataTrail';
 import { TrailStepType } from './DataTrailsHistory';
 import { RECENT_TRAILS_KEY } from './shared';
 
+const MAX_RECENT_TRAILS = 20;
+
 export interface SerializedTrail {
   key: string;
-  urlValues: SceneObjectUrlValues;
   history: Array<{
     urlValues: SceneObjectUrlValues;
     type: TrailStepType;
@@ -18,11 +19,11 @@ export interface SerializedTrail {
 }
 
 export class LocalStorageSyncManager {
-  private _recent: Record<string, SceneObjectRef<DataTrail>>;
+  private _recent: Array<SceneObjectRef<DataTrail>>;
   private _save;
 
   constructor() {
-    this._recent = {};
+    this._recent = [];
     const recentTrailsItem = localStorage.getItem(RECENT_TRAILS_KEY);
     if (recentTrailsItem) {
       const recentTrails: SerializedTrail[] = JSON.parse(recentTrailsItem);
@@ -36,12 +37,12 @@ export class LocalStorageSyncManager {
             trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: trail.state.history }),
           });
         });
-        this._recent[t.key] = trail.getRef();
+        this._recent.push(trail.getRef());
       }
     }
 
     this._save = debounce(() => {
-      const serialized = Object.values(this._recent).map((trail) => this.serializeTrail(trail.resolve()));
+      const serialized = this._recent.slice(0, MAX_RECENT_TRAILS).map((trail) => this.serializeTrail(trail.resolve()));
       localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify(serialized));
     }, 1000);
   }
@@ -57,7 +58,6 @@ export class LocalStorageSyncManager {
     });
     return {
       key: trail.state.key || uuidv4(),
-      urlValues: getUrlSyncManager().getUrlState(trail),
       history,
     };
   }
@@ -76,11 +76,8 @@ export class LocalStorageSyncManager {
   }
 
   setRecentTrail(trail: DataTrail) {
-    if (trail.state.key) {
-      this._recent[trail.state.key] = trail.getRef();
-    } else {
-      console.error('Unable to set recent trail without key', trail);
-    }
+    this._recent = this._recent.filter((t) => t !== trail.getRef());
+    this._recent.unshift(trail.getRef());
     this._save();
   }
 }

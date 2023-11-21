@@ -39,12 +39,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   public onSelectTrail = (trail: DataTrail) => {
     const app = getAppFor(this);
 
-    const currentTrail = app.state.trail;
-    const existsInRecent = getLocalStorageSyncManager().isRecent(currentTrail);
-
-    if (!existsInRecent) {
-      getLocalStorageSyncManager().setRecentTrail(currentTrail);
-    }
+    getLocalStorageSyncManager().setRecentTrail(trail);
 
     app.goToUrlForTrail(trail);
   };
