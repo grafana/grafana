@@ -65,17 +65,32 @@ Controls if threshold values are shown.
 
 Controls if a threshold band is shown outside the inner gauge value band.
 
+### Gauge size
+
+Choose a gauge size mode.
+
+- **Auto -** Grafana determines the best gauge size.
+- **Manual -** Manually configure the gauge size.
+
 ### Min width
 
 Set the minimum width of vertically-oriented gauges.
 
 If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data.
 
+{{% admonition type="note" %}}
+This option only applies when gauge size is set to manual.
+{{% /admonition %}}
+
 ### Min height
 
 Set the minimum height of horizontally-oriented gauges.
 
 If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data.
+
+{{% admonition type="note" %}}
+This option only applies when gauge size is set to manual.
+{{% /admonition %}}
 
 ### Neutral
 

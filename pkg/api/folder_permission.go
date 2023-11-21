@@ -94,7 +94,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
 			OrgID:       c.SignedInUser.GetOrgID(),
-			DashboardID: folder.ID,
+			DashboardID: folder.ID, // nolint:staticcheck
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
 			Role:        item.Role,
@@ -146,7 +146,7 @@ func (hs *HTTPServer) getFolderACL(ctx context.Context, user identity.Requester,
 
 		acl = append(acl, &dashboards.DashboardACLInfoDTO{
 			OrgID:          folder.OrgID,
-			DashboardID:    folder.ID,
+			DashboardID:    folder.ID, // nolint:staticcheck
 			FolderUID:      folder.ParentUID,
 			Created:        p.Created,
 			Updated:        p.Updated,
