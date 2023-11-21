@@ -83,7 +83,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
@@ -225,9 +224,9 @@ var wireBasicSet = wire.NewSet(
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
-	authinfoservice.ProvideService,
-	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Service)),
-	authinfoservice.ProvideStore,
+	authinfoimpl.ProvideService,
+	wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)),
+	authinfoimpl.ProvideStore,
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,

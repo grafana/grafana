@@ -15,7 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/socialtest"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -229,7 +229,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 	}
 
 	authInfoStore := &FakeAuthInfoStore{}
-	authInfoService := authinfoservice.ProvideService(authInfoStore)
+	authInfoService := authinfoimpl.ProvideService(authInfoStore)
 	return &Service{
 		Cfg:                  setting.NewCfg(),
 		SocialService:        socialService,
@@ -241,11 +241,8 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 
 type FakeAuthInfoStore struct {
 	login.Store
-	ExpectedError                   error
-	ExpectedUser                    *user.User
-	ExpectedOAuth                   *login.UserAuth
-	ExpectedDuplicateUserEntries    int
-	ExpectedHasDuplicateUserEntries int
+	ExpectedError error
+	ExpectedOAuth *login.UserAuth
 }
 
 func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
@@ -253,10 +250,6 @@ func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAut
 }
 
 func (f *FakeAuthInfoStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
-	return f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *login.UserAuth) error {
 	return f.ExpectedError
 }
 
@@ -270,16 +263,4 @@ func (f *FakeAuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.Updat
 
 func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
 	return f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
 }

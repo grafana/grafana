@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -30,7 +29,7 @@ func ptrInt64(i int64) *int64 {
 }
 
 func TestUserSync_SyncUserHook(t *testing.T) {
-	userProtection := &authinfoservice.OSSUserProtectionImpl{}
+	userProtection := &authinfoimpl.OSSUserProtectionImpl{}
 
 	authFakeNil := &logintest.AuthInfoServiceFake{
 		ExpectedError: user.ErrUserNotFound,

@@ -24,7 +24,7 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -62,8 +62,8 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore := authinfoservice.ProvideStore(sqlStore, secretsService)
-		srv := authinfoservice.ProvideService(
+		authInfoStore := authinfoimpl.ProvideStore(sqlStore, secretsService)
+		srv := authinfoimpl.ProvideService(
 			authInfoStore,
 		)
 		hs.authInfoService = srv

@@ -1,4 +1,4 @@
-package authinfoservice
+package authinfoimpl
 
 import (
 	"context"
