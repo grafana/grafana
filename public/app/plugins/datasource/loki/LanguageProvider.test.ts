@@ -1,4 +1,4 @@
-import { AbstractLabelOperator, DataFrame, dateTime } from '@grafana/data';
+import { AbstractLabelOperator, DataFrame, TimeRange, dateTime } from '@grafana/data';
 
 import LanguageProvider from './LanguageProvider';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
@@ -23,6 +23,15 @@ jest.mock('app/store/store', () => ({
     }),
   },
 }));
+
+const mockTimeRange = {
+  from: dateTime(1546372800000),
+  to: dateTime(1546380000000),
+  raw: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+  },
+};
 
 describe('Language completion provider', () => {
   describe('fetchSeries', () => {
@@ -57,6 +66,27 @@ describe('Language completion provider', () => {
         end: 1,
         'match[]': 'interpolated-stream',
         start: 0,
+      });
+    });
+
+    it('should be called with time range params if provided', () => {
+      const datasource = setup({});
+      datasource.getTimeRangeParams = jest
+        .fn()
+        .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
+      const languageProvider = new LanguageProvider(datasource);
+      languageProvider.request = jest.fn().mockResolvedValue([]);
+      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
+      fetchSeriesLabels('stream', { timeRange: mockTimeRange });
+      // time range was passed to getTimeRangeParams
+      expect(datasource.getTimeRangeParams).toHaveBeenCalled();
+      expect(datasource.getTimeRangeParams).toHaveBeenCalledWith(mockTimeRange);
+      // time range was passed to request
+      expect(languageProvider.request).toHaveBeenCalled();
+      expect(languageProvider.request).toHaveBeenCalledWith('series', {
+        end: 1546380000000,
+        'match[]': 'stream',
+        start: 1546372800000,
       });
     });
   });
@@ -149,14 +179,6 @@ describe('Language completion provider', () => {
 describe('Request URL', () => {
   it('should contain range params', async () => {
     const datasourceWithLabels = setup({ other: [] });
-    const mockTimeRange = {
-      from: dateTime(1546372800000),
-      to: dateTime(1546380000000),
-      raw: {
-        from: dateTime(1546372800000),
-        to: dateTime(1546380000000),
-      },
-    };
     const rangeParams = datasourceWithLabels.getTimeRangeParams(mockTimeRange);
     const datasourceSpy = jest.spyOn(datasourceWithLabels, 'metadataRequest');
 
@@ -202,15 +224,6 @@ describe('fetchLabels', () => {
 
   it('should use time range param', async () => {
     const datasourceWithLabels = setup({});
-
-    const mockTimeRange = {
-      from: dateTime(1546372800000),
-      to: dateTime(1546380000000),
-      raw: {
-        from: dateTime(1546372800000),
-        to: dateTime(1546380000000),
-      },
-    };
     datasourceWithLabels.languageProvider.request = jest.fn();
 
     const instance = new LanguageProvider(datasourceWithLabels);

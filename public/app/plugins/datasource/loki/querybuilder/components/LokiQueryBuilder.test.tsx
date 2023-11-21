@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { getSelectParent } from 'test/helpers/selectOptionInTest';
 
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePluginMeta, dateTime } from '@grafana/data';
 
 import { MISSING_LABEL_FILTER_ERROR_MESSAGE } from '../../../prometheus/querybuilder/shared/LabelFilters';
 import { LokiDatasource } from '../../datasource';
@@ -15,6 +15,15 @@ import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 const defaultQuery: LokiVisualQuery = {
   labels: [{ op: '=', label: 'baz', value: 'bar' }],
   operations: [],
+};
+
+const mockTimeRange = {
+  from: dateTime(1546372800000),
+  to: dateTime(1546380000000),
+  raw: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+  },
 };
 
 const createDefaultProps = () => {
@@ -33,6 +42,7 @@ const createDefaultProps = () => {
     onRunQuery: () => {},
     onChange: () => {},
     showExplain: false,
+    timeRange: mockTimeRange,
   };
 
   return props;
@@ -49,6 +59,9 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
+    expect(props.datasource.languageProvider.fetchSeriesLabels).toBeCalledWith('{baz="bar"}', {
+      timeRange: mockTimeRange,
+    });
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
   });
 
