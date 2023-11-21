@@ -587,11 +587,11 @@ const (
 	// Enable filtering menu displayed when text of a log line is selected
 	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
 
-	// FlagPlugiinsSkipHostEnvVars
+	// FlagPluginsSkipHostEnvVars
 	// Disables passing host environment variable to plugin processes
-	FlagPlugiinsSkipHostEnvVars = "plugiinsSkipHostEnvVars"
+	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
 
 	// FlagRegressionTransformation
-	// Enables regresion analysis transformation
+	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
 )

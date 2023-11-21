@@ -1071,7 +1071,7 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "plugiinsSkipHostEnvVars",
+			Name:         "pluginsSkipHostEnvVars",
 			Description:  "Disables passing host environment variable to plugin processes",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
@@ -1079,7 +1079,7 @@ var (
 		},
 		{
 			Name:         "regressionTransformation",
-			Description:  "Enables regresion analysis transformation",
+			Description:  "Enables regression analysis transformation",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaBiSquad,

@@ -163,6 +163,6 @@ export interface FeatureToggles {
   datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
-  plugiinsSkipHostEnvVars?: boolean;
+  pluginsSkipHostEnvVars?: boolean;
   regressionTransformation?: boolean;
 }

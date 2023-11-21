@@ -144,5 +144,5 @@ alertingDetailsViewV2,experimental,@grafana/alerting-squad,false,false,false,tru
 datatrails,experimental,@grafana/dashboards-squad,false,false,false,true
 alertingSimplifiedRouting,experimental,@grafana/alerting-squad,false,false,false,false
 logRowsPopoverMenu,experimental,@grafana/observability-logs,false,false,false,true
-plugiinsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false,false
+pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false,false
 regressionTransformation,experimental,@grafana/grafana-bi-squad,false,false,false,true
