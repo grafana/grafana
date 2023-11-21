@@ -328,6 +328,7 @@ func TestIntegrationCreate(t *testing.T) {
 		buf1 := &bytes.Buffer{}
 		err = json.NewEncoder(buf1).Encode(dashboards.SaveDashboardCommand{
 			Dashboard: dashboardDataOne,
+			OrgID:     0,
 			FolderUID: folder.Uid,
 		})
 		require.NoError(t, err)
