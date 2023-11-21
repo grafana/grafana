@@ -6,6 +6,7 @@ import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { createDashboardEditViewFor } from '../settings/utils';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
@@ -17,17 +18,34 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel'];
+    return ['inspect', 'viewPanel', 'editview'];
   }
 
   getUrlState(): SceneObjectUrlValues {
     const state = this._scene.state;
-    return { inspect: state.inspectPanelKey, viewPanel: state.viewPanelKey };
+    return {
+      inspect: state.inspectPanelKey,
+      viewPanel: state.viewPanelKey,
+      editview: state.editview?.getUrlKey(),
+    };
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey: inspectPanelId, viewPanelKey: viewPanelId } = this._scene.state;
+    const { inspectPanelKey, viewPanelKey, meta, isEditing } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
+
+    if (typeof values.editview === 'string' && meta.canEdit) {
+      update.editview = createDashboardEditViewFor(values.editview);
+
+      // If we are not in editing (for example after full page reload)
+      if (!isEditing) {
+        // Not sure what is best to do here.
+        // The reason for the timeout is for this change to happen after the url sync has completed
+        setTimeout(() => this._scene.onEnterEditMode());
+      }
+    } else if (values.hasOwnProperty('editview')) {
+      update.editview = undefined;
+    }
 
     // Handle inspect object state
     if (typeof values.inspect === 'string') {
@@ -40,7 +58,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       update.inspectPanelKey = values.inspect;
       update.overlay = new PanelInspectDrawer({ panelRef: panel.getRef() });
-    } else if (inspectPanelId) {
+    } else if (inspectPanelKey) {
       update.inspectPanelKey = undefined;
       update.overlay = undefined;
     }
@@ -61,7 +79,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.viewPanelKey = values.viewPanel;
-    } else if (viewPanelId) {
+    } else if (viewPanelKey) {
       update.viewPanelKey = undefined;
     }
 

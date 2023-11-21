@@ -13,7 +13,6 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/socialtest"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
@@ -230,7 +229,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 	}
 
 	authInfoStore := &FakeAuthInfoStore{}
-	authInfoService := authinfoservice.ProvideAuthInfoService(nil, authInfoStore, &usagestats.UsageStatsMock{})
+	authInfoService := authinfoservice.ProvideAuthInfoService(authInfoStore)
 	return &Service{
 		Cfg:                  setting.NewCfg(),
 		SocialService:        socialService,
