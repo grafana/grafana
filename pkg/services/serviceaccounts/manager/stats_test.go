@@ -18,15 +18,17 @@ func Test_UsageStats(t *testing.T) {
 	require.NoError(t, err)
 
 	storeMock.ExpectedStats = &serviceaccounts.Stats{
-		ServiceAccounts:     1,
-		Tokens:              1,
-		ForcedExpiryEnabled: false,
+		ServiceAccounts:           1,
+		ServiceAccountsWithNoRole: 1,
+		Tokens:                    1,
+		ForcedExpiryEnabled:       false,
 	}
 	stats, err := svc.getUsageMetrics(context.Background())
 	require.NoError(t, err)
 
-	assert.Len(t, stats, 4, stats)
+	assert.Len(t, stats, 5, stats)
 	assert.Equal(t, int64(1), stats["stats.serviceaccounts.count"].(int64))
+	assert.Equal(t, int64(1), stats["stats.serviceaccounts.role_none.count"].(int64))
 	assert.Equal(t, int64(1), stats["stats.serviceaccounts.tokens.count"].(int64))
 	assert.Equal(t, int64(1), stats["stats.serviceaccounts.secret_scan.enabled.count"].(int64))
 	assert.Equal(t, int64(0), stats["stats.serviceaccounts.forced_expiry_enabled.count"].(int64))

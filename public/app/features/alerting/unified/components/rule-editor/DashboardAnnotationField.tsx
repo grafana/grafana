@@ -27,7 +27,7 @@ const DashboardAnnotationField = ({
   const styles = useStyles2(getStyles);
 
   const dashboardLink = makeDashboardLink(dashboard?.uid || dashboardUid);
-  const panelLink = makePanelLink(dashboard?.uid || dashboardUid, panel?.id.toString() || panelId);
+  const panelLink = makePanelLink(dashboard?.uid || dashboardUid, panel?.id?.toString() || panelId);
   return (
     <div className={styles.container}>
       {dashboard && (

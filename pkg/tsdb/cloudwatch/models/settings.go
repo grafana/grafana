@@ -48,7 +48,7 @@ func LoadCloudWatchSettings(config backend.DataSourceInstanceSettings) (CloudWat
 }
 
 func (duration *Duration) UnmarshalJSON(b []byte) error {
-	var unmarshalledJson interface{}
+	var unmarshalledJson any
 
 	err := json.Unmarshal(b, &unmarshalledJson)
 	if err != nil {

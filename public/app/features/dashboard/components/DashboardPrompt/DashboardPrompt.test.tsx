@@ -2,14 +2,14 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
 import { ContextSrv, setContextSrv } from '../../../../core/services/context_srv';
 import { PanelModel } from '../../state/PanelModel';
-import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
 import { hasChanges, ignoreChanges } from './DashboardPrompt';
 
 function getDefaultDashboardModel() {
   return createDashboardModelFixture({
     panels: [
-      createPanelJSONFixture({
+      createPanelSaveModel({
         id: 1,
         type: 'graph',
         gridPos: { x: 0, y: 0, w: 24, h: 6 },
@@ -35,7 +35,7 @@ function getTestContext() {
   const contextSrv = { isSignedIn: true, isEditor: true } as ContextSrv;
   setContextSrv(contextSrv);
   const dash = getDefaultDashboardModel();
-  const original = dash.getSaveModelClone();
+  const original = dash.getSaveModelCloneOld();
 
   return { dash, original, contextSrv };
 }
@@ -98,7 +98,7 @@ describe('DashboardPrompt', () => {
       it('then it should return true', () => {
         const { contextSrv } = getTestContext();
         const dash = createDashboardModelFixture({}, { canSave: false });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         contextSrv.isEditor = false;
         expect(ignoreChanges(dash, original)).toBe(true);
       });
@@ -108,7 +108,7 @@ describe('DashboardPrompt', () => {
       it('then it should return undefined', () => {
         const { contextSrv } = getTestContext();
         const dash = createDashboardModelFixture({}, { canSave: true });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         contextSrv.isEditor = false;
         expect(ignoreChanges(dash, original)).toBe(undefined);
       });
@@ -118,7 +118,7 @@ describe('DashboardPrompt', () => {
       it('then it should return true', () => {
         const { contextSrv } = getTestContext();
         const dash = createDashboardModelFixture({}, { canSave: true });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         contextSrv.isSignedIn = false;
         expect(ignoreChanges(dash, original)).toBe(true);
       });
@@ -127,26 +127,26 @@ describe('DashboardPrompt', () => {
     describe('when called with fromScript', () => {
       it('then it should return true', () => {
         const dash = createDashboardModelFixture({}, { canSave: true, fromScript: true, fromFile: undefined });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         expect(ignoreChanges(dash, original)).toBe(true);
       });
     });
 
-    it('Should ignore panel schema migrations', () => {
+    it('Should ignore panel schema migrations', async () => {
       const { original, dash } = getTestContext();
       const plugin = getPanelPlugin({}).setMigrationHandler((panel) => {
         delete (panel as any).legend;
         return { option1: 'Aasd' };
       });
 
-      dash.panels[0].pluginLoaded(plugin);
+      await dash.panels[0].pluginLoaded(plugin);
       expect(hasChanges(dash, original)).toBe(false);
     });
 
     describe('when called with fromFile', () => {
       it('then it should return true', () => {
         const dash = createDashboardModelFixture({}, { canSave: true, fromScript: undefined, fromFile: true });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         expect(ignoreChanges(dash, original)).toBe(true);
       });
     });
@@ -154,7 +154,7 @@ describe('DashboardPrompt', () => {
     describe('when called with canSave but without fromScript and fromFile', () => {
       it('then it should return false', () => {
         const dash = createDashboardModelFixture({}, { canSave: true, fromScript: undefined, fromFile: undefined });
-        const original = dash.getSaveModelClone();
+        const original = dash.getSaveModelCloneOld();
         expect(ignoreChanges(dash, original)).toBe(undefined);
       });
     });

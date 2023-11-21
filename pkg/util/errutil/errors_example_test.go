@@ -15,9 +15,9 @@ var (
 	// same error message for the frontend statically within the
 	// package.
 
-	errAbsPath     = errutil.NewBase(errutil.StatusBadRequest, "shorturl.absolutePath")
-	errInvalidPath = errutil.NewBase(errutil.StatusBadRequest, "shorturl.invalidPath")
-	errUnexpected  = errutil.NewBase(errutil.StatusInternal, "shorturl.unexpected")
+	errAbsPath     = errutil.BadRequest("shorturl.absolutePath")
+	errInvalidPath = errutil.BadRequest("shorturl.invalidPath")
+	errUnexpected  = errutil.Internal("shorturl.unexpected")
 )
 
 func Example() {

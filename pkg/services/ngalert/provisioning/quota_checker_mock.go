@@ -53,7 +53,7 @@ type MockQuotaChecker_CheckQuotaReached_Call struct {
 //   - ctx context.Context
 //   - target quota.TargetSrv
 //   - scopeParams *quota.ScopeParameters
-func (_e *MockQuotaChecker_Expecter) CheckQuotaReached(ctx interface{}, target interface{}, scopeParams interface{}) *MockQuotaChecker_CheckQuotaReached_Call {
+func (_e *MockQuotaChecker_Expecter) CheckQuotaReached(ctx any, target any, scopeParams any) *MockQuotaChecker_CheckQuotaReached_Call {
 	return &MockQuotaChecker_CheckQuotaReached_Call{Call: _e.mock.On("CheckQuotaReached", ctx, target, scopeParams)}
 }
 

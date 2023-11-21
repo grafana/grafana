@@ -1,21 +1,22 @@
 import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
 import { useEffect, useRef } from 'react';
 
-import { CoreApp, ExploreUrlState, RawTimeRange, DataSourceApi } from '@grafana/data';
+import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange, EventBusSrv } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { addListener, ExploreItemState, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
 
 import { changeDatasource } from '../../state/datasource';
-import { initializeExplore } from '../../state/explorePane';
+import { changePanelsStateAction, initializeExplore } from '../../state/explorePane';
 import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../../state/main';
 import { runQueries, setQueriesAction } from '../../state/query';
 import { selectPanes } from '../../state/selectors';
 import { changeRangeAction, updateTime } from '../../state/time';
-import { DEFAULT_RANGE, fromURLRange, toURLTimeRange } from '../../state/utils';
+import { DEFAULT_RANGE, fromURLRange } from '../../state/utils';
 import { withUniqueRefIds } from '../../utils/queries';
 import { isFulfilled } from '../utils';
 
@@ -31,6 +32,7 @@ export function useStateSync(params: ExploreQueryParams) {
   const orgId = useSelector((state) => state.user.orgId);
   const prevParams = useRef(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
+  const { warning } = useAppNotification();
 
   useEffect(() => {
     // This happens when the user navigates to an explore "empty page" while within Explore.
@@ -49,9 +51,14 @@ export function useStateSync(params: ExploreQueryParams) {
           // - a pane is opened or closed
           // - a query is run
           // - range is changed
-          [splitClose.type, splitOpen.fulfilled.type, runQueries.pending.type, changeRangeAction.type].includes(
-            action.type
-          ),
+          // - panel state is updated
+          [
+            splitClose.type,
+            splitOpen.fulfilled.type,
+            runQueries.pending.type,
+            changeRangeAction.type,
+            changePanelsStateAction.type,
+          ].includes(action.type),
         effect: async (_, { cancelActiveListeners, delay, getState }) => {
           // The following 2 lines will throttle updates to avoid creating history entries when rapid changes
           // are committed to the store.
@@ -71,8 +78,11 @@ export function useStateSync(params: ExploreQueryParams) {
           if (!isEqual(prevParams.current.panes, JSON.stringify(panesQueryParams))) {
             // If there's no previous state it means we are mounting explore for the first time,
             // in this case we want to replace the URL instead of pushing a new entry to the history.
+            // If the init state is 'pending' it means explore still hasn't finished initializing. in that case we skip
+            // pushing a new entry in the history as the first entry will be pushed after initialization.
             const replace =
-              !!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0;
+              (!!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0) ||
+              initState.current === 'pending';
 
             prevParams.current = {
               panes: JSON.stringify(panesQueryParams),
@@ -91,14 +101,21 @@ export function useStateSync(params: ExploreQueryParams) {
   useEffect(() => {
     const isURLOutOfSync = prevParams.current?.panes !== params.panes;
 
-    const urlState = parseURL(params);
+    const [urlState, hasParseError] = parseURL(params);
+    hasParseError &&
+      warning(
+        'Could not parse Explore URL',
+        'The requested URL contains invalid parameters, a default Explore state has been loaded.'
+      );
 
     async function sync() {
       // if navigating the history causes one of the time range to not being equal to all the other ones,
       // we set syncedTimes to false to avoid inconsistent UI state.
       // Ideally `syncedTimes` should be saved in the URL.
-      if (Object.values(urlState.panes).some(({ range }, _, [{ range: firstRange }]) => !isEqual(range, firstRange))) {
-        dispatch(syncTimesAction({ syncedTimes: false }));
+      const paneArray = Object.values(urlState.panes);
+      if (paneArray.length > 1) {
+        const paneTimesUnequal = paneArray.some(({ range }, _, [{ range: firstRange }]) => !isEqual(range, firstRange));
+        dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
       }
 
       Object.entries(urlState.panes).forEach(([exploreId, urlPane], i) => {
@@ -128,6 +145,10 @@ export function useStateSync(params: ExploreQueryParams) {
               if (update.queries || update.range) {
                 dispatch(runQueries({ exploreId }));
               }
+
+              if (update.panelsState && panelsState) {
+                dispatch(changePanelsStateAction({ exploreId, panelsState }));
+              }
             });
         } else {
           // This happens when browser history is used to navigate.
@@ -139,9 +160,10 @@ export function useStateSync(params: ExploreQueryParams) {
               exploreId,
               datasource: datasource || '',
               queries: withUniqueRefIds(queries),
-              range,
+              range: fromURLRange(range),
               panelsState,
               position: i,
+              eventBridge: new EventBusSrv(),
             })
           );
         }
@@ -207,49 +229,60 @@ export function useStateSync(params: ExploreQueryParams) {
                 exploreId,
                 datasource,
                 queries,
-                range,
+                range: fromURLRange(range),
                 panelsState,
+                eventBridge: new EventBusSrv(),
               })
             ).unwrap();
           })
         );
 
-        const newParams = initializedPanes.reduce(
-          (acc, { exploreId, state }) => {
-            return {
-              ...acc,
-              panes: {
-                ...acc.panes,
-                [exploreId]: getUrlStateFromPaneState(state),
-              },
-            };
-          },
-          {
-            panes: {},
-          }
-        );
-        initState.current = 'done';
+        if (initializedPanes.length > 1) {
+          const paneTimesUnequal = initializedPanes.some(
+            ({ state }, _, [{ state: firstState }]) => !isEqual(state.range.raw, firstState.range.raw)
+          );
+          dispatch(syncTimesAction({ syncedTimes: !paneTimesUnequal })); // if all time ranges are equal, keep them synced
+        }
+
+        const panesObj = initializedPanes.reduce((acc, { exploreId, state }) => {
+          return {
+            ...acc,
+            [exploreId]: getUrlStateFromPaneState(state),
+          };
+        }, {});
+
         // we need to use partial here beacuse replace doesn't encode the query params.
-        location.partial(
-          {
-            // partial doesn't remove other parameters, so we delete (by setting them to undefined) all the current one before adding the new ones.
-            ...Object.keys(location.getSearchObject()).reduce<Record<string, unknown>>((acc, key) => {
-              acc[key] = undefined;
-              return acc;
-            }, {}),
-            panes: JSON.stringify(newParams.panes),
-            schemaVersion: urlState.schemaVersion,
-            orgId,
-          },
-          true
-        );
+        const oldQuery = location.getSearchObject();
+
+        // we create the default query params from the current URL, omitting all the properties we know should be in the final url.
+        // This includes params from previous schema versions and 'schemaVersion', 'panes', 'orgId' as we want to replace those.
+        let defaults: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(oldQuery).filter(
+          ([key]) => !['schemaVersion', 'panes', 'orgId', 'left', 'right'].includes(key)
+        )) {
+          defaults[key] = value;
+        }
+
+        const searchParams = new URLSearchParams({
+          // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
+          schemaVersion: `${urlState.schemaVersion}`,
+          panes: JSON.stringify(panesObj),
+          orgId: `${orgId}`,
+          ...defaults,
+        });
+
+        location.replace({
+          pathname: location.getLocation().pathname,
+          search: searchParams.toString(),
+        });
+        initState.current = 'done';
       });
     }
 
     prevParams.current = params;
 
     isURLOutOfSync && initState.current === 'done' && sync();
-  }, [dispatch, panesState, orgId, location, params]);
+  }, [dispatch, panesState, orgId, location, params, warning]);
 }
 
 function getDefaultQuery(ds: DataSourceApi) {
@@ -358,7 +391,7 @@ const urlDiff = (
 } => {
   const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
   const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
-  const range = !areRangesEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
+  const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
   const panelsState = !isEqual(currentUrlState?.panelsState, oldUrlState?.panelsState);
 
   return {
@@ -369,20 +402,13 @@ const urlDiff = (
   };
 };
 
-const areRangesEqual = (a: RawTimeRange, b: RawTimeRange): boolean => {
-  const parsedA = toURLTimeRange(a);
-  const parsedB = toURLTimeRange(b);
-
-  return parsedA.from === parsedB.from && parsedA.to === parsedB.to;
-};
-
 export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.
     datasource: pane.datasourceInstance?.uid || '',
     queries: pane.queries.map(clearQueryKeys),
-    range: toURLTimeRange(pane.range.raw),
+    range: toURLRange(pane.range.raw),
     // don't include panelsState in the url unless a piece of state is actually set
     panelsState: pruneObject(pane.panelsState),
   };

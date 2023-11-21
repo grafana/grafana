@@ -73,7 +73,7 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
     source.pipe(map((data) => partitionByValuesTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: PartitionByValuesTransformerOptions, ctx: DataTransformContext) => {
-    const matcherConfig = getMatcherConfig({ names: options.fields });
+    const matcherConfig = getMatcherConfig(ctx, { names: options.fields });
 
     if (!matcherConfig) {
       return noopTransformer.transformer({}, ctx);

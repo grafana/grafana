@@ -3,11 +3,9 @@ import { debounce } from 'lodash';
 import React, { FormEvent, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { logInfo } from '@grafana/runtime';
-import { Label, Tooltip, Input, Icon, useStyles2 } from '@grafana/ui';
+import { Label, Tooltip, Input, Icon, useStyles2, Stack } from '@grafana/ui';
 
-import { LogMessages } from '../../Analytics';
+import { logInfo, LogMessages } from '../../Analytics';
 
 interface Props {
   className?: string;
@@ -23,7 +21,7 @@ export const MatcherFilter = ({ className, onFilterChange, defaultQueryString }:
       debounce((e: FormEvent<HTMLInputElement>) => {
         logInfo(LogMessages.filterByLabel);
 
-        const target = e.target as HTMLInputElement;
+        const target = e.currentTarget;
         onFilterChange(target.value);
       }, 600),
     [onFilterChange]

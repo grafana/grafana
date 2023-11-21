@@ -99,8 +99,11 @@ export function isValidDate(dateString: string): boolean {
 }
 
 /**
- * isValidDuration returns true if the given string can be parsed into a valid Duration object, false otherwise
+ * isValidDuration returns true if the given string can be parsed into a valid `date-fns` `Duration` object, false otherwise
  *
+ * Valid time units are "y", "Y", "years", "M", "months", "w", "W", "weeks", "d", "D", "days", "h", "H", "hours", "m", "minutes", "s", "S", "seconds"
+ *
+ * @see https://date-fns.org/v2.30.0/docs/Duration
  * @param durationString - string representation of a duration
  *
  * @public
@@ -127,7 +130,7 @@ export function isValidDuration(durationString: string): boolean {
  *
  * Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
  *
- * Go docs: https://pkg.go.dev/time#ParseDuration
+ * @see https://pkg.go.dev/time#ParseDuration
  *
  * @param durationString - string representation of a duration
  *
@@ -135,6 +138,27 @@ export function isValidDuration(durationString: string): boolean {
  */
 export function isValidGoDuration(durationString: string): boolean {
   const timeUnits = ['h', 'm', 's', 'ms', 'us', 'µs', 'ns'];
+  return validateDurationByUnits(durationString, timeUnits);
+}
+
+/**
+ * isValidGrafanaDuration returns `true` if the given string can be parsed into a valid Duration object based on
+ * the Grafana SDK's gtime.parseDuration, `false` otherwise.
+ *
+ * Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h", "d", "w", "M", "y".
+ *
+ * @see https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend/gtime#ParseDuration
+ *
+ * @param durationString - string representation of a duration
+ *
+ * @internal
+ */
+export function isValidGrafanaDuration(durationString: string): boolean {
+  const timeUnits = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'ms', 'us', 'µs', 'ns'];
+  return validateDurationByUnits(durationString, timeUnits);
+}
+
+function validateDurationByUnits(durationString: string, timeUnits: string[]): boolean {
   for (const value of durationString.trim().split(' ')) {
     const match = value.match(/([0-9]*[.]?[0-9]+)(.+)/);
     if (match === null || match.length !== 3) {

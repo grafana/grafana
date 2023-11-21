@@ -1,5 +1,5 @@
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:main
     command: -config.file=/etc/loki/loki-config.yaml
     volumes:
       - ./docker/blocks/loki/loki-config.yaml:/etc/loki/loki-config.yaml

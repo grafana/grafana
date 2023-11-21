@@ -1,4 +1,4 @@
-import { screen, render, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 import React from 'react';
@@ -14,18 +14,28 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types/alerting';
 
+import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
 import { mockAlertGroup, mockAlertmanagerAlert, mockReceiversState } from '../../mocks';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { Policy } from './Policy';
 
-beforeAll(() => {
-  userEvent.setup();
-});
+jest.mock('../../hooks/useAbilities', () => ({
+  ...jest.requireActual('../../hooks/useAbilities'),
+  useAlertmanagerAbilities: jest.fn(),
+}));
+
+const useAlertmanagerAbilitiesMock = jest.mocked(useAlertmanagerAbilities);
 
 describe('Policy', () => {
   beforeAll(() => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    useAlertmanagerAbilitiesMock.mockReturnValue([
+      [true, true],
+      [true, true],
+      [true, true],
+    ]);
   });
 
   it('should render a policy tree', async () => {
@@ -37,6 +47,7 @@ describe('Policy', () => {
     );
 
     const routeTree = mockRoutes;
+    const user = userEvent.setup();
 
     renderPolicy(
       <Policy
@@ -57,13 +68,13 @@ describe('Policy', () => {
 
     // click "more actions" and check if we can edit and delete
     expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
-    await userEvent.click(within(defaultPolicy).getByTestId('more-actions'));
+    await user.click(within(defaultPolicy).getByTestId('more-actions'));
 
     // should be editable
     const editDefaultPolicy = screen.getByRole('menuitem', { name: 'Edit' });
     expect(editDefaultPolicy).toBeInTheDocument();
     expect(editDefaultPolicy).not.toBeDisabled();
-    await userEvent.click(editDefaultPolicy);
+    await user.click(editDefaultPolicy);
     expect(onEditPolicy).toHaveBeenCalledWith(routeTree, true);
 
     // should not be deletable
@@ -101,11 +112,11 @@ describe('Policy', () => {
       const policy = within(container);
 
       // click "more actions" and check if we can delete
-      await userEvent.click(policy.getByTestId('more-actions'));
+      await user.click(policy.getByTestId('more-actions'));
       expect(screen.queryByRole('menuitem', { name: 'Edit' })).not.toBeDisabled();
       expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeDisabled();
 
-      await userEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
       expect(onDeletePolicy).toHaveBeenCalled();
     }
 
@@ -130,6 +141,110 @@ describe('Policy', () => {
     expect(within(thirdPolicy).getByTestId('label-matchers')).toHaveTextContent(
       /^foo = barbar = bazbaz = quxasdf = asdftype = diskand 1 more$/
     );
+  });
+
+  it('should show export option when export is allowed and supported returns true', async () => {
+    const onEditPolicy = jest.fn();
+    const onAddPolicy = jest.fn();
+    const onDeletePolicy = jest.fn();
+    const onShowAlertInstances = jest.fn(
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
+    );
+
+    const routeTree = mockRoutes;
+    const user = userEvent.setup();
+
+    renderPolicy(
+      <Policy
+        routeTree={routeTree}
+        currentRoute={routeTree}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={onEditPolicy}
+        onAddPolicy={onAddPolicy}
+        onDeletePolicy={onDeletePolicy}
+        onShowAlertInstances={onShowAlertInstances}
+      />
+    );
+    // should have default policy
+    const defaultPolicy = screen.getByTestId('am-root-route-container');
+    // click "more actions"
+    expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
+    await user.click(within(defaultPolicy).getByTestId('more-actions'));
+    expect(screen.getByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
+  });
+
+  it('should not show export option when is not supported', async () => {
+    const onEditPolicy = jest.fn();
+    const onAddPolicy = jest.fn();
+    const onDeletePolicy = jest.fn();
+    const onShowAlertInstances = jest.fn(
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
+    );
+
+    const routeTree = mockRoutes;
+
+    useAlertmanagerAbilitiesMock.mockReturnValue([
+      [true, true],
+      [true, true],
+      [false, true],
+    ]);
+
+    const user = userEvent.setup();
+
+    renderPolicy(
+      <Policy
+        routeTree={routeTree}
+        currentRoute={routeTree}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={onEditPolicy}
+        onAddPolicy={onAddPolicy}
+        onDeletePolicy={onDeletePolicy}
+        onShowAlertInstances={onShowAlertInstances}
+      />
+    );
+    // should have default policy
+    const defaultPolicy = screen.getByTestId('am-root-route-container');
+    // click "more actions"
+    expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
+    await user.click(within(defaultPolicy).getByTestId('more-actions'));
+    expect(screen.queryByRole('menuitem', { name: 'Export' })).not.toBeInTheDocument();
+  });
+
+  it('should not show export option when is not allowed', async () => {
+    const onEditPolicy = jest.fn();
+    const onAddPolicy = jest.fn();
+    const onDeletePolicy = jest.fn();
+    const onShowAlertInstances = jest.fn(
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
+    );
+
+    const routeTree = mockRoutes;
+
+    useAlertmanagerAbilitiesMock.mockReturnValue([
+      [true, true],
+      [true, true],
+      [true, false],
+    ]);
+
+    const user = userEvent.setup();
+
+    renderPolicy(
+      <Policy
+        routeTree={routeTree}
+        currentRoute={routeTree}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={onEditPolicy}
+        onAddPolicy={onAddPolicy}
+        onDeletePolicy={onDeletePolicy}
+        onShowAlertInstances={onShowAlertInstances}
+      />
+    );
+    // should have default policy
+    const defaultPolicy = screen.getByTestId('am-root-route-container');
+    // click "more actions"
+    expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
+    await user.click(within(defaultPolicy).getByTestId('more-actions'));
+    expect(screen.queryByRole('menuitem', { name: 'Export' })).not.toBeInTheDocument();
   });
 
   it('should not allow editing readOnly policy tree', () => {
@@ -221,7 +336,11 @@ describe('Policy', () => {
 });
 
 const renderPolicy = (element: JSX.Element) =>
-  render(<Router history={locationService.getHistory()}>{element}</Router>);
+  render(
+    <Router history={locationService.getHistory()}>
+      <AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>
+    </Router>
+  );
 
 const eq = MatcherOperator.equal;
 
@@ -257,4 +376,6 @@ const mockRoutes: RouteWithID = {
     },
   ],
   group_wait: '30s',
+  group_interval: undefined,
+  repeat_interval: undefined,
 };

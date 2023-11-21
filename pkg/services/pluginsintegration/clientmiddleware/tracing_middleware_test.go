@@ -11,6 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -101,7 +104,8 @@ func TestTracingMiddleware(t *testing.T) {
 	} {
 		t.Run("Creates spans on "+tc.name, func(t *testing.T) {
 			t.Run("successful", func(t *testing.T) {
-				tracer := tracing.NewFakeTracer()
+				spanRecorder := tracetest.NewSpanRecorder()
+				tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 
 				cdt := clienttest.NewClientDecoratorTest(
 					t,
@@ -110,16 +114,17 @@ func TestTracingMiddleware(t *testing.T) {
 
 				err := tc.run(pluginCtx, cdt)
 				require.NoError(t, err)
-				require.Len(t, tracer.Spans, 1, "must have 1 span")
-				span := tracer.Spans[0]
-				assert.True(t, span.IsEnded(), "span should be ended")
-				assert.NoError(t, span.Err, "span should not have an error")
-				assert.Equal(t, codes.Unset, span.StatusCode, "span should not have a status code")
-				assert.Equal(t, tc.expSpanName, span.Name)
+				spans := spanRecorder.Ended()
+				require.Len(t, spans, 1, "must have 1 span")
+				span := spans[0]
+				assert.Empty(t, span.Events(), "span should not have an error")
+				assert.Equal(t, codes.Unset, span.Status().Code, "span should not have a status code")
+				assert.Equal(t, tc.expSpanName, span.Name())
 			})
 
 			t.Run("error", func(t *testing.T) {
-				tracer := tracing.NewFakeTracer()
+				spanRecorder := tracetest.NewSpanRecorder()
+				tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 
 				cdt := clienttest.NewClientDecoratorTest(
 					t,
@@ -131,17 +136,19 @@ func TestTracingMiddleware(t *testing.T) {
 
 				err := tc.run(pluginCtx, cdt)
 				require.Error(t, err)
-				require.Len(t, tracer.Spans, 1, "must have 1 span")
-				span := tracer.Spans[0]
-				assert.True(t, span.IsEnded(), "span should be ended")
-				assert.Error(t, span.Err, "span should contain an error")
-				assert.Equal(t, codes.Error, span.StatusCode, "span code should be error")
+				spans := spanRecorder.Ended()
+				require.Len(t, spans, 1, "must have 1 span")
+				span := spans[0]
+				require.Len(t, span.Events(), 1, "span should contain an error")
+				require.Equal(t, semconv.ExceptionEventName, span.Events()[0].Name)
+				require.Equal(t, codes.Error, span.Status().Code, "span code should be error")
 			})
 
 			t.Run("panic", func(t *testing.T) {
 				var didPanic bool
 
-				tracer := tracing.NewFakeTracer()
+				spanRecorder := tracetest.NewSpanRecorder()
+				tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 
 				cdt := clienttest.NewClientDecoratorTest(
 					t,
@@ -163,9 +170,7 @@ func TestTracingMiddleware(t *testing.T) {
 				}()
 
 				require.True(t, didPanic, "should have panicked")
-				require.Len(t, tracer.Spans, 1, "must have 1 span")
-				span := tracer.Spans[0]
-				assert.True(t, span.IsEnded(), "span should be ended")
+				require.Len(t, spanRecorder.Ended(), 1, "must have 1 span")
 			})
 		})
 	}
@@ -180,19 +185,18 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		requestMut []func(ctx *context.Context, req *backend.QueryDataRequest)
-		assert     func(t *testing.T, span *tracing.FakeSpan)
+		assert     func(t *testing.T, span trace.ReadOnlySpan)
 	}{
 		{
 			name: "default",
 			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){
 				defaultPluginContextRequestMut,
 			},
-			assert: func(t *testing.T, span *tracing.FakeSpan) {
-				assert.Len(t, span.Attributes, 2, "should have correct number of span attributes")
-				assert.Equal(t, "my_plugin_id", span.Attributes["plugin_id"].AsString(), "should have correct plugin_id")
-				assert.Equal(t, int64(1337), span.Attributes["org_id"].AsInt64(), "should have correct org_id")
-				_, ok := span.Attributes["user"]
-				assert.False(t, ok, "should not have user attribute")
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 2, "should have correct number of span attributes")
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "my_plugin_id")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 1337)))
 			},
 		},
 		{
@@ -203,22 +207,22 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 					req.PluginContext.User = &backend.User{Login: "admin"}
 				},
 			},
-			assert: func(t *testing.T, span *tracing.FakeSpan) {
-				assert.Len(t, span.Attributes, 3, "should have correct number of span attributes")
-				assert.Equal(t, "my_plugin_id", span.Attributes["plugin_id"].AsString(), "should have correct plugin_id")
-				assert.Equal(t, int64(1337), span.Attributes["org_id"].AsInt64(), "should have correct org_id")
-				assert.Equal(t, "admin", span.Attributes["user"].AsString(), "should have correct user attribute")
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				assert.Len(t, attribs, 3, "should have correct number of span attributes")
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "my_plugin_id")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 1337)))
+				require.True(t, spanAttributesContains(attribs, attribute.String("user", "admin")))
 			},
 		},
 		{
 			name:       "empty retains zero values",
 			requestMut: []func(ctx *context.Context, req *backend.QueryDataRequest){},
-			assert: func(t *testing.T, span *tracing.FakeSpan) {
-				assert.Len(t, span.Attributes, 2, "should have correct number of span attributes")
-				assert.Zero(t, span.Attributes["plugin_id"].AsString(), "should have correct plugin_id")
-				assert.Zero(t, span.Attributes["org_id"].AsInt64(), "should have correct org_id")
-				_, ok := span.Attributes["user"]
-				assert.False(t, ok, "should not have user attribute")
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 2, "should have correct number of span attributes")
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
 			},
 		},
 		{
@@ -228,9 +232,10 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 					*ctx = ctxkey.Set(*ctx, &contextmodel.ReqContext{Context: &web.Context{Req: &http.Request{Header: nil}}})
 				},
 			},
-			assert: func(t *testing.T, span *tracing.FakeSpan) {
-				assert.Empty(t, span.Attributes["panel_id"])
-				assert.Empty(t, span.Attributes["dashboard_id"])
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
 			},
 		},
 		{
@@ -244,14 +249,13 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 					}
 				},
 			},
-			assert: func(t *testing.T, span *tracing.FakeSpan) {
-				require.Len(t, span.Attributes, 4)
-				for _, k := range []string{"plugin_id", "org_id"} {
-					_, ok := span.Attributes[attribute.Key(k)]
-					assert.True(t, ok)
-				}
-				assert.Equal(t, "uid", span.Attributes["datasource_uid"].AsString())
-				assert.Equal(t, "name", span.Attributes["datasource_name"].AsString())
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 4)
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
+				require.True(t, spanAttributesContains(attribs, attribute.String("datasource_uid", "uid")))
+				require.True(t, spanAttributesContains(attribs, attribute.String("datasource_name", "name")))
 			},
 		},
 		{
@@ -268,15 +272,14 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 					}))
 				},
 			},
-			assert: func(t *testing.T, span *tracing.FakeSpan) {
-				require.Len(t, span.Attributes, 5)
-				for _, k := range []string{"plugin_id", "org_id"} {
-					_, ok := span.Attributes[attribute.Key(k)]
-					assert.True(t, ok)
-				}
-				assert.Equal(t, int64(10), span.Attributes["panel_id"].AsInt64())
-				assert.Equal(t, "dashboard uid", span.Attributes["dashboard_uid"].AsString())
-				assert.Equal(t, "query group id", span.Attributes["query_group_id"].AsString())
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 5)
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("panel_id", 10)))
+				require.True(t, spanAttributesContains(attribs, attribute.String("query_group_id", "query group id")))
+				require.True(t, spanAttributesContains(attribs, attribute.String("dashboard_uid", "dashboard uid")))
 			},
 		},
 		{
@@ -291,12 +294,11 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 					}))
 				},
 			},
-			assert: func(t *testing.T, span *tracing.FakeSpan) {
-				require.Len(t, span.Attributes, 2)
-				for _, k := range []string{"plugin_id", "org_id"} {
-					_, ok := span.Attributes[attribute.Key(k)]
-					assert.True(t, ok)
-				}
+			assert: func(t *testing.T, span trace.ReadOnlySpan) {
+				attribs := span.Attributes()
+				require.Len(t, attribs, 2)
+				require.True(t, spanAttributesContains(attribs, attribute.String("plugin_id", "")))
+				require.True(t, spanAttributesContains(attribs, attribute.Int("org_id", 0)))
 			},
 		},
 	} {
@@ -309,7 +311,8 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 				mut(&ctx, req)
 			}
 
-			tracer := tracing.NewFakeTracer()
+			spanRecorder := tracetest.NewSpanRecorder()
+			tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 
 			cdt := clienttest.NewClientDecoratorTest(
 				t,
@@ -318,17 +321,27 @@ func TestTracingMiddlewareAttributes(t *testing.T) {
 
 			_, err := cdt.Decorator.QueryData(ctx, req)
 			require.NoError(t, err)
-			require.Len(t, tracer.Spans, 1, "must have 1 span")
-			span := tracer.Spans[0]
-			assert.True(t, span.IsEnded(), "span should be ended")
-			assert.NoError(t, span.Err, "span should not have an error")
-			assert.Equal(t, codes.Unset, span.StatusCode, "span should not have a status code")
+			spans := spanRecorder.Ended()
+			require.Len(t, spans, 1, "must have 1 span")
+			span := spans[0]
+			assert.Len(t, span.Events(), 0, "span should not have an error")
+			assert.Equal(t, codes.Unset, span.Status().Code, "span should not have a status code")
 
 			if tc.assert != nil {
 				tc.assert(t, span)
 			}
 		})
 	}
+}
+
+func spanAttributesContains(attribs []attribute.KeyValue, attrib attribute.KeyValue) bool {
+	for _, v := range attribs {
+		if v.Key == attrib.Key && v.Value == attrib.Value {
+			return true
+		}
+	}
+
+	return false
 }
 
 func newReqContextWithRequest(req *http.Request) *contextmodel.ReqContext {

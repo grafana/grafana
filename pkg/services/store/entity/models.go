@@ -86,59 +86,6 @@ type EntityKindInfo struct {
 	MimeType string `json:"mimeType,omitempty"`
 }
 
-// EntitySummary represents common data derived from a raw object bytes.
-// The values should not depend on system state, and are derived from the raw object.
-// This summary is used for a unified search and object listing
-type EntitySummary struct {
-	UID         string `json:"uid,omitempty"`
-	Kind        string `json:"kind,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-
-	// Key value pairs.  Tags are are represented as keys with empty values
-	Labels map[string]string `json:"labels,omitempty"`
-
-	// Parent folder UID
-	Folder string `json:"folder,omitempty"`
-
-	// URL safe version of the name.  It will be unique within the folder
-	Slug string `json:"slug,omitempty"`
-
-	// When errors exist
-	Error *EntityErrorInfo `json:"error,omitempty"`
-
-	// Optional field values.  The schema will define and document possible values for a given kind
-	Fields map[string]interface{} `json:"fields,omitempty"`
-
-	// eg: panels within dashboard
-	Nested []*EntitySummary `json:"nested,omitempty"`
-
-	// Optional references to external things
-	References []*EntityExternalReference `json:"references,omitempty"`
-
-	// The summary can not be extended
-	_ interface{}
-}
-
-// Reference to another object outside itself
-// This message is derived from the object body and can be used to search for references.
-// This does not represent a method to declare a reference to another object.
-type EntityExternalReference struct {
-	// Category of dependency
-	// eg: datasource, plugin, runtime
-	Family string `json:"family,omitempty"`
-
-	// datasource > prometheus|influx|...
-	// plugin > panel | datasource
-	// runtime > transformer
-	Type string `json:"type,omitempty"` // flavor
-
-	// datasource > UID
-	// plugin > plugin identifier
-	// runtime > name lookup
-	Identifier string `json:"ID,omitempty"`
-}
-
 // EntitySummaryBuilder will read an object, validate it, and return a summary, sanitized payload, or an error
 // This should not include values that depend on system state, only the raw object
 type EntitySummaryBuilder = func(ctx context.Context, uid string, body []byte) (*EntitySummary, []byte, error)

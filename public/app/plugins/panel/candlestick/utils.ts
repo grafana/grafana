@@ -120,12 +120,12 @@ export function drawMarkers(opts: RendererOpts) {
       let intraDir = Math.sign(cData[i]! - oData[i]!);
 
       // volume
-      if (drawVolume) {
+      if (drawVolume && flatPathVol && upPathVol && downPathVol) {
         let outerPath = selectPath(
           colorStrategy === ColorStrategy.CloseClose ? interDir : intraDir,
-          flatPathVol as Path2D,
-          upPathVol as Path2D,
-          downPathVol as Path2D,
+          flatPathVol,
+          upPathVol,
+          downPathVol,
           i === idx0 && ColorStrategy.CloseClose ? false : flatAsUp
         );
 
@@ -133,12 +133,12 @@ export function drawMarkers(opts: RendererOpts) {
         outerPath.rect(tPx - halfWidth, vPx, barWidth, zeroPx! - vPx);
       }
 
-      if (drawPrice) {
+      if (drawPrice && flatPath && upPath && downPath) {
         let outerPath = selectPath(
           colorStrategy === ColorStrategy.CloseClose ? interDir : intraDir,
-          flatPath as Path2D,
-          upPath as Path2D,
-          downPath as Path2D,
+          flatPath,
+          upPath,
+          downPath,
           i === idx0 && ColorStrategy.CloseClose ? false : flatAsUp
         );
 
@@ -179,26 +179,26 @@ export function drawMarkers(opts: RendererOpts) {
     ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
     ctx.clip();
 
-    if (drawVolume) {
+    if (drawVolume && flatPathVol && upPathVol && downPathVol) {
       ctx.fillStyle = alpha(upColor, volumeAlpha);
-      ctx.fill(upPathVol as Path2D);
+      ctx.fill(upPathVol);
 
       ctx.fillStyle = alpha(downColor, volumeAlpha);
-      ctx.fill(downPathVol as Path2D);
+      ctx.fill(downPathVol);
 
       ctx.fillStyle = alpha(flatColor, volumeAlpha);
-      ctx.fill(flatPathVol as Path2D);
+      ctx.fill(flatPathVol);
     }
 
-    if (drawPrice) {
+    if (drawPrice && flatPath && upPath && downPath) {
       ctx.fillStyle = upColor;
-      ctx.fill(upPath as Path2D);
+      ctx.fill(upPath);
 
       ctx.fillStyle = downColor;
-      ctx.fill(downPath as Path2D);
+      ctx.fill(downPath);
 
       ctx.fillStyle = flatColor;
-      ctx.fill(flatPath as Path2D);
+      ctx.fill(flatPath);
 
       ctx.globalCompositeOperation = 'destination-out';
       ctx.fill(hollowPath);

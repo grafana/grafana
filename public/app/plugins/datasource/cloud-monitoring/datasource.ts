@@ -54,8 +54,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return super.query(request);
   }
 
-  applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
-    const { timeSeriesList, timeSeriesQuery, sloQuery } = target;
+  applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars) {
+    const { timeSeriesList, timeSeriesQuery, sloQuery, promQLQuery } = target;
 
     return {
       ...target,
@@ -79,6 +79,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         ),
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
+      promQLQuery: promQLQuery && this.interpolateProps(promQLQuery, scopedVars),
     };
   }
 
@@ -88,7 +89,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     projectName: string,
     aggregation?: Aggregation,
     timeRange?: TimeRange
-  ) {
+  ): Promise<{ [k: string]: string[] }> {
     const options = {
       targets: [
         {
@@ -129,11 +130,13 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             },
           });
         }),
+
         map(({ data }) => {
           const dataQueryResponse = toDataQueryResponse({
             data: data,
           });
-          const labels = dataQueryResponse?.data
+
+          const labels: Record<string, Set<string>> = dataQueryResponse?.data
             .map((f) => f.meta?.custom?.labels)
             .filter((p) => !!p)
             .reduce((acc, labels) => {
@@ -147,10 +150,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
               }
               return acc;
             }, {});
+
           return Object.fromEntries(
-            Object.entries(labels).map((l: any) => {
-              l[1] = Array.from(l[1]);
-              return l;
+            Object.entries(labels).map(([key, value]) => {
+              const fromArr = Array.from(value);
+              return [key, fromArr];
             })
           );
         })
@@ -183,9 +187,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return [];
     }
 
-    return this.getResource(
-      `metricDescriptors/v3/projects/${this.templateSrv.replace(projectName)}/metricDescriptors`
-    ) as Promise<MetricDescriptor[]>;
+    return this.getResource(`metricDescriptors/v3/projects/${this.templateSrv.replace(projectName)}/metricDescriptors`);
   }
 
   async filterMetricsByType(projectName: string, filter: string): Promise<MetricDescriptor[]> {
@@ -323,13 +325,17 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return !!query.timeSeriesList && !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
     }
 
+    if (query.queryType === QueryType.PROMQL) {
+      return (
+        !!query.promQLQuery && !!query.promQLQuery.projectName && !!query.promQLQuery.expr && !!query.promQLQuery.step
+      );
+    }
+
     return false;
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
-    return queries.map(
-      (query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars) as CloudMonitoringQuery
-    );
+    return queries.map((query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars));
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {

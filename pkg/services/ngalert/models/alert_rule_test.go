@@ -610,7 +610,7 @@ func TestDiff(t *testing.T) {
 			},
 			DatasourceUID: util.GenerateShortUID(),
 			Model:         json.RawMessage(`{ "test": "data"}`),
-			modelProps: map[string]interface{}{
+			modelProps: map[string]any{
 				"test": 1,
 			},
 		}
@@ -619,7 +619,7 @@ func TestDiff(t *testing.T) {
 
 		t.Run("should ignore modelProps", func(t *testing.T) {
 			query2 := query1
-			query2.modelProps = map[string]interface{}{
+			query2.modelProps = map[string]any{
 				"some": "other value",
 			}
 			rule2.Data = []AlertQuery{query2}

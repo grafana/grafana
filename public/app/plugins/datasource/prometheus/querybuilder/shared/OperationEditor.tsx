@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Icon, InlineField, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
@@ -46,6 +45,7 @@ export function OperationEditor({
 }: Props) {
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
+  const id = useId();
 
   const isConflicting =
     operation.id === LokiOperationId.LabelFilter && isConflictingFilter(operation, query.operations);
@@ -86,7 +86,7 @@ export function OperationEditor({
       <div className={styles.paramRow} key={`${paramIndex}-1`}>
         {!paramDef.hideName && (
           <div className={styles.paramName}>
-            <label htmlFor={getOperationParamId(index, paramIndex)}>{paramDef.name}</label>
+            <label htmlFor={getOperationParamId(id, paramIndex)}>{paramDef.name}</label>
             {paramDef.description && (
               <Tooltip placement="top" content={paramDef.description} theme="info">
                 <Icon name="info-circle" size="sm" className={styles.infoIcon} />
@@ -95,13 +95,13 @@ export function OperationEditor({
           </div>
         )}
         <div className={styles.paramValue}>
-          <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
+          <Stack gap={0.5} direction="row" alignItems="center">
             <Editor
               index={paramIndex}
               paramDef={paramDef}
               value={operation.params[paramIndex]}
               operation={operation}
-              operationIndex={index}
+              operationId={id}
               onChange={onParamValueChanged}
               onRunQuery={onRunQuery}
               query={query}

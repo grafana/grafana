@@ -1197,6 +1197,67 @@
         }
       }
     },
+    "/api/ruler/grafana/api/v1/export/rules": {
+      "get": {
+        "description": "List rules in provisioning format",
+        "consumes": [
+          "application/json",
+          "application/yaml"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "operationId": "RouteGetRulesForExport",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UIDs of folders from which to export rules",
+            "name": "folderUid",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+            "name": "group",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+            "name": "ruleUid",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      }
+    },
     "/api/ruler/grafana/api/v1/rules": {
       "get": {
         "description": "List rule groups",
@@ -1284,9 +1345,9 @@
         ],
         "responses": {
           "202": {
-            "description": "Ack",
+            "description": "UpdateRuleGroupResponse",
             "schema": {
-              "$ref": "#/definitions/Ack"
+              "$ref": "#/definitions/UpdateRuleGroupResponse"
             }
           }
         }
@@ -1311,6 +1372,59 @@
             "schema": {
               "$ref": "#/definitions/Ack"
             }
+          }
+        }
+      }
+    },
+    "/api/ruler/grafana/api/v1/rules/{Namespace}/export": {
+      "post": {
+        "description": "Converts submitted rule group to provisioning format",
+        "consumes": [
+          "application/json",
+          "application/yaml"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "operationId": "RoutePostRulesGroupForExport",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/PostableRuleGroupConfig"
+            }
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
           }
         }
       }
@@ -1876,6 +1990,27 @@
             "default": "yaml",
             "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UIDs of folders from which to export rules",
+            "name": "folderUid",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+            "name": "group",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+            "name": "ruleUid",
             "in": "query"
           }
         ],
@@ -2982,7 +3117,7 @@
           "type": "string"
         },
         "relativeTimeRange": {
-          "$ref": "#/definitions/RelativeTimeRange"
+          "$ref": "#/definitions/RelativeTimeRangeExport"
         }
       }
     },
@@ -3260,6 +3395,9 @@
           "type": "string"
         },
         "for": {
+          "type": "string"
+        },
+        "keep_firing_for": {
           "type": "string"
         },
         "labels": {
@@ -3613,6 +3751,9 @@
         "uid": {
           "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
           "type": "string",
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9\\-\\_]+$",
           "example": "my_external_reference"
         }
       }
@@ -4067,6 +4208,12 @@
             "$ref": "#/definitions/GettableGrafanaReceiver"
           }
         },
+        "msteams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -4153,6 +4300,9 @@
         },
         "grafana_alert": {
           "$ref": "#/definitions/GettableGrafanaRule"
+        },
+        "keep_firing_for": {
+          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -4658,6 +4808,26 @@
         }
       }
     },
+    "MSTeamsConfig": {
+      "type": "object",
+      "properties": {
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "webhook_url": {
+          "$ref": "#/definitions/SecretURL"
+        }
+      }
+    },
     "MatchRegexps": {
       "type": "object",
       "title": "MatchRegexps represents a map of Regexp.",
@@ -5108,6 +5278,12 @@
             "$ref": "#/definitions/PostableGrafanaReceiver"
           }
         },
+        "msteams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -5194,6 +5370,9 @@
         },
         "grafana_alert": {
           "$ref": "#/definitions/PostableGrafanaRule"
+        },
+        "keep_firing_for": {
+          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -5490,7 +5669,10 @@
           "example": "Always firing"
         },
         "uid": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9-_]+$"
         },
         "updated": {
           "type": "string",
@@ -5561,6 +5743,9 @@
           "$ref": "#/definitions/Secret"
         },
         "token_file": {
+          "type": "string"
+        },
+        "ttl": {
           "type": "string"
         },
         "url": {
@@ -5680,6 +5865,12 @@
             "$ref": "#/definitions/EmailConfig"
           }
         },
+        "msteams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -5778,6 +5969,19 @@
         },
         "to": {
           "$ref": "#/definitions/Duration"
+        }
+      }
+    },
+    "RelativeTimeRangeExport": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "to": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -6326,8 +6530,16 @@
       "type": "object",
       "title": "TLSConfig configures the options for TLS connections.",
       "properties": {
+        "ca": {
+          "description": "Text of the CA cert to use for the targets.",
+          "type": "string"
+        },
         "ca_file": {
           "description": "The CA cert to use for the targets.",
+          "type": "string"
+        },
+        "cert": {
+          "description": "Text of the client cert file for the targets.",
           "type": "string"
         },
         "cert_file": {
@@ -6337,6 +6549,9 @@
         "insecure_skip_verify": {
           "description": "Disable target certificate validation.",
           "type": "boolean"
+        },
+        "key": {
+          "$ref": "#/definitions/Secret"
         },
         "key_file": {
           "description": "The client key file for the targets.",
@@ -6649,9 +6864,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -6685,6 +6899,32 @@
         },
         "User": {
           "$ref": "#/definitions/Userinfo"
+        }
+      }
+    },
+    "UpdateRuleGroupResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deleted": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -6865,7 +7105,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -6996,6 +7235,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -7117,6 +7357,7 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -7299,6 +7540,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

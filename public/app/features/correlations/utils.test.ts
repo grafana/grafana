@@ -19,6 +19,7 @@ describe('correlations utils', () => {
           datasourceUid: prometheus.uid,
           datasourceName: prometheus.name,
           query: {
+            datasource: { uid: prometheus.uid },
             expr: 'target Prometheus query',
           },
         },
@@ -29,6 +30,7 @@ describe('correlations utils', () => {
           datasourceUid: elastic.uid,
           datasourceName: elastic.name,
           query: {
+            datasource: { uid: elastic.uid },
             expr: 'target Elastic query',
           },
         },
@@ -110,6 +112,7 @@ function setup() {
       source: loki,
       target: prometheus,
       config: { type: 'query', field: 'traceId', target: { expr: 'target Prometheus query' } },
+      provisioned: false,
     },
     // Test multiple correlations attached to the same field
     {
@@ -118,6 +121,7 @@ function setup() {
       source: loki,
       target: elastic,
       config: { type: 'query', field: 'traceId', target: { expr: 'target Elastic query' } },
+      provisioned: false,
     },
     {
       uid: 'prometheus-to-elastic',
@@ -125,6 +129,7 @@ function setup() {
       source: prometheus,
       target: elastic,
       config: { type: 'query', field: 'value', target: { expr: 'target Elastic query' } },
+      provisioned: false,
     },
   ];
 

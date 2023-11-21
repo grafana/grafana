@@ -14,6 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -231,14 +234,17 @@ func TestAPI_Annotations(t *testing.T) {
 				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1})
 				hs.annotationsRepo = repo
 				hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
-				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
+				features := featuremgmt.WithFeatures()
+				dashSvc := &dashboards.FakeDashboardService{}
+				folderSvc := &foldertest.FakeService{}
+				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, features, dashSvc, folderSvc))
 			})
 			var body io.Reader
 			if tt.body != "" {
 				body = strings.NewReader(tt.body)
 			}
 
-			req := webtest.RequestWithSignedInUser(server.NewRequest(tt.method, tt.path, body), userWithPermissions(1, tt.permissions))
+			req := webtest.RequestWithSignedInUser(server.NewRequest(tt.method, tt.path, body), authedUserWithPermissions(1, 1, tt.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
@@ -247,60 +253,100 @@ func TestAPI_Annotations(t *testing.T) {
 	}
 }
 func TestService_AnnotationTypeScopeResolver(t *testing.T) {
+	rootDashUID := "root-dashboard"
+	folderDashUID := "folder-dashboard"
+	folderUID := "folder"
+	dashSvc := &dashboards.FakeDashboardService{}
+	rootDash := &dashboards.Dashboard{ID: 1, OrgID: 1, UID: rootDashUID}
+	folderDash := &dashboards.Dashboard{ID: 2, OrgID: 1, UID: folderDashUID, FolderUID: folderUID}
+	dashSvc.On("GetDashboard", context.Background(), &dashboards.GetDashboardQuery{ID: rootDash.ID, OrgID: 1}).Return(rootDash, nil)
+	dashSvc.On("GetDashboard", context.Background(), &dashboards.GetDashboardQuery{ID: folderDash.ID, OrgID: 1}).Return(folderDash, nil)
+
+	rootDashboardAnnotation := annotations.Item{ID: 1, DashboardID: rootDash.ID}
+	folderDashboardAnnotation := annotations.Item{ID: 3, DashboardID: folderDash.ID}
+	organizationAnnotation := annotations.Item{ID: 2}
+
+	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
+	_ = fakeAnnoRepo.Save(context.Background(), &rootDashboardAnnotation)
+	_ = fakeAnnoRepo.Save(context.Background(), &folderDashboardAnnotation)
+	_ = fakeAnnoRepo.Save(context.Background(), &organizationAnnotation)
+
 	type testCaseResolver struct {
-		desc    string
-		given   string
-		want    string
-		wantErr error
+		desc           string
+		given          string
+		featureToggles []any
+		want           []string
+		wantErr        error
 	}
 
 	testCases := []testCaseResolver{
 		{
 			desc:    "correctly resolves dashboard annotations",
 			given:   "annotations:id:1",
-			want:    accesscontrol.ScopeAnnotationsTypeDashboard,
+			want:    []string{accesscontrol.ScopeAnnotationsTypeDashboard},
 			wantErr: nil,
 		},
 		{
 			desc:    "correctly resolves organization annotations",
 			given:   "annotations:id:2",
-			want:    accesscontrol.ScopeAnnotationsTypeOrganization,
+			want:    []string{accesscontrol.ScopeAnnotationsTypeOrganization},
 			wantErr: nil,
 		},
 		{
 			desc:    "invalid annotation ID",
 			given:   "annotations:id:123abc",
-			want:    "",
+			want:    []string{""},
 			wantErr: accesscontrol.ErrInvalidScope,
 		},
 		{
 			desc:    "malformed scope",
 			given:   "annotations:1",
-			want:    "",
+			want:    []string{""},
 			wantErr: accesscontrol.ErrInvalidScope,
+		},
+		{
+			desc:           "correctly resolves organization annotations with feature toggle",
+			given:          "annotations:id:2",
+			featureToggles: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			want:           []string{accesscontrol.ScopeAnnotationsTypeOrganization},
+			wantErr:        nil,
+		},
+		{
+			desc:           "correctly resolves annotations from root dashboard with feature toggle",
+			given:          "annotations:id:1",
+			featureToggles: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			want: []string{
+				dashboards.ScopeDashboardsProvider.GetResourceScopeUID(rootDashUID),
+				dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID),
+			},
+			wantErr: nil,
+		},
+		{
+			desc:           "correctly resolves annotations from dashboard in a folder with feature toggle",
+			given:          "annotations:id:3",
+			featureToggles: []any{featuremgmt.FlagAnnotationPermissionUpdate},
+			want: []string{
+				dashboards.ScopeDashboardsProvider.GetResourceScopeUID(folderDashUID),
+				dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID),
+			},
+			wantErr: nil,
 		},
 	}
 
-	dashboardAnnotation := annotations.Item{ID: 1, DashboardID: 1}
-	organizationAnnotation := annotations.Item{ID: 2}
-
-	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	_ = fakeAnnoRepo.Save(context.Background(), &dashboardAnnotation)
-	_ = fakeAnnoRepo.Save(context.Background(), &organizationAnnotation)
-
-	prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo)
-	require.Equal(t, "annotations:id:", prefix)
-
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
+			features := featuremgmt.WithFeatures(tc.featureToggles...)
+			prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo, features, dashSvc, &foldertest.FakeService{})
+			require.Equal(t, "annotations:id:", prefix)
+
 			resolved, err := resolver.Resolve(context.Background(), 1, tc.given)
 			if tc.wantErr != nil {
 				require.Error(t, err)
 				require.Equal(t, tc.wantErr, err)
 			} else {
 				require.NoError(t, err)
-				require.Len(t, resolved, 1)
-				require.Equal(t, tc.want, resolved[0])
+				require.Len(t, resolved, len(tc.want))
+				require.Equal(t, tc.want, resolved)
 			}
 		})
 	}
@@ -312,5 +358,5 @@ func setUpRBACGuardian(t *testing.T) {
 		guardian.New = origNewGuardian
 	})
 
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanEditValue: true})
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanEditValue: true, CanViewValue: true})
 }

@@ -12,12 +12,14 @@ import (
 
 func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink, error) {
 	var configNodes []*navtree.NavLink
+	ctx := c.Req.Context()
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
-	authConfigUIAvailable := s.license.FeatureEnabled("saml")
+	authConfigUIAvailable := s.license.FeatureEnabled("saml") || s.cfg.LDAPAuthEnabled
 
-	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
+	// FIXME: If plugin admin is disabled or externally managed, server admins still need to access the page, this is why
+	// while we don't have a permissions for listing plugins the legacy check has to stay as a default
 	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Plugins",
@@ -54,7 +56,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	disabled, err := s.apiKeyService.IsDisabled(c.Req.Context(), c.OrgID)
+	disabled, err := s.apiKeyService.IsDisabled(ctx, c.SignedInUser.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
@@ -100,13 +102,17 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagFeatureToggleAdminPage) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
 		configNodes = append(configNodes, &navtree.NavLink{
-			Text: "Feature Toggles", SubTitle: "View feature toggles", Id: "feature-toggles", Url: s.cfg.AppSubURL + "/admin/featuretoggles", Icon: "toggle-on",
+			Text:     "Feature Toggles",
+			SubTitle: "View and edit feature toggles",
+			Id:       "feature-toggles",
+			Url:      s.cfg.AppSubURL + "/admin/featuretoggles",
+			Icon:     "toggle-on",
 		})
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagCorrelations) && hasAccess(correlations.ConfigurationPageAccess) {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagCorrelations) && hasAccess(correlations.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Correlations",
 			Icon:     "gf-glue",
@@ -116,7 +122,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
+	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(ctx, featuremgmt.FlagStorage) {
 		storage := &navtree.NavLink{
 			Text:     "Storage",
 			Id:       "storage",
@@ -130,7 +136,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	configNode := &navtree.NavLink{
 		Id:         navtree.NavIDCfg,
 		Text:       "Administration",
-		SubTitle:   "Organization: " + c.OrgName,
+		SubTitle:   "Organization: " + c.SignedInUser.GetOrgName(),
 		Icon:       "cog",
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,

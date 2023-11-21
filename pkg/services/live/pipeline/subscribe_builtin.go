@@ -6,9 +6,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/model"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type BuiltinSubscriber struct {
@@ -16,7 +16,7 @@ type BuiltinSubscriber struct {
 }
 
 type ChannelHandlerGetter interface {
-	GetChannelHandler(ctx context.Context, user *user.SignedInUser, channel string) (model.ChannelHandler, live.Channel, error)
+	GetChannelHandler(ctx context.Context, user identity.Requester, channel string) (model.ChannelHandler, live.Channel, error)
 }
 
 const SubscriberTypeBuiltin = "builtin"

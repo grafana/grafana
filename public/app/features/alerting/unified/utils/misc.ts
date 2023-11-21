@@ -1,7 +1,10 @@
 import { sortBy } from 'lodash';
 
 import { UrlQueryMap, Labels, DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
+import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
@@ -55,7 +58,9 @@ export function createMuteTimingLink(muteTimingName: string, alertManagerSourceN
 
 export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string {
   if (isCloudRulesSource(ruleSource)) {
-    return createAbsoluteUrl(`/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(rule.name)}/find`);
+    return createAbsoluteUrl(
+      `/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(escapePathSeparators(rule.name))}/find`
+    );
   }
 
   return window.location.href.split('?')[0];
@@ -205,4 +210,14 @@ export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
   }
 
   return result;
+}
+
+export function isOpenSourceEdition() {
+  const buildInfo = config.buildInfo;
+  return buildInfo.edition === GrafanaEdition.OpenSource;
+}
+
+export function isLocalDevEnv() {
+  const buildInfo = config.buildInfo;
+  return buildInfo.env === 'development';
 }

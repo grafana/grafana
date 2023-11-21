@@ -8,8 +8,8 @@ import (
 )
 
 func TestCompositeLogger(t *testing.T) {
-	loggedArgs := [][]interface{}{}
-	l := gokitlog.LoggerFunc(func(i ...interface{}) error {
+	loggedArgs := [][]any{}
+	l := gokitlog.LoggerFunc(func(i ...any) error {
 		loggedArgs = append(loggedArgs, i)
 		return nil
 	})

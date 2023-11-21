@@ -229,6 +229,11 @@ export function getGradientRange(
   return [min, max];
 }
 
+function isStepTransparent(color: string) {
+  // steps are stored as names or 8-char hex
+  return color === 'transparent' || (color[0] === '#' && color.slice(-2) === '00');
+}
+
 export function getScaleGradientFn(
   opacity: number,
   theme: GrafanaTheme2,
@@ -254,34 +259,30 @@ export function getScaleGradientFn(
 
     if (colorMode.id === FieldColorModeId.Thresholds) {
       if (thresholds.mode === ThresholdsMode.Absolute) {
-        const valueStops = thresholds.steps.map(
-          (step) =>
-            [step.value, colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity)] as ValueStop
-        );
+        const valueStops: ValueStop[] = thresholds.steps.map((step) => [
+          step.value,
+          isStepTransparent(step.color)
+            ? '#0000'
+            : colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
+        ]);
         gradient = scaleGradient(plot, scaleKey, valueStops, true);
       } else {
         const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
         const range = max - min;
-        const valueStops = thresholds.steps.map(
-          (step) =>
-            [
-              min + range * (step.value / 100),
-              colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
-            ] as ValueStop
-        );
+        const valueStops: ValueStop[] = thresholds.steps.map((step) => [
+          min + range * (step.value / 100),
+          colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
+        ]);
         gradient = scaleGradient(plot, scaleKey, valueStops, true);
       }
     } else if (colorMode.getColors) {
       const colors = colorMode.getColors(theme);
       const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
       const range = max - min;
-      const valueStops = colors.map(
-        (color, i) =>
-          [
-            min + range * (i / (colors.length - 1)),
-            colorManipulator.alpha(theme.visualization.getColorByName(color), opacity),
-          ] as ValueStop
-      );
+      const valueStops: ValueStop[] = colors.map((color, i) => [
+        min + range * (i / (colors.length - 1)),
+        colorManipulator.alpha(theme.visualization.getColorByName(color), opacity),
+      ]);
       gradient = scaleGradient(plot, scaleKey, valueStops, false);
     }
 

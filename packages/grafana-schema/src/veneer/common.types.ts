@@ -45,3 +45,15 @@ export const defaultTableFieldOptions: raw.TableFieldOptions = {
     type: raw.TableCellDisplayMode.Auto,
   },
 };
+
+/**
+ * Represent panel data loading state.
+ * @deprecated Please use LoadingState from @grafana/data
+ */
+export enum LoadingState {
+  NotStarted = 'NotStarted',
+  Loading = 'Loading',
+  Streaming = 'Streaming',
+  Done = 'Done',
+  Error = 'Error',
+}

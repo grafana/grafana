@@ -8,28 +8,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-kit/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-)
 
-func newLogger(name string, lev string) log.Logger {
-	logger := log.New(name)
-	logger.Swap(level.NewFilter(logger.GetLogger(), level.AllowInfo()))
-	return logger
-}
+	"github.com/grafana/grafana/pkg/setting"
+)
 
 func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name                 string
@@ -113,11 +105,8 @@ func TestSearchJSONForEmail(t *testing.T) {
 
 func TestSearchJSONForGroups(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name                 string
@@ -176,11 +165,8 @@ func TestSearchJSONForGroups(t *testing.T) {
 
 func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name                 string
@@ -238,19 +224,17 @@ func TestSearchJSONForRole(t *testing.T) {
 }
 
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
-	provider := SocialGenericOAuth{
-		SocialBase: &SocialBase{
-			log: newLogger("generic_oauth_test", "debug"),
-		},
-		emailAttributePath: "email",
-	}
+	provider, err := NewGenericOAuthProvider(map[string]any{
+		"email_attribute_path": "email",
+	}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	tests := []struct {
 		Name                    string
 		SkipOrgRoleSync         bool
 		AllowAssignGrafanaAdmin bool
-		ResponseBody            interface{}
-		OAuth2Extra             interface{}
+		ResponseBody            any
+		OAuth2Extra             any
 		RoleAttributePath       string
 		ExpectedEmail           string
 		ExpectedRole            org.RoleType
@@ -259,7 +243,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	}{
 		{
 			Name: "Given a valid id_token, a valid role path, no API response, use id_token",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 			},
@@ -269,7 +253,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given a valid id_token, no role path, no API response, use id_token",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
@@ -279,7 +263,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given a valid id_token, an invalid role path, no API response, use id_token",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 			},
@@ -289,7 +273,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given no id_token, a valid role path, a valid API response, use API response",
-			ResponseBody: map[string]interface{}{
+			ResponseBody: map[string]any{
 				"role":  "Admin",
 				"email": "john.doe@example.com",
 			},
@@ -299,7 +283,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given no id_token, no role path, a valid API response, use API response",
-			ResponseBody: map[string]interface{}{
+			ResponseBody: map[string]any{
 				"email": "john.doe@example.com",
 			},
 			RoleAttributePath: "",
@@ -308,7 +292,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given no id_token, a role path, a valid API response without a role, use API response",
-			ResponseBody: map[string]interface{}{
+			ResponseBody: map[string]any{
 				"email": "john.doe@example.com",
 			},
 			RoleAttributePath: "role",
@@ -323,11 +307,11 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given a valid id_token, a valid role path, a valid API response, prefer id_token",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 			},
-			ResponseBody: map[string]interface{}{
+			ResponseBody: map[string]any{
 				"role":  "FromResponse",
 				"email": "from_response@example.com",
 			},
@@ -338,11 +322,11 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		{
 			Name:                    "Given a valid id_token and AssignGrafanaAdmin is unchecked, don't grant Server Admin",
 			AllowAssignGrafanaAdmin: false,
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "GrafanaAdmin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
 			},
-			ResponseBody: map[string]interface{}{
+			ResponseBody: map[string]any{
 				"role":  "FromResponse",
 				"email": "from_response@example.com",
 			},
@@ -354,11 +338,11 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		{
 			Name:                    "Given a valid id_token and AssignGrafanaAdmin is checked, grant Server Admin",
 			AllowAssignGrafanaAdmin: true,
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "GrafanaAdmin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
 			},
-			ResponseBody: map[string]interface{}{
+			ResponseBody: map[string]any{
 				"role":  "FromResponse",
 				"email": "from_response@example.com",
 			},
@@ -369,11 +353,11 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given a valid id_token, an invalid role path, a valid API response, prefer id_token",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 			},
-			ResponseBody: map[string]interface{}{
+			ResponseBody: map[string]any{
 				"role":  "FromResponse",
 				"email": "from_response@example.com",
 			},
@@ -383,11 +367,11 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given a valid id_token with no email, a valid role path, a valid API response with no role, merge",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "Admin" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4ifQ.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
-			ResponseBody: map[string]interface{}{
+			ResponseBody: map[string]any{
 				"email": "from_response@example.com",
 			},
 			RoleAttributePath: "role",
@@ -396,11 +380,11 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given a valid id_token with no role, a valid role path, a valid API response with no email, merge",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
-			ResponseBody: map[string]interface{}{
+			ResponseBody: map[string]any{
 				"role": "FromResponse",
 			},
 			RoleAttributePath: "role",
@@ -410,7 +394,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given a valid id_token, a valid advanced JMESPath role path, derive the role",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
@@ -421,12 +405,12 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct role using the userinfo API response (JMESPath warning on id_token)",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
-			ResponseBody: map[string]interface{}{
-				"info": map[string]interface{}{
+			ResponseBody: map[string]any{
+				"info": map[string]any{
 					"roles": []string{"engineering", "SRE"},
 				},
 			},
@@ -436,13 +420,13 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		},
 		{
 			Name: "Given a valid id_token, a valid advanced JMESPath role path, a valid API response, prefer ID token",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
 			},
-			ResponseBody: map[string]interface{}{
-				"info": map[string]interface{}{
+			ResponseBody: map[string]any{
+				"info": map[string]any{
 					"roles": []string{"engineering", "SRE"},
 				},
 			},
@@ -453,13 +437,13 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		{
 			Name:            "Given skip org role sync set to true, with a valid id_token, a valid advanced JMESPath role path, a valid API response, no org role should be set",
 			SkipOrgRoleSync: true,
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
 			},
-			ResponseBody: map[string]interface{}{
-				"info": map[string]interface{}{
+			ResponseBody: map[string]any{
+				"info": map[string]any{
 					"roles": []string{"engineering", "SRE"},
 				},
 			},
@@ -508,23 +492,21 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 func TestUserInfoSearchesForLogin(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-			loginAttributePath: "login",
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{
+			"login_attribute_path": "login",
+		}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name               string
-			ResponseBody       interface{}
-			OAuth2Extra        interface{}
+			ResponseBody       any
+			OAuth2Extra        any
 			LoginAttributePath string
 			ExpectedLogin      string
 		}{
 			{
 				Name: "Given a valid id_token, a valid login path, no API response, use id_token",
-				OAuth2Extra: map[string]interface{}{
+				OAuth2Extra: map[string]any{
 					// { "login": "johndoe", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
 				},
@@ -533,7 +515,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			},
 			{
 				Name: "Given a valid id_token, no login path, no API response, use id_token",
-				OAuth2Extra: map[string]interface{}{
+				OAuth2Extra: map[string]any{
 					// { "login": "johndoe", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
 				},
@@ -542,7 +524,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, a valid login path, a valid API response, use API response",
-				ResponseBody: map[string]interface{}{
+				ResponseBody: map[string]any{
 					"user_uid": "johndoe",
 					"email":    "john.doe@example.com",
 				},
@@ -551,7 +533,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, no login path, a valid API response, use API response",
-				ResponseBody: map[string]interface{}{
+				ResponseBody: map[string]any{
 					"login": "johndoe",
 				},
 				LoginAttributePath: "",
@@ -559,7 +541,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, a login path, a valid API response without a login, use API response",
-				ResponseBody: map[string]interface{}{
+				ResponseBody: map[string]any{
 					"username": "john.doe",
 				},
 				LoginAttributePath: "login",
@@ -603,23 +585,21 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 
 func TestUserInfoSearchesForName(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-			nameAttributePath: "name",
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{
+			"name_attribute_path": "name",
+		}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name              string
-			ResponseBody      interface{}
-			OAuth2Extra       interface{}
+			ResponseBody      any
+			OAuth2Extra       any
 			NameAttributePath string
 			ExpectedName      string
 		}{
 			{
 				Name: "Given a valid id_token, a valid name path, no API response, use id_token",
-				OAuth2Extra: map[string]interface{}{
+				OAuth2Extra: map[string]any{
 					// { "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwibmFtZSI6IkpvaG4gRG9lIn0.oMsXH0mHxUSYMXh6FonZIWh8LgNIcYbKRLSO1bwnfSI",
 				},
@@ -628,7 +608,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			},
 			{
 				Name: "Given a valid id_token, no name path, no API response, use id_token",
-				OAuth2Extra: map[string]interface{}{
+				OAuth2Extra: map[string]any{
 					// { "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwibmFtZSI6IkpvaG4gRG9lIn0.oMsXH0mHxUSYMXh6FonZIWh8LgNIcYbKRLSO1bwnfSI",
 				},
@@ -637,7 +617,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, a valid name path, a valid API response, use API response",
-				ResponseBody: map[string]interface{}{
+				ResponseBody: map[string]any{
 					"user_name": "John Doe",
 					"login":     "johndoe",
 					"email":     "john.doe@example.com",
@@ -647,7 +627,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, no name path, a valid API response, use API response",
-				ResponseBody: map[string]interface{}{
+				ResponseBody: map[string]any{
 					"display_name": "John Doe",
 					"login":        "johndoe",
 				},
@@ -656,7 +636,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			},
 			{
 				Name: "Given no id_token, a name path, a valid API response without a name, use API response",
-				ResponseBody: map[string]interface{}{
+				ResponseBody: map[string]any{
 					"display_name": "John Doe",
 					"username":     "john.doe",
 				},
@@ -701,16 +681,10 @@ func TestUserInfoSearchesForName(t *testing.T) {
 
 func TestUserInfoSearchesForGroup(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
-
 		tests := []struct {
 			name                string
 			groupsAttributePath string
-			responseBody        interface{}
+			responseBody        any
 			expectedResult      []string
 		}{
 			{
@@ -721,8 +695,8 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 			{
 				name:                "If groups are empty, user groups are nil",
 				groupsAttributePath: "info.groups",
-				responseBody: map[string]interface{}{
-					"info": map[string]interface{}{
+				responseBody: map[string]any{
+					"info": map[string]any{
 						"groups": []string{},
 					},
 				},
@@ -731,8 +705,8 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 			{
 				name:                "If groups are set, user groups are set",
 				groupsAttributePath: "info.groups",
-				responseBody: map[string]interface{}{
-					"info": map[string]interface{}{
+				responseBody: map[string]any{
+					"info": map[string]any{
 						"groups": []string{"foo", "bar"},
 					},
 				},
@@ -742,7 +716,6 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				provider.groupsAttributePath = test.groupsAttributePath
 				body, err := json.Marshal(test.responseBody)
 				require.NoError(t, err)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -752,7 +725,13 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 					_, err := w.Write(body)
 					require.NoError(t, err)
 				}))
-				provider.apiUrl = ts.URL
+
+				provider, err := NewGenericOAuthProvider(map[string]any{
+					"groups_attribute_path": test.groupsAttributePath,
+					"api_url":               ts.URL,
+				}, &setting.Cfg{}, featuremgmt.WithFeatures())
+				require.NoError(t, err)
+
 				token := &oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
@@ -769,21 +748,19 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 }
 
 func TestPayloadCompression(t *testing.T) {
-	provider := SocialGenericOAuth{
-		SocialBase: &SocialBase{
-			log: newLogger("generic_oauth_test", "debug"),
-		},
-		emailAttributePath: "email",
-	}
+	provider, err := NewGenericOAuthProvider(map[string]any{
+		"email_attribute_path": "email",
+	}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	tests := []struct {
 		Name          string
-		OAuth2Extra   interface{}
+		OAuth2Extra   any
 		ExpectedEmail string
 	}{
 		{
 			Name: "Given a valid DEFLATE compressed id_token, return userInfo",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkRFRiJ9.eJyrVkrNTczMUbJSysrPyNNLyU91SK1IzC3ISdVLzs9V0lEqys9JBco6puRm5inVAgCFRw_6.XrV4ZKhw19dTcnviXanBD8lwjeALCYtDiESMmGzC-ho",
 			},
@@ -791,7 +768,7 @@ func TestPayloadCompression(t *testing.T) {
 		},
 		{
 			Name: "Given a valid DEFLATE compressed id_token with numeric header, return userInfo",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// Generated from https://token.dev/
 				"id_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsInZlciI6NH0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTY0MjUxNjYwNSwiZXhwIjoxNjQyNTIwMjA1LCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.ANndoPWIHNjKPG8na7UUq7nan1RgF8-ze8STU31RXcA",
 			},
@@ -799,7 +776,7 @@ func TestPayloadCompression(t *testing.T) {
 		},
 		{
 			Name: "Given an invalid DEFLATE compressed id_token, return nil",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkRFRiJ9.00eJyrVkrNTczMUbJSysrPyNNLyU91SK1IzC3ISdVLzs9V0lEqys9JBco6puRm5inVAgCFRw_6.XrV4ZKhw19dTcnviXanBD8lwjeALCYtDiESMmGzC-ho",
 			},
@@ -807,7 +784,7 @@ func TestPayloadCompression(t *testing.T) {
 		},
 		{
 			Name: "Given an unsupported GZIP compressed id_token, return nil",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkdaSVAifQ.H4sIAAAAAAAAAKtWSs1NzMxRslLKys_I00vJT3VIrUjMLchJ1UvOz1XSUSrKz0kFyjqm5GbmKdUCANotxTkvAAAA.85AXm3JOF5qflEA0goDFvlbZl2q3eFvqVcehz860W-o",
 			},
@@ -833,6 +810,100 @@ func TestPayloadCompression(t *testing.T) {
 				require.NotNil(t, userInfo, "Testing case %q", test.Name)
 				require.Equal(t, test.ExpectedEmail, userInfo.Email)
 			}
+		})
+	}
+}
+
+func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
+	type settingFields struct {
+		nameAttributePath    string
+		loginAttributePath   string
+		idTokenAttributeName string
+		teamIds              []string
+		allowedOrganizations []string
+	}
+	testCases := []struct {
+		name     string
+		settings map[string]any
+		want     settingFields
+	}{
+		{
+			name: "nameAttributePath is set",
+			settings: map[string]any{
+				"name_attribute_path": "name",
+			},
+			want: settingFields{
+				nameAttributePath:    "name",
+				loginAttributePath:   "",
+				idTokenAttributeName: "",
+				teamIds:              []string{},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "loginAttributePath is set",
+			settings: map[string]any{
+				"login_attribute_path": "login",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "login",
+				idTokenAttributeName: "",
+				teamIds:              []string{},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "idTokenAttributeName is set",
+			settings: map[string]any{
+				"id_token_attribute_name": "id_token",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "",
+				idTokenAttributeName: "id_token",
+				teamIds:              []string{},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "teamIds is set",
+			settings: map[string]any{
+				"team_ids": "[\"team1\", \"team2\"]",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "",
+				idTokenAttributeName: "",
+				teamIds:              []string{"team1", "team2"},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "allowedOrganizations is set",
+			settings: map[string]any{
+				"allowed_organizations": "org1, org2",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "",
+				idTokenAttributeName: "",
+				teamIds:              []string{},
+				allowedOrganizations: []string{"org1", "org2"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
+			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
+			require.Equal(t, tc.want.idTokenAttributeName, s.idTokenAttributeName)
+			require.Equal(t, tc.want.teamIds, s.teamIds)
+			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
 		})
 	}
 }

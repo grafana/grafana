@@ -4,18 +4,21 @@
 
 # For the verbose comments options see "openldap" env block
 
-# --- First LDAP Server (only admins) ---
-
+# --- First LDAP Server ---
 [[servers]]
 host = "127.0.0.1"
 port = 389
 use_ssl = false
 start_tls = false
+tls_ciphers = []
+min_tls_version = ""
 ssl_skip_verify = false
-bind_dn = "cn=admin,dc=grafana,dc=org"
+
+timeout = 10
+bind_dn = "cn=admin,dc=srv1-grafana,dc=org"
 bind_password = 'grafana'
 search_filter = "(cn=%s)"
-search_base_dns = ["ou=users,dc=grafana,dc=org"]
+search_base_dns = ["dc=srv1-grafana,dc=org"]
 
 [servers.attributes]
 name = "givenName"
@@ -24,24 +27,36 @@ username = "cn"
 member_of = "memberOf"
 email =  "email"
 
+# Map ldap groups to grafana org roles
 [[servers.group_mappings]]
-group_dn = "cn=admins,ou=groups,dc=grafana,dc=org"
+group_dn = "cn=admins,ou=groups,dc=srv1-grafana,dc=org"
 org_role = "Admin"
-grafana_admin = true
 
-# --- Second LDAP Server (rest of the users) ---
+[[servers.group_mappings]]
+group_dn = "cn=editors,ou=groups,dc=srv1-grafana,dc=org"
+org_role = "Editor"
+
+[[servers.group_mappings]]
+group_dn = "*"
+org_role = "Viewer"
+
+
+# --- Second LDAP Server ---
 
 [[servers]]
 host = "127.0.0.1"
-port = 388
+port = 1389
 use_ssl = false
 start_tls = false
+tls_ciphers = []
+min_tls_version = ""
 ssl_skip_verify = false
 
-bind_dn = "cn=admin,dc=grafana,dc=org"
+timeout = 10
+bind_dn = "cn=admin,dc=srv2-grafana,dc=org"
 bind_password = 'grafana'
 search_filter = "(cn=%s)"
-search_base_dns = ["ou=users,dc=grafana,dc=org"]
+search_base_dns = ["dc=srv2-grafana,dc=org"]
 
 [servers.attributes]
 name = "givenName"
@@ -50,8 +65,13 @@ username = "cn"
 member_of = "memberOf"
 email =  "email"
 
+# Map ldap groups to grafana org roles
 [[servers.group_mappings]]
-group_dn = "cn=editors,ou=groups,dc=grafana,dc=org"
+group_dn = "cn=admins,ou=groups,dc=srv2-grafana,dc=org"
+org_role = "Admin"
+
+[[servers.group_mappings]]
+group_dn = "cn=editors,ou=groups,dc=srv2-grafana,dc=org"
 org_role = "Editor"
 
 [[servers.group_mappings]]

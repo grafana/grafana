@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -63,13 +64,13 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 
 func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	raw := &entity.Entity{
-		GRN:    &entity.GRN{},
+		GRN:    &grn.GRN{},
 		Origin: &entity.EntityOriginInfo{},
 	}
 
 	summaryjson := &summarySupport{}
-	args := []interface{}{
-		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID, &raw.Folder,
+	args := []any{
+		&raw.GRN.TenantID, &raw.GRN.ResourceKind, &raw.GRN.ResourceIdentifier, &raw.Folder,
 		&raw.Version, &raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
@@ -106,7 +107,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 	return raw, nil
 }
 
-func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*entity.GRN, error) {
+func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *grn.GRN) (*grn.GRN, error) {
 	if grn == nil {
 		return nil, fmt.Errorf("missing GRN")
 	}
@@ -114,22 +115,22 @@ func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*en
 	if err != nil {
 		return nil, err
 	}
-	if grn.TenantId == 0 {
-		grn.TenantId = user.OrgID
-	} else if grn.TenantId != user.OrgID {
+	if grn.TenantID == 0 {
+		grn.TenantID = user.OrgID
+	} else if grn.TenantID != user.OrgID {
 		return nil, fmt.Errorf("tenant ID does not match userID")
 	}
 
-	if grn.Kind == "" {
-		return nil, fmt.Errorf("GRN missing kind")
+	if grn.ResourceKind == "" {
+		return nil, fmt.Errorf("GRN missing ResourceKind")
 	}
-	if grn.UID == "" {
-		return nil, fmt.Errorf("GRN missing UID")
+	if grn.ResourceIdentifier == "" {
+		return nil, fmt.Errorf("GRN missing ResourceIdentifier")
 	}
-	if len(grn.UID) > 40 {
-		return nil, fmt.Errorf("GRN UID is too long (>40)")
+	if len(grn.ResourceIdentifier) > 64 {
+		return nil, fmt.Errorf("GRN ResourceIdentifier is too long (>64)")
 	}
-	if strings.ContainsAny(grn.UID, "/#$@?") {
+	if strings.ContainsAny(grn.ResourceIdentifier, "/#$@?") {
 		return nil, fmt.Errorf("invalid character in GRN")
 	}
 	return grn, nil
@@ -144,7 +145,7 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 		return nil, err
 	}
 
-	args := []interface{}{grn.ToGRNString()}
+	args := []any{grn.ToGRNString()}
 	where := "grn=?"
 
 	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
@@ -199,9 +200,9 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 
 	// Dynamically create the summary
 	if r.WithSummary {
-		builder := s.kinds.GetSummaryBuilder(r.GRN.Kind)
+		builder := s.kinds.GetSummaryBuilder(r.GRN.ResourceKind)
 		if builder != nil {
-			val, out, err := builder(ctx, r.GRN.UID, raw.Body)
+			val, out, err := builder(ctx, r.GRN.ResourceIdentifier, raw.Body)
 			if err == nil {
 				raw.Body = out // cleaned up
 				raw.SummaryJson, err = json.Marshal(val)
@@ -226,7 +227,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 	}
 
 	first := b.Batch[0]
-	args := []interface{}{}
+	args := []any{}
 	constraints := []string{}
 
 	for _, r := range b.Batch {
@@ -438,7 +439,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				" ?, ?, ?, "+
 				" ?, ?, ?, "+
 				" ?, ?, ?)",
-				oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
+				oid, grn.TenantID, grn.ResourceKind, grn.ResourceIdentifier, r.Folder,
 				versionInfo.Size, body, etag, versionInfo.Version,
 				updatedAt, createdBy, createdAt, createdBy,
 				summary.model.Name, summary.model.Description, summary.model.Slug,
@@ -446,8 +447,8 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				origin.Source, origin.Key, origin.Time,
 			)
 		}
-		if err == nil && entity.StandardKindFolder == r.GRN.Kind {
-			err = updateFolderTree(ctx, tx, grn.TenantId)
+		if err == nil && entity.StandardKindFolder == r.GRN.ResourceKind {
+			err = updateFolderTree(ctx, tx, grn.TenantID)
 		}
 		if err == nil {
 			summary.folder = r.Folder
@@ -514,7 +515,7 @@ func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 func (s *sqlEntityServer) writeSearchInfo(
 	ctx context.Context,
 	tx *session.SessionTx,
-	grn string,
+	grn2 string,
 	summary *summarySupport,
 ) error {
 	parent_grn := summary.getParentGRN()
@@ -525,7 +526,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 			`INSERT INTO entity_labels `+
 				"(grn, label, value, parent_grn) "+
 				`VALUES (?, ?, ?, ?)`,
-			grn, k, v, parent_grn,
+			grn2, k, v, parent_grn,
 		)
 		if err != nil {
 			return err
@@ -542,7 +543,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 			"grn, parent_grn, family, type, id, "+
 			"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			grn, parent_grn, ref.Family, ref.Type, ref.Identifier,
+			grn2, parent_grn, ref.Family, ref.Type, ref.Identifier,
 			resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 		)
 		if err != nil {
@@ -553,10 +554,10 @@ func (s *sqlEntityServer) writeSearchInfo(
 	// Traverse entities and insert refs
 	if summary.model.Nested != nil {
 		for _, childModel := range summary.model.Nested {
-			grn = (&entity.GRN{
-				TenantId: summary.parent_grn.TenantId,
-				Kind:     childModel.Kind,
-				UID:      childModel.UID, // append???
+			grn2 = (&grn.GRN{
+				TenantID:           summary.parent_grn.TenantID,
+				ResourceKind:       childModel.Kind,
+				ResourceIdentifier: childModel.UID, // append???
 			}).ToGRNString()
 
 			child, err := newSummarySupport(childModel)
@@ -577,17 +578,16 @@ func (s *sqlEntityServer) writeSearchInfo(
 				" ?, ?, ?, ?,"+
 				" ?, ?,"+
 				" ?, ?, ?)",
-				*parent_grn, grn,
-				summary.parent_grn.TenantId, childModel.Kind, childModel.UID, summary.folder,
+				*parent_grn, grn2,
+				summary.parent_grn.TenantID, childModel.Kind, childModel.UID, summary.folder,
 				child.name, child.description,
 				child.labels, child.fields, child.errors,
 			)
-
 			if err != nil {
 				return err
 			}
 
-			err = s.writeSearchInfo(ctx, tx, grn, child)
+			err = s.writeSearchInfo(ctx, tx, grn2, child)
 			if err != nil {
 				return err
 			}
@@ -598,13 +598,12 @@ func (s *sqlEntityServer) writeSearchInfo(
 }
 
 func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntityRequest) (*summarySupport, []byte, error) {
-	grn := r.GRN
-	builder := s.kinds.GetSummaryBuilder(grn.Kind)
+	builder := s.kinds.GetSummaryBuilder(r.GRN.ResourceKind)
 	if builder == nil {
 		return nil, nil, fmt.Errorf("unsupported kind")
 	}
 
-	summary, body, err := builder(ctx, grn.UID, r.Body)
+	summary, body, err := builder(ctx, r.GRN.ResourceIdentifier, r.Body)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -613,7 +612,7 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 	if summary.Slug == "" {
 		t := summary.Name
 		if t == "" {
-			t = r.GRN.UID
+			t = r.GRN.ResourceIdentifier
 		}
 		summary.Slug = slugify.Slugify(t)
 	}
@@ -627,21 +626,21 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 }
 
 func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
-	grn, err := s.validateGRN(ctx, r.GRN)
+	grn2, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
 
 	rsp := &entity.DeleteEntityResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		rsp.OK, err = doDelete(ctx, tx, grn)
+		rsp.OK, err = doDelete(ctx, tx, grn2)
 		return err
 	})
 	return rsp, err
 }
 
-func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool, error) {
-	str := grn.ToGRNString()
+func doDelete(ctx context.Context, tx *session.SessionTx, grn2 *grn.GRN) (bool, error) {
+	str := grn2.ToGRNString()
 	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", str)
 	if err != nil {
 		return false, err
@@ -669,21 +668,21 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool
 		return false, err
 	}
 
-	if grn.Kind == entity.StandardKindFolder {
-		err = updateFolderTree(ctx, tx, grn.TenantId)
+	if grn2.ResourceKind == entity.StandardKindFolder {
+		err = updateFolderTree(ctx, tx, grn2.TenantID)
 	}
 	return rows > 0, err
 }
 
 func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRequest) (*entity.EntityHistoryResponse, error) {
-	grn, err := s.validateGRN(ctx, r.GRN)
+	grn2, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
 	}
-	oid := grn.ToGRNString()
+	oid := grn2.ToGRNString()
 
 	page := ""
-	args := []interface{}{oid}
+	args := []any{oid}
 	if r.NextPageToken != "" {
 		// args = append(args, r.NextPageToken) // TODO, need to get time from the version
 		// page = "AND updated <= ?"
@@ -748,7 +747,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	entityQuery := selectQuery{
 		fields:   fields,
 		from:     "entity", // the table
-		args:     []interface{}{},
+		args:     []any{},
 		limit:    r.Limit,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
@@ -764,7 +763,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	if len(r.Labels) > 0 {
-		var args []interface{}
+		var args []any
 		var conditions []string
 		for labelKey, labelValue := range r.Labels {
 			args = append(args, labelKey)
@@ -789,12 +788,12 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	rsp := &entity.EntitySearchResponse{}
 	for rows.Next() {
 		result := &entity.EntitySearchResult{
-			GRN: &entity.GRN{},
+			GRN: &grn.GRN{},
 		}
 		summaryjson := summarySupport{}
 
-		args := []interface{}{
-			&oid, &result.GRN.TenantId, &result.GRN.Kind, &result.GRN.UID,
+		args := []any{
+			&oid, &result.GRN.TenantID, &result.GRN.ResourceKind, &result.GRN.ResourceIdentifier,
 			&result.Version, &result.Folder, &result.Slug, &summaryjson.errors,
 			&result.Size, &result.UpdatedAt, &result.UpdatedBy,
 			&result.Name, &summaryjson.description,

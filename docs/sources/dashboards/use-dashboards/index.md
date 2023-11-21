@@ -39,12 +39,12 @@ The following image and descriptions highlight all dashboard features.
 - (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel using a link or snapshot. You can also export the dashboard definition from the share modal.
 - (4) **Add**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
 - (5) **Save dashboard**: Click to save changes to your dashboard.
-- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics]({{< relref "../assess-dashboard-usage/" >}}).
-- (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. Learn more about [dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings/" >}}).
+- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics][].
+- (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. Learn more about [dashboard settings][].
 - (8) **Time picker dropdown**: Click to select relative time range options and set custom absolute time ranges.
   - You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
   - Time settings are saved on a per-dashboard basis.
-- (9) **Zoom out time range**: Click to zoom out the time range. Learn more about how to use [common time range controls]({{< relref "#common-time-range-controls" >}}).
+- (9) **Zoom out time range**: Click to zoom out the time range. Learn more about how to use [common time range controls](#common-time-range-controls).
 - (10) **Refresh dashboard**: Click to immediately trigger queries and refresh dashboard data.
 - (11) **Refresh dashboard time interval**: Click to select a dashboard auto refresh time interval.
 - (12) **View mode**: Click to display the dashboard on a large screen such as a TV or a kiosk. View mode hides irrelevant information such as navigation menus. Learn more about view mode in our [How to Create Kiosks to Display Dashboards on a TV blog post](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/).
@@ -56,7 +56,7 @@ The following image and descriptions highlight all dashboard features.
 - (15) **Dashboard row**: A dashboard row is a logical divider within a dashboard that groups panels together.
   - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
   - Panels inside a collapsed row do not issue queries.
-  - Use [repeating rows]({{< relref "../build-dashboards/create-dashboard/#configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
+  - Use [repeating rows][] to dynamically create rows based on a template variable.
 
 ## Keyboard shortcuts
 
@@ -209,6 +209,17 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 
 You can control the time range of a dashboard by providing the following query parameters in the dashboard URL:
 
-- `from`: Defines the lower limit of the time range, specified in `ms`, `epoch`, or [relative time]({{< relref "#relative-time-range" >}})
-- `to`: Defines the upper limit of the time range, specified in `ms`, `epoch`, or [relative time]({{< relref "#relative-time-range" >}})
+- `from`: Defines the lower limit of the time range, specified in `ms`, `epoch`, or [relative time](#relative-time-range)
+- `to`: Defines the upper limit of the time range, specified in `ms`, `epoch`, or [relative time](#relative-time-range)
 - `time` and `time.window`: Defines a time range from `time-time.window/2` to `time+time.window/2`. Both parameters should be specified in `ms`. For example `?time=1500000000000&time.window=10000` results in 10s time range from 1499999995000 to 1500000005000
+
+{{% docs/reference %}}
+[dashboard analytics]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage"
+[dashboard analytics]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage"
+
+[dashboard settings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/modify-dashboard-settings"
+[dashboard settings]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/modify-dashboard-settings"
+
+[repeating rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
+[repeating rows]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
+{{% /docs/reference %}}

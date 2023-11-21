@@ -7,15 +7,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/socialtest"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -40,7 +40,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 		{
 			name:           "returns false and an error in case GetAuthInfo returns an error",
-			user:           &user.SignedInUser{},
+			user:           &user.SignedInUser{UserID: 1},
 			want:           nil,
 			wantExist:      false,
 			wantErr:        true,
@@ -48,7 +48,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 		{
 			name:           "returns false without an error in case auth entry is not found",
-			user:           &user.SignedInUser{},
+			user:           &user.SignedInUser{UserID: 1},
 			want:           nil,
 			wantExist:      false,
 			wantErr:        false,
@@ -56,7 +56,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 		{
 			name:            "returns false without an error in case the auth entry is not oauth",
-			user:            &user.SignedInUser{},
+			user:            &user.SignedInUser{UserID: 1},
 			want:            nil,
 			wantExist:       false,
 			wantErr:         false,
@@ -64,7 +64,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 		{
 			name:            "returns true when the auth entry is found",
-			user:            &user.SignedInUser{},
+			user:            &user.SignedInUser{UserID: 1},
 			want:            &login.UserAuth{AuthModule: "oauth_generic_oauth"},
 			wantExist:       true,
 			wantErr:         false,
@@ -72,6 +72,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			srv, authInfoStore, _ := setupOAuthTokenService(t)
 			authInfoStore.ExpectedOAuth = &tc.getAuthInfoUser
@@ -228,27 +229,20 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 	}
 
 	authInfoStore := &FakeAuthInfoStore{}
-	authInfoService := authinfoservice.ProvideAuthInfoService(nil, authInfoStore, &usagestats.UsageStatsMock{})
+	authInfoService := authinfoimpl.ProvideService(authInfoStore)
 	return &Service{
-		Cfg:               setting.NewCfg(),
-		SocialService:     socialService,
-		AuthInfoService:   authInfoService,
-		singleFlightGroup: &singleflight.Group{},
+		Cfg:                  setting.NewCfg(),
+		SocialService:        socialService,
+		AuthInfoService:      authInfoService,
+		singleFlightGroup:    &singleflight.Group{},
+		tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
 	}, authInfoStore, socialConnector
 }
 
 type FakeAuthInfoStore struct {
 	login.Store
-	ExpectedError                   error
-	ExpectedUser                    *user.User
-	ExpectedOAuth                   *login.UserAuth
-	ExpectedDuplicateUserEntries    int
-	ExpectedHasDuplicateUserEntries int
-	ExpectedLoginStats              login.LoginStats
-}
-
-func (f *FakeAuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*login.ExternalUserInfo, error) {
-	return nil, f.ExpectedError
+	ExpectedError error
+	ExpectedOAuth *login.UserAuth
 }
 
 func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
@@ -256,10 +250,6 @@ func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAut
 }
 
 func (f *FakeAuthInfoStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
-	return f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *login.UserAuth) error {
 	return f.ExpectedError
 }
 
@@ -273,36 +263,4 @@ func (f *FakeAuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.Updat
 
 func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
 	return f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) GetUserById(ctx context.Context, id int64) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]interface{}, error) {
-	var res = make(map[string]interface{})
-	res["stats.users.duplicate_user_entries"] = f.ExpectedDuplicateUserEntries
-	res["stats.users.has_duplicate_user_entries"] = f.ExpectedHasDuplicateUserEntries
-	res["stats.users.duplicate_user_entries_by_login"] = 0
-	res["stats.users.has_duplicate_user_entries_by_login"] = 0
-	res["stats.users.duplicate_user_entries_by_email"] = 0
-	res["stats.users.has_duplicate_user_entries_by_email"] = 0
-	res["stats.users.mixed_cased_users"] = f.ExpectedLoginStats.MixedCasedUsers
-	return res, f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) RunMetricsCollection(ctx context.Context) error {
-	return f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, error) {
-	return f.ExpectedLoginStats, f.ExpectedError
 }

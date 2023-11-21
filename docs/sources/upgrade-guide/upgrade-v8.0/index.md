@@ -16,7 +16,11 @@ weight: 2900
 
 # Upgrade to Grafana v8.0
 
-{{< docs/shared lookup="upgrade/upgrade-common-tasks.md" source="grafana" >}}
+{{< docs/shared lookup="upgrade/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
+
+{{< docs/shared lookup="back-up/back-up-grafana.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+1" >}}
+
+{{< docs/shared lookup="upgrade/upgrade-common-tasks.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Technical notes
 
@@ -38,7 +42,7 @@ Refer to [Grafana Live configuration]({{< relref "../../setup-grafana/set-up-gra
 
 ### Postgres, MySQL, Microsoft SQL Server data sources
 
-Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames" >}}) for the Postgres, MySQL, Microsoft SQL Server data sources. As a result, a _Time series_ query result gets returned in a [wide format]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}). To make the visualizations work as they did before, you might have to do some manual migrations.
+Grafana v8.0 changes the underlying data structure to [data frames](/developers/plugin-tools/introduction/data-frames) for the Postgres, MySQL, Microsoft SQL Server data sources. As a result, a _Time series_ query result gets returned in a [wide format](/developers/plugin-tools/introduction/data-frames#wide-format). To make the visualizations work as they did before, you might have to do some manual migrations.
 
 For any existing panels/visualizations using a _Time series_ query, where the time column is only needed for filtering the time range, for example, using the bar gauge or pie chart panel, we recommend that you use a _Table query_ instead and exclude the time column as a field in the response.
 Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658) for detailed instructions and workarounds.

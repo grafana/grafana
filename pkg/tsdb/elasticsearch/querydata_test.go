@@ -11,6 +11,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -51,7 +53,6 @@ func newFlowTestDsInfo(body []byte, statusCode int, requestCallback func(req *ht
 		Interval:                   "Daily",
 		Database:                   "[testdb-]YYYY.MM.DD",
 		ConfiguredFields:           configuredFields,
-		TimeInterval:               "1s",
 		URL:                        "http://localhost:9200",
 		HTTPClient:                 &client,
 		MaxConcurrentShardRequests: 42,
@@ -137,7 +138,7 @@ func queryDataTestWithResponseCode(queriesBytes []byte, responseStatusCode int, 
 		return nil
 	})
 
-	result, err := queryData(context.Background(), queries, dsInfo)
+	result, err := queryData(context.Background(), queries, dsInfo, log.New("test.logger"), tracing.InitializeTracerForTest())
 	if err != nil {
 		return queryDataTestResult{}, err
 	}

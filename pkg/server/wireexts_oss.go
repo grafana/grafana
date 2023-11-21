@@ -1,12 +1,14 @@
 //go:build wireinject && oss
 // +build wireinject,oss
 
+// This file should contain wiresets which contain OSS-specific implementations.
 package server
 
 import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
@@ -17,18 +19,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
+	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/caching"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -63,12 +66,10 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
 	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
-	datasourceservice.ProvideCacheService,
-	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	migrations.ProvideOSSMigrations,
 	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
-	authinfoservice.ProvideOSSUserProtectionService,
-	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
+	authinfoimpl.ProvideOSSUserProtectionService,
+	wire.Bind(new(login.UserProtectionService), new(*authinfoimpl.OSSUserProtectionImpl)),
 	encryptionprovider.ProvideEncryptionProvider,
 	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 	filters.ProvideOSSSearchUserFilter,
@@ -79,8 +80,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
-	permissions.ProvideDatasourcePermissionsService,
-	wire.Bind(new(permissions.DatasourcePermissionsService), new(*permissions.OSSDatasourcePermissionsService)),
+	guardian.ProvideGuardian,
+	wire.Bind(new(guardian.DatasourceGuardianProvider), new(*guardian.OSSProvider)),
 	usagestatssvcs.ProvideUsageStatsProvidersRegistry,
 	wire.Bind(new(registry.UsageStatsProvidersRegistry), new(*usagestatssvcs.UsageStatsProvidersRegistry)),
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
@@ -92,6 +93,10 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
+	idimpl.ProvideLocalSigner,
+	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
+	manager.ProvideInstaller,
+	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 )
 
 var wireExtsSet = wire.NewSet(
@@ -107,4 +112,23 @@ var wireExtsCLISet = wire.NewSet(
 var wireExtsTestSet = wire.NewSet(
 	wireTestSet,
 	wireExtsBasicSet,
+)
+
+// The wireExtsBaseCLISet is a simplified set of dependencies for the OSS CLI,
+// suitable for running background services and targeted dskit modules without
+// starting up the full Grafana server.
+var wireExtsBaseCLISet = wire.NewSet(
+	NewModuleRunner,
+
+	featuremgmt.ProvideManagerService,
+	featuremgmt.ProvideToggles,
+	hooks.ProvideService,
+	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
+	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
+)
+
+// wireModuleServerSet is a wire set for the ModuleServer.
+var wireExtsModuleServerSet = wire.NewSet(
+	NewModule,
+	wireExtsBaseCLISet,
 )

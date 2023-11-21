@@ -9,6 +9,6 @@ import { Vector } from '../types';
 export class AsNumberVector extends Array<number> {
   constructor(field: Vector) {
     super();
-    return field.map((v) => +v) as AsNumberVector;
+    return field.map((v) => +v);
   }
 }

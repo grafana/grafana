@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -21,7 +22,6 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -29,6 +29,8 @@ import (
 const (
 	viewIndex            = "index"
 	loginErrorCookieName = "login_error"
+	// #nosec G101 - this is not a hardcoded secret
+	postLogoutRedirectParam = "post_logout_redirect_uri"
 )
 
 var setIndexViewData = (*HTTPServer).setIndexViewData
@@ -89,7 +91,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
-	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagClientTokenRotation) {
 		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
 			c.Redirect(hs.Cfg.AppSubURL + "/")
 			return
@@ -239,9 +241,14 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 }
 
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if errID != nil {
+		hs.log.Error("failed to retrieve user ID", "error", errID)
+	}
+
 	// If SAML is enabled and this is a SAML user use saml logout
 	if hs.samlSingleLogoutEnabled() {
-		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: c.UserID}
+		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: userID}
 		if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 			if authInfo.AuthModule == loginservice.SAMLAuthModule {
 				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
@@ -250,10 +257,22 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		}
 	}
 
+	idTokenHint := ""
+	oidcLogout := isPostLogoutRedirectConfigured(hs.Cfg.SignoutRedirectUrl)
+
 	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
 	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
+		token := hs.oauthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser)
+		if oidcLogout {
+			if token.Valid() {
+				idTokenHint = token.Extra("id_token").(string)
+			} else {
+				hs.log.Warn("Token is not valid")
+			}
+		}
+
 		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
-			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
+			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", userID, "error", err)
 		}
 	}
 
@@ -264,10 +283,14 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 
 	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 
-	if setting.SignoutRedirectUrl != "" {
-		c.Redirect(setting.SignoutRedirectUrl)
+	rdUrl := hs.Cfg.SignoutRedirectUrl
+	if rdUrl != "" {
+		if oidcLogout {
+			rdUrl = getPostRedirectUrl(hs.Cfg.SignoutRedirectUrl, idTokenHint)
+		}
+		c.Redirect(rdUrl)
 	} else {
-		hs.log.Info("Successful Logout", "User", c.Email)
+		hs.log.Info("Successful Logout", "User", c.SignedInUser.GetEmail())
 		c.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 }
@@ -298,12 +321,12 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *contextmodel.ReqContext, cookie
 	return nil
 }
 
-func (hs *HTTPServer) redirectWithError(c *contextmodel.ReqContext, err error, v ...interface{}) {
+func (hs *HTTPServer) redirectWithError(c *contextmodel.ReqContext, err error, v ...any) {
 	c.Logger.Warn(err.Error(), v...)
 	c.Redirect(hs.redirectURLWithErrorCookie(c, err))
 }
 
-func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
+func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err error, v ...any) *response.RedirectResponse {
 	c.Logger.Error(err.Error(), v...)
 	location := hs.redirectURLWithErrorCookie(c, err)
 	return response.Redirect(location)
@@ -311,8 +334,17 @@ func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err 
 
 func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
 	setCookie := true
-	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
+		var userID int64
+		if c.SignedInUser != nil && !c.SignedInUser.IsNil() {
+			var errID error
+			userID, errID = identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+			if errID != nil {
+				hs.log.Error("failed to retrieve user ID", "error", errID)
+			}
+		}
+
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
 		prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 		if err != nil {
 			c.Redirect(hs.Cfg.AppSubURL + "/login")
@@ -373,4 +405,39 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 	}
 
 	return errPublic.Message
+}
+
+func isPostLogoutRedirectConfigured(redirectUrl string) bool {
+	if redirectUrl == "" {
+		return false
+	}
+
+	u, err := url.Parse(redirectUrl)
+	if err != nil {
+		return false
+	}
+
+	q := u.Query()
+	_, ok := q[postLogoutRedirectParam]
+	return ok
+}
+
+func getPostRedirectUrl(rdUrl string, tokenHint string) string {
+	if tokenHint == "" {
+		return rdUrl
+	}
+	if rdUrl == "" {
+		return rdUrl
+	}
+
+	u, err := url.Parse(rdUrl)
+	if err != nil {
+		return rdUrl
+	}
+
+	q := u.Query()
+	q.Set("id_token_hint", tokenHint)
+	u.RawQuery = q.Encode()
+
+	return u.String()
 }

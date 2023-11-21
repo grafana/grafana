@@ -1,21 +1,18 @@
 import {
+  getTimeZone,
   PanelMenuItem,
   PluginExtensionLink,
   PluginExtensionPoints,
+  urlUtil,
   type PluginExtensionPanelContext,
 } from '@grafana/data';
-import {
-  AngularComponent,
-  getDataSourceSrv,
-  locationService,
-  reportInteraction,
-  getPluginLinkExtensions,
-} from '@grafana/runtime';
+import { AngularComponent, getPluginLinkExtensions, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -33,6 +30,7 @@ import { truncateTitle } from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { store } from 'app/store/store';
 
+import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
 import { getTimeSrv } from '../services/TimeSrv';
 
@@ -110,7 +108,13 @@ export function getPanelMenu(
     event.preventDefault();
     const openInNewWindow =
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
-    store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
+    store.dispatch(
+      navigateToExplore(panel, {
+        timeRange: getTimeSrv().timeRange(),
+        getExploreUrl,
+        openInNewWindow,
+      }) as any
+    );
     reportInteraction('dashboards_panelheader_menu', { item: 'explore' });
   };
 
@@ -188,10 +192,12 @@ export function getPanelMenu(
     iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<HTMLElement>) => {
       const currentTarget = e.currentTarget;
-      const target = e.target as HTMLElement;
-      const closestMenuItem = target.closest('[role="menuitem"]');
+      const target = e.target;
 
-      if (target === currentTarget || closestMenuItem === currentTarget) {
+      if (
+        target === currentTarget ||
+        (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
+      ) {
         onInspectPanel();
       }
     },
@@ -199,8 +205,27 @@ export function getPanelMenu(
     subMenu: inspectMenu,
   });
 
+  const createAlert = async () => {
+    const formValues = await panelToRuleFormValues(panel, dashboard);
+
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(formValues),
+      returnTo: location.pathname + location.search,
+    });
+
+    locationService.push(ruleFormUrl);
+  };
+
+  const onCreateAlert = (event: React.MouseEvent) => {
+    event.preventDefault();
+    createAlert();
+    reportInteraction('dashboards_panelheader_menu', { item: 'create-alert' });
+  };
+
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
+  const isCreateAlertMenuOptionAvailable = getCreateAlertInMenuAvailability();
+
   if (!(panel.isViewing || panel.isEditing)) {
     if (canEdit) {
       subMenu.push({
@@ -232,6 +257,13 @@ export function getPanelMenu(
         onClick: onCopyPanel,
       });
     }
+  }
+
+  if (isCreateAlertMenuOptionAvailable) {
+    subMenu.push({
+      text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+      onClick: onCreateAlert,
+    });
   }
 
   // add old angular panel options
@@ -270,6 +302,12 @@ export function getPanelMenu(
   // When editing hide most actions
   if (panel.isEditing) {
     subMenu.length = 0;
+    if (isCreateAlertMenuOptionAvailable) {
+      subMenu.push({
+        text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+        onClick: onCreateAlert,
+      });
+    }
   }
 
   if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
@@ -324,7 +362,9 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     pluginId: panel.type,
     title: panel.title,
     timeRange: dashboard.time,
-    timeZone: dashboard.timezone,
+    timeZone: getTimeZone({
+      timeZone: dashboard.timezone,
+    }),
     dashboard: {
       uid: dashboard.uid,
       title: dashboard.title,

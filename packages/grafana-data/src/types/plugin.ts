@@ -49,6 +49,12 @@ export enum PluginErrorCode {
 export interface PluginError {
   errorCode: PluginErrorCode;
   pluginId: string;
+  pluginType?: PluginType;
+}
+
+export interface AngularMeta {
+  detected: boolean;
+  hideDeprecation: boolean;
 }
 
 export interface PluginMeta<T extends KeyValue = {}> {
@@ -58,7 +64,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   info: PluginMetaInfo;
   includes?: PluginInclude[];
   state?: PluginState;
-  alias?: string;
+  aliasIDs?: string[];
 
   // System.load & relative URLS
   module: string;
@@ -81,7 +87,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   signatureType?: PluginSignatureType;
   signatureOrg?: string;
   live?: boolean;
-  angularDetected?: boolean;
+  angular?: AngularMeta;
 }
 
 interface PluginDependencyInfo {

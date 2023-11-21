@@ -3,9 +3,9 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,6 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+var (
+	truePtr  = boolPtr(true)
+	falsePtr = boolPtr(false)
 )
 
 func TestGetFeatureToggles(t *testing.T) {
@@ -83,10 +92,10 @@ func TestGetFeatureToggles(t *testing.T) {
 			},
 		}
 		settings := setting.FeatureMgmtSettings{
-			HiddenToggles:       map[string]struct{}{"toggle1": {}},
-			ReadOnlyToggles:     map[string]struct{}{"toggle2": {}},
-			AllowEditing:        true,
-			UpdateControllerUrl: "bogus",
+			HiddenToggles:   map[string]struct{}{"toggle1": {}},
+			ReadOnlyToggles: map[string]struct{}{"toggle2": {}},
+			AllowEditing:    true,
+			UpdateWebhook:   "bogus",
 		}
 
 		result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
@@ -107,20 +116,27 @@ func TestGetFeatureToggles(t *testing.T) {
 				Name:  "toggle3",
 				Stage: featuremgmt.FeatureStagePrivatePreview,
 			}, {
-				Name:  "toggle4",
-				Stage: featuremgmt.FeatureStagePublicPreview,
+				Name:           "toggle4",
+				Stage:          featuremgmt.FeatureStagePublicPreview,
+				AllowSelfServe: truePtr,
 			}, {
-				Name:  "toggle5",
-				Stage: featuremgmt.FeatureStageGeneralAvailability,
+				Name:           "toggle5",
+				Stage:          featuremgmt.FeatureStageGeneralAvailability,
+				AllowSelfServe: truePtr,
 			}, {
-				Name:  "toggle6",
-				Stage: featuremgmt.FeatureStageDeprecated,
+				Name:           "toggle6",
+				Stage:          featuremgmt.FeatureStageDeprecated,
+				AllowSelfServe: truePtr,
+			}, {
+				Name:           "toggle7",
+				Stage:          featuremgmt.FeatureStageGeneralAvailability,
+				AllowSelfServe: falsePtr,
 			},
 		}
 
 		t.Run("unknown, experimental, and private preview toggles are hidden by default", func(t *testing.T) {
 			result := runGetScenario(t, features, setting.FeatureMgmtSettings{}, readPermissions, http.StatusOK)
-			assert.Len(t, result, 3)
+			assert.Len(t, result, 4)
 
 			_, ok := findResult(t, result, "toggle1")
 			assert.False(t, ok)
@@ -130,13 +146,13 @@ func TestGetFeatureToggles(t *testing.T) {
 			assert.False(t, ok)
 		})
 
-		t.Run("only public preview and GA are writeable by default", func(t *testing.T) {
+		t.Run("only public preview and GA with AllowSelfServe are writeable", func(t *testing.T) {
 			settings := setting.FeatureMgmtSettings{
-				AllowEditing:        true,
-				UpdateControllerUrl: "bogus",
+				AllowEditing:  true,
+				UpdateWebhook: "bogus",
 			}
 			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
-			assert.Len(t, result, 3)
+			assert.Len(t, result, 4)
 
 			t4, ok := findResult(t, result, "toggle4")
 			assert.True(t, ok)
@@ -151,11 +167,11 @@ func TestGetFeatureToggles(t *testing.T) {
 
 		t.Run("all toggles are read-only when server is misconfigured", func(t *testing.T) {
 			settings := setting.FeatureMgmtSettings{
-				AllowEditing:        false,
-				UpdateControllerUrl: "",
+				AllowEditing:  false,
+				UpdateWebhook: "",
 			}
 			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
-			assert.Len(t, result, 3)
+			assert.Len(t, result, 4)
 
 			t4, ok := findResult(t, result, "toggle4")
 			assert.True(t, ok)
@@ -216,8 +232,8 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 
 		s := setting.FeatureMgmtSettings{
-			AllowEditing:        true,
-			UpdateControllerUrl: "random",
+			AllowEditing:  true,
+			UpdateWebhook: "random",
 		}
 		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 		defer func() { require.NoError(t, res.Body.Close()) }()
@@ -243,8 +259,8 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 
 		s := setting.FeatureMgmtSettings{
-			AllowEditing:        true,
-			UpdateControllerUrl: "random",
+			AllowEditing:  true,
+			UpdateWebhook: "random",
 			ReadOnlyToggles: map[string]struct{}{
 				"toggle3": {},
 			},
@@ -260,7 +276,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
-			assert.Equal(t, fmt.Sprintf("invalid toggle passed in: %s", featuremgmt.FlagFeatureToggleAdminPage), p["error"])
+			assert.Equal(t, "invalid toggle passed in", p["message"])
 		})
 
 		t.Run("because it is not GA or Deprecated", func(t *testing.T) {
@@ -273,7 +289,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
-			assert.Equal(t, "invalid toggle passed in: toggle2", p["error"])
+			assert.Equal(t, "invalid toggle passed in", p["message"])
 		})
 
 		t.Run("because it is configured to be read-only", func(t *testing.T) {
@@ -286,11 +302,11 @@ func TestSetFeatureToggles(t *testing.T) {
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			p := readBody(t, res.Body)
-			assert.Equal(t, "invalid toggle passed in: toggle3", p["error"])
+			assert.Equal(t, "invalid toggle passed in", p["message"])
 		})
 	})
 
-	t.Run("succeeds with all conditions met", func(t *testing.T) {
+	t.Run("when all conditions met", func(t *testing.T) {
 		features := []*featuremgmt.FeatureFlag{
 			{
 				Name:    featuremgmt.FlagFeatureToggleAdminPage,
@@ -305,19 +321,22 @@ func TestSetFeatureToggles(t *testing.T) {
 				Enabled: false,
 				Stage:   featuremgmt.FeatureStageGeneralAvailability,
 			}, {
-				Name:    "toggle4",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+				Name:           "toggle4",
+				Enabled:        false,
+				Stage:          featuremgmt.FeatureStageGeneralAvailability,
+				AllowSelfServe: truePtr,
 			}, {
-				Name:    "toggle5",
-				Enabled: false,
-				Stage:   featuremgmt.FeatureStageDeprecated,
+				Name:           "toggle5",
+				Enabled:        false,
+				Stage:          featuremgmt.FeatureStageDeprecated,
+				AllowSelfServe: truePtr,
 			},
 		}
 
 		s := setting.FeatureMgmtSettings{
-			AllowEditing:        true,
-			UpdateControllerUrl: "random",
+			AllowEditing:       true,
+			UpdateWebhook:      "random",
+			UpdateWebhookToken: "token",
 			ReadOnlyToggles: map[string]struct{}{
 				"toggle3": {},
 			},
@@ -332,11 +351,34 @@ func TestSetFeatureToggles(t *testing.T) {
 				Enabled: false,
 			},
 		}
-		// TODO: check for success status after the handler is fully implemented
-		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusNotImplemented)
-		defer func() { require.NoError(t, res.Body.Close()) }()
-		p := readBody(t, res.Body)
-		assert.Equal(t, "UpdateFeatureToggle is unimplemented", p["message"])
+		t.Run("fail when webhook request is not successful", func(t *testing.T) {
+			webhookServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+			}))
+			defer webhookServer.Close()
+			s.UpdateWebhook = webhookServer.URL
+			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		})
+
+		t.Run("succeed when webhook request is successul", func(t *testing.T) {
+			webhookServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "Bearer "+s.UpdateWebhookToken, r.Header.Get("Authorization"))
+
+				var req UpdatePayload
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+
+				assert.Equal(t, "true", req.FeatureToggles["toggle4"])
+				assert.Equal(t, "false", req.FeatureToggles["toggle5"])
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer webhookServer.Close()
+			s.UpdateWebhook = webhookServer.URL
+			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusOK)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+		})
 	})
 }
 
@@ -351,12 +393,12 @@ func findResult(t *testing.T, result []featuremgmt.FeatureToggleDTO, name string
 	return featuremgmt.FeatureToggleDTO{}, false
 }
 
-func readBody(t *testing.T, rc io.ReadCloser) map[string]interface{} {
+func readBody(t *testing.T, rc io.ReadCloser) map[string]any {
 	t.Helper()
 
 	b, err := io.ReadAll(rc)
 	require.NoError(t, err)
-	payload := map[string]interface{}{}
+	payload := map[string]any{}
 	require.NoError(t, json.Unmarshal(b, &payload))
 	return payload
 }

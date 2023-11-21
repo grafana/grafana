@@ -4,12 +4,13 @@ import React from 'react';
 import { MemoryRouter, Router } from 'react-router-dom';
 
 import store from 'app/core/store';
+import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 
 import * as useAlertManagerSources from '../hooks/useAlertManagerSources';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY } from '../utils/constants';
 import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { AlertmanagerProvider, useAlertmanager } from './AlertmanagerContext';
+import { AlertmanagerProvider, isAlertManagerWithConfigAPI, useAlertmanager } from './AlertmanagerContext';
 
 const grafanaAm: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
@@ -117,4 +118,24 @@ describe('useAlertmanager', () => {
     const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(externalAmProm.name);
   });
+});
+
+test('isAlertManagerWithConfigAPI', () => {
+  expect(
+    isAlertManagerWithConfigAPI({
+      implementation: undefined,
+    })
+  ).toBe(true);
+
+  expect(
+    isAlertManagerWithConfigAPI({
+      implementation: AlertManagerImplementation.mimir,
+    })
+  ).toBe(true);
+
+  expect(
+    isAlertManagerWithConfigAPI({
+      implementation: AlertManagerImplementation.prometheus,
+    })
+  ).toBe(false);
 });

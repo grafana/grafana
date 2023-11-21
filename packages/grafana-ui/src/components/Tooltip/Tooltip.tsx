@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { buildTooltipTheme } from '../../utils/tooltipUtils';
@@ -23,7 +24,8 @@ export interface TooltipProps {
 
 export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
   ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
-    const [controlledVisible, setControlledVisible] = React.useState(show);
+    const [controlledVisible, setControlledVisible] = useState(show);
+    const tooltipId = useId();
 
     useEffect(() => {
       if (controlledVisible !== false) {
@@ -43,14 +45,25 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
 
     const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
       visible: show ?? controlledVisible,
-      placement: placement,
-      interactive: interactive,
+      placement,
+      interactive,
       delayHide: interactive ? 100 : 0,
-      delayShow: 150,
       offset: [0, 8],
       trigger: ['hover', 'focus'],
       onVisibleChange: setControlledVisible,
     });
+
+    const contentIsFunction = typeof content === 'function';
+
+    /**
+     * If content is a function we need to call popper update function to make sure the tooltip is positioned correctly
+     * if it's close to the viewport boundary
+     **/
+    useEffect(() => {
+      if (update && contentIsFunction) {
+        update();
+      }
+    }, [visible, update, contentIsFunction]);
 
     const styles = useStyles2(getStyles);
     const style = styles[theme ?? 'info'];
@@ -68,19 +81,29 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
       [forwardedRef, setTriggerRef]
     );
 
+    // if the child has an aria-label, this should take precedence over the tooltip content
+    const childHasAriaLabel = 'aria-label' in children.props;
+
     return (
       <>
         {React.cloneElement(children, {
           ref: handleRef,
-          tabIndex: 0, // tooltip should be keyboard focusable
+          tabIndex: 0, // tooltip trigger should be keyboard focusable
+          'aria-describedby': !childHasAriaLabel && visible ? tooltipId : undefined,
         })}
         {visible && (
           <Portal>
-            <div ref={setTooltipRef} {...getTooltipProps({ className: style.container })}>
+            <div
+              data-testid={selectors.components.Tooltip.container}
+              ref={setTooltipRef}
+              id={tooltipId}
+              role="tooltip"
+              {...getTooltipProps({ className: style.container })}
+            >
               <div {...getArrowProps({ className: style.arrow })} />
               {typeof content === 'string' && content}
               {React.isValidElement(content) && React.cloneElement(content)}
-              {typeof content === 'function' &&
+              {contentIsFunction &&
                 update &&
                 content({
                   updatePopperPosition: update,

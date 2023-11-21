@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
@@ -124,6 +125,13 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, team1.Email, "test1@test.com")
 				require.Equal(t, team1.OrgID, testOrgID)
 				require.EqualValues(t, team1.MemberCount, 2)
+
+				getIDsQuery := &team.GetTeamIDsByUserQuery{OrgID: testOrgID, UserID: userIds[0]}
+				getIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
+				require.NoError(t, err)
+
+				require.Equal(t, len(getIDResult), 1)
+				require.Equal(t, getIDResult[0], team1.ID)
 			})
 
 			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
@@ -232,6 +240,60 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, len(query2Result.Teams), 2)
 			})
 
+			t.Run("Should be able to sort teams by descending member count order", func(t *testing.T) {
+				sortOpts, err := sortopts.ParseSortQueryParam("memberCount-desc")
+				require.NoError(t, err)
+
+				// Add a team member
+				err = teamSvc.AddTeamMember(userIds[0], testOrgID, team2.ID, false, 0)
+				require.NoError(t, err)
+				defer func() {
+					err := teamSvc.RemoveTeamMember(context.Background(),
+						&team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: userIds[0], TeamID: team2.ID})
+					require.NoError(t, err)
+				}()
+
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, SortOpts: sortOpts, SignedInUser: testUser}
+				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.Equal(t, len(queryResult.Teams), 2)
+				require.EqualValues(t, queryResult.TotalCount, 2)
+				require.Greater(t, queryResult.Teams[0].MemberCount, queryResult.Teams[1].MemberCount)
+			})
+
+			t.Run("Should be able to sort teams by descending name order", func(t *testing.T) {
+				sortOpts, err := sortopts.ParseSortQueryParam("name-desc")
+				require.NoError(t, err)
+
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, SortOpts: sortOpts, SignedInUser: testUser}
+				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.Equal(t, len(queryResult.Teams), 2)
+				require.EqualValues(t, queryResult.TotalCount, 2)
+				require.Equal(t, queryResult.Teams[0].Name, team2.Name)
+				require.Equal(t, queryResult.Teams[1].Name, team1.Name)
+			})
+
+			t.Run("Should be able to query teams by ids", func(t *testing.T) {
+				allTeamsQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "", SignedInUser: testUser}
+				allTeamsQueryResult, err := teamSvc.SearchTeams(context.Background(), allTeamsQuery)
+				require.NoError(t, err)
+				require.Equal(t, len(allTeamsQueryResult.Teams), 2)
+
+				teamIds := make([]int64, 0)
+				for _, team := range allTeamsQueryResult.Teams {
+					teamIds = append(teamIds, team.ID)
+				}
+
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, TeamIds: teamIds}
+				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.Equal(t, len(queryResult.Teams), 2)
+				require.EqualValues(t, queryResult.TotalCount, 2)
+				require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
+				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
+			})
+
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				setup()
@@ -293,30 +355,6 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0], Permission: 0})
 					require.NoError(t, err)
 				})
-			})
-
-			t.Run("Should be able to remove a group with users and permissions", func(t *testing.T) {
-				groupID := team2.ID
-				err := teamSvc.AddTeamMember(userIds[1], testOrgID, groupID, false, 0)
-				require.NoError(t, err)
-				err = teamSvc.AddTeamMember(userIds[2], testOrgID, groupID, false, 0)
-				require.NoError(t, err)
-				err = updateDashboardACL(t, sqlStore, 1, &dashboards.DashboardACL{
-					DashboardID: 1, OrgID: testOrgID, Permission: dashboards.PERMISSION_EDIT, TeamID: groupID,
-				})
-				require.NoError(t, err)
-				err = teamSvc.DeleteTeam(context.Background(), &team.DeleteTeamCommand{OrgID: testOrgID, ID: groupID})
-				require.NoError(t, err)
-
-				query := &team.GetTeamByIDQuery{OrgID: testOrgID, ID: groupID}
-				_, err = teamSvc.GetTeamByID(context.Background(), query)
-				require.Equal(t, err, team.ErrTeamNotFound)
-
-				permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: testOrgID}
-				permQueryResult, err := getDashboardACLInfoList(sqlStore, permQuery)
-				require.NoError(t, err)
-
-				require.Equal(t, len(permQueryResult), 0)
 			})
 
 			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
@@ -573,7 +611,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionOrgUsersRead) {
 				for _, member := range queryResult {
 					assert.Contains(t,
-						tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgID][ac.ActionOrgUsersRead],
+						tt.query.SignedInUser.GetPermissions()[ac.ActionOrgUsersRead],
 						ac.Scope("users", "id", fmt.Sprintf("%d", member.UserID)),
 					)
 				}
@@ -582,131 +620,11 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	}
 }
 
-func hasWildcardScope(user *user.SignedInUser, action string) bool {
-	for _, scope := range user.Permissions[user.OrgID][action] {
+func hasWildcardScope(user identity.Requester, action string) bool {
+	for _, scope := range user.GetPermissions()[action] {
 		if strings.HasSuffix(scope, ":*") {
 			return true
 		}
 	}
 	return false
-}
-
-// TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*dashboards.DashboardACL) error {
-	t.Helper()
-
-	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
-		if err != nil {
-			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
-		}
-
-		for _, item := range items {
-			item.Created = time.Now()
-			item.Updated = time.Now()
-			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return dashboards.ErrDashboardACLInfoMissing
-			}
-
-			if item.DashboardID == 0 {
-				return dashboards.ErrDashboardPermissionDashboardEmpty
-			}
-
-			sess.Nullable("user_id", "team_id")
-			if _, err := sess.Insert(item); err != nil {
-				return err
-			}
-		}
-
-		// Update dashboard HasACL flag
-		dashboard := dashboards.Dashboard{HasACL: true}
-		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
-		return err
-	})
-	return err
-}
-
-// This function was copied from pkg/services/dashboards/database to circumvent
-// import cycles. When this org-related code is refactored into a service the
-// tests can the real GetDashboardACLInfoList functions
-func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
-	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
-	outerErr := s.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-		falseStr := s.GetDialect().BooleanStr(false)
-
-		if query.DashboardID == 0 {
-			sql := `SELECT
-		da.id,
-		da.org_id,
-		da.dashboard_id,
-		da.user_id,
-		da.team_id,
-		da.permission,
-		da.role,
-		da.created,
-		da.updated,
-		'' as user_login,
-		'' as user_email,
-		'' as team,
-		'' as title,
-		'' as slug,
-		'' as uid,` +
-				falseStr + ` AS is_folder,` +
-				falseStr + ` AS inherited
-		FROM dashboard_acl as da
-		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&queryResult)
-		}
-
-		rawSQL := `
-			-- get permissions for the dashboard and its parent folder
-			SELECT
-				da.id,
-				da.org_id,
-				da.dashboard_id,
-				da.user_id,
-				da.team_id,
-				da.permission,
-				da.role,
-				da.created,
-				da.updated,
-				u.login AS user_login,
-				u.email AS user_email,
-				ug.name AS team,
-				ug.email AS team_email,
-				d.title,
-				d.slug,
-				d.uid,
-				d.is_folder,
-				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + s.GetDialect().BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
-			FROM dashboard as d
-				LEFT JOIN dashboard folder on folder.id = d.folder_id
-				LEFT JOIN dashboard_acl AS da ON
-				da.dashboard_id = d.id OR
-				da.dashboard_id = d.folder_id OR
-				(
-					-- include default permissions -->
-					da.org_id = -1 AND (
-					  (folder.id IS NOT NULL AND folder.has_acl = ` + falseStr + `) OR
-					  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
-					)
-				)
-				LEFT JOIN ` + s.GetDialect().Quote("user") + ` AS u ON u.id = da.user_id
-				LEFT JOIN team ug on ug.id = da.team_id
-			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
-			ORDER BY da.id ASC
-			`
-
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&queryResult)
-	})
-
-	if outerErr != nil {
-		return nil, outerErr
-	}
-
-	for _, p := range queryResult {
-		p.PermissionName = p.Permission.String()
-	}
-
-	return queryResult, nil
 }

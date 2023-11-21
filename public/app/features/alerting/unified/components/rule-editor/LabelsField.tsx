@@ -1,13 +1,22 @@
 import { css, cx } from '@emotion/css';
-import { flattenDeep, compact } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Field, InlineLabel, Label, useStyles2, Tooltip, Icon, Input, LoadingPlaceholder } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  InlineLabel,
+  Label,
+  useStyles2,
+  Text,
+  Tooltip,
+  Icon,
+  Input,
+  LoadingPlaceholder,
+  Stack,
+} from '@grafana/ui';
 import { useDispatch } from 'app/types';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
@@ -19,7 +28,7 @@ interface Props {
   dataSourceName?: string | null;
 }
 
-const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, string[]> } => {
+const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, Set<string>> } => {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -27,33 +36,45 @@ const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsB
   }, [dispatch, dataSourceName]);
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
   const rulerRequest = rulerRuleRequests[dataSourceName];
 
-  const result = rulerRequest?.result || {};
+  const labelsByKeyResult = useMemo<Record<string, Set<string>>>(() => {
+    const labelsByKey: Record<string, Set<string>> = {};
 
-  //store all labels in a flat array and remove empty values
-  const labels = compact(
-    flattenDeep(
-      Object.keys(result).map((ruleGroupKey) =>
-        result[ruleGroupKey].map((ruleItem: RulerRuleGroupDTO) => ruleItem.rules.map((item) => item.labels))
-      )
-    )
-  );
+    const rulerRulesConfig = rulerRequest?.result;
+    if (!rulerRulesConfig) {
+      return labelsByKey;
+    }
 
-  const labelsByKey: Record<string, string[]> = {};
+    const allRules = Object.values(rulerRulesConfig)
+      .flatMap((groups) => groups)
+      .flatMap((group) => group.rules);
 
-  labels.forEach((label: Record<string, string>) => {
-    Object.entries(label).forEach(([key, value]) => {
-      labelsByKey[key] = [...new Set([...(labelsByKey[key] || []), value])];
+    allRules.forEach((rule) => {
+      if (rule.labels) {
+        Object.entries(rule.labels).forEach(([key, value]) => {
+          if (!value) {
+            return;
+          }
+
+          const labelEntry = labelsByKey[key];
+          if (labelEntry) {
+            labelEntry.add(value);
+          } else {
+            labelsByKey[key] = new Set([value]);
+          }
+        });
+      }
     });
-  });
 
-  return { loading: rulerRequest?.loading, labelsByKey };
+    return labelsByKey;
+  }, [rulerRequest]);
+
+  return { loading: rulerRequest?.loading, labelsByKey: labelsByKeyResult };
 };
 
-function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>> {
-  return items.map((item) => ({ label: item, value: item }));
+function mapLabelsToOptions(items: Iterable<string> = []): Array<SelectableValue<string>> {
+  return Array.from(items, (item) => ({ label: item, value: item }));
 }
 
 const RemoveButton: FC<{
@@ -129,7 +150,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
     <>
       {loading && <LoadingPlaceholder text="Loading" />}
       {!loading && (
-        <>
+        <Stack direction="column" gap={0.5}>
           {fields.map((field, index) => {
             return (
               <div key={field.id}>
@@ -182,7 +203,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
             );
           })}
           <AddButton className={styles.addLabelButton} append={append} />
-        </>
+        </Stack>
       )}
     </>
   );
@@ -245,14 +266,16 @@ const LabelsWithoutSuggestions: FC = () => {
   );
 };
 
-const LabelsField: FC<Props> = ({ className, dataSourceName }) => {
+const LabelsField: FC<Props> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(className, styles.wrapper)}>
-      <Label>
-        <Stack gap={0.5}>
-          <span>Custom Labels</span>
+    <div>
+      <Label description="A set of default labels is automatically added. Add additional labels as required.">
+        <Stack gap={0.5} alignItems="center">
+          <Text variant="bodySmall" color="primary">
+            Labels
+          </Text>
           <Tooltip
             content={
               <div>
@@ -265,15 +288,7 @@ const LabelsField: FC<Props> = ({ className, dataSourceName }) => {
           </Tooltip>
         </Stack>
       </Label>
-      <>
-        <div className={styles.flexRow}>
-          <InlineLabel width={18}>Labels</InlineLabel>
-          <div className={styles.flexColumn}>
-            {dataSourceName && <LabelsWithSuggestions dataSourceName={dataSourceName} />}
-            {!dataSourceName && <LabelsWithoutSuggestions />}
-          </div>
-        </div>
-      </>
+      {dataSourceName ? <LabelsWithSuggestions dataSourceName={dataSourceName} /> : <LabelsWithoutSuggestions />}
     </div>
   );
 };
@@ -282,9 +297,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css`
       margin-right: ${theme.spacing(0.5)};
-    `,
-    wrapper: css`
-      margin-bottom: ${theme.spacing(4)};
     `,
     flexColumn: css`
       display: flex;
@@ -318,7 +330,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     labelInput: css`
       width: 175px;
-      margin-bottom: ${theme.spacing(1)};
+      margin-bottom: -${theme.spacing(1)};
+
       & + & {
         margin-left: ${theme.spacing(1)};
       }

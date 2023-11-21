@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSocialOkta_UserInfo(t *testing.T) {
@@ -22,7 +23,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 	tests := []struct {
 		name                    string
 		userRawJSON             string
-		OAuth2Extra             interface{}
+		OAuth2Extra             any
 		autoAssignOrgRole       string
 		settingSkipOrgRoleSync  bool
 		allowAssignGrafanaAdmin bool
@@ -37,7 +38,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			name:              "Should give role from JSON and email from id token",
 			userRawJSON:       `{ "email": "okta-octopus@grafana.com", "role": "Admin" }`,
 			RoleAttributePath: "role",
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// {
 				// "email": "okto.octopus@test.com"
 				// },
@@ -53,7 +54,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			userRawJSON:            `{ "email": "okta-octopus@grafana.com", "role": "Admin" }`,
 			RoleAttributePath:      "role",
 			settingSkipOrgRoleSync: true,
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// {
 				// "email": "okto.octopus@test.com"
 				// },
@@ -69,7 +70,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			userRawJSON:             fmt.Sprintf(`{ "email": "okta-octopus@grafana.com", "role": "%s" }`, RoleGrafanaAdmin),
 			RoleAttributePath:       "role",
 			allowAssignGrafanaAdmin: true,
-			OAuth2Extra: map[string]interface{}{
+			OAuth2Extra: map[string]any{
 				// {
 				// "email": "okto.octopus@test.com"
 				// },
@@ -95,14 +96,22 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 				}
 			}))
 			defer server.Close()
-			provider := &SocialOkta{
-				SocialBase: newSocialBase("okta", &oauth2.Config{},
-					&OAuthInfo{RoleAttributePath: tt.RoleAttributePath}, tt.autoAssignOrgRole, false, *featuremgmt.WithFeatures()),
-				apiUrl:          server.URL + "/user",
-				skipOrgRoleSync: tt.settingSkipOrgRoleSync,
-			}
-			provider.allowAssignGrafanaAdmin = tt.allowAssignGrafanaAdmin
-			provider.roleAttributePath = tt.RoleAttributePath
+
+			provider, err := NewOktaProvider(
+				map[string]any{
+					"api_url":                    server.URL + "/user",
+					"role_attribute_path":        tt.RoleAttributePath,
+					"allow_assign_grafana_admin": tt.allowAssignGrafanaAdmin,
+					"skip_org_role_sync":         tt.settingSkipOrgRoleSync,
+				},
+				&setting.Cfg{
+					OktaSkipOrgRoleSync:        tt.settingSkipOrgRoleSync,
+					AutoAssignOrgRole:          tt.autoAssignOrgRole,
+					OAuthSkipOrgRoleUpdateSync: false,
+				},
+				featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
 			// create a oauth2 token with a id_token
 			staticToken := oauth2.Token{
 				AccessToken:  "",

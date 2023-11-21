@@ -5,7 +5,8 @@ import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, Stacki
 
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
-import { buildScaleKey } from '../GraphNG/utils';
+
+import { buildScaleKey } from './internal';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
@@ -117,12 +118,12 @@ export function getStackingGroups(frame: DataFrame) {
     let transform = custom.transform;
     let stackDir = getStackDirection(transform, values);
 
-    let drawStyle = custom.drawStyle as GraphDrawStyle;
-    let drawStyle2 =
+    let drawStyle: GraphDrawStyle = custom.drawStyle;
+    let drawStyle2: BarAlignment | LineInterpolation | null =
       drawStyle === GraphDrawStyle.Bars
-        ? (custom.barAlignment as BarAlignment)
+        ? custom.barAlignment
         : drawStyle === GraphDrawStyle.Line
-        ? (custom.lineInterpolation as LineInterpolation)
+        ? custom.lineInterpolation
         : null;
 
     let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(
@@ -153,7 +154,7 @@ export function preparePlotData2(
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
 ) {
-  let data = Array(frame.fields.length) as AlignedData;
+  let data: AlignedData = Array(frame.fields.length);
 
   let stacksQty = stackingGroups.length;
 
@@ -380,7 +381,7 @@ function hasNegSample(data: unknown[], samples = 100) {
     for (let i = firstIdx; i <= lastIdx; i += stride) {
       const v = data[i];
 
-      if (v != null) {
+      if (v != null && typeof v === 'number') {
         if (v < 0 || Object.is(v, -0)) {
           negCount++;
         } else if (v > 0) {

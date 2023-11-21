@@ -28,10 +28,10 @@ func GetEntitySummaryBuilder(kind string) entity.EntitySummaryBuilder {
 				"tag1":  "",
 				"tag2":  "",
 			},
-			Fields: map[string]interface{}{
+			Fields: map[string]string{
 				"field1": "a string",
-				"field2": 1.224,
-				"field4": true,
+				"field2": "1.224",
+				"field4": "true",
 			},
 			Error:  nil, // ignore for now
 			Nested: nil, // ignore for now

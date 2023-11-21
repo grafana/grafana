@@ -1,7 +1,6 @@
 import { of } from 'rxjs';
 
 import { CustomVariableModel, DataQueryRequest } from '@grafana/data';
-import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchAnnotationQueryRunner } from '../query-runner/CloudWatchAnnotationQueryRunner';
@@ -16,13 +15,8 @@ export function setupMockedAnnotationQueryRunner({ variables }: { variables?: Cu
     templateService = setupMockedTemplateService(variables);
   }
 
-  const runner = new CloudWatchAnnotationQueryRunner(CloudWatchSettings, templateService);
-  const fetchMock = jest.fn().mockReturnValue(of({}));
-
-  setBackendSrv({
-    ...getBackendSrv(),
-    fetch: fetchMock,
-  });
+  const queryMock = jest.fn().mockReturnValue(of({}));
+  const runner = new CloudWatchAnnotationQueryRunner(CloudWatchSettings, templateService, queryMock);
 
   const request: DataQueryRequest<CloudWatchQuery> = {
     range: TimeRangeMock,
@@ -37,5 +31,5 @@ export function setupMockedAnnotationQueryRunner({ variables }: { variables?: Cu
     startTime: 0,
   };
 
-  return { runner, fetchMock, templateService, request, timeRange: TimeRangeMock };
+  return { runner, queryMock, templateService, request, timeRange: TimeRangeMock };
 }

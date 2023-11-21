@@ -1,4 +1,4 @@
-import type { Tree, SyntaxNode } from '@lezer/common';
+import type { SyntaxNode, TreeCursor } from '@lezer/common';
 
 import {
   parser,
@@ -14,17 +14,24 @@ import {
   LogQL,
   LogRangeExpr,
   LogExpr,
+  Logfmt,
   Identifier,
   Grouping,
   Expr,
   LiteralExpr,
   MetricExpr,
   UnwrapExpr,
-  DistinctFilter,
-  DistinctLabel,
+  DropLabelsExpr,
+  KeepLabelsExpr,
+  DropLabels,
+  KeepLabels,
+  ParserFlag,
+  LabelExtractionExpression,
+  LabelExtractionExpressionList,
+  LogfmtExpressionParser,
 } from '@grafana/lezer-logql';
 
-import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
+import { getLogQueryFromMetricsQueryAtPosition, getNodesFromQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -35,6 +42,30 @@ function move(node: SyntaxNode, direction: Direction): SyntaxNode | null {
   return node[direction];
 }
 
+/**
+ * Iteratively calls walk with given path until it returns null, then we return the last non-null node.
+ * @param node
+ * @param path
+ */
+function traverse(node: SyntaxNode, path: Path): SyntaxNode | null {
+  let current: SyntaxNode | null = node;
+  let next = walk(current, path);
+  while (next) {
+    let nextTmp = walk(next, path);
+    if (nextTmp) {
+      next = nextTmp;
+    } else {
+      return next;
+    }
+  }
+  return null;
+}
+
+/**
+ * Walks a single step from the provided node, following the path.
+ * @param node
+ * @param path
+ */
 function walk(node: SyntaxNode, path: Path): SyntaxNode | null {
   let current: SyntaxNode | null = node;
   for (const [direction, expectedNode] of path) {
@@ -99,6 +130,14 @@ export type Situation =
       type: 'AT_ROOT';
     }
   | {
+      type: 'IN_LOGFMT';
+      otherLabels: string[];
+      flags: boolean;
+      trailingSpace: boolean;
+      trailingComma: boolean;
+      logQuery: string;
+    }
+  | {
       type: 'IN_RANGE';
     }
   | {
@@ -129,12 +168,12 @@ export type Situation =
       logQuery: string;
     }
   | {
-      type: 'AFTER_DISTINCT';
+      type: 'AFTER_KEEP_AND_DROP';
       logQuery: string;
     };
 
 type Resolver = {
-  path: NodeType[];
+  paths: NodeType[][];
   fun: (node: SyntaxNode, text: string, pos: number) => Situation | null;
 };
 
@@ -146,64 +185,76 @@ const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
   {
-    path: [Selector],
+    paths: [[Selector], [Selector, Matchers], [Matchers], [ERROR_NODE_ID, Matchers, Selector]],
     fun: resolveSelector,
   },
   {
-    path: [ERROR_NODE_ID, Matchers, Selector],
-    fun: resolveSelector,
+    paths: [
+      [LogQL],
+      [RangeAggregationExpr],
+      [ERROR_NODE_ID, LogRangeExpr, RangeAggregationExpr],
+      [ERROR_NODE_ID, LabelExtractionExpressionList],
+      [LogRangeExpr],
+      [ERROR_NODE_ID, LabelExtractionExpressionList],
+      [LabelExtractionExpressionList],
+      [LogfmtExpressionParser],
+    ],
+    fun: resolveLogfmtParser,
   },
   {
-    path: [LogQL],
+    paths: [[LogQL], [ERROR_NODE_ID, Selector]],
     fun: resolveTopLevel,
   },
   {
-    path: [String, Matcher],
+    paths: [[String, Matcher]],
     fun: resolveMatcher,
   },
   {
-    path: [Grouping],
+    paths: [[Grouping]],
     fun: resolveLabelsForGrouping,
   },
   {
-    path: [LogRangeExpr],
+    paths: [[LogRangeExpr]],
     fun: resolveLogRange,
   },
   {
-    path: [ERROR_NODE_ID, Matcher],
+    paths: [
+      [ERROR_NODE_ID, Matcher],
+      [ERROR_NODE_ID, Matchers, Selector],
+    ],
     fun: resolveMatcher,
   },
   {
-    path: [ERROR_NODE_ID, Range],
+    paths: [[ERROR_NODE_ID, Range]],
     fun: resolveDurations,
   },
   {
-    path: [ERROR_NODE_ID, LogRangeExpr],
+    paths: [[ERROR_NODE_ID, LogRangeExpr]],
     fun: resolveLogRangeFromError,
   },
   {
-    path: [ERROR_NODE_ID, LiteralExpr, MetricExpr, VectorAggregationExpr],
+    paths: [[ERROR_NODE_ID, LiteralExpr, MetricExpr, VectorAggregationExpr]],
     fun: () => ({ type: 'IN_AGGREGATION' }),
   },
   {
-    path: [ERROR_NODE_ID, PipelineStage, PipelineExpr],
+    paths: [
+      [ERROR_NODE_ID, PipelineStage, PipelineExpr],
+      [PipelineStage, PipelineExpr],
+    ],
     fun: resolvePipeError,
   },
   {
-    path: [ERROR_NODE_ID, UnwrapExpr],
+    paths: [[ERROR_NODE_ID, UnwrapExpr], [UnwrapExpr]],
     fun: resolveAfterUnwrap,
   },
   {
-    path: [UnwrapExpr],
-    fun: resolveAfterUnwrap,
-  },
-  {
-    path: [ERROR_NODE_ID, DistinctFilter],
-    fun: resolveAfterDistinct,
-  },
-  {
-    path: [ERROR_NODE_ID, DistinctLabel],
-    fun: resolveAfterDistinct,
+    paths: [
+      [ERROR_NODE_ID, DropLabelsExpr],
+      [ERROR_NODE_ID, DropLabels],
+      [ERROR_NODE_ID, KeepLabelsExpr],
+      [ERROR_NODE_ID, KeepLabels],
+    ],
+    fun: resolveAfterKeepAndDrop,
   },
 ];
 
@@ -252,11 +303,25 @@ function getLabel(matcherNode: SyntaxNode, text: string): Label | null {
 }
 
 function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
-  if (selectorNode.type.id !== Selector) {
+  if (selectorNode.type.id !== Selector && selectorNode.type.id !== Matchers) {
     return [];
   }
 
-  let listNode: SyntaxNode | null = walk(selectorNode, [['firstChild', Matchers]]);
+  let listNode: SyntaxNode | null = null;
+
+  // If parent node is selector, we want to start with the current Matcher node
+  if (selectorNode?.parent?.type.id === Selector) {
+    listNode = selectorNode;
+  } else {
+    // Parent node needs to be returned first because otherwise both of the other walks will return a non-null node and this function will return the labels on the left side of the current node, the other two walks should be mutually exclusive when the parent is null
+    listNode =
+      // Node in-between labels
+      traverse(selectorNode, [['parent', Matchers]]) ??
+      // Node after all other labels
+      walk(selectorNode, [['firstChild', Matchers]]) ??
+      // Node before all other labels
+      walk(selectorNode, [['lastChild', Matchers]]);
+  }
 
   const labels: Label[] = [];
 
@@ -282,29 +347,28 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situation | null {
   return {
     type: 'AFTER_UNWRAP',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
 function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // for example `{level="info"} |`
-  const exprNode = walk(node, [
-    ['parent', PipelineStage],
-    ['parent', PipelineExpr],
-  ]);
-
-  if (exprNode === null) {
-    return null;
+  /**
+   * Examples:
+   * - {level="info"} |^
+   * - count_over_time({level="info"} |^ [4m])
+   */
+  let exprNode: SyntaxNode | null = null;
+  if (node.type.id === ERROR_NODE_ID) {
+    exprNode = walk(node, [
+      ['parent', PipelineStage],
+      ['parent', PipelineExpr],
+    ]);
+  } else if (node.type.id === PipelineStage) {
+    exprNode = walk(node, [['parent', PipelineExpr]]);
   }
 
-  const { parent } = exprNode;
-
-  if (parent === null) {
-    return null;
-  }
-
-  if (parent.type.id === LogExpr || parent.type.id === LogRangeExpr) {
-    return resolveLogOrLogRange(parent, text, pos, true);
+  if (exprNode?.parent?.type.id === LogExpr || exprNode?.parent?.type.id === LogRangeExpr) {
+    return resolveLogOrLogRange(exprNode.parent, text, pos, true);
   }
 
   return null;
@@ -332,7 +396,7 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
 
   return {
     type: 'IN_GROUPING',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -403,16 +467,80 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
   };
 }
 
-function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
-  // we try a couply specific paths here.
-  // `{x="y"}` situation, with the cursor at the end
+function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number): Situation | null {
+  // We want to know if the cursor if after a log query with logfmt parser.
+  // E.g. `{x="y"} | logfmt ^`
+  /**
+   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise
+   * it creates suggestion bugs with queries like {label="value"} | parser^ suggest "parser"
+   * and it can be inserted with extra pipes or commas.
+   */
+  const tree = parser.parse(text);
 
+  // Adjust the cursor position if there are spaces at the end of the text.
+  const trimRightTextLen = text.substring(0, cursorPosition).trimEnd().length;
+  const position = trimRightTextLen < cursorPosition ? trimRightTextLen : cursorPosition;
+
+  const cursor = tree.cursorAt(position);
+
+  // Check if the user cursor is in any node that requires logfmt suggestions.
+  const expectedNodes = [Logfmt, ParserFlag, LabelExtractionExpression, LabelExtractionExpressionList];
+  let inLogfmt = false;
+  do {
+    const { node } = cursor;
+    if (!expectedNodes.includes(node.type.id)) {
+      continue;
+    }
+    if (cursor.from <= position && cursor.to >= position) {
+      inLogfmt = true;
+      break;
+    }
+  } while (cursor.next());
+
+  if (!inLogfmt) {
+    return null;
+  }
+
+  const flags = getNodesFromQuery(text, [ParserFlag]).length > 1;
+  const labelNodes = getNodesFromQuery(text, [LabelExtractionExpression]);
+  const otherLabels = labelNodes
+    .map((label: SyntaxNode) => label.getChild(Identifier))
+    .filter((label: SyntaxNode | null): label is SyntaxNode => label !== null)
+    .map((label: SyntaxNode) => getNodeText(label, text));
+
+  const logQuery = getLogQueryFromMetricsQueryAtPosition(text, position).trim();
+  const trailingSpace = text.charAt(cursorPosition - 1) === ' ';
+  const trailingComma = text.trimEnd().charAt(position - 1) === ',';
+
+  return {
+    type: 'IN_LOGFMT',
+    otherLabels,
+    flags,
+    trailingSpace,
+    trailingComma,
+    logQuery,
+  };
+}
+
+function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
+  /**
+   * The following queries trigger resolveTopLevel().
+   * - Empty query
+   * - {label="value"} ^
+   * - {label="value"} | parser ^
+   * From here, we need to determine if the user is in a resolveLogOrLogRange() or simply at the root.
+   */
   const logExprNode = walk(node, [
     ['lastChild', Expr],
     ['lastChild', LogExpr],
   ]);
 
-  if (logExprNode != null) {
+  /**
+   * Wait until the user adds a space to be sure of what the last identifier is. Otherwise
+   * it creates suggestion bugs with queries like {label="value"} | parser^ suggest "parser"
+   * and it can be inserted with extra pipes.
+   */
+  if (logExprNode != null && text.endsWith(' ')) {
     return resolveLogOrLogRange(logExprNode, text, pos, false);
   }
 
@@ -441,7 +569,10 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Situatio
 }
 
 function resolveLogRange(node: SyntaxNode, text: string, pos: number): Situation | null {
-  return resolveLogOrLogRange(node, text, pos, false);
+  const partialQuery = text.substring(0, pos).trimEnd();
+  const afterPipe = partialQuery.endsWith('|');
+
+  return resolveLogOrLogRange(node, text, pos, afterPipe);
 }
 
 function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): Situation | null {
@@ -450,7 +581,10 @@ function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): 
     return null;
   }
 
-  return resolveLogOrLogRange(parent, text, pos, false);
+  const partialQuery = text.substring(0, pos).trimEnd();
+  const afterPipe = partialQuery.endsWith('|');
+
+  return resolveLogOrLogRange(parent, text, pos, afterPipe);
 }
 
 function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, afterPipe: boolean): Situation | null {
@@ -466,8 +600,8 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
   return {
     type: 'AFTER_SELECTOR',
     afterPipe,
-    hasSpace: text.endsWith(' '),
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    hasSpace: text.charAt(pos - 1) === ' ',
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -509,51 +643,48 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
   };
 }
 
-function resolveAfterDistinct(node: SyntaxNode, text: string, pos: number): Situation | null {
-  let logQuery = getLogQueryFromMetricsQuery(text).trim();
-
-  let distinctFilterParent: SyntaxNode | null = null;
+function resolveAfterKeepAndDrop(node: SyntaxNode, text: string, pos: number): Situation | null {
+  let logQuery = getLogQueryFromMetricsQueryAtPosition(text, pos).trim();
+  let keepAndDropParent: SyntaxNode | null = null;
   let parent = node.parent;
   while (parent !== null) {
     if (parent.type.id === PipelineStage) {
-      distinctFilterParent = parent;
+      keepAndDropParent = parent;
       break;
     }
     parent = parent.parent;
   }
 
-  if (distinctFilterParent?.type.id === PipelineStage) {
-    logQuery = logQuery.slice(0, distinctFilterParent.from);
+  if (keepAndDropParent?.type.id === PipelineStage) {
+    logQuery = logQuery.slice(0, keepAndDropParent.from);
   }
 
   return {
-    type: 'AFTER_DISTINCT',
+    type: 'AFTER_KEEP_AND_DROP',
     logQuery,
   };
 }
 
-// we find the first error-node in the tree that is at the cursor-position.
-// NOTE: this might be too slow, might need to optimize it
-// (ideas: we do not need to go into every subtree, based on from/to)
-// also, only go to places that are in the sub-tree of the node found
-// by default by lezer. problem is, `next()` will go upward too,
-// and we do not want to go higher than our node
-function getErrorNode(tree: Tree, text: string, cursorPos: number): SyntaxNode | null {
-  // sometimes the cursor is a couple spaces after the end of the expression.
-  // to account for this situation, we "move" the cursor position back,
-  // so that there are no spaces between the end-of-expression and the cursor
+// If there is an error in the current cursor position, it's likely that the user is
+// in the middle of writing a query. If we can't find an error node, we use the node
+// at the cursor position to identify the situation.
+function resolveCursor(text: string, cursorPos: number): TreeCursor {
+  // Sometimes the cursor is a couple spaces after the end of the expression.
+  // To account for this situation, we "move" the cursor position back to the real end
+  // of the expression.
   const trimRightTextLen = text.trimEnd().length;
   const pos = trimRightTextLen < cursorPos ? trimRightTextLen : cursorPos;
-  const cur = tree.cursorAt(pos);
+
+  const tree = parser.parse(text);
+  const cursor = tree.cursorAt(pos);
+
   do {
-    if (cur.from === pos && cur.to === pos) {
-      const { node } = cur;
-      if (node.type.isError) {
-        return node;
-      }
+    if (cursor.from === pos && cursor.to === pos && cursor.node.type.isError) {
+      return cursor;
     }
-  } while (cur.next());
-  return null;
+  } while (cursor.next());
+
+  return tree.cursorAt(pos);
 }
 
 export function getSituation(text: string, pos: number): Situation | null {
@@ -566,27 +697,22 @@ export function getSituation(text: string, pos: number): Situation | null {
     };
   }
 
-  const tree = parser.parse(text);
+  const cursor = resolveCursor(text, pos);
+  const currentNode = cursor.node;
 
-  // if the tree contains error, it is very probable that
-  // our node is one of those error nodes.
-  // also, if there are errors, the node lezer finds us,
-  // might not be the best node.
-  // so first we check if there is an error node at the cursor position
-  const maybeErrorNode = getErrorNode(tree, text, pos);
-
-  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(pos);
-
-  const currentNode = cur.node;
-
-  const ids = [cur.type.id];
-  while (cur.parent()) {
-    ids.push(cur.type.id);
+  const ids = [cursor.type.id];
+  while (cursor.parent()) {
+    ids.push(cursor.type.id);
   }
 
   for (let resolver of RESOLVERS) {
-    if (isPathMatch(resolver.path, ids)) {
-      return resolver.fun(currentNode, text, pos);
+    for (let path of resolver.paths) {
+      if (isPathMatch(path, ids)) {
+        const situation = resolver.fun(currentNode, text, pos);
+        if (situation) {
+          return situation;
+        }
+      }
     }
   }
 

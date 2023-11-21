@@ -8,6 +8,7 @@ import {
   standardFieldConfigEditorRegistry,
   dateTime,
   TimeRange,
+  PanelMigrationHandler,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { mockStandardFieldConfigOptions } from '@grafana/data/test/helpers/fieldConfig';
@@ -80,7 +81,7 @@ describe('PanelModel', () => {
       },
     });
 
-    beforeEach(() => {
+    beforeEach(async () => {
       persistedOptionsMock = {
         fieldOptions: {
           thresholds: [
@@ -141,7 +142,44 @@ describe('PanelModel', () => {
       };
 
       model = new PanelModel(modelJson);
-      model.pluginLoaded(tablePlugin);
+      await model.pluginLoaded(tablePlugin);
+    });
+
+    describe('migrations', () => {
+      let initialMigrator: PanelMigrationHandler<(typeof model)['options']> | undefined = undefined;
+
+      beforeEach(() => {
+        initialMigrator = tablePlugin.onPanelMigration;
+      });
+      afterEach(() => {
+        tablePlugin.onPanelMigration = initialMigrator;
+      });
+
+      it('should run sync migrations', async () => {
+        model.options.valueToMigrate = 'old-legacy';
+
+        tablePlugin.onPanelMigration = (p) => ({ ...p.options, valueToMigrate: 'new-version' });
+
+        tablePlugin.onPanelMigration = (p) => {
+          p.options.valueToMigrate = 'new-version';
+          return p.options;
+        };
+
+        await model.pluginLoaded(tablePlugin);
+        expect(model.options).toMatchObject({ valueToMigrate: 'new-version' });
+      });
+
+      it('should run async migrations', async () => {
+        model.options.valueToMigrate = 'old-legacy';
+
+        tablePlugin.onPanelMigration = async (p) =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve({ ...p.options, valueToMigrate: 'new-version' }), 10);
+          });
+
+        await model.pluginLoaded(tablePlugin);
+        expect(model.options).toMatchObject({ valueToMigrate: 'new-version' });
+      });
     });
 
     it('should apply defaults', () => {

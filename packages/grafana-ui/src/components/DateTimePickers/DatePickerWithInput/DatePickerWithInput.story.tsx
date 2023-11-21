@@ -3,8 +3,6 @@ import { useArgs } from '@storybook/client-api';
 import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
-
 import { DatePickerWithInput } from './DatePickerWithInput';
 import mdx from './DatePickerWithInput.mdx';
 
@@ -18,7 +16,6 @@ minimumDate.setMonth(minimumDate.getMonth() - 1);
 const meta: Meta<typeof DatePickerWithInput> = {
   title: 'Pickers and Editors/TimePickers/DatePickerWithInput',
   component: DatePickerWithInput,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

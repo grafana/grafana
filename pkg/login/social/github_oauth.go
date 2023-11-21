@@ -7,13 +7,19 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+const gitHubProviderName = "github"
 
 type SocialGithub struct {
 	*SocialBase
@@ -33,15 +39,40 @@ type GithubTeam struct {
 }
 
 var (
-	ErrMissingTeamMembership = errutil.NewBase(errutil.StatusUnauthorized,
+	ErrMissingTeamMembership = errutil.Unauthorized(
 		"auth.missing_team",
 		errutil.WithPublicMessage(
 			"User is not a member of one of the required teams. Please contact identity provider administrator."))
-	ErrMissingOrganizationMembership = errutil.NewBase(errutil.StatusUnauthorized,
+	ErrMissingOrganizationMembership = errutil.Unauthorized(
 		"auth.missing_organization",
 		errutil.WithPublicMessage(
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
+
+func NewGitHubProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGithub, error) {
+	info, err := createOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	teamIds, err := mustInts(util.SplitString(info.Extra["team_ids"]))
+	if err != nil {
+		return nil, err
+	}
+
+	config := createOAuthConfig(info, cfg, gitHubProviderName)
+	provider := &SocialGithub{
+		SocialBase:           newSocialBase(gitHubProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		apiUrl:               info.ApiUrl,
+		teamIds:              teamIds,
+		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
+		skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	return provider, nil
+}
 
 func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bool {
 	if len(s.teamIds) == 0 {
@@ -231,7 +262,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 
 	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
 	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
-		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	userInfo := &BasicUserInfo{
@@ -276,6 +307,10 @@ func (t *GithubTeam) GetShorthand() (string, error) {
 	return fmt.Sprintf("@%s/%s", t.Organization.Login, t.Slug), nil
 }
 
+func (s *SocialGithub) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 func convertToGroupList(t []GithubTeam) []string {
 	groups := make([]string, 0)
 	for _, team := range t {
@@ -290,4 +325,16 @@ func convertToGroupList(t []GithubTeam) []string {
 	}
 
 	return groups
+}
+
+func mustInts(s []string) ([]int, error) {
+	result := make([]int, 0, len(s))
+	for _, v := range s {
+		num, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, num)
+	}
+	return result, nil
 }

@@ -3,6 +3,7 @@
   "access-control": {
     "add-permission": {
       "role-label": "Role",
+      "serviceaccount-label": "Service Account",
       "team-label": "Team",
       "title": "Add permission for",
       "user-label": "User"
@@ -18,6 +19,7 @@
       "no-permissions": "There are no permissions",
       "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
       "role": "Role",
+      "serviceaccount": "Service Account",
       "team": "Team",
       "title": "Permissions",
       "user": "User"
@@ -26,7 +28,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
+      "cannot-move-folders": "Folders can not be moved",
       "delete-button": "Delete",
+      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
+      "delete-modal-invalid-title": "Cannot delete folder",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "deleting": "Deleting...",
@@ -40,19 +45,23 @@
       "new-folder-name-required-phrase": "Folder name is required."
     },
     "counts": {
-      "alertRule__one": "{{count}} alert rule",
-      "alertRule__other": "{{count}} alert rules",
-      "dashboard__one": "{{count}} dashboard",
-      "dashboard__other": "{{count}} dashboards",
-      "folder__one": "{{count}} folder",
-      "folder__other": "{{count}} folders",
-      "libraryPanel__one": "{{count}} library panel",
-      "libraryPanel__other": "{{count}} library panels",
-      "total__one": "{{count}} item",
-      "total__other": "{{count}} items"
+      "alertRule_one": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
+      "dashboard_one": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
+      "folder_one": "{{count}} folder",
+      "folder_other": "{{count}} folders",
+      "libraryPanel_one": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
+      "total_one": "{{count}} item",
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
+      "collapse-folder-button": "Collapse folder {{title}}",
+      "expand-folder-button": "Expand folder {{title}}",
       "name-column": "Name",
+      "select-all-header-checkbox": "Select all",
+      "select-checkbox": "Select",
       "tags-column": "Tags"
     },
     "folder-actions-button": {
@@ -123,6 +132,98 @@
       "placeholder": "Search all"
     }
   },
+  "correlations": {
+    "add-new": "Add new",
+    "alert": {
+      "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
+      "title": "Error fetching correlation data"
+    },
+    "basic-info-form": {
+      "description-description": "Optional description with more information about the link",
+      "description-label": "Description",
+      "label-description": "This name will be used as the label for the correlation. This will show as button text, a menu item, or hover text on a link.",
+      "label-label": "Label",
+      "label-placeholder": "e.g. Tempo traces",
+      "label-required": "This field is required.",
+      "sub-text": "<0>Define text that will describe the correlation.</0>",
+      "title": "Define correlation label (Step 1 of 3)"
+    },
+    "list": {
+      "delete": "delete correlation",
+      "label": "Label",
+      "loading": "loading...",
+      "read-only": "Read only",
+      "source": "Source",
+      "target": "Target"
+    },
+    "navigation-form": {
+      "add-button": "Add",
+      "back-button": "Back",
+      "next-button": "Next",
+      "save-button": "Save"
+    },
+    "page-content": "To enable Correlations, add it in the Grafana config:",
+    "page-heading": "Correlations are disabled",
+    "query-editor": {
+      "control-rules": "The selected target data source must export a query editor.",
+      "data-source-text": "Please select a target data source first.",
+      "data-source-title": "No data source selected",
+      "error-text": "The selected data source could not be loaded.",
+      "error-title": "Error loading data source",
+      "loading": "Loading query editor...",
+      "query-description": "Define the query that is run when the link is clicked. You can use <2>variables</2> to access specific field values.",
+      "query-editor-title": "Data source does not export a query editor.",
+      "query-label": "Query"
+    },
+    "source-form": {
+      "control-required": "This field is required.",
+      "description": "You have used following variables in the target query: <1></1><2></2>A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<4></4>Note: Not every variable needs to be explicitly defined below. A transformation such as <7>logfmt</7> will create variables for every key/value pair.",
+      "heading": "Variables used in the target query",
+      "results-description": "The link will be shown next to the value of this field",
+      "results-label": "Results field",
+      "results-required": "This field is required.",
+      "source-description": "Results from selected source data source have links displayed in the panel",
+      "source-label": "Source",
+      "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>",
+      "title": "Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)"
+    },
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>",
+    "target-form": {
+      "control-rules": "This field is required.",
+      "sub-text": "<0>Define what data source the correlation will link to, and what query will run when the correlation is clicked.</0>",
+      "target-description": "Specify which data source is queried when the link is clicked",
+      "target-label": "Target",
+      "title": "Setup the target for the correlation (Step 2 of 3)"
+    },
+    "trans-details": {
+      "logfmt-description": "Parse provided field with logfmt to get variables",
+      "logfmt-label": "Logfmt",
+      "regex-description": "Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value. Regex is case insensitive.",
+      "regex-expression": "Use capture groups to extract a portion of the field.",
+      "regex-label": "Regular expression",
+      "regex-map-values": "Defines the name of the variable if the capture group is not named."
+    },
+    "transform": {
+      "add-button": "Add transformation",
+      "heading": "Transformations",
+      "no-transform": "No transformations defined."
+    },
+    "transform-row": {
+      "expression-label": "Expression",
+      "expression-required": "Please define an expression",
+      "expression-tooltip": "Required for regular expression. The expression the transformation will use. Logfmt does not use further specifications.",
+      "field-input": "field",
+      "field-label": "Field",
+      "field-tooltip": "Optional. The field to transform. If not specified, the transformation will be applied to the results field.",
+      "map-value-label": "Map value",
+      "map-value-tooltip": "Optional. Defines the name of the variable. This is currently only valid for regular expressions with a single, unnamed capture group.",
+      "remove-button": "Remove",
+      "remove-tooltip": "Remove transformation",
+      "transform-required": "Please select a transformation type",
+      "type-label": "Type",
+      "type-tooltip": "The type of transformation that will be applied to the source data."
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Import from library",
@@ -132,24 +233,24 @@
       "widget": "Widget"
     },
     "empty": {
-      "add-import-body": "Import visualizations that are shared with other dashboards.",
-      "add-import-button": "Import library panel",
-      "add-import-header": "Import panel",
-      "add-row-body": "Group your visualizations into expandable sections.",
-      "add-row-button": "Add row",
-      "add-row-header": "Add a row",
+      "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
+      "add-library-panel-button": "Add library panel",
+      "add-library-panel-header": "Add a library panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "add-widget-body": "Create lists, markdowns and other widgets",
       "add-widget-button": "Add widget",
-      "add-widget-header": "Add a widget"
+      "add-widget-header": "Add a widget",
+      "import-a-dashboard-body": "Import dashboard from file or <1>grafana.com</1>.",
+      "import-a-dashboard-header": "Import a dashboard",
+      "import-dashboard-button": "Import dashboard"
     },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Error",
       "json-tab": "JSON",
-      "meta-tab": "Meta Data",
+      "meta-tab": "Meta data",
       "query-tab": "Query",
       "stats-tab": "Stats",
       "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
@@ -208,19 +309,244 @@
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "settings": "Dashboard settings",
-      "share": "Share dashboard or panel",
+      "share": "Share dashboard",
       "unmark-favorite": "Unmark as favorite"
+    },
+    "validation": {
+      "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
+      "invalid-json": "Not valid JSON",
+      "tags-expected-array": "tags expected array",
+      "tags-expected-strings": "tags expected array of strings"
     }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "Upload dashboard JSON file",
+      "secondary-text": "Drag and drop here or click to browse"
+    },
+    "form-actions": {
+      "cancel": "Cancel",
+      "load": "Load"
+    },
+    "gcom-field": {
+      "label": "Find and import dashboards for common applications at <1></1>",
+      "load-button": "Load",
+      "placeholder": "Grafana.com dashboard URL or ID",
+      "validation-required": "A Grafana dashboard URL or ID is required"
+    },
+    "json-field": {
+      "label": "Import via dashboard JSON model",
+      "validation-required": "Need a dashboard JSON model"
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": "Annotations"
+    },
+    "dashboard-delete-button": "Delete Dashboard",
+    "general": {
+      "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list.",
+      "auto-refresh-label": "Auto refresh",
+      "description-label": "Description",
+      "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
+      "editable-label": "Editable",
+      "folder-label": "Folder",
+      "panel-options-graph-tooltip-description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
+      "panel-options-graph-tooltip-label": "Graph tooltip",
+      "panel-options-label": "Panel options",
+      "tags-label": "Tags",
+      "title": "General",
+      "title-label": "Title"
+    },
+    "json-editor": {
+      "save-button": "Save changes",
+      "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
+      "title": "JSON Model"
+    },
+    "links": {
+      "title": "Links"
+    },
+    "permissions": {
+      "title": "Permissions"
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "time-picker": {
+      "hide-time-picker": "Hide time picker",
+      "now-delay-description": "Exclude recent data that may be incomplete.",
+      "now-delay-label": "Now delay",
+      "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
+      "refresh-live-dashboards-label": "Refresh live dashboards",
+      "time-options-label": "Time options",
+      "time-zone-label": "Time zone",
+      "week-start-label": "Week start"
+    },
+    "variables": {
+      "title": "Variables"
+    },
+    "versions": {
+      "title": "Versions"
+    }
+  },
+  "data-source-picker": {
+    "add-new-data-source": "Configure a new data source",
+    "built-in-list": {
+      "description-dashboard": "Reuse query results from other visualizations",
+      "description-grafana": "Discover visualizations using mock data",
+      "description-mixed": "Use multiple data sources"
+    },
+    "list": {
+      "no-data-source-message": "No data sources found"
+    },
+    "modal": {
+      "configure-new-data-source": "Open a new tab and configure a data source",
+      "input-placeholder": "Select data source",
+      "title": "Select data source"
+    },
+    "open-advanced-button": "Open advanced data source picker"
   },
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
     }
   },
+  "explore": {
+    "add-to-dashboard": "Add to dashboard",
+    "rich-history": {
+      "close-tooltip": "Close query history",
+      "datasource-a-z": "Data source A-Z",
+      "datasource-z-a": "Data source Z-A",
+      "newest-first": "Newest first",
+      "oldest-first": "Oldest first",
+      "query-history": "Query history",
+      "settings": "Settings",
+      "starred": "Starred"
+    },
+    "rich-history-card": {
+      "add-comment-form": "Add comment form",
+      "add-comment-tooltip": "Add comment",
+      "cancel": "Cancel",
+      "confirm-delete": "Delete",
+      "copy-query-tooltip": "Copy query to clipboard",
+      "copy-shortened-link-tooltip": "Copy shortened link to clipboard",
+      "datasource-icon-label": "Data source icon",
+      "datasource-name-label": "Data source name",
+      "datasource-not-exist": "Data source does not exist anymore",
+      "delete-query-confirmation-title": "Delete",
+      "delete-query-title": "Delete query",
+      "delete-query-tooltip": "Delete query",
+      "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
+      "edit-comment-tooltip": "Edit comment",
+      "loading-text": "loading...",
+      "optional-description": "An optional description of what the query does.",
+      "query-comment-label": "Query comment",
+      "query-text-label": "Query text",
+      "run-query-button": "Run query",
+      "save-comment": "Save comment",
+      "star-query-tooltip": "Star query",
+      "switch-datasource-button": "Switch data source and run query",
+      "unstar-query-tooltip": "Unstar query",
+      "update-comment-form": "Update comment form"
+    },
+    "rich-history-container": {
+      "loading": "Loading..."
+    },
+    "rich-history-notification": {
+      "query-copied": "Query copied to clipboard",
+      "query-deleted": "Query deleted"
+    },
+    "rich-history-queries-tab": {
+      "displaying-partial-queries": "Displaying {{ count }} queries",
+      "displaying-queries": "{{ count }} queries",
+      "filter-aria-label": "Filter queries for data sources(s)",
+      "filter-history": "Filter history",
+      "filter-placeholder": "Filter queries for data sources(s)",
+      "history-local": "The history is local to your browser and is not shared with others.",
+      "loading": "Loading...",
+      "loading-results": "Loading results...",
+      "search-placeholder": "Search queries",
+      "showing-queries": "Showing {{ shown }} of {{ total }} <0>Load more</0>",
+      "sort-aria-label": "Sort queries",
+      "sort-placeholder": "Sort queries by"
+    },
+    "rich-history-settings-tab": {
+      "alert-info": "Grafana will keep entries up to {{optionLabel}}.Starred entries won't be deleted.",
+      "change-default-tab": "Change the default active tab from “Query history” to “Starred”",
+      "clear-history-info": "Delete all of your query history, permanently.",
+      "clear-query-history": "Clear query history",
+      "clear-query-history-button": "Clear query history",
+      "delete-confirm": "Delete",
+      "delete-confirm-text": "Are you sure you want to permanently delete your query history?",
+      "delete-title": "Delete",
+      "history-time-span": "History time span",
+      "history-time-span-description": "Select the period of time for which Grafana will save your query history. Up to {{MAX_HISTORY_ITEMS}} entries will be stored.",
+      "only-show-active-datasource": "Only show queries for data source currently active in Explore",
+      "query-history-deleted": "Query history deleted",
+      "retention-period": {
+        "1-week": "1 week",
+        "2-days": "2 days",
+        "2-weeks": "2 weeks",
+        "5-days": "5 days"
+      }
+    },
+    "rich-history-starred-tab": {
+      "filter-queries-aria-label": "Filter queries for data sources(s)",
+      "filter-queries-placeholder": "Filter queries for data sources(s)",
+      "loading": "Loading...",
+      "loading-results": "Loading results...",
+      "local-history-message": "The history is local to your browser and is not shared with others.",
+      "search-queries-placeholder": "Search queries",
+      "showing-queries": "Showing {{ shown }} of {{ total }} <0>Load more</0>",
+      "sort-queries-aria-label": "Sort queries",
+      "sort-queries-placeholder": "Sort queries by"
+    },
+    "rich-history-utils": {
+      "a-week-ago": "a week ago",
+      "days-ago": "{{num}} days ago",
+      "default-from": "now-1h",
+      "default-to": "now",
+      "today": "today",
+      "two-weeks-ago": "two weeks ago",
+      "yesterday": "yesterday"
+    },
+    "rich-history-utils-notification": {
+      "saving-failed": "Saving rich history failed",
+      "update-failed": "Rich History update failed"
+    },
+    "secondary-actions": {
+      "query-add-button": "Add query",
+      "query-add-button-aria-label": "Add query",
+      "query-history-button": "Query history",
+      "query-history-button-aria-label": "Query history",
+      "query-inspector-button": "Query inspector",
+      "query-inspector-button-aria-label": "Query inspector"
+    },
+    "table": {
+      "no-data": "0 series returned",
+      "title": "Table",
+      "title-with-name": "Table - {{name}}"
+    },
+    "toolbar": {
+      "aria-label": "Explore toolbar",
+      "copy-shortened-link": "Copy shortened link",
+      "refresh-picker-cancel": "Cancel",
+      "refresh-picker-run": "Run query",
+      "split-close": "Close",
+      "split-close-tooltip": "Close split pane",
+      "split-narrow": "Narrow pane",
+      "split-title": "Split",
+      "split-tooltip": "Split the pane",
+      "split-widen": "Widen pane"
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": "Close"
+    },
     "segment-async": {
       "error": "Failed to load options",
       "loading": "Loading options...",
@@ -229,6 +555,64 @@
     "select": {
       "no-options-label": "No options found",
       "placeholder": "Choose"
+    }
+  },
+  "graph": {
+    "container": {
+      "content": "Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.",
+      "show-all-series": "Show all {{length}}",
+      "show-only-series": "Showing only {{MAX_NUMBER_OF_TIME_SERIES}} series",
+      "title": "Graph"
+    }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "Dashboard",
+      "focused-panel": "Focused Panel",
+      "global": "Global",
+      "time-range": "Time Range"
+    },
+    "shortcuts-description": {
+      "change-theme": "Change theme",
+      "collapse-all-rows": "Collapse all rows",
+      "dashboard-settings": "Dashboard settings",
+      "duplicate-panel": "Duplicate Panel",
+      "exit-edit/setting-views": "Exit edit/setting views",
+      "expand-all-rows": "Expand all rows",
+      "go-to-dashboards": "Go to Dashboards",
+      "go-to-explore": "Go to Explore",
+      "go-to-home-dashboard": "Go to Home Dashboard",
+      "go-to-profile": "Go to Profile",
+      "make-time-range-permanent": "Make time range absolute/permanent",
+      "move-time-range-back": "Move time range back",
+      "move-time-range-forward": "Move time range forward",
+      "open-search": "Open search",
+      "open-shared-modal": "Open Panel Share Modal",
+      "refresh-all-panels": "Refresh all panels",
+      "remove-panel": "Remove Panel",
+      "save-dashboard": "Save dashboard",
+      "show-all-shortcuts": "Show all keyboard shortcuts",
+      "toggle-active-mode": "Toggle in-active / view mode",
+      "toggle-all-panel-legends": "Toggle all panel legends",
+      "toggle-auto-fit": "Toggle auto fit panels (experimental feature)",
+      "toggle-exemplars": "Toggle exemplars in all panel",
+      "toggle-graph-crosshair": "Toggle shared graph crosshair",
+      "toggle-kiosk": "Toggle kiosk mode (hides top nav)",
+      "toggle-panel-edit": "Toggle panel edit view",
+      "toggle-panel-fullscreen": "Toggle panel fullscreen view",
+      "toggle-panel-legend": "Toggle panel legend",
+      "zoom-out-time-range": "Zoom out time range"
+    },
+    "title": "Shortcuts"
+  },
+  "inspector": {
+    "query": {
+      "collapse-all": "Collapse all",
+      "copy-to-clipboard": "Copy to clipboard",
+      "description": "Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a new query. Click refresh button below to trigger a new query.",
+      "expand-all": "Expand all",
+      "no-data": "No request and response collected yet. Hit refresh button",
+      "refresh": "Refresh"
     }
   },
   "library-panel": {
@@ -245,6 +629,17 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "button-cancel": "<0>Cancel</0>",
+      "button-view-panel1": "View panel in {{label}}...",
+      "button-view-panel2": "View panel in dashboard...",
+      "panel-not-linked": "Panel is not linked to a dashboard. Add the panel to a dashboard and retry.",
+      "select-no-options-message": "No dashboards found",
+      "select-placeholder": "Start typing to search for dashboard",
+      "title": "View panel in dashboard"
+    },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
@@ -311,7 +706,7 @@
       "title": "API keys"
     },
     "application": {
-      "title": "Application (preview)"
+      "title": "Application"
     },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
@@ -322,6 +717,18 @@
     },
     "config": {
       "title": "Administration"
+    },
+    "config-access": {
+      "subtitle": "Configure access for individual users, teams, and service accounts",
+      "title": "Users and access"
+    },
+    "config-general": {
+      "subtitle": "Manage default preferences and settings across Grafana",
+      "title": "General"
+    },
+    "config-plugins": {
+      "subtitle": "Install plugins and define the relationships between data",
+      "title": "Plugins and data"
     },
     "connect-data": {
       "title": "Connect data"
@@ -395,7 +802,7 @@
       "title": "Incidents"
     },
     "infrastructure": {
-      "title": "Infrastructure"
+      "title": "Integrations"
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -454,7 +861,7 @@
       "title": "Profile"
     },
     "profiles": {
-      "title": "Profiles (preview)"
+      "title": "Profiles"
     },
     "public": {
       "title": "Public dashboards"
@@ -528,9 +935,14 @@
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
     },
+    "megamenu": {
+      "close": "Close menu",
+      "dock": "Dock menu"
+    },
     "toolbar": {
+      "close-menu": "Close menu",
       "enable-kiosk": "Enable kiosk mode",
-      "toggle-menu": "Toggle menu",
+      "open-menu": "Open menu",
       "toggle-search-bar": "Toggle top search bar"
     }
   },
@@ -554,6 +966,7 @@
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
       "share": "Share",
@@ -561,6 +974,79 @@
       "unlink-library-panel": "Unlink library panel",
       "view": "View"
     }
+  },
+  "playlist-edit": {
+    "error-prefix": "Error loading playlist:",
+    "form": {
+      "add-tag-label": "Add by tag",
+      "add-tag-placeholder": "Select a tag",
+      "add-title-label": "Add by title",
+      "cancel": "Cancel",
+      "heading": "Add dashboards",
+      "interval-label": "Interval",
+      "interval-placeholder": "5m",
+      "interval-required": "Interval is required",
+      "name-label": "Name",
+      "name-placeholder": "Name",
+      "name-required": "Name is required",
+      "save": "Save",
+      "table-delete": "Delete playlist item",
+      "table-drag": "Drag and drop to reorder",
+      "table-empty": "Playlist is empty. Add dashboards below.",
+      "table-heading": "Dashboards"
+    },
+    "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
+    "title": "Edit playlist"
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "Delete playlist",
+      "edit": "Edit playlist",
+      "start": "Start playlist",
+      "tooltip": "Share playlist"
+    },
+    "create-button": {
+      "title": "New playlist"
+    },
+    "delete-modal": {
+      "body": "Are you sure you want to delete {{name}} playlist?",
+      "confirm-text": "Delete"
+    },
+    "empty": {
+      "button": "Create Playlist",
+      "pro-tip": "You can use playlists to cycle dashboards on TVs without user control",
+      "pro-tip-link-title": "Learn more",
+      "title": "There are no playlists created yet"
+    }
+  },
+  "profile": {
+    "change-password": {
+      "cancel-button": "Cancel",
+      "cannot-change-password-message": "Password cannot be changed here.",
+      "change-password-button": "Change Password",
+      "confirm-password-label": "Confirm password",
+      "confirm-password-required": "New password confirmation is required",
+      "ldap-auth-proxy-message": "You cannot change password when signed in with LDAP or auth proxy.",
+      "new-password-label": "New password",
+      "new-password-required": "New password is required",
+      "new-password-same-as-old": "New password can't be the same as the old one.",
+      "old-password-label": "Old password",
+      "old-password-required": "Old password is required",
+      "passwords-must-match": "Passwords must match"
+    }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "Collapse query row",
+      "datasource-help": "Show data source help",
+      "disable-query": "Disable query",
+      "drag-and-drop": "Drag and drop to reorder",
+      "duplicate-query": "Duplicate query",
+      "expand-row": "Expand query row",
+      "remove-query": "Remove query",
+      "toggle-edit-mode": "Toggle text edit mode"
+    },
+    "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
   "refresh-picker": {
     "aria-label": {
@@ -579,8 +1065,9 @@
       "aria-label": "Turn off auto refresh",
       "label": "Off"
     },
-    "select-button": {
-      "auto-refresh": "Set auto refresh interval"
+    "tooltip": {
+      "interval-selected": "Set auto refresh interval",
+      "turned-off": "Auto refresh off"
     }
   },
   "search": {
@@ -640,10 +1127,10 @@
       "time-range-description": "Transforms the current relative time range to an absolute time range"
     },
     "export": {
+      "back-button": "Back to export config",
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
       "save-button": "Save to file",
-      "share-default-label": "Export with default values removed",
       "share-externally-label": "Export for sharing externally",
       "view-button": "View JSON"
     },
@@ -655,7 +1142,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the&nbsp;<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render a panel image, you must install the <1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
@@ -690,6 +1177,8 @@
       "export": "Export",
       "library-panel": "Library panel",
       "link": "Link",
+      "panel-embed": "Embed",
+      "public-dashboard": "Public Dashboard",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
@@ -701,6 +1190,17 @@
     "view-json": {
       "copy-button": "Copy to Clipboard"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "Panel heights will be adjusted to fit screen size",
+    "checkbox-label": "Autofit",
+    "copy-link-button": "Copy",
+    "link-url-label": "Link URL",
+    "mode": "Mode",
+    "mode-kiosk": "Kiosk",
+    "mode-normal": "Normal",
+    "mode-tv": "TV",
+    "title": "Share playlist"
   },
   "shared": {
     "preferences": {
@@ -730,6 +1230,12 @@
     },
     "title": "Preferences"
   },
+  "snapshot": {
+    "external-badge": "External",
+    "name-column-header": "Name",
+    "url-column-header": "Snapshot url",
+    "view-button": "View"
+  },
   "tag-filter": {
     "loading": "Loading...",
     "no-tags": "No tags found",
@@ -746,7 +1252,8 @@
       "select-time": "Select a time range"
     },
     "content": {
-      "empty-recent-list": "<0><0>It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.</0></0><1><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></1>",
+      "empty-recent-list-docs": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
+      "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
     },
     "footer": {

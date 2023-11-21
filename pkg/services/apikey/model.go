@@ -4,9 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -32,7 +32,7 @@ type APIKey struct {
 
 func (k APIKey) TableName() string { return "api_key" }
 
-// swagger:model
+// swagger:model AddAPIKeyCommand
 type AddCommand struct {
 	Name             string       `json:"name" binding:"Required"`
 	Role             org.RoleType `json:"role" binding:"Required"`
@@ -50,7 +50,7 @@ type DeleteCommand struct {
 type GetApiKeysQuery struct {
 	OrgID          int64
 	IncludeExpired bool
-	User           *user.SignedInUser
+	User           identity.Requester
 }
 type GetByNameQuery struct {
 	KeyName string

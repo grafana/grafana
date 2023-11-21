@@ -449,7 +449,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		assert.Equal(t, "Invalid username or password", res["message"])
 	}
@@ -524,7 +524,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 			},
 		}
 
-		status, _ := apiClient.PostRulesGroup(t, "default", &rules)
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
 	}
 
@@ -664,7 +664,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 					},
 				},
 			}
-			status, body := tc.client.PostRulesGroup(t, "default", &rules)
+			_, status, body := tc.client.PostRulesGroupWithStatus(t, "default", &rules)
 			assert.Equal(t, tc.expStatus, status)
 			res := &Response{}
 			err = json.Unmarshal([]byte(body), &res)
@@ -1097,7 +1097,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						tc.rule,
 					},
 				}
-				status, body := apiClient.PostRulesGroup(t, "default", &rules)
+				_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 				res := &Response{}
 				err = json.Unmarshal([]byte(body), &res)
 				require.NoError(t, err)
@@ -1170,9 +1170,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				},
 			},
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		resp, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Equal(t, "rule group updated successfully", resp.Message)
+		assert.Len(t, resp.Created, 2)
+		assert.Empty(t, resp.Updated)
+		assert.Empty(t, resp.Deleted)
 	}
 
 	// With the rules created, let's make sure that rule definition is stored correctly.
@@ -1339,9 +1342,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			Interval: interval,
 		}
 
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusNotFound, status)
-		var res map[string]interface{}
+		var res map[string]any
 		assert.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "failed to update rule group: failed to update rule with UID unknown because could not find alert rule", res["message"])
 
@@ -1445,9 +1448,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusBadRequest, status)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, fmt.Sprintf("rule [1] has UID %s that is already assigned to another rule at index 0", ruleUID), res["message"])
 
@@ -1519,9 +1522,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Equal(t, respModel.Updated, []string{ruleUID})
+		require.Len(t, respModel.Deleted, 1)
 
 		// let's make sure that rule definitions are updated correctly.
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1637,9 +1641,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Equal(t, respModel.Updated, []string{ruleUID})
 
 		// let's make sure that rule definitions are updated correctly.
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1723,9 +1727,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			Interval: interval,
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"no changes detected in the rule group"}`, body)
+		require.Equal(t, "no changes detected in the rule group", respModel.Message)
+		assert.Empty(t, respModel.Created)
+		assert.Empty(t, respModel.Updated)
+		assert.Empty(t, respModel.Deleted)
 
 		// let's make sure that rule definitions are updated correctly.
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1813,7 +1820,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
-			var res map[string]interface{}
+			var res map[string]any
 			require.NoError(t, json.Unmarshal(b, &res))
 			require.Equal(t, "rules deleted", res["message"])
 		})
@@ -1993,9 +2000,9 @@ func TestIntegrationQuota(t *testing.T) {
 				},
 			},
 		}
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusForbidden, status)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "quota has been exceeded", res["message"])
 	})
@@ -2030,9 +2037,9 @@ func TestIntegrationQuota(t *testing.T) {
 			},
 		}
 
-		status, body := apiClient.PostRulesGroup(t, "default", &rules)
+		respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, "default", &rules)
 		assert.Equal(t, http.StatusAccepted, status)
-		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+		require.Len(t, respModel.Updated, 1)
 
 		// let's make sure that rule definitions are updated correctly.
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)

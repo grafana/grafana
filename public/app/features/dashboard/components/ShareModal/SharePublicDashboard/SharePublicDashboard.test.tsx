@@ -69,7 +69,6 @@ beforeAll(() => {
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
 
-  jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 });
@@ -103,7 +102,7 @@ const getErrorPublicDashboardResponse = () =>
 
 const alertTests = () => {
   it('when user has no write permissions, warning is shown', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     await renderSharePublicDashboard();
     expect(screen.queryByTestId(selectors.NoUpsertPermissionsWarningAlert)).toBeInTheDocument();
@@ -196,7 +195,7 @@ describe('SharePublic - New config setup', () => {
   it('renders when public dashboards feature is enabled', async () => {
     await renderSharePublicDashboard();
 
-    await screen.findByText('Welcome to public dashboards public preview!');
+    await screen.findByText('Welcome to public dashboards!');
     expect(screen.getByText('Generate public URL')).toBeInTheDocument();
 
     expect(screen.queryByTestId(selectors.WillBePublicCheckbox)).toBeInTheDocument();
@@ -251,7 +250,7 @@ describe('SharePublic - Already persisted', () => {
     expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
   });
   it('inputs and delete button are disabled because of lack of permissions', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
 

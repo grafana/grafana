@@ -196,7 +196,6 @@ describe('NotificationPolicies', () => {
 
   beforeEach(() => {
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
-    mocks.contextSrv.hasAccess.mockImplementation(() => true);
     mocks.contextSrv.hasPermission.mockImplementation(() => true);
     mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
@@ -384,7 +383,7 @@ describe('NotificationPolicies', () => {
   });
 
   it('hides create and edit button if user does not have permission', async () => {
-    mocks.contextSrv.hasAccess.mockImplementation((action) =>
+    mocks.contextSrv.hasPermission.mockImplementation((action) =>
       [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsRead].includes(
         action as AccessControlAction
       )

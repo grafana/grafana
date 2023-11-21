@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -7,7 +6,6 @@ import {
   applyFieldOverrides,
   applyRawFieldOverrides,
   CoreApp,
-  CSVConfig,
   DataFrame,
   DataTransformerID,
   FieldConfigSource,
@@ -20,7 +18,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
-import { PanelModel } from 'app/features/dashboard/state';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
@@ -35,7 +32,11 @@ interface Props {
   timeZone: TimeZone;
   app?: CoreApp;
   data?: DataFrame[];
-  panel?: PanelModel;
+  /** The title of the panel or other context name */
+  dataName: string;
+  panelPluginId?: string;
+  fieldConfig?: FieldConfigSource;
+  hasTransformations?: boolean;
   onOptionsChange?: (options: GetDataOptions) => void;
 }
 
@@ -91,15 +92,20 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
   }
 
-  exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
-    const { panel } = this.props;
+  exportCsv(dataFrames: DataFrame[], hasLogs: boolean) {
+    const { dataName } = this.props;
     const { transformId } = this.state;
+    const dataFrame = dataFrames[this.state.dataFrameIndex];
 
-    downloadDataFrameAsCsv(dataFrame, panel ? panel.getDisplayTitle() : 'Explore', csvConfig, transformId);
-  };
+    if (hasLogs) {
+      reportInteraction('grafana_logs_download_clicked', { app: this.props.app, format: 'csv' });
+    }
 
-  exportLogsAsTxt = () => {
-    const { data, panel, app } = this.props;
+    downloadDataFrameAsCsv(dataFrame, dataName, { useExcelHeader: this.state.downloadForExcel }, transformId);
+  }
+
+  onExportLogsAsTxt = () => {
+    const { data, dataName, app } = this.props;
 
     reportInteraction('grafana_logs_download_logs_clicked', {
       app,
@@ -108,11 +114,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
 
     const logsModel = dataFrameToLogsModel(data || []);
-    downloadLogsModelAsTxt(logsModel, panel ? panel.getDisplayTitle() : 'Explore');
+    downloadLogsModelAsTxt(logsModel, dataName);
   };
 
-  exportTracesAsJson = () => {
-    const { data, panel, app } = this.props;
+  onExportTracesAsJson = () => {
+    const { data, dataName, app } = this.props;
 
     if (!data) {
       return;
@@ -123,7 +129,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
       if (df.meta?.preferredVisualisationType !== 'trace') {
         continue;
       }
-      const traceFormat = downloadTraceAsJson(df, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
+
+      const traceFormat = downloadTraceAsJson(df, dataName + '-traces');
 
       reportInteraction('grafana_traces_download_traces_clicked', {
         app,
@@ -134,8 +141,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
   };
 
-  exportServiceGraph = () => {
-    const { data, panel, app } = this.props;
+  onExportServiceGraph = () => {
+    const { data, dataName, app } = this.props;
+
     reportInteraction('grafana_traces_download_service_graph_clicked', {
       app,
       grafana_version: config.buildInfo.version,
@@ -146,7 +154,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       return;
     }
 
-    downloadAsJson(data, panel ? panel.getDisplayTitle() : 'Explore');
+    downloadAsJson(data, dataName);
   };
 
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
@@ -158,28 +166,28 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   };
 
-  toggleDownloadForExcel = () => {
+  onToggleDownloadForExcel = () => {
     this.setState((prevState) => ({
       downloadForExcel: !prevState.downloadForExcel,
     }));
   };
 
   getProcessedData(): DataFrame[] {
-    const { options, panel, timeZone } = this.props;
+    const { options, panelPluginId, fieldConfig, timeZone } = this.props;
     const data = this.state.transformedData;
 
-    if (!options.withFieldConfig || !panel) {
+    if (!options.withFieldConfig || !panelPluginId || !fieldConfig) {
       return applyRawFieldOverrides(data);
     }
 
-    const fieldConfig = this.cleanTableConfigFromFieldConfig(panel.type, panel.fieldConfig);
+    const fieldConfigCleaned = this.cleanTableConfigFromFieldConfig(panelPluginId, fieldConfig);
 
     // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
     // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
     return applyFieldOverrides({
       data,
       theme: config.theme2,
-      fieldConfig,
+      fieldConfig: fieldConfigCleaned,
       timeZone,
       replaceVariables: (value: string) => {
         return value;
@@ -210,9 +218,34 @@ export class InspectDataTab extends PureComponent<Props, State> {
     return fieldConfig;
   }
 
+  renderActions(dataFrames: DataFrame[], hasLogs: boolean, hasTraces: boolean, hasServiceGraph: boolean) {
+    return (
+      <>
+        <Button variant="primary" onClick={() => this.exportCsv(dataFrames, hasLogs)} size="sm">
+          <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
+        </Button>
+        {hasLogs && (
+          <Button variant="primary" onClick={this.onExportLogsAsTxt} size="sm">
+            <Trans i18nKey="dashboard.inspect-data.download-logs">Download logs</Trans>
+          </Button>
+        )}
+        {hasTraces && (
+          <Button variant="primary" onClick={this.onExportTracesAsJson} size="sm">
+            <Trans i18nKey="dashboard.inspect-data.download-traces">Download traces</Trans>
+          </Button>
+        )}
+        {hasServiceGraph && (
+          <Button variant="primary" onClick={this.onExportServiceGraph} size="sm">
+            <Trans i18nKey="dashboard.inspect-data.download-service">Download service graph</Trans>
+          </Button>
+        )}
+      </>
+    );
+  }
+
   render() {
-    const { isLoading, options, data, panel, onOptionsChange, app } = this.props;
-    const { dataFrameIndex, transformId, transformationOptions, selectedDataFrame, downloadForExcel } = this.state;
+    const { isLoading, options, data, onOptionsChange, hasTransformations } = this.props;
+    const { dataFrameIndex, transformationOptions, selectedDataFrame, downloadForExcel } = this.state;
     const styles = getPanelInspectorStyles();
 
     if (isLoading) {
@@ -241,70 +274,17 @@ export class InspectDataTab extends PureComponent<Props, State> {
         <div className={styles.toolbar}>
           <InspectDataOptions
             data={data}
-            panel={panel}
+            hasTransformations={hasTransformations}
             options={options}
             dataFrames={dataFrames}
-            transformId={transformId}
             transformationOptions={transformationOptions}
             selectedDataFrame={selectedDataFrame}
             downloadForExcel={downloadForExcel}
             onOptionsChange={onOptionsChange}
             onDataFrameChange={this.onDataFrameChange}
-            toggleDownloadForExcel={this.toggleDownloadForExcel}
+            toggleDownloadForExcel={this.onToggleDownloadForExcel}
+            actions={this.renderActions(dataFrames, hasLogs, hasTraces, hasServiceGraph)}
           />
-          <Button
-            variant="primary"
-            onClick={() => {
-              if (hasLogs) {
-                reportInteraction('grafana_logs_download_clicked', {
-                  app,
-                  format: 'csv',
-                });
-              }
-              this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: this.state.downloadForExcel });
-            }}
-            className={css`
-              margin-bottom: 10px;
-            `}
-          >
-            <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
-          </Button>
-          {hasLogs && (
-            <Button
-              variant="primary"
-              onClick={this.exportLogsAsTxt}
-              className={css`
-                margin-bottom: 10px;
-                margin-left: 10px;
-              `}
-            >
-              <Trans i18nKey="dashboard.inspect-data.download-logs">Download logs</Trans>
-            </Button>
-          )}
-          {hasTraces && (
-            <Button
-              variant="primary"
-              onClick={this.exportTracesAsJson}
-              className={css`
-                margin-bottom: 10px;
-                margin-left: 10px;
-              `}
-            >
-              <Trans i18nKey="dashboard.inspect-data.download-traces">Download traces</Trans>
-            </Button>
-          )}
-          {hasServiceGraph && (
-            <Button
-              variant="primary"
-              onClick={this.exportServiceGraph}
-              className={css`
-                margin-bottom: 10px;
-                margin-left: 10px;
-              `}
-            >
-              <Trans i18nKey="dashboard.inspect-data.download-service">Download service graph</Trans>
-            </Button>
-          )}
         </div>
         <div className={styles.content}>
           <AutoSizer>

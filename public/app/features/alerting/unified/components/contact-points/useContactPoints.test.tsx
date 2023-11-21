@@ -1,13 +1,36 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import './__mocks__/server';
+import { AccessControlAction } from 'app/types';
+
+import { setupMswServer } from '../../mockApi';
+import { grantUserPermissions } from '../../mocks';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+
+import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
 import { useContactPointsWithStatus } from './useContactPoints';
 
+const server = setupMswServer();
+
 describe('useContactPoints', () => {
+  beforeEach(() => {
+    setupGrafanaManagedServer(server);
+  });
+
+  beforeAll(() => {
+    grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
+  });
+
   it('should return contact points with status', async () => {
-    const { result } = renderHook(() => useContactPointsWithStatus('grafana'), {
-      wrapper: TestProvider,
+    const { result } = renderHook(() => useContactPointsWithStatus(), {
+      wrapper: ({ children }) => (
+        <TestProvider>
+          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={'grafana'}>
+            {children}
+          </AlertmanagerProvider>
+        </TestProvider>
+      ),
     });
 
     await waitFor(() => {

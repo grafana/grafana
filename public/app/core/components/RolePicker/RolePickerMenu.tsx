@@ -1,10 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { config } from '@grafana/runtime';
 import { Button, CustomScrollbar, HorizontalGroup, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { contextSrv } from 'app/core/core';
 import { OrgRole, Role } from 'app/types';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
@@ -36,8 +34,7 @@ const fixedRoleGroupNames: Record<string, string> = {
   current: 'Current org',
 };
 
-const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled() && config.featureToggles.noBasicRole;
-const tooltipMessage = noBasicRoleFlag ? (
+const tooltipMessage = (
   <>
     You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
     information in&nbsp;
@@ -50,8 +47,6 @@ const tooltipMessage = noBasicRoleFlag ? (
     </TextLink>
     .
   </>
-) : (
-  ''
 );
 
 interface RolePickerMenuProps {
@@ -68,6 +63,7 @@ interface RolePickerMenuProps {
   updateDisabled?: boolean;
   apply?: boolean;
   offset: { vertical: number; horizontal: number };
+  menuLeft?: boolean;
 }
 
 export const RolePickerMenu = ({
@@ -83,6 +79,7 @@ export const RolePickerMenu = ({
   onUpdate,
   updateDisabled,
   offset,
+  menuLeft,
   apply,
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
@@ -211,15 +208,24 @@ export const RolePickerMenu = ({
       className={cx(
         styles.menu,
         customStyles.menuWrapper,
-        { [customStyles.menuLeft]: offset.horizontal > 0 },
-        css`
-          bottom: ${offset.vertical > 0 ? `${offset.vertical}px` : 'unset'};
-          top: ${offset.vertical < 0 ? `${Math.abs(offset.vertical)}px` : 'unset'};
-        `
+        { [customStyles.menuLeft]: menuLeft },
+        css({
+          top: `${offset.vertical}px`,
+          left: !menuLeft ? `${offset.horizontal}px` : 'unset',
+          right: menuLeft ? `${offset.horizontal}px` : 'unset',
+        })
       )}
     >
       <div className={customStyles.menu} aria-label="Role picker menu">
-        <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack hideVerticalTrack>
+        <CustomScrollbar
+          autoHide={false}
+          autoHeightMax={`${MENU_MAX_HEIGHT}px`}
+          hideHorizontalTrack
+          hideVerticalTrack
+          // NOTE: this is a way to force hiding of the scrollbar
+          // the scrollbar makes the mouseEvents drop
+          className={cx(customStyles.hideScrollBar)}
+        >
           {showBasicRole && (
             <div className={customStyles.menuSection}>
               <BuiltinRoleSelector
@@ -245,7 +251,7 @@ export const RolePickerMenu = ({
               selectedOptions={selectedOptions}
               onRoleChange={onChange}
               onClearSubMenu={onClearSubMenu}
-              showOnLeftSubMenu={offset.horizontal > 0}
+              showOnLeftSubMenu={menuLeft}
             />
           ))}
         </CustomScrollbar>

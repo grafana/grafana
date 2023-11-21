@@ -23,6 +23,7 @@ import {
   PanelData,
   LoadingState,
   GraphSeriesValue,
+  DataFrameWithValue,
 } from '../types/index';
 
 import { arrayToDataFrame } from './ArrayDataFrame';
@@ -32,10 +33,11 @@ function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
     // TODO: should be Column but type does not exists there so not sure whats up here.
     const { text, type, ...disp } = c as any;
+    const values: unknown[] = [];
     return {
       name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
-      values: [] as unknown[],
+      values,
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
@@ -302,6 +304,9 @@ export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFr
 export const isTableData = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('columns'));
 
 export const isDataFrame = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('fields'));
+
+export const isDataFrameWithValue = (data: unknown): data is DataFrameWithValue =>
+  Boolean(isDataFrame(data) && data.hasOwnProperty('value'));
 
 /**
  * Inspect any object and return the results as a DataFrame

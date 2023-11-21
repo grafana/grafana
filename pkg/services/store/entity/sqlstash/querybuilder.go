@@ -1,32 +1,43 @@
 package sqlstash
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 type selectQuery struct {
+	dialect  migrator.Dialect
 	fields   []string // SELECT xyz
 	from     string   // FROM object
 	limit    int64
 	oneExtra bool
 
 	where []string
-	args  []interface{}
+	args  []any
 }
 
-func (q *selectQuery) addWhere(f string, val interface{}) {
-	q.args = append(q.args, val)
-	q.where = append(q.where, f+"=?")
+func (q *selectQuery) addWhere(f string, val ...any) {
+	q.args = append(q.args, val...)
+	// if the field contains a question mark, we assume it's a raw where clause
+	if strings.Contains(f, "?") {
+		q.where = append(q.where, f)
+		// otherwise we assume it's a field name
+	} else {
+		q.where = append(q.where, q.dialect.Quote(f)+"=?")
+	}
 }
 
-func (q *selectQuery) addWhereInSubquery(f string, subquery string, subqueryArgs []interface{}) {
+func (q *selectQuery) addWhereInSubquery(f string, subquery string, subqueryArgs []any) {
 	q.args = append(q.args, subqueryArgs...)
-	q.where = append(q.where, f+" IN ("+subquery+")")
+	q.where = append(q.where, q.dialect.Quote(f)+" IN ("+subquery+")")
 }
 
 func (q *selectQuery) addWhereIn(f string, vals []string) {
 	count := len(vals)
 	if count > 1 {
 		sb := strings.Builder{}
-		sb.WriteString(f)
+		sb.WriteString(q.dialect.Quote(f))
 		sb.WriteString(" IN (")
 		for i := 0; i < count; i++ {
 			if i > 0 {
@@ -42,11 +53,15 @@ func (q *selectQuery) addWhereIn(f string, vals []string) {
 	}
 }
 
-func (q *selectQuery) toQuery() (string, []interface{}) {
+func (q *selectQuery) toQuery() (string, []any) {
 	args := q.args
 	sb := strings.Builder{}
 	sb.WriteString("SELECT ")
-	sb.WriteString(strings.Join(q.fields, ","))
+	quotedFields := make([]string, len(q.fields))
+	for i, f := range q.fields {
+		quotedFields[i] = q.dialect.Quote(f)
+	}
+	sb.WriteString(strings.Join(quotedFields, ","))
 	sb.WriteString(" FROM ")
 	sb.WriteString(q.from)
 

@@ -26,7 +26,7 @@ func TestDuplicatesValidator(t *testing.T) {
 		Type:    "file",
 		OrgID:   1,
 		Folder:  "",
-		Options: map[string]interface{}{"path": dashboardContainingUID},
+		Options: map[string]any{"path": dashboardContainingUID},
 	}
 	logger := log.New("test.logger")
 
@@ -39,18 +39,19 @@ func TestDuplicatesValidator(t *testing.T) {
 		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(6)
 		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*dashboards.DashboardProvisioning{}, nil).Times(4)
 		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
-		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
+		folderID, _, err := r.getOrCreateFolder(context.Background(), cfg, fakeService, folderName)
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
 
 		cfg1 := &config{
 			Name: "first", Type: "file", OrgID: 1, Folder: folderName,
-			Options: map[string]interface{}{"path": dashboardContainingUID},
+			Options: map[string]any{"path": dashboardContainingUID},
 		}
 		cfg2 := &config{
 			Name: "second", Type: "file", OrgID: 1, Folder: folderName,
-			Options: map[string]interface{}{"path": dashboardContainingUID},
+			Options: map[string]any{"path": dashboardContainingUID},
 		}
 
 		reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore)
@@ -92,18 +93,19 @@ func TestDuplicatesValidator(t *testing.T) {
 		fakeStore := &fakeDashboardStore{}
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 		require.NoError(t, err)
-		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
+		folderID, _, err := r.getOrCreateFolder(context.Background(), cfg, fakeService, folderName)
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
 
 		cfg1 := &config{
 			Name: "first", Type: "file", OrgID: 1, Folder: folderName,
-			Options: map[string]interface{}{"path": dashboardContainingUID},
+			Options: map[string]any{"path": dashboardContainingUID},
 		}
 		cfg2 := &config{
 			Name: "second", Type: "file", OrgID: 2, Folder: folderName,
-			Options: map[string]interface{}{"path": dashboardContainingUID},
+			Options: map[string]any{"path": dashboardContainingUID},
 		}
 
 		reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore)
@@ -157,15 +159,15 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		cfg1 := &config{
 			Name: "first", Type: "file", OrgID: 1, Folder: "duplicates-validator-folder",
-			Options: map[string]interface{}{"path": twoDashboardsWithUID},
+			Options: map[string]any{"path": twoDashboardsWithUID},
 		}
 		cfg2 := &config{
 			Name: "second", Type: "file", OrgID: 1, Folder: "root",
-			Options: map[string]interface{}{"path": defaultDashboards},
+			Options: map[string]any{"path": defaultDashboards},
 		}
 		cfg3 := &config{
 			Name: "third", Type: "file", OrgID: 2, Folder: "duplicates-validator-folder",
-			Options: map[string]interface{}{"path": twoDashboardsWithUID},
+			Options: map[string]any{"path": twoDashboardsWithUID},
 		}
 		reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore)
 		reader1.dashboardProvisioningService = fakeService
@@ -194,9 +196,10 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 		require.NoError(t, err)
-		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, cfg1.Folder)
+		folderID, _, err := r.getOrCreateFolder(context.Background(), cfg, fakeService, cfg1.Folder)
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
 
 		require.Equal(t, uint8(2), duplicates[1].UIDs["Z-phNqGmz"].Sum)
@@ -211,9 +214,10 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		r, err = NewDashboardFileReader(cfg3, logger, nil, fakeStore)
 		require.NoError(t, err)
-		folderID, err = r.getOrCreateFolderID(context.Background(), cfg3, fakeService, cfg3.Folder)
+		folderID, _, err = r.getOrCreateFolder(context.Background(), cfg3, fakeService, cfg3.Folder)
 		require.NoError(t, err)
 
+		// nolint:staticcheck
 		identity = dashboardIdentity{folderID: folderID, title: "Grafana"}
 
 		require.Equal(t, uint8(2), duplicates[2].UIDs["Z-phNqGmz"].Sum)

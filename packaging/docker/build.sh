@@ -59,10 +59,10 @@ docker_build () {
   esac
   if [ $UBUNTU_BASE = "0" ]; then
     libc="-musl"
-    base_image="${base_arch}alpine:3.17"
+    base_image="${base_arch}alpine:3.18.3"
   else
     libc=""
-    base_image="${base_arch}ubuntu:20.04"
+    base_image="${base_arch}ubuntu:22.04"
   fi
 
   grafana_tgz=${GRAFANA_TGZ:-"grafana-latest.linux-${arch}${libc}.tar.gz"}

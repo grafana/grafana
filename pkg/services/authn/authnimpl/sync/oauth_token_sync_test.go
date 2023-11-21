@@ -9,18 +9,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/singleflight"
+
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
@@ -74,7 +76,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectedHasEntryToken: &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
 		},
 		{
-			desc:                        "should refresh access token when is has expired",
+			desc:                        "should refresh access token when it has expired",
 			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
 			expectHasEntryCalled:        true,
 			expectTryRefreshTokenCalled: true,
@@ -117,7 +119,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				HasOAuthEntryFunc: func(ctx context.Context, usr *user.SignedInUser) (*login.UserAuth, bool, error) {
+				HasOAuthEntryFunc: func(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
 					hasEntryCalled = true
 					return tt.expectedHasEntryToken, tt.expectedHasEntryToken != nil, nil
 				},
@@ -154,6 +156,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				service:        service,
 				sessionService: sessionService,
 				socialService:  socialService,
+				sf:             new(singleflight.Group),
 			}
 
 			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)

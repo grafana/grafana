@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -52,26 +53,26 @@ const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(2),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 6,
 							"y": 0,
 						},
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"uid":  sc.initialResult.Result.UID,
 							"name": sc.initialResult.Result.Name,
 						},
@@ -82,6 +83,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 				Title: "Testing DeleteLibraryElementsInFolder",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
+			// nolint:staticcheck
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
@@ -98,6 +100,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
 		func(t *testing.T, sc scenarioContext) {
+			// nolint:staticcheck
 			command := getCreateVariableCommand(sc.folder.ID, "query0")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -125,26 +128,26 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 func TestGetLibraryPanelConnections(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get connections of library panel, it should succeed and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(2),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 6,
 							"y": 0,
 						},
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"uid":  sc.initialResult.Result.UID,
 							"name": sc.initialResult.Result.Name,
 						},
@@ -155,6 +158,7 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 				Title: "Testing GetLibraryPanelConnections",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
+			// nolint:staticcheck
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
@@ -190,15 +194,16 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 }
 
 type libraryElement struct {
-	ID          int64                       `json:"id"`
-	OrgID       int64                       `json:"orgId"`
+	ID    int64 `json:"id"`
+	OrgID int64 `json:"orgId"`
+	// Deprecated: use FolderUID instead
 	FolderID    int64                       `json:"folderId"`
 	UID         string                      `json:"uid"`
 	Name        string                      `json:"name"`
 	Kind        int64                       `json:"kind"`
 	Type        string                      `json:"type"`
 	Description string                      `json:"description"`
-	Model       map[string]interface{}      `json:"model"`
+	Model       map[string]any              `json:"model"`
 	Version     int64                       `json:"version"`
 	Meta        model.LibraryElementDTOMeta `json:"meta"`
 }
@@ -251,7 +256,7 @@ func getCreateVariableCommand(folderID int64, name string) model.CreateLibraryEl
 
 func getCreateCommandWithModel(folderID int64, name string, kind model.LibraryElementKind, byteModel []byte) model.CreateLibraryElementCommand {
 	command := model.CreateLibraryElementCommand{
-		FolderID: folderID,
+		FolderID: folderID, // nolint:staticcheck
 		Name:     name,
 		Model:    byteModel,
 		Kind:     int64(kind),
@@ -268,9 +273,11 @@ type scenarioContext struct {
 	folder        *folder.Folder
 	initialResult libraryElementResult
 	sqlStore      db.DB
+	log           log.Logger
 }
 
 func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
+	// nolint:staticcheck
 	dash.FolderID = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
@@ -280,11 +287,10 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 		Overwrite: false,
 	}
 
-	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
@@ -307,12 +313,11 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder {
 	t.Helper()
 
-	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	cfg := setting.NewCfg()
 	ac := actest.FakeAccessControl{}
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sc.sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
@@ -367,12 +372,12 @@ func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) lib
 func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
+	features := featuremgmt.WithFeatures()
 	sqlStore := db.InitTestDB(t)
 	ac := actest.FakeAccessControl{}
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
-	features := featuremgmt.WithFeatures()
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
@@ -382,13 +387,15 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, svcErr)
-	guardian.InitAccessControlGuardian(sqlStore.Cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashboardService)
+	guardian.InitAccessControlGuardian(sqlStore.Cfg, ac, dashboardService)
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
+		// nolint:staticcheck
 		command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel")
 		sc.reqContext.Req.Body = mockRequestBody(command)
 		resp := sc.service.createHandler(sc.reqContext)
 		sc.initialResult = validateAndUnMarshalResponse(t, resp)
+		sc.log = log.New("libraryelements-test")
 
 		fn(t, sc)
 	})
@@ -424,11 +431,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		req = req.WithContext(ctx)
 		webCtx := web.Context{Req: req}
 
+		features := featuremgmt.WithFeatures()
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
-		features := featuremgmt.WithFeatures()
 		ac := acimpl.ProvideAccessControl(sqlStore.Cfg)
 		folderPermissions := acmock.NewMockedPermissionsService()
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
@@ -440,7 +447,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			foldertest.NewFakeService(),
 		)
 		require.NoError(t, dashSvcErr)
-		guardian.InitAccessControlGuardian(sqlStore.Cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashService)
+		guardian.InitAccessControlGuardian(sqlStore.Cfg, ac, dashService)
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
 			features:      featuremgmt.WithFeatures(),
@@ -488,7 +495,7 @@ func getCompareOptions() []cmp.Option {
 	}
 }
 
-func mockRequestBody(v interface{}) io.ReadCloser {
+func mockRequestBody(v any) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
 }

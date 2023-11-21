@@ -879,24 +879,24 @@ func (db *postgres) IndexOnTable() bool {
 	return false
 }
 
-func (db *postgres) IndexCheckSql(tableName, idxName string) (string, []interface{}) {
+func (db *postgres) IndexCheckSql(tableName, idxName string) (string, []any) {
 	if len(db.Schema) == 0 {
-		args := []interface{}{tableName, idxName}
+		args := []any{tableName, idxName}
 		return `SELECT indexname FROM pg_indexes WHERE tablename = ? AND indexname = ?`, args
 	}
 
-	args := []interface{}{db.Schema, tableName, idxName}
+	args := []any{db.Schema, tableName, idxName}
 	return `SELECT indexname FROM pg_indexes ` +
 		`WHERE schemaname = ? AND tablename = ? AND indexname = ?`, args
 }
 
-func (db *postgres) TableCheckSql(tableName string) (string, []interface{}) {
+func (db *postgres) TableCheckSql(tableName string) (string, []any) {
 	if len(db.Schema) == 0 {
-		args := []interface{}{tableName}
+		args := []any{tableName}
 		return `SELECT tablename FROM pg_tables WHERE tablename = ?`, args
 	}
 
-	args := []interface{}{db.Schema, tableName}
+	args := []any{db.Schema, tableName}
 	return `SELECT tablename FROM pg_tables WHERE schemaname = ? AND tablename = ?`, args
 }
 
@@ -931,11 +931,11 @@ func (db *postgres) DropIndexSql(tableName string, index *core.Index) string {
 }
 
 func (db *postgres) IsColumnExist(tableName, colName string) (bool, error) {
-	args := []interface{}{db.Schema, tableName, colName}
+	args := []any{db.Schema, tableName, colName}
 	query := "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = $1 AND table_name = $2" +
 		" AND column_name = $3"
 	if len(db.Schema) == 0 {
-		args = []interface{}{tableName, colName}
+		args = []any{tableName, colName}
 		query = "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1" +
 			" AND column_name = $2"
 	}
@@ -951,7 +951,7 @@ func (db *postgres) IsColumnExist(tableName, colName string) (bool, error) {
 }
 
 func (db *postgres) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
-	args := []interface{}{tableName}
+	args := []any{tableName}
 	s := `SELECT column_name, column_default, is_nullable, data_type, character_maximum_length,
     CASE WHEN p.contype = 'p' THEN true ELSE false END AS primarykey,
     CASE WHEN p.contype = 'u' THEN true ELSE false END AS uniquekey
@@ -1066,7 +1066,7 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 }
 
 func (db *postgres) GetTables() ([]*core.Table, error) {
-	args := []interface{}{}
+	args := []any{}
 	s := "SELECT tablename FROM pg_tables"
 	if len(db.Schema) != 0 {
 		args = append(args, db.Schema)
@@ -1107,7 +1107,7 @@ func getIndexColName(indexdef string) []string {
 }
 
 func (db *postgres) GetIndexes(tableName string) (map[string]*core.Index, error) {
-	args := []interface{}{tableName}
+	args := []any{tableName}
 	s := "SELECT indexname, indexdef FROM pg_indexes WHERE tablename=$1"
 	if len(db.Schema) != 0 {
 		args = append(args, db.Schema)

@@ -1,3 +1,4 @@
+import { ProxyTarget } from '@locker/near-membrane-shared';
 import { cloneDeep, isFunction } from 'lodash';
 
 import { PluginMeta } from '@grafana/data';
@@ -83,6 +84,7 @@ export function getGeneralSandboxDistortionMap() {
     distortWorkers(generalDistortionMap);
     distortDocument(generalDistortionMap);
     distortMonacoEditor(generalDistortionMap);
+    distortPostMessage(generalDistortionMap);
   }
   return generalDistortionMap;
 }
@@ -494,14 +496,37 @@ async function distortMonacoEditor(distortions: DistortionMap) {
   Reflect.set(monacoEditor, SANDBOX_LIVE_API_PATCHED, {});
 }
 
+async function distortPostMessage(distortions: DistortionMap) {
+  const descriptor = Object.getOwnPropertyDescriptor(window, 'postMessage');
+
+  function getPostMessageDistortion(originalMethod: unknown) {
+    return function postMessageDistortion(this: Window, ...args: unknown[]) {
+      // proxies can't be serialized by postMessage algorithm
+      // the only way to pass it through is to send a cloned version
+      // objects passed to postMessage should be clonable
+      try {
+        const newArgs: unknown[] = cloneDeep(args);
+        if (isFunction(originalMethod)) {
+          originalMethod.apply(this, newArgs);
+        }
+      } catch (e) {
+        throw new Error('postMessage arguments are invalid objects');
+      }
+    };
+  }
+
+  if (descriptor?.value) {
+    distortions.set(descriptor.value, getPostMessageDistortion);
+  }
+}
+
 /**
- * We define "live" APIs as APIs that can only be distorted in runtime on-the-fly and not at initialization
- * time like other distortions do.
- *
- * This could be because the objects we want to patch only become available after specific states are reached
- * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions
- *
+ * "Live" APIs are APIs that can only be distorted at runtime.
+ * This could be because the objects we want to patch only become available after specific states are reached,
+ * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions.
+ * We put here only distortions that can't be static because they are dynamicly loaded
  */
-export async function distortLiveApis() {
+export function distortLiveApis(originalValue: ProxyTarget): ProxyTarget | undefined {
   distortMonacoEditor(generalDistortionMap);
+  return;
 }

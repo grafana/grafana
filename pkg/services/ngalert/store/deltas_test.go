@@ -247,7 +247,7 @@ func TestCalculateChanges(t *testing.T) {
 	t.Run("should fail if cannot fetch current rules in the group", func(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		expectedErr := errors.New("TEST ERROR")
-		fakeStore.Hook = func(cmd interface{}) error {
+		fakeStore.Hook = func(cmd any) error {
 			switch cmd.(type) {
 			case models.ListAlertRulesQuery:
 				return expectedErr
@@ -265,7 +265,7 @@ func TestCalculateChanges(t *testing.T) {
 	t.Run("should fail if cannot fetch rule by UID", func(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		expectedErr := errors.New("TEST ERROR")
-		fakeStore.Hook = func(cmd interface{}) error {
+		fakeStore.Hook = func(cmd any) error {
 			switch cmd.(type) {
 			case models.GetAlertRulesGroupByRuleUIDQuery:
 				return expectedErr
@@ -457,7 +457,7 @@ func withUIDs(uids map[string]*models.AlertRule) func(rule *models.AlertRule) {
 
 func randFolder() *folder.Folder {
 	return &folder.Folder{
-		ID:        rand.Int63(),
+		ID:        rand.Int63(), // nolint:staticcheck
 		UID:       util.GenerateShortUID(),
 		Title:     "TEST-FOLDER-" + util.GenerateShortUID(),
 		URL:       "",

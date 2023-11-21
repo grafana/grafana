@@ -103,11 +103,11 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 	if err := handler.notifier.SendIfNeeded(evalContext); err != nil {
 		switch {
 		case errors.Is(err, context.Canceled):
-			handler.log.Debug("handler.notifier.SendIfNeeded returned context.Canceled")
+			handler.log.Debug("Handler.notifier.SendIfNeeded returned context.Canceled")
 		case errors.Is(err, context.DeadlineExceeded):
-			handler.log.Debug("handler.notifier.SendIfNeeded returned context.DeadlineExceeded")
+			handler.log.Debug("Handler.notifier.SendIfNeeded returned context.DeadlineExceeded")
 		default:
-			handler.log.Error("handler.notifier.SendIfNeeded failed", "err", err)
+			handler.log.Error("Handler.notifier.SendIfNeeded failed", "err", err)
 		}
 	}
 

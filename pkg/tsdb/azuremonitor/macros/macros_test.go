@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -138,7 +137,7 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defaultTimeField := "TimeGenerated"
-			rawQuery, err := KqlInterpolate(log.New("test"), tt.query, types.DatasourceInfo{}, tt.kql, defaultTimeField)
+			rawQuery, err := KqlInterpolate(tt.query, types.DatasourceInfo{}, tt.kql, defaultTimeField)
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.expected, rawQuery, cmpopts.EquateNaNs()); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

@@ -5,7 +5,7 @@ import { Field, LinkModel } from '@grafana/data';
 /**
  * @internal
  */
-export const getCellLinks = (field: Field, row: Row<any>) => {
+export const getCellLinks = (field: Field, row: Row) => {
   let links: Array<LinkModel<unknown>> | undefined;
   if (field.getLinks) {
     links = field.getLinks({

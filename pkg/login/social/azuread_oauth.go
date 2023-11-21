@@ -16,14 +16,20 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+const azureADProviderName = "azuread"
+
+var _ SocialConnector = (*SocialAzureAD)(nil)
 
 type SocialAzureAD struct {
 	*SocialBase
 	cache                remotecache.CacheStorage
 	allowedOrganizations []string
-	allowedGroups        []string
 	forceUseGraphAPI     bool
 	skipOrgRoleSync      bool
 }
@@ -56,6 +62,30 @@ type azureAccessClaims struct {
 
 type keySetJWKS struct {
 	jose.JSONWebKeySet
+}
+
+func NewAzureADProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (*SocialAzureAD, error) {
+	info, err := createOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	config := createOAuthConfig(info, cfg, azureADProviderName)
+	provider := &SocialAzureAD{
+		SocialBase:           newSocialBase(azureADProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		cache:                cache,
+		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
+		forceUseGraphAPI:     mustBool(info.Extra["force_use_graph_api"], false),
+		skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	if info.UseRefreshToken && features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) {
+		appendUniqueScope(config, OfflineAccessScope)
+	}
+
+	return provider, nil
 }
 
 func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -99,7 +129,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
 	s.log.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
-	if !s.IsGroupMember(groups) {
+	if !s.isGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
 
@@ -109,7 +139,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	}
 
 	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
-		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	return &BasicUserInfo{
@@ -121,6 +151,10 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}, nil
+}
+
+func (s *SocialAzureAD) GetOAuthInfo() *OAuthInfo {
+	return s.info
 }
 
 func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
@@ -180,22 +214,6 @@ func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *ht
 	s.log.Warn("AzureAD OAuth: signing key not found", "kid", keyID)
 
 	return nil, &Error{"AzureAD OAuth: signing key not found"}
-}
-
-func (s *SocialAzureAD) IsGroupMember(groups []string) bool {
-	if len(s.allowedGroups) == 0 {
-		return true
-	}
-
-	for _, allowedGroup := range s.allowedGroups {
-		for _, group := range groups {
-			if group == allowedGroup {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 func (claims *azureClaims) extractEmail() string {
@@ -260,7 +278,7 @@ type getAzureGroupResponse struct {
 // See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
 func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
 	if !s.forceUseGraphAPI {
-		s.log.Debug("checking the claim for groups")
+		s.log.Debug("Checking the claim for groups")
 		if len(claims.Groups) > 0 {
 			return claims.Groups, nil
 		}

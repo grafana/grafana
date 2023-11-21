@@ -30,7 +30,7 @@ export function initPanelState(panel: PanelModel): ThunkResult<Promise<void>> {
     }
 
     if (!panel.plugin) {
-      panel.pluginLoaded(plugin);
+      await panel.pluginLoaded(plugin);
     }
 
     dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
@@ -46,7 +46,7 @@ export function cleanUpPanelState(panelKey: string): ThunkResult<void> {
 export interface ChangePanelPluginAndOptionsArgs {
   panel: PanelModel;
   pluginId: string;
-  options?: any;
+  options?: Record<string, unknown>;
   fieldConfig?: FieldConfigSource;
   transformations?: DataTransformerConfig[];
 }
@@ -120,7 +120,7 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
         plugin = await dispatch(loadPanelPlugin(newPluginId));
       }
 
-      panel.pluginLoaded(plugin);
+      await panel.pluginLoaded(plugin);
       panel.generateNewKey();
 
       await dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));

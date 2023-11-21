@@ -8,8 +8,11 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -17,8 +20,7 @@ import (
 )
 
 var (
-	ResendDelay           = 30 * time.Second
-	MetricsScrapeInterval = 15 * time.Second // TODO: parameterize? // Setting to a reasonable default scrape interval for Prometheus.
+	ResendDelay = 30 * time.Second
 )
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
@@ -30,6 +32,7 @@ type AlertInstanceManager interface {
 type Manager struct {
 	log     log.Logger
 	metrics *metrics.State
+	tracer  tracing.Tracer
 
 	clock       clock.Clock
 	cache       *cache
@@ -60,13 +63,22 @@ type ManagerCfg struct {
 	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool
+
+	Tracer tracing.Tracer
+	Log    log.Logger
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
-	return &Manager{
-		cache:                          newCache(),
+	// Metrics for the cache use a collector, so they need access to the register directly.
+	c := newCache()
+	if cfg.Metrics != nil {
+		c.RegisterMetrics(cfg.Metrics.Registerer())
+	}
+
+	m := &Manager{
+		cache:                          c,
 		ResendDelay:                    ResendDelay, // TODO: make this configurable
-		log:                            log.New("ngalert.state.manager"),
+		log:                            cfg.Log,
 		metrics:                        cfg.Metrics,
 		instanceStore:                  cfg.InstanceStore,
 		images:                         cfg.Images,
@@ -76,25 +88,14 @@ func NewManager(cfg ManagerCfg) *Manager {
 		doNotSaveNormalState:           cfg.DoNotSaveNormalState,
 		maxStateSaveConcurrency:        cfg.MaxStateSaveConcurrency,
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
+		tracer:                         cfg.Tracer,
 	}
-}
 
-func (st *Manager) Run(ctx context.Context) error {
-	if st.applyNoDataAndErrorToAllStates {
-		st.log.Info("Running in alternative execution of Error/NoData mode")
+	if m.applyNoDataAndErrorToAllStates {
+		m.log.Info("Running in alternative execution of Error/NoData mode")
 	}
-	ticker := st.clock.Ticker(MetricsScrapeInterval)
-	for {
-		select {
-		case <-ticker.C:
-			st.log.Debug("Recording state cache metrics", "now", st.clock.Now())
-			st.cache.recordMetrics(st.metrics)
-		case <-ctx.Done():
-			st.log.Debug("Stopping")
-			ticker.Stop()
-			return ctx.Err()
-		}
-	}
+
+	return m
 }
 
 func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
@@ -251,18 +252,37 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
-	logger := st.log.FromContext(ctx)
+	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
+	tracingCtx, span := st.tracer.Start(ctx, "alert rule state calculation", trace.WithAttributes(
+		attribute.String("rule_uid", alertRule.UID),
+		attribute.Int64("org_id", alertRule.OrgID),
+		attribute.Int64("rule_version", alertRule.Version),
+		attribute.String("tick", utcTick),
+		attribute.Int("results", len(results))))
+	defer span.End()
+
+	logger := st.log.FromContext(tracingCtx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger)
+	states := st.setNextStateForRule(tracingCtx, alertRule, results, extraLabels, logger)
+	span.AddEvent("results processed", trace.WithAttributes(
+		attribute.Int64("state_transitions", int64(len(states))),
+	))
 
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
-	st.deleteAlertStates(ctx, logger, staleStates)
+	st.deleteAlertStates(tracingCtx, logger, staleStates)
 
-	st.saveAlertStates(ctx, logger, states...)
+	if len(staleStates) > 0 {
+		span.AddEvent("deleted stale states", trace.WithAttributes(
+			attribute.Int64("state_transitions", int64(len(staleStates))),
+		))
+	}
+
+	st.saveAlertStates(tracingCtx, logger, states...)
+	span.AddEvent("updated database")
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
+		st.historian.Record(tracingCtx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
 	return allChanges
 }
@@ -303,6 +323,7 @@ func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.A
 
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, logger log.Logger) StateTransition {
+	start := st.clock.Now()
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
@@ -388,6 +409,10 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		State:               currentState,
 		PreviousState:       oldState,
 		PreviousStateReason: oldReason,
+	}
+
+	if st.metrics != nil {
+		st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 	}
 
 	return nextState

@@ -16,7 +16,7 @@ import (
 )
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
 	return runTimeSeriesRequest(ctx, timeSeriesFilter.logger, req, s, dsInfo, tracer, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil)
 }
 
@@ -30,7 +30,7 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 		frame.RefID = query.getRefID()
 		frame.Meta = &data.FrameMeta{
 			ExecutedQueryString: executedQueryString,
-			Custom: map[string]interface{}{
+			Custom: map[string]any{
 				"alignmentPeriod":  params.Get("aggregation.alignmentPeriod"),
 				"perSeriesAligner": params.Get("aggregation.perSeriesAligner"),
 				"labels":           seriesLabels,
@@ -56,8 +56,8 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) parseResponse(queryRes *backend.DataResponse,
-	response cloudMonitoringResponse, executedQueryString string) error {
-	return parseTimeSeriesResponse(queryRes, response, executedQueryString, timeSeriesFilter, timeSeriesFilter.params, timeSeriesFilter.parameters.GroupBys)
+	response any, executedQueryString string) error {
+	return parseTimeSeriesResponse(queryRes, response.(cloudMonitoringResponse), executedQueryString, timeSeriesFilter, timeSeriesFilter.params, timeSeriesFilter.parameters.GroupBys)
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) buildDeepLink() string {
@@ -68,9 +68,9 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) buildDeepLink() string {
 			filter = fmt.Sprintf(`resource.type="%s" %s`, resourceType, filter)
 		}
 	}
-	dataSets := []map[string]interface{}{
+	dataSets := []map[string]any{
 		{
-			"timeSeriesFilter": map[string]interface{}{
+			"timeSeriesFilter": map[string]any{
 				"aggregations":           []string{},
 				"crossSeriesReducer":     timeSeriesFilter.params.Get("aggregation.crossSeriesReducer"),
 				"filter":                 filter,

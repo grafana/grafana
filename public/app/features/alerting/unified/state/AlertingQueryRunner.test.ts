@@ -6,14 +6,15 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import {
   DataFrame,
   DataFrameJSON,
-  DataSourceApi,
   Field,
   FieldType,
   getDefaultRelativeTimeRange,
   LoadingState,
   rangeUtil,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
-import { DataSourceSrv, FetchResponse } from '@grafana/runtime';
+import { DataSourceSrv, FetchResponse, DataSourceWithBackend } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -44,6 +45,7 @@ describe('AlertingQueryRunner', () => {
         A: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238, 1620051632238],
@@ -59,6 +61,7 @@ describe('AlertingQueryRunner', () => {
         B: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238],
@@ -135,6 +138,7 @@ describe('AlertingQueryRunner', () => {
         A: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238, 1620051632238],
@@ -150,6 +154,7 @@ describe('AlertingQueryRunner', () => {
         B: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238],
@@ -256,9 +261,15 @@ const mockBackendSrv = ({ fetch }: MockBackendSrvConfig): BackendSrv => {
   } as unknown as BackendSrv;
 };
 
-const mockDataSourceSrv = (dsApi?: Partial<DataSourceApi>) => {
+interface MockOpts {
+  filterQuery?: (query: DataQuery) => boolean;
+}
+
+const mockDataSourceSrv = (opts?: MockOpts) => {
+  const ds = new DataSourceWithBackend({} as unknown as DataSourceInstanceSettings);
+  ds.filterQuery = opts?.filterQuery;
   return {
-    get: () => Promise.resolve(dsApi ?? {}),
+    get: () => Promise.resolve(ds),
   } as unknown as DataSourceSrv;
 };
 

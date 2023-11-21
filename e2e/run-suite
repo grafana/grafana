@@ -16,7 +16,7 @@ echo -e "Starting Cypress scenarios"
 
 args=("$@")
 
-CMD="start"
+CMD="cypress run --browser=chrome"
 PARAMS=""
 CLEANUP=""
 
@@ -26,24 +26,22 @@ declare -A env=(
 )
 
 testFilesForSingleSuite="*.spec.ts"
-rootForEnterpriseSuite="extensions-suite"
+rootForEnterpriseSuite="./e2e/extensions-suite"
 
 declare -A cypressConfig=(
-  [integrationFolder]=../../e2e
-  [screenshotsFolder]=../../e2e/"${args[0]}"/screenshots
-  [videosFolder]=../../e2e/"${args[0]}"/videos
-  [fileServerFolder]=./cypress
-  [testFiles]=*-suite/*spec.ts
+  [screenshotsFolder]=./e2e/"${args[0]}"/screenshots
+  [fixturesFolder]=./e2e/cypress/fixtures
+  [videosFolder]=./e2e/"${args[0]}"/videos
+  [downloadsFolder]=./e2e/cypress/downloads
+  [fileServerFolder]=./e2e/cypress
+  [specPattern]=./e2e/*-suite/*spec.ts
   [defaultCommandTimeout]=30000
   [viewportWidth]=1920
   [viewportHeight]=1080
   [trashAssetsBeforeRuns]=false
-  [videoUploadOnPasses]=false
-  [reporter]=../../e2e/log-reporter.js
+  [reporter]=./e2e/log-reporter.js
+  [baseUrl]=${BASE_URL:-"http://$HOST:$PORT"}
 )
-
-
-cd packages/grafana-e2e
 
 case "$1" in
     "debug")
@@ -53,23 +51,21 @@ case "$1" in
         ;;
     "dev")
         echo "Dev mode"
-        CMD="open"
+        CMD="cypress open"
         ;;
     "benchmark")
         echo "Benchmark"
-        PARAMS="--headed"
-        CMD="start-benchmark"
+        PARAMS="--headed --no-runner-ui"
         env[BENCHMARK_PLUGIN_ENABLED]=true
-        env[BENCHMARK_PLUGIN_RESULTS_FOLDER]=../../e2e/benchmarks/"${args[1]}"/results
+        env[BENCHMARK_PLUGIN_RESULTS_FOLDER]=./e2e/benchmarks/"${args[1]}"/results
         cypressConfig[video]=false
-        cypressConfig[integrationFolder]=../../e2e/benchmarks/"${args[1]}"
-        cypressConfig[screenshotsFolder]=../../e2e/benchmarks/"${args[1]}"/screenshots
-        cypressConfig[testFiles]=$testFilesForSingleSuite
+        cypressConfig[screenshotsFolder]=./e2e/benchmarks/"${args[1]}"/screenshots
+        cypressConfig[specPattern]=./e2e/benchmarks/"${args[1]}"/$testFilesForSingleSuite
         ;;
     "enterprise")
         echo "Enterprise"
-        CLEANUP="rm -rf ../../e2e/extensions-suite"
-        SETUP="cp -Lr ../../e2e/extensions ../../e2e/extensions-suite"
+        CLEANUP="rm -rf ./e2e/extensions-suite"
+        SETUP="cp -Lr ./e2e/extensions ./e2e/extensions-suite"
         enterpriseSuite=$(basename "${args[1]}")
         case "$2" in
             "debug")
@@ -80,18 +76,17 @@ case "$1" in
                 ;;
             "dev")
                 echo "Dev mode"
-                CMD="open"
+                CMD="cypress open"
                 enterpriseSuite=$(basename "${args[2]}")
                 ;;
         esac
-        cypressConfig[testFiles]=$rootForEnterpriseSuite/$enterpriseSuite/*-suite/*.spec.ts
+        cypressConfig[specPattern]=$rootForEnterpriseSuite/$enterpriseSuite/*-suite/*.spec.ts
         $CLEANUP && $SETUP
         ;;
     "")
         ;;
     *)
-        cypressConfig[integrationFolder]=../../e2e/"${args[0]}"
-        cypressConfig[testFiles]=$testFilesForSingleSuite
+        cypressConfig[specPattern]=./e2e/"${args[0]}"/$testFilesForSingleSuite
         cypressConfig[video]=${args[1]}
         ;;
 esac
@@ -115,8 +110,9 @@ function join () {
   echo "$res"
 }
 
+export TZ="Pacific/Honolulu"
 
-yarn $CMD --env "$(join env)" \
+yarn run $CMD --env "$(join env)" \
   --config "$(join cypressConfig)" \
   $PARAMS
 

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"net/mail"
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
@@ -19,12 +18,6 @@ func (hs *HTTPServer) GetRedirectURL(c *contextmodel.ReqContext) string {
 		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}
 	return redirectURL
-}
-
-func jsonMap(data []byte) (map[string]string, error) {
-	jsonMap := make(map[string]string)
-	err := json.Unmarshal(data, &jsonMap)
-	return jsonMap, err
 }
 
 func ValidateAndNormalizeEmail(email string) (string, error) {

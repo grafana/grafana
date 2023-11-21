@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -6,64 +6,69 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/datasources"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
-	_ backend.QueryDataHandler    = (*PhlareDatasource)(nil)
-	_ backend.CallResourceHandler = (*PhlareDatasource)(nil)
-	_ backend.CheckHealthHandler  = (*PhlareDatasource)(nil)
-	_ backend.StreamHandler       = (*PhlareDatasource)(nil)
+	_ backend.QueryDataHandler    = (*PyroscopeDatasource)(nil)
+	_ backend.CallResourceHandler = (*PyroscopeDatasource)(nil)
+	_ backend.CheckHealthHandler  = (*PyroscopeDatasource)(nil)
+	_ backend.StreamHandler       = (*PyroscopeDatasource)(nil)
 )
 
-// PhlareDatasource is a datasource for querying application performance profiles.
-type PhlareDatasource struct {
+type ProfilingClient interface {
+	ProfileTypes(context.Context) ([]*ProfileType, error)
+	LabelNames(ctx context.Context) ([]string, error)
+	LabelValues(ctx context.Context, label string) ([]string, error)
+	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
+	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
+	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
+}
+
+// PyroscopeDatasource is a datasource for querying application performance profiles.
+type PyroscopeDatasource struct {
 	httpClient *http.Client
 	client     ProfilingClient
 	settings   backend.DataSourceInstanceSettings
 	ac         accesscontrol.AccessControl
 }
 
-type JsonData struct {
-	BackendType string `json:"backendType"`
-}
-
-// NewPhlareDatasource creates a new datasource instance.
-func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
-	opt, err := settings.HTTPClientOptions()
+// NewPyroscopeDatasource creates a new datasource instance.
+func NewPyroscopeDatasource(ctx context.Context, httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
+	ctxLogger := logger.FromContext(ctx)
+	opt, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
+		ctxLogger.Error("Failed to get HTTP client options", "error", err, "function", logEntrypoint())
 		return nil, err
 	}
 	httpClient, err := httpClientProvider.New(opt)
 	if err != nil {
+		ctxLogger.Error("Failed to create HTTP client", "error", err, "function", logEntrypoint())
 		return nil, err
 	}
 
-	var jsonData *JsonData
-	err = json.Unmarshal(settings.JSONData, &jsonData)
-	if err != nil {
-		return nil, err
-	}
-
-	return &PhlareDatasource{
+	return &PyroscopeDatasource{
 		httpClient: httpClient,
-		client:     getClient(jsonData.BackendType, httpClient, settings.URL),
+		client:     NewPyroscopeClient(httpClient, settings.URL),
 		settings:   settings,
 		ac:         ac,
 	}, nil
 }
 
-func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
+func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctxLogger := logger.FromContext(ctx)
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.CallResource", trace.WithAttributes(attribute.String("path", req.Path), attribute.String("method", req.Method)))
+	defer span.End()
+	ctxLogger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body, "function", logEntrypoint())
 	if req.Path == "profileTypes" {
 		return d.profileTypes(ctx, req, sender)
 	}
@@ -73,55 +78,46 @@ func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallRe
 	if req.Path == "labelValues" {
 		return d.labelValues(ctx, req, sender)
 	}
-	if req.Path == "backendType" {
-		return d.backendType(ctx, req, sender)
-	}
 	return sender.Send(&backend.CallResourceResponse{
 		Status: 404,
 	})
 }
 
-func (d *PhlareDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctxLogger := logger.FromContext(ctx)
 	types, err := d.client.ProfileTypes(ctx)
 	if err != nil {
+		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return err
 	}
 	bodyData, err := json.Marshal(types)
 	if err != nil {
+		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Headers: req.Headers, Status: 200})
 	if err != nil {
+		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
 	}
 	return nil
 }
 
-func (d *PhlareDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	u, err := url.Parse(req.URL)
+func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctxLogger := logger.FromContext(ctx)
+	res, err := d.client.LabelNames(ctx)
 	if err != nil {
-		return err
-	}
-	query := u.Query()
-	start, err := strconv.ParseInt(query["start"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-	end, err := strconv.ParseInt(query["end"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-
-	res, err := d.client.LabelNames(ctx, query["query"][0], start, end)
-	if err != nil {
+		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelNames: %v", err)
 	}
 	data, err := json.Marshal(res)
 	if err != nil {
+		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
 	}
 	return nil
@@ -134,116 +130,50 @@ type LabelValuesPayload struct {
 	End   int64
 }
 
-func (d *PhlareDatasource) labelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctxLogger := logger.FromContext(ctx)
 	u, err := url.Parse(req.URL)
 	if err != nil {
+		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
 		return err
 	}
 	query := u.Query()
-	start, err := strconv.ParseInt(query["start"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-	end, err := strconv.ParseInt(query["end"][0], 10, 64)
-	if err != nil {
-		return err
-	}
 
-	res, err := d.client.LabelValues(ctx, query["query"][0], query["label"][0], start, end)
+	res, err := d.client.LabelValues(ctx, query["label"][0])
 	if err != nil {
+		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelValues: %v", err)
 	}
+
 	data, err := json.Marshal(res)
 	if err != nil {
+		ctxLogger.Error("Failed to marshal response", "error", err, "function", logEntrypoint())
 		return err
 	}
+
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
+		ctxLogger.Error("Failed to send response", "error", err, "function", logEntrypoint())
 		return err
 	}
+
 	return nil
-}
-
-type BackendTypeRespBody struct {
-	BackendType string `json:"backendType"` // "phlare" or "pyroscope"
-}
-
-// backendType is a simplistic test to figure out if we are speaking to phlare or pyroscope backend
-func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	// To prevent any user sending arbitrary URL for us to test with we allow this only for users who can edit the datasource
-	// as config page is where this is meant to be used.
-	ok, err := d.isUserAllowedToEditDatasource(ctx)
-	if err != nil {
-		return err
-	}
-
-	if !ok {
-		return sender.Send(&backend.CallResourceResponse{Headers: req.Headers, Status: 401})
-	}
-
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		return err
-	}
-	query := u.Query()
-	body := &BackendTypeRespBody{BackendType: "unknown"}
-
-	// We take the url from the request query because the data source may not yet be saved in DB with the URL we want
-	// to test with (like when filling in the confgi page for the first time)
-	url := query["url"][0]
-
-	pyroClient := getClient("pyroscope", d.httpClient, url)
-	_, err = pyroClient.ProfileTypes(ctx)
-
-	if err == nil {
-		body.BackendType = "pyroscope"
-	} else {
-		phlareClient := getClient("phlare", d.httpClient, url)
-		_, err := phlareClient.ProfileTypes(ctx)
-		if err == nil {
-			body.BackendType = "phlare"
-		}
-	}
-
-	data, err := json.Marshal(body)
-	if err != nil {
-		return err
-	}
-
-	return sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
-}
-
-func (d *PhlareDatasource) isUserAllowedToEditDatasource(ctx context.Context) (bool, error) {
-	reqCtx := contexthandler.FromContext(ctx)
-	uidScope := datasources.ScopeProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-
-	if reqCtx == nil || reqCtx.SignedInUser == nil {
-		return false, nil
-	}
-
-	ok, err := d.ac.Evaluate(ctx, reqCtx.SignedInUser, accesscontrol.EvalPermission(datasources.ActionWrite, uidScope))
-	if err != nil {
-		return false, err
-	}
-	if !ok {
-		return false, nil
-	}
-
-	return true, nil
 }
 
 // QueryData handles multiple queries and returns multiple responses.
 // req contains the queries []DataQuery (where each query contains RefID as a unique identifier).
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
-func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("QueryData called", "Queries", req.Queries)
+func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	ctxLogger := logger.FromContext(ctx)
+	ctxLogger.Debug("Processing queries", "queryLenght", len(req.Queries), "function", logEntrypoint())
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
 
 	// loop over queries and execute them individually.
-	for _, q := range req.Queries {
+	for i, q := range req.Queries {
+		ctxLogger.Debug("Processing query", "counter", i, "function", logEntrypoint())
 		res := d.query(ctx, req.PluginContext, q)
 
 		// save the response in a hashmap
@@ -251,6 +181,7 @@ func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryData
 		response.Responses[q.RefID] = res
 	}
 
+	ctxLogger.Debug("All queries processed", "function", logEntrypoint())
 	return response, nil
 }
 
@@ -258,8 +189,8 @@ func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryData
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *PhlareDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger.Debug("CheckHealth called")
+func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	logger.FromContext(ctx).Debug("CheckHealth called", "function", logEntrypoint())
 
 	status := backend.HealthStatusOk
 	message := "Data source is working"
@@ -277,8 +208,8 @@ func (d *PhlareDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHeal
 
 // SubscribeStream is called when a client wants to connect to a stream. This callback
 // allows sending the first message.
-func (d *PhlareDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	logger.Debug("SubscribeStream called")
+func (d *PyroscopeDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	logger.Debug("Subscribing stream called", "function", logEntrypoint())
 
 	status := backend.SubscribeStreamStatusPermissionDenied
 	if req.Path == "stream" {
@@ -292,8 +223,9 @@ func (d *PhlareDatasource) SubscribeStream(_ context.Context, req *backend.Subsc
 
 // RunStream is called once for any open channel.  Results are shared with everyone
 // subscribed to the same channel.
-func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	logger.Debug("RunStream called")
+func (d *PyroscopeDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	ctxLogger := logger.FromContext(ctx)
+	ctxLogger.Debug("Running stream", "path", req.Path, "function", logEntrypoint())
 
 	// Create the same data frame as for query data.
 	frame := data.NewFrame("response")
@@ -310,7 +242,7 @@ func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStream
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("Context done, finish streaming", "path", req.Path)
+			ctxLogger.Info("Context done, finish streaming", "path", req.Path, "function", logEntrypoint())
 			return nil
 		case <-time.After(time.Second):
 			// Send new data periodically.
@@ -321,7 +253,7 @@ func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStream
 
 			err := sender.SendFrame(frame, data.IncludeAll)
 			if err != nil {
-				logger.Error("Error sending frame", "error", err)
+				ctxLogger.Error("Error sending frame", "error", err, "function", logEntrypoint())
 				continue
 			}
 		}
@@ -329,8 +261,8 @@ func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStream
 }
 
 // PublishStream is called when a client sends a message to the stream.
-func (d *PhlareDatasource) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	logger.Debug("PublishStream called")
+func (d *PyroscopeDatasource) PublishStream(ctx context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	logger.FromContext(ctx).Debug("Publishing stream", "function", logEntrypoint())
 
 	// Do not allow publishing at all.
 	return &backend.PublishStreamResponse{

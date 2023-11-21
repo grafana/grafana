@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -43,6 +44,7 @@ type Service struct {
 	ac                 accesscontrol.AccessControl
 	logger             log.Logger
 	db                 db.DB
+	pluginStore        pluginstore.Store
 
 	ptc proxyTransportCache
 }
@@ -60,7 +62,7 @@ type cachedRoundTripper struct {
 func ProvideService(
 	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
-	quotaService quota.Service,
+	quotaService quota.Service, pluginStore pluginstore.Store,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger}
@@ -77,6 +79,7 @@ func ProvideService(
 		ac:                 ac,
 		logger:             dslogger,
 		db:                 db,
+		pluginStore:        pluginStore,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -173,6 +176,14 @@ func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetA
 }
 
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	if query.AliasIDs == nil {
+		// Populate alias IDs from plugin store
+		p, found := s.pluginStore.Plugin(ctx, query.Type)
+		if !found {
+			return nil, fmt.Errorf("plugin %s not found", query.Type)
+		}
+		query.AliasIDs = p.AliasIDs
+	}
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
 
@@ -187,7 +198,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
-		if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+		if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
 			cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 			if err != nil {
 				return err
@@ -208,25 +219,20 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return err
 		}
 
-		if !s.ac.IsDisabled() {
-			// This belongs in Data source permissions, and we probably want
-			// to do this with a hook in the store and rollback on fail.
-			// We can't use events, because there's no way to communicate
-			// failure, and we want "not being able to set default perms"
-			// to fail the creation.
-			permissions := []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "Query"},
-				{BuiltinRole: "Editor", Permission: "Query"},
-			}
-			if cmd.UserID != 0 {
-				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Edit"})
-			}
-			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
-				return err
-			}
+		// This belongs in Data source permissions, and we probably want
+		// to do this with a hook in the store and rollback on fail.
+		// We can't use events, because there's no way to communicate
+		// failure, and we want "not being able to set default perms"
+		// to fail the creation.
+		permissions := []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: "Viewer", Permission: "Query"},
+			{BuiltinRole: "Editor", Permission: "Query"},
 		}
-
-		return nil
+		if cmd.UserID != 0 {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
+		}
+		_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
+		return err
 	})
 }
 
@@ -365,7 +371,7 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 	if exist {
 		err = json.Unmarshal([]byte(secret), &decryptedValues)
 		if err != nil {
-			s.logger.Debug("failed to unmarshal secret value, using legacy secrets", "err", err)
+			s.logger.Debug("Failed to unmarshal secret value, using legacy secrets", "err", err)
 		}
 	}
 
@@ -455,7 +461,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	if ds.JsonData != nil {
 		opts.CustomOptions = ds.JsonData.MustMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
-		deepJsonDataCopy := make(map[string]interface{}, len(opts.CustomOptions))
+		deepJsonDataCopy := make(map[string]any, len(opts.CustomOptions))
 		for k, v := range opts.CustomOptions {
 			deepJsonDataCopy[k] = v
 		}
@@ -490,6 +496,13 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 				Username: ds.JsonData.Get("secureSocksProxyUsername").MustString(ds.UID),
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
+			ClientCfg: &sdkproxy.ClientCfg{
+				ClientCert:   s.cfg.SecureSocksDSProxy.ClientCert,
+				ClientKey:    s.cfg.SecureSocksDSProxy.ClientKey,
+				RootCA:       s.cfg.SecureSocksDSProxy.RootCA,
+				ProxyAddress: s.cfg.SecureSocksDSProxy.ProxyAddress,
+				ServerName:   s.cfg.SecureSocksDSProxy.ServerName,
+			},
 		}
 
 		if val, exists, err := s.DecryptedValue(ctx, ds, "secureSocksProxyPassword"); err == nil && exists {
@@ -676,7 +689,7 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	}
 
 	cmd.EncryptedSecureJsonData = make(map[string][]byte)
-	if !s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility) {
 		cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
 		if err != nil {
 			return err

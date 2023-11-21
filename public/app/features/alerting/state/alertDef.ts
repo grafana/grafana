@@ -1,7 +1,7 @@
 import { isArray, reduce } from 'lodash';
 
 import { IconName } from '@grafana/ui';
-import { QueryPart, QueryPartDef } from 'app/features/alerting/state/query_part';
+import { QueryPartDef, QueryPart } from 'app/features/alerting/state/query_part';
 
 const alertQueryDef = new QueryPartDef({
   type: 'query',
@@ -84,7 +84,7 @@ function createReducerPart(model: any) {
 
 // state can also contain a "Reason", ie. "Alerting (NoData)" which indicates that the actual state is "Alerting" but
 // the reason it is set to "Alerting" is "NoData"; a lack of data points to evaluate.
-export function normalizeAlertState(state: string) {
+function normalizeAlertState(state: string) {
   return state.toLowerCase().replace(/_/g, '').split(' ')[0];
 }
 

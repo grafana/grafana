@@ -12,7 +12,7 @@
   oauthkeycloak:
     image: quay.io/keycloak/keycloak:22.0
     container_name: oauthkeycloak
-    command: --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true start-dev
+    command: start-dev
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://oauthkeycloakdb/keycloak

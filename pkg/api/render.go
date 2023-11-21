@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
@@ -53,14 +54,19 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		headers["Accept-Language"] = acceptLanguageHeader
 	}
 
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if errID != nil {
+		hs.log.Error("Failed to parse user id", "err", errID)
+	}
+
 	result, err := hs.RenderService.Render(c.Req.Context(), rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
 			Timeout: time.Duration(timeout) * time.Second,
 		},
 		AuthOpts: rendering.AuthOpts{
-			OrgID:   c.OrgID,
-			UserID:  c.UserID,
-			OrgRole: c.OrgRole,
+			OrgID:   c.SignedInUser.GetOrgID(),
+			UserID:  userID,
+			OrgRole: c.SignedInUser.GetOrgRole(),
 		},
 		Width:             width,
 		Height:            height,

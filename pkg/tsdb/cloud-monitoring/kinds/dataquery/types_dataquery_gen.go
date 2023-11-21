@@ -67,6 +67,7 @@ const (
 // Defines values for QueryType.
 const (
 	QueryTypeAnnotation      QueryType = "annotation"
+	QueryTypePromQL          QueryType = "promQL"
 	QueryTypeSlo             QueryType = "slo"
 	QueryTypeTimeSeriesList  QueryType = "timeSeriesList"
 	QueryTypeTimeSeriesQuery QueryType = "timeSeriesQuery"
@@ -98,6 +99,9 @@ type CloudMonitoringQuery struct {
 
 	// Time interval in milliseconds.
 	IntervalMs *float32 `json:"intervalMs,omitempty"`
+
+	// PromQL sub-query properties.
+	PromQLQuery *PromQLQuery `json:"promQLQuery,omitempty"`
 
 	// SLO sub-query properties.
 	SloQuery *SLOQuery `json:"sloQuery,omitempty"`
@@ -219,6 +223,18 @@ type MetricQuery struct {
 
 // Types of pre-processor available. Defined by the metric.
 type PreprocessorType string
+
+// PromQL sub-query properties.
+type PromQLQuery struct {
+	// PromQL expression/query to be executed.
+	Expr string `json:"expr"`
+
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+
+	// PromQL min step
+	Step string `json:"step"`
+}
 
 // Defines the supported queryTypes.
 type QueryType string

@@ -13,6 +13,7 @@ type Service interface {
 	SearchTeams(ctx context.Context, query *SearchTeamsQuery) (SearchTeamQueryResult, error)
 	GetTeamByID(ctx context.Context, query *GetTeamByIDQuery) (*TeamDTO, error)
 	GetTeamsByUser(ctx context.Context, query *GetTeamsByUserQuery) ([]*TeamDTO, error)
+	GetTeamIDsByUser(ctx context.Context, query *GetTeamIDsByUserQuery) ([]int64, error)
 	AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error
 	UpdateTeamMember(ctx context.Context, cmd *UpdateTeamMemberCommand) error
 	IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error)
@@ -20,4 +21,5 @@ type Service interface {
 	RemoveUsersMemberships(tx context.Context, userID int64) error
 	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*TeamMemberDTO, error)
 	GetTeamMembers(ctx context.Context, query *GetTeamMembersQuery) ([]*TeamMemberDTO, error)
+	RegisterDelete(query string)
 }

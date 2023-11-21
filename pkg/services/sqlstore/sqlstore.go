@@ -55,6 +55,7 @@ type SQLStore struct {
 	migrations                   registry.DatabaseMigrator
 	tracer                       tracing.Tracer
 	recursiveQueriesAreSupported *bool
+	recursiveQueriesMu           sync.Mutex
 }
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
@@ -67,6 +68,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 		return nil, err
 	}
 
+	// nolint:staticcheck
 	if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
 		return nil, err
 	}
@@ -80,9 +82,13 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	db := s.engine.DB().DB
 
 	// register the go_sql_stats_connections_* metrics
-	prometheus.MustRegister(sqlstats.NewStatsCollector("grafana", db))
+	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
+		s.log.Warn("Failed to register sqlstore stats collector", "error", err)
+	}
 	// TODO: deprecate/remove these metrics
-	prometheus.MustRegister(newSQLStoreMetrics(db))
+	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
+		s.log.Warn("Failed to register sqlstore metrics", "error", err)
+	}
 
 	return s, nil
 }
@@ -301,12 +307,9 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
+		// nolint:staticcheck
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
-		}
-
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
-			cnnstr += "&parseTime=true"
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
@@ -520,6 +523,8 @@ func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {
 }
 
 func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
+	ss.recursiveQueriesMu.Lock()
+	defer ss.recursiveQueriesMu.Unlock()
 	if ss.recursiveQueriesAreSupported != nil {
 		return *ss.recursiveQueriesAreSupported, nil
 	}
@@ -559,9 +564,9 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 // ITestDB is an interface of arguments for testing db
 type ITestDB interface {
 	Helper()
-	Fatalf(format string, args ...interface{})
-	Logf(format string, args ...interface{})
-	Log(args ...interface{})
+	Fatalf(format string, args ...any)
+	Logf(format string, args ...any)
+	Log(args ...any)
 }
 
 var testSQLStore *SQLStore
@@ -631,6 +636,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 
 		// set test db config
 		cfg := setting.NewCfg()
+		// nolint:staticcheck
 		cfg.IsFeatureToggleEnabled = func(key string) bool {
 			for _, enabledFeature := range features {
 				if enabledFeature == key {
@@ -725,6 +731,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		return testSQLStore, nil
 	}
 
+	// nolint:staticcheck
 	testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
 		for _, enabledFeature := range features {
 			if enabledFeature == key {

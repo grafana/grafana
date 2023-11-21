@@ -43,7 +43,7 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
   }
 
   for (const panel of current) {
-    const target = inputPanels.get(panel.id) as PanelModel;
+    const target = inputPanels.get(panel.id);
     if (!target) {
       info.changed = true;
       info.actions.remove.push(panel.id);

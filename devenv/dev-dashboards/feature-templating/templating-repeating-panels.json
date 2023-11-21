@@ -1,0 +1,423 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 15,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div class=\"center-vh\">\n  Horizontally repeated panel below\n</div>",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.2.0-pre",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisBorderShow": false,
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 2
+      },
+      "id": 2,
+      "maxPerRow": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "repeat": "server",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "alias": "server = $server",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1
+        }
+      ],
+      "title": "server=$server",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": {
+        "h": 20,
+        "w": 16,
+        "x": 0,
+        "y": 12
+      },
+      "id": 10,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "###  \n\nIt also has a variable with different value and text representations (A=1, B=2, etc). \nTo test that this works for the scoped variable. \n\nIn the title the text representation should be seen (A,B,C, etc). In the legend you\nshould see both the text and value (id). \n\n",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.2.0-pre",
+      "title": "Panel to the right is configured for vertical repeat",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisBorderShow": false,
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
+      "id": 5,
+      "maxDataPoints": 50,
+      "maxPerRow": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "repeat": "host",
+      "repeatDirection": "v",
+      "targets": [
+        {
+          "alias": "host = ${host:text} / id = $host",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1
+        }
+      ],
+      "title": "host_name = $host",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "tags": ["gdev", "templating"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "A",
+            "B",
+            "C"
+          ],
+          "value": [
+            "A",
+            "B",
+            "C"
+          ]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "server",
+        "options": [
+          {
+            "selected": false,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": true,
+            "text": "A",
+            "value": "A"
+          },
+          {
+            "selected": true,
+            "text": "B",
+            "value": "B"
+          },
+          {
+            "selected": true,
+            "text": "C",
+            "value": "C"
+          },
+          {
+            "selected": false,
+            "text": "D",
+            "value": "D"
+          },
+          {
+            "selected": false,
+            "text": "E",
+            "value": "E"
+          },
+          {
+            "selected": false,
+            "text": "F",
+            "value": "F"
+          },
+          {
+            "selected": false,
+            "text": "E",
+            "value": "E"
+          },
+          {
+            "selected": false,
+            "text": "G",
+            "value": "G"
+          },
+          {
+            "selected": false,
+            "text": "H",
+            "value": "H"
+          },
+          {
+            "selected": false,
+            "text": "I",
+            "value": "I"
+          },
+          {
+            "selected": false,
+            "text": "J",
+            "value": "J"
+          },
+          {
+            "selected": false,
+            "text": "K",
+            "value": "K"
+          },
+          {
+            "selected": false,
+            "text": "L",
+            "value": "L"
+          }
+        ],
+        "query": "A,B,C,D,E,F,E,G,H,I,J,K,L",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "host",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "A",
+            "value": "1"
+          },
+          {
+            "selected": false,
+            "text": "B",
+            "value": "2"
+          },
+          {
+            "selected": false,
+            "text": "C",
+            "value": "3"
+          },
+          {
+            "selected": false,
+            "text": "D",
+            "value": "4"
+          },
+          {
+            "selected": false,
+            "text": "E",
+            "value": "5"
+          }
+        ],
+        "query": "A : 1, B : 2,C : 3, D : 4, E : 5",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Templating - Repeating Panels",
+  "uid": "templating-repeating-panels",
+  "version": 37,
+  "weekStart": ""
+}

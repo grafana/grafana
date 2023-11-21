@@ -64,7 +64,7 @@ type StorageService interface {
 	RegisterHTTPRoutes(routing.RouteRegister)
 
 	// List folder contents
-	List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error)
+	List(ctx context.Context, user *user.SignedInUser, path string, maxFiles int) (*StorageListFrame, error)
 
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error)
@@ -101,7 +101,7 @@ func ProvideService(
 ) (StorageService, error) {
 	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
-		grafanaStorageLogger.Warn("error loading storage config", "error", err)
+		grafanaStorageLogger.Warn("Error loading storage config", "error", err)
 	}
 
 	if err := migrations.MigrateEntityStore(sql, features); err != nil {
@@ -160,7 +160,7 @@ func ProvideService(
 		root.UnderContentRoot = true
 		s, err := newStorage(root, filepath.Join(cfg.DataPath, "storage", "cache", root.Prefix))
 		if err != nil {
-			grafanaStorageLogger.Warn("error loading storage config", "error", err)
+			grafanaStorageLogger.Warn("Error loading storage config", "error", err)
 		}
 		if s != nil {
 			globalRoots = append(globalRoots, s)
@@ -209,7 +209,7 @@ func ProvideService(
 		if storageName == RootSystem {
 			filter, err := systemUsersService.GetFilter(user)
 			if err != nil {
-				grafanaStorageLogger.Error("failed to create path filter for system user", "userID", user.UserID, "userLogin", user.Login, "err", err)
+				grafanaStorageLogger.Error("Failed to create path filter for system user", "userID", user.UserID, "userLogin", user.Login, "err", err)
 				return map[string]filestorage.PathFilter{
 					ActionFilesRead:   denyAllPathFilter,
 					ActionFilesWrite:  denyAllPathFilter,
@@ -328,7 +328,7 @@ func newStandardStorageService(
 }
 
 func (s *standardStorageService) Run(ctx context.Context) error {
-	grafanaStorageLogger.Info("storage starting")
+	grafanaStorageLogger.Info("Storage starting")
 	return nil
 }
 
@@ -340,9 +340,9 @@ func getOrgId(user *user.SignedInUser) int64 {
 	return user.OrgID
 }
 
-func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error) {
+func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string, maxFiles int) (*StorageListFrame, error) {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
-	return s.tree.ListFolder(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
+	return s.tree.ListFolder(ctx, getOrgId(user), path, maxFiles, guardian.getPathFilter(ActionFilesRead))
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error) {
@@ -411,22 +411,22 @@ func (s *standardStorageService) Upload(ctx context.Context, user *user.SignedIn
 
 	validationResult := s.validateUploadRequest(ctx, user, req, storagePath)
 	if !validationResult.ok {
-		grafanaStorageLogger.Warn("file upload validation failed", "path", req.Path, "reason", validationResult.reason)
+		grafanaStorageLogger.Warn("File upload validation failed", "path", req.Path, "reason", validationResult.reason)
 		return ErrValidationFailed
 	}
 
 	upsertCommand, err := s.sanitizeUploadRequest(ctx, user, req, storagePath)
 	if err != nil {
-		grafanaStorageLogger.Error("failed while sanitizing the upload request", "path", req.Path, "error", err)
+		grafanaStorageLogger.Error("Failed while sanitizing the upload request", "path", req.Path, "error", err)
 		return ErrUploadInternalError
 	}
 
-	grafanaStorageLogger.Info("uploading a file", "path", req.Path)
+	grafanaStorageLogger.Info("Uploading a file", "path", req.Path)
 
 	if !req.OverwriteExistingFile {
 		file, _, err := root.Store().Get(ctx, storagePath, &filestorage.GetFileOptions{WithContents: false})
 		if err != nil {
-			grafanaStorageLogger.Error("failed while checking file existence", "err", err, "path", req.Path)
+			grafanaStorageLogger.Error("Failed while checking file existence", "err", err, "path", req.Path)
 			return ErrUploadInternalError
 		}
 
@@ -436,7 +436,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *user.SignedIn
 	}
 
 	if err := root.Store().Upsert(ctx, upsertCommand); err != nil {
-		grafanaStorageLogger.Error("failed while uploading the file", "err", err, "path", req.Path)
+		grafanaStorageLogger.Error("Failed while uploading the file", "err", err, "path", req.Path)
 		return ErrUploadInternalError
 	}
 
@@ -447,12 +447,12 @@ func (s *standardStorageService) checkFileQuota(ctx context.Context, path string
 	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
 	quotaReached, err := s.quotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
 	if err != nil {
-		grafanaStorageLogger.Error("failed while checking upload quota", "path", path, "error", err)
+		grafanaStorageLogger.Error("Failed while checking upload quota", "path", path, "error", err)
 		return ErrUploadInternalError
 	}
 
 	if quotaReached {
-		grafanaStorageLogger.Info("reached file quota", "path", path)
+		grafanaStorageLogger.Info("Reached file quota", "path", path)
 		return ErrQuotaReached
 	}
 

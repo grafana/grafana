@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 // Typed errors
@@ -79,6 +79,11 @@ type GetTeamByIDQuery struct {
 // FilterIgnoreUser is used in a get / search teams query when the caller does not want to filter teams by user ID / membership
 const FilterIgnoreUser int64 = 0
 
+type GetTeamIDsByUserQuery struct {
+	OrgID  int64
+	UserID int64 `json:"userId"`
+}
+
 type GetTeamsByUserQuery struct {
 	OrgID        int64
 	UserID       int64 `json:"userId"`
@@ -91,6 +96,8 @@ type SearchTeamsQuery struct {
 	Limit        int
 	Page         int
 	OrgID        int64 `xorm:"org_id"`
+	SortOpts     []model.SortOption
+	TeamIds      []int64
 	SignedInUser identity.Requester
 	HiddenUsers  map[string]struct{}
 }
@@ -160,7 +167,7 @@ type GetTeamMembersQuery struct {
 	TeamUID      string
 	UserID       int64
 	External     bool
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }
 
 // ----------------------

@@ -3,14 +3,11 @@ import React, { useState } from 'react';
 
 import { Button, Drawer, Tab, TabsBar } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import mdx from './Drawer.mdx';
 
 const meta: Meta<typeof Drawer> = {
   title: 'Overlays/Drawer',
   component: Drawer,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -21,7 +18,6 @@ const meta: Meta<typeof Drawer> = {
   },
   args: {
     closeOnMaskClick: true,
-    scrollableContent: false,
     expandable: false,
     subtitle: 'This is a subtitle.',
   },
@@ -147,11 +143,21 @@ export const WithTabs: StoryFn<typeof Drawer> = (args) => {
 
   const tabs = (
     <TabsBar>
-      <Tab label={'Options'} active={activeTab === 'options'} onChangeTab={() => setActiveTab('options')} />
       <Tab
-        label={'Changes'}
+        label="Options"
+        active={activeTab === 'options'}
+        onChangeTab={(ev) => {
+          ev?.preventDefault();
+          setActiveTab('options');
+        }}
+      />
+      <Tab
+        label="Changes"
         active={activeTab === 'changes'}
-        onChangeTab={() => setActiveTab('changes')}
+        onChangeTab={(ev) => {
+          ev?.preventDefault();
+          setActiveTab('changes');
+        }}
         counter={10}
       />
     </TabsBar>

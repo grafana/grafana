@@ -2,6 +2,8 @@ import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
+
 import { PanelModel } from '../../state/PanelModel';
 
 import { DashboardRow } from './DashboardRow';
@@ -17,6 +19,7 @@ describe('DashboardRow', () => {
         canEdit: true,
       },
       events: { subscribe: jest.fn() },
+      getRowPanels: () => [],
     };
 
     panel = new PanelModel({ collapsed: false });
@@ -66,5 +69,29 @@ describe('DashboardRow', () => {
     render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
     expect(screen.queryByRole('button', { name: 'Delete row' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Row options' })).not.toBeInTheDocument();
+  });
+
+  it('Should return warning message when row panel has a panel with dashboard ds set', async () => {
+    const panel = new PanelModel({
+      datasource: {
+        type: 'datasource',
+        uid: SHARED_DASHBOARD_QUERY,
+      },
+    });
+    const rowPanel = new PanelModel({ collapsed: true, panels: [panel] });
+    const dashboardRow = new DashboardRow({ panel: rowPanel, dashboard: dashboardMock });
+    expect(dashboardRow.getWarning()).toBeDefined();
+  });
+
+  it('Should not return warning message when row panel does not have a panel with dashboard ds set', async () => {
+    const panel = new PanelModel({
+      datasource: {
+        type: 'datasource',
+        uid: 'ds-uid',
+      },
+    });
+    const rowPanel = new PanelModel({ collapsed: true, panels: [panel] });
+    const dashboardRow = new DashboardRow({ panel: rowPanel, dashboard: dashboardMock });
+    expect(dashboardRow.getWarning()).not.toBeDefined();
   });
 });

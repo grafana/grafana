@@ -147,7 +147,7 @@ export interface BootData {
  * @internal
  */
 export interface GrafanaConfig {
-  isPublicDashboardView: boolean;
+  publicDashboardAccessToken?: string;
   snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
@@ -181,6 +181,7 @@ export interface GrafanaConfig {
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
+  /** @deprecated always set to true. */
   rbacEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
@@ -218,7 +219,11 @@ export interface GrafanaConfig {
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
+  rudderstackIntegrationsUrl: string | undefined;
   sqlConnectionLimits: SqlConnectionLimits;
+
+  // The namespace to use for kubernetes apiserver requests
+  namespace: string;
 }
 
 export interface SqlConnectionLimits {

@@ -74,9 +74,9 @@ Developers can re-create the OpenAPI v2 and v3 specifications using the followin
 
 ```bash
 
-make clean-api-spec && make openapi3-gen
+make swagger-clean && make openapi3-gen
 ```
 
 They can observe its output into the `public/api-merged.json` and `public/openapi3.json` files.
 
-Finally, they can browser and try out both the OpenAPI v2 and v3 via the Swagger UI editor (served by the grafana server) by navigating to `/swagger-ui` and `/openapi3` respectivally.
+Finally, they can browser and try out both the OpenAPI v2 and v3 via the Swagger UI editor (served by the grafana server) by navigating to `/swagger`.

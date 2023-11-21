@@ -30,27 +30,6 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('Repeating-a-row-with-a-non-repeating-pan', import '../dev-dashboards/e2e-repeats/Repeating-a-row-with-a-non-repeating-panel-and-horizontal-repeating-panel.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('Repeating-a-row-with-a-non-repeating-pan', import '../dev-dashboards/e2e-repeats/Repeating-a-row-with-a-non-repeating-panel-and-vertical-repeating-panel.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('Repeating-a-row-with-a-non-repeating-pan', import '../dev-dashboards/e2e-repeats/Repeating-a-row-with-a-non-repeating-panel.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
     dashboard.new('Repeating-a-row-with-a-repeating-horizon', import '../dev-dashboards/e2e-repeats/Repeating-a-row-with-a-repeating-horizontal-panel.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -164,6 +143,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('config-from-query', import '../dev-dashboards/transforms/config-from-query.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('dashlist', import '../dev-dashboards/panel-dashlist/dashlist.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -408,6 +394,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('loki_query_splitting', import '../dev-dashboards/datasource-loki/loki_query_splitting.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('migrations', import '../dev-dashboards/migrations/migrations.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -548,6 +541,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('relative_time_zone_support', import '../dev-dashboards/scenarios/relative_time_zone_support.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('reuse', import '../dev-dashboards/transforms/reuse.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -611,6 +611,20 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('templating-repeating-panels', import '../dev-dashboards/feature-templating/templating-repeating-panels.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('templating-repeating-rows', import '../dev-dashboards/feature-templating/templating-repeating-rows.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('templating-textbox-e2e-scenarios', import '../dev-dashboards/feature-templating/templating-textbox-e2e-scenarios.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -633,13 +647,6 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('testdata-nested-variables-drilldown', import '../dev-dashboards/feature-templating/testdata-nested-variables-drilldown.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('testdata-repeating', import '../dev-dashboards/feature-templating/testdata-repeating.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -710,6 +717,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('timeseries', import '../dev-dashboards/panel-timeseries/timeseries.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('timeseries-bars-high-density', import '../dev-dashboards/panel-timeseries/timeseries-bars-high-density.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

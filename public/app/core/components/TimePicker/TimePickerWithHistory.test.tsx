@@ -113,7 +113,6 @@ describe('TimePickerWithHistory', () => {
 
     const timeRange = getDefaultTimeRange();
     render(<TimePickerWithHistory value={timeRange} {...props} />);
-    await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     for (const [inputFrom, inputTo] of inputRanges) {
       await userEvent.click(screen.getByLabelText(/Time range selected/));
@@ -129,7 +128,7 @@ describe('TimePickerWithHistory', () => {
 
   it('Should display handle timezones correctly', async () => {
     const timeRange = getDefaultTimeRange();
-    render(<TimePickerWithHistory value={timeRange} {...props} {...{ timeZone: 'Eastern/Pacific' }} />);
+    render(<TimePickerWithHistory value={timeRange} {...props} {...{ timeZone: 'Asia/Tokyo' }} />);
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     await clearAndType(getFromField(), '2022-12-10 00:00:00');

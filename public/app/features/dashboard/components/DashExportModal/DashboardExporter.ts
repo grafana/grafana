@@ -52,8 +52,10 @@ interface PanelWithExportableLibraryPanel {
   libraryPanel: LibraryPanel;
 }
 
-function isExportableLibraryPanel(p: any): p is PanelWithExportableLibraryPanel {
-  return p.libraryPanel && typeof p.libraryPanel.name === 'string' && typeof p.libraryPanel.uid === 'string';
+function isExportableLibraryPanel(
+  p: PanelModel | PanelWithExportableLibraryPanel
+): p is PanelWithExportableLibraryPanel {
+  return Boolean(p.libraryPanel?.name && p.libraryPanel?.uid);
 }
 
 interface DataSources {
@@ -83,7 +85,7 @@ export class DashboardExporter {
     // this is pretty hacky and needs to be changed
     dashboard.cleanUpRepeats();
 
-    const saveModel = dashboard.getSaveModelClone();
+    const saveModel = dashboard.getSaveModelCloneOld();
     saveModel.id = null;
 
     // undo repeat cleanup
@@ -105,10 +107,10 @@ export class DashboardExporter {
         return;
       }
 
-      let datasource: string = obj.datasource;
+      let datasource = obj.datasource;
       let datasourceVariable: any = null;
 
-      const datasourceUid: string = (datasource as any)?.uid;
+      const datasourceUid: string = datasource?.uid;
       // ignore data source properties that contain a variable
       if (datasourceUid) {
         if (datasourceUid.indexOf('$') === 0) {

@@ -80,19 +80,19 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     // GraphDrawStyle.Points mode also needs this for fill/stroke sharing & re-use in series.points. see getColor() below.
     lineConfig.stroke = lineColor;
 
+    lineConfig.width = lineWidth;
+    if (lineStyle && lineStyle.fill !== 'solid') {
+      if (lineStyle.fill === 'dot') {
+        lineConfig.cap = 'round';
+      }
+      lineConfig.dash = lineStyle.dash ?? [10, 10];
+    }
+
     if (pathBuilder != null) {
       lineConfig.paths = pathBuilder;
-      lineConfig.width = lineWidth;
     } else if (drawStyle === GraphDrawStyle.Points) {
       lineConfig.paths = () => null;
     } else if (drawStyle != null) {
-      lineConfig.width = lineWidth;
-      if (lineStyle && lineStyle.fill !== 'solid') {
-        if (lineStyle.fill === 'dot') {
-          lineConfig.cap = 'round';
-        }
-        lineConfig.dash = lineStyle.dash ?? [10, 10];
-      }
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
         let pathsBuilder = mapDrawStyleToPathBuilder(
           drawStyle,
@@ -239,7 +239,7 @@ let builders: PathBuilders | undefined = undefined;
 function mapDrawStyleToPathBuilder(
   style: GraphDrawStyle,
   lineInterpolation?: LineInterpolation,
-  barAlignment = 0,
+  barAlignment = BarAlignment.Center,
   barWidthFactor = 0.6,
   barMaxWidth = 200
 ): Series.PathBuilder {
@@ -262,7 +262,7 @@ function mapDrawStyleToPathBuilder(
     if (!builders[barsCfgKey]) {
       builders[barsCfgKey] = pathBuilders.bars!({
         size: [barWidthFactor, barMaxWidth],
-        align: barAlignment as BarAlignment,
+        align: barAlignment,
       });
     }
 

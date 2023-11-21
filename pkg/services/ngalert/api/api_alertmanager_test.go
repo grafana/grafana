@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"math/rand"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -229,21 +231,21 @@ func TestAlertmanagerConfig(t *testing.T) {
 		r := sut.RoutePostAlertingConfig(&rc, request)
 		require.Equal(t, 202, r.Status())
 
-		am, err := sut.mam.AlertmanagerFor(1)
-		require.NoError(t, err)
-		hash := am.Base.ConfigHash()
-
 		getResponse := sut.RouteGetAlertingConfig(&rc)
 		require.Equal(t, 200, getResponse.Status())
-		postable, err := notifier.Load(getResponse.Body())
+
+		body := getResponse.Body()
+		hash := md5.Sum(body)
+		postable, err := notifier.Load(body)
 		require.NoError(t, err)
 
 		r = sut.RoutePostAlertingConfig(&rc, *postable)
 		require.Equal(t, 202, r.Status())
 
-		am, err = sut.mam.AlertmanagerFor(1)
-		require.NoError(t, err)
-		newHash := am.Base.ConfigHash()
+		getResponse = sut.RouteGetAlertingConfig(&rc)
+		require.Equal(t, 200, getResponse.Status())
+
+		newHash := md5.Sum(getResponse.Body())
 		require.Equal(t, hash, newHash)
 	})
 
@@ -617,7 +619,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
 				require.NoError(t, err)
 				silence.ID = ""
-				newID, err := alertmanagerFor.CreateSilence(&silence)
+				newID, err := alertmanagerFor.CreateSilence(context.Background(), &silence)
 				require.NoError(t, err)
 				silence.ID = newID
 			}
@@ -663,7 +665,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
 	provStore := provisioning.NewFakeProvisioningStore()
 	tmpDir := t.TempDir()
-	kvStore := notifier.NewFakeKVStore(t)
+	kvStore := ngfakes.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)

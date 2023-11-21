@@ -7,9 +7,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
+	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/jmespath/go-jmespath"
+	"github.com/mitchellh/mapstructure"
+	"golang.org/x/oauth2"
+	"gopkg.in/ini.v1"
 )
 
 var (
@@ -76,7 +83,7 @@ func (s *SocialBase) httpGet(ctx context.Context, client *http.Client, url strin
 	return response, nil
 }
 
-func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (interface{}, error) {
+func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (any, error) {
 	if attributePath == "" {
 		return "", errors.New("no attribute path specified")
 	}
@@ -85,7 +92,7 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (inter
 		return "", errors.New("empty user info JSON response provided")
 	}
 
-	var buf interface{}
+	var buf any
 	if err := json.Unmarshal(data, &buf); err != nil {
 		return "", fmt.Errorf("%v: %w", "failed to unmarshal user info JSON response", err)
 	}
@@ -118,7 +125,7 @@ func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []b
 		return []string{}, err
 	}
 
-	ifArr, ok := val.([]interface{})
+	ifArr, ok := val.([]any)
 	if !ok {
 		return []string{}, nil
 	}
@@ -131,4 +138,102 @@ func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []b
 	}
 
 	return result, nil
+}
+
+func createOAuthConfig(info *OAuthInfo, cfg *setting.Cfg, defaultName string) *oauth2.Config {
+	var authStyle oauth2.AuthStyle
+	switch strings.ToLower(info.AuthStyle) {
+	case "inparams":
+		authStyle = oauth2.AuthStyleInParams
+	case "inheader":
+		authStyle = oauth2.AuthStyleInHeader
+	default:
+		authStyle = oauth2.AuthStyleAutoDetect
+	}
+
+	config := oauth2.Config{
+		ClientID:     info.ClientId,
+		ClientSecret: info.ClientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:   info.AuthUrl,
+			TokenURL:  info.TokenUrl,
+			AuthStyle: authStyle,
+		},
+		RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + defaultName,
+		Scopes:      info.Scopes,
+	}
+
+	return &config
+}
+
+func mustBool(value any, defaultValue bool) bool {
+	if value == nil {
+		return defaultValue
+	}
+
+	str, ok := value.(string)
+	if ok {
+		result, err := strconv.ParseBool(str)
+		if err != nil {
+			return defaultValue
+		}
+		return result
+	}
+
+	result, ok := value.(bool)
+	if !ok {
+		return defaultValue
+	}
+
+	return result
+}
+
+// convertIniSectionToMap converts key value pairs from an ini section to a map[string]any
+func convertIniSectionToMap(sec *ini.Section) map[string]any {
+	mappedSettings := make(map[string]any)
+	for k, v := range sec.KeysHash() {
+		mappedSettings[k] = v
+	}
+	return mappedSettings
+}
+
+// createOAuthInfoFromKeyValues creates an OAuthInfo struct from a map[string]any using mapstructure
+// it puts all extra key values into OAuthInfo's Extra map
+func createOAuthInfoFromKeyValues(settingsKV map[string]any) (*OAuthInfo, error) {
+	emptyStrToSliceDecodeHook := func(from reflect.Type, to reflect.Type, data any) (any, error) {
+		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
+			strData, ok := data.(string)
+			if !ok {
+				return nil, fmt.Errorf("failed to convert %v to string", data)
+			}
+
+			if strData == "" {
+				return []string{}, nil
+			}
+			return util.SplitString(strData), nil
+		}
+		return data, nil
+	}
+
+	var oauthInfo OAuthInfo
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		DecodeHook:       emptyStrToSliceDecodeHook,
+		Result:           &oauthInfo,
+		WeaklyTypedInput: true,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = decoder.Decode(settingsKV)
+	if err != nil {
+		return nil, err
+	}
+
+	if oauthInfo.EmptyScopes {
+		oauthInfo.Scopes = []string{}
+	}
+
+	return &oauthInfo, err
 }

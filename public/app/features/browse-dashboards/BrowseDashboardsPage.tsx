@@ -3,6 +3,7 @@ import React, { memo, useEffect, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -78,9 +79,10 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const hasSelection = useHasSelection();
 
-  const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
+  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO);
 
-  const showEditTitle = canEditInFolder && folderUID;
+  const showEditTitle = canEditFolders && folderUID;
+  const canSelect = canEditFolders || canEditDashboards;
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
@@ -88,8 +90,16 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
         title: newValue,
       });
       if ('error' in result) {
+        reportInteraction('grafana_browse_dashboards_page_edit_folder_name', {
+          status: 'failed_with_error',
+          error: result.error,
+        });
         throw result.error;
+      } else {
+        reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'success' });
       }
+    } else {
+      reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'failed_no_folderDTO' });
     }
   };
 
@@ -101,11 +111,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       actions={
         <>
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
-          {(canCreateDashboards || canCreateFolder) && (
+          {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton
               parentFolder={folderDTO}
               canCreateDashboard={canCreateDashboards}
-              canCreateFolder={canCreateFolder}
+              canCreateFolder={canCreateFolders}
             />
           )}
         </>
@@ -125,9 +135,9 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView canSelect={canEditInFolder} width={width} height={height} />
+                <SearchView canSelect={canSelect} width={width} height={height} />
               ) : (
-                <BrowseView canSelect={canEditInFolder} width={width} height={height} folderUID={folderUID} />
+                <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
               )
             }
           </AutoSizer>

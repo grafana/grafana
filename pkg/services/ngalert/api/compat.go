@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // AlertRuleFromProvisionedAlertRule converts definitions.ProvisionedAlertRule to models.AlertRule
@@ -54,10 +55,10 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 }
 
 // ProvisionedAlertRuleFromAlertRules converts a collection of models.AlertRule to definitions.ProvisionedAlertRules with provenance status models.ProvenanceNone
-func ProvisionedAlertRuleFromAlertRules(rules []*models.AlertRule) definitions.ProvisionedAlertRules {
+func ProvisionedAlertRuleFromAlertRules(rules []*models.AlertRule, provenances map[string]models.Provenance) definitions.ProvisionedAlertRules {
 	result := make([]definitions.ProvisionedAlertRule, 0, len(rules))
 	for _, r := range rules {
-		result = append(result, ProvisionedAlertRuleFromAlertRule(*r, models.ProvenanceNone))
+		result = append(result, ProvisionedAlertRuleFromAlertRule(*r, provenances[r.UID]))
 	}
 	return result
 }
@@ -151,11 +152,13 @@ func AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(d models.AlertRuleGro
 		rules = append(rules, alert)
 	}
 	return definitions.AlertRuleGroupExport{
-		OrgID:    d.OrgID,
-		Name:     d.Title,
-		Folder:   d.FolderTitle,
-		Interval: model.Duration(time.Duration(d.Interval) * time.Second),
-		Rules:    rules,
+		OrgID:           d.OrgID,
+		Name:            d.Title,
+		Folder:          d.FolderTitle,
+		FolderUID:       d.FolderUID,
+		Interval:        model.Duration(time.Duration(d.Interval) * time.Second),
+		IntervalSeconds: d.Interval,
+		Rules:           rules,
 	}, nil
 }
 
@@ -170,49 +173,52 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		data = append(data, query)
 	}
 
-	var dashboardUID string
-	if rule.DashboardUID != nil {
-		dashboardUID = *rule.DashboardUID
-	}
-
-	var panelID int64
-	if rule.PanelID != nil {
-		panelID = *rule.PanelID
-	}
-
-	return definitions.AlertRuleExport{
+	result := definitions.AlertRuleExport{
 		UID:          rule.UID,
 		Title:        rule.Title,
 		For:          model.Duration(rule.For),
 		Condition:    rule.Condition,
 		Data:         data,
-		DashboardUID: dashboardUID,
-		PanelID:      panelID,
+		DashboardUID: rule.DashboardUID,
+		PanelID:      rule.PanelID,
 		NoDataState:  definitions.NoDataState(rule.NoDataState),
 		ExecErrState: definitions.ExecutionErrorState(rule.ExecErrState),
-		Annotations:  rule.Annotations,
-		Labels:       rule.Labels,
 		IsPaused:     rule.IsPaused,
-	}, nil
+	}
+	if rule.For.Seconds() > 0 {
+		result.ForString = util.Pointer(model.Duration(rule.For).String())
+	}
+	if rule.Annotations != nil {
+		result.Annotations = &rule.Annotations
+	}
+	if rule.Labels != nil {
+		result.Labels = &rule.Labels
+	}
+	return result, nil
 }
 
 // AlertQueryExportFromAlertQuery creates a definitions.AlertQueryExport DTO from models.AlertQuery.
 func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQueryExport, error) {
 	// We unmarshal the json.RawMessage model into a map in order to facilitate yaml marshalling.
-	var mdl map[string]interface{}
+	var mdl map[string]any
 	err := json.Unmarshal(query.Model, &mdl)
 	if err != nil {
 		return definitions.AlertQueryExport{}, err
 	}
+	var queryType *string
+	if query.QueryType != "" {
+		queryType = &query.QueryType
+	}
 	return definitions.AlertQueryExport{
 		RefID:     query.RefID,
-		QueryType: query.QueryType,
-		RelativeTimeRange: definitions.RelativeTimeRange{
-			From: definitions.Duration(query.RelativeTimeRange.From),
-			To:   definitions.Duration(query.RelativeTimeRange.To),
+		QueryType: queryType,
+		RelativeTimeRange: definitions.RelativeTimeRangeExport{
+			FromSeconds: int64(time.Duration(query.RelativeTimeRange.From).Seconds()),
+			ToSeconds:   int64(time.Duration(query.RelativeTimeRange.To).Seconds()),
 		},
 		DatasourceUID: query.DatasourceUID,
 		Model:         mdl,
+		ModelString:   string(query.Model),
 	}, nil
 }
 
@@ -275,18 +281,36 @@ func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definiti
 
 // RouteExportFromRoute creates a definitions.RouteExport DTO from definitions.Route.
 func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
+	toStringIfNotNil := func(d *model.Duration) *string {
+		if d == nil {
+			return nil
+		}
+		s := d.String()
+		return &s
+	}
+
+	matchers := make([]*definitions.MatcherExport, 0, len(route.ObjectMatchers))
+	for _, matcher := range route.ObjectMatchers {
+		matchers = append(matchers, &definitions.MatcherExport{
+			Label: matcher.Name,
+			Match: matcher.Type.String(),
+			Value: matcher.Value,
+		})
+	}
+
 	export := definitions.RouteExport{
-		Receiver:          route.Receiver,
-		GroupByStr:        route.GroupByStr,
-		Match:             route.Match,
-		MatchRE:           route.MatchRE,
-		Matchers:          route.Matchers,
-		ObjectMatchers:    route.ObjectMatchers,
-		MuteTimeIntervals: route.MuteTimeIntervals,
-		Continue:          route.Continue,
-		GroupWait:         route.GroupWait,
-		GroupInterval:     route.GroupInterval,
-		RepeatInterval:    route.RepeatInterval,
+		Receiver:            route.Receiver,
+		GroupByStr:          NilIfEmpty(util.Pointer(route.GroupByStr)),
+		Match:               route.Match,
+		MatchRE:             route.MatchRE,
+		Matchers:            route.Matchers,
+		ObjectMatchers:      route.ObjectMatchers,
+		ObjectMatchersSlice: matchers,
+		MuteTimeIntervals:   NilIfEmpty(util.Pointer(route.MuteTimeIntervals)),
+		Continue:            OmitDefault(util.Pointer(route.Continue)),
+		GroupWait:           toStringIfNotNil(route.GroupWait),
+		GroupInterval:       toStringIfNotNil(route.GroupInterval),
+		RepeatInterval:      toStringIfNotNil(route.RepeatInterval),
 	}
 
 	if len(route.Routes) > 0 {
@@ -297,4 +321,24 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 	}
 
 	return &export
+}
+
+// OmitDefault returns nil if the value is the default.
+func OmitDefault[T comparable](v *T) *T {
+	var def T
+	if v == nil {
+		return v
+	}
+	if *v == def {
+		return nil
+	}
+	return v
+}
+
+// NilIfEmpty returns nil if pointer to slice points to the empty slice.
+func NilIfEmpty[T any](v *[]T) *[]T {
+	if v == nil || len(*v) == 0 {
+		return nil
+	}
+	return v
 }

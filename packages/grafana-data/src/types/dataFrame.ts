@@ -101,6 +101,9 @@ export interface FieldConfig<TOptions = any> {
 
   // Panel Specific Values
   custom?: TOptions;
+
+  // Calculate min max per field
+  fieldMinMax?: boolean;
 }
 
 export interface FieldTypeConfig {
@@ -244,6 +247,11 @@ export interface DataFrame extends QueryResultBase {
   length: number;
 }
 
+// Data frame that include aggregate value, for use by timeSeriesTableTransformer / chart cell type
+export interface DataFrameWithValue extends DataFrame {
+  value: number | null;
+}
+
 /**
  * @public
  * Like a field, but properties are optional and values may be a simple array
@@ -267,7 +275,7 @@ export interface DataFrameDTO extends QueryResultBase {
 
 export interface FieldCalcs extends Record<string, any> {}
 
-/** @deprecated check data plane docs: https://grafana.github.io/dataplane/heatmap **/
+/** @deprecated check data plane docs: https://grafana.com/developers/dataplane/heatmap **/
 export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
 export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
 export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';

@@ -45,7 +45,7 @@ func TestPassword_AuthenticatePassword(t *testing.T) {
 			username:    "test",
 			password:    "",
 			req:         &authn.Request{},
-			expectedErr: errEmptyPassword,
+			expectedErr: errPasswordAuthFailed,
 		},
 		{
 			desc:        "should if login is blocked by to many attempts",
@@ -53,7 +53,7 @@ func TestPassword_AuthenticatePassword(t *testing.T) {
 			password:    "test",
 			req:         &authn.Request{},
 			blockLogin:  true,
-			expectedErr: errLoginAttemptBlocked,
+			expectedErr: errPasswordAuthFailed,
 		},
 		{
 			desc:        "should fail when not found in any clients",

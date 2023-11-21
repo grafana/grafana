@@ -2521,7 +2521,6 @@
   ],
   "refresh": false,
   "schemaVersion": 16,
-  "style": "dark",
   "tags": ["gdev", "postgres", "datasource-test"],
   "templating": {
     "list": [

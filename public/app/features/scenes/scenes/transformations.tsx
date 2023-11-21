@@ -8,7 +8,7 @@ import {
   PanelBuilders,
 } from '@grafana/scenes';
 
-import { DashboardScene } from '../dashboard/DashboardScene';
+import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 

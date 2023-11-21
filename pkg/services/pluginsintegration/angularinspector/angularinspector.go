@@ -16,7 +16,7 @@ func ProvideService(cfg *config.Cfg, dynamic *angulardetectorsprovider.Dynamic) 
 	var detectorsProvider angulardetector.DetectorsProvider
 	var err error
 	static := angularinspector.NewDefaultStaticDetectorsProvider()
-	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
+	if cfg.Features != nil && cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
 		detectorsProvider = angulardetector.SequenceDetectorsProvider{dynamic, static}
 	} else {
 		detectorsProvider = static
@@ -24,5 +24,5 @@ func ProvideService(cfg *config.Cfg, dynamic *angulardetectorsprovider.Dynamic) 
 	if err != nil {
 		return nil, err
 	}
-	return &Service{Inspector: &angularinspector.PatternsListInspector{DetectorsProvider: detectorsProvider}}, nil
+	return &Service{Inspector: angularinspector.NewPatternListInspector(detectorsProvider)}, nil
 }

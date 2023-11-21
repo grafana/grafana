@@ -6,6 +6,7 @@ export const SEARCH_ITEM_HEIGHT = 58;
 export const SEARCH_ITEM_MARGIN = 8;
 export const DEFAULT_SORT = { label: 'A\u2013Z', value: 'alpha-asc' };
 export const SECTION_STORAGE_KEY = 'search.sections';
+export const SEARCH_EXPANDED_FOLDER_STORAGE_KEY = 'grafana.search.expanded-folder';
 export const GENERAL_FOLDER_ID = 0;
 export const GENERAL_FOLDER_UID = 'general';
 export const GENERAL_FOLDER_TITLE = 'General';

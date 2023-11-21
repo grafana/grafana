@@ -3,6 +3,7 @@ package png
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"image/png"
 
 	"github.com/grafana/grafana/pkg/services/store"
@@ -33,9 +34,9 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 			Kind: entity.StandardKindSVG,
 			Name: store.GuessNameFromUID(uid),
 			UID:  uid,
-			Fields: map[string]interface{}{
-				"width":  int64(size.X),
-				"height": int64(size.Y),
+			Fields: map[string]string{
+				"width":  fmt.Sprint(size.X),
+				"height": fmt.Sprint(size.Y),
 			},
 		}
 		return summary, body, nil

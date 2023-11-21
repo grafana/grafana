@@ -7,6 +7,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -115,6 +116,21 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	// when running oss or enterprise without a license all users should be able to query data sources
 	if !hs.License.FeatureEnabled("dspermissions.enforcement") {
 		datasourcesReaderRole.Grants = []string{string(org.RoleViewer)}
+	}
+
+	datasourcesCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:datasources:creator",
+			DisplayName: "Data source creator",
+			Description: "Create data sources.",
+			Group:       "Data sources",
+			Permissions: []ac.Permission{
+				{
+					Action: datasources.ActionCreate,
+				},
+			},
+		},
+		Grants: []string{},
 	}
 
 	datasourcesWriterRole := ac.RoleRegistration{
@@ -252,6 +268,19 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: teamCreatorGrants,
+	}
+
+	teamsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:teams:read",
+			DisplayName: "Team reader",
+			Description: "List all teams.",
+			Group:       "Teams",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionTeamsRead, Scope: ac.ScopeTeamsAll},
+			},
+		},
+		Grants: []string{},
 	}
 
 	teamsWriterRole := ac.RoleRegistration{
@@ -408,6 +437,76 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	libraryPanelsCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library.panels:creator",
+			DisplayName: "Library panel creator",
+			Description: "Create library panel in general folder.",
+			Group:       "Library panels",
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+			},
+		},
+		Grants: []string{"Editor"},
+	}
+
+	libraryPanelsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library.panels:reader",
+			DisplayName: "Library panel reader",
+			Description: "Read all library panels.",
+			Group:       "Library panels",
+			Permissions: []ac.Permission{
+				{Action: libraryelements.ActionLibraryPanelsRead, Scope: dashboards.ScopeFoldersAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	libraryPanelsGeneralReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library.panels:general.reader",
+			DisplayName: "Library panel general reader",
+			Description: "Read all library panels in general folder.",
+			Group:       "Library panels",
+			Permissions: []ac.Permission{
+				{Action: libraryelements.ActionLibraryPanelsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+			},
+		},
+		Grants: []string{"Viewer"},
+	}
+
+	libraryPanelsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library.panels:writer",
+			DisplayName: "Library panel writer",
+			Group:       "Library panels",
+			Description: "Create, read, write or delete all library panels and their permissions.",
+			Permissions: ac.ConcatPermissions(libraryPanelsReaderRole.Role.Permissions, []ac.Permission{
+				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: dashboards.ScopeFoldersAll},
+				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersAll},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: dashboards.ScopeFoldersAll},
+			}),
+		},
+		Grants: []string{"Admin"},
+	}
+
+	libraryPanelsGeneralWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library.panels:general.writer",
+			DisplayName: "Library panel general writer",
+			Group:       "Library panels",
+			Description: "Create, read, write or delete all library panels and their permissions in the general folder.",
+			Permissions: ac.ConcatPermissions(libraryPanelsGeneralReaderRole.Role.Permissions, []ac.Permission{
+				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+			}),
+		},
+		Grants: []string{"Editor"},
+	}
+
 	publicDashboardsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:dashboards.public:writer",
@@ -447,15 +546,16 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
-	return hs.accesscontrolService.DeclareFixedRoles(
-		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
-		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
-		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
+	roles := []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
+		datasourcesIdReaderRole, datasourcesCreatorRole, orgReaderRole, orgWriterRole,
+		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
-		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole,
-	)
+		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
+		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole}
+
+	return hs.accesscontrolService.DeclareFixedRoles(roles...)
 }
 
 // Metadata helpers
@@ -463,25 +563,20 @@ func (hs *HTTPServer) declareFixedRoles() error {
 func (hs *HTTPServer) getAccessControlMetadata(c *contextmodel.ReqContext,
 	orgID int64, prefix string, resourceID string) ac.Metadata {
 	ids := map[string]bool{resourceID: true}
-	return hs.getMultiAccessControlMetadata(c, orgID, prefix, ids)[resourceID]
+	return hs.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }
 
 // getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
 // Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
 func (hs *HTTPServer) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
-	orgID int64, prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
+	prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
 	if !c.QueryBool("accesscontrol") {
 		return map[string]ac.Metadata{}
 	}
 
-	if c.SignedInUser.Permissions == nil {
+	if len(c.SignedInUser.GetPermissions()) == 0 {
 		return map[string]ac.Metadata{}
 	}
 
-	permissions, ok := c.SignedInUser.Permissions[orgID]
-	if !ok {
-		return map[string]ac.Metadata{}
-	}
-
-	return ac.GetResourcesMetadata(c.Req.Context(), permissions, prefix, resourceIDs)
+	return ac.GetResourcesMetadata(c.Req.Context(), c.SignedInUser.GetPermissions(), prefix, resourceIDs)
 }

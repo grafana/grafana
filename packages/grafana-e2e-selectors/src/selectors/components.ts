@@ -15,6 +15,7 @@ export const Components = {
   },
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
+    overlayContent: 'data-testid TimePicker Overlay Content',
     fromField: 'Time Range from field',
     toField: 'Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
@@ -30,6 +31,9 @@ export const Components = {
     roleType: 'Role to add new permission to',
     rolePicker: 'Built-in role picker',
     permissionLevel: 'Permission Level',
+  },
+  DateTimePicker: {
+    input: 'data-testid date-time-input',
   },
   DataSource: {
     TestData: {
@@ -53,6 +57,7 @@ export const Components = {
     },
     Prometheus: {
       configPage: {
+        connectionSettings: 'Data source connection URL',
         exemplarsAddButton: 'Add exemplar config button',
         internalLinkSwitch: 'Internal link switch',
       },
@@ -71,11 +76,12 @@ export const Components = {
   Panels: {
     Panel: {
       title: (title: string) => `data-testid Panel header ${title}`,
-      headerItems: (item: string) => `Panel header item ${item}`,
+      headerItems: (item: string) => `data-testid Panel header item ${item}`,
       menuItems: (item: string) => `data-testid Panel menu item ${item}`,
       menu: (title: string) => `data-testid Panel menu ${title}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
+      status: (status: string) => `data-testid Panel status ${status}`,
       loadingBar: () => `Panel loading bar`,
       HoverWidget: {
         container: 'data-testid hover-header-container',
@@ -112,6 +118,7 @@ export const Components = {
       Table: {
         header: 'table header',
         footer: 'table-footer',
+        body: 'data-testid table body',
       },
     },
   },
@@ -146,6 +153,12 @@ export const Components = {
     toggleTableView: 'toggle-table-view',
 
     // [Geomap] Map controls
+    showZoomField: 'Map controls Show zoom control field property editor',
+    showAttributionField: 'Map controls Show attribution field property editor',
+    showScaleField: 'Map controls Show scale field property editor',
+    showMeasureField: 'Map controls Show measure tools field property editor',
+    showDebugField: 'Map controls Show debug field property editor',
+
     measureButton: 'show measure tools',
   },
   PanelInspector: {
@@ -183,8 +196,8 @@ export const Components = {
   QueryTab: {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',
-    queryHistoryButton: 'Rich history button',
-    addQuery: 'Query editor add query button',
+    queryHistoryButton: 'data-testid query-history-button',
+    addQuery: 'data-testid query-tab-add-query',
   },
   QueryHistory: {
     queryText: 'Query text',
@@ -216,12 +229,12 @@ export const Components = {
   Transforms: {
     card: (name: string) => `data-testid New transform ${name}`,
     Reduce: {
-      modeLabel: 'Transform mode label',
-      calculationsLabel: 'Transform calculations label',
+      modeLabel: 'data-testid Transform mode label',
+      calculationsLabel: 'data-testid Transform calculations label',
     },
     SpatialOperations: {
       actionLabel: 'root Action field property editor',
-      locationLabel: 'root Location field property editor',
+      locationLabel: 'root Location Mode field property editor',
       location: {
         autoOption: 'Auto location option',
         coords: {
@@ -248,13 +261,14 @@ export const Components = {
       button: 'Configuration',
     },
     Toggle: {
-      button: 'Toggle menu',
+      button: 'data-testid Toggle menu',
     },
     Reporting: {
       button: 'Reporting',
     },
   },
   NavMenu: {
+    Menu: 'data-testid navigation mega-menu',
     item: 'data-testid Nav menu item',
   },
   NavToolbar: {
@@ -377,7 +391,7 @@ export const Components = {
     singleLink: 'Data link',
   },
   CodeEditor: {
-    container: 'Code editor container',
+    container: 'data-testid Code editor container',
   },
   DashboardImportPage: {
     textarea: 'data-testid-import-dashboard-textarea',
@@ -424,5 +438,8 @@ export const Components = {
   Annotations: {
     annotationsTypeInput: 'annotations-type-input',
     annotationsChoosePanelInput: 'choose-panels-input',
+  },
+  Tooltip: {
+    container: 'data-testid tooltip',
   },
 };

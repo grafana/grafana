@@ -110,10 +110,10 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("avatar_url", dn.AvatarURL)
 	}
 
-	fields := make([]map[string]interface{}, 0)
+	fields := make([]map[string]any, 0)
 
 	for _, evt := range evalContext.EvalMatches {
-		fields = append(fields, map[string]interface{}{
+		fields = append(fields, map[string]any{
 			// Discord uniquely does not send the alert if the metric field is empty,
 			// which it can be in some cases
 			"name":   notEmpty(evt.Metric),
@@ -122,7 +122,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	footer := map[string]interface{}{
+	footer := map[string]any{
 		"text":     "Grafana v" + setting.BuildVersion,
 		"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 	}
@@ -139,17 +139,17 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	embed.Set("fields", fields)
 	embed.Set("footer", footer)
 
-	var image map[string]interface{}
+	var image map[string]any
 	var embeddedImage = false
 
 	if dn.NeedsImage() {
 		if evalContext.ImagePublicURL != "" {
-			image = map[string]interface{}{
+			image = map[string]any{
 				"url": evalContext.ImagePublicURL,
 			}
 			embed.Set("image", image)
 		} else {
-			image = map[string]interface{}{
+			image = map[string]any{
 				"url": "attachment://graph.png",
 			}
 			embed.Set("image", image)
@@ -157,7 +157,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 
-	bodyJSON.Set("embeds", []interface{}{embed})
+	bodyJSON.Set("embeds", []any{embed})
 
 	json, _ := bodyJSON.MarshalJSON()
 
@@ -172,7 +172,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	} else {
 		err := dn.embedImage(cmd, evalContext.ImageOnDiskPath, json)
 		if err != nil {
-			dn.log.Error("failed to embed image", "error", err)
+			dn.log.Error("Failed to embed image", "error", err)
 			return err
 		}
 	}

@@ -18,7 +18,7 @@ func (s *UserAuthTokenService) Run(ctx context.Context) error {
 		}
 	})
 	if err != nil {
-		s.log.Error("failed to lock and execute cleanup of expired auth token", "error", err)
+		s.log.Error("Failed to lock and execute cleanup of expired auth token", "error", err)
 	}
 
 	for {
@@ -30,7 +30,7 @@ func (s *UserAuthTokenService) Run(ctx context.Context) error {
 				}
 			})
 			if err != nil {
-				s.log.Error("failed to lock and execute cleanup of expired auth token", "error", err)
+				s.log.Error("Failed to lock and execute cleanup of expired auth token", "error", err)
 			}
 
 		case <-ctx.Done():
@@ -43,7 +43,7 @@ func (s *UserAuthTokenService) deleteExpiredTokens(ctx context.Context, maxInact
 	createdBefore := getTime().Add(-maxLifetime)
 	rotatedBefore := getTime().Add(-maxInactiveLifetime)
 
-	s.log.Debug("starting cleanup of expired auth tokens", "createdBefore", createdBefore, "rotatedBefore", rotatedBefore)
+	s.log.Debug("Starting cleanup of expired auth tokens", "createdBefore", createdBefore, "rotatedBefore", rotatedBefore)
 
 	var affected int64
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -55,11 +55,11 @@ func (s *UserAuthTokenService) deleteExpiredTokens(ctx context.Context, maxInact
 
 		affected, err = res.RowsAffected()
 		if err != nil {
-			s.log.Error("failed to cleanup expired auth tokens", "error", err)
+			s.log.Error("Failed to cleanup expired auth tokens", "error", err)
 			return nil
 		}
 
-		s.log.Debug("cleanup of expired auth tokens done", "count", affected)
+		s.log.Debug("Cleanup of expired auth tokens done", "count", affected)
 
 		return nil
 	})

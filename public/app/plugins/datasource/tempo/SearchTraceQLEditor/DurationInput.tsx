@@ -14,7 +14,8 @@ interface Props {
   operators: string[];
 }
 
-const validationRegex = /^\d+(?:\.\d)?\d*(?:us|µs|ns|ms|s|m|h)$/;
+// Support template variables (e.g., `$dur`, `$v_1`) and durations (e.g., `300µs`, `1.2ms`)
+const validationRegex = /^(\$\w+)|(\d+(?:\.\d)?\d*(?:us|µs|ns|ms|s|m|h))$/;
 
 const getStyles = () => ({
   noBoxShadow: css`

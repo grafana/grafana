@@ -96,7 +96,6 @@ it('handles a default datasource in a template variable', async () => {
 
 it('replaces datasource ref in library panel', async () => {
   const dashboard: Dashboard = {
-    style: 'dark',
     editable: true,
     graphTooltip: 1,
     schemaVersion: 38,

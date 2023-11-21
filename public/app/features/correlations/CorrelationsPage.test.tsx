@@ -47,7 +47,7 @@ const renderWithContext = async (
       const matches = url.match(/^\/api\/datasources\/uid\/(?<sourceUID>[a-zA-Z0-9]+)\/correlations$/);
       if (matches?.groups) {
         const { sourceUID } = matches.groups;
-        const correlation = { sourceUID, ...data, uid: uniqueId() };
+        const correlation = { sourceUID, ...data, uid: uniqueId(), provisioned: false };
         correlations.push(correlation);
         return createCreateCorrelationResponse(correlation);
       }
@@ -66,7 +66,7 @@ const renderWithContext = async (
           }
           return c;
         });
-        return createUpdateCorrelationResponse({ sourceUID, ...data, uid: uniqueId() });
+        return createUpdateCorrelationResponse({ sourceUID, ...data, uid: uniqueId(), provisioned: false });
       }
 
       throw createFetchCorrelationsError();
@@ -292,7 +292,9 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+      });
 
       // the table showing correlations should have appeared
       expect(await screen.findByRole('table')).toBeInTheDocument();
@@ -358,6 +360,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '1',
             label: 'Some label',
+            provisioned: false,
             config: {
               field: 'line',
               target: {},
@@ -373,6 +376,7 @@ describe('CorrelationsPage', () => {
             uid: '2',
             label: 'Prometheus to Loki',
             config: { field: 'label', target: {}, type: 'query' },
+            provisioned: false,
           },
         ]
       );
@@ -437,7 +441,9 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /add$/i }));
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
+      });
 
       // the table showing correlations should have appeared
       expect(await screen.findByRole('table')).toBeInTheDocument();
@@ -472,7 +478,9 @@ describe('CorrelationsPage', () => {
 
       expect(screen.queryByRole('cell', { name: /some label$/i })).not.toBeInTheDocument();
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_deleted');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_deleted');
+      });
     });
 
     it('correctly edits correlations', async () => {
@@ -484,7 +492,9 @@ describe('CorrelationsPage', () => {
       const rowExpanderButton = within(tableRows[0]).getByRole('button', { name: /toggle row expanded/i });
       await userEvent.click(rowExpanderButton);
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_details_expanded');
+      });
 
       await userEvent.clear(screen.getByRole('textbox', { name: /label/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /label/i }), 'edited label');
@@ -498,9 +508,11 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
 
-      expect(await screen.findByRole('cell', { name: /edited label$/i })).toBeInTheDocument();
+      expect(await screen.findByRole('cell', { name: /edited label$/i }, { timeout: 5000 })).toBeInTheDocument();
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+      });
     });
 
     it('correctly edits transformations', async () => {
@@ -551,7 +563,9 @@ describe('CorrelationsPage', () => {
       expect(screen.getByText('Please define an expression')).toBeInTheDocument();
       await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
+      });
     });
   });
 
@@ -580,6 +594,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '1',
             label: 'Loki to Loki',
+            provisioned: false,
             config: {
               field: 'line',
               target: {},
@@ -594,6 +609,7 @@ describe('CorrelationsPage', () => {
             targetUID: 'prometheus',
             uid: '2',
             label: 'Loki to Prometheus',
+            provisioned: false,
             config: {
               field: 'line',
               target: {},
@@ -609,6 +625,7 @@ describe('CorrelationsPage', () => {
             uid: '3',
             label: 'Prometheus to Loki',
             config: { field: 'label', target: {}, type: 'query' },
+            provisioned: false,
           },
           {
             sourceUID: 'prometheus',
@@ -616,6 +633,7 @@ describe('CorrelationsPage', () => {
             uid: '4',
             label: 'Prometheus to Prometheus',
             config: { field: 'label', target: {}, type: 'query' },
+            provisioned: false,
           },
         ]
       );
@@ -638,6 +656,7 @@ describe('CorrelationsPage', () => {
         targetUID: 'loki',
         uid: '1',
         label: 'Some label',
+        provisioned: true,
         config: {
           field: 'line',
           target: {},
@@ -677,7 +696,9 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(rowExpanderButton);
 
-      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
+      await waitFor(() => {
+        expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_details_expanded');
+      });
 
       // form elements should be readonly
       const labelInput = await screen.findByRole('textbox', { name: /label/i });

@@ -111,9 +111,9 @@ func RequestWithWebContext(req *http.Request, c *contextmodel.ReqContext) *http.
 	return req
 }
 
-func RequestWithSignedInUser(req *http.Request, user *user.SignedInUser) *http.Request {
+func RequestWithSignedInUser(req *http.Request, usr *user.SignedInUser) *http.Request {
 	return RequestWithWebContext(req, &contextmodel.ReqContext{
-		SignedInUser: user,
+		SignedInUser: usr,
 		IsSignedIn:   true,
 	})
 }

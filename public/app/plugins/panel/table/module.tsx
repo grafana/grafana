@@ -7,25 +7,19 @@ import {
   standardEditorsRegistry,
   identityOverrideProcessor,
 } from '@grafana/data';
-import {
-  TableFieldOptions,
-  TableCellOptions,
-  TableCellDisplayMode,
-  defaultTableFieldOptions,
-  TableCellHeight,
-} from '@grafana/schema';
+import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { Options, defaultOptions } from './panelcfg.gen';
+import { Options, defaultOptions, FieldConfig } from './panelcfg.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';
 const cellCategory = ['Cell options'];
 
-export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
+export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
   .useFieldConfig({
@@ -138,7 +132,7 @@ export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
         path: 'footer.reducer',
         name: 'Calculation',
         description: 'Choose a reducer function / calculation',
-        editor: standardEditorsRegistry.get('stats-picker').editor as any,
+        editor: standardEditorsRegistry.get('stats-picker').editor,
         defaultValue: [ReducerID.sum],
         showIf: (cfg) => cfg.footer?.show,
       })
@@ -167,7 +161,7 @@ export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
                 if (field.type === FieldType.number) {
                   const name = getFieldDisplayName(field, frame, context.data);
                   const value = field.name;
-                  options.push({ value, label: name } as any);
+                  options.push({ value, label: name });
                 }
               }
             }

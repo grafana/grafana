@@ -84,7 +84,7 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remo
 	}
 
 	var renderKeyProvider renderKeyProvider
-	if features.IsEnabled(featuremgmt.FlagRenderAuthJWT) {
+	if features.IsEnabledGlobally(featuremgmt.FlagRenderAuthJWT) {
 		renderKeyProvider = &jwtRenderKeyProvider{
 			log:       logger,
 			authToken: []byte(cfg.RendererAuthToken),
@@ -216,7 +216,7 @@ func (rs *RenderingService) RenderErrorImage(theme models.Theme, err error) (*Re
 		theme = models.ThemeDark
 	}
 	imgUrl := "public/img/rendering_%s_%s.png"
-	if errors.Is(err, ErrTimeout) {
+	if errors.Is(err, ErrTimeout) || errors.Is(err, ErrServerTimeout) {
 		imgUrl = fmt.Sprintf(imgUrl, "timeout", theme)
 	} else {
 		imgUrl = fmt.Sprintf(imgUrl, "error", theme)

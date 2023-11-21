@@ -90,7 +90,7 @@ The new heatmap by default assumes that the data is pre-bucketed. So if your que
 
 Grafana Alerting is now on by default if you upgrade from an earlier version of Grafana. If you have been using legacy alerting in an earlier version of Grafana and you upgrade to Grafana 9 your alert rules will be automatically migrated and the legacy alerting interface will be replaced by the Grafana Alerting interface.
 
-Grafana Alerting, called unified alerting in Grafana 8, has been available since June, 2021 now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/migrating-alerts/opt-out" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
+Grafana Alerting, called unified alerting in Grafana 8, has been available since June, 2021 now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/set-up/migrating-alerts#opt-out" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
 
 ### Alert state history for Grafana managed alerts
 
@@ -109,8 +109,6 @@ Grafana now uses envelope encryption to encrypt secrets in the database. Envelop
 ## Dashboard previews (opt-in beta)
 
 The dashboard previews initially came to life during our internal [Grafana Labs Hackathon](/blog/2022/01/14/all-about-the-grafana-labs-hackathon-2.0/?), and are now ready for an opt-in beta release. The previews provide an overview of all available dashboards and help you quickly find the right dashboard when the dashboard names aren’t enough.
-
-Refer to the [Dashboard previews topic](/docs/grafana/next/dashboards/previews/) for instructions on how to enable the feature and current limitations.
 
 {{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="750px" caption="Dashboard previews" >}}
 

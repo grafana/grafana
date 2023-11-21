@@ -34,7 +34,7 @@ type ServerLockService struct {
 func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error {
 	start := time.Now()
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.LockAndExecute")
-	span.SetAttributes("serverlock.actionName", actionName, attribute.Key("serverlock.actionName").String(actionName))
+	span.SetAttributes(attribute.String("serverlock.actionName", actionName))
 	defer span.End()
 
 	ctxLogger := sl.log.FromContext(ctx)
@@ -138,7 +138,7 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error {
 	start := time.Now()
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.LockExecuteAndRelease")
-	span.SetAttributes("serverlock.actionName", actionName, attribute.Key("serverlock.actionName").String(actionName))
+	span.SetAttributes(attribute.String("serverlock.actionName", actionName))
 	defer span.End()
 
 	ctxLogger := sl.log.FromContext(ctx)

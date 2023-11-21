@@ -24,7 +24,7 @@ Prometheus is an open-source database that uses an telemetry collector agent to 
 Grafana provides native support for Prometheus.
 For instructions on downloading Prometheus see [Get started with Grafana and Prometheus][get-started-prometheus].
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][].
 Only users with the organization `administrator` role can add data sources and edit existing data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
@@ -164,6 +164,9 @@ Increasing the duration of the `incrementalQueryOverlapWindow` will increase the
 The Prometheus data source can be configured to disable recording rules under the data source configuration or provisioning file (under `disableRecordingRules` in jsonData).
 
 {{% docs/reference %}}
+[administration documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[administration documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
 [build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
 [build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
 

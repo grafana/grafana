@@ -59,7 +59,9 @@ export const ConfigEditor = (props: Props) => {
             onOptionsChange={onOptionsChange}
             azureAuthSettings={azureAuthSettings}
             sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-            renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+            renderSigV4Editor={
+              <SIGV4ConnectionConfig inExperimentalAuthComponent={true} {...props}></SIGV4ConnectionConfig>
+            }
             secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
           />
         </>

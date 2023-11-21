@@ -3,6 +3,7 @@ package dataframe
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -38,9 +39,9 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 			Kind: entity.StandardKindDataFrame,
 			Name: df.Name,
 			UID:  uid,
-			Fields: map[string]interface{}{
-				"rows": rows,
-				"cols": len(df.Fields),
+			Fields: map[string]string{
+				"rows": fmt.Sprint(rows),
+				"cols": fmt.Sprint(len(df.Fields)),
 			},
 		}
 		if summary.Name == "" {

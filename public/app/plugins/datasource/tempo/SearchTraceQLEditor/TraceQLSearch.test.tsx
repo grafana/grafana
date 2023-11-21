@@ -1,6 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { act } from 'react-dom/test-utils';
+import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
+
+import { config } from '@grafana/runtime';
 
 import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -39,6 +43,8 @@ jest.mock('../language_provider', () => {
 });
 
 describe('TraceQLSearch', () => {
+  initTemplateSrv('key', []);
+
   let user: ReturnType<typeof userEvent.setup>;
 
   const datasource: TempoDatasource = {
@@ -94,25 +100,65 @@ describe('TraceQLSearch', () => {
     }
   });
 
-  // it('should add new filter when new value is selected in the service name section', async () => {
-  //   const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
-  //   const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
-  //   expect(serviceNameValue).not.toBeNull();
-  //   expect(serviceNameValue).toBeInTheDocument();
+  it('should add new filter when new value is selected in the service name section', async () => {
+    const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+    const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
+    expect(serviceNameValue).not.toBeNull();
+    expect(serviceNameValue).toBeInTheDocument();
 
-  //   expect(query.filters.find((f) => f.id === 'service-name')).not.toBeDefined();
+    expect(query.filters.find((f) => f.id === 'service-name')).not.toBeDefined();
 
-  //   if (serviceNameValue) {
-  //     await user.click(serviceNameValue);
-  //     jest.advanceTimersByTime(1000);
-  //     const customerValue = await screen.findByText('customer');
-  //     await user.click(customerValue);
-  //     const nameFilter = query.filters.find((f) => f.id === 'service-name');
-  //     expect(nameFilter).not.toBeNull();
-  //     expect(nameFilter?.operator).toBe('=');
-  //     expect(nameFilter?.value).toStrictEqual(['customer']);
-  //     expect(nameFilter?.tag).toBe('service.name');
-  //     expect(nameFilter?.scope).toBe(TraceqlSearchScope.Resource);
-  //   }
-  // });
+    if (serviceNameValue) {
+      await user.click(serviceNameValue);
+      jest.advanceTimersByTime(1000);
+      const customerValue = await screen.findByText('customer');
+      await user.click(customerValue);
+      const nameFilter = query.filters.find((f) => f.id === 'service-name');
+      expect(nameFilter).not.toBeNull();
+      expect(nameFilter?.operator).toBe('=');
+      expect(nameFilter?.value).toStrictEqual(['customer']);
+      expect(nameFilter?.tag).toBe('service.name');
+      expect(nameFilter?.scope).toBe(TraceqlSearchScope.Resource);
+    }
+  });
+
+  it('should not render static filter when no tag is configured', async () => {
+    const datasource: TempoDatasource = {
+      search: {
+        filters: [
+          {
+            id: 'service-name',
+            operator: '=',
+            scope: TraceqlSearchScope.Resource,
+          },
+        ],
+      },
+    } as TempoDatasource;
+    datasource.languageProvider = new TempoLanguageProvider(datasource);
+    await act(async () => {
+      const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+      const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
+      expect(serviceNameValue).toBeNull();
+      expect(serviceNameValue).not.toBeInTheDocument();
+    });
+  });
+
+  it('should not render group by when feature toggle is not enabled', async () => {
+    await waitFor(() => {
+      render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+      const groupBy = screen.queryByText('Aggregate by');
+      expect(groupBy).toBeNull();
+      expect(groupBy).not.toBeInTheDocument();
+    });
+  });
+
+  it('should render group by when feature toggle enabled', async () => {
+    config.featureToggles.metricsSummary = true;
+    await waitFor(() => {
+      render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+      const groupBy = screen.queryByText('Aggregate by');
+      expect(groupBy).not.toBeNull();
+      expect(groupBy).toBeInTheDocument();
+    });
+  });
 });

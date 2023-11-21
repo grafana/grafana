@@ -15,6 +15,7 @@ import { createRoot } from 'react-dom/client';
 import {
   locationUtil,
   monacoLanguageRegistry,
+  OrgRole,
   setLocale,
   setTimeZoneResolver,
   setWeekStart,
@@ -52,6 +53,7 @@ import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType } from './core/context/GrafanaContext';
+import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
@@ -68,6 +70,7 @@ import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/gra
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
+import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -81,6 +84,7 @@ import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
+import { cleanupOldExpandedFolders } from './features/search/utils';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
 import { createConstantVariableAdapter } from './features/variables/constant/adapter';
@@ -120,6 +124,7 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       initEchoSrv();
+      initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
       addClassIfNoOverlayScrollbar();
@@ -131,6 +136,8 @@ export class GrafanaApp {
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
+
+      initAuthConfig();
 
       // Expose the app-wide eventbus
       setAppEvents(appEvents);
@@ -212,6 +219,13 @@ export class GrafanaApp {
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);
 
+      // Clean up old search local storage values
+      try {
+        cleanupOldExpandedFolders();
+      } catch (err) {
+        console.warn('Failed to clean up old expanded folders', err);
+      }
+
       this.context = {
         backend: backendSrv,
         location: locationService,
@@ -266,7 +280,7 @@ function initEchoSrv() {
     }
   });
 
-  if (contextSrv.user.orgRole !== '') {
+  if (contextSrv.user.orgRole !== OrgRole.None) {
     registerEchoBackend(new PerformanceBackend({}));
   }
 
@@ -312,6 +326,7 @@ function initEchoSrv() {
         user: config.bootData.user,
         sdkUrl: config.rudderstackSdkUrl,
         configUrl: config.rudderstackConfigUrl,
+        integrationsUrl: config.rudderstackIntegrationsUrl,
         buildInfo: config.buildInfo,
       })
     );

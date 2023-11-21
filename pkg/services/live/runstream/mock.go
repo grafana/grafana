@@ -10,7 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-	user "github.com/grafana/grafana/pkg/services/user"
+	identity "github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // MockChannelLocalPublisher is a mock of ChannelLocalPublisher interface.
@@ -45,7 +45,7 @@ func (m *MockChannelLocalPublisher) PublishLocal(arg0 string, arg1 []byte) error
 }
 
 // PublishLocal indicates an expected call of PublishLocal.
-func (mr *MockChannelLocalPublisherMockRecorder) PublishLocal(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockChannelLocalPublisherMockRecorder) PublishLocal(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishLocal", reflect.TypeOf((*MockChannelLocalPublisher)(nil).PublishLocal), arg0, arg1)
 }
@@ -83,7 +83,7 @@ func (m *MockNumLocalSubscribersGetter) GetNumLocalSubscribers(arg0 string) (int
 }
 
 // GetNumLocalSubscribers indicates an expected call of GetNumLocalSubscribers.
-func (mr *MockNumLocalSubscribersGetterMockRecorder) GetNumLocalSubscribers(arg0 interface{}) *gomock.Call {
+func (mr *MockNumLocalSubscribersGetterMockRecorder) GetNumLocalSubscribers(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNumLocalSubscribers", reflect.TypeOf((*MockNumLocalSubscribersGetter)(nil).GetNumLocalSubscribers), arg0)
 }
@@ -120,7 +120,7 @@ func (m *MockStreamRunner) RunStream(arg0 context.Context, arg1 *backend.RunStre
 }
 
 // RunStream indicates an expected call of RunStream.
-func (mr *MockStreamRunnerMockRecorder) RunStream(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockStreamRunnerMockRecorder) RunStream(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunStream", reflect.TypeOf((*MockStreamRunner)(nil).RunStream), arg0, arg1, arg2)
 }
@@ -149,7 +149,7 @@ func (m *MockPluginContextGetter) EXPECT() *MockPluginContextGetterMockRecorder 
 }
 
 // GetPluginContext mocks base method.
-func (m *MockPluginContextGetter) GetPluginContext(arg0 context.Context, arg1 *user.SignedInUser, arg2, arg3 string, arg4 bool) (backend.PluginContext, error) {
+func (m *MockPluginContextGetter) GetPluginContext(arg0 context.Context, arg1 identity.Requester, arg2, arg3 string, arg4 bool) (backend.PluginContext, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPluginContext", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(backend.PluginContext)
@@ -158,7 +158,7 @@ func (m *MockPluginContextGetter) GetPluginContext(arg0 context.Context, arg1 *u
 }
 
 // GetPluginContext indicates an expected call of GetPluginContext.
-func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), arg0, arg1, arg2, arg3, arg4)
 }

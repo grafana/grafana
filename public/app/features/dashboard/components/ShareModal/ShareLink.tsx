@@ -30,6 +30,7 @@ export class ShareLink extends PureComponent<Props, State> {
       shareUrl: '',
       imageUrl: '',
     };
+    this.onCopy = this.onCopy.bind(this);
   }
 
   componentDidMount() {
@@ -74,7 +75,11 @@ export class ShareLink extends PureComponent<Props, State> {
   };
 
   onCopy() {
-    trackDashboardSharingActionPerType('copy_link', shareDashboardType.link);
+    trackDashboardSharingActionPerType('copy_link', shareDashboardType.link, {
+      currentTimeRange: this.state.useCurrentTimeRange,
+      theme: this.state.selectedTheme,
+      shortenURL: this.state.useShortUrl,
+    });
   }
 
   render() {
@@ -162,7 +167,7 @@ export class ShareLink extends PureComponent<Props, State> {
             bottomSpacing={0}
           >
             <Trans i18nKey="share-modal.link.render-instructions">
-              To render a panel image, you must install the&nbsp;
+              To render a panel image, you must install the
               <a
                 href="https://grafana.com/grafana/plugins/grafana-image-renderer"
                 target="_blank"

@@ -152,7 +152,7 @@ func Recovery(cfg *setting.Cfg) web.Middleware {
 					}
 
 					if ctx != nil && ctx.IsApiRequest() {
-						resp := make(map[string]interface{})
+						resp := make(map[string]any)
 						resp["message"] = fmt.Sprintf("Internal Server Error - %s", cfg.UserFacingDefaultError)
 
 						if data.ErrorMsg != "" {

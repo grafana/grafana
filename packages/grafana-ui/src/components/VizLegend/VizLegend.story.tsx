@@ -5,14 +5,11 @@ import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 import { useTheme2, VizLegend } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { VizLegendItem } from './types';
 
 const meta: Meta = {
   title: 'Visualizations/VizLegend',
   component: VizLegend,
-  decorators: [withCenteredStory],
   args: {
     containerWidth: '100%',
     seriesCount: 5,

@@ -48,6 +48,24 @@ export interface TextConfig {
   valign: VAlign;
 }
 
+export interface EllipseConfig extends TextConfig {
+  backgroundColor?: ColorDimensionConfig;
+  borderColor?: ColorDimensionConfig;
+  width?: number;
+}
+
+export interface EllipseData extends TextData {
+  backgroundColor?: string;
+  borderColor?: string;
+  width?: number;
+}
+
+export interface StandardEditorConfig {
+  layout?: boolean;
+  background?: boolean;
+  border?: boolean;
+}
+
 export {
   Placement,
   Constraint,

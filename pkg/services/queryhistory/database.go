@@ -45,7 +45,7 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 // searchQueries searches for queries in query history based on provided parameters
 func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
 	var dtos []QueryHistoryDTO
-	var allQueries []interface{}
+	var allQueries []any
 
 	if query.To <= 0 {
 		query.To = s.now().Unix()

@@ -46,7 +46,7 @@ export function Form<T extends FieldValues>({
       onSubmit={handleSubmit(onSubmit)}
       {...htmlProps}
     >
-      {children({ errors: formState.errors, formState, ...rest })}
+      {children({ errors: formState.errors, formState, trigger, ...rest })}
     </form>
   );
 }

@@ -11,7 +11,7 @@ Here is the conf you need to add to your configuration file (conf/custom.ini):
 
 ```ini
 [auth]
-signout_redirect_url = http://localhost:8087/realms/grafana/protocol/openid-connect/logout?redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
+signout_redirect_url = http://localhost:8087/realms/grafana/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
 
 [auth.generic_oauth]
 enabled = true

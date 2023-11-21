@@ -18,16 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/socialtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
-	authinfostore "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -64,11 +62,9 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore := authinfostore.ProvideAuthInfoStore(sqlStore, secretsService, userMock)
-		srv := authinfoservice.ProvideAuthInfoService(
-			&authinfoservice.OSSUserProtectionImpl{},
+		authInfoStore := authinfoimpl.ProvideStore(sqlStore, secretsService)
+		srv := authinfoimpl.ProvideService(
 			authInfoStore,
-			&usagestats.UsageStatsMock{},
 		)
 		hs.authInfoService = srv
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
@@ -96,7 +92,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			TokenType:    "Bearer",
 		}
 		idToken := "testidtoken"
-		token = token.WithExtra(map[string]interface{}{"id_token": idToken})
+		token = token.WithExtra(map[string]any{"id_token": idToken})
 		userlogin := "loginuser"
 		query := &login.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: login.UserLookupParams{Login: &userlogin}}
 		cmd := &login.UpdateAuthInfoCommand{
@@ -295,7 +291,7 @@ func Test_GetUserByID(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			userAuth := &login.UserAuth{AuthModule: tc.authModule}
-			authInfoService := &logintest.AuthInfoServiceFake{ExpectedUserAuth: userAuth}
+			authInfoService := &authinfotest.FakeService{ExpectedUserAuth: userAuth}
 			socialService := &socialtest.FakeSocialService{}
 			userService := &usertest.FakeUserService{ExpectedUserProfileDTO: &user.UserProfileDTO{}}
 			cfg := setting.NewCfg()
@@ -379,7 +375,7 @@ func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
 	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
 		sc := setupScenarioContext(t, ctx.url)
 
-		sc.authInfoService = &logintest.AuthInfoServiceFake{}
+		sc.authInfoService = &authinfotest.FakeService{}
 		hs.authInfoService = sc.authInfoService
 
 		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -432,7 +428,7 @@ func updateSignedInUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPSer
 	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
 		sc := setupScenarioContext(t, ctx.url)
 
-		sc.authInfoService = &logintest.AuthInfoServiceFake{}
+		sc.authInfoService = &authinfotest.FakeService{}
 		hs.authInfoService = sc.authInfoService
 
 		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {

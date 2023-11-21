@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // ModelToInstanceSettings converts a datasources.DataSource to a backend.DataSourceInstanceSettings.
@@ -43,16 +43,16 @@ func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *data
 	}, err
 }
 
-// BackendUserFromSignedInUser converts Grafana's SignedInUser model
+// BackendUserFromSignedInUser converts Grafana's context request identity
 // to the backend plugin's model.
-func BackendUserFromSignedInUser(su *user.SignedInUser) *backend.User {
-	if su == nil {
+func BackendUserFromSignedInUser(requester identity.Requester) *backend.User {
+	if requester == nil {
 		return nil
 	}
 	return &backend.User{
-		Login: su.Login,
-		Name:  su.Name,
-		Email: su.Email,
-		Role:  string(su.OrgRole),
+		Login: requester.GetLogin(),
+		Name:  requester.GetDisplayName(),
+		Email: requester.GetEmail(),
+		Role:  string(requester.GetOrgRole()),
 	}
 }

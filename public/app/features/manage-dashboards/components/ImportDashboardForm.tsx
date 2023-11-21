@@ -1,4 +1,4 @@
-import React, { BaseSyntheticEvent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
@@ -60,7 +60,7 @@ export const ImportDashboardForm = ({
   */
   useEffect(() => {
     if (isSubmitted && (errors.title || errors.uid)) {
-      onSubmit(getValues(), {} as BaseSyntheticEvent);
+      onSubmit(getValues());
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
   const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];

@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 const (
@@ -34,7 +34,7 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Unknown app plugin should return error", func(t *testing.T) {
-		cfgProvider := newConfigReader(log.New("test logger"), &fakes.FakePluginStore{})
+		cfgProvider := newConfigReader(log.New("test logger"), &pluginstore.FakePluginStore{})
 		_, err := cfgProvider.readConfig(context.Background(), unknownApp)
 		require.Error(t, err)
 		require.Equal(t, "plugin not installed: \"nonexisting\"", err.Error())
@@ -48,8 +48,8 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Can read correct properties", func(t *testing.T) {
-		pm := &fakes.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
+		pm := &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "test-plugin"}},
 				{JSONData: plugins.JSONData{ID: "test-plugin-2"}},
 			},

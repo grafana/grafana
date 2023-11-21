@@ -132,5 +132,5 @@ export function getLastNotNullFieldValue<T>(field: Field): T {
       return v;
     }
   }
-  return undefined as any;
+  return undefined as T;
 }

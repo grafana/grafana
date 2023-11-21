@@ -16,6 +16,7 @@ import {
   makeClassES5Compatible,
   parseLiveChannelAddress,
   ScopedVars,
+  AdHocVariableFilter,
 } from '@grafana/data';
 
 import { config } from '../config';
@@ -29,6 +30,7 @@ import {
   StreamingFrameOptions,
 } from '../services';
 
+import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 /**
@@ -80,6 +82,7 @@ enum PluginRequestHeaders {
   PanelID = 'X-Panel-Id', // mainly useful for debugging slow queries
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
+  SkipQueryCache = 'X-Cache-Skip', // used by datasources to skip the query cache
 }
 
 /**
@@ -123,6 +126,10 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
+    if (config.publicDashboardAccessToken) {
+      return publicDashboardQueryHandler(request);
+    }
+
     const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
@@ -170,7 +177,7 @@ class DataSourceWithBackend<
         dsUIDs.add(datasource.uid);
       }
       return {
-        ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars) : q),
+        ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
         datasource,
         datasourceId, // deprecated!
         intervalMs,
@@ -184,12 +191,11 @@ class DataSourceWithBackend<
       return of({ data: [] });
     }
 
-    const body: any = { queries };
-
-    if (range) {
-      body.from = range.from.valueOf().toString();
-      body.to = range.to.valueOf().toString();
-    }
+    const body = {
+      queries,
+      from: range?.from.valueOf().toString(),
+      to: range?.to.valueOf().toString(),
+    };
 
     if (config.featureToggles.queryOverLive) {
       return getGrafanaLiveSrv().getQueryData({
@@ -222,6 +228,9 @@ class DataSourceWithBackend<
     }
     if (request.queryGroupId) {
       headers[PluginRequestHeaders.QueryGroupID] = `${request.queryGroupId}`;
+    }
+    if (request.skipQueryCache) {
+      headers[PluginRequestHeaders.SkipQueryCache] = 'true';
     }
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
@@ -258,12 +267,22 @@ class DataSourceWithBackend<
   /**
    * Apply template variables for explore
    */
-  interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[] {
-    return queries.map((q) => this.applyTemplateVariables(q, scopedVars) as TQuery);
+  interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters) as TQuery);
   }
 
   /**
-   * Override to apply template variables.  The result is usually also `TQuery`, but sometimes this can
+   * Override to skip executing a query.  Note this function may not be called
+   * if the query method is overwritten.
+   *
+   * @returns false if the query should be skipped
+   *
+   * @virtual
+   */
+  filterQuery?(query: TQuery): boolean;
+
+  /**
+   * Override to apply template variables and adhoc filters.  The result is usually also `TQuery`, but sometimes this can
    * be used to modify the query structure before sending to the backend.
    *
    * NOTE: if you do modify the structure or use template variables, alerting queries may not work
@@ -271,7 +290,7 @@ class DataSourceWithBackend<
    *
    * @virtual
    */
-  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): Record<string, any> {
     return query;
   }
 

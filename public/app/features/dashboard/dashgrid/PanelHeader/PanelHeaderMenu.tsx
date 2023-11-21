@@ -1,11 +1,8 @@
-import classnames from 'classnames';
-import React, { PureComponent } from 'react';
+import React from 'react';
 
 import { PanelMenuItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
-
-import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
 
 export interface Props {
   items: PanelMenuItem[];
@@ -14,65 +11,7 @@ export interface Props {
   className?: string;
 }
 
-export class PanelHeaderMenu extends PureComponent<Props> {
-  renderItems = (menu: PanelMenuItem[], isSubMenu = false) => {
-    return (
-      <ul
-        className={classnames('dropdown-menu', 'dropdown-menu--menu', 'panel-menu', this.props.itemsClassName)}
-        style={this.props.style}
-        role={isSubMenu ? '' : 'menu'}
-      >
-        {menu.map((menuItem, idx: number) => {
-          return (
-            <PanelHeaderMenuItem
-              key={`${menuItem.text}${idx}`}
-              type={menuItem.type}
-              text={menuItem.text}
-              iconClassName={menuItem.iconClassName}
-              onClick={menuItem.onClick}
-              shortcut={menuItem.shortcut}
-              href={menuItem.href}
-            >
-              {menuItem.subMenu && this.renderItems(menuItem.subMenu, true)}
-            </PanelHeaderMenuItem>
-          );
-        })}
-      </ul>
-    );
-  };
-
-  render() {
-    return (
-      <div className={classnames('panel-menu-container', 'dropdown', 'open', this.props.className)}>
-        {this.renderItems(flattenGroups(this.props.items))}
-      </div>
-    );
-  }
-}
-
-function flattenGroups(items: PanelMenuItem[]): PanelMenuItem[] {
-  return items.reduce((all: PanelMenuItem[], item) => {
-    if (Array.isArray(item.subMenu) && item.type === 'submenu') {
-      all.push({
-        ...item,
-        subMenu: flattenGroups(item.subMenu),
-      });
-      return all;
-    }
-
-    if (Array.isArray(item.subMenu) && item.type === 'group') {
-      const { subMenu, ...rest } = item;
-      all.push(rest);
-      all.push.apply(all, flattenGroups(subMenu));
-      return all;
-    }
-
-    all.push(item);
-    return all;
-  }, []);
-}
-
-export function PanelHeaderMenuNew({ items }: Props) {
+export function PanelHeaderMenu({ items }: Props) {
   const renderItems = (items: PanelMenuItem[]) => {
     return items.map((item) => {
       switch (item.type) {

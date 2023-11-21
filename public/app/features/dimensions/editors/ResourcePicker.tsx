@@ -32,17 +32,24 @@ interface Props {
   name?: string;
   placeholder?: string;
   color?: string;
+  maxFiles?: number;
 }
 
 export const ResourcePicker = (props: Props) => {
-  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color } = props;
+  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color, maxFiles } = props;
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
   const pickerTriggerRef = createRef<HTMLDivElement>();
   const popoverElement = (
-    <ResourcePickerPopover onChange={onChange} value={value} mediaType={mediaType} folderName={folderName} />
+    <ResourcePickerPopover
+      onChange={onChange}
+      value={value}
+      mediaType={mediaType}
+      folderName={folderName}
+      maxFiles={maxFiles}
+    />
   );
 
   let sanitizedSrc = src;
@@ -96,9 +103,18 @@ export const ResourcePicker = (props: Props) => {
               />
             )}
 
-            {/* TODO: fix keyboard a11y */}
-            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-            <div ref={pickerTriggerRef} onClick={showPopper} className={styles.pointer}>
+            <div
+              ref={pickerTriggerRef}
+              className={styles.pointer}
+              onClick={showPopper}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  showPopper();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
               {size === ResourcePickerSize.SMALL && renderSmallResourcePicker()}
               {size === ResourcePickerSize.NORMAL && renderNormalResourcePicker()}
             </div>

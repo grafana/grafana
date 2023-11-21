@@ -21,6 +21,7 @@ export interface RadioButtonGroupProps<T> {
   fullWidth?: boolean;
   className?: string;
   autoFocus?: boolean;
+  ['aria-label']?: string;
   invalid?: boolean;
 }
 
@@ -36,6 +37,7 @@ export function RadioButtonGroup<T>({
   className,
   fullWidth = false,
   autoFocus = false,
+  'aria-label': ariaLabel,
   invalid = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
@@ -71,7 +73,11 @@ export function RadioButtonGroup<T>({
   }, [autoFocus]);
 
   return (
-    <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, invalid && styles.invalid, className)}>
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}
+    >
       {options.map((opt, i) => {
         const isItemDisabled = disabledOptions && opt.value && disabledOptions.includes(opt.value);
         const icon = opt.icon ? toIconName(opt.icon) : undefined;

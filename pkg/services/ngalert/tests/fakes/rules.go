@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -21,21 +21,21 @@ type RuleStore struct {
 	mtx sync.Mutex
 	// OrgID -> RuleGroup -> Namespace -> Rules
 	Rules       map[int64][]*models.AlertRule
-	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
-	RecordedOps []interface{}
+	Hook        func(cmd any) error // use Hook if you need to intercept some query and return an error
+	RecordedOps []any
 	Folders     map[int64][]*folder.Folder
 }
 
 type GenericRecordedQuery struct {
 	Name   string
-	Params []interface{}
+	Params []any
 }
 
 func NewRuleStore(t *testing.T) *RuleStore {
 	return &RuleStore{
 		t:     t,
 		Rules: map[int64][]*models.AlertRule{},
-		Hook: func(interface{}) error {
+		Hook: func(any) error {
 			return nil
 		},
 		Folders: map[int64][]*folder.Folder{},
@@ -68,7 +68,7 @@ mainloop:
 		}
 		if existing == nil {
 			folders = append(folders, &folder.Folder{
-				ID:    rand.Int63(),
+				ID:    rand.Int63(), // nolint:staticcheck
 				UID:   r.NamespaceUID,
 				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
 			})
@@ -78,11 +78,11 @@ mainloop:
 }
 
 // GetRecordedCommands filters recorded commands using predicate function. Returns the subset of the recorded commands that meet the predicate
-func (f *RuleStore) GetRecordedCommands(predicate func(cmd interface{}) (interface{}, bool)) []interface{} {
+func (f *RuleStore) GetRecordedCommands(predicate func(cmd any) (any, bool)) []any {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	result := make([]interface{}, 0, len(f.RecordedOps))
+	result := make([]any, 0, len(f.RecordedOps))
 	for _, op := range f.RecordedOps {
 		cmd, ok := predicate(op)
 		if !ok {
@@ -96,7 +96,7 @@ func (f *RuleStore) GetRecordedCommands(predicate func(cmd interface{}) (interfa
 func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "DeleteAlertRulesByUID",
-		Params: []interface{}{orgID, UIDs},
+		Params: []any{orgID, UIDs},
 	})
 
 	rules := f.Rules[orgID]
@@ -228,7 +228,7 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 	return ruleList, nil
 }
 
-func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*folder.Folder, error) {
+func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ identity.Requester) (map[string]*folder.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -245,7 +245,7 @@ func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *
 	return namespacesMap, nil
 }
 
-func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser) (*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ identity.Requester) (*folder.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.Title == title {
@@ -255,10 +255,10 @@ func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID i
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ identity.Requester) (*folder.Folder, error) {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
-		Params: []interface{}{orgID, uid},
+		Params: []any{orgID, uid},
 	})
 
 	folders := f.Folders[orgID]
@@ -280,11 +280,11 @@ func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) e
 	return nil
 }
 
-func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) (map[string]int64, error) {
+func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) ([]models.AlertRuleKeyWithId, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
-	ids := make(map[string]int64, len(q))
+	ids := make([]models.AlertRuleKeyWithId, 0, len(q))
 	if err := f.Hook(q); err != nil {
 		return ids, err
 	}
@@ -323,7 +323,7 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "IncreaseVersionForAllRulesInNamespace",
-		Params: []interface{}{orgID, namespaceUID},
+		Params: []any{orgID, namespaceUID},
 	})
 
 	var result []models.AlertRuleKeyWithVersionAndPauseStatus
@@ -348,6 +348,6 @@ func (f *RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
 	return 0, nil
 }
 
-func (f *RuleStore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+func (f *RuleStore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
 	return 0, nil
 }

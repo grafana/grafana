@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // ChannelPublisher writes data into a channel. Note that permissions are not checked.
@@ -54,10 +54,10 @@ type PublishReply struct {
 // ChannelHandler defines the core channel behavior
 type ChannelHandler interface {
 	// OnSubscribe is called when a client wants to subscribe to a channel
-	OnSubscribe(ctx context.Context, user *user.SignedInUser, e SubscribeEvent) (SubscribeReply, backend.SubscribeStreamStatus, error)
+	OnSubscribe(ctx context.Context, user identity.Requester, e SubscribeEvent) (SubscribeReply, backend.SubscribeStreamStatus, error)
 
 	// OnPublish is called when a client writes a message to the channel websocket.
-	OnPublish(ctx context.Context, user *user.SignedInUser, e PublishEvent) (PublishReply, backend.PublishStreamStatus, error)
+	OnPublish(ctx context.Context, user identity.Requester, e PublishEvent) (PublishReply, backend.PublishStreamStatus, error)
 }
 
 // ChannelHandlerFactory should be implemented by all core features.

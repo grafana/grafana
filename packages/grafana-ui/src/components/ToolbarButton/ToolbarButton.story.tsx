@@ -2,7 +2,6 @@ import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ButtonGroup } from '../Button';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
@@ -13,7 +12,6 @@ import { ToolbarButtonRow } from './ToolbarButtonRow';
 const meta: Meta<typeof ToolbarButton> = {
   title: 'Buttons/ToolbarButton',
   component: ToolbarButton,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

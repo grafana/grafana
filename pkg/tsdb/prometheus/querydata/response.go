@@ -25,14 +25,12 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}()
 
-	ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.parseResponse", []utils.Attribute{})
+	ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.parseResponse")
 	defer endSpan()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
-		MatrixWideSeries: s.enableWideSeries,
-		VectorWideSeries: s.enableWideSeries,
-		Dataplane:        s.enableDataplane,
+		Dataplane: s.enableDataplane,
 	})
 
 	// Add frame to attach metadata
@@ -41,11 +39,10 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
-	for _, frame := range r.Frames {
-		if s.enableWideSeries {
-			addMetadataToWideFrame(q, frame)
-		} else {
-			addMetadataToMultiFrame(q, frame, s.enableDataplane)
+	for i, frame := range r.Frames {
+		addMetadataToMultiFrame(q, frame, s.enableDataplane)
+		if i == 0 {
+			frame.Meta.ExecutedQueryString = executedQueryString(q)
 		}
 	}
 
@@ -57,7 +54,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 }
 
 func (s *QueryData) processExemplars(ctx context.Context, q *models.Query, dr backend.DataResponse) backend.DataResponse {
-	_, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.processExemplars", []utils.Attribute{})
+	_, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.processExemplars")
 	defer endSpan()
 	sampler := s.exemplarSampler()
 	labelTracker := exemplar.NewLabelTracker()
@@ -112,7 +109,6 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
-	frame.Meta.ExecutedQueryString = executedQueryString(q)
 	if len(frame.Fields) < 2 {
 		return
 	}
@@ -130,22 +126,6 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane
 		}
 	} else {
 		frame.Name = customName
-	}
-}
-
-func addMetadataToWideFrame(q *models.Query, frame *data.Frame) {
-	if frame.Meta == nil {
-		frame.Meta = &data.FrameMeta{}
-	}
-	frame.Meta.ExecutedQueryString = executedQueryString(q)
-	if len(frame.Fields) < 2 {
-		return
-	}
-	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
-	for _, f := range frame.Fields {
-		if f.Type() == data.FieldTypeFloat64 || f.Type() == data.FieldTypeNullableFloat64 {
-			f.Name = getName(q, f)
-		}
 	}
 }
 

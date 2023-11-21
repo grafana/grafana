@@ -40,6 +40,9 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				require.Equal(t, []string{zipNameV1}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV1}, nil
 			},
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				return p, nil
+			},
 		}
 
 		pluginRepo := &fakes.FakePluginRepo{
@@ -62,7 +65,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc)
+		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 		err := inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 		require.NoError(t, err)
 
@@ -129,9 +132,9 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 			var unloadedPlugins []string
 			inst.pluginLoader = &fakes.FakeLoader{
-				UnloadFunc: func(_ context.Context, id string) error {
-					unloadedPlugins = append(unloadedPlugins, id)
-					return nil
+				UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+					unloadedPlugins = append(unloadedPlugins, p.ID)
+					return p, nil
 				},
 			}
 
@@ -168,7 +171,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				},
 			}
 
-			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc)
+			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 			err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 

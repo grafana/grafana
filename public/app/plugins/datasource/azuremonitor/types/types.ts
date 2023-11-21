@@ -1,13 +1,17 @@
+import { ScalarParameter, TabularParameter, Function } from '@kusto/monaco-kusto';
+
 import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourceSettings,
   PanelData,
   SelectableValue,
+  TimeRange,
 } from '@grafana/data';
 
 import Datasource from '../datasource';
 
+import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 import { AzureMonitorQuery, ResultFormat } from './query';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
@@ -29,7 +33,7 @@ export enum AzureCloud {
   None = '',
 }
 
-export type AzureAuthType = 'msi' | 'clientsecret';
+export type AzureAuthType = 'msi' | 'clientsecret' | 'workloadidentity';
 
 export type ConcealedSecret = symbol;
 
@@ -41,6 +45,10 @@ export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
   authType: 'msi';
 }
 
+export interface AzureWorkloadIdentityCredentials extends AzureCredentialsBase {
+  authType: 'workloadidentity';
+}
+
 export interface AzureClientSecretCredentials extends AzureCredentialsBase {
   authType: 'clientsecret';
   azureCloud?: string;
@@ -49,7 +57,10 @@ export interface AzureClientSecretCredentials extends AzureCredentialsBase {
   clientSecret?: string | ConcealedSecret;
 }
 
-export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
+export type AzureCredentials =
+  | AzureManagedIdentityCredentials
+  | AzureClientSecretCredentials
+  | AzureWorkloadIdentityCredentials;
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
   cloudName: string;
@@ -74,6 +85,8 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
   // App Insights
   appInsightsAppId?: string;
+
+  enableSecureSocksProxy?: boolean;
 }
 
 export interface AzureDataSourceSecureJsonData {
@@ -129,9 +142,31 @@ export interface AzureQueryEditorFieldProps {
   datasource: Datasource;
   subscriptionId?: string;
   variableOptionGroup: VariableOptionGroup;
+  schema?: EngineSchema;
+  range?: TimeRange;
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
+}
+
+// To avoid a type issue we redeclare the EngineSchema type from @kusto/monaco-kusto
+export interface EngineSchema {
+  clusterType: 'Engine';
+  cluster: {
+    connectionString: string;
+    databases: Database[];
+  };
+  database: Database | undefined;
+  globalScalarParameters?: ScalarParameter[];
+  globalTabularParameters?: TabularParameter[];
+}
+
+export interface Database {
+  name: string;
+  tables: AzureLogAnalyticsMetadataTable[];
+  functions: Function[];
+  majorVersion: number;
+  minorVersion: number;
 }
 
 export interface FormatAsFieldProps extends AzureQueryEditorFieldProps {
@@ -385,3 +420,41 @@ interface MetricMetadataValue {
   name: AzureMonitorLocalizedValue;
   value: string;
 }
+
+export type Category = {
+  displayName: string;
+  id: string;
+  related: {
+    queries: string[];
+    tables: string[];
+  };
+};
+
+export type CheatsheetQuery = {
+  body: string;
+  description: string;
+  displayName: string;
+  id: string;
+  properties: {
+    ExampleQuery: boolean;
+    QueryAttributes: {
+      isMultiResource: boolean;
+    };
+  };
+  related: {
+    categories: string[];
+    resourceTypes: string[];
+    tables: string[];
+  };
+  tags: {
+    Topic: string[];
+  };
+};
+
+export type CheatsheetQueries = {
+  [key: string]: CheatsheetQuery[];
+};
+
+export type DropdownCategories = {
+  [key: string]: boolean;
+};

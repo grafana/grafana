@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -30,7 +31,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 			if c.AllowAnonymous {
 				forceLogin, _ := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin")) // ignoring error, assuming false for non-true values is ok.
 				orgID, err := strconv.ParseInt(c.Req.URL.Query().Get("orgId"), 10, 64)
-				if err == nil && orgID > 0 && orgID != c.OrgID {
+				if err == nil && orgID > 0 && orgID != c.SignedInUser.GetOrgID() {
 					forceLogin = true
 				}
 
@@ -56,9 +57,9 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 	}
 }
 
-func authorize(c *contextmodel.ReqContext, ac AccessControl, user *user.SignedInUser, evaluator Evaluator) {
+func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Requester, evaluator Evaluator) {
 	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
-		OrgID:     c.OrgID,
+		OrgID:     user.GetOrgID(),
 		URLParams: web.Params(c.Req),
 	}))
 	if err != nil {
@@ -78,9 +79,11 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
 	} else {
+		namespace, identifier := c.SignedInUser.GetNamespacedID()
 		c.Logger.Info(
 			"Access denied",
-			"userID", c.UserID,
+			"namespace", namespace,
+			"userID", identifier,
 			"accessErrorID", id,
 			"permissions", evaluator.GoString(),
 		)
@@ -126,9 +129,9 @@ func unauthorized(c *contextmodel.ReqContext, err error) {
 
 func tokenRevoked(c *contextmodel.ReqContext, err *usertoken.TokenRevokedError) {
 	if c.IsApiRequest() {
-		c.JSON(http.StatusUnauthorized, map[string]interface{}{
+		c.JSON(http.StatusUnauthorized, map[string]any{
 			"message": "Token revoked",
-			"error": map[string]interface{}{
+			"error": map[string]any{
 				"id":                    "ERR_TOKEN_REVOKED",
 				"maxConcurrentSessions": err.MaxConcurrentSessions,
 			},
@@ -187,19 +190,26 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 				return
 			}
 
-			if targetOrgID != GlobalOrgID && userCopy.Permissions[targetOrgID] == nil {
-				query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: targetOrgID}
-				queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
-				if err != nil {
-					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
-					return
+			if userCopy.OrgID != targetOrgID {
+				switch targetOrgID {
+				case GlobalOrgID:
+					userCopy.OrgID = GlobalOrgID
+					userCopy.OrgRole = org.RoleNone
+					userCopy.OrgName = ""
+				default:
+					query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: targetOrgID}
+					queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
+					if err != nil {
+						deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+						return
+					}
+					userCopy.OrgID = queryResult.OrgID
+					userCopy.OrgName = queryResult.OrgName
+					userCopy.OrgRole = queryResult.OrgRole
 				}
-				userCopy.OrgID = queryResult.OrgID
-				userCopy.OrgName = queryResult.OrgName
-				userCopy.OrgRole = queryResult.OrgRole
 			}
 
-			if userCopy.Permissions[userCopy.OrgID] == nil {
+			if userCopy.Permissions[targetOrgID] == nil {
 				permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
@@ -209,7 +219,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 				if userCopy.Permissions == nil {
 					userCopy.Permissions = make(map[int64]map[string][]string)
 				}
-				userCopy.Permissions[userCopy.OrgID] = GroupScopesByAction(permissions)
+				userCopy.Permissions[targetOrgID] = GroupScopesByAction(permissions)
 			}
 
 			authorize(c, ac, &userCopy, evaluator)
@@ -218,7 +228,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 			if c.SignedInUser.Permissions == nil {
 				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[userCopy.OrgID] = userCopy.Permissions[userCopy.OrgID]
+			c.SignedInUser.Permissions[targetOrgID] = userCopy.Permissions[targetOrgID]
 		}
 	}
 }
@@ -240,6 +250,16 @@ func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
 
 func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
+}
+
+// UseGlobalOrSingleOrg returns the global organization or the current organization in a single organization setup
+func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
+	return func(c *contextmodel.ReqContext) (int64, error) {
+		if cfg.RBACSingleOrganization {
+			return c.GetOrgID(), nil
+		}
+		return GlobalOrgID, nil
+	}
 }
 
 // scopeParams holds the parameters used to fill in scope templates

@@ -11,7 +11,13 @@ import (
 	"strconv"
 
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+const genericOAuthProviderName = "generic_oauth"
 
 type SocialGenericOAuth struct {
 	*SocialBase
@@ -30,6 +36,36 @@ type SocialGenericOAuth struct {
 	skipOrgRoleSync      bool
 }
 
+func NewGenericOAuthProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGenericOAuth, error) {
+	info, err := createOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	config := createOAuthConfig(info, cfg, genericOAuthProviderName)
+	provider := &SocialGenericOAuth{
+		SocialBase:           newSocialBase(genericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		apiUrl:               info.ApiUrl,
+		teamsUrl:             info.TeamsUrl,
+		emailAttributeName:   info.EmailAttributeName,
+		emailAttributePath:   info.EmailAttributePath,
+		nameAttributePath:    info.Extra["name_attribute_path"],
+		groupsAttributePath:  info.GroupsAttributePath,
+		loginAttributePath:   info.Extra["login_attribute_path"],
+		idTokenAttributeName: info.Extra["id_token_attribute_name"],
+		teamIdsAttributePath: info.TeamIdsAttributePath,
+		teamIds:              util.SplitString(info.Extra["team_ids"]),
+		allowedOrganizations: util.SplitString(info.Extra["allowed_organizations"]),
+		allowedGroups:        info.AllowedGroups,
+		skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	return provider, nil
+}
+
+// TODOD: remove this in the next PR and use the isGroupMember from social.go
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true
@@ -172,7 +208,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
-		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	if userInfo.Email == "" {
@@ -205,6 +241,10 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	return userInfo, nil
 }
 
+func (s *SocialGenericOAuth) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
 	s.log.Debug("Extracting user info from OAuth token")
 
@@ -228,7 +268,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 
 	var data UserInfoJson
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
-		s.log.Error("Error decoding id_token JSON", "raw_json", string(data.rawJSON), "error", err)
+		s.log.Error("Error decoding id_token JSON", "raw_json", string(rawJSON), "error", err)
 		return nil
 	}
 

@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byText } from 'testing-library-selector';
 
-import { config, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { PluginExtensionTypes } from '@grafana/data';
+import { getPluginLinkExtensions, locationService, setBackendSrv } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -20,13 +22,13 @@ import {
   getGrafanaRule,
   grantUserPermissions,
   mockDataSource,
-  MockDataSourceSrv,
   mockPromAlertingRule,
   mockRulerAlertingRule,
   promRuleFromRulerRule,
 } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 import { mockPluginSettings } from '../../mocks/plugins';
+import { setupDataSources } from '../../testSetup/datasources';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import * as ruleId from '../../utils/rule-id';
 
@@ -47,38 +49,33 @@ const mockRoute = (id?: string): GrafanaRouteComponentProps<{ id?: string; sourc
   staticContext: {},
 });
 
-// jest.mock('../../hooks/useCombinedRule');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: () => ({ name: 'prometheus' }),
-      get: () =>
-        Promise.resolve({
-          filterQuery: () => true,
-        }),
-    };
-  },
+  getPluginLinkExtensions: jest.fn(),
 }));
-
 jest.mock('../../hooks/useIsRuleEditable');
 jest.mock('../../api/buildInfo');
 
 const mocks = {
+  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
   useIsRuleEditable: jest.mocked(useIsRuleEditable),
 };
 
 const ui = {
   actionButtons: {
     edit: byRole('link', { name: /edit/i }),
-    clone: byRole('link', { name: /copy/i }),
-    delete: byRole('button', { name: /delete/i }),
     silence: byRole('link', { name: 'Silence' }),
+  },
+  moreButton: byRole('button', { name: /More/i }),
+  moreButtons: {
+    duplicate: byRole('menuitem', { name: /^Duplicate$/i }),
+    delete: byRole('menuitem', { name: /delete/i }),
   },
   loadingIndicator: byText(/Loading rule/i),
 };
 
-const renderRuleViewer = async (ruleId?: string) => {
+const renderRuleViewer = async (ruleId: string) => {
+  locationService.push(`/alerting/grafana/${ruleId}/view`);
   render(
     <TestProvider>
       <RuleViewer {...mockRoute(ruleId)} />
@@ -96,7 +93,15 @@ const rulerRuleIdentifier = ruleId.fromRulerRule('prometheus', 'ns-default', 'gr
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
+  const promDsSettings = mockDataSource({
+    name: dsName,
+    uid: dsName,
+  });
 
+  setupDataSources(promDsSettings);
+});
+
+beforeEach(() => {
   // some action buttons need to check what Alertmanager setup we have for Grafana managed rules
   mockAlertmanagerChoiceResponse(server, {
     alertmanagersChoice: AlertmanagerChoice.Internal,
@@ -104,16 +109,6 @@ beforeAll(() => {
   });
   // we need to mock this one for the "declare incident" button
   mockPluginSettings(server, SupportedPlugin.Incident);
-
-  const dsSettings = mockDataSource({
-    name: dsName,
-    uid: dsName,
-  });
-  config.datasources = {
-    [dsName]: dsSettings,
-  };
-
-  setDataSourceSrv(new MockDataSourceSrv({ [dsName]: dsSettings }));
 
   mockAlertRuleApi(server).rulerRules('grafana', {
     [mockGrafanaRule.namespace.name]: [
@@ -155,6 +150,19 @@ beforeAll(() => {
     },
     status: 'success',
   });
+  mocks.getPluginLinkExtensionsMock.mockReturnValue({
+    extensions: [
+      {
+        pluginId: 'grafana-ml-app',
+        id: '1',
+        type: PluginExtensionTypes.link,
+        title: 'Run investigation',
+        category: 'Sift',
+        description: 'Run a Sift investigation for this alert',
+        onClick: jest.fn(),
+      },
+    ],
+  });
 });
 
 describe('RuleViewer', () => {
@@ -166,7 +174,7 @@ describe('RuleViewer', () => {
 
   it('should render page with grafana alert', async () => {
     mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
-    await renderRuleViewer();
+    await renderRuleViewer('test1');
 
     expect(screen.getByText(/test alert/i)).toBeInTheDocument();
   });
@@ -208,7 +216,7 @@ describe('RuleDetails RBAC', () => {
       });
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
@@ -225,11 +233,14 @@ describe('RuleDetails RBAC', () => {
       });
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
+      const user = userEvent.setup();
+
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
+      await user.click(ui.moreButton.get());
 
       // Assert
-      expect(ui.actionButtons.delete.get()).toBeInTheDocument();
+      expect(ui.moreButtons.delete.get()).toBeInTheDocument();
     });
 
     it('Should not render Silence button for users wihout the instance create permission', async () => {
@@ -244,7 +255,7 @@ describe('RuleDetails RBAC', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       await waitFor(() => {
@@ -266,7 +277,7 @@ describe('RuleDetails RBAC', () => {
         .mockImplementation((action) => action === AccessControlAction.AlertingInstanceCreate);
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       await waitFor(() => {
@@ -283,9 +294,12 @@ describe('RuleDetails RBAC', () => {
       });
       grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
 
-      await renderRuleViewer();
+      const user = userEvent.setup();
 
-      expect(ui.actionButtons.clone.get()).toBeInTheDocument();
+      await renderRuleViewer('test1');
+      await user.click(ui.moreButton.get());
+
+      expect(ui.moreButtons.duplicate.get()).toBeInTheDocument();
     });
 
     it('Should NOT render clone button for users without create rule permission', async () => {
@@ -298,10 +312,12 @@ describe('RuleDetails RBAC', () => {
 
       const { AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete } = AccessControlAction;
       grantUserPermissions([AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete]);
+      const user = userEvent.setup();
 
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
+      await user.click(ui.moreButton.get());
 
-      expect(ui.actionButtons.clone.query()).not.toBeInTheDocument();
+      expect(ui.moreButtons.duplicate.query()).not.toBeInTheDocument();
     });
   });
   describe('Cloud rules action buttons', () => {
@@ -326,7 +342,7 @@ describe('RuleDetails RBAC', () => {
       });
 
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
 
       // Assert
       expect(ui.actionButtons.edit.query()).toBeInTheDocument();
@@ -343,11 +359,14 @@ describe('RuleDetails RBAC', () => {
       });
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
 
+      const user = userEvent.setup();
+
       // Act
-      await renderRuleViewer();
+      await renderRuleViewer('test1');
+      await user.click(ui.moreButton.get());
 
       // Assert
-      expect(ui.actionButtons.delete.query()).toBeInTheDocument();
+      expect(ui.moreButtons.delete.query()).toBeInTheDocument();
     });
   });
 });

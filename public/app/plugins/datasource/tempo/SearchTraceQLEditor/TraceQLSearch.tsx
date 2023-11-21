@@ -3,20 +3,21 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { FetchError } from '@grafana/runtime';
+import { config, FetchError, getTemplateSrv } from '@grafana/runtime';
 import { Alert, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
-import { TraceqlFilter } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
 
 import DurationInput from './DurationInput';
+import { GroupByField } from './GroupByField';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
@@ -29,12 +30,16 @@ interface Props {
   onBlur?: () => void;
 }
 
+const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
+
 const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   const styles = useStyles2(getStyles);
   const [error, setError] = useState<Error | FetchError | null>(null);
 
   const [isTagsLoading, setIsTagsLoading] = useState(true);
   const [traceQlQuery, setTraceQlQuery] = useState<string>('');
+
+  const templateSrv = getTemplateSrv();
 
   const updateFilter = useCallback(
     (s: TraceqlFilter) => {
@@ -92,37 +97,60 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   staticTags.push('duration');
 
   // Dynamic filters are all filters that don't match the ID of a filter in the datasource configuration
-  // The duration tag is a special case since its selector is hard-coded
+  // The duration and status fields are a special case since its selector is hard-coded
   const dynamicFilters = (query.filters || []).filter(
-    (f) => f.tag !== 'duration' && (datasource.search?.filters?.findIndex((sf) => sf.id === f.id) || 0) === -1
+    (f) =>
+      !hardCodedFilterIds.includes(f.id) && (datasource.search?.filters?.findIndex((sf) => sf.id === f.id) || 0) === -1
   );
 
   return (
     <>
       <div className={styles.container}>
         <div>
-          {datasource.search?.filters?.map((f) => (
-            <InlineSearchField
-              key={f.id}
-              label={filterTitle(f)}
-              tooltip={`Filter your search by ${filterScopedTag(
-                f
-              )}. To modify the default filters shown for search visit the Tempo datasource configuration page.`}
-            >
-              <SearchField
-                filter={findFilter(f.id) || f}
-                datasource={datasource}
-                setError={setError}
-                updateFilter={updateFilter}
-                tags={[]}
-                hideScope={true}
-                hideTag={true}
-                query={traceQlQuery}
-              />
-            </InlineSearchField>
-          ))}
+          {datasource.search?.filters?.map(
+            (f) =>
+              f.tag && (
+                <InlineSearchField
+                  key={f.id}
+                  label={filterTitle(f)}
+                  tooltip={`Filter your search by ${filterScopedTag(
+                    f
+                  )}. To modify the default filters shown for search visit the Tempo datasource configuration page.`}
+                >
+                  <SearchField
+                    filter={findFilter(f.id) || f}
+                    datasource={datasource}
+                    setError={setError}
+                    updateFilter={updateFilter}
+                    tags={[]}
+                    hideScope={true}
+                    hideTag={true}
+                    query={traceQlQuery}
+                  />
+                </InlineSearchField>
+              )
+          )}
+          <InlineSearchField label={'Status'}>
+            <SearchField
+              filter={
+                findFilter('status') || {
+                  id: 'status',
+                  tag: 'status',
+                  scope: TraceqlSearchScope.Intrinsic,
+                  operator: '=',
+                }
+              }
+              datasource={datasource}
+              setError={setError}
+              updateFilter={updateFilter}
+              tags={[]}
+              hideScope={true}
+              hideTag={true}
+              query={traceQlQuery}
+            />
+          </InlineSearchField>
           <InlineSearchField
-            label={'Duration'}
+            label={'Span Duration'}
             tooltip="The span duration, i.e.	end - start time of the span. Accepted units are ns, ms, s, m, h"
           >
             <HorizontalGroup spacing={'sm'}>
@@ -164,9 +192,12 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
               query={traceQlQuery}
             />
           </InlineSearchField>
+          {config.featureToggles.metricsSummary && (
+            <GroupByField datasource={datasource} onChange={onChange} query={query} isTagsLoading={isTagsLoading} />
+          )}
         </div>
         <EditorRow>
-          <RawQuery query={traceQlQuery} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
+          <RawQuery query={templateSrv.replace(traceQlQuery)} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
         </EditorRow>
         <TempoQueryBuilderOptions onChange={onChange} query={query} />
       </div>

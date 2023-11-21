@@ -45,11 +45,12 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	setting.IsEnterprise = extensions.IsEnterprise
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir})
+	require.NoError(t, err)
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
 
-	env, err := server.InitializeForTest(cmdLineArgs, serverOpts, apiServerOpts)
+	env, err := server.InitializeForTest(cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 	require.NoError(t, env.SQLStore.Sync())
 
@@ -57,6 +58,18 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	dbSec, err := env.SQLStore.Cfg.Raw.GetSection("database")
 	require.NoError(t, err)
 	assert.Greater(t, dbSec.Key("query_retries").MustInt(), 0)
+
+	env.Server.HTTPServer.AddMiddleware(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if env.RequestMiddleware != nil {
+				h := env.RequestMiddleware(next)
+				h.ServeHTTP(w, r)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
@@ -329,6 +342,19 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 
+		if o.APIServerStorageType != "" {
+			section, err := getOrCreateSection("grafana-apiserver")
+			require.NoError(t, err)
+			_, err = section.NewKey("storage_type", o.APIServerStorageType)
+			require.NoError(t, err)
+
+			// Hardcoded local etcd until this is needed to run in CI
+			if o.APIServerStorageType == "etcd" {
+				_, err = section.NewKey("etcd_servers", "localhost:2379")
+				require.NoError(t, err)
+			}
+		}
+
 		if o.GRPCServerAddress != "" {
 			logSection, err := getOrCreateSection("grpc_server")
 			require.NoError(t, err)
@@ -384,6 +410,7 @@ type GrafanaOpts struct {
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int64
+	APIServerStorageType                  string
 }
 
 func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) *user.User {

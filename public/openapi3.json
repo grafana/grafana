@@ -50,25 +50,6 @@
         },
         "description": "AcceptedResponse"
       },
-      "addPermissionResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "message": {
-                  "type": "string"
-                },
-                "permissionId": {
-                  "format": "int64",
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "adminCreateUserResponse": {
         "content": {
           "application/json": {
@@ -121,6 +102,16 @@
           }
         },
         "description": "BadRequestError is returned when the request is invalid and it cannot be processed."
+      },
+      "badRequestPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "BadRequestPublicError is returned when the request is invalid and it cannot be processed."
       },
       "calculateDashboardDiffResponse": {
         "content": {
@@ -270,6 +261,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Playlist"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "createPublicDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublicDashboard"
             }
           }
         },
@@ -525,6 +526,16 @@
         },
         "description": "ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource."
       },
+      "forbiddenPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource."
+      },
       "genericError": {
         "content": {
           "application/json": {
@@ -617,16 +628,6 @@
         },
         "description": "(empty)"
       },
-      "getAllPermissionseResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/DataSourcePermissionsDTO"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "getAllRolesResponse": {
         "content": {
           "application/json": {
@@ -644,7 +645,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ItemDTO"
+              "$ref": "#/components/schemas/Annotation"
             }
           }
         },
@@ -665,7 +666,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/ItemDTO"
+                "$ref": "#/components/schemas/Annotation"
               },
               "type": "array"
             }
@@ -714,19 +715,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/OrgDetailsDTO"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getCustomPermissionsReportResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/CustomPermissionsRecordDTO"
-              },
-              "type": "array"
             }
           }
         },
@@ -988,7 +976,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/Item"
+                "$ref": "#/components/schemas/PlaylistItemDTO"
               },
               "type": "array"
             }
@@ -1000,7 +988,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Spec"
+              "$ref": "#/components/schemas/PlaylistDTO"
             }
           }
         },
@@ -1011,6 +999,29 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Spec"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getPublicAnnotationsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/AnnotationEvent"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getPublicDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublicDashboard"
             }
           }
         },
@@ -1286,6 +1297,34 @@
         },
         "description": "InternalServerError is a general error indicating something went wrong internally."
       },
+      "internalServerPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "InternalServerPublicError is a general error indicating something went wrong internally."
+      },
+      "jwksResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "keys": {
+                  "items": {
+                    "$ref": "#/components/schemas/JSONWebKey"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "listBuiltinRolesResponse": {
         "content": {
           "application/json": {
@@ -1297,6 +1336,16 @@
                 "type": "array"
               },
               "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "listPublicDashboardsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublicDashboardListResponseWithPagination"
             }
           }
         },
@@ -1356,7 +1405,10 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/TokenDTO"
+              "items": {
+                "$ref": "#/components/schemas/TokenDTO"
+              },
+              "type": "array"
             }
           }
         },
@@ -1371,6 +1423,16 @@
           }
         },
         "description": "NotFoundError is returned when the requested resource was not found."
+      },
+      "notFoundPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "NotFoundPublicError is returned when the requested resource was not found."
       },
       "okResponse": {
         "content": {
@@ -1478,10 +1540,15 @@
           "application/json": {
             "schema": {
               "properties": {
+                "folderUid": {
+                  "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
+                  "type": "string"
+                },
                 "id": {
                   "description": "ID The unique identifier (id) of the created/updated dashboard.",
-                  "example": "1",
-                  "type": "string"
+                  "example": 1,
+                  "format": "int64",
+                  "type": "integer"
                 },
                 "status": {
                   "description": "Status status of the response.",
@@ -1537,7 +1604,27 @@
         },
         "description": "PreconditionFailedError"
       },
+      "publicErrorResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "queryMetricsWithExpressionsRespons": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QueryDataResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "queryPublicDashboardResponse": {
         "content": {
           "application/json": {
             "schema": {
@@ -1729,16 +1816,6 @@
         },
         "description": "(empty)"
       },
-      "trimDashboardResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/TrimDashboardFullWithMeta"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "unauthorisedError": {
         "content": {
           "application/json": {
@@ -1748,6 +1825,16 @@
           }
         },
         "description": "UnauthorizedError is returned when the request is not authenticated."
+      },
+      "unauthorisedPublicError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/publicError"
+            }
+          }
+        },
+        "description": "UnauthorisedPublicError is returned when the request is not authenticated."
       },
       "unprocessableEntityError": {
         "content": {
@@ -1773,7 +1860,17 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Spec"
+              "$ref": "#/components/schemas/PlaylistDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "updatePublicDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PublicDashboard"
             }
           }
         },
@@ -1828,6 +1925,16 @@
             }
           }
         }
+      },
+      "viewPublicDashboardResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DashboardFullWithMeta"
+            }
+          }
+        },
+        "description": "(empty)"
       }
     },
     "schemas": {
@@ -1870,7 +1977,7 @@
         },
         "type": "object"
       },
-      "AddCommand": {
+      "AddAPIKeyCommand": {
         "properties": {
           "name": {
             "type": "string"
@@ -1975,25 +2082,6 @@
               "Admin"
             ],
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "AddPermissionDTO": {
-        "properties": {
-          "builtinRole": {
-            "type": "string"
-          },
-          "permission": {
-            "$ref": "#/components/schemas/DsPermissionType"
-          },
-          "teamId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -2451,7 +2539,7 @@
             "type": "string"
           },
           "relativeTimeRange": {
-            "$ref": "#/components/schemas/RelativeTimeRange"
+            "$ref": "#/components/schemas/RelativeTimeRangeExport"
           }
         },
         "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
@@ -2795,6 +2883,80 @@
         },
         "type": "object"
       },
+      "Annotation": {
+        "properties": {
+          "alertId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "alertName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "created": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardUID": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Json"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "login": {
+            "type": "string"
+          },
+          "newState": {
+            "type": "string"
+          },
+          "panelId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "prevState": {
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "text": {
+            "type": "string"
+          },
+          "time": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "timeEnd": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "updated": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "AnnotationActions": {
         "properties": {
           "canAdd": {
@@ -2809,6 +2971,67 @@
         },
         "type": "object"
       },
+      "AnnotationEvent": {
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isRegion": {
+            "type": "boolean"
+          },
+          "panelId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "source": {
+            "$ref": "#/components/schemas/AnnotationQuery"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "text": {
+            "type": "string"
+          },
+          "time": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "timeEnd": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AnnotationPanelFilter": {
+        "properties": {
+          "exclude": {
+            "description": "Should the specified panels be included or excluded",
+            "type": "boolean"
+          },
+          "ids": {
+            "description": "Panel IDs that should be included or excluded",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
+        "type": "object"
+      },
       "AnnotationPermission": {
         "properties": {
           "dashboard": {
@@ -2816,6 +3039,72 @@
           },
           "organization": {
             "$ref": "#/components/schemas/AnnotationActions"
+          }
+        },
+        "type": "object"
+      },
+      "AnnotationQuery": {
+        "description": "TODO docs\nFROM: AnnotationQuery in grafana-data/src/types/annotations.ts",
+        "properties": {
+          "builtIn": {
+            "description": "Set to 1 for the standard annotation query all dashboards have by default.",
+            "format": "float",
+            "type": "number"
+          },
+          "datasource": {
+            "$ref": "#/components/schemas/DataSourceRef"
+          },
+          "enable": {
+            "description": "When enabled the annotation query is issued with every dashboard refresh",
+            "type": "boolean"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/AnnotationPanelFilter"
+          },
+          "hide": {
+            "description": "Annotation queries can be toggled on or off at the top of the dashboard.\nWhen hide is true, the toggle is not shown in the dashboard.",
+            "type": "boolean"
+          },
+          "iconColor": {
+            "description": "Color to use for the annotation event markers",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of annotation.",
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/AnnotationTarget"
+          },
+          "type": {
+            "description": "TODO -- this should not exist here, it is based on the --grafana-- datasource",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AnnotationTarget": {
+        "description": "TODO: this should be a regular DataQuery that depends on the selected dashboard\nthese match the properties of the \"grafana\" datasouce that is default in most dashboards",
+        "properties": {
+          "limit": {
+            "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+            "format": "int64",
+            "type": "integer"
+          },
+          "matchAny": {
+            "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+            "type": "boolean"
+          },
+          "tags": {
+            "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "type": {
+            "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+            "type": "string"
           }
         },
         "type": "object"
@@ -2869,6 +3158,9 @@
           "for": {
             "type": "string"
           },
+          "keep_firing_for": {
+            "type": "string"
+          },
           "labels": {
             "additionalProperties": {
               "type": "string"
@@ -2878,6 +3170,16 @@
           "record": {
             "type": "string"
           }
+        },
+        "type": "object"
+      },
+      "AttributeTypeAndValue": {
+        "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
+        "properties": {
+          "Type": {
+            "$ref": "#/components/schemas/ObjectIdentifier"
+          },
+          "Value": {}
         },
         "type": "object"
       },
@@ -2999,6 +3301,247 @@
             "type": "integer"
           }
         },
+        "type": "object"
+      },
+      "Certificate": {
+        "properties": {
+          "AuthorityKeyId": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "BasicConstraintsValid": {
+            "description": "BasicConstraintsValid indicates whether IsCA, MaxPathLen,\nand MaxPathLenZero are valid.",
+            "type": "boolean"
+          },
+          "CRLDistributionPoints": {
+            "description": "CRL Distribution Points",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "DNSNames": {
+            "description": "Subject Alternate Name values. (Note that these values may not be valid\nif invalid values were contained within a parsed certificate. For\nexample, an element of DNSNames may not be a valid DNS domain name.)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "EmailAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExcludedDNSDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExcludedEmailAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExcludedIPRanges": {
+            "items": {
+              "$ref": "#/components/schemas/IPNet"
+            },
+            "type": "array"
+          },
+          "ExcludedURIDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExtKeyUsage": {
+            "items": {
+              "$ref": "#/components/schemas/ExtKeyUsage"
+            },
+            "type": "array"
+          },
+          "Extensions": {
+            "description": "Extensions contains raw X.509 extensions. When parsing certificates,\nthis can be used to extract non-critical extensions that are not\nparsed by this package. When marshaling certificates, the Extensions\nfield is ignored, see ExtraExtensions.",
+            "items": {
+              "$ref": "#/components/schemas/Extension"
+            },
+            "type": "array"
+          },
+          "ExtraExtensions": {
+            "description": "ExtraExtensions contains extensions to be copied, raw, into any\nmarshaled certificates. Values override any extensions that would\notherwise be produced based on the other fields. The ExtraExtensions\nfield is not populated when parsing certificates, see Extensions.",
+            "items": {
+              "$ref": "#/components/schemas/Extension"
+            },
+            "type": "array"
+          },
+          "IPAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "IsCA": {
+            "type": "boolean"
+          },
+          "Issuer": {
+            "$ref": "#/components/schemas/Name"
+          },
+          "IssuingCertificateURL": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "KeyUsage": {
+            "$ref": "#/components/schemas/KeyUsage"
+          },
+          "MaxPathLen": {
+            "description": "MaxPathLen and MaxPathLenZero indicate the presence and\nvalue of the BasicConstraints' \"pathLenConstraint\".\n\nWhen parsing a certificate, a positive non-zero MaxPathLen\nmeans that the field was specified, -1 means it was unset,\nand MaxPathLenZero being true mean that the field was\nexplicitly set to zero. The case of MaxPathLen==0 with MaxPathLenZero==false\nshould be treated equivalent to -1 (unset).\n\nWhen generating a certificate, an unset pathLenConstraint\ncan be requested with either MaxPathLen == -1 or using the\nzero value for both MaxPathLen and MaxPathLenZero.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "MaxPathLenZero": {
+            "description": "MaxPathLenZero indicates that BasicConstraintsValid==true\nand MaxPathLen==0 should be interpreted as an actual\nmaximum path length of zero. Otherwise, that combination is\ninterpreted as MaxPathLen not being set.",
+            "type": "boolean"
+          },
+          "NotBefore": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "OCSPServer": {
+            "description": "RFC 5280, 4.2.2.1 (Authority Information Access)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PermittedDNSDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PermittedDNSDomainsCritical": {
+            "description": "Name constraints",
+            "type": "boolean"
+          },
+          "PermittedEmailAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PermittedIPRanges": {
+            "items": {
+              "$ref": "#/components/schemas/IPNet"
+            },
+            "type": "array"
+          },
+          "PermittedURIDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PolicyIdentifiers": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "PublicKey": {},
+          "PublicKeyAlgorithm": {
+            "$ref": "#/components/schemas/PublicKeyAlgorithm"
+          },
+          "Raw": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawIssuer": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawSubject": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawSubjectPublicKeyInfo": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "RawTBSCertificate": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "SerialNumber": {
+            "type": "string"
+          },
+          "Signature": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "SignatureAlgorithm": {
+            "$ref": "#/components/schemas/SignatureAlgorithm"
+          },
+          "Subject": {
+            "$ref": "#/components/schemas/Name"
+          },
+          "SubjectKeyId": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "URIs": {
+            "items": {
+              "$ref": "#/components/schemas/URL"
+            },
+            "type": "array"
+          },
+          "UnhandledCriticalExtensions": {
+            "description": "UnhandledCriticalExtensions contains a list of extension IDs that\nwere not (fully) processed when parsing. Verify will fail if this\nslice is non-empty, unless verification is delegated to an OS\nlibrary which understands all the critical extensions.\n\nUsers can access these extensions using Extensions and can remove\nelements from this slice if they believe that they have been\nhandled.",
+            "items": {
+              "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "UnknownExtKeyUsage": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectIdentifier"
+            },
+            "type": "array"
+          },
+          "Version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "title": "A Certificate represents an X.509 certificate.",
         "type": "object"
       },
       "ChangeUserPasswordCommand": {
@@ -3191,6 +3734,16 @@
             "example": "My Label",
             "type": "string"
           },
+          "orgId": {
+            "description": "OrgID of the data source the correlation originates from",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "provisioned": {
+            "description": "Provisioned True if the correlation was created during provisioning",
+            "type": "boolean"
+          },
           "sourceUID": {
             "description": "UID of the data source the correlation originates from",
             "example": "d0oxYRg4z",
@@ -3338,6 +3891,10 @@
             "example": "My label",
             "type": "string"
           },
+          "provisioned": {
+            "description": "True if correlation was created with provisioning. This makes it read-only.",
+            "type": "boolean"
+          },
           "targetUID": {
             "description": "Target data source UID to which the correlation is created. required if config.type = query",
             "example": "PE1C5CBDA0504A6A3",
@@ -3415,7 +3972,7 @@
         "description": "CreateLibraryElementCommand is the command for adding a LibraryElement",
         "properties": {
           "folderId": {
-            "description": "ID of the folder where the library element is stored.",
+            "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -3616,53 +4173,6 @@
         },
         "type": "object"
       },
-      "CustomPermissionsRecordDTO": {
-        "properties": {
-          "customPermissions": {
-            "type": "string"
-          },
-          "granteeName": {
-            "type": "string"
-          },
-          "granteeType": {
-            "type": "string"
-          },
-          "granteeUrl": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isFolder": {
-            "type": "boolean"
-          },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "orgRole": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          },
-          "usersCount": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "DashboardACLInfoDTO": {
         "properties": {
           "created": {
@@ -3674,6 +4184,7 @@
             "type": "integer"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -3828,6 +4339,7 @@
             "type": "string"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -3856,9 +4368,6 @@
             "type": "boolean"
           },
           "provisionedExternalId": {
-            "type": "string"
-          },
-          "publicDashboardAccessToken": {
             "type": "string"
           },
           "publicDashboardEnabled": {
@@ -3930,27 +4439,15 @@
           "externalUrl": {
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "key": {
             "type": "string"
           },
           "name": {
             "type": "string"
           },
-          "orgId": {
-            "format": "int64",
-            "type": "integer"
-          },
           "updated": {
             "format": "date-time",
             "type": "string"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -4033,6 +4530,9 @@
           "Error": {
             "description": "Error is a property to be set if the corresponding DataQuery has an error.",
             "type": "string"
+          },
+          "ErrorSource": {
+            "$ref": "#/components/schemas/ErrorSource"
           },
           "Frames": {
             "$ref": "#/components/schemas/Frames"
@@ -4170,79 +4670,16 @@
         },
         "type": "object"
       },
-      "DataSourcePermissionRuleDTO": {
+      "DataSourceRef": {
+        "description": "Ref to a DataSource instance",
         "properties": {
-          "builtInRole": {
+          "type": {
+            "description": "The plugin type-id",
             "type": "string"
           },
-          "created": {
-            "format": "date-time",
+          "uid": {
+            "description": "Specific datasource instance",
             "type": "string"
-          },
-          "datasourceId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "isManaged": {
-            "type": "boolean"
-          },
-          "permission": {
-            "$ref": "#/components/schemas/DsPermissionType"
-          },
-          "permissionName": {
-            "type": "string"
-          },
-          "team": {
-            "type": "string"
-          },
-          "teamAvatarUrl": {
-            "type": "string"
-          },
-          "teamEmail": {
-            "type": "string"
-          },
-          "teamId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "userAvatarUrl": {
-            "type": "string"
-          },
-          "userEmail": {
-            "type": "string"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userLogin": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "DataSourcePermissionsDTO": {
-        "properties": {
-          "datasourceId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "permissions": {
-            "items": {
-              "$ref": "#/components/schemas/DataSourcePermissionRuleDTO"
-            },
-            "type": "array"
           }
         },
         "type": "object"
@@ -4382,6 +4819,17 @@
         "title": "EmailConfig configures notifications via mail.",
         "type": "object"
       },
+      "EmailDTO": {
+        "properties": {
+          "recipient": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "EmbeddedContactPoint": {
         "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
         "properties": {
@@ -4428,6 +4876,9 @@
           "uid": {
             "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
             "example": "my_external_reference",
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9\\-\\_]+$",
             "type": "string"
           }
         },
@@ -4491,6 +4942,10 @@
         ],
         "type": "object"
       },
+      "ErrorSource": {
+        "description": "ErrorSource type defines the source of the error",
+        "type": "string"
+      },
       "ErrorType": {
         "title": "ErrorType models the different API error types.",
         "type": "string"
@@ -4550,6 +5005,12 @@
       "ExplorePanelsState": {
         "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
       },
+      "ExtKeyUsage": {
+        "description": "Each of the ExtKeyUsage* constants define a unique action.",
+        "format": "int64",
+        "title": "ExtKeyUsage represents an extended set of actions that are valid for a given key.",
+        "type": "integer"
+      },
       "ExtendedReceiver": {
         "properties": {
           "email_configs": {
@@ -4578,6 +5039,25 @@
           },
           "wechat_configs": {
             "$ref": "#/components/schemas/WechatConfig"
+          }
+        },
+        "type": "object"
+      },
+      "Extension": {
+        "description": "Extension represents the ASN.1 structure of the same name. See RFC\n5280, section 4.2.",
+        "properties": {
+          "Critical": {
+            "type": "boolean"
+          },
+          "Id": {
+            "$ref": "#/components/schemas/ObjectIdentifier"
+          },
+          "Value": {
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -4792,6 +5272,7 @@
             "type": "boolean"
           },
           "id": {
+            "description": "Deprecated: use Uid instead",
             "format": "int64",
             "type": "integer"
           },
@@ -5061,6 +5542,12 @@
             },
             "type": "array"
           },
+          "msteams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -5147,6 +5634,9 @@
           },
           "grafana_alert": {
             "$ref": "#/components/schemas/GettableGrafanaRule"
+          },
+          "keep_firing_for": {
+            "type": "string"
           },
           "labels": {
             "additionalProperties": {
@@ -5521,6 +6011,7 @@
       "Hit": {
         "properties": {
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -5595,6 +6086,27 @@
         "title": "HostPort represents a \"host:port\" network address.",
         "type": "object"
       },
+      "IPMask": {
+        "description": "See type IPNet and func ParseCIDR for details.",
+        "items": {
+          "format": "uint8",
+          "type": "integer"
+        },
+        "title": "An IPMask is a bitmask that can be used to manipulate\nIP addresses for IP addressing and routing.",
+        "type": "array"
+      },
+      "IPNet": {
+        "properties": {
+          "IP": {
+            "type": "string"
+          },
+          "Mask": {
+            "$ref": "#/components/schemas/IPMask"
+          }
+        },
+        "title": "An IPNet represents an IP network.",
+        "type": "object"
+      },
       "ImportDashboardInput": {
         "properties": {
           "name": {
@@ -5619,6 +6131,7 @@
             "$ref": "#/components/schemas/Json"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -5654,6 +6167,7 @@
             "type": "string"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -5764,103 +6278,60 @@
         },
         "type": "object"
       },
-      "Item": {
+      "JSONWebKey": {
         "properties": {
-          "title": {
-            "description": "Title is an unused property -- it will be removed in the future",
+          "Algorithm": {
+            "description": "Key algorithm, parsed from `alg` header.",
             "type": "string"
           },
-          "type": {
-            "$ref": "#/components/schemas/ItemType"
-          },
-          "value": {
-            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
-            "type": "string"
-          }
-        },
-        "title": "Item defines model for Item.",
-        "type": "object"
-      },
-      "ItemDTO": {
-        "properties": {
-          "alertId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "alertName": {
-            "type": "string"
-          },
-          "avatarUrl": {
-            "type": "string"
-          },
-          "created": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "dashboardUID": {
-            "type": "string"
-          },
-          "data": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "email": {
-            "type": "string"
-          },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "login": {
-            "type": "string"
-          },
-          "newState": {
-            "type": "string"
-          },
-          "panelId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "prevState": {
-            "type": "string"
-          },
-          "tags": {
+          "CertificateThumbprintSHA1": {
+            "description": "X.509 certificate thumbprint (SHA-1), parsed from `x5t` header.",
             "items": {
-              "type": "string"
+              "format": "uint8",
+              "type": "integer"
             },
             "type": "array"
           },
-          "text": {
+          "CertificateThumbprintSHA256": {
+            "description": "X.509 certificate thumbprint (SHA-256), parsed from `x5t#S256` header.",
+            "items": {
+              "format": "uint8",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "Certificates": {
+            "description": "X.509 certificate chain, parsed from `x5c` header.",
+            "items": {
+              "$ref": "#/components/schemas/Certificate"
+            },
+            "type": "array"
+          },
+          "CertificatesURL": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "Key": {
+            "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          },
+          "KeyID": {
+            "description": "Key identifier, parsed from `kid` header.",
             "type": "string"
           },
-          "time": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "timeEnd": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "updated": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "userId": {
-            "format": "int64",
-            "type": "integer"
+          "Use": {
+            "description": "Key use, parsed from `use` header.",
+            "type": "string"
           }
         },
+        "title": "JSONWebKey represents a public or private key in JWK format.",
         "type": "object"
-      },
-      "ItemType": {
-        "title": "Type of the item.",
-        "type": "string"
       },
       "Json": {
         "type": "object"
+      },
+      "KeyUsage": {
+        "description": "KeyUsage represents the set of actions that are valid for a given key. It's\na bitmap of the KeyUsage* constants.",
+        "format": "int64",
+        "type": "integer"
       },
       "Label": {
         "properties": {
@@ -6026,6 +6497,7 @@
             "type": "string"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -6176,6 +6648,26 @@
         },
         "type": "object"
       },
+      "MSTeamsConfig": {
+        "properties": {
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "webhook_url": {
+            "$ref": "#/components/schemas/SecretURL"
+          }
+        },
+        "type": "object"
+      },
       "MassDeleteAnnotationsCmd": {
         "properties": {
           "annotationId": {
@@ -6247,9 +6739,6 @@
             "example": "now-1h",
             "type": "string"
           },
-          "publicDashboardAccessToken": {
-            "type": "string"
-          },
           "queries": {
             "description": "queries.refId – Specifies an identifier of the query. Is optional and default to “A”.\nqueries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.\nqueries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.\nqueries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000.",
             "example": [
@@ -6314,6 +6803,47 @@
           "$ref": "#/components/schemas/MuteTimeInterval"
         },
         "type": "array"
+      },
+      "Name": {
+        "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an RDNSequence.",
+        "properties": {
+          "Country": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ExtraNames": {
+            "description": "ExtraNames contains attributes to be copied, raw, into any marshaled\ndistinguished names. Values override any attributes with the same OID.\nThe ExtraNames field is not populated when parsing, see Names.",
+            "items": {
+              "$ref": "#/components/schemas/AttributeTypeAndValue"
+            },
+            "type": "array"
+          },
+          "Locality": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "Names": {
+            "description": "Names contains all parsed attributes. When parsing distinguished names,\nthis can be used to extract non-standard attributes that are not parsed\nby this package. When marshaling to RDNSequences, the Names field is\nignored, see ExtraNames.",
+            "items": {
+              "$ref": "#/components/schemas/AttributeTypeAndValue"
+            },
+            "type": "array"
+          },
+          "SerialNumber": {
+            "type": "string"
+          },
+          "StreetAddress": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
       },
       "NamespaceConfigResponse": {
         "additionalProperties": {
@@ -6499,6 +7029,14 @@
         },
         "title": "OAuth2 is the oauth2 client configuration.",
         "type": "object"
+      },
+      "ObjectIdentifier": {
+        "items": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
+        "type": "array"
       },
       "ObjectMatchers": {
         "$ref": "#/components/schemas/Matchers"
@@ -6791,7 +7329,7 @@
         "description": "PatchLibraryElementCommand is the command for patching a LibraryElement",
         "properties": {
           "folderId": {
-            "description": "ID of the folder where the library element is stored.",
+            "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -6946,6 +7484,30 @@
         },
         "type": "object"
       },
+      "PlaylistDTO": {
+        "properties": {
+          "interval": {
+            "description": "Interval sets the time between switching views in a playlist.",
+            "type": "string"
+          },
+          "items": {
+            "description": "The ordered list of items that the playlist will iterate over.",
+            "items": {
+              "$ref": "#/components/schemas/PlaylistItemDTO"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the playlist.",
+            "type": "string"
+          },
+          "uid": {
+            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "PlaylistDashboard": {
         "properties": {
           "id": {
@@ -6998,6 +7560,23 @@
             "type": "string"
           },
           "value": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PlaylistItemDTO": {
+        "properties": {
+          "title": {
+            "description": "Title is an unused property -- it will be removed in the future",
+            "type": "string"
+          },
+          "type": {
+            "description": "Type of the item.",
+            "type": "string"
+          },
+          "value": {
+            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
             "type": "string"
           }
         },
@@ -7138,6 +7717,12 @@
             },
             "type": "array"
           },
+          "msteams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -7224,6 +7809,9 @@
           },
           "grafana_alert": {
             "$ref": "#/components/schemas/PostableGrafanaRule"
+          },
+          "keep_firing_for": {
+            "type": "string"
           },
           "labels": {
             "additionalProperties": {
@@ -7523,6 +8111,9 @@
             "type": "string"
           },
           "uid": {
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9-_]+$",
             "type": "string"
           },
           "updated": {
@@ -7569,6 +8160,124 @@
         },
         "type": "object"
       },
+      "PublicDashboard": {
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "annotationsEnabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "recipients": {
+            "items": {
+              "$ref": "#/components/schemas/EmailDTO"
+            },
+            "type": "array"
+          },
+          "share": {
+            "$ref": "#/components/schemas/ShareType"
+          },
+          "timeSelectionEnabled": {
+            "type": "boolean"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedBy": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PublicDashboardDTO": {
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "annotationsEnabled": {
+            "type": "boolean"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "share": {
+            "$ref": "#/components/schemas/ShareType"
+          },
+          "timeSelectionEnabled": {
+            "type": "boolean"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PublicDashboardListResponse": {
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PublicDashboardListResponseWithPagination": {
+        "properties": {
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "perPage": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "publicDashboards": {
+            "items": {
+              "$ref": "#/components/schemas/PublicDashboardListResponse"
+            },
+            "type": "array"
+          },
+          "totalCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PublicKeyAlgorithm": {
+        "format": "int64",
+        "type": "integer"
+      },
       "PushoverConfig": {
         "properties": {
           "device": {
@@ -7605,6 +8314,9 @@
             "$ref": "#/components/schemas/Secret"
           },
           "token_file": {
+            "type": "string"
+          },
+          "ttl": {
             "type": "string"
           },
           "url": {
@@ -7846,6 +8558,12 @@
             },
             "type": "array"
           },
+          "msteams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "name": {
             "description": "A unique identifier for this receiver.",
             "type": "string"
@@ -7990,6 +8708,19 @@
           },
           "to": {
             "$ref": "#/components/schemas/Duration"
+          }
+        },
+        "type": "object"
+      },
+      "RelativeTimeRangeExport": {
+        "properties": {
+          "from": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "to": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -8466,6 +9197,7 @@
             "$ref": "#/components/schemas/Json"
           },
           "folderId": {
+            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -8702,6 +9434,10 @@
             "example": false,
             "type": "boolean"
           },
+          "isExternal": {
+            "example": false,
+            "type": "boolean"
+          },
           "login": {
             "example": "sa-grafana",
             "type": "string"
@@ -8753,6 +9489,10 @@
             "example": false,
             "type": "boolean"
           },
+          "isExternal": {
+            "example": false,
+            "type": "boolean"
+          },
           "login": {
             "example": "sa-grafana",
             "type": "string"
@@ -8765,6 +9505,10 @@
             "example": 1,
             "format": "int64",
             "type": "integer"
+          },
+          "requiredBy": {
+            "example": "grafana-app",
+            "type": "string"
           },
           "role": {
             "example": "Editor",
@@ -8861,6 +9605,9 @@
         },
         "type": "object"
       },
+      "ShareType": {
+        "type": "string"
+      },
       "SigV4Config": {
         "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
         "properties": {
@@ -8881,6 +9628,10 @@
           }
         },
         "type": "object"
+      },
+      "SignatureAlgorithm": {
+        "format": "int64",
+        "type": "integer"
       },
       "SlackAction": {
         "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -9136,8 +9887,16 @@
       },
       "TLSConfig": {
         "properties": {
+          "ca": {
+            "description": "Text of the CA cert to use for the targets.",
+            "type": "string"
+          },
           "ca_file": {
             "description": "The CA cert to use for the targets.",
+            "type": "string"
+          },
+          "cert": {
+            "description": "Text of the client cert file for the targets.",
             "type": "string"
           },
           "cert_file": {
@@ -9147,6 +9906,9 @@
           "insecure_skip_verify": {
             "description": "Disable target certificate validation.",
             "type": "boolean"
+          },
+          "key": {
+            "$ref": "#/components/schemas/Secret"
           },
           "key_file": {
             "description": "The client key file for the targets.",
@@ -9810,32 +10572,11 @@
         },
         "type": "array"
       },
-      "TrimDashboardCommand": {
-        "properties": {
-          "dashboard": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/Json"
-          }
-        },
-        "type": "object"
-      },
-      "TrimDashboardFullWithMeta": {
-        "properties": {
-          "dashboard": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/Json"
-          }
-        },
-        "type": "object"
-      },
       "Type": {
         "type": "string"
       },
       "URL": {
+        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -9871,7 +10612,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "URL is a custom URL type that allows validation at configuration load time.",
+        "title": "A URL represents a parsed URL (technically, a URI reference).",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -10086,10 +10827,6 @@
             "description": "NewTitle it's an optional parameter used for overriding the existing folder title",
             "type": "string"
           },
-          "uid": {
-            "description": "NewUID it's an optional parameter used for overriding the existing folder UID\nStarting with 10.0, this is deprecated. It will be removed in a future release.\nPlease avoid using it because it can result in folder loosing its permissions.",
-            "type": "string"
-          },
           "version": {
             "description": "Version only used by the legacy folder implementation",
             "format": "int64",
@@ -10252,6 +10989,32 @@
         },
         "type": "object"
       },
+      "UpdateRuleGroupResponse": {
+        "properties": {
+          "created": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "deleted": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "message": {
+            "type": "string"
+          },
+          "updated": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "UpdateServiceAccountForm": {
         "properties": {
           "isDisabled": {
@@ -10390,6 +11153,9 @@
             "type": "boolean"
           },
           "isGrafanaAdmin": {
+            "type": "boolean"
+          },
+          "isGrafanaAdminExternallySynced": {
             "type": "boolean"
           },
           "login": {
@@ -10871,7 +11637,6 @@
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10920,7 +11685,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -11070,6 +11834,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -11103,6 +11868,34 @@
           "endsAt",
           "matchers",
           "startsAt"
+        ],
+        "type": "object"
+      },
+      "publicError": {
+        "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+        "properties": {
+          "extra": {
+            "additionalProperties": false,
+            "description": "Extra Additional information about the error",
+            "type": "object"
+          },
+          "message": {
+            "description": "Message A human readable message",
+            "type": "string"
+          },
+          "messageId": {
+            "description": "MessageID A unique identifier for the error",
+            "type": "string"
+          },
+          "statusCode": {
+            "description": "StatusCode The HTTP status code returned",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "statusCode",
+          "messageId"
         ],
         "type": "object"
       },
@@ -11936,7 +12729,8 @@
         },
         "summary": "Returns the current state of the LDAP background sync integration.",
         "tags": [
-          "ldap_debug"
+          "ldap_debug",
+          "enterprise"
         ]
       }
     },
@@ -13958,6 +14752,33 @@
               "default": "yaml",
               "type": "string"
             }
+          },
+          {
+            "description": "UIDs of folders from which to export rules",
+            "in": "query",
+            "name": "folderUid",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+            "in": "query",
+            "name": "group",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+            "in": "query",
+            "name": "ruleUid",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -14997,7 +15818,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddCommand"
+                "$ref": "#/components/schemas/AddAPIKeyCommand"
               }
             }
           },
@@ -15490,6 +16311,29 @@
         ]
       }
     },
+    "/dashboards/public-dashboards": {
+      "get": {
+        "description": "Get list of public dashboards",
+        "operationId": "listPublicDashboards",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listPublicDashboardsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      }
+    },
     "/dashboards/tags": {
       "get": {
         "operationId": "getDashboardTags",
@@ -15510,14 +16354,62 @@
         ]
       }
     },
-    "/dashboards/trim": {
+    "/dashboards/uid/{dashboardUid}/public-dashboards": {
+      "get": {
+        "description": "Get public dashboard by dashboardUid",
+        "operationId": "getPublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboardUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      },
       "post": {
-        "operationId": "trimDashboard",
+        "description": "Create public dashboard for a dashboard",
+        "operationId": "createPublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboardUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrimDashboardCommand"
+                "$ref": "#/components/schemas/PublicDashboardDTO"
               }
             }
           },
@@ -15526,18 +16418,120 @@
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/trimDashboardResponse"
+            "$ref": "#/components/responses/createPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
           },
           "401": {
-            "$ref": "#/components/responses/unauthorisedError"
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
           },
           "500": {
-            "$ref": "#/components/responses/internalServerError"
+            "$ref": "#/components/responses/internalServerPublicError"
           }
         },
-        "summary": "Trim defaults from dashboard.",
         "tags": [
-          "dashboards"
+          "dashboard_public"
+        ]
+      }
+    },
+    "/dashboards/uid/{dashboardUid}/public-dashboards/{uid}": {
+      "delete": {
+        "description": "Delete public dashboard for a dashboard",
+        "operationId": "deletePublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboardUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      },
+      "patch": {
+        "description": "Update public dashboard for a dashboard",
+        "operationId": "updatePublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dashboardUid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicDashboardDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/updatePublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
         ]
       }
     },
@@ -16798,236 +17792,6 @@
         ]
       }
     },
-    "/datasources/{datasourceId}/disable-permissions": {
-      "post": {
-        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "operationId": "disablePermissions",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Disable permissions for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      }
-    },
-    "/datasources/{datasourceId}/enable-permissions": {
-      "post": {
-        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "operationId": "enablePermissions",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Enable permissions for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      }
-    },
-    "/datasources/{datasourceId}/permissions": {
-      "get": {
-        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use GET /api/access-control/datasources/:uid",
-        "operationId": "getAllPermissions",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getAllPermissionseResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get permissions for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      },
-      "post": {
-        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "operationId": "addPermission",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "userId",
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "teamId",
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "builtinRole",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "permission",
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/addPermissionResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Add permissions for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      }
-    },
-    "/datasources/{datasourceId}/permissions/{permissionId}": {
-      "delete": {
-        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "operationId": "deletePermissions",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "datasourceId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "permissionId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          }
-        },
-        "summary": "Remove permission for a data source.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ]
-      }
-    },
     "/datasources/{id}": {
       "delete": {
         "deprecated": true,
@@ -17940,6 +18704,9 @@
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
           "404": {
             "$ref": "#/components/responses/notFoundError"
           },
@@ -18026,6 +18793,9 @@
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
           },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
           "404": {
             "$ref": "#/components/responses/notFoundError"
           },
@@ -18056,12 +18826,10 @@
     },
     "/licensing/custom-permissions": {
       "get": {
+        "deprecated": true,
         "description": "You need to have a permission with action `licensing.reports:read`.",
         "operationId": "getCustomPermissionsReport",
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -18075,12 +18843,10 @@
     },
     "/licensing/custom-permissions-csv": {
       "get": {
+        "deprecated": true,
         "description": "You need to have a permission with action `licensing.reports:read`.",
         "operationId": "getCustomPermissionsCSV",
         "responses": {
-          "200": {
-            "$ref": "#/components/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -19578,42 +20344,6 @@
         ]
       }
     },
-    "/playlists/{uid}/dashboards": {
-      "get": {
-        "operationId": "getPlaylistDashboards",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getPlaylistDashboardsResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get playlist dashboards.",
-        "tags": [
-          "playlists"
-        ]
-      }
-    },
     "/playlists/{uid}/items": {
       "get": {
         "operationId": "getPlaylistItems",
@@ -19647,6 +20377,132 @@
         "summary": "Get playlist items.",
         "tags": [
           "playlists"
+        ]
+      }
+    },
+    "/public/dashboards/{accessToken}": {
+      "get": {
+        "description": "Get public dashboard for view",
+        "operationId": "viewPublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accessToken",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/viewPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      }
+    },
+    "/public/dashboards/{accessToken}/annotations": {
+      "get": {
+        "description": "Get annotations for a public dashboard",
+        "operationId": "getPublicAnnotations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accessToken",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getPublicAnnotationsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
+        ]
+      }
+    },
+    "/public/dashboards/{accessToken}/panels/{panelId}/query": {
+      "post": {
+        "description": "Get results for a given panel on a public dashboard",
+        "operationId": "queryPublicDashboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accessToken",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "panelId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/queryPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerPublicError"
+          }
+        },
+        "tags": [
+          "dashboard_public"
         ]
       }
     },
@@ -20406,6 +21262,27 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scaleFactor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeTables",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -20689,7 +21566,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "It performs assertion Consumer Service (ACS).",
+        "summary": "It performs Assertion Consumer Service (ACS).",
         "tags": [
           "saml",
           "enterprise"
@@ -21314,6 +22191,24 @@
         ]
       }
     },
+    "/signing-keys/keys": {
+      "get": {
+        "description": "Required permissions\nNone",
+        "operationId": "retrieveJWKS",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/jwksResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)",
+        "tags": [
+          "signing_keys"
+        ]
+      }
+    },
     "/snapshot/shared-options": {
       "get": {
         "operationId": "getSharingOptions",
@@ -21694,56 +22589,6 @@
           }
         },
         "summary": "Add External Group.",
-        "tags": [
-          "sync_team_groups",
-          "enterprise"
-        ]
-      }
-    },
-    "/teams/{teamId}/groups/{groupId}": {
-      "delete": {
-        "deprecated": true,
-        "operationId": "removeTeamGroupApi",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "groupId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "teamId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/components/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Remove External Group.",
         "tags": [
           "sync_team_groups",
           "enterprise"
@@ -22958,6 +23803,43 @@
           "users"
         ]
       }
+    },
+    "/v1/sso-settings/{key}": {
+      "delete": {
+        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "removeProviderSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove SSO Settings",
+        "tags": [
+          "sso_settings"
+        ]
+      }
     }
   },
   "security": [
@@ -22979,7 +23861,7 @@
       "name": "datasources"
     },
     {
-      "description": "Folders are identified by the identifier (id) and the unique identifier (uid).\nThe identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a folder can be used for uniquely identify folders between multiple Grafana installs. It’s automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.\nThe uid can have a maximum length of 40 characters.\n\nThe General folder (id=0) is special and is not part of the Folder API which means that you cannot use this API for retrieving information about the General folder.",
+      "description": "Folders are identified by the identifier (id) and the unique identifier (uid).\nThe identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a folder can be used for uniquely identify folders between multiple Grafana installs. It’s automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.\nThe uid can have a maximum length of 40 characters.",
       "name": "folders"
     },
     {

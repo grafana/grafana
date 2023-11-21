@@ -10,12 +10,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/routes"
 )
 
 func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/regions", handleResourceReq(e.handleGetRegions))
 	mux.HandleFunc("/ebs-volume-ids", handleResourceReq(e.handleGetEbsVolumeIds))
 	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(e.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
@@ -27,6 +27,16 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/namespaces", routes.ResourceRequestMiddleware(routes.NamespacesHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/log-group-fields", routes.ResourceRequestMiddleware(routes.LogGroupFieldsHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/external-id", routes.ResourceRequestMiddleware(routes.ExternalIdHandler, logger, e.getRequestContext))
+
+	// feature is enabled by default, just putting behind a feature flag in case of unexpected bugs
+	if e.features.IsEnabledGlobally(featuremgmt.FlagCloudwatchNewRegionsHandler) {
+		mux.HandleFunc("/regions", routes.ResourceRequestMiddleware(routes.RegionsHandler, logger, e.getRequestContext))
+	} else {
+		mux.HandleFunc("/regions", handleResourceReq(e.handleGetRegions))
+	}
+
+	// remove this once AWS's Cross Account Observability is supported in GovCloud
+	mux.HandleFunc("/legacy-log-groups", handleResourceReq(e.handleGetLogGroups))
 
 	return mux
 }

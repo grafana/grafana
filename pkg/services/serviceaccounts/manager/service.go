@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/secretscan"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -39,15 +37,12 @@ type ServiceAccountsService struct {
 
 func ProvideServiceAccountsService(
 	cfg *setting.Cfg,
-	ac accesscontrol.AccessControl,
-	routeRegister routing.RouteRegister,
 	usageStats usagestats.Service,
 	store *sqlstore.SQLStore,
 	apiKeyService apikey.Service,
 	kvStore kvstore.KVStore,
 	userService user.Service,
 	orgService org.Service,
-	permissionService accesscontrol.ServiceAccountPermissionsService,
 	accesscontrolService accesscontrol.Service,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
@@ -70,9 +65,6 @@ func ProvideServiceAccountsService(
 
 	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
 
-	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService)
-	serviceaccountsAPI.RegisterAPIEndpoints()
-
 	s.secretScanEnabled = cfg.SectionWithEnvOverrides("secretscan").Key("enabled").MustBool(false)
 	s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
 		Key("interval").MustDuration(defaultSecretScanInterval)
@@ -81,7 +73,7 @@ func ProvideServiceAccountsService(
 		s.secretScanService, errSecret = secretscan.NewService(s.store, cfg)
 		if errSecret != nil {
 			s.secretScanEnabled = false
-			s.log.Warn("failed to initialize secret scan service. secret scan is disabled",
+			s.log.Warn("Failed to initialize secret scan service. secret scan is disabled",
 				"error", errSecret.Error())
 		}
 	}
@@ -90,7 +82,7 @@ func ProvideServiceAccountsService(
 }
 
 func (sa *ServiceAccountsService) Run(ctx context.Context) error {
-	sa.backgroundLog.Debug("service initialized")
+	sa.backgroundLog.Debug("Service initialized")
 
 	if _, err := sa.getUsageMetrics(ctx); err != nil {
 		sa.log.Warn("Failed to get usage metrics", "error", err.Error())
@@ -101,7 +93,7 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 
 	// Enforce a minimum interval of 1 minute.
 	if sa.secretScanEnabled && sa.secretScanInterval < time.Minute {
-		sa.backgroundLog.Warn("secret scan interval is too low, increasing to " +
+		sa.backgroundLog.Warn("Secret scan interval is too low, increasing to " +
 			defaultSecretScanInterval.String())
 
 		sa.secretScanInterval = defaultSecretScanInterval
@@ -112,7 +104,7 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 	if !sa.secretScanEnabled {
 		tokenCheckTicker.Stop()
 	} else {
-		sa.backgroundLog.Debug("enabled token secret check and executing first check")
+		sa.backgroundLog.Debug("Enabled token secret check and executing first check")
 		if err := sa.secretScanService.CheckTokens(ctx); err != nil {
 			sa.backgroundLog.Warn("Failed to check for leaked tokens", "error", err.Error())
 		}
@@ -127,17 +119,17 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 				return fmt.Errorf("context error in service account background service: %w", ctx.Err())
 			}
 
-			sa.backgroundLog.Debug("stopped service account background service")
+			sa.backgroundLog.Debug("Stopped service account background service")
 
 			return nil
 		case <-updateStatsTicker.C:
-			sa.backgroundLog.Debug("updating usage metrics")
+			sa.backgroundLog.Debug("Updating usage metrics")
 
 			if _, err := sa.getUsageMetrics(ctx); err != nil {
 				sa.backgroundLog.Warn("Failed to get usage metrics", "error", err.Error())
 			}
 		case <-tokenCheckTicker.C:
-			sa.backgroundLog.Debug("checking for leaked tokens")
+			sa.backgroundLog.Debug("Checking for leaked tokens")
 
 			if err := sa.secretScanService.CheckTokens(ctx); err != nil {
 				sa.backgroundLog.Warn("Failed to check for leaked tokens", "error", err.Error())
@@ -145,6 +137,8 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 		}
 	}
 }
+
+var _ serviceaccounts.Service = (*ServiceAccountsService)(nil)
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if err := validOrgID(orgID); err != nil {
@@ -181,6 +175,16 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 		return err
 	}
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
+}
+
+func (sa *ServiceAccountsService) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {
+	if err := validOrgID(orgID); err != nil {
+		return err
+	}
+	if err := validServiceAccountID(serviceAccountID); err != nil {
+		return err
+	}
+	return sa.store.EnableServiceAccount(ctx, orgID, serviceAccountID, enable)
 }
 
 func (sa *ServiceAccountsService) UpdateServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64, saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {

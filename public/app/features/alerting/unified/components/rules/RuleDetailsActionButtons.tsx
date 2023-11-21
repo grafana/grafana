@@ -1,16 +1,26 @@
 import { css } from '@emotion/css';
+import { uniqueId } from 'lodash';
 import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config } from '@grafana/runtime';
-import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  ClipboardButton,
+  ConfirmModal,
+  Dropdown,
+  HorizontalGroup,
+  Icon,
+  LinkButton,
+  Menu,
+  useStyles2,
+} from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction, useDispatch } from 'app/types';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -21,12 +31,19 @@ import { getRulesPermissions } from '../../utils/access-control';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
-import { createExploreLink, createShareLink, makeRuleBasedSilenceLink } from '../../utils/misc';
+import {
+  createExploreLink,
+  createShareLink,
+  isLocalDevEnv,
+  isOpenSourceEdition,
+  makeRuleBasedSilenceLink,
+} from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { createUrl } from '../../utils/url';
 import { DeclareIncident } from '../bridges/DeclareIncidentButton';
 
-import { CloneRuleButton } from './CloneRuleButton';
+import { RedirectToCloneRule } from './CloneRule';
 
 interface Props {
   rule: CombinedRule;
@@ -43,6 +60,9 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const notifyApp = useAppNotification();
 
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+  const [redirectToClone, setRedirectToClone] = useState<
+    { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
+  >(undefined);
 
   const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
     ? rulesSource
@@ -52,6 +72,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
 
   const buttons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
+  const moreActionsButtons: React.ReactElement[] = [];
 
   const deleteRule = () => {
     if (ruleToDelete && ruleToDelete.rulerRule) {
@@ -216,34 +237,52 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
       }
     }
 
+    if (isGrafanaRulerRule(rulerRule)) {
+      const modifyUrl = createUrl(
+        `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`
+      );
+
+      moreActionsButtons.push(<Menu.Item label="Modify export" icon="edit" url={modifyUrl} />);
+    }
+
     if (hasCreateRulePermission && !isFederated) {
-      rightButtons.push(
-        <CloneRuleButton key="clone" text="Copy" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
+      moreActionsButtons.push(
+        <Menu.Item label="Duplicate" icon="copy" onClick={() => setRedirectToClone({ identifier, isProvisioned })} />
       );
     }
 
     if (isRemovable && !isFederated && !isProvisioned) {
-      rightButtons.push(
-        <Button
-          size="sm"
-          type="button"
-          key="delete"
-          variant="secondary"
-          icon="trash-alt"
-          onClick={() => setRuleToDelete(rule)}
-        >
-          Delete
-        </Button>
+      moreActionsButtons.push(<Menu.Divider />);
+      moreActionsButtons.push(
+        <Menu.Item key="delete" label="Delete" icon="trash-alt" onClick={() => setRuleToDelete(rule)} />
       );
     }
   }
 
-  if (buttons.length || rightButtons.length) {
+  if (buttons.length || rightButtons.length || moreActionsButtons.length) {
     return (
       <>
         <div className={style.wrapper}>
           <HorizontalGroup width="auto">{buttons.length ? buttons : <div />}</HorizontalGroup>
-          <HorizontalGroup width="auto">{rightButtons.length ? rightButtons : <div />}</HorizontalGroup>
+          <HorizontalGroup width="auto">
+            {rightButtons.length && rightButtons}
+            {moreActionsButtons.length && (
+              <Dropdown
+                overlay={
+                  <Menu>
+                    {moreActionsButtons.map((action) => (
+                      <React.Fragment key={uniqueId('action_')}>{action}</React.Fragment>
+                    ))}
+                  </Menu>
+                }
+              >
+                <Button variant="secondary" size="sm">
+                  More
+                  <Icon name="angle-down" />
+                </Button>
+              </Dropdown>
+            )}
+          </HorizontalGroup>
         </div>
         {!!ruleToDelete && (
           <ConfirmModal
@@ -256,9 +295,17 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             onDismiss={() => setRuleToDelete(undefined)}
           />
         )}
+        {redirectToClone && (
+          <RedirectToCloneRule
+            identifier={redirectToClone.identifier}
+            isProvisioned={redirectToClone.isProvisioned}
+            onDismiss={() => setRedirectToClone(undefined)}
+          />
+        )}
       </>
     );
   }
+
   return null;
 };
 
@@ -267,11 +314,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
  * We should show it in development mode
  */
 function shouldShowDeclareIncidentButton() {
-  const buildInfo = config.buildInfo;
-  const isOpenSourceEdition = buildInfo.edition === GrafanaEdition.OpenSource;
-  const isDevelopment = buildInfo.env === 'development';
-
-  return !isOpenSourceEdition || isDevelopment;
+  return !isOpenSourceEdition() || isLocalDevEnv();
 }
 
 /**
@@ -291,7 +334,7 @@ function useCanSilence(rule: CombinedRule) {
     return false;
   }
 
-  const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
+  const hasPermissions = contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate);
 
   const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;

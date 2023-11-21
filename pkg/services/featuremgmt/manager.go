@@ -14,13 +14,15 @@ var (
 )
 
 type FeatureManager struct {
-	isDevMod  bool
-	licensing licensing.Licensing
-	flags     map[string]*FeatureFlag
-	enabled   map[string]bool // only the "on" values
-	config    string          // path to config file
-	vars      map[string]interface{}
-	log       log.Logger
+	isDevMod        bool
+	restartRequired bool
+	allowEditing    bool
+	licensing       licensing.Licensing
+	flags           map[string]*FeatureFlag
+	enabled         map[string]bool // only the "on" values
+	config          string          // path to config file
+	vars            map[string]any
+	log             log.Logger
 }
 
 // This will merge the flags with the current configuration
@@ -124,7 +126,12 @@ func (fm *FeatureManager) readFile() error {
 }
 
 // IsEnabled checks if a feature is enabled
-func (fm *FeatureManager) IsEnabled(flag string) bool {
+func (fm *FeatureManager) IsEnabled(ctx context.Context, flag string) bool {
+	return fm.enabled[flag]
+}
+
+// IsEnabledGlobally checks if a feature is for all tenants
+func (fm *FeatureManager) IsEnabledGlobally(flag string) bool {
 	return fm.enabled[flag]
 }
 
@@ -148,6 +155,14 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	return v
 }
 
+func (fm *FeatureManager) GetState() *FeatureManagerState {
+	return &FeatureManagerState{RestartRequired: fm.restartRequired, AllowEditing: fm.allowEditing}
+}
+
+func (fm *FeatureManager) SetRestartRequired() {
+	fm.restartRequired = true
+}
+
 // Check to see if a feature toggle exists by name
 func (fm *FeatureManager) LookupFlag(name string) (FeatureFlag, bool) {
 	f, ok := fm.flags[name]
@@ -161,8 +176,8 @@ func (fm *FeatureManager) LookupFlag(name string) (FeatureFlag, bool) {
 
 // WithFeatures is used to define feature toggles for testing.
 // The arguments are a list of strings that are optionally followed by a boolean value for example:
-// WithFeatures([]interface{}{"my_feature", "other_feature"}) or WithFeatures([]interface{}{"my_feature", true})
-func WithFeatures(spec ...interface{}) *FeatureManager {
+// WithFeatures([]any{"my_feature", "other_feature"}) or WithFeatures([]any{"my_feature", true})
+func WithFeatures(spec ...any) *FeatureManager {
 	count := len(spec)
 	features := make(map[string]*FeatureFlag, count)
 	enabled := make(map[string]bool, count)

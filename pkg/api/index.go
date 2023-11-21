@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,15 +30,15 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	settings.IsPublicDashboardView = c.IsPublicDashboardView
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
 		if !prefs.Cookies("analytics") {
 			settings.GoogleAnalytics4Id = ""
 			settings.GoogleAnalyticsId = ""
@@ -82,7 +83,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
 
 	userOrgCount := 1
-	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: c.UserID})
+	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
 	if err != nil {
 		hs.log.Error("Failed to count user orgs", "error", err)
 	}
@@ -96,16 +97,16 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
-			Id:                         c.UserID,
+			Id:                         userID,
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
-			Email:                      c.Email,
+			Email:                      c.SignedInUser.GetEmail(),
 			Name:                       c.Name,
-			OrgId:                      c.OrgID,
+			OrgId:                      c.SignedInUser.GetOrgID(),
 			OrgName:                    c.OrgName,
-			OrgRole:                    c.OrgRole,
+			OrgRole:                    c.SignedInUser.GetOrgRole(),
 			OrgCount:                   userOrgCount,
-			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
+			GravatarUrl:                dtos.GetGravatarUrl(c.SignedInUser.GetEmail()),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			Theme:                      theme.ID,
 			LightTheme:                 theme.Type == "light",
@@ -171,10 +172,22 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	return &data, nil
 }
 
-func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUser *user.SignedInUser) dtos.AnalyticsSettings {
-	identifier := signedInUser.Email + "@" + setting.AppUrl
+func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUser identity.Requester) dtos.AnalyticsSettings {
+	namespace, id := signedInUser.GetNamespacedID()
+	// Anonymous users do not have an email or auth info
+	if namespace != identity.NamespaceUser {
+		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+	}
 
-	authInfo, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: signedInUser.UserID})
+	userID, err := identity.IntIdentifier(namespace, id)
+	if err != nil {
+		hs.log.Error("Failed to parse user ID", "error", err)
+		return dtos.AnalyticsSettings{Identifier: "@" + setting.AppUrl}
+	}
+
+	identifier := signedInUser.GetEmail() + "@" + setting.AppUrl
+
+	authInfo, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		hs.log.Error("Failed to get auth info for analytics", "error", err)
 	}
@@ -231,7 +244,7 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 
 	if pref.IsValidThemeID(themePrefId) {
 		theme := pref.GetThemeByID(themePrefId)
-		if !theme.IsExtra || hs.Features.IsEnabled(featuremgmt.FlagExtraThemes) {
+		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagExtraThemes) {
 			return theme
 		}
 	}

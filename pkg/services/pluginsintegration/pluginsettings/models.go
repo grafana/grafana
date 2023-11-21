@@ -14,7 +14,7 @@ type DTO struct {
 	OrgID          int64
 	PluginID       string
 	PluginVersion  string
-	JSONData       map[string]interface{}
+	JSONData       map[string]any
 	SecureJSONData map[string][]byte
 	Enabled        bool
 	Pinned         bool
@@ -32,7 +32,7 @@ type InfoDTO struct {
 type UpdateArgs struct {
 	Enabled                 bool
 	Pinned                  bool
-	JSONData                map[string]interface{}
+	JSONData                map[string]any
 	SecureJSONData          map[string]string
 	PluginVersion           string
 	PluginID                string
@@ -61,7 +61,7 @@ type PluginSetting struct {
 	OrgId          int64
 	Enabled        bool
 	Pinned         bool
-	JsonData       map[string]interface{}
+	JsonData       map[string]any
 	SecureJsonData map[string][]byte
 	PluginVersion  string
 
@@ -82,11 +82,11 @@ type PluginSettingInfo struct {
 
 // Also acts as api DTO
 type UpdatePluginSettingCmd struct {
-	Enabled        bool                   `json:"enabled"`
-	Pinned         bool                   `json:"pinned"`
-	JsonData       map[string]interface{} `json:"jsonData"`
-	SecureJsonData map[string]string      `json:"secureJsonData"`
-	PluginVersion  string                 `json:"version"`
+	Enabled        bool              `json:"enabled"`
+	Pinned         bool              `json:"pinned"`
+	JsonData       map[string]any    `json:"jsonData"`
+	SecureJsonData map[string]string `json:"secureJsonData"`
+	PluginVersion  string            `json:"version"`
 
 	PluginId                string            `json:"-"`
 	OrgId                   int64             `json:"-"`
