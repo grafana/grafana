@@ -147,7 +147,7 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     position: 'absolute',
     marginTop: '-14px',
     padding: '3px 15px',
-    background: `${theme.colors.background.primary}`,
+    background: theme.colors.background.primary,
     transform: 'translateX(-50%)',
   }),
   followerContainer: css({
