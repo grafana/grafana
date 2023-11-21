@@ -26,6 +26,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
+import { renderHistogram } from './HeatmapHoverViewOld';
 import { HeatmapData } from './fields';
 import { calculateSparseBucketMinMax, formatMilliseconds, getFieldFromData, getHoverCellColor } from './tooltip/utils';
 
@@ -208,61 +209,8 @@ const HeatmapHoverCell = ({
 
   useEffect(
     () => {
-      if (showHistogram) {
-        let histCtx = can.current?.getContext('2d');
-
-        if (histCtx && xVals && yVals && countVals) {
-          let fromIdx = index;
-
-          while (xVals[fromIdx--] === xVals[index]) {}
-
-          fromIdx++;
-
-          let toIdx = fromIdx + data.yBucketCount!;
-
-          let maxCount = 0;
-
-          let i = fromIdx;
-          while (i < toIdx) {
-            let c = countVals[i];
-            maxCount = Math.max(maxCount, c);
-            i++;
-          }
-
-          let pHov = new Path2D();
-          let pRest = new Path2D();
-
-          i = fromIdx;
-          let j = 0;
-          while (i < toIdx) {
-            let c = countVals[i];
-
-            if (c > 0) {
-              let pctY = c / maxCount;
-              let pctX = j / (data.yBucketCount! + 1);
-
-              let p = i === index ? pHov : pRest;
-
-              p.rect(
-                Math.round(histCanWidth * pctX),
-                Math.round(histCanHeight * (1 - pctY)),
-                Math.round(histCanWidth / data.yBucketCount!),
-                Math.round(histCanHeight * pctY)
-              );
-            }
-
-            i++;
-            j++;
-          }
-
-          histCtx.clearRect(0, 0, histCanWidth, histCanHeight);
-
-          histCtx.fillStyle = '#2E3036';
-          histCtx.fill(pRest);
-
-          histCtx.fillStyle = '#5794F2';
-          histCtx.fill(pHov);
-        }
+      if (showHistogram && xVals != null && countVals != null) {
+        renderHistogram(can, histCanWidth, histCanHeight, xVals, countVals, index, data.yBucketCount!);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
