@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { getSelectParent } from 'test/helpers/selectOptionInTest';
 
-import { DataSourceInstanceSettings, DataSourcePluginMeta, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 
 import { MISSING_LABEL_FILTER_ERROR_MESSAGE } from '../../../prometheus/querybuilder/shared/LabelFilters';
-import { LokiDatasource } from '../../datasource';
+import { createLokiDatasource } from '../../mocks';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';
@@ -27,15 +27,7 @@ const mockTimeRange = {
 };
 
 const createDefaultProps = () => {
-  const datasource = new LokiDatasource(
-    {
-      url: '',
-      jsonData: {},
-      meta: {} as DataSourcePluginMeta,
-    } as DataSourceInstanceSettings,
-    undefined,
-    undefined
-  );
+  const datasource = createLokiDatasource();
 
   const props = {
     datasource,
