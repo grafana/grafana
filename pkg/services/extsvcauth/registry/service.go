@@ -123,11 +123,12 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 // associated service account has the correct permissions.
 func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	var (
-		errSave error
-		extSvc  *extsvcauth.ExternalService
+		errSave  error
+		extSvc   *extsvcauth.ExternalService
+		lockName = "ext-svc-save-" + cmd.Name
 	)
 
-	err := r.serverLock.LockExecuteAndReleaseWithRetries(ctx, "ext-svc-save-"+cmd.Name, lockTimeConfig, func(ctx context.Context) {
+	err := r.serverLock.LockExecuteAndReleaseWithRetries(ctx, lockName, lockTimeConfig, func(ctx context.Context) {
 		// Record provider in case of removal
 		r.lock.Lock()
 		r.extSvcProviders[slugify.Slugify(cmd.Name)] = cmd.AuthProvider
