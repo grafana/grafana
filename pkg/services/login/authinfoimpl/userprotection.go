@@ -1,4 +1,4 @@
-package authinfoservice
+package authinfoimpl
 
 import "github.com/grafana/grafana/pkg/services/user"
 
