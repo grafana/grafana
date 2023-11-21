@@ -244,7 +244,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   Consider the following dataset:
 
-  #### Data Set Example
+  #### Dataset Example
 
   | Timestamp         | json_data |
   |-------------------|-----------|
@@ -296,7 +296,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   For example, if you have this data:
 
-  #### Data Set Example
+  #### Dataset Example
 
   | Location  | Values |
   |-----------|--------|
@@ -373,7 +373,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   Consider the following dataset:
 
-  #### Data Set Example
+  #### Dataset Example
 
   | Time                | Temperature | Altitude |
   |---------------------|-------------|----------|
