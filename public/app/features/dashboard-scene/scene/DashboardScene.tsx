@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, UrlQueryMap } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -24,6 +24,7 @@ import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
+import { DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { findVizPanelByKey, forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel } from '../utils/utils';
@@ -54,6 +55,8 @@ export interface DashboardSceneState extends SceneObjectState {
   inspectPanelKey?: string;
   /** Panel to view in full screen */
   viewPanelKey?: string;
+  /** Edit view */
+  editview?: DashboardEditView;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
 }
@@ -77,7 +80,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Url state before editing started
    */
-  private _initiallUrlState?: UrlQueryMap;
+  private _initialUrlState?: H.Location;
   /**
    * change tracking subscription
    */
@@ -128,7 +131,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
-    this._initiallUrlState = locationService.getSearchObject();
+    this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
     this.setState({ isEditing: true });
@@ -148,7 +151,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Stop url sync before updating url
     this.stopUrlSync();
     // Now we can update url
-    locationService.partial(this._initiallUrlState!, true);
+    locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
     // Update state and disable editing
     this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again
@@ -166,14 +169,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta } = this.state;
+    const { meta, viewPanelKey } = this.state;
 
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: getDashboardUrl({
         uid: this.state.uid,
         currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null },
+        updateQuery: { viewPanel: null, inspect: null, editview: null },
         useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && meta.canEdit),
       }),
     };
@@ -192,7 +195,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       }
     }
 
-    if (this.state.viewPanelKey) {
+    if (viewPanelKey) {
       pageNav = {
         text: 'View panel',
         parentItem: pageNav,
@@ -261,6 +264,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       console.error('Failed to star dashboard', err);
     }
   }
+
+  public onOpenSettings = () => {
+    locationService.partial({ editview: 'settings' });
+  };
 
   /**
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
