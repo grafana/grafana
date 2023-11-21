@@ -182,55 +182,90 @@ type userCache interface {
 func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
-			// We need to copy the user here because we're going to mutate it
-			userCopy := *(c.SignedInUser)
 			targetOrgID, err := getTargetOrg(c)
 			if err != nil {
 				deny(c, nil, fmt.Errorf("failed to get target org: %w", err))
 				return
 			}
 
-			if userCopy.OrgID != targetOrgID {
-				switch targetOrgID {
-				case GlobalOrgID:
-					userCopy.OrgID = GlobalOrgID
-					userCopy.OrgRole = org.RoleNone
-					userCopy.OrgName = ""
-				default:
-					query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: targetOrgID}
-					queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
-					if err != nil {
-						deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
-						return
-					}
-					userCopy.OrgID = queryResult.OrgID
-					userCopy.OrgName = queryResult.OrgName
-					userCopy.OrgRole = queryResult.OrgRole
-				}
+			tmpUser, err := makeTmpUser(c.Req.Context(), service, cache, c.SignedInUser, targetOrgID)
+			if err != nil {
+				deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+				return
 			}
 
-			if userCopy.Permissions[targetOrgID] == nil {
-				permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
-				if err != nil {
-					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
-				}
-
-				// guard against nil map
-				if userCopy.Permissions == nil {
-					userCopy.Permissions = make(map[int64]map[string][]string)
-				}
-				userCopy.Permissions[targetOrgID] = GroupScopesByAction(permissions)
-			}
-
-			authorize(c, ac, &userCopy, evaluator)
+			authorize(c, ac, tmpUser, evaluator)
 
 			// guard against nil map
 			if c.SignedInUser.Permissions == nil {
 				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[targetOrgID] = userCopy.Permissions[targetOrgID]
+			c.SignedInUser.Permissions[targetOrgID] = tmpUser.GetPermissions()
 		}
 	}
+}
+
+// makeTmpUser creates a temporary user that can be used to evaluate access across orgs.
+func makeTmpUser(ctx context.Context, service Service, cache userCache, reqUser identity.Requester, targetOrgID int64) (identity.Requester, error) {
+	tmpUser := &user.SignedInUser{
+		OrgID:          reqUser.GetOrgID(),
+		OrgName:        reqUser.GetOrgName(),
+		OrgRole:        reqUser.GetOrgRole(),
+		IsGrafanaAdmin: reqUser.GetIsGrafanaAdmin(),
+		Login:          reqUser.GetLogin(),
+		Teams:          reqUser.GetTeams(),
+		Permissions: map[int64]map[string][]string{
+			reqUser.GetOrgID(): reqUser.GetPermissions(),
+		},
+	}
+
+	namespace, identifier := reqUser.GetNamespacedID()
+	id, _ := identity.IntIdentifier(namespace, identifier)
+	switch namespace {
+	case identity.NamespaceUser:
+		tmpUser.UserID = id
+	case identity.NamespaceAPIKey:
+		tmpUser.ApiKeyID = id
+	case identity.NamespaceServiceAccount:
+		tmpUser.UserID = id
+		tmpUser.IsServiceAccount = true
+	}
+
+	if tmpUser.OrgID != targetOrgID {
+		switch targetOrgID {
+		case GlobalOrgID:
+			tmpUser.OrgID = GlobalOrgID
+			tmpUser.OrgRole = org.RoleNone
+			tmpUser.OrgName = ""
+		default:
+			if cache == nil {
+				return nil, errors.New("user cache is nil")
+			}
+			query := user.GetSignedInUserQuery{UserID: tmpUser.UserID, OrgID: targetOrgID}
+			queryResult, err := cache.GetSignedInUserWithCacheCtx(ctx, &query)
+			if err != nil {
+				return nil, err
+			}
+			tmpUser.OrgID = queryResult.OrgID
+			tmpUser.OrgName = queryResult.OrgName
+			tmpUser.OrgRole = queryResult.OrgRole
+		}
+	}
+
+	if tmpUser.Permissions[targetOrgID] == nil || len(tmpUser.Permissions[targetOrgID]) == 0 {
+		permissions, err := service.GetUserPermissions(ctx, tmpUser, Options{})
+		if err != nil {
+			return nil, err
+		}
+
+		// guard against nil map
+		if tmpUser.Permissions == nil {
+			tmpUser.Permissions = make(map[int64]map[string][]string)
+		}
+		tmpUser.Permissions[targetOrgID] = GroupScopesByAction(permissions)
+	}
+
+	return tmpUser, nil
 }
 
 func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {

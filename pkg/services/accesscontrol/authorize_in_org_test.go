@@ -80,9 +80,11 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
 			accessControl:   ac,
 			userCache:       &usertest.FakeUserService{},
-			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{accesscontrol.GlobalOrgID: {"users:read": {"users:*"}}}},
-			acService:       &actest.FakeService{},
-			expectedStatus:  http.StatusOK,
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			acService: &actest.FakeService{
+				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			},
+			expectedStatus: http.StatusOK,
 		},
 		{
 			name: "should return 403 when user has no permissions for a global org",

@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -116,18 +115,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		}
 	}
 
-	namespace, identifier := user.GetNamespacedID()
-
-	var userID int64
-	switch namespace {
-	case authn.NamespaceUser, authn.NamespaceServiceAccount:
-		var err error
-		userID, err = strconv.ParseInt(identifier, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+	userID, _ := identity.UserIdentifier(user.GetNamespacedID())
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:        user.GetOrgID(),
 		UserID:       userID,

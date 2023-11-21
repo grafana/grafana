@@ -104,26 +104,20 @@ type User struct {
 // HasGlobalAccess checks user access with globally assigned permissions only
 func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
 	return func(evaluator Evaluator) bool {
-		userCopy := *c.SignedInUser
-		userCopy.OrgID = GlobalOrgID
-		userCopy.OrgRole = ""
-		userCopy.OrgName = ""
-		if userCopy.Permissions[GlobalOrgID] == nil {
-			permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
-			if err != nil {
-				c.Logger.Error("Failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
-			}
-			userCopy.Permissions[GlobalOrgID] = GroupScopesByAction(permissions)
+		var targetOrgID int64 = GlobalOrgID
+		tmpUser, err := makeTmpUser(c.Req.Context(), service, nil, c.SignedInUser, targetOrgID)
+		if err != nil {
+			deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 		}
 
-		hasAccess, err := ac.Evaluate(c.Req.Context(), &userCopy, evaluator)
+		hasAccess, err := ac.Evaluate(c.Req.Context(), tmpUser, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false
 		}
 
 		// set on user so we don't fetch global permissions every time this is called
-		c.SignedInUser.Permissions[GlobalOrgID] = userCopy.Permissions[GlobalOrgID]
+		c.SignedInUser.Permissions[GlobalOrgID] = tmpUser.GetPermissions()
 
 		return hasAccess
 	}
