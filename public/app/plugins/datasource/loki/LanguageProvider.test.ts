@@ -47,6 +47,26 @@ describe('Language completion provider', () => {
         start: 1560153109000,
       });
     });
+
+    it('should use provided time range', () => {
+      const datasource = setup({});
+      datasource.getTimeRangeParams = jest
+        .fn()
+        .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
+      const languageProvider = new LanguageProvider(datasource);
+      languageProvider.request = jest.fn();
+      languageProvider.fetchSeries('{job="grafana"}', { timeRange: mockTimeRange });
+      // time range was passed to getTimeRangeParams
+      expect(datasource.getTimeRangeParams).toHaveBeenCalled();
+      expect(datasource.getTimeRangeParams).toHaveBeenCalledWith(mockTimeRange);
+      // time range was passed to request
+      expect(languageProvider.request).toHaveBeenCalled();
+      expect(languageProvider.request).toHaveBeenCalledWith('series', {
+        end: 1546380000000,
+        'match[]': '{job="grafana"}',
+        start: 1546372800000,
+      });
+    });
   });
 
   describe('fetchSeriesLabels', () => {
