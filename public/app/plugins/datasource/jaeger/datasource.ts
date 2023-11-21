@@ -13,10 +13,10 @@ import {
   FieldType,
   MutableDataFrame,
   ScopedVars,
+  urlUtil,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
-import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
@@ -47,7 +47,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
   }
 
-  async metadataRequest(url: string, params?: Record<string, unknown>) {
+  async metadataRequest(url: string, params?: Record<string, string | number | boolean>) {
     const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
     return res.data.data;
   }
@@ -232,10 +232,10 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
 
   private _request(
     apiUrl: string,
-    data?: Record<string, unknown>,
+    data?: Record<string, string | number | boolean>,
     options?: Partial<BackendSrvRequest>
   ): Observable<Record<string, any>> {
-    const params = data ? serializeParams(data) : '';
+    const params = data ? urlUtil.serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,

@@ -198,6 +198,7 @@ export const urlUtil = {
   appendQueryToUrl,
   getUrlSearchParams,
   parseKeyValue,
+  serializeParams,
 };
 
 /**
@@ -236,3 +237,21 @@ export const toURLRange = (range: RawTimeRange): URLRange => {
     to,
   };
 };
+
+/**
+ * Converts an object into a URL-encoded query string.
+ *
+ * @param params data to serialize
+ * @returns A URL-encoded string representing the provided data.
+ */
+function serializeParams(params: Record<string, string | number | boolean | Array<string | number | boolean>>): string {
+  return Object.keys(params)
+    .map((key) => {
+      const value = params[key];
+      if (Array.isArray(value)) {
+        return value.map((arrayValue) => `${encodeURIComponent(key)}=${encodeURIComponent(arrayValue)}`).join('&');
+      }
+      return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    })
+    .join('&');
+}

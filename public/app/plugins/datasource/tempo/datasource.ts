@@ -19,6 +19,7 @@ import {
   rangeUtil,
   ScopedVars,
   TestDataSourceResponse,
+  urlUtil,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -32,7 +33,6 @@ import {
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { serializeParams } from 'app/core/utils/fetch';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -316,8 +316,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
         const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
         const searchQuery = this.buildSearchQuery(query, timeRange);
+        // Params can't have undefined values
+        const params: Record<string, string | number> = {};
+        for (const key in searchQuery) {
+          const value = searchQuery[key];
+          if (value !== undefined) {
+            params[key] = value;
+          }
+        }
+
         subQueries.push(
-          this._request('/api/search', searchQuery).pipe(
+          this._request('/api/search', params).pipe(
             map((response) => {
               return {
                 data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
@@ -688,10 +697,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   private _request(
     apiUrl: string,
-    data?: unknown,
+    data?: Record<string, string | number>,
     options?: Partial<BackendSrvRequest>
   ): Observable<Record<string, any>> {
-    const params = data ? serializeParams(data) : '';
+    const params = data ? urlUtil.serializeParams(data) : '';
     const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = { ...options, url };
 
