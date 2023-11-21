@@ -437,6 +437,10 @@ func getK8sApiserverVersion() (string, error) {
 		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
 	}
 
+	if len(bi.Deps) == 0 {
+		return "v?.?", nil // this is normal while debugging
+	}
+
 	for _, dep := range bi.Deps {
 		if dep.Path == "k8s.io/apiserver" {
 			if !semver.IsValid(dep.Version) {

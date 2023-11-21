@@ -34,31 +34,6 @@ func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service, userSe
 	return store
 }
 
-func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*login.ExternalUserInfo, error) {
-	userQuery := user.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	usr, err := s.userService.GetByLogin(ctx, &userQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.ID}
-	authInfo, err := s.GetAuthInfo(ctx, authInfoQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &login.ExternalUserInfo{
-		UserId:     usr.ID,
-		Login:      usr.Login,
-		Email:      usr.Email,
-		Name:       usr.Name,
-		IsDisabled: usr.IsDisabled,
-		AuthModule: authInfo.AuthModule,
-		AuthId:     authInfo.AuthId,
-	}
-	return result, nil
-}
-
 // GetAuthInfo returns the auth info for a user
 // It will return the latest auth info for a user
 func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
@@ -190,6 +165,7 @@ func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *login.
 	}
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Cols("created").Update(authInfo, cond)
+
 		return err
 	})
 }
@@ -233,8 +209,32 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAut
 
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		upd, err := sess.MustCols("o_auth_expiry").Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).Update(authUser)
-		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId,
-			"auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
+
+		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
+
+		// Clean up duplicated entries
+		if upd > 1 {
+			var id int64
+			ok, err := sess.SQL(
+				"SELECT id FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ?",
+				cmd.UserId, cmd.AuthModule, cmd.AuthId,
+			).Get(&id)
+
+			if err != nil {
+				return err
+			}
+
+			if !ok {
+				return nil
+			}
+
+			_, err = sess.Exec(
+				"DELETE FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ? AND id != ?",
+				cmd.UserId, cmd.AuthModule, cmd.AuthId, id,
+			)
+			return err
+		}
+
 		return err
 	})
 }

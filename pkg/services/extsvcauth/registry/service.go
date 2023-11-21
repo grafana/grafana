@@ -35,10 +35,49 @@ func ProvideExtSvcRegistry(oauthServer *oasimpl.OAuth2ServiceImpl, saSvc *extsvc
 	}
 }
 
+// CleanUpOrphanedExternalServices remove external services present in store that have not been registered on startup.
+func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
+	extsvcs, err := r.retrieveExtSvcProviders(ctx)
+	if err != nil {
+		r.logger.Error("Could not retrieve external services from store", "error", err.Error())
+		return err
+	}
+	for name, provider := range extsvcs {
+		// The service did not register this time. Removed.
+		if _, ok := r.extSvcProviders[slugify.Slugify(name)]; !ok {
+			r.logger.Info("Detected removed External Service", "service", name, "provider", provider)
+			switch provider {
+			case extsvcauth.ServiceAccounts:
+				if err := r.saReg.RemoveExternalService(ctx, name); err != nil {
+					return err
+				}
+			case extsvcauth.OAuth2Server:
+				if err := r.oauthReg.RemoveExternalService(ctx, name); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // HasExternalService returns whether an external service has been saved with that name.
 func (r *Registry) HasExternalService(ctx context.Context, name string) (bool, error) {
 	_, ok := r.extSvcProviders[slugify.Slugify(name)]
 	return ok, nil
+}
+
+// GetExternalServiceNames returns the list of external services registered in store.
+func (r *Registry) GetExternalServiceNames(ctx context.Context) ([]string, error) {
+	extSvcProviders, err := r.retrieveExtSvcProviders(ctx)
+	if err != nil {
+		return nil, err
+	}
+	names := []string{}
+	for s := range extSvcProviders {
+		names = append(names, s)
+	}
+	return names, nil
 }
 
 // RemoveExternalService removes an external service and its associated resources from the database (ex: service account, token).
@@ -96,4 +135,35 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 	default:
 		return nil, extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", cmd.AuthProvider)
 	}
+}
+
+// retrieveExtSvcProviders fetches external services from store and map their associated provider
+func (r *Registry) retrieveExtSvcProviders(ctx context.Context) (map[string]extsvcauth.AuthProvider, error) {
+	extsvcs := map[string]extsvcauth.AuthProvider{}
+	if r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+		names, err := r.saReg.GetExternalServiceNames(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for i := range names {
+			extsvcs[names[i]] = extsvcauth.ServiceAccounts
+		}
+	}
+	// Important to run this second as the OAuth server uses External Service Accounts as well.
+	if r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) {
+		names, err := r.oauthReg.GetExternalServiceNames(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for i := range names {
+			extsvcs[names[i]] = extsvcauth.OAuth2Server
+		}
+	}
+	return extsvcs, nil
+}
+
+func (r *Registry) Run(ctx context.Context) error {
+	// This is a one-time background job.
+	// Cleans up external services that have not been registered this time.
+	return r.CleanUpOrphanedExternalServices(ctx)
 }

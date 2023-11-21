@@ -387,7 +387,7 @@ type CountDashboardsInFolderRequest struct {
 
 func FromDashboard(dash *Dashboard) *folder.Folder {
 	return &folder.Folder{
-		ID:        dash.ID,
+		ID:        dash.ID, // nolint:staticcheck
 		UID:       dash.UID,
 		OrgID:     dash.OrgID,
 		Title:     dash.Title,

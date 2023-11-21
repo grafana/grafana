@@ -104,6 +104,30 @@ describe('PrometheusMetricFindQuery', () => {
       });
     });
 
+    const emptyFilters = ['{}', '{   }', ' {   }  ', '   {}  '];
+
+    emptyFilters.forEach((emptyFilter) => {
+      const queryString = `label_values(${emptyFilter}, resource)`;
+      it(`Empty filter, query, ${queryString} should just generate label search query`, async () => {
+        const query = setupMetricFindQuery({
+          query: queryString,
+          response: {
+            data: ['value1', 'value2', 'value3'],
+          },
+        });
+        const results = await query.process(raw);
+
+        expect(results).toHaveLength(3);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledWith({
+          method: 'GET',
+          url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
+          hideFromInspector: true,
+          headers: {},
+        });
+      });
+    });
+
     // <LegacyPrometheus>
     it('label_values(metric, resource) should generate series query with correct time', async () => {
       const query = setupMetricFindQuery({
