@@ -14,13 +14,9 @@ describe('Query editor', () => {
 
     e2e.components.RadioButton.container().filter(':contains("Code")').click();
 
-    // we need to wait for the query-field being lazy-loaded, in two steps:
-    // it is a two-step process:
-    // 1. first we wait for the text 'Loading...' to appear
-    // 1. then we wait for the text 'Loading...' to disappear
-    const monacoLoadingText = 'Loading...';
-    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
-    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
+    // Wait for lazy loading Monaco
+    e2e.components.QueryField.container().children('[data-testid="Spinner"]').should('not.exist');
+    cy.window().its('monaco').should('exist');
     e2e.components.QueryField.container().type(queryText, { parseSpecialCharSequences: false }).type('{backspace}');
 
     cy.contains(queryText.slice(0, -1)).should('be.visible');
