@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Settings, ThunkResult, UpdateSettingsQuery } from 'app/types';
 
@@ -33,6 +33,9 @@ export function loadSettings(): ThunkResult<Promise<Settings>> {
 
 export function loadProviders(): ThunkResult<Promise<SSOProvider[]>> {
   return async (dispatch) => {
+    if (!config.featureToggles.ssoSettingsApi) {
+      return [];
+    }
     const result = await getBackendSrv().get('/api/v1/sso-settings');
     dispatch(providersLoaded(result));
     return result;

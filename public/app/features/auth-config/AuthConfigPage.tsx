@@ -41,15 +41,14 @@ export const AuthConfigPageUnconnected = ({
   }, [loadSettings]);
 
   const authProviders = getRegisteredAuthProviders();
-  const configuredProviders = authProviders.filter((p) => providerStatuses[p.id]?.configured);
-
+  const availableProviders = authProviders.filter((p) => !providerStatuses[p.id]?.hide);
   const onProviderCardClick = (providerType: string) => {
     reportInteraction('authentication_ui_provider_clicked', { provider: providerType });
   };
 
-  const providerList = configuredProviders.length
+  const providerList = availableProviders.length
     ? [
-        ...configuredProviders.map((p) => ({ provider: p.id, settings: { ...providerStatuses[p.id], type: p.type } })),
+        ...availableProviders.map((p) => ({ provider: p.id, settings: { ...providerStatuses[p.id], type: p.type } })),
         ...providers,
       ]
     : providers;
