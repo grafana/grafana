@@ -8,13 +8,16 @@ import {
   PluginType,
   VariableHide,
 } from '@grafana/data';
-import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, setBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
 
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData } from '../types';
+
+const queryMock = jest.fn().mockReturnValue(of({ data: [] }));
+jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation((args) => queryMock(args));
 
 export function setupMockedTemplateService(variables: CustomVariableModel[]) {
   const templateService = new TemplateSrv();
@@ -93,7 +96,7 @@ export function setupMockedDataSource({
     get: getMock,
   });
 
-  return { datasource, fetchMock, templateService, timeSrv };
+  return { datasource, fetchMock, queryMock, templateService, timeSrv };
 }
 
 export const metricVariable: CustomVariableModel = {

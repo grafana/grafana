@@ -233,6 +233,8 @@ export enum VariableHide {
  * `4`: Numerical DESC
  * `5`: Alphabetical Case Insensitive ASC
  * `6`: Alphabetical Case Insensitive DESC
+ * `7`: Natural ASC
+ * `8`: Natural DESC
  */
 export enum VariableSort {
   alphabeticalAsc = 1,
@@ -240,6 +242,8 @@ export enum VariableSort {
   alphabeticalCaseInsensitiveDesc = 6,
   alphabeticalDesc = 2,
   disabled = 0,
+  naturalAsc = 7,
+  naturalDesc = 8,
   numericalAsc = 3,
   numericalDesc = 4,
 }
@@ -301,7 +305,7 @@ export interface DashboardLink {
   /**
    * Link URL. Only required/valid if the type is link
    */
-  url: string;
+  url?: string;
 }
 
 export const defaultDashboardLink: Partial<DashboardLink> = {

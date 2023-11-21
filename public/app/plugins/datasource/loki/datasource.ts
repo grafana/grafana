@@ -35,14 +35,13 @@ import {
   QueryFilterOptions,
   renderLegendFormat,
   LegacyMetricFindQueryOptions,
+  AdHocVariableFilter,
 } from '@grafana/data';
-import { intervalToMs } from '@grafana/data/src/datetime/rangeutil';
 import { Duration } from '@grafana/lezer-logql';
-import { BackendSrvRequest, config, DataSourceWithBackend } from '@grafana/runtime';
+import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
@@ -421,13 +420,20 @@ export class LokiDatasource
    * Implemented as a part of DataSourceApi. Interpolates variables and adds ad hoc filters to a list of Loki queries.
    * @returns An array of expanded Loki queries with interpolated variables and ad hoc filters.
    */
-  interpolateVariablesInQueries(queries: LokiQuery[], scopedVars: ScopedVars): LokiQuery[] {
+  interpolateVariablesInQueries(
+    queries: LokiQuery[],
+    scopedVars: ScopedVars,
+    adhocFilters?: AdHocVariableFilter[]
+  ): LokiQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => ({
         ...query,
         datasource: this.getRef(),
-        expr: this.addAdHocFilters(this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)),
+        expr: this.addAdHocFilters(
+          this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+          adhocFilters
+        ),
       }));
     }
 
@@ -594,7 +600,7 @@ export class LokiDatasource
       if (!!durations[idx]) {
         // if query has a duration e.g. [1m]
         end = this.getTimeRangeParams().end;
-        start = end - intervalToMs(durations[idx]) * NS_IN_MS;
+        start = end - rangeUtil.intervalToMs(durations[idx]) * NS_IN_MS;
         return { start, end };
       } else {
         // if query has no duration e.g. [$__interval]
@@ -928,8 +934,14 @@ export class LokiDatasource
         expression = addFilterAsLabelFilter(expression, [lastPosition], filter);
         break;
       }
+      case 'ADD_STRING_FILTER':
       case 'ADD_LINE_FILTER': {
-        expression = addLineFilter(expression);
+        expression = addLineFilter(expression, action.options?.value);
+        break;
+      }
+      case 'ADD_STRING_FILTER_OUT':
+      case 'ADD_LINE_FILTER_OUT': {
+        expression = addLineFilter(expression, action.options?.value, '!=');
         break;
       }
       default:
@@ -1041,8 +1053,11 @@ export class LokiDatasource
    * @returns The query expression with ad hoc filters and correctly escaped values.
    * @todo this.templateSrv.getAdhocFilters() is deprecated
    */
-  addAdHocFilters(queryExpr: string) {
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+  addAdHocFilters(queryExpr: string, adhocFilters?: AdHocVariableFilter[]) {
+    if (!adhocFilters) {
+      return queryExpr;
+    }
+
     let expr = replaceVariables(queryExpr);
 
     expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
@@ -1080,12 +1095,12 @@ export class LokiDatasource
    * It is called from DatasourceWithBackend.
    * @returns A modified Loki query with template variables and ad hoc filters applied.
    */
-  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
+  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars, adhocFilters?: AdHocVariableFilter[]): LokiQuery {
     // We want to interpolate these variables on backend because we support using them in
     // alerting/ML queries and we want to have consistent interpolation for all queries
     const { __auto, __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
-    const exprWithAdHoc = this.addAdHocFilters(target.expr);
+    const exprWithAdHoc = this.addAdHocFilters(target.expr, adhocFilters);
 
     return {
       ...target,

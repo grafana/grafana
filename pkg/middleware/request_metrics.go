@@ -37,7 +37,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 
 	histogramLabels := []string{"handler", "status_code", "method"}
 
-	if features.IsEnabled(featuremgmt.FlagRequestInstrumentationStatusSource) {
+	if features.IsEnabledGlobally(featuremgmt.FlagRequestInstrumentationStatusSource) {
 		histogramLabels = append(histogramLabels, "status_source")
 	}
 
@@ -45,7 +45,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		histogramLabels = append(histogramLabels, "grafana_team")
 	}
 
-	if features.IsEnabled(featuremgmt.FlagHttpSLOLevels) {
+	if features.IsEnabledGlobally(featuremgmt.FlagHttpSLOLevels) {
 		histogramLabels = append(histogramLabels, "slo_group")
 	}
 
@@ -56,7 +56,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		Buckets:   defBuckets,
 	}
 
-	if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
+	if features.IsEnabledGlobally(featuremgmt.FlagEnableNativeHTTPHistogram) {
 		// the recommended default value from the prom_client
 		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
 		// Giving this variable an value means the client will expose the histograms as an
@@ -95,7 +95,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 					handler = "notfound"
 				} else {
 					// log requests where we could not identify handler so we can register them.
-					if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
+					if features.IsEnabled(r.Context(), featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
 						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
 					}
 				}
@@ -104,7 +104,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 			labelValues := []string{handler, code, r.Method}
 			rmd := requestmeta.GetRequestMetaData(r.Context())
 
-			if features.IsEnabled(featuremgmt.FlagRequestInstrumentationStatusSource) {
+			if features.IsEnabled(r.Context(), featuremgmt.FlagRequestInstrumentationStatusSource) {
 				labelValues = append(labelValues, string(rmd.StatusSource))
 			}
 
@@ -112,7 +112,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				labelValues = append(labelValues, rmd.Team)
 			}
 
-			if features.IsEnabled(featuremgmt.FlagHttpSLOLevels) {
+			if features.IsEnabled(r.Context(), featuremgmt.FlagHttpSLOLevels) {
 				labelValues = append(labelValues, string(rmd.SLOGroup))
 			}
 
