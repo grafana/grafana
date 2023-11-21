@@ -60,6 +60,7 @@ describe('Exemplars', () => {
     // Wait for lazy loading Monaco
     e2e.components.QueryField.container().children('[data-testid="Spinner"]').should('not.exist');
     cy.window().its('monaco').should('exist');
+    cy.get('.monaco-editor textarea:first').should('exist');
 
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.fromField().clear().type('2021-07-10 17:10:00');

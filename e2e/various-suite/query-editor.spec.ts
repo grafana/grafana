@@ -17,6 +17,8 @@ describe('Query editor', () => {
     // Wait for lazy loading Monaco
     e2e.components.QueryField.container().children('[data-testid="Spinner"]').should('not.exist');
     cy.window().its('monaco').should('exist');
+    cy.get('.monaco-editor textarea:first').should('exist');
+
     e2e.components.QueryField.container().type(queryText, { parseSpecialCharSequences: false }).type('{backspace}');
 
     cy.contains(queryText.slice(0, -1)).should('be.visible');

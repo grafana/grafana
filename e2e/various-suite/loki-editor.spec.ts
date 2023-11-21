@@ -42,6 +42,7 @@ describe('Loki Query Editor', () => {
     // Wait for lazy loading Monaco
     e2e.components.QueryField.container().children('[data-testid="Spinner"]').should('not.exist');
     cy.window().its('monaco').should('exist');
+    cy.get('.monaco-editor textarea:first').should('exist');
 
     // adds closing braces around empty value
     e2e.components.QueryField.container().type('time(');
