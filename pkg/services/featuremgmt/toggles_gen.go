@@ -582,4 +582,8 @@ const (
 	// FlagAlertingSimplifiedRouting
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
+
+	// FlagRegressionTransformation
+	// Enables regresion analysis transformation
+	FlagRegressionTransformation = "regressionTransformation"
 )

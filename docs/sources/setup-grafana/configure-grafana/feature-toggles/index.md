@@ -163,6 +163,7 @@ Experimental features might be changed or removed without prior notice.
 | `dashboardScene`                            | Enables dashboard rendering using scenes for all roles                                                                                                                                                                                                                            |
 | `logsInfiniteScrolling`                     | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                                                                                                                                                                           |
 | `flameGraphItemCollapsing`                  | Allow collapsing of flame graph items                                                                                                                                                                                                                                             |
+| `regressionTransformation`                  | Enables regresion analysis transformation                                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 

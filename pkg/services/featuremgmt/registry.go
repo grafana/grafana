@@ -1046,6 +1046,13 @@ var (
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 		},
+		{
+			Name:         "regressionTransformation",
+			Description:  "Enables regresion analysis transformation",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )
 

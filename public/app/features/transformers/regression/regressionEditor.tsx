@@ -1,13 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
-import { DataTransformerID, TransformerRegistryItem, TransformerUIProps, TransformerCategory } from '@grafana/data';
+import {
+  DataTransformerID,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+  fieldMatchers,
+  FieldMatcherID,
+} from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
+import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
-import { useAllFieldNamesFromDataFrames } from '../utils';
 
-import { ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
+import { DEFAULTS, ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
+
+const fieldNamePickerSettings = {
+  editor: FieldNamePicker,
+  id: '',
+  name: '',
+  settings: { width: 24, isClearable: false },
+};
+
+const LABEL_WIDTH = 16;
 
 export const RegressionTransformerEditor = ({
   input,
@@ -19,53 +35,95 @@ export const RegressionTransformerEditor = ({
     { label: 'Polynomial', value: ModelType.polynomial },
   ];
 
-  const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
+  useEffect(() => {
+    let x;
+    let y;
+    if (!options.xFieldName) {
+      const timeMatcher = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
+      for (const frame of input) {
+        x = frame.fields.find((field) => timeMatcher(field, frame, input));
+        if (x) {
+          break;
+        }
+      }
+      if (!x) {
+        const firstMatcher = fieldMatchers.get(FieldMatcherID.first).get({});
+        for (const frame of input) {
+          x = frame.fields.find((field) => firstMatcher(field, frame, input));
+          if (x) {
+            break;
+          }
+        }
+      }
+    }
+    if (!options.yFieldName) {
+      const numberMatcher = fieldMatchers.get(FieldMatcherID.numeric).get({});
+      for (const frame of input) {
+        y = frame.fields.find((field) => numberMatcher(field, frame, input));
+        if (y) {
+          break;
+        }
+      }
+    }
+
+    if (x && y) {
+      onChange({ ...options, xFieldName: x.name, yFieldName: y.name });
+    }
+  });
 
   return (
     <>
-      <InlineField label="x field">
-        <Select
-          options={fieldNames}
-          value={options.xFieldName}
+      <InlineField labelWidth={LABEL_WIDTH} label="x field">
+        <FieldNamePicker
+          context={{ data: input }}
+          value={options.xFieldName ?? ''}
+          item={fieldNamePickerSettings}
           onChange={(v) => {
-            onChange({ ...options, xFieldName: v.value });
+            onChange({ ...options, xFieldName: v });
           }}
-        ></Select>
+        ></FieldNamePicker>
       </InlineField>
-      <InlineField label="y field">
-        <Select
-          options={fieldNames}
-          value={options.yFieldName}
+      <InlineField labelWidth={LABEL_WIDTH} label="y field">
+        <FieldNamePicker
+          context={{ data: input }}
+          value={options.yFieldName ?? ''}
+          item={fieldNamePickerSettings}
           onChange={(v) => {
-            onChange({ ...options, yFieldName: v.value });
+            onChange({ ...options, yFieldName: v });
           }}
-        ></Select>
+        ></FieldNamePicker>
       </InlineField>
-      <InlineField label="Model type">
+      <InlineField labelWidth={LABEL_WIDTH} label="Model type">
         <Select
-          value={options.modelType}
+          value={options.modelType ?? DEFAULTS.modelType}
           onChange={(v) => {
-            onChange({ ...options, modelType: v.value ?? ModelType.linear });
+            onChange({ ...options, modelType: v.value ?? DEFAULTS.modelType });
           }}
           options={modelTypeOptions}
         ></Select>
       </InlineField>
-      <InlineField label="Resolution">
+      <InlineField labelWidth={LABEL_WIDTH} label="Resolution">
         <NumberInput
-          value={options.resolution}
+          value={options.resolution ?? DEFAULTS.resolution}
           onChange={(v) => {
             onChange({ ...options, resolution: v });
           }}
         ></NumberInput>
       </InlineField>
       {options.modelType === ModelType.polynomial && (
-        <InlineField label="Order">
-          <NumberInput
-            value={options.order}
+        <InlineField labelWidth={LABEL_WIDTH} label="Degree">
+          <Select<number>
+            value={options.degree ?? DEFAULTS.degree}
+            options={[
+              { label: 'Quadratic', value: 2 },
+              { label: 'Cubic', value: 3 },
+              { label: 'Quartic', value: 4 },
+              { label: 'Quintic', value: 5 },
+            ]}
             onChange={(v) => {
-              onChange({ ...options, order: v });
+              onChange({ ...options, degree: v.value });
             }}
-          ></NumberInput>
+          ></Select>
         </InlineField>
       )}
     </>

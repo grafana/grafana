@@ -5,9 +5,10 @@ import { map } from 'rxjs';
 import {
   DataFrame,
   DataTransformerID,
+  FieldMatcherID,
   FieldType,
   SynchronousDataTransformerInfo,
-  getFieldDisplayName,
+  fieldMatchers,
 } from '@grafana/data';
 
 export enum ModelType {
@@ -17,11 +18,13 @@ export enum ModelType {
 
 export interface RegressionTransformerOptions {
   modelType?: ModelType;
-  order?: number;
+  degree?: number;
   xFieldName?: string;
   yFieldName?: string;
   resolution?: number;
 }
+
+export const DEFAULTS = { resolution: 100, modelType: ModelType.linear, degree: 2 };
 
 export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTransformerOptions> = {
   id: DataTransformerID.regression,
@@ -30,21 +33,26 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
     source.pipe(map((data) => RegressionTransformer.transformer(options, ctx)(data))),
   transformer: (options, ctx) => {
     return (frames: DataFrame[]) => {
-      const { resolution = 100 } = options;
+      const { resolution, modelType, degree } = { ...DEFAULTS, ...options };
       if (frames.length === 0) {
         return frames;
       }
+      const matchesY = fieldMatchers.get(FieldMatcherID.byName).get(options.yFieldName);
+      const matchesX = fieldMatchers.get(FieldMatcherID.byName).get(options.xFieldName);
 
       let xField;
       let yField;
       for (const frame of frames) {
-        const fx = frame.fields.find((f) => options.xFieldName === getFieldDisplayName(f, frame, frames));
-        if (fx) {
-          xField = fx;
-        }
-        const fy = frame.fields.find((f) => options.yFieldName === getFieldDisplayName(f, frame, frames));
+        const fy = frame.fields.find((f) => matchesY(f, frame, frames));
         if (fy) {
           yField = fy;
+          const fx = frame.fields.find((f) => matchesX(f, frame, frames));
+          if (fx) {
+            xField = fx;
+            break;
+          } else {
+            throw 'X and Y fields must be part of the same frame';
+          }
         }
       }
 
@@ -73,22 +81,22 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
       }
 
       let result: PolynomialRegression | SimpleLinearRegression;
-      switch (options.modelType) {
+      switch (modelType) {
         case ModelType.linear:
           result = new SimpleLinearRegression(xValues, yValues);
           break;
         case ModelType.polynomial:
-          result = new PolynomialRegression(xValues, yValues, options.order ?? 2);
+          result = new PolynomialRegression(xValues, yValues, degree);
           break;
         default:
           return frames;
       }
 
       const newFrame: DataFrame = {
-        name: `${options.modelType} regression`,
+        name: `${modelType} regression`,
         length: points.length,
         fields: [
-          { name: `${xField.name} predicted`, type: xField.type, values: points, config: {} },
+          { name: xField.name, type: xField.type, values: points, config: {} },
           {
             name: `${yField.name} predicted`,
             type: yField.type,

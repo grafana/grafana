@@ -62,8 +62,8 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     limitTransformRegistryItem,
     joinByLabelsTransformRegistryItem,
     partitionByValuesTransformRegistryItem,
-    regressionTransformerRegistryItem,
     ...(config.featureToggles.formatString ? [formatStringTransformerRegistryItem] : []),
+    ...(config.featureToggles.regressionTransformation ? [regressionTransformerRegistryItem] : []),
     formatTimeTransformerRegistryItem,
     timeSeriesTableTransformRegistryItem,
   ];
