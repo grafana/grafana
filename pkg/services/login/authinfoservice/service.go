@@ -17,9 +17,7 @@ func ProvideAuthInfoService(authInfoStore login.Store) *Implementation {
 		authInfoStore: authInfoStore,
 		logger:        log.New("login.authinfo"),
 	}
-	// FIXME: disabled metrics until further notice
-	// query performance is slow for more than 20000 users
-	// usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
+
 	return s
 }
 
@@ -44,9 +42,4 @@ func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfo
 
 func (s *Implementation) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return s.authInfoStore.DeleteUserAuthInfo(ctx, userID)
-}
-
-func (s *Implementation) Run(ctx context.Context) error {
-	s.logger.Debug("Started AuthInfo Metrics collection service")
-	return s.authInfoStore.RunMetricsCollection(ctx)
 }
