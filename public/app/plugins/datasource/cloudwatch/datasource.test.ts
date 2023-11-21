@@ -28,7 +28,7 @@ describe('datasource', () => {
   });
   describe('query', () => {
     it('should not run a query if log groups is not specified', async () => {
-      const { datasource, fetchMock } = setupMockedDataSource();
+      const { datasource, queryMock } = setupMockedDataSource();
       await lastValueFrom(
         datasource.query({
           targets: [
@@ -59,8 +59,8 @@ describe('datasource', () => {
         })
       );
 
-      expect(fetchMock.mock.calls[0][0].data.queries).toHaveLength(1);
-      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+      expect(queryMock.mock.calls[0][0].targets).toHaveLength(1);
+      expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject({
         queryString: 'some query string',
         logGroupNames: ['/some/group'],
         region: 'us-west-1',
@@ -68,7 +68,7 @@ describe('datasource', () => {
     });
 
     it('should not run a query if query expression is not specified', async () => {
-      const { datasource, fetchMock } = setupMockedDataSource();
+      const { datasource, queryMock } = setupMockedDataSource();
       await lastValueFrom(
         datasource.query({
           targets: [
@@ -99,8 +99,8 @@ describe('datasource', () => {
         })
       );
 
-      expect(fetchMock.mock.calls[0][0].data.queries).toHaveLength(1);
-      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+      expect(queryMock.mock.calls[0][0].targets).toHaveLength(1);
+      expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject({
         queryString: 'some query string',
         logGroupNames: ['/some/group'],
         region: 'us-west-1',
@@ -141,7 +141,7 @@ describe('datasource', () => {
     });
 
     it('should interpolate variables in the query', async () => {
-      const { datasource, fetchMock } = setupMockedDataSource({
+      const { datasource, queryMock } = setupMockedDataSource({
         variables: [fieldsVariable, regionVariable],
       });
       await lastValueFrom(
@@ -168,7 +168,7 @@ describe('datasource', () => {
           })
           .pipe(toArray())
       );
-      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+      expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject({
         queryString: 'fields templatedField',
         logGroupNames: ['/some/group'],
         region: 'templatedRegion',
@@ -176,7 +176,7 @@ describe('datasource', () => {
     });
 
     it('should interpolate multi-value template variable for log group names in the query', async () => {
-      const { datasource, fetchMock } = setupMockedDataSource({
+      const { datasource, queryMock } = setupMockedDataSource({
         variables: [fieldsVariable, logGroupNamesVariable, regionVariable],
         mockGetVariableName: false,
       });
@@ -204,7 +204,7 @@ describe('datasource', () => {
           })
           .pipe(toArray())
       );
-      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+      expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject({
         queryString: 'fields templatedField',
         logGroupNames: ['templatedGroup-1', 'templatedGroup-2'],
         region: 'templatedRegion',
