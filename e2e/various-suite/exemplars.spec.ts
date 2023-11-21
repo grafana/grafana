@@ -61,8 +61,10 @@ describe('Exemplars', () => {
     // 1. first we wait for the text 'Loading...' to appear
     // 1. then we wait for the text 'Loading...' to disappear
     const monacoLoadingText = 'Loading...';
-    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
-    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
+    e2e.components.QueryField.container({ timeout: 10000 }).should('be.visible').should('have.text', monacoLoadingText);
+    e2e.components.QueryField.container({ timeout: 10000 })
+      .should('be.visible')
+      .should('not.have.text', monacoLoadingText);
 
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.fromField().clear().type('2021-07-10 17:10:00');
