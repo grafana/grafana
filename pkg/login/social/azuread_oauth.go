@@ -34,7 +34,7 @@ var (
 		"scopes":            "openid email profile",
 	}
 
-	ExtraAzureADSettingKeys = []string{"force_use_graph_api"}
+	ExtraAzureADSettingKeys = []string{"force_use_graph_api", "allowed_organizations"}
 )
 
 const azureADProviderName = "azuread"

@@ -77,7 +77,7 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 		result["scopes"] = ""
 	}
 
-	result = ssosettings.ConvertMapSnakeCaseKeysToCamelCaseKeys(result)
+	// result = ssosettings.ConvertMapSnakeCaseKeysToCamelCaseKeys(result)
 
 	return result, nil
 }
