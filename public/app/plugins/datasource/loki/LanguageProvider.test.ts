@@ -156,6 +156,23 @@ describe('Language completion provider', () => {
       });
     });
 
+    it('uses default time range if fetch label does not receive options.timeRange', async () => {
+      const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+      datasource.getTimeRangeParams = jest
+        .fn()
+        .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
+      const languageProvider = new LanguageProvider(datasource);
+      languageProvider.request = jest.fn().mockResolvedValue([]);
+      languageProvider.getDefaultTimeRange = jest.fn().mockReturnValue({ from: dateTime(0), to: dateTime(1) });
+      languageProvider.fetchLabelValues('testKey');
+      expect(languageProvider.getDefaultTimeRange).toHaveBeenCalled();
+      expect(languageProvider.request).toHaveBeenCalled();
+      expect(languageProvider.request).toHaveBeenCalledWith('label/testKey/values', {
+        end: 1,
+        start: 0,
+      });
+    });
+
     it('should return cached values', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
