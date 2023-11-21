@@ -3,6 +3,7 @@ aliases:
   - ../panels/calculation-types/
   - ../panels/calculations-list/
   - ../panels/reference-calculation-types/
+  - ../calculation-types/ # /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types/
 labels:
   products:
     - cloud
