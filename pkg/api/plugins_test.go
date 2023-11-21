@@ -75,7 +75,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			input := strings.NewReader(`{"version": "1.0.2"}`)
-			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(1, tc.permissions))
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(ac.GlobalOrgID, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCode, res.StatusCode)
@@ -84,7 +84,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			input := strings.NewReader("{ }")
-			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(1, tc.permissions))
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(ac.GlobalOrgID, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCode, res.StatusCode)
