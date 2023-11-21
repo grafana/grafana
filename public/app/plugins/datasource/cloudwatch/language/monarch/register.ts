@@ -34,17 +34,12 @@ export const reRegisterCompletionProvider = async (
 export const registerLanguage = async (
   monaco: Monaco,
   language: LanguageDefinition,
-  completionItemProvider: Completeable,
-  logs = false
+  completionItemProvider: Completeable
 ) => {
   const { id, loader } = language;
 
   const languages = monaco.languages.getLanguages();
   if (languages.find((l) => l.id === id)) {
-    if (!logs) {
-      return;
-    }
-    reRegisterCompletionProvider(monaco, language, completionItemProvider);
     return;
   }
 

@@ -28,18 +28,21 @@ export const CloudWatchLogsQueryFieldMonaco = (props: CloudWatchLogsQueryFieldPr
   const onChangeLogs = useCallback(
     async (query: CloudWatchLogsQuery) => {
       onChange(query);
-      disposalRef.current = await reRegisterCompletionProvider(
-        monacoRef.current!,
-        language,
-        datasource.logsCompletionItemProviderFunc({
-          region: query.region,
-          logGroups: query.logGroups,
-        }),
-        disposalRef.current
-      );
     },
-    [datasource, onChange]
+    [onChange]
   );
+
+  const onFocus = useCallback(async () => {
+    disposalRef.current = await reRegisterCompletionProvider(
+      monacoRef.current!,
+      language,
+      datasource.logsCompletionItemProviderFunc({
+        region: query.region,
+        logGroups: query.logGroups,
+      }),
+      disposalRef.current
+    );
+  }, [datasource, query.logGroups, query.region]);
 
   const onChangeQuery = useCallback(
     (value: string) => {
@@ -70,8 +73,7 @@ export const CloudWatchLogsQueryFieldMonaco = (props: CloudWatchLogsQueryFieldPr
       datasource.logsCompletionItemProviderFunc({
         region: query.region,
         logGroups: query.logGroups,
-      }),
-      true
+      })
     );
   };
 
@@ -120,7 +122,9 @@ export const CloudWatchLogsQueryFieldMonaco = (props: CloudWatchLogsQueryFieldPr
               if (value !== query.expression) {
                 onChangeQuery(value);
               }
+              disposalRef.current?.dispose();
             }}
+            onFocus={onFocus}
             onBeforeEditorMount={onBeforeEditorMount}
             onEditorDidMount={onEditorMount}
             onEditorWillUnmount={() => disposalRef.current?.dispose()}
