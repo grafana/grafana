@@ -241,7 +241,7 @@ function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
       display: 'flex',
       flexGrow: 1,
       minHeight: 0,
-      maxHeight: vertical ? undefined : '100vh',
+      height: vertical ? undefined : '100vh',
       flexDirection: vertical ? 'column-reverse' : 'row',
       columnGap: theme.spacing(1),
     }),
