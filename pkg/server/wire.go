@@ -227,7 +227,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
 	authinfoservice.ProvideAuthInfoService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
-	authinfoservice.ProvideAuthInfoStore,
+	authinfoservice.ProvideStore,
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,

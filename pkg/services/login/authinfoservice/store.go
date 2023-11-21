@@ -20,7 +20,7 @@ type Store struct {
 	logger         log.Logger
 }
 
-func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service) login.Store {
+func ProvideStore(sqlStore db.DB, secretsService secrets.Service) login.Store {
 	store := &Store{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
