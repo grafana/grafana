@@ -230,7 +230,7 @@ function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
     container: css({
       label: 'container',
       height: '100%',
-      display: 'flex',
+      display: vertical ? 'block' : 'flex',
       flex: '1 1 0',
       flexDirection: 'column',
       minHeight: 0,
