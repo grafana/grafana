@@ -1,6 +1,6 @@
-import { AdHocVariableFilter, locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
+import { locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationSearchToObject, locationService } from '@grafana/runtime';
-import { sceneGraph, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { getExploreUrl } from 'app/core/utils/explore';
 
