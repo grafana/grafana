@@ -199,6 +199,25 @@ describe('fetchLabels', () => {
     await instance.fetchLabels();
     expect(instance.labelKeys).toEqual([]);
   });
+
+  it('should use time range param', async () => {
+    const datasourceWithLabels = setup({});
+
+    const mockTimeRange = {
+      from: dateTime(1546372800000),
+      to: dateTime(1546380000000),
+      raw: {
+        from: dateTime(1546372800000),
+        to: dateTime(1546380000000),
+      },
+    };
+    datasourceWithLabels.languageProvider.request = jest.fn();
+
+    const instance = new LanguageProvider(datasourceWithLabels);
+    instance.request = jest.fn();
+    await instance.fetchLabels({ timeRange: mockTimeRange });
+    expect(instance.request).toBeCalledWith('labels', datasourceWithLabels.getTimeRangeParams(mockTimeRange));
+  });
 });
 
 describe('Query imports', () => {
