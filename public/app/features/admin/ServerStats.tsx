@@ -32,6 +32,7 @@ export const ServerStats = () => {
     return null;
   }
 
+  console.log('stats', stats);
   return (
     <>
       <h2 className={styles.title}>Instance statistics</h2>
@@ -81,6 +82,9 @@ export const ServerStats = () => {
               { name: 'Users total', value: stats.users },
               { name: 'Active users in last 30 days', value: stats.activeUsers },
               { name: 'Active sessions', value: stats.activeSessions },
+              ...(!!stats.activeAnonymousUsers
+                ? [{ name: 'Active anonymous users in last 30 days', value: stats.activeAnonymousUsers }]
+                : []),
             ]}
             footer={
               hasAccessToAdminUsers && (

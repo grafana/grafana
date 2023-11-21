@@ -113,7 +113,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 			store := db.InitTestDB(t)
 			anonDBStore := anonstore.ProvideAnonDBStore(store)
 			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-				&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil)
+				&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, nil, nil)
 
 			for _, req := range tc.req {
 				err := anonService.TagDevice(context.Background(), req.httpReq, req.kind)
@@ -149,7 +149,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	store := db.InitTestDB(t)
 	anonDBStore := anonstore.ProvideAnonDBStore(store)
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-		&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil)
+		&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, nil, nil)
 
 	req := &http.Request{
 		Header: http.Header{

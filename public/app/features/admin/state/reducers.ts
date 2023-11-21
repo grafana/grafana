@@ -13,6 +13,8 @@ import {
   UserSession,
   UserListAdminState,
   UserFilter,
+  UserListAnonymousState,
+  UserAnonymousDTO,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
@@ -201,8 +203,60 @@ export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageC
   userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
 
+// UserListAnonymousPage
+
+const initialUserListAnonymousState: UserListAnonymousState = {
+  devices: [],
+  query: '',
+  page: 0,
+  perPage: 50,
+  totalPages: 1,
+  showPaging: false,
+  filters: [{ name: 'activeLast30Days', value: false }],
+  isLoading: true,
+};
+
+interface UsersAnonymousFetched {
+  devices: UserAnonymousDTO[];
+  currentPage: number;
+  perPage: number;
+  totalCount: number;
+}
+
+export const userListAnonymousSlice = createSlice({
+  name: 'userListAnonymous',
+  initialState: initialUserListAnonymousState,
+  reducers: {
+    usersAnonymousFetched: (state, action: PayloadAction<UsersAnonymousFetched>) => {
+      const { devices } = action.payload;
+      const totalPages = 1;
+      const perPage = 10;
+      return {
+        ...state,
+        totalPages,
+        perPage,
+        devices,
+        showPaging: totalPages > 1,
+        isLoading: false,
+      };
+    },
+
+    usersAnonymousFetchBegin: (state) => {
+      return { ...state, isLoading: true };
+    },
+    usersAnonymousFetchEnd: (state) => {
+      return { ...state, isLoading: false };
+    },
+  },
+});
+
+export const { usersAnonymousFetched, usersAnonymousFetchBegin, usersAnonymousFetchEnd } =
+  userListAnonymousSlice.actions;
+export const userListAnonymousReducer = userListAnonymousSlice.reducer;
+
 export default {
   ldap: ldapReducer,
   userAdmin: userAdminReducer,
   userListAdmin: userListAdminReducer,
+  userListAnonymous: userListAnonymousReducer,
 };

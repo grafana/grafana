@@ -1,6 +1,10 @@
 import { getBackendSrv } from '@grafana/runtime';
 
-export interface ServerStat {
+interface AnonServerStat {
+  activeAnonymousUsers?: number;
+}
+
+export interface ServerStat extends AnonServerStat {
   activeAdmins: number;
   activeEditors: number;
   activeSessions: number;
@@ -21,8 +25,26 @@ export interface ServerStat {
 }
 
 export const getServerStats = async (): Promise<ServerStat | null> => {
+  let resp = await getBackendSrv()
+    .get('/api/anonymous/stats')
+    .then((res) => {
+      return res;
+    })
+    .catch((err) => {
+      console.error(err);
+      // FIXME:
+      // return null;
+    });
   return getBackendSrv()
     .get('api/admin/stats')
+    .then((res) => {
+      console.log(`resp`);
+      console.log(resp);
+      if (resp) {
+        res.activeAnonymousUsers = resp;
+      }
+      return res;
+    })
     .catch((err) => {
       console.error(err);
       return null;
