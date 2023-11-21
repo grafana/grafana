@@ -22,22 +22,22 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const azureADProviderName = "azuread"
+
 var (
 	AzureADDefaultSettings = map[string]string{
-		"use_pkce":          "true",
-		"use_refresh_token": "true",
 		"name":              "Microsoft",
 		"icon":              "microsoft",
 		"enabled":           "false",
 		"allow_sign_up":     "true",
 		"auto_login":        "false",
 		"scopes":            "openid email profile",
+		"use_pkce":          "true",
+		"use_refresh_token": "true",
 	}
 
 	ExtraAzureADSettingKeys = []string{"force_use_graph_api", "allowed_organizations"}
 )
-
-const azureADProviderName = "azuread"
 
 var _ SocialConnector = (*SocialAzureAD)(nil)
 

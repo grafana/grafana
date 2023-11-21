@@ -17,6 +17,19 @@ import (
 
 const oktaProviderName = "okta"
 
+var (
+	OktaDefaultSettings = map[string]string{
+		"name":              "Okta",
+		"icon":              "okta",
+		"enabled":           "false",
+		"allow_sign_up":     "true",
+		"auto_login":        "false",
+		"scopes":            "openid email profile groups",
+		"use_pkce":          "true",
+		"use_refresh_token": "false",
+	}
+)
+
 type SocialOkta struct {
 	*SocialBase
 	apiUrl          string

@@ -30,7 +30,7 @@ func (s *OAuthStrategy) IsMatch(provider string) bool {
 	return s.supportedProvidersRegex.MatchString(provider)
 }
 
-func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string) (map[string]interface{}, error) {
+func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string) (map[string]any, error) {
 	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
 
 	defaultSettings := getDefaultOAuthInfoForProvider(provider)
@@ -50,7 +50,7 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 		"role_attribute_strict":      parseDataFromKey("role_attribute_strict", section, defaultSettings),
 		"groups_attribute_path":      parseDataFromKey("groups_attribute_path", section, defaultSettings),
 		"team_ids_attribute_path":    parseDataFromKey("team_ids_attribute_path", section, defaultSettings),
-		"allowed_domains":            parseDataFromKey("allowed_domains", section, defaultSettings), // list
+		"allowed_domains":            parseDataFromKey("allowed_domains", section, defaultSettings),
 		"hosted_domain":              parseDataFromKey("hosted_domain", section, defaultSettings),
 		"allow_sign_up":              parseDataFromKey("allow_sign_up", section, defaultSettings),
 		"name":                       parseDataFromKey("name", section, defaultSettings),
@@ -77,8 +77,6 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 		result["scopes"] = ""
 	}
 
-	// result = ssosettings.ConvertMapSnakeCaseKeysToCamelCaseKeys(result)
-
 	return result, nil
 }
 
@@ -90,6 +88,18 @@ func getDefaultOAuthInfoForProvider(provider string) map[string]string {
 	switch provider {
 	case "azuread":
 		return social.AzureADDefaultSettings
+	case "generic_oauth":
+		return social.GenericOAuthDefaultSettings
+	case "github":
+		return social.GitHubDefaultSettings
+	case "gitlab":
+		return social.GitlabDefaultSettings
+	case "google":
+		return social.GoogleDefaultSettings
+	case "grafana_com":
+		return social.GrafanaComDefaultSettings
+	case "okta":
+		return social.OktaDefaultSettings
 	default:
 		return map[string]string{}
 	}
@@ -99,6 +109,12 @@ func getExtraKeysForProvider(provider string) []string {
 	switch provider {
 	case "azuread":
 		return social.ExtraAzureADSettingKeys
+	case "generic_oauth":
+		return social.ExtraGenericOAuthSettingKeys
+	case "github":
+		return social.ExtraGithubSettingKeys
+	case "grafana_com":
+		return social.ExtraGrafanaComSettingKeys
 	default:
 		return nil
 	}
