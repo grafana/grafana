@@ -43,7 +43,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		},
 	}
 	authFakeUserID := &logintest.AuthInfoServiceFake{
-		ExpectedUser:  nil,
 		ExpectedError: nil,
 		ExpectedUserAuth: &login.UserAuth{
 			AuthModule: "oauth",
@@ -68,7 +67,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	}}
 
 	userServiceNil := &usertest.FakeUserService{
-		ExpectedUser:  nil,
 		ExpectedError: user.ErrUserNotFound,
 		CreateFn: func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 			return &user.User{
