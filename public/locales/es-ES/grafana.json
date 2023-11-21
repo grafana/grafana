@@ -46,19 +46,14 @@
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
-      "alertRule_many": "",
       "alertRule_other": "{{count}} reglas de alerta",
       "dashboard_one": "{{count}} panel de control",
-      "dashboard_many": "",
       "dashboard_other": "{{count}} paneles de control",
       "folder_one": "{{count}} carpeta",
-      "folder_many": "",
       "folder_other": "{{count}} carpetas",
       "libraryPanel_one": "{{count}} panel de librería",
-      "libraryPanel_many": "",
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
-      "total_many": "",
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
@@ -597,7 +592,7 @@
       "remove-panel": "Eliminar panel",
       "save-dashboard": "Guardar panel de control",
       "show-all-shortcuts": "Mostrar todos los accesos directos del teclado",
-      "toggle-active-mode": "Cambiar el modo activo/vista",
+      "toggle-active-mode": "Alternar el modo activo/vista",
       "toggle-all-panel-legends": "Cambiar todas las leyendas del panel",
       "toggle-auto-fit": "Cambiar los paneles de ajuste automático (característica experimental)",
       "toggle-exemplars": "Cambiar los ejemplares en todo el panel",
@@ -635,16 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
-      "body_many": "",
-      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:",
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Ver panel en {{label}}...",
       "button-view-panel2": "Ver panel en el tablero...",
       "panel-not-linked": "El panel no está enlazado a un tablero. Añada el panel a un tablero y vuelva a intentarlo.",
       "select-no-options-message": "No se ha encontrado ningún tablero",
-      "select-placeholder": "Empezar a escribir para buscar el tablero",
-      "title": "Ver el panel en el tablero"
+      "select-placeholder": "Empezar a escribir para buscar el panel de control",
+      "title": "Ver el panel en el tablero",
+      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
+      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:"
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
