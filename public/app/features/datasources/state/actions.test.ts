@@ -392,9 +392,6 @@ describe('addDataSource', () => {
     (api.createDataSource as jest.Mock).mockResolvedValueOnce(dataSourceMock);
     (api.getDataSources as jest.Mock).mockResolvedValueOnce([]);
 
-    const dispatchedActions = await thunkTester(state).givenThunk(addDataSource).whenThunkIsDispatched(meta);
-
-    expect(dispatchedActions).toEqual([dataSourcesLoaded([])]);
     expect(trackDataSourceCreated).toHaveBeenCalledWith({
       plugin_id: 'azure-monitor',
       plugin_version: '1.2.3',

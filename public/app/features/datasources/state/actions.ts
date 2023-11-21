@@ -231,7 +231,7 @@ export function addDataSource(
   plugin: DataSourcePluginMeta,
   editRoute = DATASOURCES_ROUTES.Edit
 ): ThunkResult<Promise<void>> {
-  return async (dispatch, getStore) => {
+  return async () => {
     const newInstance = {
       type: plugin.id,
       access: 'proxy',
