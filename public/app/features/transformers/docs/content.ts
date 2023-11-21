@@ -68,7 +68,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
   - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
   
-  > **Note:** 'Cumulative functions' and 'Window functions' modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the 'addFieldFromCalculationStatFunctions' in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+  > **Note:** **Cumulative functions** and **Window functions** modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `addFieldFromCalculationStatFunctions` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
   In the example below, we added two fields together and named them Sum.
 
