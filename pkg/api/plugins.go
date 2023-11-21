@@ -441,7 +441,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	hs.logHasPluginRequestedPermissions(c, pluginID, dto.Version)
+	hs.hasPluginRequestedPermissions(c, pluginID, dto.Version)
 
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
@@ -503,8 +503,8 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 	return md.Content, nil
 }
 
-// logHasPluginRequestedPermissions logs if the plugin installer does not have the permissions that the plugin requests to have on Grafana.
-func (hs *HTTPServer) logHasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID, version string) {
+// hasPluginRequestedPermissions logs if the plugin installer does not have the permissions that the plugin requests to have on Grafana.
+func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID, version string) {
 	repoCompatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 
 	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, version, repoCompatOpts)
@@ -527,7 +527,7 @@ func (hs *HTTPServer) logHasPluginRequestedPermissions(c *contextmodel.ReqContex
 
 	// Log a warning if the user does not have the plugin requested permissions
 	if !hasAccess(evaluator) && !c.IsGrafanaAdmin {
-		hs.log.Log("Plugin installer has less permission than what the plugin requires.", "Permissions", evaluator.String())
+		hs.log.Warn("Plugin installer has less permission than what the plugin requires.", "Permissions", evaluator.String())
 	}
 }
 
