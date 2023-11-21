@@ -573,20 +573,26 @@ class UnthemedLogs extends PureComponent<Props, State> {
           collapsible
           collapsed={!logsVolumeEnabled}
           onToggleCollapse={this.onToggleLogsVolumeCollapse}
+          height={210} // define height to prevent the page jumping when interacting with elements that modify the query below the logs volume panel
+          width={width + 16} // Why can't we define width as undefined to use 100%?
         >
-          {logsVolumeEnabled && (
-            <LogsVolumePanelList
-              absoluteRange={absoluteRange}
-              width={width}
-              logsVolumeData={logsVolumeData}
-              onUpdateTimeRange={onChangeTime}
-              timeZone={timeZone}
-              splitOpen={splitOpen}
-              onLoadLogsVolume={loadLogsVolumeData}
-              onHiddenSeriesChanged={this.onToggleLogLevel}
-              eventBus={this.logsVolumeEventBus}
-              onClose={() => this.onToggleLogsVolumeCollapse(true)}
-            />
+          {(w, h) => (
+            <>
+              {logsVolumeEnabled && (
+                <LogsVolumePanelList
+                  absoluteRange={absoluteRange}
+                  width={w}
+                  logsVolumeData={logsVolumeData}
+                  onUpdateTimeRange={onChangeTime}
+                  timeZone={timeZone}
+                  splitOpen={splitOpen}
+                  onLoadLogsVolume={loadLogsVolumeData}
+                  onHiddenSeriesChanged={this.onToggleLogLevel}
+                  eventBus={this.logsVolumeEventBus}
+                  onClose={() => this.onToggleLogsVolumeCollapse(true)}
+                />
+              )}
+            </>
           )}
         </PanelChrome>
         <PanelChrome
