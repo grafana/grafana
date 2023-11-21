@@ -8,7 +8,7 @@ labels:
     - enterprise
     - oss
 title: Configure a legend
-weight: 400
+weight: 70
 ---
 
 # Configure a legend
