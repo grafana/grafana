@@ -74,7 +74,7 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 3')).toBeInTheDocument();
 
       // Core plugins should still be listed
-      expect(queryByText('Plugin 4')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
     });
 
     it('should list installed plugins (including core plugins) when filtering by installed', async () => {
