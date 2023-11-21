@@ -943,7 +943,8 @@
     },
     "megamenu": {
       "close": "",
-      "dock": ""
+      "dock": "",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "",

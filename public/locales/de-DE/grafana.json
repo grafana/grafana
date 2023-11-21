@@ -937,7 +937,8 @@
     },
     "megamenu": {
       "close": "Menü schließen",
-      "dock": "Menü andocken"
+      "dock": "Menü andocken",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "Menü schließen",
