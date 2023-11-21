@@ -269,7 +269,7 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
           </Text>
           <NeedHelpInfo
             contentText="The dropdown only displays labels that you have previously used for alerts. 
-            Select a label from the options bellow or type in a new one."
+            Select a label from the options below or type in a new one."
             title="Labels"
           />
         </Stack>
