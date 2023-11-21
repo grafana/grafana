@@ -51,6 +51,14 @@ export const Simple: Story = () => {
   );
 };
 
+export const withHref: Story = () => (
+  <DashboardStoryCanvas>
+    <TabsBar>
+      <Tab label={'to Google'} active={false} href="https://google.com/" />
+    </TabsBar>
+  </DashboardStoryCanvas>
+);
+
 export const Counter: Story<CounterProps> = (args) => {
   return <TabCounter {...args} />;
 };
