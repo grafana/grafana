@@ -200,7 +200,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 			if c.SignedInUser.Permissions == nil {
 				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[targetOrgID] = tmpUser.GetPermissions()
+			c.SignedInUser.Permissions[tmpUser.GetOrgID()] = tmpUser.GetPermissions()
 		}
 	}
 }

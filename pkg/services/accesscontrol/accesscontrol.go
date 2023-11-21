@@ -117,7 +117,7 @@ func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqConte
 		}
 
 		// set on user so we don't fetch global permissions every time this is called
-		c.SignedInUser.Permissions[GlobalOrgID] = tmpUser.GetPermissions()
+		c.SignedInUser.Permissions[tmpUser.GetOrgID()] = tmpUser.GetPermissions()
 
 		return hasAccess
 	}
