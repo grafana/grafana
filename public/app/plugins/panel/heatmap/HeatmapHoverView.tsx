@@ -26,8 +26,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
-import { renderHistogram } from './HeatmapHoverViewOld';
 import { HeatmapData } from './fields';
+import { renderHistogram } from './renderHistogram';
 import { calculateSparseBucketMinMax, formatMilliseconds, getFieldFromData, getHoverCellColor } from './tooltip/utils';
 
 interface Props {
