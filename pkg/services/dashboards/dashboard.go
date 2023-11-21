@@ -27,6 +27,7 @@ type DashboardService interface {
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error
 	DeleteACLByUser(ctx context.Context, userID int64) error
 	CountInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) (int64, error)
+	GetUserDashboards(ctx context.Context, query *GetUserDashboardsQuery) ([]*Dashboard, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.

@@ -324,6 +324,11 @@ type GetDashboardsQuery struct {
 	OrgID         int64
 }
 
+type GetUserDashboardsQuery struct {
+	User  identity.Requester
+	OrgID int64
+}
+
 type GetDashboardsByPluginIDQuery struct {
 	OrgID    int64
 	PluginID string

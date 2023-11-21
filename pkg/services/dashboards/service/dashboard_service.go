@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
@@ -518,7 +519,56 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
+func (dr *DashboardServiceImpl) GetUserDashboards(ctx context.Context, query *dashboards.GetUserDashboardsQuery) ([]*dashboards.Dashboard, error) {
+	permissions := query.User.GetPermissions()
+	dashboardPermissions := permissions["dashboards:read"]
+	sharedDashboards := make([]*dashboards.Dashboard, 0)
+	dashboardUids := make([]string, 0)
+	for _, p := range dashboardPermissions {
+		if dashboardUid, found := strings.CutPrefix(p, "dashboards:uid:"); found {
+			if !slices.Contains(dashboardUids, dashboardUid) {
+				dashboardUids = append(dashboardUids, dashboardUid)
+			}
+		}
+	}
+
+	if len(dashboardUids) == 0 {
+		return sharedDashboards, nil
+	}
+
+	dashboardsQuery := &dashboards.GetDashboardsQuery{
+		DashboardUIDs: dashboardUids,
+		OrgID:         query.OrgID,
+	}
+	sharedDashboards, err := dr.dashboardStore.GetDashboards(ctx, dashboardsQuery)
+	return sharedDashboards, err
+}
+
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	if len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, "sharedwithme") {
+		userDashboards, err := dr.GetUserDashboards(ctx, &dashboards.GetUserDashboardsQuery{User: query.SignedInUser, OrgID: query.OrgId})
+		if err != nil {
+			return nil, err
+		}
+		userDashboardUIDs := make([]string, 0)
+		for _, dashboard := range userDashboards {
+			// Filter out dashboards if user has access to parent folder
+			g, err := guardian.NewByUID(ctx, dashboard.FolderUID, query.OrgId, query.SignedInUser)
+			if err != nil {
+				return nil, err
+			}
+
+			canView, err := g.CanView()
+			if err != nil {
+				return nil, err
+			}
+			if !canView {
+				userDashboardUIDs = append(userDashboardUIDs, dashboard.UID)
+			}
+		}
+		query.DashboardUIDs = userDashboardUIDs
+		query.FolderUIDs = []string{}
+	}
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
