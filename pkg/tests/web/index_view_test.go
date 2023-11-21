@@ -129,7 +129,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			})
 
 			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
-			authInfoStore := databaseAuthInfo.ProvideAuthInfoStore(store, secretsService, nil)
+			authInfoStore := databaseAuthInfo.ProvideAuthInfoStore(store, secretsService)
 
 			// insert user_auth relationship
 			err := authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{

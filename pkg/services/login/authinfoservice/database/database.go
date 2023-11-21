@@ -18,19 +18,15 @@ type AuthInfoStore struct {
 	sqlStore       db.DB
 	secretsService secrets.Service
 	logger         log.Logger
-	userService    user.Service
 }
 
-func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service, userService user.Service) login.Store {
+func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service) login.Store {
 	store := &AuthInfoStore{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
-		userService:    userService,
 	}
-	// FIXME: disabled the metric collection for duplicate user entries
-	// due to query performance issues that is clogging the users Grafana instance
-	// InitDuplicateUserMetrics()
+
 	return store
 }
 
