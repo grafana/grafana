@@ -1,4 +1,4 @@
-package logintest
+package authinfotest
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
-type AuthInfoServiceFake struct {
+type FakeService struct {
 	login.AuthInfoService
 	LatestUserID         int64
 	ExpectedUserAuth     *login.UserAuth
@@ -18,16 +18,16 @@ type AuthInfoServiceFake struct {
 	UpdateAuthInfoFn func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error
 }
 
-func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
+func (a *FakeService) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
 	a.LatestUserID = query.UserId
 	return a.ExpectedUserAuth, a.ExpectedError
 }
 
-func (a *AuthInfoServiceFake) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+func (a *FakeService) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	return a.ExpectedLabels, a.ExpectedError
 }
 
-func (a *AuthInfoServiceFake) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
+func (a *FakeService) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	if a.SetAuthInfoFn != nil {
 		return a.SetAuthInfoFn(ctx, cmd)
 	}
@@ -35,7 +35,7 @@ func (a *AuthInfoServiceFake) SetAuthInfo(ctx context.Context, cmd *login.SetAut
 	return a.ExpectedError
 }
 
-func (a *AuthInfoServiceFake) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
+func (a *FakeService) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	if a.UpdateAuthInfoFn != nil {
 		return a.UpdateAuthInfoFn(ctx, cmd)
 	}
@@ -43,6 +43,6 @@ func (a *AuthInfoServiceFake) UpdateAuthInfo(ctx context.Context, cmd *login.Upd
 	return a.ExpectedError
 }
 
-func (a *AuthInfoServiceFake) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+func (a *FakeService) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return a.ExpectedError
 }
