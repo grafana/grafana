@@ -111,7 +111,7 @@ func createLoader(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
 	})
 	i := initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
-			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), provider.New(features, provider.RendererProvider)),
+			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), provider.New(provider.RendererProvider)),
 			initialization.PluginRegistrationStep(pr),
 		},
 	})
