@@ -48,6 +48,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		permissions                      []ac.Permission
 		pluginAdminEnabled               bool
 		pluginAdminExternalManageEnabled bool
+		singleOrganization               bool
 	}
 	tcs := []testCase{
 		{expectedCode: http.StatusNotFound, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
@@ -55,6 +56,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		{expectedCode: http.StatusNotFound, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false},
 		{expectedCode: http.StatusForbidden, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
 		{expectedCode: http.StatusOK, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
+		{expectedCode: http.StatusForbidden, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, singleOrganization: true},
+		{expectedCode: http.StatusOK, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, singleOrganization: true},
 	}
 
 	testName := func(action string, tc testCase) string {
@@ -67,15 +70,21 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.Cfg = setting.NewCfg()
 			hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
 			hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
+			hs.Cfg.RBACSingleOrganization = true
 
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.pluginInstaller = NewFakePluginInstaller()
 			hs.pluginFileStore = &fakes.FakePluginFileStore{}
 		})
 
+		orgID := int64(ac.GlobalOrgID)
+		if tc.singleOrganization {
+			orgID = int64(1)
+		}
+
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			input := strings.NewReader(`{"version": "1.0.2"}`)
-			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(ac.GlobalOrgID, tc.permissions))
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(orgID, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCode, res.StatusCode)
@@ -84,7 +93,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			input := strings.NewReader("{ }")
-			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(ac.GlobalOrgID, tc.permissions))
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(orgID, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCode, res.StatusCode)
