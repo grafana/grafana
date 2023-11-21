@@ -252,7 +252,7 @@ func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
 }
 
-// UseGlobalOrSingleOrg returns the global organization unless we are in a single organization setup
+// UseGlobalOrSingleOrg returns the global organization or the current organization in a single organization setup
 func UseGlobalOrSingleOrg(cfg *setting.Cfg) OrgIDGetter {
 	return func(c *contextmodel.ReqContext) (int64, error) {
 		if cfg.RBACSingleOrganization {
