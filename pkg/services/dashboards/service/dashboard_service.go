@@ -3,8 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"strings"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
@@ -544,27 +545,35 @@ func (dr *DashboardServiceImpl) GetUserDashboards(ctx context.Context, query *da
 	return sharedDashboards, err
 }
 
-func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	if len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, "sharedwithme") {
-		userDashboards, err := dr.GetUserDashboards(ctx, &dashboards.GetUserDashboardsQuery{User: query.SignedInUser, OrgID: query.SignedInUser.OrgID})
+func (dr *DashboardServiceImpl) getUserDashboardUIDs(ctx context.Context, user identity.Requester) ([]string, error) {
+	userDashboards, err := dr.GetUserDashboards(ctx, &dashboards.GetUserDashboardsQuery{User: user, OrgID: user.GetOrgID()})
+	if err != nil {
+		return nil, err
+	}
+	userDashboardUIDs := make([]string, 0)
+	for _, dashboard := range userDashboards {
+		// Filter out dashboards if user has access to parent folder
+		g, err := guardian.NewByUID(ctx, dashboard.FolderUID, user.GetOrgID(), user)
 		if err != nil {
 			return nil, err
 		}
-		userDashboardUIDs := make([]string, 0)
-		for _, dashboard := range userDashboards {
-			// Filter out dashboards if user has access to parent folder
-			g, err := guardian.NewByUID(ctx, dashboard.FolderUID, query.OrgId, query.SignedInUser)
-			if err != nil {
-				return nil, err
-			}
 
-			canView, err := g.CanView()
-			if err != nil {
-				return nil, err
-			}
-			if !canView {
-				userDashboardUIDs = append(userDashboardUIDs, dashboard.UID)
-			}
+		canView, err := g.CanView()
+		if err != nil {
+			return nil, err
+		}
+		if !canView {
+			userDashboardUIDs = append(userDashboardUIDs, dashboard.UID)
+		}
+	}
+	return userDashboardUIDs, nil
+}
+
+func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	if len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, "sharedwithme") {
+		userDashboardUIDs, err := dr.getUserDashboardUIDs(ctx, query.SignedInUser)
+		if err != nil {
+			return nil, err
 		}
 		query.DashboardUIDs = userDashboardUIDs
 		query.FolderUIDs = []string{}
