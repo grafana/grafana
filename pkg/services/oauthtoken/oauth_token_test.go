@@ -246,7 +246,6 @@ type FakeAuthInfoStore struct {
 	ExpectedOAuth                   *login.UserAuth
 	ExpectedDuplicateUserEntries    int
 	ExpectedHasDuplicateUserEntries int
-	ExpectedLoginStats              login.LoginStats
 }
 
 func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
@@ -283,24 +282,4 @@ func (f *FakeAuthInfoStore) GetUserByLogin(ctx context.Context, login string) (*
 
 func (f *FakeAuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]interface{}, error) {
-	var res = make(map[string]interface{})
-	res["stats.users.duplicate_user_entries"] = f.ExpectedDuplicateUserEntries
-	res["stats.users.has_duplicate_user_entries"] = f.ExpectedHasDuplicateUserEntries
-	res["stats.users.duplicate_user_entries_by_login"] = 0
-	res["stats.users.has_duplicate_user_entries_by_login"] = 0
-	res["stats.users.duplicate_user_entries_by_email"] = 0
-	res["stats.users.has_duplicate_user_entries_by_email"] = 0
-	res["stats.users.mixed_cased_users"] = f.ExpectedLoginStats.MixedCasedUsers
-	return res, f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) RunMetricsCollection(ctx context.Context) error {
-	return f.ExpectedError
-}
-
-func (f *FakeAuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, error) {
-	return f.ExpectedLoginStats, f.ExpectedError
 }
