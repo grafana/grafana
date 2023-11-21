@@ -10,7 +10,6 @@ import (
 )
 
 type OAuthStrategy struct {
-	provider                string
 	cfg                     *setting.Cfg
 	supportedProvidersRegex *regexp.Regexp
 }
@@ -29,8 +28,8 @@ func (s *OAuthStrategy) IsMatch(provider string) bool {
 	return s.supportedProvidersRegex.MatchString(provider)
 }
 
-func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context) (map[string]any, error) {
-	section := s.cfg.SectionWithEnvOverrides("auth." + s.provider)
+func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string) (map[string]any, error) {
+	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
 
 	// TODO: load the provider specific keys separately
 	result := map[string]any{
@@ -70,5 +69,8 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context) (map[string]any
 	if section.Key("empty_scopes").MustBool(false) {
 		result["scopes"] = []string{}
 	}
+
+	result = ssosettings.ConvertMapSnakeCaseKeysToCamelCaseKeys(result)
+
 	return result, nil
 }
