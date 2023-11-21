@@ -630,15 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
-      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
       "button-cancel": "<0>Abbrechen</0>",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
       "select-no-options-message": "Keine Dashboards gefunden",
       "select-placeholder": "Tippen, um nach Dashboard zu suchen",
-      "title": "Fenster im Dashboard anzeigen"
+      "title": "Fenster im Dashboard anzeigen",
+      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
+      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:"
     },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
