@@ -50,8 +50,7 @@ export function loadProviderStatuses(): ThunkResult<void> {
     const statuses = await Promise.all(getStatusPromises);
     for (let i = 0; i < registeredProviders.length; i++) {
       const provider = registeredProviders[i];
-      const status = statuses[i];
-      providerStatuses[provider.id] = status;
+      providerStatuses[provider.id] = statuses[i];
     }
     dispatch(providerStatusesLoaded(providerStatuses));
   };

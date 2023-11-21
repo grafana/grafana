@@ -14,6 +14,8 @@ export type SSOProvider = {
   provider: string;
   settings: {
     enabled: boolean;
+    name: string;
+    type: string;
   };
 };
 
@@ -23,7 +25,7 @@ export interface AuthConfigState {
   isLoading?: boolean;
   updateError?: SettingsError;
   warning?: SettingsError;
-  providers?: SSOProvider[];
+  providers: SSOProvider[];
 }
 
 export interface AuthProviderStatus {
