@@ -171,6 +171,8 @@ function StepCarousel({ steps }: { steps: SetupStep[] }) {
 }
 
 const getStyles = stylesFactory(() => {
+  const DEV_FLAG_DONT_MERGE_SMUSH = window.location.search.includes('smush');
+
   const theme = config.theme2;
   const buttonBase = {
     position: 'absolute',
@@ -209,12 +211,16 @@ const getStyles = stylesFactory(() => {
       scrollSnapType: 'x proximity',
       paddingBottom: theme.spacing(2),
     }),
-    step: css({
-      padding: theme.spacing(2, 2, 0, 2),
-      scrollSnapAlign: 'start',
-      flexShrink: 0,
-      minWidth: '100%',
-    }),
+    step: css(
+      {
+        padding: theme.spacing(2, 2, 0, 2),
+        scrollSnapAlign: 'start',
+      },
+      !DEV_FLAG_DONT_MERGE_SMUSH && {
+        flexShrink: 0,
+        minWidth: '100%',
+      }
+    ),
     header: css`
       label: header;
       margin-bottom: ${theme.spacing(3)};
