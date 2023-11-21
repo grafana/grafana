@@ -393,9 +393,6 @@ const prepConfig = (
               }
 
               if (showPoints) {
-                // if pointHints.fixed? don't recalc size
-                // if pointColor has 0 opacity, draw as single path (assuming all strokes are alpha 1)
-
                 u.ctx.moveTo(cx + size / 2, cy);
                 u.ctx.beginPath();
                 u.ctx.arc(cx, cy, size / 2, 0, deg360);
@@ -696,7 +693,7 @@ const prepConfig = (
       pathBuilder: drawBubbles, // drawBubbles({disp: {size: {values: () => }}})
       theme,
       scaleKey: '', // facets' scales used (above)
-      lineColor: alpha('' + lineColor, 1),
+      lineColor: lineColor as string,
       fillColor: alpha(pointColor, 0.5),
       show: !customConfig.hideFrom?.viz,
     });
