@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { getModalStyles } from '../Modal/getModalStyles';
@@ -106,9 +106,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   );
   const { dialogProps } = useDialog({}, overlayRef);
 
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { modalBackdrop } = getModalStyles(theme);
+  const { modalBackdrop } = useStyles2(getModalStyles);
   const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
