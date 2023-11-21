@@ -46,19 +46,14 @@
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
-      "alertRule_many": "",
       "alertRule_other": "{{count}} reglas de alerta",
       "dashboard_one": "{{count}} panel de control",
-      "dashboard_many": "",
       "dashboard_other": "{{count}} paneles de control",
       "folder_one": "{{count}} carpeta",
-      "folder_many": "",
       "folder_other": "{{count}} carpetas",
       "libraryPanel_one": "{{count}} panel de librería",
-      "libraryPanel_many": "",
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
-      "total_many": "",
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
@@ -190,7 +185,7 @@
       "source-description": "Los resultados de la fuente de datos seleccionada tienen enlaces que se muestran en el panel",
       "source-label": "Fuente",
       "sub-text": "<0>Defina qué fuente de datos mostrará la correlación y qué datos reemplazarán a las variables previamente definidas.</0>",
-      "title": "Configurar la fuente de datos que se enlazará a {{dataSourceName}} (paso 3 de 3)"
+      "title": "Configurar la fuente de datos que se vinculará a {{dataSourceName}} (paso 3 de 3)"
     },
     "sub-title": "Defina cómo se relacionan los datos que se encuentran en diferentes fuentes de datos. Más información en la <2>documentación<1></1></2>",
     "target-form": {
@@ -429,12 +424,12 @@
       "starred": "Destacado"
     },
     "rich-history-card": {
-      "add-comment-form": "Añadir formulario de comentario",
+      "add-comment-form": "Añadir formulario de comentarios",
       "add-comment-tooltip": "Añadir comentario",
       "cancel": "Cancelar",
       "confirm-delete": "Eliminar",
       "copy-query-tooltip": "Copiar consulta al portapapeles",
-      "copy-shortened-link-tooltip": "Copiar enlace abreviado al portapapeles",
+      "copy-shortened-link-tooltip": "Copiar enlace acortado al portapapeles",
       "datasource-icon-label": "Icono de fuente de datos",
       "datasource-name-label": "Nombre de fuente de datos",
       "datasource-not-exist": "La fuente de datos ya no existe",
@@ -467,7 +462,7 @@
       "filter-aria-label": "Filtrar consultas para la(s) fuente(s) de datos",
       "filter-history": "Filtrar historial",
       "filter-placeholder": "Filtrar consultas para la(s) fuente(s) de datos",
-      "history-local": "El historial es local para su navegador y no se comparte con otras personas.",
+      "history-local": "El historial se almacena en su navegador y no se comparte con otras personas.",
       "loading": "Cargando...",
       "loading-results": "Cargando resultados...",
       "search-placeholder": "Buscar consultas",
@@ -500,7 +495,7 @@
       "filter-queries-placeholder": "Filtrar consultas para la(s) fuente(s) de datos",
       "loading": "Cargando...",
       "loading-results": "Cargando resultados...",
-      "local-history-message": "El historial es local para su navegador y no se comparte con otras personas.",
+      "local-history-message": "El historial se almacena en su navegador y no se comparte con otras personas.",
       "search-queries-placeholder": "Buscar consultas",
       "showing-queries": "Mostrando {{ shown }} de {{ total }} <0>Cargar más</0>",
       "sort-queries-aria-label": "Ordenar consultas",
@@ -517,7 +512,7 @@
     },
     "rich-history-utils-notification": {
       "saving-failed": "Error al guardar el historial enriquecido",
-      "update-failed": "Error al actualizar el historial enriquecido"
+      "update-failed": "Error al actualizar el extenso historial"
     },
     "secondary-actions": {
       "query-add-button": "Añadir consulta",
@@ -533,16 +528,16 @@
       "title-with-name": "Tabla - {{name}}"
     },
     "toolbar": {
-      "aria-label": "Explorar la barra de herramientas",
-      "copy-shortened-link": "Copiar enlace abreviado",
+      "aria-label": "Barra de herramientas de Explore",
+      "copy-shortened-link": "Copiar enlace acortado",
       "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "Ejecutar consulta",
       "split-close": "Cerrar",
       "split-close-tooltip": "Cerrar panel dividido",
-      "split-narrow": "Estrechar panel",
+      "split-narrow": "Reducir panel",
       "split-title": "Dividir",
       "split-tooltip": "Dividir el panel",
-      "split-widen": "Ensanchar panel"
+      "split-widen": "Agrandar panel"
     }
   },
   "folder-picker": {
@@ -573,7 +568,7 @@
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "Panel de control",
-      "focused-panel": "Panel centrado",
+      "focused-panel": "Panel focalizado",
       "global": "Global",
       "time-range": "Rango de tiempo"
     },
@@ -582,16 +577,16 @@
       "collapse-all-rows": "Contraer todas las filas",
       "dashboard-settings": "Ajustes del panel de control",
       "duplicate-panel": "Duplicar panel",
-      "exit-edit/setting-views": "Salir de las vistas de edición/ajuste",
+      "exit-edit/setting-views": "Salir de las opciones de edición/ajustes",
       "expand-all-rows": "Expandir todas las filas",
-      "go-to-dashboards": "Ir a los tableros",
+      "go-to-dashboards": "Ir a paneles de control",
       "go-to-explore": "Ir a Explorar",
-      "go-to-home-dashboard": "Ir al tablero de inicio",
+      "go-to-home-dashboard": "Ir al panel de control de inicio",
       "go-to-profile": "Ir al perfil",
       "make-time-range-permanent": "Hacer que el rango de tiempo sea absoluto/permanente",
-      "move-time-range-back": "Mover el rango de tiempo hacia atrás",
+      "move-time-range-back": "Retrasar el rango de tiempo",
       "move-time-range-forward": "Mover el rango de tiempo hacia delante",
-      "open-search": "Abrir la búsqueda",
+      "open-search": "Abrir búsqueda",
       "open-shared-modal": "Abrir el modo de panel compartido",
       "refresh-all-panels": "Actualizar todos los paneles",
       "remove-panel": "Eliminar panel",
@@ -600,9 +595,9 @@
       "toggle-active-mode": "Alternar el modo activo/vista",
       "toggle-all-panel-legends": "Cambiar todas las leyendas del panel",
       "toggle-auto-fit": "Cambiar los paneles de ajuste automático (característica experimental)",
-      "toggle-exemplars": "Cambiar los ejemplares en todo el panel",
-      "toggle-graph-crosshair": "Cambiar la retícula del gráfico compartido",
-      "toggle-kiosk": "Cambiar al modo de kiosco (oculta la navegación superior)",
+      "toggle-exemplars": "Alternar los ejemplares en todo el panel",
+      "toggle-graph-crosshair": "Alternar la retícula del gráfico compartido",
+      "toggle-kiosk": "Alternar al modo de quiosco (oculta la navegación superior)",
       "toggle-panel-edit": "Cambiar la vista de edición del panel",
       "toggle-panel-fullscreen": "Cambiar la vista de pantalla completa del panel",
       "toggle-panel-legend": "Cambiar leyenda del panel",
@@ -614,7 +609,7 @@
     "query": {
       "collapse-all": "Contraer todo",
       "copy-to-clipboard": "Copiar al portapapeles",
-      "description": "El inspector de consultas le permite ver la solicitud y la respuesta en bruto. Para recopilar estos datos, Grafana necesita emitir una nueva consulta. Haga clic en el botón actualizar situado debajo para activar una nueva consulta.",
+      "description": "El inspector de consultas le permite ver la solicitud y la respuesta sin procesar. Para recopilar estos datos, Grafana necesita emitir una nueva consulta. Haga clic en el botón actualizar situado debajo para activar una nueva consulta.",
       "expand-all": "Expandir todo",
       "no-data": "Aún no se ha recogido ninguna solicitud o respuesta. Pulse el botón para actualizar",
       "refresh": "Actualizar"
@@ -635,16 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
-      "body_many": "",
-      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:",
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Ver panel en {{label}}...",
-      "button-view-panel2": "Ver panel en el tablero...",
-      "panel-not-linked": "El panel no está enlazado a un tablero. Añada el panel a un tablero y vuelva a intentarlo.",
+      "button-view-panel2": "Ver panel en el panel de control...",
+      "panel-not-linked": "El panel no está vinculado a un panel de control. Añádelo a un panel de control y vuelva a intentarlo.",
       "select-no-options-message": "No se ha encontrado ningún tablero",
       "select-placeholder": "Empezar a escribir para buscar el panel de control",
-      "title": "Ver el panel en el tablero"
+      "title": "Ver el panel en el tablero",
+      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
+      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:"
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -792,7 +786,7 @@
       "title": "Usuarios"
     },
     "grafana-quaderno": {
-      "title": "Cuaderno de Grafana"
+      "title": "Grafana Quaderno"
     },
     "help": {
       "title": "Ayuda"
@@ -1032,7 +1026,7 @@
       "change-password-button": "Cambiar contraseña",
       "confirm-password-label": "Confirmar contraseña",
       "confirm-password-required": "Se requiere confirmación de la nueva contraseña",
-      "ldap-auth-proxy-message": "No puede cambiar la contraseña al iniciar sesión con LDAP o «proxy» de autenticación.",
+      "ldap-auth-proxy-message": "No puede cambiar la contraseña al iniciar sesión con un LDAP o con un proxy de autenticación.",
       "new-password-label": "Nueva contraseña",
       "new-password-required": "Se requiere una nueva contraseña",
       "new-password-same-as-old": "La nueva contraseña no puede ser la misma que la antigua.",
@@ -1239,7 +1233,7 @@
   "snapshot": {
     "external-badge": "Externo",
     "name-column-header": "Nombre",
-    "url-column-header": "Imagen de la URL",
+    "url-column-header": "URL de la instantánea",
     "view-button": "Vista"
   },
   "tag-filter": {
