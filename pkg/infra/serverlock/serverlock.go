@@ -201,8 +201,7 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 				}
 
 				for _, op := range retryOpts {
-					err := op(lockChecks)
-					if err != nil {
+					if err := op(lockChecks); err != nil {
 						return err
 					}
 				}
