@@ -20,8 +20,6 @@ type Store interface {
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
-	CollectLoginStats(ctx context.Context) (map[string]any, error)
-	RunMetricsCollection(ctx context.Context) error
 }
 
 const (
