@@ -14,10 +14,10 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
-	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -45,34 +44,37 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
-	ApiUrl                  string   `toml:"api_url"`
-	AuthUrl                 string   `toml:"auth_url"`
-	ClientId                string   `toml:"client_id"`
-	ClientSecret            string   `toml:"-"`
-	EmailAttributeName      string   `toml:"email_attribute_name"`
-	EmailAttributePath      string   `toml:"email_attribute_path"`
-	GroupsAttributePath     string   `toml:"groups_attribute_path"`
-	HostedDomain            string   `toml:"hosted_domain"`
-	Icon                    string   `toml:"icon"`
-	Name                    string   `toml:"name"`
-	RoleAttributePath       string   `toml:"role_attribute_path"`
-	TeamIdsAttributePath    string   `toml:"team_ids_attribute_path"`
-	TeamsUrl                string   `toml:"teams_url"`
-	TlsClientCa             string   `toml:"tls_client_ca"`
-	TlsClientCert           string   `toml:"tls_client_cert"`
-	TlsClientKey            string   `toml:"tls_client_key"`
-	TokenUrl                string   `toml:"token_url"`
-	AllowedDomains          []string `toml:"allowed_domains"`
-	AllowedGroups           []string `toml:"allowed_groups"`
-	Scopes                  []string `toml:"scopes"`
-	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin"`
-	AllowSignup             bool     `toml:"allow_signup"`
-	AutoLogin               bool     `toml:"auto_login"`
-	Enabled                 bool     `toml:"enabled"`
-	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
-	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
-	UsePKCE                 bool     `toml:"use_pkce"`
-	UseRefreshToken         bool     `toml:"use_refresh_token"`
+	ApiUrl                  string            `mapstructure:"api_url"`
+	AuthUrl                 string            `mapstructure:"auth_url"`
+	AuthStyle               string            `mapstructure:"auth_style"`
+	ClientId                string            `mapstructure:"client_id"`
+	ClientSecret            string            `mapstructure:"client_secret"`
+	EmailAttributeName      string            `mapstructure:"email_attribute_name"`
+	EmailAttributePath      string            `mapstructure:"email_attribute_path"`
+	EmptyScopes             bool              `mapstructure:"empty_scopes"`
+	GroupsAttributePath     string            `mapstructure:"groups_attribute_path"`
+	HostedDomain            string            `mapstructure:"hosted_domain"`
+	Icon                    string            `mapstructure:"icon"`
+	Name                    string            `mapstructure:"name"`
+	RoleAttributePath       string            `mapstructure:"role_attribute_path"`
+	TeamIdsAttributePath    string            `mapstructure:"team_ids_attribute_path"`
+	TeamsUrl                string            `mapstructure:"teams_url"`
+	TlsClientCa             string            `mapstructure:"tls_client_ca"`
+	TlsClientCert           string            `mapstructure:"tls_client_cert"`
+	TlsClientKey            string            `mapstructure:"tls_client_key"`
+	TokenUrl                string            `mapstructure:"token_url"`
+	AllowedDomains          []string          `mapstructure:"allowed_domains"`
+	AllowedGroups           []string          `mapstructure:"allowed_groups"`
+	Scopes                  []string          `mapstructure:"scopes"`
+	AllowAssignGrafanaAdmin bool              `mapstructure:"allow_assign_grafana_admin"`
+	AllowSignup             bool              `mapstructure:"allow_sign_up"`
+	AutoLogin               bool              `mapstructure:"auto_login"`
+	Enabled                 bool              `mapstructure:"enabled"`
+	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict"`
+	TlsSkipVerify           bool              `mapstructure:"tls_skip_verify_insecure"`
+	UsePKCE                 bool              `mapstructure:"use_pkce"`
+	UseRefreshToken         bool              `mapstructure:"use_refresh_token"`
+	Extra                   map[string]string `mapstructure:",remain"`
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -93,40 +95,11 @@ func ProvideService(cfg *setting.Cfg,
 	for _, name := range allOauthes {
 		sec := cfg.Raw.Section("auth." + name)
 
-		info := &OAuthInfo{
-			ClientId:                sec.Key("client_id").String(),
-			ClientSecret:            sec.Key("client_secret").String(),
-			Scopes:                  util.SplitString(sec.Key("scopes").String()),
-			AuthUrl:                 sec.Key("auth_url").String(),
-			TokenUrl:                sec.Key("token_url").String(),
-			ApiUrl:                  sec.Key("api_url").String(),
-			TeamsUrl:                sec.Key("teams_url").String(),
-			Enabled:                 sec.Key("enabled").MustBool(),
-			EmailAttributeName:      sec.Key("email_attribute_name").String(),
-			EmailAttributePath:      sec.Key("email_attribute_path").String(),
-			RoleAttributePath:       sec.Key("role_attribute_path").String(),
-			RoleAttributeStrict:     sec.Key("role_attribute_strict").MustBool(),
-			GroupsAttributePath:     sec.Key("groups_attribute_path").String(),
-			TeamIdsAttributePath:    sec.Key("team_ids_attribute_path").String(),
-			AllowedDomains:          util.SplitString(sec.Key("allowed_domains").String()),
-			HostedDomain:            sec.Key("hosted_domain").String(),
-			AllowSignup:             sec.Key("allow_sign_up").MustBool(),
-			Name:                    sec.Key("name").MustString(name),
-			Icon:                    sec.Key("icon").String(),
-			TlsClientCert:           sec.Key("tls_client_cert").String(),
-			TlsClientKey:            sec.Key("tls_client_key").String(),
-			TlsClientCa:             sec.Key("tls_client_ca").String(),
-			TlsSkipVerify:           sec.Key("tls_skip_verify_insecure").MustBool(),
-			UsePKCE:                 sec.Key("use_pkce").MustBool(),
-			UseRefreshToken:         sec.Key("use_refresh_token").MustBool(false),
-			AllowAssignGrafanaAdmin: sec.Key("allow_assign_grafana_admin").MustBool(false),
-			AutoLogin:               sec.Key("auto_login").MustBool(false),
-			AllowedGroups:           util.SplitString(sec.Key("allowed_groups").String()),
-		}
-
-		// when empty_scopes parameter exists and is true, overwrite scope with empty value
-		if sec.Key("empty_scopes").MustBool() {
-			info.Scopes = []string{}
+		settingsKVs := convertIniSectionToMap(sec)
+		info, err := createOAuthInfoFromKeyValues(settingsKVs)
+		if err != nil {
+			ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
+			continue
 		}
 
 		if !info.Enabled {
@@ -137,133 +110,13 @@ func ProvideService(cfg *setting.Cfg,
 			name = grafanaCom
 		}
 
-		ss.oAuthProvider[name] = info
-
-		var authStyle oauth2.AuthStyle
-		switch strings.ToLower(sec.Key("auth_style").String()) {
-		case "inparams":
-			authStyle = oauth2.AuthStyleInParams
-		case "inheader":
-			authStyle = oauth2.AuthStyleInHeader
-		case "autodetect", "":
-			authStyle = oauth2.AuthStyleAutoDetect
-		default:
-			ss.log.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
-			authStyle = oauth2.AuthStyleAutoDetect
+		conn, err := ss.createOAuthConnector(name, settingsKVs, cfg, features, cache)
+		if err != nil {
+			ss.log.Error("Failed to create OAuth provider", "error", err, "provider", name)
 		}
 
-		config := oauth2.Config{
-			ClientID:     info.ClientId,
-			ClientSecret: info.ClientSecret,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:   info.AuthUrl,
-				TokenURL:  info.TokenUrl,
-				AuthStyle: authStyle,
-			},
-			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
-			Scopes:      info.Scopes,
-		}
-
-		// GitHub.
-		if name == "github" {
-			ss.socialMap["github"] = &SocialGithub{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:               info.ApiUrl,
-				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
-			}
-		}
-
-		// GitLab.
-		if name == "gitlab" {
-			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:          info.ApiUrl,
-				skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
-			}
-		}
-
-		// Google.
-		if name == "google" {
-			if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
-				ss.log.Warn("Using legacy Google API URL, please update your configuration")
-			}
-			ss.socialMap["google"] = &SocialGoogle{
-				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				hostedDomain:    info.HostedDomain,
-				apiUrl:          info.ApiUrl,
-				skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
-			}
-		}
-
-		// AzureAD.
-		if name == "azuread" {
-			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				cache:                cache,
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
-				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
-			}
-			if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-				appendUniqueScope(&config, OfflineAccessScope)
-			}
-		}
-
-		// Okta
-		if name == "okta" {
-			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:          info.ApiUrl,
-				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
-				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
-			}
-			if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-				appendUniqueScope(&config, OfflineAccessScope)
-			}
-		}
-
-		// Generic - Uses the same scheme as GitHub.
-		if name == "generic_oauth" {
-			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:               info.ApiUrl,
-				teamsUrl:             info.TeamsUrl,
-				emailAttributeName:   info.EmailAttributeName,
-				emailAttributePath:   info.EmailAttributePath,
-				nameAttributePath:    sec.Key("name_attribute_path").String(),
-				groupsAttributePath:  info.GroupsAttributePath,
-				loginAttributePath:   sec.Key("login_attribute_path").String(),
-				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
-				teamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
-				teamIds:              sec.Key("team_ids").Strings(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
-				skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
-			}
-		}
-
-		if name == grafanaCom {
-			config = oauth2.Config{
-				ClientID:     info.ClientId,
-				ClientSecret: info.ClientSecret,
-				Endpoint: oauth2.Endpoint{
-					AuthURL:   cfg.GrafanaComURL + "/oauth2/authorize",
-					TokenURL:  cfg.GrafanaComURL + "/api/oauth2/token",
-					AuthStyle: oauth2.AuthStyleInHeader,
-				},
-				RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
-				Scopes:      info.Scopes,
-			}
-
-			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				url:                  cfg.GrafanaComURL,
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
-			}
-		}
+		ss.socialMap[name] = conn
+		ss.oAuthProvider[name] = ss.socialMap[name].GetOAuthInfo()
 	}
 
 	ss.registerSupportBundleCollectors(bundleRegistry)
@@ -292,6 +145,8 @@ type SocialConnector interface {
 	IsEmailAllowed(email string) bool
 	IsSignupAllowed() bool
 
+	GetOAuthInfo() *OAuthInfo
+
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
 	Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
@@ -301,6 +156,7 @@ type SocialConnector interface {
 
 type SocialBase struct {
 	*oauth2.Config
+	info                    *OAuthInfo
 	log                     log.Logger
 	allowSignup             bool
 	allowAssignGrafanaAdmin bool
@@ -353,6 +209,7 @@ func newSocialBase(name string,
 
 	return &SocialBase{
 		Config:                  config,
+		info:                    info,
 		log:                     logger,
 		allowSignup:             info.AllowSignup,
 		allowAssignGrafanaAdmin: info.AllowAssignGrafanaAdmin,
@@ -553,8 +410,8 @@ func (ss *SocialService) GetOAuthInfoProviders() map[string]*OAuthInfo {
 	return ss.oAuthProvider
 }
 
-func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	authTypes := map[string]bool{}
 	for provider, enabled := range ss.GetOAuthProviders() {
@@ -589,7 +446,7 @@ func (s *SocialBase) isGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
+func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
 	tokenString, ok := idToken.(string)
 	if !ok {
 		return nil, fmt.Errorf("id_token is not a string: %v", idToken)
@@ -611,7 +468,7 @@ func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("error base64 decoding header: %w", err)
 	}
 
-	var header map[string]interface{}
+	var header map[string]any
 	if err := json.Unmarshal(headerBytes, &header); err != nil {
 		return nil, fmt.Errorf("error deserializing header: %w", err)
 	}
@@ -643,6 +500,27 @@ func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
 	}
 
 	return rawJSON, nil
+}
+
+func (ss *SocialService) createOAuthConnector(name string, settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager, cache remotecache.CacheStorage) (SocialConnector, error) {
+	switch name {
+	case azureADProviderName:
+		return NewAzureADProvider(settings, cfg, features, cache)
+	case genericOAuthProviderName:
+		return NewGenericOAuthProvider(settings, cfg, features)
+	case gitHubProviderName:
+		return NewGitHubProvider(settings, cfg, features)
+	case gitlabProviderName:
+		return NewGitLabProvider(settings, cfg, features)
+	case googleProviderName:
+		return NewGoogleProvider(settings, cfg, features)
+	case grafanaComProviderName:
+		return NewGrafanaComProvider(settings, cfg, features)
+	case oktaProviderName:
+		return NewOktaProvider(settings, cfg, features)
+	default:
+		return nil, fmt.Errorf("unknown oauth provider: %s", name)
+	}
 }
 
 func appendUniqueScope(config *oauth2.Config, scope string) {

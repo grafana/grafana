@@ -11,6 +11,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/prometheus/prometheus/promql/parser"
+	"golang.org/x/exp/slices"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
@@ -18,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -336,22 +340,24 @@ func validateURL(cmdType string, url string) response.Response {
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
 // For more context take a look at CVE-2022-35957
 func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features *featuremgmt.FeatureManager) error {
-	if jsonData == nil || !cfg.AuthProxyEnabled {
+	if jsonData == nil {
 		return nil
 	}
 
-	for key, value := range jsonData.MustMap() {
-		if strings.HasPrefix(key, datasources.CustomHeaderName) {
-			header := fmt.Sprint(value)
-			if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
-				datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
-				return errors.New("validation error, invalid header name specified")
+	if cfg.AuthProxyEnabled {
+		for key, value := range jsonData.MustMap() {
+			if strings.HasPrefix(key, datasources.CustomHeaderName) {
+				header := fmt.Sprint(value)
+				if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
+					datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
+					return errors.New("validation error, invalid header name specified")
+				}
 			}
 		}
 	}
 
 	// Prevent adding a data source team header with a name that matches the auth proxy header name
-	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
+	if features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) {
 		err := validateTeamHTTPHeaderJSON(jsonData)
 		if err != nil {
 			return err
@@ -374,11 +380,13 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 	// each teams headers
 	for _, teamheaders := range teamHTTPHeadersJSON {
 		for _, header := range teamheaders {
-			if !contains(validHeaders, header.Header) {
+			if !slices.ContainsFunc(validHeaders, func(v string) bool {
+				return http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(header.Header)
+			}) {
 				datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", header.Header)
 				return errors.New("validation error, invalid header name specified")
 			}
-			if !teamHTTPHeaderValueRegexMatch(header.Value) {
+			if !validateLBACHeader(header.Value) {
 				datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
 				return errors.New("validation error, invalid header value syntax")
 			}
@@ -387,27 +395,25 @@ func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
 	return nil
 }
 
-func contains(slice []string, value string) bool {
-	for _, v := range slice {
-		if http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(value) {
-			return true
-		}
-	}
-	return false
-}
-
-// teamHTTPHeaderValueRegexMatch returns true if the header value matches the regex
-// words separated by special characters
-// namespace!="auth", env="prod", env!~"dev"
-func teamHTTPHeaderValueRegexMatch(headervalue string) bool {
-	// link to regex: https://regex101.com/r/I8KhZz/1
-	// 1234:{ name!="value",foo!~"bar" }
-	exp := `^\d+:{(?:\s*\w+\s*(?:=|!=|=~|!~)\s*\"\w+\"\s*,*)+}$`
-	reg, err := regexp.Compile(exp)
+// validateLBACHeader returns true if the header value matches the syntax
+// 1234:{ name!="value",foo!~"bar" }
+func validateLBACHeader(headervalue string) bool {
+	exp := `^\d+:(.+)`
+	pattern, err := regexp.Compile(exp)
 	if err != nil {
 		return false
 	}
-	return reg.Match([]byte(strings.TrimSpace(headervalue)))
+	match := pattern.FindSubmatch([]byte(strings.TrimSpace(headervalue)))
+	if match == nil || len(match) < 2 {
+		return false
+	}
+	_, err = parser.ParseMetricSelector(string(match[1]))
+	return err == nil
+}
+
+func evaluateTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, scope string) (bool, error) {
+	ev := ac.EvalPermission(datasources.ActionPermissionsWrite, ac.Scope(scope))
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ev)
 }
 
 // swagger:route POST /datasources datasources addDataSource
@@ -447,6 +453,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 			return resp
 		}
 	}
+
 	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
@@ -515,7 +522,6 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
-
 	ds, err := hs.getRawDataSourceById(c.Req.Context(), cmd.ID, cmd.OrgID)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
@@ -523,6 +529,13 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 		}
 		return response.Error(500, "Failed to update datasource", err)
 	}
+
+	// check if LBAC rules have been modified
+	hasAccess, errAccess := checkTeamHTTPHeaderPermissions(hs, c, ds, cmd)
+	if !hasAccess {
+		return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), errAccess)
+	}
+
 	return hs.updateDataSourceByID(c, ds, cmd)
 }
 
@@ -564,7 +577,35 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
 	cmd.ID = ds.ID
+
+	// check if LBAC rules have been modified
+	hasAccess, errAccess := checkTeamHTTPHeaderPermissions(hs, c, ds, cmd)
+	if !hasAccess {
+		return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), errAccess)
+	}
+
 	return hs.updateDataSourceByID(c, ds, cmd)
+}
+
+func getEncodedString(jsonData *simplejson.Json, key string) string {
+	if jsonData == nil {
+		return ""
+	}
+	jsonValues, exists := jsonData.CheckGet(key)
+	if !exists {
+		return ""
+	}
+	val, _ := jsonValues.Encode()
+	return string(val)
+}
+
+func checkTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) (bool, error) {
+	currentTeamHTTPHeaders := getEncodedString(ds.JsonData, "teamHttpHeaders")
+	newTeamHTTPHeaders := getEncodedString(cmd.JsonData, "teamHttpHeaders")
+	if (currentTeamHTTPHeaders != "" || newTeamHTTPHeaders != "") && currentTeamHTTPHeaders != newTeamHTTPHeaders {
+		return evaluateTeamHTTPHeaderPermissions(hs, c, datasources.ScopePrefix+ds.UID)
+	}
+	return true, nil
 }
 
 func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) response.Response {

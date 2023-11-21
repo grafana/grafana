@@ -16,16 +16,7 @@ import (
 )
 
 var (
-	timeColumn      = "time"
-	timeColumnName  = "Time"
-	valueColumnName = "Value"
-
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
-
-	timeArray   []time.Time
-	floatArray  []*float64
-	stringArray []*string
-	boolArray   []*bool
 )
 
 const (
@@ -75,12 +66,10 @@ func parseJSON(buf io.Reader) (models.Response, error) {
 }
 
 func transformRows(rows []models.Row, query models.Query) data.Frames {
-	// Create a map for faster column name lookups
-	columnToLowerCase := make(map[string]string)
+	// pre-allocate frames - this can save many allocations
+	cols := 0
 	for _, row := range rows {
-		for _, column := range row.Columns {
-			columnToLowerCase[column] = strings.ToLower(column)
-		}
+		cols += len(row.Columns)
 	}
 
 	if len(rows) == 0 {
@@ -97,8 +86,10 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 	for _, row := range rows {
 		var hasTimeCol = false
 
-		if _, ok := columnToLowerCase[timeColumn]; ok {
-			hasTimeCol = true
+		for _, column := range row.Columns {
+			if strings.ToLower(column) == "time" {
+				hasTimeCol = true
+			}
 		}
 
 		if !hasTimeCol {
@@ -106,7 +97,7 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
-				if columnToLowerCase[column] == timeColumn {
+				if column == "time" {
 					continue
 				}
 				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
@@ -119,21 +110,20 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 }
 
 func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte) *data.Frame {
-	timeArray = timeArray[:0]
-	floatArray = floatArray[:0]
-	stringArray = stringArray[:0]
-	boolArray = boolArray[:0]
-
+	var timeArray []time.Time
+	var floatArray []*float64
+	var stringArray []*string
+	var boolArray []*bool
 	valType := typeof(row.Values, colIndex)
 
 	for _, valuePair := range row.Values {
 		timestamp, timestampErr := parseTimestamp(valuePair[0])
+		// we only add this row if the timestamp is valid
 		if timestampErr != nil {
 			continue
 		}
 
 		timeArray = append(timeArray, timestamp)
-
 		switch valType {
 		case "string":
 			value, ok := valuePair[colIndex].(string)
@@ -157,19 +147,19 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 		}
 	}
 
-	timeField := data.NewField(timeColumnName, nil, timeArray)
+	timeField := data.NewField("Time", nil, timeArray)
 
 	var valueField *data.Field
 
 	switch valType {
 	case "string":
-		valueField = data.NewField(valueColumnName, row.Tags, stringArray)
+		valueField = data.NewField("Value", row.Tags, stringArray)
 	case "json.Number":
-		valueField = data.NewField(valueColumnName, row.Tags, floatArray)
+		valueField = data.NewField("Value", row.Tags, floatArray)
 	case "bool":
-		valueField = data.NewField(valueColumnName, row.Tags, boolArray)
+		valueField = data.NewField("Value", row.Tags, boolArray)
 	case "null":
-		valueField = data.NewField(valueColumnName, row.Tags, floatArray)
+		valueField = data.NewField("Value", row.Tags, floatArray)
 	}
 
 	name := string(formatFrameName(row, column, query, frameName[:]))
@@ -258,6 +248,7 @@ func buildFrameNameFromQuery(row models.Row, column string, frameName []byte, re
 		first := true
 		for k, v := range row.Tags {
 			if !first {
+				frameName = append(frameName, ',')
 				frameName = append(frameName, ' ')
 			} else {
 				first = false

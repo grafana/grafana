@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,7 +43,7 @@ func ProvideApi(
 	}
 
 	// attach api if PublicDashboards feature flag is enabled
-	if features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) {
 		api.RegisterAPIEndpoints()
 	}
 
@@ -284,9 +286,9 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 }
 
 // Copied from pkg/api/metrics.go
-func toJsonStreamingResponse(features *featuremgmt.FeatureManager, qdr *backend.QueryDataResponse) response.Response {
+func toJsonStreamingResponse(ctx context.Context, features *featuremgmt.FeatureManager, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
-	if features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+	if features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
 	}
 

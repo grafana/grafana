@@ -41,10 +41,7 @@ import {
   ViewedBoundsFunctionType,
 } from './utils';
 
-const getStyles = stylesFactory((props: TVirtualizedTraceViewOwnProps) => {
-  const { topOfViewRefType } = props;
-  const position = topOfViewRefType === TopOfViewRefType.Explore ? 'fixed' : 'absolute';
-
+const getStyles = stylesFactory(() => {
   return {
     rowsWrapper: css`
       width: 100%;
@@ -59,7 +56,7 @@ const getStyles = stylesFactory((props: TVirtualizedTraceViewOwnProps) => {
       align-items: center;
       width: 40px;
       height: 40px;
-      position: ${position};
+      position: absolute;
       bottom: 30px;
       right: 30px;
       z-index: 1;
@@ -72,11 +69,6 @@ type RowState = {
   span: TraceSpan;
   spanIndex: number;
 };
-
-export enum TopOfViewRefType {
-  Explore = 'Explore',
-  Panel = 'Panel',
-}
 
 type TVirtualizedTraceViewOwnProps = {
   currentViewRangeTime: [number, number];
@@ -108,7 +100,6 @@ type TVirtualizedTraceViewOwnProps = {
   showCriticalPathSpansOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
-  topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
   headerHeight: number;
   criticalPath: CriticalPathSection[];
@@ -211,9 +202,23 @@ function generateRowStatesFromTrace(
     : [];
 }
 
+function childSpansMap(trace: Trace | TNil) {
+  const childSpansMap = new Map<string, string[]>();
+  if (!trace) {
+    return childSpansMap;
+  }
+  trace.spans.forEach((span) => {
+    if (span.childSpanIds.length) {
+      childSpansMap.set(span.spanID, span.childSpanIds);
+    }
+  });
+  return childSpansMap;
+}
+
 const memoizedGenerateRowStates = memoizeOne(generateRowStatesFromTrace);
 const memoizedViewBoundsFunc = memoizeOne(createViewedBoundsFunc, isEqual);
 const memoizedGetClipping = memoizeOne(getClipping, isEqual);
+const memoizedChildSpansMap = memoizeOne(childSpansMap);
 
 // export from tests
 export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
@@ -288,6 +293,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       viewStart: zoomStart,
       viewEnd: zoomEnd,
     });
+  }
+
+  getChildSpansMap() {
+    return memoizedChildSpansMap(this.props.trace);
   }
 
   getAccessors() {
@@ -461,10 +470,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     // This function called recursively to find all descendants of a span
     const findAllDescendants = (currentChildSpanIds: string[]) => {
       currentChildSpanIds.forEach((eachId) => {
-        const currentChildSpan = trace.spans.find((a) => a.spanID === eachId)!;
-        if (currentChildSpan.hasChildren) {
-          allChildSpanIds.push(...currentChildSpan.childSpanIds);
-          findAllDescendants(currentChildSpan.childSpanIds);
+        const childrenOfCurrent = this.getChildSpansMap().get(eachId);
+        if (childrenOfCurrent?.length) {
+          allChildSpanIds.push(...childrenOfCurrent);
+          findAllDescendants(childrenOfCurrent);
         }
       });
     };
@@ -476,7 +485,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       return each.spanId === spanID;
     });
 
-    const styles = getStyles(this.props);
+    const styles = getStyles();
     return (
       <div className={styles.row} key={key} style={style} {...attrs}>
         <SpanBarRow
@@ -536,7 +545,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
-      topOfViewRefType,
       theme,
       datasourceType,
     } = this.props;
@@ -545,7 +553,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       return null;
     }
     const color = getColorByKey(serviceName, theme);
-    const styles = getStyles(this.props);
+    const styles = getStyles();
 
     return (
       <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
@@ -572,7 +580,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           createSpanLink={createSpanLink}
           focusedSpanId={focusedSpanId}
           createFocusSpanLink={createFocusSpanLink}
-          topOfViewRefType={topOfViewRefType}
           datasourceType={datasourceType}
           visibleSpanIds={visibleSpanIds}
         />
@@ -603,7 +610,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   });
 
   render() {
-    const styles = getStyles(this.props);
+    const styles = getStyles();
     const { scrollElement } = this.props;
 
     return (
@@ -621,7 +628,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           windowScroller={false}
           scrollElement={scrollElement}
         />
-        {this.props.topOfViewRef && (
+        {this.props.topOfViewRef && ( // only for panel as explore uses content outline to scroll to top
           <ToolbarButton
             className={styles.scrollToTopButton}
             onClick={this.scrollToTop}

@@ -286,6 +286,10 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 				Cfg:                  setting.NewCfg(),
 				Features:             featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
 				accesscontrolService: actest.FakeService{},
+				AccessControl: actest.FakeAccessControl{
+					ExpectedEvaluate: true,
+					ExpectedErr:      nil,
+				},
 			}
 			sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
 			hs.Cfg.AuthProxyEnabled = true
@@ -300,7 +304,9 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 					Type:     "test",
 					JsonData: jsonData,
 				})
-				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
+				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{
+					{Action: datasources.ActionPermissionsWrite, Scope: datasources.ScopeAll},
+				})
 				return hs.AddDataSource(c)
 			}))
 
@@ -481,16 +487,20 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 	}
 }
 
-// TeamHTTPHeaderValueRegexMatch returns a regex that can be used to check
-func TestTeamHTTPHeaderValueRegexMatch(t *testing.T) {
+func TestValidateLBACHeader(t *testing.T) {
 	testcases := []struct {
 		desc            string
 		teamHeaderValue string
 		want            bool
 	}{
 		{
-			desc:            "Should be valid regex match for team headervalue",
+			desc:            "Should allow valid header",
 			teamHeaderValue: `1234:{ name!="value",foo!~"bar" }`,
+			want:            true,
+		},
+		{
+			desc:            "Should allow valid selector",
+			teamHeaderValue: `1234:{ name!="value",foo!~"bar/baz.foo" }`,
 			want:            true,
 		},
 		{
@@ -501,7 +511,7 @@ func TestTeamHTTPHeaderValueRegexMatch(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
-			assert.Equal(t, tc.want, teamHTTPHeaderValueRegexMatch(tc.teamHeaderValue))
+			assert.Equal(t, tc.want, validateLBACHeader(tc.teamHeaderValue))
 		})
 	}
 }

@@ -23,6 +23,7 @@ type store interface {
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
+	GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error)
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
 	AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error
 	UpdateMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error
@@ -212,6 +213,13 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 			params = append(params, query.Name)
 		}
 
+		if len(query.TeamIds) > 0 {
+			sql.WriteString(` and team.id IN (?` + strings.Repeat(",?", len(query.TeamIds)-1) + ")")
+			for _, id := range query.TeamIds {
+				params = append(params, id)
+			}
+		}
+
 		acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
 		if err != nil {
 			return err
@@ -326,6 +334,22 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 	if err != nil {
 		return nil, err
 	}
+	return queryResult, nil
+}
+
+// GetIDsByUser returns a list of team IDs for the given user
+func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
+	queryResult := make([]int64, 0)
+
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(`SELECT tm.team_id
+FROM team_member as tm
+WHERE tm.user_id=? AND tm.org_id=?;`, query.UserID, query.OrgID).Find(&queryResult)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get team IDs by user: %w", err)
+	}
+
 	return queryResult, nil
 }
 

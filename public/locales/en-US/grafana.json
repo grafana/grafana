@@ -138,6 +138,16 @@
       "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
       "title": "Error fetching correlation data"
     },
+    "basic-info-form": {
+      "description-description": "Optional description with more information about the link",
+      "description-label": "Description",
+      "label-description": "This name will be used as the label for the correlation. This will show as button text, a menu item, or hover text on a link.",
+      "label-label": "Label",
+      "label-placeholder": "e.g. Tempo traces",
+      "label-required": "This field is required.",
+      "sub-text": "<0>Define text that will describe the correlation.</0>",
+      "title": "Define correlation label (Step 1 of 3)"
+    },
     "list": {
       "delete": "delete correlation",
       "label": "Label",
@@ -146,9 +156,73 @@
       "source": "Source",
       "target": "Target"
     },
+    "navigation-form": {
+      "add-button": "Add",
+      "back-button": "Back",
+      "next-button": "Next",
+      "save-button": "Save"
+    },
     "page-content": "To enable Correlations, add it in the Grafana config:",
     "page-heading": "Correlations are disabled",
-    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>"
+    "query-editor": {
+      "control-rules": "The selected target data source must export a query editor.",
+      "data-source-text": "Please select a target data source first.",
+      "data-source-title": "No data source selected",
+      "error-text": "The selected data source could not be loaded.",
+      "error-title": "Error loading data source",
+      "loading": "Loading query editor...",
+      "query-description": "Define the query that is run when the link is clicked. You can use <2>variables</2> to access specific field values.",
+      "query-editor-title": "Data source does not export a query editor.",
+      "query-label": "Query"
+    },
+    "source-form": {
+      "control-required": "This field is required.",
+      "description": "You have used following variables in the target query: <1></1><2></2>A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<4></4>Note: Not every variable needs to be explicitly defined below. A transformation such as <7>logfmt</7> will create variables for every key/value pair.",
+      "heading": "Variables used in the target query",
+      "results-description": "The link will be shown next to the value of this field",
+      "results-label": "Results field",
+      "results-required": "This field is required.",
+      "source-description": "Results from selected source data source have links displayed in the panel",
+      "source-label": "Source",
+      "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>",
+      "title": "Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)"
+    },
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>",
+    "target-form": {
+      "control-rules": "This field is required.",
+      "sub-text": "<0>Define what data source the correlation will link to, and what query will run when the correlation is clicked.</0>",
+      "target-description": "Specify which data source is queried when the link is clicked",
+      "target-label": "Target",
+      "title": "Setup the target for the correlation (Step 2 of 3)"
+    },
+    "trans-details": {
+      "logfmt-description": "Parse provided field with logfmt to get variables",
+      "logfmt-label": "Logfmt",
+      "regex-description": "Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value. Regex is case insensitive.",
+      "regex-expression": "Use capture groups to extract a portion of the field.",
+      "regex-label": "Regular expression",
+      "regex-map-values": "Defines the name of the variable if the capture group is not named."
+    },
+    "transform": {
+      "add-button": "Add transformation",
+      "heading": "Transformations",
+      "no-transform": "No transformations defined."
+    },
+    "transform-row": {
+      "expression-label": "Expression",
+      "expression-required": "Please define an expression",
+      "expression-tooltip": "Required for regular expression. The expression the transformation will use. Logfmt does not use further specifications.",
+      "field-input": "field",
+      "field-label": "Field",
+      "field-tooltip": "Optional. The field to transform. If not specified, the transformation will be applied to the results field.",
+      "map-value-label": "Map value",
+      "map-value-tooltip": "Optional. Defines the name of the variable. This is currently only valid for regular expressions with a single, unnamed capture group.",
+      "remove-button": "Remove",
+      "remove-tooltip": "Remove transformation",
+      "transform-required": "Please select a transformation type",
+      "type-label": "Type",
+      "type-tooltip": "The type of transformation that will be applied to the source data."
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -632,7 +706,7 @@
       "title": "API keys"
     },
     "application": {
-      "title": "Application (preview)"
+      "title": "Application"
     },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
@@ -863,12 +937,12 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "dock": "Dock menu",
-      "undock": "Undock menu"
+      "dock": "Dock menu"
     },
     "toolbar": {
+      "close-menu": "Close menu",
       "enable-kiosk": "Enable kiosk mode",
-      "toggle-menu": "Toggle menu",
+      "open-menu": "Open menu",
       "toggle-search-bar": "Toggle top search bar"
     }
   },
@@ -882,7 +956,6 @@
   "panel": {
     "header-menu": {
       "copy": "Copy",
-      "create-alert": "Create alert",
       "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
@@ -893,6 +966,7 @@
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
       "share": "Share",
@@ -960,6 +1034,19 @@
       "old-password-required": "Old password is required",
       "passwords-must-match": "Passwords must match"
     }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "Collapse query row",
+      "datasource-help": "Show data source help",
+      "disable-query": "Disable query",
+      "drag-and-drop": "Drag and drop to reorder",
+      "duplicate-query": "Duplicate query",
+      "expand-row": "Expand query row",
+      "remove-query": "Remove query",
+      "toggle-edit-mode": "Toggle text edit mode"
+    },
+    "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
   "refresh-picker": {
     "aria-label": {
@@ -1044,7 +1131,6 @@
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
       "save-button": "Save to file",
-      "share-default-label": "Export with default values removed",
       "share-externally-label": "Export for sharing externally",
       "view-button": "View JSON"
     },
@@ -1091,6 +1177,8 @@
       "export": "Export",
       "library-panel": "Library panel",
       "link": "Link",
+      "panel-embed": "Embed",
+      "public-dashboard": "Public Dashboard",
       "snapshot": "Snapshot"
     },
     "theme-picker": {

@@ -5,7 +5,7 @@ import React from 'react';
 import { of } from 'rxjs';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { ArrayVector, CoreApp } from '@grafana/data';
+import { CoreApp } from '@grafana/data';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
@@ -51,9 +51,6 @@ const addFilter = async (
   rerender: (ui: React.ReactElement) => void
 ) => {
   const { property, operation, index } = filter;
-  const resultVector = new ArrayVector([
-    `{"${property}":[${filter.filters.map(({ count, value }) => `{"${property}":"${value}", "count":${count}}`)}]}`,
-  ]);
   mockDatasource.azureLogAnalyticsDatasource.query = jest.fn().mockReturnValue(
     of({
       data: [
@@ -82,7 +79,11 @@ const addFilter = async (
                   },
                 ],
               },
-              values: resultVector,
+              values: [
+                `{"${property}":[${filter.filters.map(
+                  ({ count, value }) => `{"${property}":"${value}", "count":${count}}`
+                )}]}`,
+              ],
               entities: {},
             },
           ],

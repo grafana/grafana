@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -68,32 +67,6 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(http.StatusForbidden, "Access denied to this dashboard", nil)
 }
 
-// swagger:route POST /dashboards/trim dashboards trimDashboard
-//
-// Trim defaults from dashboard.
-//
-// Responses:
-// 200: trimDashboardResponse
-// 401: unauthorisedError
-// 500: internalServerError
-func (hs *HTTPServer) TrimDashboard(c *contextmodel.ReqContext) response.Response {
-	cmd := dashboards.TrimDashboardCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	dash := cmd.Dashboard
-	meta := cmd.Meta
-
-	// TODO temporarily just return the input as a no-op while we convert to thema calls
-	dto := dtos.TrimDashboardFullWithMeta{
-		Dashboard: dash,
-		Meta:      meta,
-	}
-
-	c.TimeRequest(metrics.MApiDashboardGet)
-	return response.JSON(http.StatusOK, dto)
-}
-
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
 //
 // Get dashboard by uid.
@@ -120,7 +93,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	// If public dashboards is enabled and we have a public dashboard, update meta
 	// values
-	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.SignedInUser.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
@@ -190,7 +163,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		Version:                dash.Version,
 		HasACL:                 dash.HasACL,
 		IsFolder:               dash.IsFolder,
-		FolderId:               dash.FolderID,
+		FolderId:               dash.FolderID, // nolint:staticcheck
 		Url:                    dash.GetURL(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
@@ -198,7 +171,9 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	// lookup folder title
+	// nolint:staticcheck
 	if dash.FolderID > 0 {
+		// nolint:staticcheck
 		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()}
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err != nil {
@@ -412,25 +387,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
-	// nolint:staticcheck
-	if cmd.FolderUID != "" || cmd.FolderID != 0 {
-		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID: c.SignedInUser.GetOrgID(),
-			UID:   &cmd.FolderUID,
-			// nolint:staticcheck
-			ID:           &cmd.FolderID,
-			SignedInUser: c.SignedInUser,
-		})
-		if err != nil {
-			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return response.Error(http.StatusBadRequest, "Folder not found", err)
-			}
-			return response.Error(http.StatusInternalServerError, "Error while checking folder ID", err)
-		}
-		// nolint:staticcheck
-		cmd.FolderID = folder.ID
-		cmd.FolderUID = folder.UID
-	}
 
 	dash := cmd.GetDashboardModel()
 	newDashboard := dash.ID == 0
@@ -521,12 +477,13 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"status":  "success",
-		"slug":    dashboard.Slug,
-		"version": dashboard.Version,
-		"id":      dashboard.ID,
-		"uid":     dashboard.UID,
-		"url":     dashboard.GetURL(),
+		"status":    "success",
+		"slug":      dashboard.Slug,
+		"version":   dashboard.Version,
+		"id":        dashboard.ID,
+		"uid":       dashboard.UID,
+		"url":       dashboard.GetURL(),
+		"folderUid": dashboard.FolderUID,
 	})
 }
 
@@ -1232,13 +1189,6 @@ type CalcDashboardDiffParams struct {
 	}
 }
 
-// swagger:parameters trimDashboard
-type TrimDashboardParams struct {
-	// in:body
-	// required:true
-	Body dashboards.TrimDashboardCommand
-}
-
 // swagger:response dashboardResponse
 type DashboardResponse struct {
 	// The response message
@@ -1301,6 +1251,10 @@ type PostDashboardResponse struct {
 		// required: true
 		// example: /d/nHz3SXiiz/my-dashboard
 		URL string `json:"url"`
+
+		// FolderUID The unique identifier (uid) of the folder the dashboard belongs to.
+		// required: false
+		FolderUID string `json:"folderUid"`
 	} `json:"body"`
 }
 
@@ -1308,12 +1262,6 @@ type PostDashboardResponse struct {
 type CalculateDashboardDiffResponse struct {
 	// in: body
 	Body []byte `json:"body"`
-}
-
-// swagger:response trimDashboardResponse
-type TrimDashboardResponse struct {
-	// in: body
-	Body dtos.TrimDashboardFullWithMeta `json:"body"`
 }
 
 // swagger:response getHomeDashboardResponse

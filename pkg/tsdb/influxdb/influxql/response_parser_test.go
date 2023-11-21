@@ -365,6 +365,46 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		assert.Equal(t, "alias logins.count", result.Frames[1].Name)
 	})
 
+	t.Run("Influxdb response parser when multiple measurement in response", func(t *testing.T) {
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu.upc",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						},
+						{
+							"name": "logins.count",
+							"columns": ["time","mean"],
+							"tags": {
+								"datacenter": "America",
+								"cluster-name":   "Cluster"
+							},
+							"values": [
+								[111,222]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query := models.Query{}
+		result := ResponseParse(prepare(response), 200, generateQuery(query))
+		assert.True(t, strings.Contains(result.Frames[0].Name, ","))
+		assert.True(t, strings.Contains(result.Frames[1].Name, ","))
+	})
+
 	t.Run("Influxdb response parser with alias", func(t *testing.T) {
 		response := `
 		{
@@ -889,28 +929,4 @@ func TestResponseParser_Parse(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestParseTimestamp(t *testing.T) {
-	validValue := json.Number("1609459200000") // Milliseconds since epoch (January 1, 2021)
-	invalidValue := "invalid"
-
-	t.Run("ValidTimestamp", func(t *testing.T) {
-		parsedTime, err := parseTimestamp(validValue)
-		if err != nil {
-			t.Errorf("Expected no error, got: %v", err)
-		}
-
-		expectedTime := time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)
-		if !parsedTime.Equal(expectedTime) {
-			t.Errorf("Expected time: %v, got: %v", expectedTime, parsedTime)
-		}
-	})
-
-	t.Run("InvalidTimestamp", func(t *testing.T) {
-		_, err := parseTimestamp(invalidValue)
-		if err == nil {
-			t.Errorf("Expected an error, got nil")
-		}
-	})
 }

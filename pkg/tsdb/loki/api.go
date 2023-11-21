@@ -26,10 +26,11 @@ import (
 )
 
 type LokiAPI struct {
-	client *http.Client
-	url    string
-	log    log.Logger
-	tracer tracing.Tracer
+	client                    *http.Client
+	url                       string
+	log                       log.Logger
+	tracer                    tracing.Tracer
+	requestStructuredMetadata bool
 }
 
 type RawLokiResponse struct {
@@ -38,11 +39,11 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log, tracer: tracer}
+func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer, requestStructuredMetadata bool) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log, tracer: tracer, requestStructuredMetadata: requestStructuredMetadata}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, categorizeLabels bool) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -102,6 +103,10 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		}
 	}
 
+	if categorizeLabels {
+		req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
+	}
+
 	return req, nil
 }
 
@@ -156,7 +161,7 @@ func readLokiError(body io.ReadCloser) error {
 }
 
 func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
-	req, err := makeDataRequest(ctx, api.url, query)
+	req, err := makeDataRequest(ctx, api.url, query, api.requestStructuredMetadata)
 	if err != nil {
 		return nil, err
 	}
