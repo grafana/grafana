@@ -6,6 +6,7 @@ import {
   AbstractLabelOperator,
   AnnotationQueryRequest,
   CoreApp,
+  CustomVariableModel,
   DataFrame,
   dataFrameToJSON,
   DataQueryResponse,
@@ -25,9 +26,6 @@ import {
   setBackendSrv,
   TemplateSrv,
 } from '@grafana/runtime';
-
-import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
-import { CustomVariableModel } from '../../../features/variables/types';
 
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
@@ -265,7 +263,7 @@ describe('LokiDatasource', () => {
 
     beforeEach(() => {
       ds = createLokiDatasource(templateSrvStub);
-      variable = { ...initialCustomVariableModelState };
+      variable = {} as unknown as CustomVariableModel;
     });
 
     it('should only escape single quotes', () => {
