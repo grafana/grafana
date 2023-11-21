@@ -39,19 +39,18 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   public onSelectTrail = (trail: DataTrail) => {
     const app = getAppFor(this);
 
-    // const currentTrail = app.state.trail;
-    // const existsInRecent = this.state.recent.find((t) => t.resolve() === currentTrail);
-    //
-    // if (!existsInRecent) {
-    //   this.setState({ recent: [currentTrail.getRef(), ...this.state.recent] });
-    // }
+    const currentTrail = app.state.trail;
+    const existsInRecent = getLocalStorageSyncManager().isRecent(currentTrail);
+
+    if (!existsInRecent) {
+      getLocalStorageSyncManager().setRecentTrail(currentTrail);
+    }
 
     app.goToUrlForTrail(trail);
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {
     const { bookmarks } = model.useState();
-    const app = getAppFor(model);
     const styles = useStyles2(getStyles);
 
     return (
@@ -69,12 +68,18 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           <div className={styles.column}>
             <Text variant="h4">Recent trails</Text>
             <div className={styles.trailList}>
-              {app.state.trail.state.metric && <DataTrailCard trail={app.state.trail} onSelect={model.onSelectTrail} />}
               {getLocalStorageSyncManager()
                 .getRecentTrails()
-                .map((trail, index) => (
-                  <DataTrailCard key={index} trail={trail.resolve()} onSelect={model.onSelectTrail} />
-                ))}
+                .map((trail, index) => {
+                  const resolvedTrail = trail.resolve();
+                  return (
+                    <DataTrailCard
+                      key={resolvedTrail.state.key || index}
+                      trail={trail.resolve()}
+                      onSelect={model.onSelectTrail}
+                    />
+                  );
+                })}
             </div>
           </div>
           <div className={styles.column}>

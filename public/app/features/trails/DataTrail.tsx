@@ -81,7 +81,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   public goBackToStep(step: DataTrailHistoryStep) {
-    console.log('goBackToStep', step);
     if (!this.state.embedded) {
       getUrlSyncManager().cleanUp(this);
     }
@@ -162,7 +161,7 @@ function getTopSceneFor(metric?: string) {
   }
 }
 
-function getVariableSet(initialDS?: string, metric?: string, initialFilters?: AdHocVariableFilter[]) {
+export function getVariableSet(initialDS?: string, metric?: string, initialFilters?: AdHocVariableFilter[]) {
   return new SceneVariableSet({
     variables: [
       new DataSourceVariable({

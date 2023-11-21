@@ -1,17 +1,17 @@
 import { debounce } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-import { SceneObjectRef, SceneObjectUrlValues, getUrlSyncManager, sceneUtils } from '@grafana/scenes';
+import { SceneObject, SceneObjectRef, SceneObjectUrlValues, getUrlSyncManager, sceneUtils } from '@grafana/scenes';
 
 import { DataTrail } from './DataTrail';
 import { TrailStepType } from './DataTrailsHistory';
 import { RECENT_TRAILS_KEY } from './shared';
 
-interface SerializedTrail {
+export interface SerializedTrail {
   key: string;
   urlValues: SceneObjectUrlValues;
   history: Array<{
-    url: SceneObjectUrlValues;
+    urlValues: SceneObjectUrlValues;
     type: TrailStepType;
     description: string;
   }>;
@@ -27,13 +27,9 @@ export class LocalStorageSyncManager {
     if (recentTrailsItem) {
       const recentTrails: SerializedTrail[] = JSON.parse(recentTrailsItem);
       for (const t of recentTrails) {
-        console.log('Loading recent trail', t);
         const trail = new DataTrail({ key: t.key });
-        trail.updateFromUrl(t.urlValues);
         t.history.map((step) => {
-          console.log('Loading step', step);
-          const stepTrail = new DataTrail({});
-          stepTrail.updateFromUrl(step.url);
+          this._loadState(trail, step.urlValues);
           trail.state.history.state.steps.push({
             description: 'Test',
             type: step.type,
@@ -54,7 +50,7 @@ export class LocalStorageSyncManager {
     const history = trail.state.history.state.steps.map((step) => {
       const stepTrail = new DataTrail(step.trailState);
       return {
-        url: getUrlSyncManager().getUrlState(stepTrail),
+        urlValues: getUrlSyncManager().getUrlState(stepTrail),
         type: step.type,
         description: step.description,
       };
@@ -66,12 +62,20 @@ export class LocalStorageSyncManager {
     };
   }
 
+  private _loadState(node: SceneObject, urlValues: SceneObjectUrlValues) {
+    node.urlSync?.updateFromUrl(urlValues);
+    node.forEachChild((child) => this._loadState(child, urlValues));
+  }
+
+  isRecent(trail: DataTrail) {
+    return trail.state.key && trail.state.key in this._recent;
+  }
+
   getRecentTrails() {
     return Object.values(this._recent);
   }
 
   setRecentTrail(trail: DataTrail) {
-    console.log('Setting recent trail', trail);
     if (trail.state.key) {
       this._recent[trail.state.key] = trail.getRef();
     } else {

@@ -8,6 +8,8 @@ export interface ActionViewDefinition {
   getScene: () => SceneObject;
 }
 
+export const TRAILS_ROUTE = '/data-trails/trail';
+
 export const VAR_METRIC_NAMES = 'metricNames';
 export const VAR_FILTERS = 'filters';
 export const VAR_FILTERS_EXPR = '{${filters}}';
