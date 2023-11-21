@@ -229,7 +229,7 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 	}
 
 	authInfoStore := &FakeAuthInfoStore{}
-	authInfoService := authinfoservice.ProvideAuthInfoService(authInfoStore)
+	authInfoService := authinfoservice.ProvideService(authInfoStore)
 	return &Service{
 		Cfg:                  setting.NewCfg(),
 		SocialService:        socialService,

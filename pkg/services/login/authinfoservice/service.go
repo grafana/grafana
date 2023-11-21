@@ -12,7 +12,7 @@ type Service struct {
 	logger        log.Logger
 }
 
-func ProvideAuthInfoService(authInfoStore login.Store) *Service {
+func ProvideService(authInfoStore login.Store) *Service {
 	s := &Service{
 		authInfoStore: authInfoStore,
 		logger:        log.New("login.authinfo"),

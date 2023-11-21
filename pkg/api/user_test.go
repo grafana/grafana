@@ -63,7 +63,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 		authInfoStore := authinfoservice.ProvideStore(sqlStore, secretsService)
-		srv := authinfoservice.ProvideAuthInfoService(
+		srv := authinfoservice.ProvideService(
 			authInfoStore,
 		)
 		hs.authInfoService = srv
