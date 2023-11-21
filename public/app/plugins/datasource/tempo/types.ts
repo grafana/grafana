@@ -7,7 +7,6 @@ import { LokiQuery } from '../loki/types';
 import { TempoQuery as TempoBase, TempoQueryType, TraceqlFilter } from './dataquery.gen';
 
 export interface SearchQueryParams {
-  [key: string]: string | number | undefined;
   minDuration?: string;
   maxDuration?: string;
   limit?: number;

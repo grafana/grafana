@@ -319,7 +319,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         // Params can't have undefined values that are possible in SearchQueryParams
         const params: Record<string, string | number> = {};
         for (const key in searchQuery) {
-          const value = searchQuery[key];
+          const value = searchQuery[key as keyof SearchQueryParams];
           if (value !== undefined) {
             params[key] = value;
           }
