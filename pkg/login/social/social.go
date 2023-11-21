@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -83,7 +82,6 @@ func ProvideService(cfg *setting.Cfg,
 	usageStats usagestats.Service,
 	bundleRegistry supportbundles.Service,
 	cache remotecache.CacheStorage,
-	ssoSettings ssosettings.Service,
 ) *SocialService {
 	ss := &SocialService{
 		cfg:           cfg,
@@ -95,46 +93,30 @@ func ProvideService(cfg *setting.Cfg,
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
 
 	for _, name := range allOauthes {
-		if name == "azuread" {
-			settings, err := ssoSettings.GetForProvider(context.Background(), name)
-			if err != nil {
-				ss.log.Error("Failed to get settings for provider", "error", err, "provider", name)
-				continue
-			}
+		sec := cfg.Raw.Section("auth." + name)
 
-			conn, err := ss.createOAuthConnector(name, settings.Settings, cfg, features, cache)
-			if err != nil {
-				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", name)
-			}
-
-			ss.socialMap[name] = conn
-			ss.oAuthProvider[name] = ss.socialMap[name].GetOAuthInfo()
-		} else {
-			sec := cfg.Raw.Section("auth." + name)
-
-			settingsKVs := convertIniSectionToMap(sec)
-			info, err := createOAuthInfoFromKeyValues(settingsKVs)
-			if err != nil {
-				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
-				continue
-			}
-
-			if !info.Enabled {
-				continue
-			}
-
-			if name == "grafananet" {
-				name = grafanaCom
-			}
-
-			conn, err := ss.createOAuthConnector(name, settingsKVs, cfg, features, cache)
-			if err != nil {
-				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", name)
-			}
-
-			ss.socialMap[name] = conn
-			ss.oAuthProvider[name] = ss.socialMap[name].GetOAuthInfo()
+		settingsKVs := convertIniSectionToMap(sec)
+		info, err := createOAuthInfoFromKeyValues(settingsKVs)
+		if err != nil {
+			ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
+			continue
 		}
+
+		if !info.Enabled {
+			continue
+		}
+
+		if name == "grafananet" {
+			name = grafanaCom
+		}
+
+		conn, err := ss.createOAuthConnector(name, settingsKVs, cfg, features, cache)
+		if err != nil {
+			ss.log.Error("Failed to create OAuth provider", "error", err, "provider", name)
+		}
+
+		ss.socialMap[name] = conn
+		ss.oAuthProvider[name] = ss.socialMap[name].GetOAuthInfo()
 	}
 
 	ss.registerSupportBundleCollectors(bundleRegistry)

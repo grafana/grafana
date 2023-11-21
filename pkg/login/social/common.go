@@ -166,7 +166,7 @@ func createOAuthConfig(info *OAuthInfo, cfg *setting.Cfg, defaultName string) *o
 	return &config
 }
 
-func MustBool(value any, defaultValue bool) bool {
+func mustBool(value any, defaultValue bool) bool {
 	if value == nil {
 		return defaultValue
 	}
