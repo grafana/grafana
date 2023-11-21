@@ -1,39 +1,33 @@
 import { reportInteraction } from '@grafana/runtime';
 
-export const shareAnalyticsEventNames: {
-  [key: string]: string;
-} = {
-  dashboardsToolbarActionsClicked: 'dashboards_toolbar_actions_clicked',
-};
-
 export function trackToolbarFavoritesClick() {
-  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'favorites' });
+  reportInteraction('dashboards_toolbar_favorites_clicked', { item: 'favorites' });
 }
 
 export function trackToolbarSettingsClick() {
-  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'settings' });
+  reportInteraction('dashboards_toolbar_settings_clicked', { item: 'settings' });
 }
 
 export function trackToolbarRefreshClick() {
-  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'refresh' });
+  reportInteraction('dashboards_toolbar_refresh_clicked', { item: 'refresh' });
 }
 
 export function trackToolbarTimePickerClick() {
-  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'time_picker' });
+  reportInteraction('dashboards_toolbar_time_picker_clicked', { item: 'time_picker' });
 }
 
 export function trackToolbarZoomClick() {
-  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'zoom_out_time_range' });
+  reportInteraction('dashboards_toolbar_zoom_out_time_range_clicked', { item: 'zoom_out_time_range' });
 }
 
 export function trackToolbarShareClick() {
-  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'share' });
+  reportInteraction('dashboards_toolbar_share_clicked', { item: 'share' });
 }
 
 export function trackToolbarSaveClick() {
-  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'save' });
+  reportInteraction('dashboards_toolbar_save_clicked', { item: 'save' });
 }
 
 export function trackToolbarAddClick() {
-  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'add' });
+  reportInteraction('dashboards_toolbar_add_clicked', { item: 'add' });
 }
