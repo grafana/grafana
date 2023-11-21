@@ -30,7 +30,7 @@
       "cancel-button": "Cancelar",
       "cannot-move-folders": "Las carpetas no se pueden mover",
       "delete-button": "Eliminar",
-      "delete-modal-invalid-text": "Una o más carpetas contienen paneles de la biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
+      "delete-modal-invalid-text": "Una o más carpetas contienen paneles de biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
       "delete-modal-invalid-title": "No se puede eliminar la carpeta",
       "delete-modal-text": "Esta acción eliminará el siguiente contenido:",
       "delete-modal-title": "Eliminar",
