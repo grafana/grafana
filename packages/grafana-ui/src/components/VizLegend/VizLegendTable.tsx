@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { orderBy } from 'lodash';
 import React from 'react';
 
 import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
@@ -9,6 +8,8 @@ import { Icon } from '../Icon/Icon';
 
 import { LegendTableItem } from './VizLegendTableItem';
 import { VizLegendTableProps } from './types';
+
+const nameSortKey = 'Name';
 
 /**
  * @internal
@@ -28,7 +29,6 @@ export const VizLegendTable = <T extends unknown>({
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles);
   const stats: Record<string, DisplayValue> = {};
-  const nameSortKey = 'Name';
 
   if (isSortable) {
     // placeholder displayValue for Name
@@ -43,26 +43,7 @@ export const VizLegendTable = <T extends unknown>({
     }
   }
 
-  const sortedItems = sortKey
-    ? orderBy(
-        items,
-        (item) => {
-          if (sortKey === nameSortKey) {
-            return item.label;
-          }
-
-          if (item.getDisplayValues) {
-            const stat = item.getDisplayValues().filter((stat) => stat.title === sortKey)[0];
-
-            if (stat) {
-              return isNaN(stat.numeric) ? -Infinity : stat.numeric;
-            }
-          }
-          return undefined;
-        },
-        sortDesc ? 'desc' : 'asc'
-      )
-    : items;
+  const sortedItems = sortItems(items, sortKey, sortDesc);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
@@ -108,6 +89,49 @@ export const VizLegendTable = <T extends unknown>({
       <tbody>{sortedItems.map(itemRenderer!)}</tbody>
     </table>
   );
+};
+
+const sortItems = (items, sortKey: string | undefined, sortDesc: boolean | undefined) => {
+  if (!sortKey) {
+    return items;
+  }
+
+  const sorted = items.toSorted((a, b) => {
+    const aValue = sortValue(a, sortKey);
+    const bValue = sortValue(b, sortKey);
+
+    if (!aValue) {
+      return -1;
+    }
+
+    if (!bValue) {
+      return 1;
+    }
+
+    return aValue.localeCompare(bValue, undefined, { numeric: true });
+  });
+
+  if (sortDesc) {
+    return sorted.toReversed();
+  }
+
+  return sorted;
+};
+
+const sortValue = (item, sortKey: string) => {
+  if (sortKey === nameSortKey) {
+    return item.label;
+  }
+
+  if (item.getDisplayValues) {
+    const stat = item.getDisplayValues().filter((stat) => stat.title === sortKey)[0];
+
+    if (stat) {
+      return isNaN(stat.numeric) ? undefined : stat.numeric.toLocaleString('fullwide', { useGrouping: false });
+    }
+  }
+
+  return undefined;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
