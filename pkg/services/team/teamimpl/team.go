@@ -41,6 +41,10 @@ func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUser
 	return s.store.GetByUser(ctx, query)
 }
 
+func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, error) {
+	return s.store.GetIDsByUser(ctx, query)
+}
+
 func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error {
 	return s.store.AddMember(userID, orgID, teamID, isExternal, permission)
 }
