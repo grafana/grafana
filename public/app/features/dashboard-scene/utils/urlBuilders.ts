@@ -1,6 +1,6 @@
-import { locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
+import { AdHocVariableFilter, locationUtil, UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationSearchToObject, locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { getExploreUrl } from 'app/core/utils/explore';
 
@@ -91,5 +91,6 @@ export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | u
     dsRef: queryRunner.state.datasource,
     timeRange: timeRange.state.value,
     scopedVars: { __sceneObject: { value: vizPanel } },
+    adhocFilters: queryRunner.state.data?.request?.filters,
   });
 }
