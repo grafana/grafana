@@ -835,19 +835,5 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('xychart-example', import '../dev-dashboards/panel-xychart/xychart-example.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('xychart-example', import '../dev-dashboards/panel-xychart/xychart-example.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
   ],
 } 
