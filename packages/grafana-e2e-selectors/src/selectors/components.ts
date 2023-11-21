@@ -207,7 +207,7 @@ export const Components = {
     container: (refId: string) => `Query editor row ${refId}`,
   },
   AlertTab: {
-    content: 'Alert editor tab content',
+    content: 'data-testid Alert editor tab content',
   },
   Alert: {
     /**
@@ -398,7 +398,7 @@ export const Components = {
     submit: 'data-testid-import-dashboard-submit',
   },
   PanelAlertTabContent: {
-    content: 'Unified alert editor tab content',
+    content: 'data-testid Unified alert editor tab content',
   },
   VisualizationPreview: {
     card: (name: string) => `data-testid suggestion-${name}`,
