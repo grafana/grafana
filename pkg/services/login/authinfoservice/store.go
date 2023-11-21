@@ -14,14 +14,14 @@ import (
 
 var GetTime = time.Now
 
-type AuthInfoStore struct {
+type Store struct {
 	sqlStore       db.DB
 	secretsService secrets.Service
 	logger         log.Logger
 }
 
 func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service) login.Store {
-	store := &AuthInfoStore{
+	store := &Store{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
@@ -32,7 +32,7 @@ func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service) login.
 
 // GetAuthInfo returns the auth info for a user
 // It will return the latest auth info for a user
-func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
+func (s *Store) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
 	if query.UserId == 0 && query.AuthId == "" {
 		return nil, user.ErrUserNotFound
 	}
@@ -82,7 +82,7 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInf
 	return userAuth, nil
 }
 
-func (s *AuthInfoStore) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+func (s *Store) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	userAuths := []login.UserAuth{}
 	params := make([]interface{}, 0, len(query.UserIDs))
 	for _, id := range query.UserIDs {
@@ -106,7 +106,7 @@ func (s *AuthInfoStore) GetUserLabels(ctx context.Context, query login.GetUserLa
 	return labelMap, nil
 }
 
-func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
+func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
 		UserId:     cmd.UserId,
 		AuthModule: cmd.AuthModule,
@@ -149,7 +149,7 @@ func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoC
 	})
 }
 
-func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
+func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	authUser := &login.UserAuth{
 		UserId:     cmd.UserId,
 		AuthModule: cmd.AuthModule,
@@ -218,7 +218,7 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAut
 	})
 }
 
-func (s *AuthInfoStore) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+func (s *Store) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "DELETE FROM user_auth WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
@@ -227,7 +227,7 @@ func (s *AuthInfoStore) DeleteUserAuthInfo(ctx context.Context, userID int64) er
 }
 
 // decodeAndDecrypt will decode the string with the standard base64 decoder and then decrypt it
-func (s *AuthInfoStore) decodeAndDecrypt(str string) (string, error) {
+func (s *Store) decodeAndDecrypt(str string) (string, error) {
 	// Bail out if empty string since it'll cause a segfault in Decrypt
 	if str == "" {
 		return "", nil
@@ -245,7 +245,7 @@ func (s *AuthInfoStore) decodeAndDecrypt(str string) (string, error) {
 
 // encryptAndEncode will encrypt a string with grafana's secretKey, and
 // then encode it with the standard bas64 encoder
-func (s *AuthInfoStore) encryptAndEncode(str string) (string, error) {
+func (s *Store) encryptAndEncode(str string) (string, error) {
 	encrypted, err := s.secretsService.Encrypt(context.Background(), []byte(str), secrets.WithoutScope())
 	if err != nil {
 		return "", err
