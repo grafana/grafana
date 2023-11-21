@@ -35,6 +35,23 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
   title: string;
+  /** The description */
+  description?: string;
+  /** The tags */
+  tags?: string[];
+  /** Is editable */
+  editable?: boolean;
+  /** Default Timezone */
+  timezone: string;
+  /** Day when the week starts */
+  weekStart: string;
+  /** True when live */
+  liveNow: boolean;
+  timepicker: {
+    refresh_intervals: string[];
+    nowDelay: string;
+    hidden: boolean;
+  };
   /** A uid when saved */
   uid?: string;
   /** @deprecated */
@@ -90,6 +107,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     super({
       title: 'Dashboard',
       meta: {},
+      timezone: 'browser',
+      timepicker: {
+        refresh_intervals: ['10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+        nowDelay: '5s',
+        hidden: false,
+      },
+      weekStart: 'monday',
+      liveNow: false,
+      editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       ...state,
     });
@@ -218,6 +244,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
         if (event.payload.changedObject instanceof SceneGridItem) {
+          this.setIsDirty();
+        }
+        if (event.payload.changedObject instanceof DashboardScene) {
           this.setIsDirty();
         }
       }
