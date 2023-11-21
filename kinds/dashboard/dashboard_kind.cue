@@ -243,8 +243,6 @@ lineage: schemas: [{
 		// `4`: Numerical DESC
 		// `5`: Alphabetical Case Insensitive ASC
 		// `6`: Alphabetical Case Insensitive DESC
-		// `7`: Natural ASC
-		// `8`: Natural DESC
 		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc|naturalAsc|naturalDesc")
 
 		// Ref to a DataSource instance
