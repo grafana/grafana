@@ -8,7 +8,7 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { getAlertManagerDataSourcesByPermission } from '../../../utils/datasource';
+import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
 import { Folder } from '../RuleFolderPicker';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
@@ -62,10 +62,10 @@ export const NotificationPreview = ({
     });
   };
 
-  //  Get alert managers's source name + image
-  const alertManagerMetaData = getAlertManagerDataSourcesByPermission('notification');
+  //  Get alert managers's data source information
+  const alertManagerDataSources = useGetAlertManagerDataSourcesByPermissionAndConfig('notification');
 
-  const onlyOneAM = alertManagerMetaData.length === 1;
+  const onlyOneAM = alertManagerDataSources.length === 1;
 
   return (
     <Stack direction="column">
@@ -97,7 +97,7 @@ export const NotificationPreview = ({
       </div>
       {!isLoading && !previewUninitialized && potentialInstances.length > 0 && (
         <Suspense fallback={<LoadingPlaceholder text="Loading preview..." />}>
-          {alertManagerMetaData.map((alertManagerSource) => (
+          {alertManagerDataSources.map((alertManagerSource) => (
             <NotificationPreviewByAlertManager
               alertManagerSource={alertManagerSource}
               potentialInstances={potentialInstances}

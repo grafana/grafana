@@ -43,12 +43,16 @@ export function SimplifiedRouting() {
   const styles = useStyles2(getStyles);
   const contactPointsInAlert = getValues('contactPoints');
 
-  const alertManagerMetaData = getAlertManagerDataSourcesByPermission('notification');
+  const allAlertManagersByPermission = getAlertManagerDataSourcesByPermission('notification');
 
-  const alertManagerMetaDataWithConfigAPI = alertManagerMetaData.filter((am) => am.hasConfigurationAPI);
+  const alertManagersDataSources = allAlertManagersByPermission.availableInternalDataSources.concat(
+    allAlertManagersByPermission.availableExternalDataSources
+  );
+
+  const alertManagersDataSourcesWithConfigAPI = alertManagersDataSources.filter((am) => am.hasConfigurationAPI);
 
   // we merge the selected contact points with the alert manager meta data
-  const alertManagersWithSelectedContactPoints = alertManagerMetaDataWithConfigAPI.map((am) => {
+  const alertManagersWithSelectedContactPoints = alertManagersDataSourcesWithConfigAPI.map((am) => {
     const selectedContactPoint = contactPointsInAlert?.find((cp) => cp.alertManager === am.name);
     return { alertManager: am, selectedContactPoint: selectedContactPoint?.selectedContactPoint };
   });
@@ -68,8 +72,6 @@ export function SimplifiedRouting() {
     setValue('contactPoints', contactPointsForForm, { shouldValidate: false });
   }, [alertManagersWithCPState, setValue]);
 
-  //todo: decide what to do when there some alert managers not postable
-  //const shouldShowAM = alertManagerMetaDataPostable.length > 1;
   const shouldShowAM = true;
 
   return alertManagersWithCPState.map((alertManagerContactPoint, index) => {

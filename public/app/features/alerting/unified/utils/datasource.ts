@@ -1,10 +1,16 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+  AlertmanagerChoice,
+} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
 
+import { alertmanagerApi } from '../api/alertmanagerApi';
+import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, notificationsPermissions } from './access-control';
@@ -24,6 +30,7 @@ export interface AlertManagerDataSource {
   imgUrl: string;
   meta?: DataSourceInstanceSettings['meta'];
   hasConfigurationAPI?: boolean;
+  handleGrafanaManagedAlerts?: boolean;
 }
 
 export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
@@ -73,17 +80,53 @@ export function getAllAlertManagerDataSources(): AlertManagerDataSource[] {
   ];
 }
 
-export function getAlertManagerDataSourcesByPermission(
+/**
+ * This method gets all alert managers that the user has access, and then filter them first by being able to handle grafana managed alerts,
+ * and then depending on the current alerting configuration returns either only the internal alert managers, only the external alert managers, or both.
+ *
+ */
+export function useGetAlertManagerDataSourcesByPermissionAndConfig(
   permission: 'instance' | 'notification'
 ): AlertManagerDataSource[] {
-  const availableDataSources: AlertManagerDataSource[] = [];
+  const allAlertManagersByPermission = useAlertManagersByPermission(permission); // this hook memoizes the result of getAlertManagerDataSourcesByPermission
+
+  const externalDsAlertManagers: AlertManagerDataSource[] =
+    allAlertManagersByPermission.availableExternalDataSources.filter((ds) => ds.handleGrafanaManagedAlerts);
+  const internalDSAlertManagers = allAlertManagersByPermission.availableInternalDataSources;
+
+  //get current alerting configuration
+  const { currentData: amConfigStatus } = alertmanagerApi.useGetAlertmanagerChoiceStatusQuery(undefined);
+
+  const alertmanagerChoice = amConfigStatus?.alertmanagersChoice;
+
+  switch (alertmanagerChoice) {
+    case AlertmanagerChoice.Internal:
+      return internalDSAlertManagers;
+    case AlertmanagerChoice.External:
+      return externalDsAlertManagers;
+    default:
+      return [...internalDSAlertManagers, ...externalDsAlertManagers];
+  }
+}
+
+/**
+ * This method gets all alert managers that the user has access to and then split them into two groups:
+ * 1. Internal alert managers
+ * 2. External alert managers
+ */
+export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 'notification'): {
+  availableInternalDataSources: AlertManagerDataSource[];
+  availableExternalDataSources: AlertManagerDataSource[];
+} {
+  const availableInternalDataSources: AlertManagerDataSource[] = [];
+  const availableExternalDataSources: AlertManagerDataSource[] = [];
   const permissions = {
     instance: instancesPermissions.read,
     notification: notificationsPermissions.read,
   };
 
   if (contextSrv.hasPermission(permissions[permission].grafana)) {
-    availableDataSources.push(grafanaAlertManagerDataSource);
+    availableInternalDataSources.push(grafanaAlertManagerDataSource);
   }
 
   if (contextSrv.hasPermission(permissions[permission].external)) {
@@ -93,11 +136,12 @@ export function getAlertManagerDataSourcesByPermission(
       imgUrl: ds.meta.info.logos.small,
       meta: ds.meta,
       hasConfigurationAPI: isAlertManagerWithConfigAPI(ds.jsonData),
+      handleGrafanaManagedAlerts: ds.jsonData.handleGrafanaManagedAlerts,
     }));
-    availableDataSources.push(...cloudSources);
+    availableExternalDataSources.push(...cloudSources);
   }
 
-  return availableDataSources;
+  return { availableInternalDataSources, availableExternalDataSources };
 }
 
 export function getLotexDataSourceByName(dataSourceName: string): DataSourceInstanceSettings {
