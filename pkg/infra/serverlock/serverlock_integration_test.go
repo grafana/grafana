@@ -76,15 +76,17 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 	fn := func(context.Context) {
 		funcRuns++
 	}
-	lockTimeout := time.Hour
-	minWait := 0 * time.Millisecond
-	maxWait := 1 * time.Millisecond
+	lockTimeConfig := LockTimeConfig{
+		MaxInterval: time.Hour,
+		MinWait:     0 * time.Millisecond,
+		MaxWait:     1 * time.Millisecond,
+	}
 	ctx := context.Background()
 	actionName := "test-operation"
 
 	// Acquire lock so that when `LockExecuteAndReleaseWithRetries` runs, it is forced
 	// to retry
-	err := sl.acquireForRelease(ctx, actionName, lockTimeout)
+	err := sl.acquireForRelease(ctx, actionName, lockTimeConfig.MaxInterval)
 	require.NoError(t, err)
 
 	wgRetries := sync.WaitGroup{}
@@ -93,6 +95,7 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 	wgRelease.Add(1)
 	wgCompleted := sync.WaitGroup{}
 	wgCompleted.Add(1)
+
 	onRetryFn := func(int) error {
 		retries++
 		wgRetries.Done()
@@ -105,7 +108,7 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 	}
 
 	go func() {
-		err := sl.LockExecuteAndReleaseWithRetries(ctx, actionName, minWait, maxWait, lockTimeout, fn, onRetryFn)
+		err := sl.LockExecuteAndReleaseWithRetries(ctx, actionName, lockTimeConfig, fn, onRetryFn)
 		require.NoError(t, err)
 		wgCompleted.Done()
 	}()

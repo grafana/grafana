@@ -16,11 +16,11 @@ import (
 
 var _ extsvcauth.ExternalServiceRegistry = &Registry{}
 
-const (
-	lockWaitMin = 1 * time.Second
-	lockWaitMax = 5 * time.Second
-	lockTimeout = 2 * time.Minute
-)
+var lockTimeConfig = serverlock.LockTimeConfig{
+	MaxInterval: 2 * time.Minute,
+	MinWait:     1 * time.Second,
+	MaxWait:     5 * time.Second,
+}
 
 type Registry struct {
 	features featuremgmt.FeatureToggles
@@ -114,7 +114,7 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 		r.logger.Debug("Routing External Service removal to the OAuth2Server", "service", name)
 		return r.oauthReg.RemoveExternalService(ctx, name)
 	default:
-		return extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", provider)
+		return extsvcauth.ErrUnknownProvider.Errorf("unknown provider '%v'", provider)
 	}
 }
 
@@ -127,7 +127,7 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 		extSvc  *extsvcauth.ExternalService
 	)
 
-	err := r.serverLock.LockExecuteAndReleaseWithRetries(ctx, "ext-svc-save-"+cmd.Name, lockWaitMin, lockWaitMax, lockTimeout, func(ctx context.Context) {
+	err := r.serverLock.LockExecuteAndReleaseWithRetries(ctx, "ext-svc-save-"+cmd.Name, lockTimeConfig, func(ctx context.Context) {
 		// Record provider in case of removal
 		r.lock.Lock()
 		r.extSvcProviders[slugify.Slugify(cmd.Name)] = cmd.AuthProvider

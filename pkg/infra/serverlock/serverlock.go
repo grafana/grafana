@@ -166,8 +166,18 @@ func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionNa
 	return nil
 }
 
+// RetryOpt is a callback function called after each failed lock acquisition try.
+// It gets the number of tries passed as an arg.
+type RetryOpt func(int) error
+
+type LockTimeConfig struct {
+	MaxInterval time.Duration // Duration after which we consider a lock to be dead and overtake it. Make sure this is big enough so that a server cannot acquire the lock while another server is processing.
+	MinWait     time.Duration // Minimum time to wait before retrying to acquire the lock.
+	MaxWait     time.Duration // Maximum time to wait before retrying to acquire the lock.
+}
+
 // LockExecuteAndReleaseWithRetries mimics LockExecuteAndRelease but waits for the lock to be released if it is already taken.
-func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Context, actionName string, waitMin time.Duration, waitMax time.Duration, maxInterval time.Duration, fn func(ctx context.Context), retryOpts ...func(int) error) error {
+func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Context, actionName string, timeConfig LockTimeConfig, fn func(ctx context.Context), retryOpts ...RetryOpt) error {
 	start := time.Now()
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.LockExecuteAndReleaseWithRetries")
 	span.SetAttributes(attribute.String("serverlock.actionName", actionName))
@@ -180,7 +190,7 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 
 	for {
 		lockChecks++
-		err := sl.acquireForRelease(ctx, actionName, maxInterval)
+		err := sl.acquireForRelease(ctx, actionName, timeConfig.MaxInterval)
 		// could not get the lock
 		if err != nil {
 			var lockedErr *ServerLockExistsError
@@ -197,7 +207,7 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 					}
 				}
 
-				time.Sleep(lockWait(waitMin, waitMax))
+				time.Sleep(lockWait(timeConfig.MinWait, timeConfig.MaxWait))
 				continue
 			}
 			span.RecordError(err)
@@ -221,9 +231,9 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 	return nil
 }
 
-// generate a random duration between lockWaitMin and lockWaitMax to ensure instances unlock gradually
-func lockWait(waitMin time.Duration, waitMax time.Duration) time.Duration {
-	return time.Duration(rand.Int63n(int64(waitMax-waitMin)) + int64(waitMin))
+// generate a random duration between minWait and maxWait to ensure instances unlock gradually
+func lockWait(minWait time.Duration, maxWait time.Duration) time.Duration {
+	return time.Duration(rand.Int63n(int64(maxWait-minWait)) + int64(minWait))
 }
 
 // acquireForRelease will check if the lock is already on the database, if it is, will check with maxInterval if it is
