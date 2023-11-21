@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -33,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -443,9 +441,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	if err := hs.hasPluginRequestedPermissions(c, pluginID, dto.Version); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch plugin json data", err)
-	}
+	hs.logHasPluginRequestedPermissions(c, pluginID, dto.Version)
 
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
@@ -507,35 +503,32 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 	return md.Content, nil
 }
 
-// hasPluginRequestedPermissions verifies an installer has the permissions that the plugin requests to have on Grafana.
-func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID, version string) error {
+// logHasPluginRequestedPermissions logs if the plugin installer does not have the permissions that the plugin requests to have on Grafana.
+func (hs *HTTPServer) logHasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID, version string) {
 	repoCompatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 
 	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, version, repoCompatOpts)
 	if err != nil {
-		return err
+		hs.log.Warn("could not fetch plugin json data", "error", err)
 	}
 
 	// No registration => Early return
 	if jsonData.ExternalServiceRegistration == nil || len(jsonData.ExternalServiceRegistration.Permissions) == 0 {
-		return nil
+		return
 	}
 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
 	evaluator := evalAllPermissions(jsonData.ExternalServiceRegistration.Permissions)
-	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	if !hs.Cfg.RBACSingleOrganization {
 		// If this is not in a single organization setup, the installer needs to have plugin's permissions accross all orgs
-		// TODO (gamab) this is probably going to fail for a lot of permissions since we only grant server admin permissions globally.
-		hasAccess = accesscontrol.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
+		hasAccess = ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 	}
 
-	if hasAccess(evaluator) {
-		return nil
+	// Log a warning if the user does not have the plugin requested permissions
+	if !hasAccess(evaluator) && !c.IsGrafanaAdmin {
+		hs.log.Log("Plugin installer has less permission than what the plugin requires.", "Permissions", evaluator.String())
 	}
-	return errutil.Forbidden("forbidden-access",
-		errutil.WithPublicMessage("You'll need additional permissions to install this plugin. Permissions needed: "+evaluator.String())).
-		Errorf("plugin installation forbidden, missing permissions (%v)", evaluator.String())
 }
 
 // evalAllPermissions generates an evaluator with all permissions from the input slice
