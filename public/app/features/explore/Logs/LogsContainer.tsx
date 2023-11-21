@@ -221,7 +221,9 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   };
 
   logDetailsFilterAvailable = () => {
-    return Object.values(this.state.dsInstances).some((ds) => ds?.modifyQuery || hasToggleableQueryFiltersSupport(ds));
+    return Object.values(this.state.dsInstances).some(
+      (ds) => ds?.modifyQuery || hasQueryModificationSupport(ds) || hasToggleableQueryFiltersSupport(ds)
+    );
   };
 
   filterValueAvailable = () => {
