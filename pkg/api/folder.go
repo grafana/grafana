@@ -62,7 +62,7 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 	result := make([]dtos.FolderSearchHit, 0)
 	for _, f := range folders {
 		result = append(result, dtos.FolderSearchHit{
-			Id:        f.ID,
+			Id:        f.ID, // nolint:staticcheck
 			Uid:       f.UID,
 			Title:     f.Title,
 			ParentUID: f.ParentUID,
@@ -117,6 +117,7 @@ func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
+	// nolint:staticcheck
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.SignedInUser.GetOrgID(), SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -365,7 +366,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 		}
 
 		return dtos.Folder{
-			Id:            f.ID,
+			Id:            f.ID, // nolint:staticcheck
 			Uid:           f.UID,
 			Title:         f.Title,
 			Url:           f.URL,
@@ -461,7 +462,7 @@ func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folde
 
 	for _, hit := range hits {
 		folders = append(folders, &folder.Folder{
-			ID:    hit.ID,
+			ID:    hit.ID, // nolint:staticcheck
 			UID:   hit.UID,
 			Title: hit.Title,
 		})
@@ -513,6 +514,8 @@ type UpdateFolderParams struct {
 type GetFolderByIDParams struct {
 	// in:path
 	// required:true
+	//
+	// Deprecated: use FolderUID instead
 	FolderID int64 `json:"folder_id"`
 }
 

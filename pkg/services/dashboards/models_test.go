@@ -63,9 +63,11 @@ func TestSaveDashboardCommand_GetDashboardModel(t *testing.T) {
 		json := simplejson.New()
 		json.Set("title", "test dash")
 
+		// nolint:staticcheck
 		cmd := &SaveDashboardCommand{Dashboard: json, FolderID: 1, FolderUID: "1"}
 		dash := cmd.GetDashboardModel()
 
+		// nolint:staticcheck
 		assert.Equal(t, int64(1), dash.FolderID)
 	})
 }

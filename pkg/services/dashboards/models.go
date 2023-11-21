@@ -37,6 +37,7 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
+	// Deprecated: use FolderUID instead
 	FolderID  int64  `xorm:"folder_id"`
 	FolderUID string `xorm:"folder_uid"`
 	IsFolder  bool
@@ -134,6 +135,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
 	dash.UpdateSlug()
@@ -332,7 +334,7 @@ type CountDashboardsInFolderRequest struct {
 
 func FromDashboard(dash *Dashboard) *folder.Folder {
 	return &folder.Folder{
-		ID:        dash.ID,
+		ID:        dash.ID, // nolint:staticcheck
 		UID:       dash.UID,
 		OrgID:     dash.OrgID,
 		Title:     dash.Title,
@@ -373,10 +375,11 @@ type DashboardACL struct {
 func (p DashboardACL) TableName() string { return "dashboard_acl" }
 
 type DashboardACLInfoDTO struct {
-	OrgID       int64  `json:"-" xorm:"org_id"`
-	DashboardID int64  `json:"dashboardId,omitempty" xorm:"dashboard_id"`
-	FolderID    int64  `json:"folderId,omitempty" xorm:"folder_id"`
-	FolderUID   string `json:"folderUid,omitempty" xorm:"folder_uid"`
+	OrgID       int64 `json:"-" xorm:"org_id"`
+	DashboardID int64 `json:"dashboardId,omitempty" xorm:"dashboard_id"`
+	// Deprecated: use FolderUID instead
+	FolderID  int64  `json:"folderId,omitempty" xorm:"folder_id"`
+	FolderUID string `json:"folderUid,omitempty" xorm:"folder_uid"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -419,12 +422,6 @@ func (dto *DashboardACLInfoDTO) hasSameTeamAs(other *DashboardACLInfoDTO) bool {
 // IsDuplicateOf returns true if other item has same role, same user or same team
 func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
 	return dto.hasSameRoleAs(other) || dto.hasSameUserAs(other) || dto.hasSameTeamAs(other)
-}
-
-// QUERIES
-type GetDashboardACLInfoListQuery struct {
-	DashboardID int64
-	OrgID       int64
 }
 
 type FindPersistedDashboardsQuery struct {
