@@ -319,6 +319,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         // Params can't have undefined values that are possible in SearchQueryParams
         const params: Record<string, string | number> = {};
         for (const key in searchQuery) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const value = searchQuery[key as keyof SearchQueryParams];
           if (value !== undefined) {
             params[key] = value;
@@ -732,7 +733,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     if (query.queryType === 'nativeSearch') {
       let result = [];
       for (const key of ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit']) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         if (query.hasOwnProperty(key) && query[key as keyof TempoQuery]) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           result.push(`${startCase(key)}: ${query[key as keyof TempoQuery]}`);
         }
       }
