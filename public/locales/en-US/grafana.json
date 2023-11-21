@@ -1049,7 +1049,9 @@
     },
     "editor-row": {
       "dataset": "Dataset",
-      "table": "Table"
+      "table": "Table",
+      "select-table-placeholder": "Select table",
+      "loading-tables-placeholder": "Loading tables"
     }
   },
   "query-operation": {

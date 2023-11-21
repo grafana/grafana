@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { DB, ResourceSelectorProps } from '../types';
 
@@ -34,7 +35,11 @@ export const TableSelector = ({ db, dataset, table, className, onChange }: Table
       onChange={onChange}
       isLoading={state.loading}
       menuShouldPortal={true}
-      placeholder={state.loading ? 'Loading tables' : 'Select table'}
+      placeholder={
+        state.loading
+          ? t('query-editor.editor-row.loading-tables-placeholder', 'Loading tables')
+          : t('query-editor.editor-row.select-tables-placeholder', 'Select table')
+      }
     />
   );
 };
