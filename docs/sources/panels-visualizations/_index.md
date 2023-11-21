@@ -15,7 +15,7 @@ labels:
     - oss
 menuTitle: Panels and visualizations
 title: Panels and visualizations
-weight: 10
+weight: 80
 ---
 
 # Panels and visualizations
