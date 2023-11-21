@@ -94,6 +94,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			folderUID := util.GenerateShortUID()
 
 			f := folder.NewFolder("Folder", "")
+			// nolint:staticcheck
 			f.ID = folderId
 			f.UID = folderUID
 
@@ -102,7 +103,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &folderId,
+					ID:           &folderId, // nolint:staticcheck
 					OrgID:        orgID,
 					SignedInUser: usr,
 				})
@@ -112,11 +113,12 @@ func TestIntegrationFolderService(t *testing.T) {
 			var zeroInt int64 = 0
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
 				foldr, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           &zeroInt,
+					ID:           &zeroInt, // nolint:staticcheck
 					OrgID:        orgID,
 					SignedInUser: usr,
 				})
 				require.NoError(t, err)
+				// nolint:staticcheck
 				require.Equal(t, foldr, &folder.Folder{ID: 0, Title: "General"})
 			})
 
@@ -239,6 +241,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
 				f := folder.NewFolder(util.GenerateShortUID(), "")
+				// nolint:staticcheck
 				f.ID = rand.Int63()
 				f.UID = util.GenerateShortUID()
 				folderStore.On("GetFolders", mock.Anything, orgID, []string{f.UID}).Return(map[string]*folder.Folder{f.UID: f}, nil)
@@ -258,6 +261,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)
+				// nolint:staticcheck
 				require.Equal(t, f.ID, actualCmd.ID)
 				require.Equal(t, orgID, actualCmd.OrgID)
 				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
@@ -274,10 +278,13 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			t.Run("When get folder by id should return folder", func(t *testing.T) {
 				expected := folder.NewFolder(util.GenerateShortUID(), "")
+				// nolint:staticcheck
 				expected.ID = rand.Int63()
 
+				// nolint:staticcheck
 				folderStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
 
+				// nolint:staticcheck
 				actual, err := service.getFolderByID(context.Background(), expected.ID, orgID)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
@@ -343,7 +350,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	cfg := setting.NewCfg()
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
-	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db), quotaService)
 	require.NoError(t, err)
 	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
 
@@ -418,7 +425,9 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
 			require.NoError(t, err)
+			// nolint:staticcheck
 			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, parent.UID, "prod")
+			// nolint:staticcheck
 			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, subfolder.UID, "prod")
 			_ = createRule(t, alertStore, parent.UID, "parent alert")
 			_ = createRule(t, alertStore, subfolder.UID, "sub alert")
@@ -454,7 +463,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		})
 		t.Run("With nested folder feature flag off", func(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
-			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
+			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
 			require.NoError(t, err)
 			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
 
@@ -495,7 +504,9 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 			subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
 			require.NoError(t, err)
+			// nolint:staticcheck
 			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, parent.UID, "prod")
+			// nolint:staticcheck
 			_ = insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, subfolder.UID, "prod")
 			_ = createRule(t, alertStore, parent.UID, "parent alert")
 			_ = createRule(t, alertStore, subfolder.UID, "sub alert")
@@ -613,7 +624,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, tc.service)
 				require.NoError(t, err)
 
-				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, tc.featuresFlag, tagimpl.ProvideService(db, db.Cfg), quotaService)
+				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, tc.featuresFlag, tagimpl.ProvideService(db), quotaService)
 				require.NoError(t, err)
 				nestedFolderStore := ProvideStore(db, db.Cfg, tc.featuresFlag)
 				tc.service.dashboardStore = dashStore
@@ -833,6 +844,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 			dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
+			dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
 			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_parent")}}
@@ -904,6 +916,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 			dashboardFolderStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
+			dashboardFolderStore.On("GetFolderByUID", mock.Anything, orgID, dashboardFolder.UID).Return(f, nil)
 
 			nestedFolderStore := NewFakeStore()
 			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{
@@ -914,10 +927,10 @@ func TestNestedFolderService(t *testing.T) {
 			}
 
 			cmd := folder.CreateFolderCommand{
-				ParentUID:    "myFolder1",
+				ParentUID:    dashboardFolder.UID,
 				OrgID:        orgID,
-				Title:        "myFolder",
-				UID:          "myFolder",
+				Title:        "myFolder1",
+				UID:          "myFolder1",
 				SignedInUser: usr,
 			}
 
@@ -1135,6 +1148,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 			dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
+			dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
 			parents := make([]*folder.Folder, 0, folder.MaxNestedFolderDepth)
 			for i := 0; i < folder.MaxNestedFolderDepth; i++ {
@@ -1179,7 +1193,7 @@ func TestNestedFolderService(t *testing.T) {
 			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Get(context.Background(), &folder.GetFolderQuery{
 				OrgID:        orgID,
-				ID:           &folder.GeneralFolder.ID,
+				ID:           &folder.GeneralFolder.ID, // nolint:staticcheck
 				SignedInUser: usr,
 			})
 			require.NoError(t, err)
@@ -1202,6 +1216,7 @@ func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth
 		f, err := service.Create(context.Background(), &cmd)
 		require.NoError(t, err)
 		require.Equal(t, title, f.Title)
+		// nolint:staticcheck
 		require.NotEmpty(t, f.ID)
 		require.NotEmpty(t, f.UID)
 

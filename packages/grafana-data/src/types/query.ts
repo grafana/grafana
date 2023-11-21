@@ -17,6 +17,7 @@ export interface DataSourceRef extends SchemaDataSourceRef {}
  */
 export enum DataTopic {
   Annotations = 'annotations',
+  AlertStates = 'alertStates',
 }
 
 /**
