@@ -5,7 +5,70 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
 )
+
+func TestCondTransMultiCondOnSingleQuery(t *testing.T) {
+	// Here we are testing that we got a query that is referenced by multiple conditions, all conditions get set correctly.
+
+	ordID := int64(1)
+	lookup := dsUIDLookup{}
+
+	settings := dashAlertSettings{}
+
+	cond1 := dashAlertCondition{}
+	cond1.Evaluator.Params = []float64{20}
+	cond1.Evaluator.Type = "lt"
+	cond1.Operator.Type = "and"
+	cond1.Query.DatasourceID = 4
+	cond1.Query.Model = []byte(`{"datasource":{"type":"graphite","uid":"000000004"},"refId":"F","target":"my_metrics"}`)
+	cond1.Query.Params = []string{
+		"F",
+		"75m",
+		"now-15m",
+	}
+	cond1.Reducer.Type = "avg"
+
+	cond2 := dashAlertCondition{}
+	cond2.Evaluator.Params = []float64{500}
+	cond2.Evaluator.Type = "gt"
+	cond2.Operator.Type = "or"
+	cond2.Query.DatasourceID = 4
+	cond1.Query.Model = []byte(`{"datasource":{"type":"graphite","uid":"000000004"},"refId":"F","target":"my_metrics"}`)
+	cond2.Query.Params = []string{
+		"F",
+		"75m",
+		"now-15m",
+	}
+	cond2.Reducer.Type = "avg"
+
+	settings.Conditions = []dashAlertCondition{cond1, cond2}
+
+	alertQuery1 := alertQuery{
+		RefID:         "A",
+		DatasourceUID: expr.DatasourceUID,
+		Model:         []byte(`{"type":"classic_conditions","refId":"A","conditions":[{"evaluator":{"params":[20],"type":"lt"},"operator":{"type":"and"},"query":{"params":["F"]},"reducer":{"type":"avg"}},{"evaluator":{"params":[500],"type":"gt"},"operator":{"type":"or"},"query":{"params":["F"]},"reducer":{"type":"avg"}}]}`),
+	}
+	alertQuery2 := alertQuery{
+		RefID: "F",
+		RelativeTimeRange: relativeTimeRange{
+			From: 4500000000000,
+			To:   900000000000,
+		},
+		Model: cond1.Query.Model,
+	}
+	expected := &condition{
+		Condition: "A",
+		OrgID:     ordID,
+		Data:      []alertQuery{alertQuery1, alertQuery2},
+	}
+
+	c, err := transConditions(settings, ordID, lookup)
+
+	require.NoError(t, err)
+	require.Equal(t, expected, c)
+}
 
 func TestCondTransExtended(t *testing.T) {
 	// Here we are testing that we got a query that is referenced with multiple different offsets, the migration

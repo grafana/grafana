@@ -56,9 +56,11 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 		if len(timeRangesToCondIdx) == 1 {
 			// If the refID does not exist yet and the condition only has one reference, we can add it directly.
 			if _, exists := newRefIDstoCondIdx[refID]; !exists {
-				// If the refID is used in only condition, keep the letter a new refID
-				newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[0])
-				newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[0]].Query.Params[1], set.Conditions[condIdxes[0]].Query.Params[2]}
+				for i := range condIdxes {
+					// If the refID is used in only condition, keep the letter a new refID
+					newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[i])
+					newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[i]].Query.Params[1], set.Conditions[condIdxes[i]].Query.Params[2]}
+				}
 				continue
 			}
 		}
