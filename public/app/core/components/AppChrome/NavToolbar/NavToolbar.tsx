@@ -44,13 +44,15 @@ export function NavToolbar({
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
 
-  const breakpoint = theme.breakpoints.values.xl;
-  const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
+  const dockMenuBreakpoint = theme.breakpoints.values.xl;
+  const [isTooSmallForDockedMenu, setIsTooSmallForDockedMenu] = useState(
+    !window.matchMedia(`(min-width: ${dockMenuBreakpoint}px)`).matches
+  );
 
   useMediaQueryChange({
-    breakpoint,
+    breakpoint: dockMenuBreakpoint,
     onChange: (e) => {
-      setIsSmallScreen(!e.matches);
+      setIsTooSmallForDockedMenu(!e.matches);
     },
   });
 
@@ -61,7 +63,7 @@ export function NavToolbar({
           id={TOGGLE_BUTTON_ID}
           name="bars"
           tooltip={
-            state.megaMenu === 'closed' || (state.megaMenu === 'docked' && isSmallScreen)
+            state.megaMenu === 'closed' || (state.megaMenu === 'docked' && isTooSmallForDockedMenu)
               ? t('navigation.toolbar.open-menu', 'Open menu')
               : t('navigation.toolbar.close-menu', 'Close menu')
           }

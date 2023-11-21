@@ -36,6 +36,9 @@ export const MegaMenu = React.memo(
 
     const handleDockedMenu = () => {
       chrome.setMegaMenu(state.megaMenu === 'docked' ? 'open' : 'docked');
+      setTimeout(() => {
+        document.getElementById('dock-menu-button')?.focus();
+      });
     };
 
     return (
@@ -62,6 +65,7 @@ export const MegaMenu = React.memo(
                   />
                   {index === 0 && (
                     <IconButton
+                      id="dock-menu-button"
                       className={styles.dockMenuButton}
                       tooltip={
                         state.megaMenu === 'docked'
