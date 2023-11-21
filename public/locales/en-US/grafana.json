@@ -1035,6 +1035,23 @@
       "passwords-must-match": "Passwords must match"
     }
   },
+  "query-editor": {
+    "editor-header": {
+      "format": "Format",
+      "filter": "Filter",
+      "group": "Group",
+      "order": "Order",
+      "preview": "Preview",
+      "run-query": "Run query",
+      "invalid-query": "Your query is invalid. Check below for details. <0 /> However, you can still run this query.",
+      "builder-mode": "Builder",
+      "code-mode": "Code"
+    },
+    "editor-row": {
+      "dataset": "Dataset",
+      "table": "Table"
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",

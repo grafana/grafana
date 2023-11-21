@@ -6,6 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { QueryWithDefaults } from '../defaults';
 import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB } from '../types';
@@ -28,8 +29,8 @@ export interface QueryHeaderProps {
 }
 
 const editorModes = [
-  { label: 'Builder', value: EditorMode.Builder },
-  { label: 'Code', value: EditorMode.Code },
+  { label: t('query-editor.editor-header.builder-mode', 'Builder'), value: EditorMode.Builder },
+  { label: t('query-editor.editor-header.code-mode', 'Code'), value: EditorMode.Code },
 ];
 
 export function QueryHeader({
@@ -121,7 +122,7 @@ export function QueryHeader({
     <>
       <EditorHeader>
         <InlineSelect
-          label="Format"
+          label={t('query-editor.editor-header.format', 'Format')}
           value={query.format}
           placeholder="Select format"
           menuShouldPortal
@@ -133,7 +134,7 @@ export function QueryHeader({
           <>
             <InlineSwitch
               id={`sql-filter-${uuidv4()}}`}
-              label="Filter"
+              label={t('query-editor.editor-header.filter', 'Filter')}
               transparent={true}
               showLabel={true}
               value={queryRowFilter.filter}
@@ -153,7 +154,7 @@ export function QueryHeader({
 
             <InlineSwitch
               id={`sql-group-${uuidv4()}}`}
-              label="Group"
+              label={t('query-editor.editor-header.group', 'Group')}
               transparent={true}
               showLabel={true}
               value={queryRowFilter.group}
@@ -173,7 +174,7 @@ export function QueryHeader({
 
             <InlineSwitch
               id={`sql-order-${uuidv4()}}`}
-              label="Order"
+              label={t('query-editor.editor-header.order', 'Order')}
               transparent={true}
               showLabel={true}
               value={queryRowFilter.order}
@@ -193,7 +194,7 @@ export function QueryHeader({
 
             <InlineSwitch
               id={`sql-preview-${uuidv4()}}`}
-              label="Preview"
+              label={t('query-editor.editor-header.preview', 'Preview')}
               transparent={true}
               showLabel={true}
               value={queryRowFilter.preview}
@@ -217,21 +218,23 @@ export function QueryHeader({
 
         {isQueryRunnable ? (
           <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
-            Run query
+            <Trans i18nKey="query-editor.editor-header.run-query">Run query</Trans>
           </Button>
         ) : (
           <Tooltip
             theme="error"
             content={
               <>
-                Your query is invalid. Check below for details. <br />
-                However, you can still run this query.
+                <Trans i18nKey="query-editor.editor-header.invalid-query">
+                  Your query is invalid. Check below for details. <br />
+                  However, you can still run this query.
+                </Trans>
               </>
             }
             placement="top"
           >
             <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
-              Run query
+              <Trans i18nKey="query-editor.editor-header.run-query">Run query</Trans>
             </Button>
           </Tooltip>
         )}
@@ -286,7 +289,7 @@ export function QueryHeader({
           <Space v={0.5} />
           <EditorRow>
             {datasetDropdownIsAvailable() && (
-              <EditorField label="Dataset" width={25}>
+              <EditorField label={t('query-editor.editor-row.dataset', 'Dataset')} width={25}>
                 <DatasetSelector
                   db={db}
                   dataset={query.dataset}
@@ -296,7 +299,7 @@ export function QueryHeader({
                 />
               </EditorField>
             )}
-            <EditorField label="Table" width={25}>
+            <EditorField label={t('query-editor.editor-row.table', 'Table')} width={25}>
               <TableSelector
                 db={db}
                 dataset={query.dataset || preconfiguredDataset}
