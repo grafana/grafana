@@ -173,6 +173,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	}
 
 	// always expose the dashboard store sequential ID
+	// nolint:staticcheck
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
@@ -225,6 +226,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		}
 
 		// always expose the dashboard store sequential ID
+		// nolint:staticcheck
 		f.ID = dashFolder.ID
 
 		if cmd.UID != "" {
@@ -481,7 +483,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 			if err := s.bus.Publish(context.Background(), &events.FolderTitleUpdated{
 				Timestamp: foldr.Updated,
 				Title:     foldr.Title,
-				ID:        dashFolder.ID,
+				ID:        dashFolder.ID, // nolint:staticcheck
 				UID:       dashFolder.UID,
 				OrgID:     cmd.OrgID,
 			}); err != nil {
@@ -503,6 +505,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 	}
 
 	// always expose the dashboard store sequential ID
+	// nolint:staticcheck
 	foldr.ID = dashFolder.ID
 	foldr.Version = dashFolder.Version
 
@@ -661,6 +664,7 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
+	// nolint:staticcheck
 	deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, ID: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {

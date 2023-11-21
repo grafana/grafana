@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import uPlot from 'uplot';
 
 import {
   DataFrameType,
@@ -19,6 +20,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from './fields';
+import { renderHistogram } from './renderHistogram';
 import { HeatmapHoverEvent } from './utils';
 
 type Props = {
@@ -37,8 +39,13 @@ export const HeatmapHoverView = (props: Props) => {
   return <HeatmapHoverCell {...props} />;
 };
 
-const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars }: Props) => {
+const HeatmapHoverCell = ({ data, hover, showHistogram = false, scopedVars, replaceVars }: Props) => {
   const index = hover.dataIdx;
+
+  const [isSparse] = useState(
+    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
+  );
+
   const xField = data.heatmap?.fields[0];
   const yField = data.heatmap?.fields[1];
   const countField = data.heatmap?.fields[2];
@@ -151,76 +158,19 @@ const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars 
 
   let can = useRef<HTMLCanvasElement>(null);
 
-  let histCssWidth = 150;
-  let histCssHeight = 50;
-  let histCanWidth = Math.round(histCssWidth * devicePixelRatio);
-  let histCanHeight = Math.round(histCssHeight * devicePixelRatio);
+  let histCssWidth = 264;
+  let histCssHeight = 64;
+  let histCanWidth = Math.round(histCssWidth * uPlot.pxRatio);
+  let histCanHeight = Math.round(histCssHeight * uPlot.pxRatio);
 
   useEffect(
     () => {
-      if (showHistogram) {
-        let histCtx = can.current?.getContext('2d');
-
-        if (histCtx && xVals && yVals && countVals) {
-          let fromIdx = index;
-
-          while (xVals[fromIdx--] === xVals[index]) {}
-
-          fromIdx++;
-
-          let toIdx = fromIdx + data.yBucketCount!;
-
-          let maxCount = 0;
-
-          let i = fromIdx;
-          while (i < toIdx) {
-            let c = countVals[i];
-            maxCount = Math.max(maxCount, c);
-            i++;
-          }
-
-          let pHov = new Path2D();
-          let pRest = new Path2D();
-
-          i = fromIdx;
-          let j = 0;
-          while (i < toIdx) {
-            let c = countVals[i];
-
-            if (c > 0) {
-              let pctY = c / maxCount;
-              let pctX = j / (data.yBucketCount! + 1);
-
-              let p = i === index ? pHov : pRest;
-
-              p.rect(
-                Math.round(histCanWidth * pctX),
-                Math.round(histCanHeight * (1 - pctY)),
-                Math.round(histCanWidth / data.yBucketCount!),
-                Math.round(histCanHeight * pctY)
-              );
-            }
-
-            i++;
-            j++;
-          }
-
-          histCtx.clearRect(0, 0, histCanWidth, histCanHeight);
-
-          histCtx.fillStyle = '#ffffff80';
-          histCtx.fill(pRest);
-
-          histCtx.fillStyle = '#ff000080';
-          histCtx.fill(pHov);
-        }
+      if (showHistogram && xVals != null && countVals != null) {
+        renderHistogram(can, histCanWidth, histCanHeight, xVals, countVals, index, data.yBucketCount!);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [index]
-  );
-
-  const [isSparse] = useState(
-    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
   );
 
   if (isSparse) {
@@ -258,7 +208,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars 
           width={histCanWidth}
           height={histCanHeight}
           ref={can}
-          style={{ width: histCanWidth + 'px', height: histCanHeight + 'px' }}
+          style={{ width: histCssWidth + 'px', height: histCssHeight + 'px' }}
         />
       )}
       <div>
