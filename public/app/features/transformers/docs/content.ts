@@ -68,7 +68,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
   - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
   
-  > **Note:** **Cumulative functions** and **Window functions** modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `addFieldFromCalculationStatFunctions` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+  > **Note:** **Cumulative functions** and **Window functions** modes are experimental features. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the **addFieldFromCalculationStatFunctions** feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
   In the example below, we added two fields together and named them Sum.
 
@@ -237,7 +237,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
   - **Source** - Select the field for the source of data.
   - **Format** - Choose one of the following:
     - **JSON** - Parse JSON content from the source.
-    - **Key+value pairs** - Parse content in the format `a=b` or `c:d` from the source.
+    - **Key+value pairs** - Parse content in the format 'a=b' or 'c:d' from the source.
     - **Auto** - Discover fields automatically.
   - **Replace All Fields** - (Optional) Select this option to hide all other fields and display only your calculated field in the visualization.
   - **Keep Time** - (Optional) Available only if **Replace All Fields** is true. Keeps the time field in the output.
@@ -502,7 +502,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
 
   This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
 
-  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `formatString` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+  > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the **formatString** feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
   `;
     },
   },
@@ -1034,7 +1034,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     name: 'Partition by values',
     getHelperDocs: function () {
       return `
-  Use this transformation to streamline the process of graphing multiple series without the need for multiple queries with different `WHERE` clauses.
+  Use this transformation to streamline the process of graphing multiple series without the need for multiple queries with different 'WHERE' clauses.
   
   This is particularly useful when dealing with a metrics SQL table, as illustrated below:
 
