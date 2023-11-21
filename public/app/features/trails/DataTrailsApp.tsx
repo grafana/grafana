@@ -10,7 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
-import { getLocalStorageSyncManager } from './LocalStorageSyncManager';
+import { getTrailStore } from './TrailStore';
 import { getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
@@ -67,7 +67,7 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
   useEffect(() => {
     if (!isInitialized) {
       getUrlSyncManager().initSync(trail);
-      getLocalStorageSyncManager().setRecentTrail(trail);
+      getTrailStore().setRecentTrail(trail);
       setIsInitialized(true);
     }
   }, [trail, isInitialized]);

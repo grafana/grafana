@@ -16,7 +16,7 @@ import { Text } from '@grafana/ui/src/components/Text/Text';
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
-import { getLocalStorageSyncManager } from './LocalStorageSyncManager';
+import { getTrailStore } from './TrailStore';
 import { newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {
@@ -32,15 +32,14 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     const app = getAppFor(this);
     const trail = newMetricsTrail();
 
-    getLocalStorageSyncManager().setRecentTrail(trail);
+    getTrailStore().setRecentTrail(trail);
     app.goToUrlForTrail(trail);
   };
 
   public onSelectTrail = (trail: DataTrail) => {
     const app = getAppFor(this);
 
-    getLocalStorageSyncManager().setRecentTrail(trail);
-
+    getTrailStore().setRecentTrail(trail);
     app.goToUrlForTrail(trail);
   };
 
@@ -63,7 +62,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           <div className={styles.column}>
             <Text variant="h4">Recent trails</Text>
             <div className={styles.trailList}>
-              {getLocalStorageSyncManager()
+              {getTrailStore()
                 .getRecentTrails()
                 .map((trail, index) => {
                   const resolvedTrail = trail.resolve();

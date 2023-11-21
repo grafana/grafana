@@ -18,19 +18,31 @@ export interface SerializedTrail {
   }>;
 }
 
-export class LocalStorageSyncManager {
-  private _recent: Array<SceneObjectRef<DataTrail>>;
+export class TrailStore {
+  private _recent: Array<SceneObjectRef<DataTrail>> = [];
   private _save;
 
   constructor() {
+    this._loadRecent();
+
+    this._save = debounce(() => {
+      const serialized = this._recent.slice(0, MAX_RECENT_TRAILS).map((trail) => this._serializeTrail(trail.resolve()));
+      localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify(serialized));
+    }, 1000);
+  }
+
+  private _loadRecent() {
     this._recent = [];
     const recentTrailsItem = localStorage.getItem(RECENT_TRAILS_KEY);
+
     if (recentTrailsItem) {
       const recentTrails: SerializedTrail[] = JSON.parse(recentTrailsItem);
       for (const t of recentTrails) {
+        // reconstruct the trail based on the the serialized history
         const trail = new DataTrail({ key: t.key });
+
         t.history.map((step) => {
-          this._loadState(trail, step.urlValues);
+          this._loadFromUrl(trail, step.urlValues);
           trail.state.history.state.steps.push({
             description: 'Test',
             type: step.type,
@@ -40,14 +52,9 @@ export class LocalStorageSyncManager {
         this._recent.push(trail.getRef());
       }
     }
-
-    this._save = debounce(() => {
-      const serialized = this._recent.slice(0, MAX_RECENT_TRAILS).map((trail) => this.serializeTrail(trail.resolve()));
-      localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify(serialized));
-    }, 1000);
   }
 
-  private serializeTrail(trail: DataTrail): SerializedTrail {
+  private _serializeTrail(trail: DataTrail): SerializedTrail {
     const history = trail.state.history.state.steps.map((step) => {
       const stepTrail = new DataTrail(step.trailState);
       return {
@@ -62,17 +69,13 @@ export class LocalStorageSyncManager {
     };
   }
 
-  private _loadState(node: SceneObject, urlValues: SceneObjectUrlValues) {
+  private _loadFromUrl(node: SceneObject, urlValues: SceneObjectUrlValues) {
     node.urlSync?.updateFromUrl(urlValues);
-    node.forEachChild((child) => this._loadState(child, urlValues));
-  }
-
-  isRecent(trail: DataTrail) {
-    return trail.state.key && trail.state.key in this._recent;
+    node.forEachChild((child) => this._loadFromUrl(child, urlValues));
   }
 
   getRecentTrails() {
-    return Object.values(this._recent);
+    return this._recent;
   }
 
   setRecentTrail(trail: DataTrail) {
@@ -82,11 +85,11 @@ export class LocalStorageSyncManager {
   }
 }
 
-let syncManager: LocalStorageSyncManager | undefined;
-export function getLocalStorageSyncManager(): LocalStorageSyncManager {
-  if (!syncManager) {
-    syncManager = new LocalStorageSyncManager();
+let store: TrailStore | undefined;
+export function getTrailStore(): TrailStore {
+  if (!store) {
+    store = new TrailStore();
   }
 
-  return syncManager;
+  return store;
 }
