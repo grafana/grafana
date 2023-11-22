@@ -734,15 +734,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:           "newBrowseDashboards",
-			Description:    "New browse/manage dashboards UI",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaFrontendPlatformSquad,
-			FrontendOnly:   true,
-			Expression:     "true", // on by default
-			AllowSelfServe: truePtr,
-		},
-		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions",
 			Stage:       FeatureStageExperimental,

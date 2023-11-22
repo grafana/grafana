@@ -86,9 +86,7 @@
     "manage-folder-nav": {
       "alert-rules": "Reglas de alerta",
       "dashboards": "Paneles de control",
-      "panels": "Paneles",
-      "permissions": "Permisos",
-      "settings": "Configuración"
+      "panels": "Paneles"
     },
     "new-folder-form": {
       "cancel-label": "Cancelar",
@@ -943,7 +941,8 @@
     },
     "megamenu": {
       "close": "Cerrar menú",
-      "dock": "Menú base"
+      "dock": "Menú base",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "Cerrar menú",
@@ -1091,15 +1090,6 @@
       "new-dashboard": "Nuevo panel de control",
       "new-folder": "Nueva carpeta"
     },
-    "folder-view": {
-      "go-to-folder": "Ir a la carpeta",
-      "select-folder": "Seleccionar carpeta"
-    },
-    "result-kind": {
-      "dashboard": "Panel de control",
-      "folder": "Carpeta",
-      "panel": "Panel"
-    },
     "results-table": {
       "datasource-header": "Fuente de datos",
       "location-header": "Ubicación",
@@ -1112,12 +1102,6 @@
     "search-input": {
       "include-panels-placeholder": "Buscar paneles de control y paneles",
       "placeholder": "Buscar paneles de control"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "Borrar la búsqueda y los filtros",
-      "text": "No se ha encontrado ningún resultado para su consulta."
     }
   },
   "share-modal": {

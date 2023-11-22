@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -186,15 +187,15 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 		}
 
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-			UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
+			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 		})
 	}
 
 	isNested := folder.ParentUID != ""
 	if !isNested || !hs.Features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}...)
 	}
 
@@ -449,7 +450,7 @@ func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folde
 		Limit:        c.QueryInt64("limit"),
 		OrgId:        c.SignedInUser.GetOrgID(),
 		Type:         "dash-folder",
-		Permission:   dashboards.PERMISSION_VIEW,
+		Permission:   dashboardaccess.PERMISSION_VIEW,
 		Page:         c.QueryInt64("page"),
 	}
 

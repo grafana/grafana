@@ -6,6 +6,7 @@ import {
   QueryVariableModel,
   IntervalVariableModel,
   TypedVariableModel,
+  TextBoxVariableModel,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
@@ -698,7 +699,40 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
-    it.each(['textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
+    it('should migrate textbox variable', () => {
+      const variable: TextBoxVariableModel = {
+        id: 'query0',
+        global: false,
+        index: 0,
+        state: LoadingState.Done,
+        error: null,
+        name: 'textboxVar',
+        label: 'Textbox Label',
+        description: 'Textbox Description',
+        type: 'textbox',
+        rootStateKey: 'N4XLmH5Vz',
+        current: {},
+        hide: 0,
+        options: [],
+        query: 'defaultValue',
+        originalQuery: 'defaultValue',
+        skipUrlSync: false,
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+      expect(rest).toEqual({
+        description: 'Textbox Description',
+        hide: 0,
+        label: 'Textbox Label',
+        name: 'textboxVar',
+        skipUrlSync: false,
+        type: 'textbox',
+        value: 'defaultValue',
+      });
+    });
+
+    it.each(['system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
         type: type as VariableType,
