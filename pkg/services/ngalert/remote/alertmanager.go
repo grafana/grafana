@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -356,40 +355,6 @@ func (am *Alertmanager) Ready() bool {
 
 // CleanUp does not have an equivalent in a "remote Alertmanager" context, we don't have files on disk, no-op.
 func (am *Alertmanager) CleanUp() {}
-
-// TODO: change implementation, this is only useful for testing other methods.
-func (am *Alertmanager) postConfig(ctx context.Context, rawConfig string) error {
-	alertsURL := strings.TrimSuffix(am.url, "/alertmanager") + "/api/v1/alerts"
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, alertsURL, strings.NewReader(rawConfig))
-	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
-	}
-
-	res, err := am.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("config not found")
-	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			am.log.Warn("Error while closing body", "err", err)
-		}
-	}()
-
-	_, err = io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("error reading request response: %w", err)
-	}
-
-	if res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("setting config failed with status code %d", res.StatusCode)
-	}
-	return nil
-}
 
 // compareRemoteConfig gets the remote Alertmanager config and compares it to the existing configuration.
 func (am *Alertmanager) compareRemoteConfig(ctx context.Context, config *models.AlertConfiguration) bool {
