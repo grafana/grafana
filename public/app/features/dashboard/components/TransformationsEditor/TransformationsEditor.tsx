@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { ChangeEvent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { Unsubscribable } from 'rxjs';
@@ -6,7 +5,6 @@ import { Unsubscribable } from 'rxjs';
 import {
   DataFrame,
   DataTransformerConfig,
-  GrafanaTheme2,
   PanelData,
   SelectableValue,
   standardTransformersRegistry,
@@ -422,18 +420,20 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   }
 
   render() {
-    const { panel: { alert } } = this.props;
+    const {
+      panel: { alert },
+    } = this.props;
     const { transformations } = this.state;
     const hasTransforms = transformations.length > 0;
 
-    // If there are any alerts then 
+    // If there are any alerts then
     // we can't use transformations
     if (alert) {
-      const message = hasTransforms ? 
-        "Transformations can't be used on a panel with alerts" : 
-        "Transformations can't be used on a panel with existing alerts";
+      const message = hasTransforms
+        ? "Transformations can't be used on a panel with alerts"
+        : "Transformations can't be used on a panel with existing alerts";
       return <PanelNotSupported message={message} />;
-    } 
+    }
 
     return (
       <CustomScrollbar scrollTop={this.state.scrollTop} autoHeightMin="100%">
