@@ -1274,6 +1274,12 @@
       "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "Aktuell",
     "name-column": "Name",

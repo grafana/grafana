@@ -1268,6 +1268,12 @@
       "select-search-input": "输入以搜索(国家、城市、缩写)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "当前",
     "name-column": "姓名",

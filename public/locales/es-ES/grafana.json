@@ -1280,6 +1280,12 @@
       "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
     }
   },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "",
+      "add-transformation-header": ""
+    }
+  },
   "user-orgs": {
     "current-org-button": "Actual",
     "name-column": "Nombre",
