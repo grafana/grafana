@@ -1242,7 +1242,7 @@ export const transformationDocsContent: TransformationDocsContentType = {
     ],
   },
   regression: {
-    name: 'Regression',
+    name: 'Regression analysis',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
   Use this transformation to create a new data frame, containing values predicted by a statistical model. This is useful for finding a trend in chaotic data. It works by fitting a mathematical function to the data, using either linear or polynomial regression. The dataframe can then be used in a visualization to display a trendline.

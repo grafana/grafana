@@ -28,7 +28,7 @@ export const DEFAULTS = { predictionCount: 100, modelType: ModelType.linear, deg
 
 export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTransformerOptions> = {
   id: DataTransformerID.regression,
-  name: 'Regression',
+  name: 'Regression analysis',
   operator: (options, ctx) => (source) =>
     source.pipe(map((data) => RegressionTransformer.transformer(options, ctx)(data))),
   transformer: (options, ctx) => {
