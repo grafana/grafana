@@ -46,8 +46,6 @@ type SqlQueryResultTransformer interface {
 	GetConverterList() []sqlutil.StringConverter
 }
 
-var sqlIntervalCalculator = intervalv2.NewCalculator()
-
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
 //
 //nolint:gocritic
@@ -401,16 +399,27 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	ch <- queryResult
 }
 
+func calculateConsistentInterval(interval time.Duration, maxDataPoints int64, timeRange backend.TimeRange) time.Duration {
+	if maxDataPoints == 0 {
+		maxDataPoints = 100 // default value used in pkg/servicers/query/query.go
+	}
+
+	intervalLowerLimit := timeRange.Duration() / time.Duration(maxDataPoints)
+
+	if interval < intervalLowerLimit {
+		return intervalv2.RoundInterval(intervalLowerLimit)
+	}
+
+	return interval
+
+}
+
 // Interpolate provides global macros/substitutions for all sql datasources.
 var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, query.Interval.String(), query.Interval.Milliseconds(), time.Second*60)
-	if err != nil {
-		return "", err
-	}
-	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval, query.MaxDataPoints)
+	interval := calculateConsistentInterval(query.Interval, query.MaxDataPoints, timeRange)
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
-	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
+	sql = strings.ReplaceAll(sql, "$__interval", intervalv2.FormatDuration(interval))
 	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.From.UTC().Unix()))
 	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.To.UTC().Unix()))
 
