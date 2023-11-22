@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -26,6 +28,7 @@ import (
 	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -476,12 +479,23 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	}
 	rule := createRule(t, store, nil)
 
-	err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
-	require.NoError(t, err)
+	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
+		store.AccessControl = acmock.New()
+		err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, &user.SignedInUser{})
+		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
+	})
 
-	c, err := store.CountInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
-	require.NoError(t, err)
-	require.Equal(t, int64(0), c)
+	t.Run("should be able to delete folder with permissions to delete rules", func(t *testing.T) {
+		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
+		})
+		err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, &user.SignedInUser{})
+		require.NoError(t, err)
+
+		c, err := store.CountInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, &user.SignedInUser{})
+		require.NoError(t, err)
+		require.Equal(t, int64(0), c)
+	})
 }
 
 func TestIntegration_GetNamespaceByUID(t *testing.T) {
