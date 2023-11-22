@@ -1,4 +1,5 @@
-import React, { ReactNode, useEffect } from 'react';
+import { css } from '@emotion/css';
+import React, { ReactNode, useEffect, useState } from 'react';
 
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, scrollElement, sortOrder }: Props) => {
+  const [outOfRange, setOutOfRange] = useState(false);
   useEffect(() => {
     if (!scrollElement || !loadMoreLogs) {
       return;
@@ -23,7 +25,12 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
       if (!scrollElement || !loadMoreLogs || !rows.length || !shouldLoadMore(scrollElement, sortOrder)) {
         return;
       }
-      loadMoreLogs(getNextRange(getVisibleRange(rows), range));
+      const nextRange = getNextRange(getVisibleRange(rows), range);
+      if (isOutOfRange(range, nextRange)) {
+        setOutOfRange(true);
+        return;
+      }
+      loadMoreLogs(nextRange);
       scrollElement?.removeEventListener('scroll', handleScroll);
     }
 
@@ -37,9 +44,19 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
   return (
     <>
       {children}
-      </>
-    );
+      {outOfRange && (
+        <div className={styles.limitReached}>Limit reached for the current time range.</div>
+      )}
+    </>
+  );
 };
+
+const styles = {
+  limitReached: css({
+    textAlign: 'center',
+    padding: 0.25,
+  })
+}
 
 function shouldLoadMore(element: HTMLDivElement, sortOrder: LogsSortOrder) {
   const delta = 1;
@@ -66,4 +83,8 @@ function getVisibleRange(rows: LogRowModel[]) {
 
 function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) {
   return { from: currentRange.from.valueOf(), to: visibleRange.from };
+}
+
+function isOutOfRange(currentRange: TimeRange, nextRange: AbsoluteTimeRange) {
+  return nextRange.from <= currentRange.from.valueOf() || nextRange.to >= currentRange.to.valueOf();
 }
