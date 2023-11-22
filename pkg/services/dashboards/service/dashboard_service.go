@@ -106,6 +106,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
+	// nolint:staticcheck
 	if dash.IsFolder && dash.FolderID > 0 {
 		return nil, dashboards.ErrDashboardFolderCannotHaveParent
 	}
@@ -131,6 +132,23 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
+	// Validate folder
+	if dash.FolderUID != "" {
+		folder, err := dr.folderStore.GetFolderByUID(ctx, dash.OrgID, dash.FolderUID)
+		if err != nil {
+			return nil, err
+		}
+		// nolint:staticcheck
+		dash.FolderID = folder.ID
+	} else if dash.FolderID != 0 { // nolint:staticcheck
+		// nolint:staticcheck
+		folder, err := dr.folderStore.GetFolderByID(ctx, dash.OrgID, dash.FolderID)
+		if err != nil {
+			return nil, err
+		}
+		dash.FolderUID = folder.UID
+	}
+
 	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(ctx, dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
@@ -142,6 +160,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		if err != nil {
 			return nil, err
 		}
+		// nolint:staticcheck
 		if canSave, err := guardian.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canSave {
 			if err != nil {
 				return nil, err
@@ -167,6 +186,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if dash.ID == 0 {
+		// nolint:staticcheck
 		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
 			if err != nil {
 				return nil, err
@@ -193,7 +213,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
 		UserID:    userID,
-		FolderID:  dash.FolderID,
+		FolderID:  dash.FolderID, // nolint:staticcheck
 		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
@@ -232,6 +252,7 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashbo
 
 	if newDashboard {
 		// if it's a new dashboard/folder check the parent folder permissions
+		// nolint:staticcheck
 		guard, err := guardian.New(ctx, d.FolderID, d.OrgID, user)
 		if err != nil {
 			return nil, err
@@ -469,6 +490,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 }
 
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {
+	// nolint:staticcheck
 	inFolder := dash.FolderID > 0
 	var permissions []accesscontrol.SetResourcePermissionCommand
 

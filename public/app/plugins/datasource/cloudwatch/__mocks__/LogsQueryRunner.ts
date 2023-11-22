@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
 import { CustomVariableModel, DataFrame, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendDataSourceResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import { BackendDataSourceResponse, toDataQueryResponse } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -33,14 +33,10 @@ export function setupMockedLogsQueryRunner({
     }
   }
 
-  const runner = new CloudWatchLogsQueryRunner(settings, templateService, timeSrv);
-  const fetchMock = jest.fn().mockReturnValue(of({ data }));
-  setBackendSrv({
-    ...getBackendSrv(),
-    fetch: fetchMock,
-  });
+  const queryMock = jest.fn().mockReturnValue(of(toDataQueryResponse({ data })));
+  const runner = new CloudWatchLogsQueryRunner(settings, templateService, timeSrv, queryMock);
 
-  return { runner, fetchMock, templateService };
+  return { runner, queryMock, templateService };
 }
 
 export function genMockFrames(numResponses: number): DataFrame[] {

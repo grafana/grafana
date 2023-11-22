@@ -325,7 +325,7 @@ export const ContactPoint = ({
             })}
           </div>
         ) : (
-          <div>
+          <div className={styles.integrationWrapper}>
             <ContactPointReceiverSummary receivers={receivers} />
           </div>
         )}
@@ -493,35 +493,32 @@ type ContactPointReceiverSummaryProps = {
  * This summary is used when we're dealing with non-Grafana managed alertmanager since they
  * don't have any metadata worth showing other than a summary of what types are configured for the contact point
  */
-const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverSummaryProps) => {
-  const styles = useStyles2(getStyles);
+export const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverSummaryProps) => {
   const countByType = groupBy(receivers, (receiver) => receiver.type);
 
   return (
-    <div className={styles.integrationWrapper}>
-      <Stack direction="column" gap={0}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          {Object.entries(countByType).map(([type, receivers], index) => {
-            const iconName = INTEGRATION_ICONS[type];
-            const receiverName = receiverTypeNames[type] ?? upperFirst(type);
-            const isLastItem = size(countByType) - 1 === index;
+    <Stack direction="column" gap={0}>
+      <Stack direction="row" alignItems="center" gap={1}>
+        {Object.entries(countByType).map(([type, receivers], index) => {
+          const iconName = INTEGRATION_ICONS[type];
+          const receiverName = receiverTypeNames[type] ?? upperFirst(type);
+          const isLastItem = size(countByType) - 1 === index;
 
-            return (
-              <React.Fragment key={type}>
-                <Stack direction="row" alignItems="center" gap={0.5}>
-                  {iconName && <Icon name={iconName} />}
-                  <Text variant="body" color="primary">
-                    {receiverName}
-                    {receivers.length > 1 && <> ({receivers.length})</>}
-                  </Text>
-                </Stack>
-                {!isLastItem && '⋅'}
-              </React.Fragment>
-            );
-          })}
-        </Stack>
+          return (
+            <React.Fragment key={type}>
+              <Stack direction="row" alignItems="center" gap={0.5}>
+                {iconName && <Icon name={iconName} />}
+                <Text variant="body">
+                  {receiverName}
+                  {receivers.length > 1 && <> ({receivers.length})</>}
+                </Text>
+              </Stack>
+              {!isLastItem && '⋅'}
+            </React.Fragment>
+          );
+        })}
       </Stack>
-    </div>
+    </Stack>
   );
 };
 
