@@ -18,6 +18,7 @@ import { TableSelector } from './TableSelector';
 export interface QueryHeaderProps {
   db: DB;
   isPostgresInstance?: boolean;
+  isFsqlInstance?: boolean;
   isQueryRunnable: boolean;
   onChange: (query: SQLQuery) => void;
   onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
@@ -35,6 +36,7 @@ const editorModes = [
 export function QueryHeader({
   db,
   isPostgresInstance,
+  isFsqlInstance,
   isQueryRunnable,
   onChange,
   onQueryRowChange,
@@ -108,6 +110,9 @@ export function QueryHeader({
   };
 
   const datasetDropdownIsAvailable = () => {
+    if (isFsqlInstance) {
+      return false;
+    }
     // If the feature flag is DISABLED, && the datasource is Postgres (`isPostgresInstance`),
     // we want to hide the dropdown - as per previous behavior.
     if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && isPostgresInstance) {

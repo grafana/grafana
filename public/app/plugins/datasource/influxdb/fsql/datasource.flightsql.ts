@@ -19,6 +19,7 @@ export class FlightSQLDatasource extends SqlDatasource {
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.preconfiguredDatabase = 'iox';
   }
 
   getQueryModel() {

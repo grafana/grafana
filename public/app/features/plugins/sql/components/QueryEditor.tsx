@@ -14,7 +14,7 @@ import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'isPostgresInstance'>;
+  queryHeaderProps?: Pick<QueryHeaderProps, 'isPostgresInstance' | 'isFsqlInstance'>;
 }
 
 export function SqlQueryEditor({
@@ -30,6 +30,7 @@ export function SqlQueryEditor({
 
   const { preconfiguredDatabase } = datasource;
   const isPostgresInstance = !!queryHeaderProps?.isPostgresInstance;
+  const isFsqlInstance = !!queryHeaderProps?.isFsqlInstance;
   const { loading, error } = useAsync(async () => {
     return () => {
       if (datasource.getDB(datasource.id).init !== undefined) {
@@ -98,6 +99,7 @@ export function SqlQueryEditor({
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
         isPostgresInstance={isPostgresInstance}
+        isFsqlInstance={isFsqlInstance}
       />
 
       <Space v={0.5} />
