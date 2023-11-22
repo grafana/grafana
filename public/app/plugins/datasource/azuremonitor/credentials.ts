@@ -63,6 +63,7 @@ export function getAzureCloud(options: AzureDataSourceSettings | AzureDataSource
       // In case of managed identity and workload identity, the cloud is always same as where Grafana is hosted
       return getDefaultAzureCloud();
     case 'clientsecret':
+    case 'currentuser':
       return options.jsonData.cloudName || getDefaultAzureCloud();
   }
 }
@@ -81,6 +82,7 @@ export function isCredentialsComplete(credentials: AzureCredentials): boolean {
   switch (credentials.authType) {
     case 'msi':
     case 'workloadidentity':
+    case 'currentuser':
       return true;
     case 'clientsecret':
       return !!(credentials.azureCloud && credentials.tenantId && credentials.clientId && credentials.clientSecret);
@@ -107,9 +109,10 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
           azureCloud: getDefaultAzureCloud(),
         };
       }
+    case 'currentuser':
     case 'clientsecret':
       return {
-        authType: 'clientsecret',
+        authType,
         azureCloud: options.jsonData.cloudName || getDefaultAzureCloud(),
         tenantId: options.jsonData.tenantId,
         clientId: options.jsonData.clientId,
@@ -143,14 +146,16 @@ export function updateCredentials(
       return options;
 
     case 'clientsecret':
+    case 'currentuser':
       options = {
         ...options,
         jsonData: {
           ...options.jsonData,
-          azureAuthType: 'clientsecret',
+          azureAuthType: credentials.authType,
           cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
+          oauthPassThru: credentials.authType === 'currentuser',
         },
         secureJsonData: {
           ...options.secureJsonData,

@@ -10,6 +10,7 @@ import { AzureAuthType, AzureCredentials } from '../types';
 export interface Props {
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
+  userIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
@@ -25,6 +26,7 @@ export const AzureCredentialsForm = (props: Props) => {
     disabled,
     managedIdentityEnabled,
     workloadIdentityEnabled,
+    userIdentityEnabled
   } = props;
 
   const authTypeOptions = useMemo(() => {
@@ -49,14 +51,22 @@ export const AzureCredentialsForm = (props: Props) => {
       });
     }
 
+    if (userIdentityEnabled) {
+      opts.unshift({
+        value: 'currentuser',
+        label: 'Current User',
+      });
+    }
+
+
     return opts;
-  }, [managedIdentityEnabled, workloadIdentityEnabled]);
+  }, [managedIdentityEnabled, workloadIdentityEnabled, userIdentityEnabled]);
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     const defaultAuthType = managedIdentityEnabled
       ? 'msi'
       : workloadIdentityEnabled
-      ? 'workloadidentity'
+      ? 'workloadidentity' : userIdentityEnabled ? 'currentuser' 
       : 'clientsecret';
     const updated: AzureCredentials = {
       ...credentials,
@@ -66,7 +76,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
-    if (credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret'|| credentials.authType === 'currentuser') {
       const updated: AzureCredentials = {
         ...credentials,
         azureCloud: selected.value,
@@ -76,7 +86,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret'|| credentials.authType === 'currentuser') {
       const updated: AzureCredentials = {
         ...credentials,
         tenantId: event.target.value,
@@ -86,7 +96,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret'|| credentials.authType === 'currentuser') {
       const updated: AzureCredentials = {
         ...credentials,
         clientId: event.target.value,
@@ -96,7 +106,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret'|| credentials.authType === 'currentuser') {
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: event.target.value,
@@ -106,7 +116,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onClientSecretReset = () => {
-    if (credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: '',
@@ -133,7 +143,7 @@ export const AzureCredentialsForm = (props: Props) => {
           />
         </Field>
       )}
-      {credentials.authType === 'clientsecret' && (
+      {(credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') && (
         <>
           {azureCloudOptions && (
             <Field
