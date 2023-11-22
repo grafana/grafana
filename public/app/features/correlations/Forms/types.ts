@@ -1,4 +1,5 @@
 import { SupportedTransformationType } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 
 import { CorrelationConfig } from '../types';
 
@@ -38,27 +39,38 @@ export function getSupportedTransTypeDetails(
   switch (transType) {
     case SupportedTransformationType.Logfmt:
       return {
-        label: 'Logfmt',
+        label: t('correlations.trans-details.logfmt-label', 'Logfmt'),
         value: SupportedTransformationType.Logfmt,
-        description: 'Parse provided field with logfmt to get variables',
+        description: t(
+          'correlations.trans-details.logfmt-description',
+          'Parse provided field with logfmt to get variables'
+        ),
         expressionDetails: { show: false },
         mapValueDetails: { show: false },
       };
     case SupportedTransformationType.Regex:
       return {
-        label: 'Regular expression',
+        label: t('correlations.trans-details.regex-label', 'Regular expression'),
         value: SupportedTransformationType.Regex,
-        description:
-          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value. Regex is case insensitive.',
+        description: t(
+          'correlations.trans-details.regex-description',
+          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value. Regex is case insensitive.'
+        ),
         expressionDetails: {
           show: true,
           required: true,
-          helpText: 'Use capture groups to extract a portion of the field.',
+          helpText: t(
+            'correlations.trans-details.regex-expression',
+            'Use capture groups to extract a portion of the field.'
+          ),
         },
         mapValueDetails: {
           show: true,
           required: false,
-          helpText: 'Defines the name of the variable if the capture group is not named.',
+          helpText: t(
+            'correlations.trans-details.regex-map-values',
+            'Defines the name of the variable if the capture group is not named.'
+          ),
         },
       };
     default:

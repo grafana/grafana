@@ -63,7 +63,13 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
-import { addAddHocFilter, addFilterToQuery, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
+import {
+  addAddHocFilter,
+  addFilterToQuery,
+  addStringFilterToQuery,
+  queryHasFilter,
+  removeFilterFromQuery,
+} from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -941,6 +947,14 @@ export class ElasticDatasource
       }
       case 'ADD_FILTER_OUT': {
         expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
+        break;
+      }
+      case 'ADD_STRING_FILTER': {
+        expression = addStringFilterToQuery(expression, action.options.value);
+        break;
+      }
+      case 'ADD_STRING_FILTER_OUT': {
+        expression = addStringFilterToQuery(expression, action.options.value, false);
         break;
       }
     }

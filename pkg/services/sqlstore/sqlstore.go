@@ -308,13 +308,8 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 		}
 
 		// nolint:staticcheck
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
-		}
-
-		// nolint:staticcheck
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
-			cnnstr += "&parseTime=true"
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')

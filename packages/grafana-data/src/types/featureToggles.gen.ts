@@ -32,7 +32,6 @@ export interface FeatureToggles {
   exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
-  newDBLibrary?: boolean;
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
@@ -137,8 +136,8 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   cloudWatchBatchQueries?: boolean;
-  navAdminSubsections?: boolean;
   recoveryThreshold?: boolean;
+  lokiStructuredMetadata?: boolean;
   teamHttpHeaders?: boolean;
   awsDatasourcesNewFormStyling?: boolean;
   cachingOptimizeSerializationMemoryUsage?: boolean;
@@ -161,5 +160,8 @@ export interface FeatureToggles {
   logsInfiniteScrolling?: boolean;
   flameGraphItemCollapsing?: boolean;
   alertingDetailsViewV2?: boolean;
+  datatrails?: boolean;
   alertingSimplifiedRouting?: boolean;
+  logRowsPopoverMenu?: boolean;
+  pluginsSkipHostEnvVars?: boolean;
 }
