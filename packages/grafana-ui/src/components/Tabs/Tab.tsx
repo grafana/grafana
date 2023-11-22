@@ -18,18 +18,17 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
   href?: string;
   icon?: IconName;
+  onChangeTab?: (event: React.MouseEvent<HTMLElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
-  onChangeTab?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
 export const Tab = React.forwardRef<HTMLElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
     const tabsStyles = useStyles2(getStyles);
     const clearStyles = useStyles2(clearButtonStyles);
-    const linkClass = cx(clearStyles, tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     const content = () => (
       <>
@@ -39,6 +38,8 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
         {Suffix && <Suffix className={tabsStyles.suffix} />}
       </>
     );
+
+    const linkClass = cx(clearStyles, tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     if (href) {
       <div className={tabsStyles.item}>
