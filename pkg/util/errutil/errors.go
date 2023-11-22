@@ -234,6 +234,24 @@ func (b Base) Errorf(format string, args ...any) Error {
 	}
 }
 
+// PublicErrorf creates a new [Error] with Reason and MessageID from [Base],
+// PublicMessage will be populated using the rules of [fmt.Sprintf],
+// Message and Underlying will be populated using the rules of [fmt.Errorf].
+func (b Base) PublicErrorf(format string, args ...any) Error {
+	err := fmt.Errorf(format, args...)
+	public := fmt.Sprintf(format, args...)
+
+	return Error{
+		Reason:        b.reason,
+		LogMessage:    err.Error(),
+		PublicMessage: public,
+		MessageID:     b.messageID,
+		Underlying:    errors.Unwrap(err),
+		LogLevel:      b.logLevel,
+		Source:        b.source,
+	}
+}
+
 // Error makes Base implement the error type. Relying on this is
 // discouraged, as the Error type can carry additional information
 // that's valuable when debugging.
