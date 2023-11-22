@@ -45,6 +45,7 @@ const labelNames = ['place', 'source'];
 const labelValues = ['moon', 'luna', 'server\\1'];
 // Source is duplicated to test handling duplicated labels
 const extractedLabelKeys = ['extracted', 'place', 'source'];
+const structuredMetadataKeys = ['structured', 'metadata'];
 const unwrapLabelKeys = ['unwrap', 'labels'];
 const otherLabels: Label[] = [
   {
@@ -218,6 +219,7 @@ describe('getCompletions', () => {
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys,
       unwrapLabelKeys,
+      structuredMetadataKeys,
       hasJSON: false,
       hasLogfmt: false,
       hasPack: false,
@@ -351,6 +353,7 @@ describe('getCompletions', () => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
         unwrapLabelKeys,
+        structuredMetadataKeys,
         hasJSON: true,
         hasLogfmt: false,
         hasPack: false,
@@ -369,6 +372,7 @@ describe('getCompletions', () => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
         unwrapLabelKeys,
+        structuredMetadataKeys,
         hasJSON: false,
         hasLogfmt: true,
         hasPack: false,
@@ -458,6 +462,7 @@ describe('getAfterSelectorCompletions', () => {
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys: ['abc', 'def'],
       unwrapLabelKeys: [],
+      structuredMetadataKeys: [],
       hasJSON: true,
       hasLogfmt: false,
       hasPack: false,
@@ -480,6 +485,7 @@ describe('getAfterSelectorCompletions', () => {
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys: ['abc', 'def'],
       unwrapLabelKeys: [],
+      structuredMetadataKeys: [],
       hasJSON: true,
       hasLogfmt: false,
       hasPack: true,
@@ -553,6 +559,7 @@ describe('IN_LOGFMT completions', () => {
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys: ['label1', 'label2'],
       unwrapLabelKeys: [],
+      structuredMetadataKeys: [],
       hasJSON: true,
       hasLogfmt: false,
       hasPack: false,

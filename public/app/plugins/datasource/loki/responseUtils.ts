@@ -65,8 +65,12 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType 
     return [];
   }
 
+  // if there are no label types, only return indexed labels if requested
   if (!labelTypeArray?.length) {
-    return Object.keys(labelsArray[0]);
+    if (type === LabelType.indexed) {
+      return Object.keys(labelsArray[0]);
+    }
+    return [];
   }
 
   const labelTypes = labelTypeArray[0];
