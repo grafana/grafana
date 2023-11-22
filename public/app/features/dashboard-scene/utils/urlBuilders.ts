@@ -91,5 +91,6 @@ export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | u
     dsRef: queryRunner.state.datasource,
     timeRange: timeRange.state.value,
     scopedVars: { __sceneObject: { value: vizPanel } },
+    adhocFilters: queryRunner.state.data?.request?.filters,
   });
 }
