@@ -679,6 +679,7 @@ describe('transformSaveModelToScene', () => {
         error: null,
         description: null,
       };
+
       const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
       expect(rest).toEqual({
@@ -696,6 +697,7 @@ describe('transformSaveModelToScene', () => {
         value: '1m',
       });
     });
+
     it.each(['textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
@@ -703,6 +705,42 @@ describe('transformSaveModelToScene', () => {
       };
 
       expect(() => createSceneVariableFromVariableModel(variable as TypedVariableModel)).toThrow();
+    });
+
+    it('should handle variable without current', () => {
+      // @ts-expect-error
+      const variable: TypedVariableModel = {
+        id: 'query1',
+        name: 'query1',
+        type: 'datasource',
+        global: false,
+        regex: '/^gdev/',
+        options: [],
+        query: 'prometheus',
+        multi: true,
+        includeAll: true,
+        refresh: 1,
+        allValue: 'Custom all',
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(migrated).toBeInstanceOf(DataSourceVariable);
+      expect(rest).toEqual({
+        allValue: 'Custom all',
+        defaultToAll: true,
+        includeAll: true,
+        label: undefined,
+        name: 'query1',
+        options: [],
+        pluginId: 'prometheus',
+        regex: '/^gdev/',
+        text: '',
+        type: 'datasource',
+        value: '',
+        isMulti: true,
+      });
     });
   });
 

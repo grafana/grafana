@@ -253,7 +253,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": fmt.Sprintf("Dashboard under %s", f.UID),
 				}),
-				FolderID:  f.ID,
+				FolderID:  f.ID, // nolint:staticcheck
 				FolderUID: f.UID,
 			})
 

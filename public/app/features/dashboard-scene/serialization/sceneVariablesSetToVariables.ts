@@ -1,12 +1,5 @@
-import {
-  QueryVariable,
-  CustomVariable,
-  DataSourceVariable,
-  ConstantVariable,
-  IntervalVariable,
-  SceneVariables,
-} from '@grafana/scenes';
-import { VariableModel, VariableHide, VariableRefresh, VariableSort } from '@grafana/schema';
+import { SceneVariables, sceneUtils } from '@grafana/scenes';
+import { VariableHide, VariableModel, VariableRefresh, VariableSort } from '@grafana/schema';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
@@ -21,7 +14,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
       hide: variable.state.hide || VariableHide.dontHide,
       type: variable.state.type,
     };
-    if (variable instanceof QueryVariable) {
+    if (sceneUtils.isQueryVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
@@ -42,7 +35,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         skipUrlSync: variable.state.skipUrlSync,
         hide: variable.state.hide || VariableHide.dontHide,
       });
-    } else if (variable instanceof CustomVariable) {
+    } else if (sceneUtils.isCustomVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
@@ -57,7 +50,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
       });
-    } else if (variable instanceof DataSourceVariable) {
+    } else if (sceneUtils.isDataSourceVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
@@ -74,7 +67,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
       });
-    } else if (variable instanceof ConstantVariable) {
+    } else if (sceneUtils.isConstantVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
@@ -87,7 +80,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         query: variable.state.value,
         hide: VariableHide.hideVariable,
       });
-    } else if (variable instanceof IntervalVariable) {
+    } else if (sceneUtils.isIntervalVariable(variable)) {
       const intervals = getIntervalsQueryFromNewIntervalModel(variable.state.intervals);
       variables.push({
         ...commonProperties,
