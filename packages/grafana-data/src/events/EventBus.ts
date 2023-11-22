@@ -48,6 +48,8 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     });
   }
 
+  // Should be changed so the filter contains publish/subscribe filters.
+  // It should also return a EventBus and not the ScopedEventBus.
   newScopedBus(key: string, filter?: EventFilterOptions): ScopedEventBus {
     return new ScopedEventBus([key], this, filter);
   }
