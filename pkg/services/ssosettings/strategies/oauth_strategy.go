@@ -70,6 +70,5 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context) (map[string]any
 	if section.Key("empty_scopes").MustBool(false) {
 		result["scopes"] = []string{}
 	}
-
 	return result, nil
 }
