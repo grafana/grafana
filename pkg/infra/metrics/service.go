@@ -2,8 +2,11 @@ package metrics
 
 import (
 	"context"
+	"errors"
+	"regexp"
 
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"k8s.io/component-base/metrics/legacyregistry"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -65,7 +68,7 @@ func ProvideRegisterer(cfg *setting.Cfg) prometheus.Registerer {
 
 func ProvideGatherer(cfg *setting.Cfg) prometheus.Gatherer {
 	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		return legacyregistry.DefaultGatherer
+		return newK8sGathererWrapper(legacyregistry.DefaultGatherer)
 	}
 	return prometheus.DefaultGatherer
 }
@@ -78,4 +81,40 @@ func ProvideGathererForTest(reg prometheus.Registerer) prometheus.Gatherer {
 	// the registerer provided by ProvideRegistererForTest
 	// is a *prometheus.Registry, so it also implements prometheus.Gatherer
 	return reg.(*prometheus.Registry)
+}
+
+type k8sGathererWrapper struct {
+	orig prometheus.Gatherer
+	reg  *regexp.Regexp
+}
+
+func newK8sGathererWrapper(orig prometheus.Gatherer) *k8sGathererWrapper {
+	return &k8sGathererWrapper{
+		orig: orig,
+		reg:  regexp.MustCompile("^((?:grafana|go).*)"),
+	}
+}
+
+func (g *k8sGathererWrapper) Gather() ([]*dto.MetricFamily, error) {
+	mf, err := g.orig.Gather()
+	if err != nil {
+		return nil, err
+	}
+
+	names := make(map[string]struct{})
+
+	for i := 0; i < len(mf); i++ {
+		m := mf[i]
+		if m.Name != nil && !g.reg.MatchString(*m.Name) {
+			*m.Name = "grafana_" + *m.Name
+			// since we are modifying the name, we need to check for duplicates in the gatherer
+			if _, exists := names[*m.Name]; exists {
+				return nil, errors.New("duplicate metric name: " + *m.Name)
+			}
+		}
+		// keep track of names to detect duplicates
+		names[*m.Name] = struct{}{}
+	}
+
+	return mf, nil
 }
