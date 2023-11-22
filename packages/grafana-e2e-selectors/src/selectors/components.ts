@@ -190,8 +190,8 @@ export const Components = {
     intervalButtonV2: 'data-testid RefreshPicker interval button',
   },
   QueryTab: {
-    content: 'Query editor tab content',
-    queryInspectorButton: 'Query inspector button',
+    content: 'data-testid Query editor tab content',
+    queryInspectorButton: 'data-testid Query inspector button',
     queryHistoryButton: 'data-testid query-history-button',
     addQuery: 'data-testid query-tab-add-query',
   },
@@ -199,7 +199,7 @@ export const Components = {
     queryText: 'Query text',
   },
   QueryEditorRows: {
-    rows: 'Query editor row',
+    rows: 'data-testid Query editor row',
   },
   QueryEditorRow: {
     actionButton: (title: string) => `${title}`,
@@ -375,7 +375,7 @@ export const Components = {
     link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
-    icon: 'Loading indicator',
+    icon: 'data-testid Loading indicator',
   },
   CallToActionCard: {
     /**

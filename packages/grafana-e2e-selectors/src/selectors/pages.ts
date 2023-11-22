@@ -63,7 +63,7 @@ export const Pages = {
       submenuItemLabels: (item: string) => `data-testid Dashboard template variables submenu Label ${item}`,
       submenuItemValueDropDownValueLinkTexts: (item: string) =>
         `data-testid Dashboard template variables Variable Value DropDown value link text ${item}`,
-      submenuItemValueDropDownDropDown: 'Variable options',
+      submenuItemValueDropDownDropDown: 'data-testid Variable options',
       submenuItemValueDropDownOptionTexts: (item: string) =>
         `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
       Annotations: {
@@ -111,14 +111,17 @@ export const Pages = {
            */
           addVariableCTA: Components.CallToActionCard.button('Add variable'),
           addVariableCTAV2: Components.CallToActionCard.buttonV2('Add variable'),
-          newButton: 'Variable editor New variable button',
-          table: 'Variable editor Table',
-          tableRowNameFields: (variableName: string) => `Variable editor Table Name field ${variableName}`,
-          tableRowDefinitionFields: (variableName: string) => `Variable editor Table Definition field ${variableName}`,
+          newButton: 'data-testid Variable editor New variable button',
+          table: 'data-testid Variable editor Table',
+          tableRowNameFields: (variableName: string) => `data-testid Variable editor Table Name field ${variableName}`,
+          tableRowDefinitionFields: (variableName: string) =>
+            `data-testid Variable editor Table Definition field ${variableName}`,
           tableRowArrowUpButtons: (variableName: string) => `Variable editor Table ArrowUp button ${variableName}`,
           tableRowArrowDownButtons: (variableName: string) => `Variable editor Table ArrowDown button ${variableName}`,
-          tableRowDuplicateButtons: (variableName: string) => `Variable editor Table Duplicate button ${variableName}`,
-          tableRowRemoveButtons: (variableName: string) => `Variable editor Table Remove button ${variableName}`,
+          tableRowDuplicateButtons: (variableName: string) =>
+            `data-testid Variable editor Table Duplicate button ${variableName}`,
+          tableRowRemoveButtons: (variableName: string) =>
+            `data-testid Variable editor Table Remove button ${variableName}`,
         },
         Edit: {
           General: {
@@ -140,8 +143,8 @@ export const Pages = {
             selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
             selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
             selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
-            previewOfValuesOption: 'Variable editor Preview of Values option',
-            submitButton: 'Variable editor Submit button',
+            previewOfValuesOption: 'data-testid Variable editor Preview of Values option',
+            submitButton: 'data-testid Variable editor Submit button',
             applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {
@@ -152,7 +155,7 @@ export const Pages = {
             queryOptionsRegExInputV2: 'data-testid Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
             queryOptionsSortSelectV2: 'data-testid Variable editor Form Query Sort select',
-            queryOptionsQueryInput: 'Variable editor Form Default Variable Query Editor textarea',
+            queryOptionsQueryInput: 'data-testid Variable editor Form Default Variable Query Editor textarea',
             valueGroupsTagsEnabledSwitch: 'Variable editor Form Query UseTags switch',
             valueGroupsTagsTagsQueryInput: 'Variable editor Form Query TagsQuery field',
             valueGroupsTagsTagsValuesQueryInput: 'Variable editor Form Query TagsValuesQuery field',

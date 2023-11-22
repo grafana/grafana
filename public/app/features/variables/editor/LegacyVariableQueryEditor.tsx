@@ -35,7 +35,7 @@ export const LegacyVariableQueryEditor = ({ onChange, query }: VariableQueryEdit
       onBlur={onBlur}
       placeholder="Metric name or tags query"
       required
-      aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
+      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
       cols={52}
       className={styles.textarea}
     />
