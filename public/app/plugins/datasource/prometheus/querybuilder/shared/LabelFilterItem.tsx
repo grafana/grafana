@@ -76,7 +76,7 @@ export function LabelFilterItem({
         <InputGroup>
           <Select
             placeholder="Select label"
-            aria-label={selectors.components.QueryBuilder.labelSelect}
+            data-testid={selectors.components.QueryBuilder.labelSelect}
             inputId="prometheus-dimensions-filter-item-key"
             width="auto"
             value={item.label ? toOption(item.label) : null}
@@ -106,7 +106,7 @@ export function LabelFilterItem({
           />
 
           <Select
-            aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
+            data-testid={selectors.components.QueryBuilder.matchOperatorSelect}
             value={toOption(item.op ?? defaultOp)}
             options={operators}
             width="auto"
@@ -124,7 +124,7 @@ export function LabelFilterItem({
 
           <Select
             placeholder="Select value"
-            aria-label={selectors.components.QueryBuilder.valueSelect}
+            data-testid={selectors.components.QueryBuilder.valueSelect}
             inputId="prometheus-dimensions-filter-item-value"
             width="auto"
             value={

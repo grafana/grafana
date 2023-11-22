@@ -58,8 +58,8 @@ export const Components = {
     Prometheus: {
       configPage: {
         connectionSettings: 'Data source connection URL',
-        exemplarsAddButton: 'Add exemplar config button',
-        internalLinkSwitch: 'Internal link switch',
+        exemplarsAddButton: 'data-testid Add exemplar config button',
+        internalLinkSwitch: 'data-testid Internal link switch',
       },
       exemplarMarker: 'Exemplar marker',
     },
@@ -341,12 +341,12 @@ export const Components = {
   TraceViewer: {
     spanBar: 'data-testid SpanBar--wrapper',
   },
-  QueryField: { container: 'Query field' },
+  QueryField: { container: 'data-testid Query field' },
   QueryBuilder: {
-    queryPatterns: 'Query patterns',
-    labelSelect: 'Select label',
-    valueSelect: 'Select value',
-    matchOperatorSelect: 'Select match operator',
+    queryPatterns: 'data-testid Query patterns',
+    labelSelect: 'data-testid Select label',
+    valueSelect: 'data-testid Select value',
+    matchOperatorSelect: 'data-testid Select match operator',
   },
   ValuePicker: {
     button: (name: string) => `Value picker button ${name}`,
