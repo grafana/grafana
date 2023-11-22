@@ -45,21 +45,16 @@
       "new-folder-name-required-phrase": "Vous devez saisir le nom du dossier."
     },
     "counts": {
-      "alertRule_one": "{{count}}\u00a0règle d'alerte",
-      "alertRule_many": "",
-      "alertRule_other": "{{count}}\u00a0règles d'alerte",
-      "dashboard_one": "{{count}}\u00a0tableau de bord",
-      "dashboard_many": "",
-      "dashboard_other": "{{count}}\u00a0tableaux de bord",
-      "folder_one": "{{count}}\u00a0dossier",
-      "folder_many": "",
-      "folder_other": "{{count}}\u00a0dossiers",
-      "libraryPanel_one": "{{count}}\u00a0panneau Bibliothèque",
-      "libraryPanel_many": "",
-      "libraryPanel_other": "{{count}}\u00a0panneaux Bibliothèque",
-      "total_one": "{{count}}\u00a0objet",
-      "total_many": "",
-      "total_other": "{{count}}\u00a0objets"
+      "alertRule_one": "{{count}} règle d'alerte",
+      "alertRule_other": "{{count}} règles d'alerte",
+      "dashboard_one": "{{count}} tableau de bord",
+      "dashboard_other": "{{count}} tableaux de bord",
+      "folder_one": "{{count}} dossier",
+      "folder_other": "{{count}} dossiers",
+      "libraryPanel_one": "{{count}} panneau Bibliothèque",
+      "libraryPanel_other": "{{count}} panneaux Bibliothèque",
+      "total_one": "{{count}} objet",
+      "total_other": "{{count}} objets"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Réduire le dossier {{title}}",
@@ -86,9 +81,7 @@
     "manage-folder-nav": {
       "alert-rules": "Règles d'alerte",
       "dashboards": "Tableaux de bord",
-      "panels": "Panneaux",
-      "permissions": "Permissions",
-      "settings": "Paramètres"
+      "panels": "Panneaux"
     },
     "new-folder-form": {
       "cancel-label": "Annuler",
@@ -259,7 +252,7 @@
       "query-tab": "Requête",
       "stats-tab": "Statistiques",
       "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
-      "title": "Inspecter\u00a0: {{panelTitle}}"
+      "title": "Inspecter : {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "Options de données",
@@ -289,7 +282,7 @@
       "panel-json-description": "Le modèle enregistré dans le tableau de bord JSON qui configure comment tout fonctionne.",
       "panel-json-label": "Panneau JSON",
       "select-source": "Sélectionner la source",
-      "unknown": "Objet inconnu\u00a0: {{show}}"
+      "unknown": "Objet inconnu : {{show}}"
     },
     "inspect-meta": {
       "no-inspector": "Pas d'inspecteur de métadonnées"
@@ -381,7 +374,7 @@
       "hide-time-picker": "Cacher le sélecteur de temps",
       "now-delay-description": "Exclure les données récentes qui peuvent être incomplètes.",
       "now-delay-label": "Délai actuel",
-      "refresh-live-dashboards-description": "Redessiner en continu les panneaux où la plage de temps indique «\u00a0maintenant\u00a0»",
+      "refresh-live-dashboards-description": "Redessiner en continu les panneaux où la plage de temps indique « maintenant »",
       "refresh-live-dashboards-label": "Actualiser les tableaux de bord en direct",
       "time-options-label": "Options de temps",
       "time-zone-label": "Fuseau horaire",
@@ -441,7 +434,7 @@
       "delete-query-confirmation-title": "Supprimer",
       "delete-query-title": "Supprimer la requête",
       "delete-query-tooltip": "Supprimer la requête",
-      "delete-starred-query-confirmation-text": "Souhaitez-vous vraiment supprimer définitivement votre requête favorite\u00a0?",
+      "delete-starred-query-confirmation-text": "Souhaitez-vous vraiment supprimer définitivement votre requête favorite ?",
       "edit-comment-tooltip": "Modifier le commentaire",
       "loading-text": "chargement...",
       "optional-description": "Une description facultative de l'action de la requête.",
@@ -485,7 +478,7 @@
       "delete-confirm-text": "Souhaitez-vous vraiment supprimer définitivement votre historique des requêtes ?",
       "delete-title": "Supprimer",
       "history-time-span": "Période de l'historique",
-      "history-time-span-description": "Sélectionnez la période de temps pendant laquelle Grafana enregistrera votre historique des requêtes. Un maximum de {{MAX_HISTORY_ITEMS}}\u00a0entrées pourront être sauvegarées.",
+      "history-time-span-description": "Sélectionnez la période de temps pendant laquelle Grafana enregistrera votre historique des requêtes. Un maximum de {{MAX_HISTORY_ITEMS}} entrées pourront être sauvegarées.",
       "only-show-active-datasource": "Afficher uniquement les requêtes pour la source de données actuellement active dans Explorer",
       "query-history-deleted": "L'historique des requêtes a été supprimé",
       "retention-period": {
@@ -635,19 +628,18 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Ce panneau est utilisé dans {{count}} tableau de bord. Choisissez dans quel tableau de bord le panneau sera affiché :",
-      "body_many": "",
-      "body_other": "Ce panneau est utilisé dans {{count}} tableaux de bord. Choisissez dans quel tableau de bord le panneau sera affiché :",
       "button-cancel": "<0>Annuler</0>",
       "button-view-panel1": "Voir le panneau dans {{label}}...",
       "button-view-panel2": "Voir le panneau dans le tableau de bord...",
       "panel-not-linked": "Le panneau n'est pas lié à un tableau de bord. Ajoutez le panneau à un tableau de bord et réessayez.",
       "select-no-options-message": "Aucun tableau de bord trouvé",
       "select-placeholder": "Commencez à taper pour rechercher le tableau de bord",
-      "title": "Voir le panneau dans le tableau de bord"
+      "title": "Voir le panneau dans le tableau de bord",
+      "body_one": "Ce panneau est utilisé dans {{count}} tableau de bord. Choisissez dans quel tableau de bord le panneau sera affiché :",
+      "body_other": "Ce panneau est utilisé dans {{count}} tableaux de bord. Choisissez dans quel tableau de bord le panneau sera affiché :"
     },
     "save": {
-      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
+      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
     }
   },
@@ -1015,7 +1007,7 @@
       "title": "Nouvelle playlist"
     },
     "delete-modal": {
-      "body": "Souhaitez-vous vraiment supprimer la playlist {{name}}\u00a0?",
+      "body": "Souhaitez-vous vraiment supprimer la playlist {{name}} ?",
       "confirm-text": "Supprimer"
     },
     "empty": {
@@ -1091,15 +1083,6 @@
       "new-dashboard": "Nouveau tableau de bord",
       "new-folder": "Nouveau dossier"
     },
-    "folder-view": {
-      "go-to-folder": "Aller dans le dossier",
-      "select-folder": "Sélectionner un dossier"
-    },
-    "result-kind": {
-      "dashboard": "Tableau de bord",
-      "folder": "Dossier",
-      "panel": "Panneau"
-    },
     "results-table": {
       "datasource-header": "Source de données",
       "location-header": "Emplacement",
@@ -1112,12 +1095,6 @@
     "search-input": {
       "include-panels-placeholder": "Rechercher des tableaux de bord et des panneaux",
       "placeholder": "Rechercher des tableaux de bord"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "Effacer la recherche et les filtres",
-      "text": "Aucun résultat trouvé pour votre requête."
     }
   },
   "share-modal": {
@@ -1172,7 +1149,7 @@
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
       "local-button": "Instantané local",
-      "mistake-message": "Avez-vous commis une erreur\u00a0? ",
+      "mistake-message": "Avez-vous commis une erreur ? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
       "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
