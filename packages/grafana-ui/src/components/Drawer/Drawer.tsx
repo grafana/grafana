@@ -3,7 +3,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -48,6 +48,8 @@ export interface Props {
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
   onClose: () => void;
+  /** Enabl */
+  enableResize?: boolean;
 }
 
 export function Drawer({
@@ -72,12 +74,13 @@ export function Drawer({
     },
     overlayRef
   );
+  const [realsize, setSize] = useState(size)
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
 
   // Apply size styles (unless deprecated width prop is used)
-  const rootClass = cx(styles.drawer, !width && styles.sizes[size]);
+  const rootClass = cx(styles.drawer, !width && styles.sizes[realsize]);
   const content = <div className={styles.content}>{children}</div>;
 
   return (
@@ -117,10 +120,41 @@ export function Drawer({
             <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
               <div className={styles.actions}>
                 <Button
+                  icon="gf-movepane-left"
+                  variant="secondary"
+                  fill="text"
+                  tooltip="Expand"
+                  disabled={realsize === 'lg'}
+                  onClick={() => {
+                    if(realsize === 'sm') {
+                      setSize('md')
+                    }
+                    else if (realsize === 'md') {
+                      setSize('lg')
+                    }
+                  }}
+                />
+                <Button
+                  icon="gf-movepane-right"
+                  variant="secondary"
+                  fill="text"
+                  tooltip="Collapse"
+                  disabled={realsize === 'sm'}
+                  onClick={() => {
+                    if (realsize === 'lg') {
+                      setSize('md')
+                    }
+                    else if (realsize === 'md') {
+                      setSize('sm')
+                    }
+                  }}
+                  />
+                <Button
                   icon="times"
                   variant="secondary"
                   fill="text"
                   onClick={onClose}
+                  tooltip="Close"
                   aria-label={selectors.components.Drawer.General.close}
                 />
               </div>
