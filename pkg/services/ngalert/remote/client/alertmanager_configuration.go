@@ -12,7 +12,6 @@ const (
 	grafanaAlertmanagerConfigPath = "/api/v1/grafana/config"
 )
 
-// TODO: successresponse should only be private.
 type UserGrafanaConfig struct {
 	ID                        int64  `json:"id"`
 	GrafanaAlertmanagerConfig string `json:"configuration"`

@@ -13,7 +13,6 @@ const (
 )
 
 type UserGrafanaState struct {
-	successResponse
 	State string `json:"state"`
 }
 
