@@ -35,16 +35,12 @@ export const MegaMenu = React.memo(
     const activeItem = getActiveItem(navItems, location.pathname);
 
     const handleDockedMenu = () => {
-      const newState = state.megaMenu === 'docked' ? 'open' : 'docked';
-      chrome.setMegaMenu(newState);
+      chrome.setMegaMenu(state.megaMenu === 'docked' ? 'open' : 'docked');
 
-      // refocus on dock/undock button when docking
-      // don't need to do this when undocking because button gets focus by default
-      if (newState === 'docked') {
-        setTimeout(() => {
-          document.getElementById('dock-menu-button')?.focus();
-        });
-      }
+      // refocus on dock/undock button when changing state
+      setTimeout(() => {
+        document.getElementById('dock-menu-button')?.focus();
+      });
     };
 
     return (
