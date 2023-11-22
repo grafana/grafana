@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
@@ -38,7 +38,7 @@ func logEntrypoint() string {
 	return fmt.Sprintf("%s:%d[%s]", file, line, functionName)
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
 		logger: log.New("tsdb.tempo"),
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
@@ -51,7 +51,7 @@ type Datasource struct {
 	URL             string
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		ctxLogger := log.New("tsdb.tempo").FromContext(ctx)
 		opts, err := settings.HTTPClientOptions(ctx)
