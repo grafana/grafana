@@ -158,7 +158,7 @@ class ScopedEventBus implements EventBus {
   }
 }
 
-type PublishEventFilter = (scope: string[], event: BusEvent) => 'parent' | 'local';
+type PublishEventFilter = (scope: string[], event: BusEvent) => 'parent' | 'local' | 'none';
 type SubscribeEventFilter = (scope: string[], event: BusEvent) => boolean;
 type ScopedEvent = BusEvent & {
   path: Readonly<string[]>;
@@ -196,6 +196,8 @@ class ScopedEventBus2 implements EventBus {
     switch (channel) {
       case 'parent':
         return this.parent.publish(event);
+      case 'none':
+        return;
       default:
         return this.local.publish(event);
     }
