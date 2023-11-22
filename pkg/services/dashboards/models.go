@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -366,7 +367,7 @@ type DashboardACL struct {
 	UserID     int64         `xorm:"user_id"`
 	TeamID     int64         `xorm:"team_id"`
 	Role       *org.RoleType // pointer to be nullable
-	Permission PermissionType
+	Permission dashboardaccess.PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -384,23 +385,23 @@ type DashboardACLInfoDTO struct {
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
-	UserID         int64          `json:"userId" xorm:"user_id"`
-	UserLogin      string         `json:"userLogin"`
-	UserEmail      string         `json:"userEmail"`
-	UserAvatarURL  string         `json:"userAvatarUrl" xorm:"user_avatar_url"`
-	TeamID         int64          `json:"teamId" xorm:"team_id"`
-	TeamEmail      string         `json:"teamEmail"`
-	TeamAvatarURL  string         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
-	Team           string         `json:"team"`
-	Role           *org.RoleType  `json:"role,omitempty"`
-	Permission     PermissionType `json:"permission"`
-	PermissionName string         `json:"permissionName"`
-	UID            string         `json:"uid" xorm:"uid"`
-	Title          string         `json:"title"`
-	Slug           string         `json:"slug"`
-	IsFolder       bool           `json:"isFolder"`
-	URL            string         `json:"url" xorm:"url"`
-	Inherited      bool           `json:"inherited"`
+	UserID         int64                          `json:"userId" xorm:"user_id"`
+	UserLogin      string                         `json:"userLogin"`
+	UserEmail      string                         `json:"userEmail"`
+	UserAvatarURL  string                         `json:"userAvatarUrl" xorm:"user_avatar_url"`
+	TeamID         int64                          `json:"teamId" xorm:"team_id"`
+	TeamEmail      string                         `json:"teamEmail"`
+	TeamAvatarURL  string                         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
+	Team           string                         `json:"team"`
+	Role           *org.RoleType                  `json:"role,omitempty"`
+	Permission     dashboardaccess.PermissionType `json:"permission"`
+	PermissionName string                         `json:"permissionName"`
+	UID            string                         `json:"uid" xorm:"uid"`
+	Title          string                         `json:"title"`
+	Slug           string                         `json:"slug"`
+	IsFolder       bool                           `json:"isFolder"`
+	URL            string                         `json:"url" xorm:"url"`
+	Inherited      bool                           `json:"inherited"`
 }
 
 func (dto *DashboardACLInfoDTO) hasSameRoleAs(other *DashboardACLInfoDTO) bool {
@@ -437,7 +438,7 @@ type FindPersistedDashboardsQuery struct {
 	Tags       []string
 	Limit      int64
 	Page       int64
-	Permission PermissionType
+	Permission dashboardaccess.PermissionType
 	Sort       model.SortOption
 
 	Filters []any

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -245,8 +246,8 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 	basicFolder := genFolder(t, 1, "f_1")
 	basicDashboard := genDashboard(t, 2, "d_1", basicFolder.ID)
 	defaultPerms := genPerms(
-		accesscontrol.SetResourcePermissionCommand{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-		accesscontrol.SetResourcePermissionCommand{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+		accesscontrol.SetResourcePermissionCommand{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+		accesscontrol.SetResourcePermissionCommand{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 	)
 
 	basicAlert1 := genLegacyAlert("alert1", basicDashboard.ID, func(a *models.Alert) { a.PanelID = 1 })
@@ -304,8 +305,8 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			dashboards:  []*dashboards.Dashboard{basicDashboard},
 			dashboardPerms: map[string][]accesscontrol.SetResourcePermissionCommand{
 				basicDashboard.UID: {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_VIEW.String()}, // Change.
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_VIEW.String()}, // Change.
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
 			},
 			alerts: []*models.Alert{basicAlert1},
@@ -314,8 +315,8 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					Alert:  genAlert(basicAlert1.Name, basicFolder.UID, basicDashboard.UID),
 					Folder: basicFolder,
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()}, // Inherits from Folder.
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()}, // Inherits from Folder.
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 					},
 				},
 			},
@@ -333,24 +334,24 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			},
 			dashboardPerms: map[string][]accesscontrol.SetResourcePermissionCommand{
 				"d_1": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_EDIT.String()}, // Change.
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_EDIT.String()}, // Change.
 				},
 				"d_2": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
 				},
 				"d_3": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_EDIT.String()},  // Change.
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_EDIT.String()},  // Change.
 				},
 				"d_4": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
 				"d_5": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
 				},
 			},
 			alerts: []*models.Alert{genLegacyAlert("alert1", 2), genLegacyAlert("alert2", 3), genLegacyAlert("alert3", 4), genLegacyAlert("alert4", 5), genLegacyAlert("alert5", 6)},
@@ -359,40 +360,40 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					Alert:  genAlert("alert1", "", "d_1"),
 					Folder: genCreatedFolder(t, "Original Folder f_1 Alerts - %s"),
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_EDIT.String()}, // Change.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_EDIT.String()}, // Change.
 					},
 				},
 				{
 					Alert:  genAlert("alert2", "", "d_2"),
 					Folder: genCreatedFolder(t, "Original Folder f_1 Alerts - %s"),
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
 					},
 				},
 				{
 					Alert:  genAlert("alert3", "", "d_3"),
 					Folder: genCreatedFolder(t, "Original Folder f_1 Alerts - %s"),
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_EDIT.String()},  // Change.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_EDIT.String()},  // Change.
 					},
 				},
 				{
 					Alert:  genAlert("alert4", "", "d_4"),
 					Folder: genCreatedFolder(t, "Original Folder f_1 Alerts - %s"),
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 					},
 				},
 				{
 					Alert:  genAlert("alert5", "", "d_5"),
 					Folder: genCreatedFolder(t, "Original Folder f_1 Alerts - %s"),
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_ADMIN.String()}, // Change.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Change.
 					},
 				},
 			},
@@ -402,12 +403,12 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			folders: []*dashboards.Dashboard{genFolder(t, 1, "f_1"), genFolder(t, 2, "f_2")},
 			folderPerms: map[string][]accesscontrol.SetResourcePermissionCommand{
 				"f_1": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_ADMIN.String()},
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
 				},
 				"f_2": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_VIEW.String()},
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
 			},
 			dashboards: []*dashboards.Dashboard{
@@ -418,16 +419,16 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			},
 			dashboardPerms: map[string][]accesscontrol.SetResourcePermissionCommand{
 				"d_1": {
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
 				"d_2": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 				},
 				"d_3": {
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
 				"d_4": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 				},
 			},
 			alerts: []*models.Alert{genLegacyAlert("alert1", 3), genLegacyAlert("alert2", 4), genLegacyAlert("alert3", 5), genLegacyAlert("alert4", 6)},
@@ -436,32 +437,32 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					Alert:  genAlert("alert1", "f_1", "d_1"),
 					Folder: genFolder(t, 1, "f_1"), // Original folder since the perms didn't change.
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_ADMIN.String()}, // Inherits from Folder.
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_ADMIN.String()}, // Overrides from Folder.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Inherits from Folder.
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Overrides from Folder.
 					},
 				},
 				{
 					Alert:  genAlert("alert2", "f_1", "d_2"),
 					Folder: genFolder(t, 1, "f_1"), // Original folder since the perms didn't change.
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_ADMIN.String()}, // Overrides from Folder.
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_ADMIN.String()}, // Inherits from Folder.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Overrides from Folder.
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // Inherits from Folder.
 					},
 				},
 				{
 					Alert:  genAlert("alert3", "f_2", "d_3"),
 					Folder: genFolder(t, 2, "f_2"), // Original folder since the perms didn't change.
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_VIEW.String()}, // Inherits from Folder.
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_VIEW.String()}, // Inherits from Folder.
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 					},
 				},
 				{
 					Alert:  genAlert("alert4", "", "d_4"),
 					Folder: genCreatedFolder(t, "Original Folder f_2 Alerts - %s"),
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()}, // Inherits from Folder.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()}, // Inherits from Folder.
 					},
 				},
 			},
@@ -471,13 +472,13 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			folders: []*dashboards.Dashboard{basicFolder},
 			folderPerms: map[string][]accesscontrol.SetResourcePermissionCommand{
 				basicFolder.UID: {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 				},
 			},
 			dashboards: []*dashboards.Dashboard{basicDashboard},
 			dashboardPerms: map[string][]accesscontrol.SetResourcePermissionCommand{
 				basicDashboard.UID: {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_VIEW.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 				},
 			},
 			alerts: []*models.Alert{basicAlert1},
@@ -486,7 +487,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					Alert:  genAlert(basicAlert1.Name, basicFolder.UID, basicDashboard.UID),
 					Folder: basicFolder,
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 					},
 				},
 			},
@@ -505,8 +506,8 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					Alert:  genAlert("alert1", "f_1", "d_1"),
 					Folder: genCreatedFolder(t, "General Alerting Alerts - %s"),
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()}, // From Dashboard.
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()}, // From Dashboard.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()}, // From Dashboard.
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()}, // From Dashboard.
 					},
 				},
 			},
@@ -516,7 +517,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			dashboards: []*dashboards.Dashboard{genDashboard(t, 1, "d_1", 0)}, // Dashboard in general folder.
 			dashboardPerms: map[string][]accesscontrol.SetResourcePermissionCommand{
 				"d_1": { // Missing viewer.
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 				},
 			},
 			alerts: []*models.Alert{genLegacyAlert("alert1", 1)},
@@ -525,7 +526,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					Alert:  genAlert("alert1", "f_1", "d_1"),
 					Folder: genCreatedFolder(t, "General Alerting Alerts - %s"),
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()}, // From Dashboard.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()}, // From Dashboard.
 					},
 				},
 			},
@@ -555,8 +556,8 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 			},
 			dashboardPerms: map[string][]accesscontrol.SetResourcePermissionCommand{
 				"d_1": {
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_EDIT.String()}, // Change.
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_EDIT.String()}, // Change.
 				},
 			},
 			alerts: []*models.Alert{genLegacyAlert("alert1", 2)},
@@ -565,9 +566,9 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					Alert:  genAlert("alert1", "", "d_1"),
 					Folder: genCreatedFolder(t, "Original Folder f_1 Alerts - %s"),
 					Perms: []accesscontrol.SetResourcePermissionCommand{
-						{BuiltinRole: string(org.RoleAdmin), Permission: dashboards.PERMISSION_ADMIN.String()}, // From basic:admin.
-						{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-						{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_EDIT.String()}, // Change.
+						{BuiltinRole: string(org.RoleAdmin), Permission: dashboardaccess.PERMISSION_ADMIN.String()}, // From basic:admin.
+						{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+						{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_EDIT.String()}, // Change.
 					},
 				},
 			},
@@ -699,7 +700,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 							expected.Alert.NamespaceUID = ""
 						}
 
-						keep := make(map[accesscontrol.SetResourcePermissionCommand]dashboards.PermissionType)
+						keep := make(map[accesscontrol.SetResourcePermissionCommand]dashboardaccess.PermissionType)
 						for _, p := range rperms {
 							if permission := service.migrationStore.MapActions(p); permission != "" {
 								sp := accesscontrol.SetResourcePermissionCommand{
