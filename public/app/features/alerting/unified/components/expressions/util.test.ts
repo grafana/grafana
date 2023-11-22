@@ -5,6 +5,7 @@ import { mockDataSource } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import {
+  GRAFANA_PARENT_FOLDER_SEPARATOR,
   decodeGrafanaNamespace,
   formatLabels,
   getSeriesLabels,
@@ -48,7 +49,7 @@ describe('formatLabels', () => {
 describe('decodeGrafanaNamespace', () => {
   it('should work for Grafana namespaces', () => {
     const grafanaNamespace: CombinedRuleNamespace = {
-      name: '/my_rule_namespace',
+      name: `${GRAFANA_PARENT_FOLDER_SEPARATOR}my_rule_namespace`,
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
       groups: [
         {
@@ -64,7 +65,7 @@ describe('decodeGrafanaNamespace', () => {
 
   it('should not change output for cloud namespaces', () => {
     const cloudNamespace: CombinedRuleNamespace = {
-      name: '/etc/prometheus/rules',
+      name: `${GRAFANA_PARENT_FOLDER_SEPARATOR}etc/prometheus/rules`,
       rulesSource: mockDataSource(),
       groups: [
         {
@@ -80,7 +81,7 @@ describe('decodeGrafanaNamespace', () => {
 
   it('should work when there is more than one separator', () => {
     const grafanaNamespace: CombinedRuleNamespace = {
-      name: '/my_rule_namespace/with/slashes',
+      name: `${GRAFANA_PARENT_FOLDER_SEPARATOR}my_rule_namespace${GRAFANA_PARENT_FOLDER_SEPARATOR}with${GRAFANA_PARENT_FOLDER_SEPARATOR}slashes`,
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
       groups: [
         {
@@ -90,7 +91,9 @@ describe('decodeGrafanaNamespace', () => {
         },
       ],
     };
-    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe('my_rule_namespace/with/slashes');
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe(
+      `my_rule_namespace${GRAFANA_PARENT_FOLDER_SEPARATOR}with${GRAFANA_PARENT_FOLDER_SEPARATOR}slashes`
+    );
   });
 });
 
