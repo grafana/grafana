@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3';
-import { Unsubscribable, Observable, Subscriber } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { Unsubscribable, Observable, Subscriber, merge, Subscription } from 'rxjs';
+import { filter, finalize } from 'rxjs/operators';
 
 import {
   EventBus,
@@ -154,4 +154,119 @@ class ScopedEventBus implements EventBus {
   newScopedBus(key: string, filter: EventFilterOptions): EventBus {
     return new ScopedEventBus([...this.path, key], this, filter);
   }
+}
+
+type PublishEventFilter = (scope: string[], event: BusEvent) => 'parent' | 'local';
+type SubscribeEventFilter = (scope: string[], event: BusEvent) => boolean;
+type ScopedEvent = BusEvent & {
+  path: Readonly<string[]>;
+};
+
+class ScopedEventBus2 implements EventBus {
+  private parent: EventBus;
+  private local: EventBus;
+  private subscriptions = new Set<Subscriber<BusEvent>>();
+
+  constructor(
+    private path: string[],
+    parent: EventBus,
+    private publishFilter?: PublishEventFilter,
+    private subscribeFilter?: SubscribeEventFilter
+  ) {
+    this.parent = parent;
+    this.local = new EventBusSrv();
+  }
+
+  publish<T extends BusEvent>(event: T): void {
+    if (isScopedEvent(event)) {
+      return this.publishToChannel(event);
+    }
+
+    return this.publishToChannel({
+      path: this.path,
+      ...event,
+    });
+  }
+
+  private publishToChannel(event: ScopedEvent): void {
+    const channel = this.publishFilter?.(this.path, event);
+
+    switch (channel) {
+      case 'parent':
+        return this.parent.publish(event);
+      default:
+        return this.local.publish(event);
+    }
+  }
+
+  private filterSubscription<T extends BusEvent>(event: T): boolean {
+    if (this.subscribeFilter) {
+      return this.subscribeFilter(this.path, event);
+    }
+    return true;
+  }
+
+  getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
+    return new Observable<T>((subscriber) => {
+      this.subscriptions.add(subscriber);
+
+      return merge(this.parent.getStream(eventType), this.local.getStream(eventType))
+        .pipe(
+          filter(this.filterSubscription),
+          finalize(() => {
+            if (this.subscriptions.has(subscriber)) {
+              this.subscriptions.delete(subscriber);
+            }
+          })
+        )
+        .subscribe(subscriber);
+    });
+  }
+
+  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+    return this.getStream(eventType).subscribe({ next: handler });
+  }
+
+  removeAllListeners(): void {
+    this.local.removeAllListeners();
+    // We should only complete the subscriptions this eventBus has made
+    // to the parent. We can't call removeAllListeners since that will
+    // remove listeners from other scoped event buses.
+    for (const sub of this.subscriptions) {
+      sub.complete();
+      this.subscriptions.delete(sub);
+    }
+  }
+
+  newScopedBus(key: string, filter: EventFilterOptions): EventBus {
+    const subscribeFilter = filter.onlyLocal ? subscribeEventFilters.onlyLocal : undefined;
+    return new ScopedEventBus2([...this.path, key], this, undefined, subscribeFilter);
+  }
+}
+
+const subscribeEventFilters: Record<string, SubscribeEventFilter> = {
+  noFilter: () => true,
+  onlyGlobal: (_, event) => !isScopedEvent(event),
+  onlyLocal: (path, event) => isScopedEvent(event) && isPathEqual(path, event.path),
+};
+
+function isPathEqual(pathA: string[], pathB: readonly string[]): boolean {
+  if (pathA.length !== pathB.length) {
+    return false;
+  }
+
+  for (let index = 0; index < pathA.length; index++) {
+    const a = pathA[index];
+    const b = pathB[index];
+
+    if (a !== b) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function isScopedEvent(event: BusEvent): event is ScopedEvent {
+  return 'path' in event;
 }
