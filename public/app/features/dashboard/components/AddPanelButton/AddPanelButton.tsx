@@ -11,18 +11,18 @@ import AddPanelMenu from './AddPanelMenu';
 
 export interface Props {
   dashboard: DashboardModel;
-  onToolbarAddClick?: () => void;
+  onToolbarAddMenuOpen?: () => void;
 }
 
-const AddPanelButton = ({ dashboard, onToolbarAddClick }: Props) => {
+const AddPanelButton = ({ dashboard, onToolbarAddMenuOpen }: Props) => {
   const styles = getStyles(useTheme2());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (isMenuOpen && onToolbarAddClick) {
-      onToolbarAddClick();
+    if (isMenuOpen && onToolbarAddMenuOpen) {
+      onToolbarAddMenuOpen();
     }
-  }, [isMenuOpen, onToolbarAddClick]);
+  }, [isMenuOpen, onToolbarAddMenuOpen]);
 
   return (
     <Dropdown

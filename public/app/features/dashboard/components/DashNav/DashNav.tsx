@@ -283,7 +283,7 @@ export const DashNav = React.memo<Props>((props) => {
     if (canEdit && !isFullscreen) {
       if (config.featureToggles.emptyDashboardPage) {
         buttons.push(
-          <AddPanelButton dashboard={dashboard} onToolbarAddClick={trackToolbarAddClick} key="panel-add-dropdown" />
+          <AddPanelButton dashboard={dashboard} onToolbarAddMenuOpen={trackToolbarAddClick} key="panel-add-dropdown" />
         );
       } else {
         buttons.push(
