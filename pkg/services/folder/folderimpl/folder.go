@@ -116,7 +116,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	}
 
 	if cmd.UID != nil && *cmd.UID == folder.SharedFolderUID {
-		return &folder.SharedWithMeFolder, nil
+		return folder.SharedWithMeFolder.WithURL(), nil
 	}
 
 	var dashFolder *folder.Folder
