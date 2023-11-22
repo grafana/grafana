@@ -12,38 +12,37 @@ import { Icon } from '../Icon/Icon';
 
 import { Counter } from './Counter';
 
-interface BaseProps {
+export interface TabProps extends HTMLProps<HTMLElement> {
   label: string;
   active?: boolean;
+  /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
+  href?: string;
   icon?: IconName;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
+  onChangeTab?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
-interface ButtonProps extends BaseProps, Omit<HTMLProps<HTMLButtonElement>, 'label'> {
-  onChangeTab?: (event?: React.MouseEvent<HTMLButtonElement>) => void;
-}
-
-interface LinkProps extends BaseProps, Omit<HTMLProps<HTMLAnchorElement>, 'label'> {
-  /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
-  href: string;
-  onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
-}
-
-export type TabProps = ButtonProps | LinkProps;
-
-export const Tab = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, TabProps>(
+export const Tab = React.forwardRef<HTMLElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
     const tabsStyles = useStyles2(getStyles);
     const clearStyles = useStyles2(clearButtonStyles);
-    const Element = href ? 'a' : 'button';
     const linkClass = cx(clearStyles, tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
-    return (
+    const content = () => (
+      <>
+        {icon && <Icon name={icon} />}
+        {label}
+        {typeof counter === 'number' && <Counter value={counter} />}
+        {Suffix && <Suffix className={tabsStyles.suffix} />}
+      </>
+    );
+
+    if (href) {
       <div className={tabsStyles.item}>
-        <Element
+        <a
           href={href}
           className={linkClass}
           {...otherProps}
@@ -51,13 +50,32 @@ export const Tab = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, TabPr
           aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
           role="tab"
           aria-selected={active}
-          ref={ref}
+          // don't think we can avoid the type assertion here :(
+          ref={ref as React.ForwardedRef<HTMLAnchorElement>}
+        >
+          {content()}
+        </a>
+      </div>;
+    }
+
+    return (
+      <div className={tabsStyles.item}>
+        <button
+          className={linkClass}
+          {...otherProps}
+          onClick={onChangeTab}
+          aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
+          role="tab"
+          type="button"
+          aria-selected={active}
+          // don't think we can avoid the type assertion here :(
+          ref={ref as React.ForwardedRef<HTMLButtonElement>}
         >
           {icon && <Icon name={icon} />}
           {label}
           {typeof counter === 'number' && <Counter value={counter} />}
           {Suffix && <Suffix className={tabsStyles.suffix} />}
-        </Element>
+        </button>
       </div>
     );
   }
