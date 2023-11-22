@@ -1,6 +1,6 @@
 import { omitBy } from 'lodash';
 
-import { deprecationWarning, urlUtil } from '@grafana/data';
+import { deprecationWarning } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
@@ -130,9 +130,21 @@ export async function parseResponseBody<T>(
   return textData as any;
 }
 
+function serializeParams(data: Record<string, any>): string {
+  return Object.keys(data)
+    .map((key) => {
+      const value = data[key];
+      if (Array.isArray(value)) {
+        return value.map((arrayValue) => `${encodeURIComponent(key)}=${encodeURIComponent(arrayValue)}`).join('&');
+      }
+      return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    })
+    .join('&');
+}
+
 export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
   const cleanParams = omitBy(options.params, (v) => v === undefined || (v && v.length === 0));
-  const serializedParams = urlUtil.serializeParams(cleanParams);
+  const serializedParams = serializeParams(cleanParams);
   return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
 };
 
