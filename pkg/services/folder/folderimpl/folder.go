@@ -653,7 +653,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 					return err
 				}
 				if alertRulesInFolder > 0 {
-					return folder.ErrFolderContainsAlertRules.Errorf("")
+					return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
 				}
 			}
 

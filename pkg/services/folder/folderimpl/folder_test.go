@@ -610,7 +610,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				prefix:       "flagon-noforce",
 				depth:        3,
 				forceDelete:  false,
-				deletionErr:  folder.ErrFolderContainsAlertRules,
+				deletionErr:  folder.ErrFolderNotEmpty,
 				desc:         "With nested folder feature flag on and no force deletion of rules",
 			},
 			{
@@ -630,7 +630,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				prefix:       "flagoff-noforce",
 				depth:        1,
 				forceDelete:  false,
-				deletionErr:  folder.ErrFolderContainsAlertRules,
+				deletionErr:  folder.ErrFolderNotEmpty,
 				desc:         "With nested folder feature flag off and no force deletion of rules",
 			},
 		}

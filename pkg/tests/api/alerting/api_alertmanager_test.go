@@ -803,7 +803,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		var errutilErr errutil.PublicError
 		err = json.Unmarshal(b, &errutilErr)
 		require.NoError(t, err)
-		assert.Equal(t, "Folder cannot be deleted: folder contains alert rules", errutilErr.Message)
+		assert.Equal(t, "Folder cannot be deleted: folder is not empty", errutilErr.Message)
 	}
 
 	// Next, the editor can delete the folder if forceDeleteRules is true.
