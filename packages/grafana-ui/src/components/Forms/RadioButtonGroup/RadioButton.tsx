@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { StringSelector } from '@grafana/e2e-selectors';
 
-import { useTheme2, stylesFactory } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { getPropertiesForButtonSize } from '../commonStyles';
@@ -42,8 +42,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
     },
     ref
   ) => {
-    const theme = useTheme2();
-    const styles = getRadioButtonStyles(theme, size, fullWidth);
+    const styles = useStyles2(getRadioButtonStyles, size, fullWidth);
 
     const inputRadioButton = (
       <input
@@ -81,7 +80,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
 
 RadioButton.displayName = 'RadioButton';
 
-const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
+const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
 
   const textColor = theme.colors.text.secondary;
@@ -143,4 +142,4 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       },
     }),
   };
-});
+};
