@@ -47,11 +47,15 @@ func (e ErrResponse4xx) Error() string {
 	return fmt.Sprintf("%d", e.statusCode)
 }
 
-var ErrVersionUnsupportedBase = errutil.NewBase(errutil.StatusConflict, "plugin.unsupportedVersion",
-	errutil.WithPublicMessage("Plugin version in not supported on your system."))
+var (
+	ErrVersionUnsupportedMsg  = "{ .Public.PluginID } v{ .Public.Version } is not supported on your system { .Public.SysInfo }"
+	ErrVersionUnsupportedBase = errutil.NewBase(errutil.StatusConflict, "plugin.unsupportedVersion").
+					MustTemplate(ErrVersionUnsupportedMsg, errutil.WithPublic(ErrVersionUnsupportedMsg))
+)
 
 func ErrVersionUnsupported(pluginID, requestedVersion, systemInfo string) error {
-	return ErrVersionUnsupportedBase.Errorf("%s v%s is not supported on your system (%s)", pluginID, requestedVersion, systemInfo)
+	return ErrVersionUnsupportedBase.Build(errutil.TemplateData{
+		Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
 }
 
 var ErrVersionNotFoundBase = errutil.NewBase(errutil.StatusNotFound, "plugin.versionNotFound",
