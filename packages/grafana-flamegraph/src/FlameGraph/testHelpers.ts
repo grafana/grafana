@@ -80,7 +80,7 @@ export function textToDataContainer(text: string) {
   const df = arrayToDataFrame(dfSorted);
   const labelField = df.fields.find((f) => f.name === 'label')!;
   labelField.type = FieldType.string;
-  return new FlameGraphDataContainer(df);
+  return new FlameGraphDataContainer(df, { collapsing: true });
 }
 
 export function trimLevelsString(s: string) {

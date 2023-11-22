@@ -100,7 +100,6 @@
     "react-popper-tooltip": "4.4.2",
     "react-router-dom": "5.3.3",
     "react-select": "5.7.4",
-    "react-select-event": "^5.1.0",
     "react-table": "7.8.0",
     "react-transition-group": "4.4.5",
     "react-use": "17.4.0",
@@ -173,6 +172,7 @@
     "process": "^0.11.10",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-select-event": "^5.1.0",
     "react-test-renderer": "18.2.0",
     "rimraf": "5.0.1",
     "rollup": "2.79.1",
@@ -185,7 +185,7 @@
     "storybook-addon-turbo-build": "2.0.1",
     "storybook-dark-mode": "3.0.1",
     "style-loader": "3.3.3",
-    "typescript": "4.8.4",
+    "typescript": "5.2.2",
     "webpack": "5.89.0"
   },
   "peerDependencies": {

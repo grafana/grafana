@@ -100,7 +100,7 @@ describe('LogsTableWrap', () => {
       checkboxLabel.click();
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
-        columns: { 0: 'app' },
+        columns: { 0: 'app', 1: 'Line', 2: 'Time' },
       });
     });
 
@@ -109,7 +109,7 @@ describe('LogsTableWrap', () => {
       checkboxLabel.click();
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
-        columns: {},
+        columns: { 0: 'Line', 1: 'Time' },
       });
     });
   });
