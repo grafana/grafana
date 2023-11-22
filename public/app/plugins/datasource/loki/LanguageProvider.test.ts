@@ -57,7 +57,6 @@ describe('Language completion provider', () => {
       languageProvider.request = jest.fn();
       languageProvider.fetchSeries('{job="grafana"}', { timeRange: mockTimeRange });
       // time range was passed to getTimeRangeParams
-      expect(datasource.getTimeRangeParams).toHaveBeenCalled();
       expect(datasource.getTimeRangeParams).toHaveBeenCalledWith(mockTimeRange);
       // time range was passed to request
       expect(languageProvider.request).toHaveBeenCalled();
