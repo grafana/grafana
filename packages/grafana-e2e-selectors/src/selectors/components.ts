@@ -159,17 +159,17 @@ export const Components = {
   },
   PanelInspector: {
     Data: {
-      content: 'Panel inspector Data content',
+      content: 'data-testid Panel inspector Data content',
     },
     Stats: {
-      content: 'Panel inspector Stats content',
+      content: 'data-testid Panel inspector Stats content',
     },
     Json: {
       content: 'data-testid Panel inspector Json content',
     },
     Query: {
-      content: 'Panel inspector Query content',
-      refreshButton: 'Panel inspector Query refresh button',
+      content: 'data-testid Panel inspector Query content',
+      refreshButton: 'data-testid Panel inspector Query refresh button',
       jsonObjectKeys: () => '.json-formatter-key',
     },
   },
@@ -287,7 +287,7 @@ export const Components = {
       title ? `data-testid Options group ${title} toggle` : 'data-testid Options group toggle',
   },
   PluginVisualization: {
-    item: (title: string) => `Plugin visualization item ${title}`,
+    item: (title: string) => `data-testid Plugin visualization item ${title}`,
     current: () => '[class*="-currentVisualizationItem"]',
   },
   Select: {

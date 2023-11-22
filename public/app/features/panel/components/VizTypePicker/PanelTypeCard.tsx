@@ -41,7 +41,6 @@ export const PanelTypeCard = ({
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events
     <div
       className={cssClass}
-      aria-label={selectors.components.PluginVisualization.item(plugin.name)}
       data-testid={selectors.components.PluginVisualization.item(plugin.name)}
       onClick={isDisabled ? undefined : onClick}
       title={isCurrent ? 'Click again to close this section' : plugin.name}

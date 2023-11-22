@@ -49,7 +49,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                   {...register('name', { required: t('playlist-edit.form.name-required', 'Name is required') })}
                   placeholder={t('playlist-edit.form.name-placeholder', 'Name')}
                   defaultValue={name}
-                  aria-label={selectors.pages.PlaylistForm.name}
+                  data-testid={selectors.pages.PlaylistForm.name}
                 />
               </Field>
               <Field
@@ -64,7 +64,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                   })}
                   placeholder={t('playlist-edit.form.interval-placeholder', '5m')}
                   defaultValue={interval ?? '5m'}
-                  aria-label={selectors.pages.PlaylistForm.interval}
+                  data-testid={selectors.pages.PlaylistForm.interval}
                 />
               </Field>
 

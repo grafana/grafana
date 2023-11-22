@@ -58,7 +58,7 @@ export const Pages = {
       publicDashboardTag: 'data-testid public dashboard tag',
     },
     SubMenu: {
-      submenu: 'Dashboard submenu',
+      submenu: 'data-testid Dashboard submenu',
       submenuItem: 'data-testid template variable',
       submenuItemLabels: (item: string) => `data-testid Dashboard template variables submenu Label ${item}`,
       submenuItemValueDropDownValueLinkTexts: (item: string) =>
@@ -79,8 +79,8 @@ export const Pages = {
       General: {
         deleteDashBoard: 'Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
-        saveDashBoard: 'Dashboard settings aside actions Save button',
-        saveAsDashBoard: 'Dashboard settings aside actions Save As button',
+        saveDashBoard: 'data-testid Dashboard settings aside actions Save button',
+        saveAsDashBoard: 'data-testid Dashboard settings aside actions Save As button',
         /**
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
@@ -200,9 +200,9 @@ export const Pages = {
     save: 'Save dashboard button',
   },
   SaveDashboardModal: {
-    save: 'Dashboard settings Save Dashboard Modal Save button',
-    saveVariables: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
-    saveTimerange: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
+    save: 'data-testid Dashboard settings Save Dashboard Modal Save button',
+    saveVariables: 'data-testid Dashboard settings Save Dashboard Modal Save variables checkbox',
+    saveTimerange: 'data-testid Dashboard settings Save Dashboard Modal Save timerange checkbox',
   },
   SharePanelModal: {
     linkToRenderedImage: 'Link to rendered image',
@@ -276,8 +276,8 @@ export const Pages = {
     disabledInfo: 'Plugin disabled info',
   },
   PlaylistForm: {
-    name: 'Playlist name',
-    interval: 'Playlist interval',
+    name: 'data-testid Playlist name',
+    interval: 'data-testid Playlist interval',
     itemDelete: 'data-testid playlist-form-delete-item',
   },
   BrowseDashboards: {

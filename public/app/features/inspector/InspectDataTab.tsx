@@ -270,7 +270,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const hasServiceGraph = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
 
     return (
-      <div className={styles.wrap} aria-label={selectors.components.PanelInspector.Data.content}>
+      <div className={styles.wrap} data-testid={selectors.components.PanelInspector.Data.content}>
         <div className={styles.toolbar}>
           <InspectDataOptions
             data={data}
