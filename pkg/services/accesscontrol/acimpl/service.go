@@ -3,7 +3,6 @@ package acimpl
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"strconv"
 	"strings"
 	"time"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -35,7 +35,7 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-var SharedWithMeFolderPermission = accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:" + folderimpl.SharedFolderUID}
+var SharedWithMeFolderPermission = accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:" + folder.SharedFolderUID}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {

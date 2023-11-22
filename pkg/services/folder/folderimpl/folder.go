@@ -26,12 +26,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const SharedFolderUID = "sharedwithme"
-
 var SharedWithMeFolder folder.Folder = folder.Folder{
 	Title:       "Shared with me",
 	Description: "Dashboards and folders shared with me",
-	UID:         SharedFolderUID,
+	UID:         folder.SharedFolderUID,
 	ParentUID:   "",
 	ID:          -1,
 }
@@ -125,7 +123,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if cmd.UID != nil && *cmd.UID == SharedFolderUID {
+	if cmd.UID != nil && *cmd.UID == folder.SharedFolderUID {
 		return &SharedWithMeFolder, nil
 	}
 
@@ -199,7 +197,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if cmd.UID == SharedFolderUID {
+	if cmd.UID == folder.SharedFolderUID {
 		return s.GetSharedWithMe(ctx, cmd)
 	}
 

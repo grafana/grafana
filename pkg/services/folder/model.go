@@ -21,6 +21,7 @@ const (
 	GeneralFolderUID     = "general"
 	RootFolderUID        = ""
 	MaxNestedFolderDepth = 4
+	SharedFolderUID      = "sharedwithme"
 )
 
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
