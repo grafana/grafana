@@ -52,6 +52,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
           role="tab"
           aria-selected={active}
           // don't think we can avoid the type assertion here :(
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           ref={ref as React.ForwardedRef<HTMLAnchorElement>}
         >
           {content()}
@@ -70,6 +71,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
           type="button"
           aria-selected={active}
           // don't think we can avoid the type assertion here :(
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           ref={ref as React.ForwardedRef<HTMLButtonElement>}
         >
           {content()}
