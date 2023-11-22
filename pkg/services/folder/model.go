@@ -49,6 +49,14 @@ type Folder struct {
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
 
+var SharedWithMeFolder = Folder{
+	Title:       "Shared with me",
+	Description: "Dashboards and folders shared with me",
+	UID:         SharedFolderUID,
+	ParentUID:   "",
+	ID:          -1,
+}
+
 func (f *Folder) IsGeneral() bool {
 	// nolint:staticcheck
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title

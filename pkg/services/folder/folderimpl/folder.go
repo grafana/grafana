@@ -26,14 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var SharedWithMeFolder folder.Folder = folder.Folder{
-	Title:       "Shared with me",
-	Description: "Dashboards and folders shared with me",
-	UID:         folder.SharedFolderUID,
-	ParentUID:   "",
-	ID:          -1,
-}
-
 type Service struct {
 	store                store
 	db                   db.DB
@@ -124,7 +116,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	}
 
 	if cmd.UID != nil && *cmd.UID == folder.SharedFolderUID {
-		return &SharedWithMeFolder, nil
+		return &folder.SharedWithMeFolder, nil
 	}
 
 	var dashFolder *folder.Folder
@@ -267,7 +259,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 
 	if len(filtered) < len(children) {
 		// add "shared with me" folder
-		filtered = append(filtered, &SharedWithMeFolder)
+		filtered = append(filtered, &folder.SharedWithMeFolder)
 	}
 
 	return filtered, nil
