@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Alert, Button, ConfirmModal, Container, CustomScrollbar, Themeable, withTheme, IconButton } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Container, CustomScrollbar, Themeable, withTheme, IconButton, ButtonGroup } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { AppNotificationSeverity } from '../../../../types';
@@ -264,9 +264,8 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderTransformsPicker() {
-    const { transformations, search } = this.state;
+    const { transformations, search, showPicker } = this.state;
     const noTransforms = !transformations?.length;
-    const showPicker = noTransforms || this.state.showPicker;
     let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
 
@@ -345,18 +344,28 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     const { transformationsRedesign } = config.featureToggles;
     const picker = transformationsRedesign ? redesignPicker : oldPicker;
 
-    return showPicker ? (picker) : (
-      <Button
-        icon="plus"
-        variant="secondary"
-        onClick={() => {
-          this.setState({ showPicker: true });
-        }}
-        data-testid={selectors.components.Transforms.addTransformationButton}
-      >
-        Add another transformation
-      </Button>
-    );
+    return (
+      <>
+        {showPicker && picker}
+        <ButtonGroup>
+          <Button
+            icon="plus"
+            variant="secondary"
+            onClick={() => {
+              this.setState({ showPicker: true });
+            }}
+            data-testid={selectors.components.Transforms.addTransformationButton}>
+            Add another transformation
+          </Button>
+          <Button
+            icon="times"
+            variant="secondary"
+            onClick={() => this.setState({ showRemoveAllModal: true })}>
+            Delete all transformations
+          </Button>
+        </ButtonGroup>
+      </>
+    )
   }
 
   render() {
@@ -382,10 +391,13 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 title="Transformations can't be used on a panel with alerts"
               />
             ) : null}
+            {!hasTransforms && config.featureToggles.transformationsRedesign &&
+              <div>Empty message here</div>
+            }
             {hasTransforms && config.featureToggles.transformationsRedesign && !this.state.showPicker && (
               <div className={styles.listInformationLineWrapper}>
-                <span className={styles.listInformationLineText}>Transformations in use</span>{' '}
-                <Button
+                {/* <span className={styles.listInformationLineText}>Transformations in use</span>{' '} */}
+                {/* <Button
                   size="sm"
                   variant="secondary"
                   onClick={() => {
@@ -393,7 +405,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                   }}
                 >
                   Delete all transformations
-                </Button>
+                </Button> */}
                 <ConfirmModal
                   isOpen={Boolean(this.state.showRemoveAllModal)}
                   title="Delete all transformations?"
