@@ -260,12 +260,8 @@ func getAvailableName(dsType string, dataSources []*datasources.DataSource) stri
 	currentDigit := 0
 
 	for dsNames[strings.ToLower(name)] {
-		if currentDigit%10 == 0 {
-			currentDigit = 1
-			name = name + "-x"
-		}
-		name = fmt.Sprintf("%s%d", name[:len(name)-1], currentDigit)
 		currentDigit++
+		name = fmt.Sprintf("%s-%d", dsType, currentDigit)
 	}
 
 	return name

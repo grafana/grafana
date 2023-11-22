@@ -122,7 +122,7 @@ func TestService_getAvailableName(t *testing.T) {
 			expected: "prometheus-2",
 		},
 		{
-			desc:   "should correctly increment the number suffix of the name once the number has reached 10",
+			desc:   "should correctly increment the number suffix for multidigit numbers",
 			dsType: "prometheus",
 			existingDs: []*datasources.DataSource{
 				{Name: "prometheus"},
@@ -135,8 +135,9 @@ func TestService_getAvailableName(t *testing.T) {
 				{Name: "prometheus-7"},
 				{Name: "prometheus-8"},
 				{Name: "prometheus-9"},
+				{Name: "prometheus-10"},
 			},
-			expected: "prometheus-9-1",
+			expected: "prometheus-11",
 		},
 		{
 			desc:   "name comparison should be case insensitive",
