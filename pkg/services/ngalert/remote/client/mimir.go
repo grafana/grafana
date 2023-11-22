@@ -122,8 +122,8 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 	ct := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(ct, "application/json") {
 		msg := "response content-type is not application/json"
-		logger.Error(msg, "err", err)
-		return nil, fmt.Errorf("%s: %w", msg, err)
+		logger.Error(msg, "content-type", ct)
+		return nil, fmt.Errorf("%s: %s", msg, ct)
 	}
 
 	if out == nil {
@@ -144,7 +144,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 		if jsonErr == nil && errResponse.Error() != "" {
 			msg := "error response from the Mimir API"
 			logger.Error(msg, "err", errResponse)
-			return nil, fmt.Errorf("%s: %w", msg, &errResponse)
+			return nil, fmt.Errorf("%s: %w", msg, errResponse)
 		}
 
 		msg := "failed to decode non-2xx JSON response"
@@ -152,7 +152,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 		return nil, fmt.Errorf("%s: %w", msg, jsonErr)
 	}
 
-	if err = json.Unmarshal(body, &out); err != nil {
+	if err = json.Unmarshal(body, out); err != nil {
 		msg := "failed to decode 2xx JSON response"
 		logger.Error(msg, "err", err)
 		return nil, fmt.Errorf("%s: %w", msg, err)
@@ -163,7 +163,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 
 func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader, contentLength int64) error {
 	var sr successResponse
-	resp, err := mc.do(ctx, p, method, payload, contentLength, sr)
+	resp, err := mc.do(ctx, p, method, payload, contentLength, &sr)
 	if err != nil {
 		return err
 	}

@@ -9,35 +9,44 @@ import (
 )
 
 const (
-	grafanaAlertmanagerConfigPath = "/grafana/config"
+	grafanaAlertmanagerConfigPath = "/api/v1/grafana/config"
 )
 
+// TODO: successresponse should only be private.
 type UserGrafanaConfig struct {
-	successResponse
-	TemplateFiles             map[string]string `json:"template_files"`
-	GrafanaAlertmanagerConfig string            `json:"grafana_alertmanager_config"`
+	ID                        int64  `json:"id"`
+	GrafanaAlertmanagerConfig string `json:"configuration"`
+	Hash                      string `json:"configuration_hash"`
+	CreatedAt                 int64  `json:"created"`
+	Default                   bool   `json:"default"`
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {
-	var config UserGrafanaConfig
+	gc := &UserGrafanaConfig{}
+	response := successResponse{
+		Data: gc,
+	}
 	// nolint:bodyclose
 	// closed within `do`
-	_, err := mc.do(ctx, grafanaAlertmanagerConfigPath, http.MethodGet, nil, -1, &config)
+	_, err := mc.do(ctx, grafanaAlertmanagerConfigPath, http.MethodGet, nil, -1, &response)
 	if err != nil {
 		return nil, err
 	}
 
-	if config.Status != "success" {
-		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", config.Status)
+	if response.Status != "success" {
+		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", response.Status)
 	}
 
-	return &config, nil
+	return gc, nil
 }
 
-func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg string, templates map[string]string) error {
+func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, c, hash string, id, created int64, d bool) error {
 	payload, err := json.Marshal(&UserGrafanaConfig{
-		GrafanaAlertmanagerConfig: cfg,
-		TemplateFiles:             templates,
+		ID:                        id,
+		GrafanaAlertmanagerConfig: c,
+		Hash:                      hash,
+		CreatedAt:                 created,
+		Default:                   d,
 	})
 	if err != nil {
 		return err

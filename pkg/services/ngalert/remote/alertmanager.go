@@ -78,7 +78,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 		return nil, err
 	}
 
-	u = u.JoinPath(amclient.DefaultBasePath)
+	u = u.JoinPath("/alertmanager", amclient.DefaultBasePath)
 	transport := httptransport.NewWithClient(u.Host, u.Path, []string{u.Scheme}, &client)
 
 	// Using our client with custom headers and basic auth credentials.
@@ -114,6 +114,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 // 2. Upload the configuration and state we currently hold.
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.ready {
+		am.log.Debug("Alertmanager is already ready")
 		return nil
 	}
 
@@ -122,7 +123,8 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	err := am.checkReadiness(ctx)
 	if err != nil {
 		// TODO: Should we be returning nil here?
-		return nil
+		am.log.Error("unable to pass the readiness check", "err", err)
+		return err
 	}
 	am.log.Debug("completed readiness check for remote Alertmanager", "url", am.url)
 
@@ -130,9 +132,9 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	ok := am.compareRemoteConfig(ctx, config)
 	if !ok {
 		// TODO: We probably need to parse the config anyways.
-		err = am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, nil)
+		err = am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
 		if err != nil {
-			am.log.Error("unable to upload the configuration to the remote Alertmanager")
+			am.log.Error("unable to upload the configuration to the remote Alertmanager", "err", err)
 		}
 	}
 	am.log.Debug("completed configuration upload to remote Alertmanager", "url", am.url)
@@ -142,7 +144,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	if !ok {
 		err = am.mimirClient.CreateGrafanaAlertmanagerState(ctx, "")
 		if err != nil {
-			am.log.Error("unable to upload the state to the remote Alertmanager")
+			am.log.Error("unable to upload the state to the remote Alertmanager", "err", err)
 		}
 	}
 	am.log.Debug("completed state upload to remote Alertmanager", "url", am.url)
@@ -152,7 +154,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 }
 
 func (am *Alertmanager) checkReadiness(ctx context.Context) error {
-	readyURL := strings.TrimSuffix(am.url, "/") + readyPath
+	readyURL := strings.TrimSuffix(am.url, "/") + "/alertmanager" + readyPath
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL, nil)
 	if err != nil {
 		return fmt.Errorf("error creating readiness request: %w", err)

@@ -18,19 +18,22 @@ type UserGrafanaState struct {
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error) {
-	var state UserGrafanaState
+	gs := &UserGrafanaState{}
+	response := successResponse{
+		Data: gs,
+	}
 	// nolint:bodyclose
 	// closed within `do`
-	_, err := mc.do(ctx, grafanaAlertmanagerStatePath, http.MethodGet, nil, -1, &state)
+	_, err := mc.do(ctx, grafanaAlertmanagerStatePath, http.MethodGet, nil, -1, &response)
 	if err != nil {
 		return nil, err
 	}
 
-	if state.Status != "success" {
-		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", state.Status)
+	if response.Status != "success" {
+		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", response.Status)
 	}
 
-	return &state, nil
+	return gs, nil
 }
 
 func (mc *Mimir) CreateGrafanaAlertmanagerState(ctx context.Context, state string) error {
