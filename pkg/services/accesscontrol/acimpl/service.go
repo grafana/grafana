@@ -46,7 +46,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 		return nil, err
 	}
 
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSplitScopes) {
+	if features.IsEnabled(featuremgmt.FlagSplitScopes) {
 		// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
 		// This will be removed once we've:
 		// 1) removed the feature toggle and

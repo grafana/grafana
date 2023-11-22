@@ -140,7 +140,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			return folder.ErrInternal.Errorf("failed to get affected row: %w", err)
 		}
 		if affected == 0 {
-			return folder.ErrInternal.Errorf("no folders are updated")
+			return folder.ErrInternal.Errorf("no folders are updated: %w", folder.ErrFolderNotFound)
 		}
 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
@@ -343,5 +343,11 @@ func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) 
 	}); err != nil {
 		return nil, err
 	}
+
+	// Add URLs
+	for i, f := range folders {
+		folders[i] = f.WithURL()
+	}
+
 	return folders, nil
 }
