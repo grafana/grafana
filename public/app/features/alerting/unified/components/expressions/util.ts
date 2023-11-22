@@ -45,7 +45,6 @@ const formatLabels = (labels: Labels): string => {
  * Grafana rule names will be returned from the API as a combination of the folder name and parent UID separated by /.
  * For this reason, we need to format this namespace , removing the folder uid and the / separator.
  */
-// todo: change description above once we update this separator value
 const GRAFANA_PARENT_FOLDER_SEPARATOR = '/';
 const decodeGrafanaNamespace = (namespace: CombinedRuleNamespace): string => {
   const nameSpaceName = namespace.name;
