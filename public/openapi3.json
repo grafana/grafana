@@ -15927,6 +15927,42 @@
         ]
       }
     },
+    "/dashboards": {
+      "get": {
+        "description": "Will return the dashboards under the folder with the given `folderUid`.\nIf no `folderUid` is provided, it will return all root dashboards (not including root folders).",
+        "operationId": "getDashboards",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "folderUid",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/searchResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get dashboards.",
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
     "/dashboards/calculate-diff": {
       "post": {
         "operationId": "calculateDashboardDiff",

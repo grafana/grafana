@@ -328,6 +328,15 @@ type GetDashboardsQuery struct {
 	OrgID         int64
 }
 
+type GetDashboardsByFolderQuery struct {
+	OrgID     int64 `json:"-"`
+	FolderUID string
+	Limit     int64
+	Page      int64
+
+	SignedInUser identity.Requester `json:"-"`
+}
+
 type GetDashboardsByPluginIDQuery struct {
 	OrgID    int64
 	PluginID string

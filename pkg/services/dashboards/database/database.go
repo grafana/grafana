@@ -921,6 +921,40 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 	return dashboards, nil
 }
 
+func (d *dashboardStore) GetDashboardsByFolder(ctx context.Context, query *dashboards.GetDashboardsByFolderQuery) ([]*dashboards.Dashboard, error) {
+	var dashboards []*dashboards.Dashboard
+	if err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		q := "SELECT * FROM dashboard WHERE org_id = ? AND is_folder = ?"
+		args := []any{query.OrgID, d.store.GetDialect().BooleanStr(false)}
+		if query.FolderUID != "" {
+			q += " AND folder_uid = ?"
+			args = append(args, query.FolderUID)
+		} else {
+			q += " AND folder_uid IS NULL"
+		}
+		// TODO limit, page, sort
+		q += " ORDER BY title ASC"
+
+		limit := query.Limit
+		if limit < 1 {
+			limit = 1000
+		}
+
+		page := query.Page
+		if page < 1 {
+			page = 1
+		}
+
+		q += d.store.GetDialect().LimitOffset(limit, (page-1)*limit)
+
+		return sess.SQL(q, args...).Find(&dashboards)
+	}); err != nil {
+		d.log.Error("Failed to get dashboards by folder", "error", err, "folder", query.FolderUID)
+		return nil, err
+	}
+	return dashboards, nil
+}
+
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
 	if err != nil {

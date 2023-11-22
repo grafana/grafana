@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/drone/runner-go/logger"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -534,6 +535,67 @@ func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *
 
 func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
 	return dr.dashboardStore.GetDashboards(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) GetDashboardsByFolder(ctx context.Context, query *dashboards.GetDashboardsByFolderQuery) ([]*dashboards.Dashboard, error) {
+	if query.FolderUID == "" {
+		return dr.getRootDashboards(ctx, query)
+	}
+
+	return dr.getDashboardsByFolder(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) getRootDashboards(ctx context.Context, query *dashboards.GetDashboardsByFolderQuery) ([]*dashboards.Dashboard, error) {
+	log := logger.FromContext(ctx)
+	r, err := dr.dashboardStore.GetDashboardsByFolder(ctx, query)
+	if err != nil {
+		dr.log.Error("Failed to get root dashboards", "error", err, "orgID", query.OrgID)
+		return nil, err
+	}
+
+	filtered := make([]*dashboards.Dashboard, 0, len(r))
+	for _, dash := range r {
+		g, err := guardian.NewByDashboard(ctx, dash, query.OrgID, query.SignedInUser)
+		if err != nil {
+			log.Error("Failed to create guardian", "error", err, "dashboardID", dash.ID, "orgID", query.OrgID)
+			continue
+		}
+		canView, err := g.CanView()
+		if err != nil {
+			log.Error("Failed to check if user can view dashboard", "error", err, "dashboardID", dash.ID, "orgID", query.OrgID)
+			continue
+		}
+		if !canView {
+			filtered = append(filtered, dash)
+		}
+	}
+
+	return filtered, nil
+}
+
+func (dr *DashboardServiceImpl) getDashboardsByFolder(ctx context.Context, query *dashboards.GetDashboardsByFolderQuery) ([]*dashboards.Dashboard, error) {
+	log := logger.FromContext(ctx)
+	g, err := guardian.NewByUID(ctx, query.FolderUID, query.OrgID, query.SignedInUser)
+	if err != nil {
+		log.Error("Failed to create guardian", "error", err, "folderUID", query.FolderUID, "orgID", query.OrgID)
+		return nil, err
+	}
+	canView, err := g.CanView()
+	if err != nil {
+		log.Error("Failed to check if user can view folder", "error", err, "folderUID", query.FolderUID, "orgID", query.OrgID)
+		return nil, err
+	}
+	if !canView {
+		return nil, dashboards.ErrFolderAccessDenied
+	}
+
+	r, err := dr.dashboardStore.GetDashboardsByFolder(ctx, query)
+	if err != nil {
+		log.Error("Failed to get dashboards by folder", "error", err, "folderUID", query.FolderUID, "orgID", query.OrgID)
+		return nil, err
+	}
+
+	return r, nil
 }
 
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {

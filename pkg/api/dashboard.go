@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -219,6 +220,48 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	c.TimeRequest(metrics.MApiDashboardGet)
 	return response.JSON(http.StatusOK, dto)
+}
+
+// swagger:route GET /dashboards dashboards getDashboards
+//
+// Get dashboards.
+//
+// Will return the dashboards under the folder with the given `folderUid`.
+// If no `folderUid` is provided, it will return all root dashboards (not including root folders).
+//
+// Responses:
+// 200: searchResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetDashboards(c *contextmodel.ReqContext) response.Response {
+	r, err := hs.DashboardService.GetDashboardsByFolder(c.Req.Context(), &dashboards.GetDashboardsByFolderQuery{
+		OrgID:        c.SignedInUser.GetOrgID(),
+		FolderUID:    c.Query("folderUid"),
+		SignedInUser: c.SignedInUser,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboards", err)
+	}
+
+	result := model.HitList{}
+	for _, dash := range r {
+		result = append(result, &model.Hit{
+			ID:          dash.ID,
+			UID:         dash.UID,
+			Title:       dash.Title,
+			Type:        "",
+			URI:         "",
+			URL:         dash.GetURL(),
+			Slug:        dash.Slug,
+			FolderUID:   dash.FolderUID,
+			FolderTitle: "",
+			Tags:        []string{},
+		})
+	}
+
+	return response.JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dtos.AnnotationActions, scope string) {
@@ -1171,6 +1214,13 @@ type PostDashboardParams struct {
 	// in:body
 	// required:true
 	Body dashboards.SaveDashboardCommand
+}
+
+// swagger:parameters getDashboards
+type GetDashboardsParams struct {
+	// in:query
+	// required:false
+	FolderUID string `json:"folderUid"`
 }
 
 // swagger:parameters calculateDashboardDiff
