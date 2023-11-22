@@ -941,7 +941,8 @@
     },
     "megamenu": {
       "close": "Cerrar menú",
-      "dock": "Menú base"
+      "dock": "Menú base",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "Cerrar menú",

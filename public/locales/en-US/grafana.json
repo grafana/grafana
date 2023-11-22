@@ -935,7 +935,8 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "dock": "Dock menu"
+      "dock": "Dock menu",
+      "undock": "Undock menu"
     },
     "toolbar": {
       "close-menu": "Close menu",

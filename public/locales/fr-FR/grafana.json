@@ -941,7 +941,8 @@
     },
     "megamenu": {
       "close": "Fermer le menu",
-      "dock": "Ancrer le menu"
+      "dock": "Ancrer le menu",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "Fermer le menu",
