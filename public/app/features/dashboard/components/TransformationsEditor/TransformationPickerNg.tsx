@@ -55,11 +55,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
   } = props;
 
   return (
-    <Drawer 
-        onClose={() => setState({ showPicker: false })}
-        title="Add another transformation"
-        >
-
+    <Drawer onClose={() => setState({ showPicker: false })} title="Add another transformation">
       <div className={styles.searchWrapper}>
         <Input
           data-testid={selectors.components.Transforms.searchInput}

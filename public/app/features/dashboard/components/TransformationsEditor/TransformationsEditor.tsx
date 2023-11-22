@@ -14,7 +14,20 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Alert, Button, ConfirmModal, Container, CustomScrollbar, Themeable, withTheme, IconButton, ButtonGroup, Box, Text } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  ConfirmModal,
+  Container,
+  CustomScrollbar,
+  Themeable,
+  withTheme,
+  IconButton,
+  ButtonGroup,
+  Box,
+  Text,
+  Stack,
+} from '@grafana/ui';
 import config from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 
@@ -243,7 +256,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   renderEmptyMessage = () => {
     return (
       <Box alignItems="center" padding={4}>
-        <Flex direction="column" alignItems="center" gap={2}>
+        <Stack direction="column" alignItems="center" gap={2}>
           <Text element="h3" textAlignment="center">
             <Trans key="transformations.empty.add-transformation-header">Start transforming data</Trans>
           </Text>
@@ -255,8 +268,8 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             <Trans key="transformations.empty.add-transformation-body">
               Transformations allow data to be changed in various ways before your visualization is shown.
               <br />
-              This includes joining data together, renaming fields, making calculations, formatting data for
-              display, and more.
+              This includes joining data together, renaming fields, making calculations, formatting data for display,
+              and more.
             </Trans>
           </Text>
           <Button
@@ -270,14 +283,14 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           >
             Add transformation
           </Button>
-        </Flex>
+        </Stack>
       </Box>
-    )
-  }
+    );
+  };
 
   renderTransformationEditors = () => {
     const { data, transformations } = this.state;
-    
+
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
@@ -390,18 +403,16 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             onClick={() => {
               this.setState({ showPicker: true });
             }}
-            data-testid={selectors.components.Transforms.addTransformationButton}>
+            data-testid={selectors.components.Transforms.addTransformationButton}
+          >
             Add another transformation
           </Button>
-          <Button
-            icon="times"
-            variant="secondary"
-            onClick={() => this.setState({ showRemoveAllModal: true })}>
+          <Button icon="times" variant="secondary" onClick={() => this.setState({ showRemoveAllModal: true })}>
             Delete all transformations
           </Button>
         </ButtonGroup>
       </>
-    )
+    );
   }
 
   render() {
@@ -427,9 +438,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 title="Transformations can't be used on a panel with alerts"
               />
             ) : null}
-            {!hasTransforms && config.featureToggles.transformationsRedesign &&
-              <div>Empty message here</div>
-            }
+            {!hasTransforms && config.featureToggles.transformationsRedesign && <div>Empty message here</div>}
             {hasTransforms && config.featureToggles.transformationsRedesign && !this.state.showPicker && (
               <div className={styles.listInformationLineWrapper}>
                 {/* <span className={styles.listInformationLineText}>Transformations in use</span>{' '} */}
