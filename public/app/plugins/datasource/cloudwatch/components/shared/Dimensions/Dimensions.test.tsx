@@ -46,7 +46,7 @@ describe('Dimensions', () => {
       await act(async () => {
         render(<Dimensions {...props} metricStat={props.query} />);
       });
-      const filterItems = screen.queryAllByTestId('cloudwatch-dimensions-filter-item');
+      const filterItems = screen.getAllByTestId('cloudwatch-dimensions-filter-item');
       expect(filterItems.length).toBe(2);
 
       expect(within(filterItems[0]).getByText('InstanceId')).toBeInTheDocument();
