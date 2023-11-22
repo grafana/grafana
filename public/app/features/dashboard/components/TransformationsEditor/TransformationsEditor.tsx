@@ -15,7 +15,6 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import {
-  Alert,
   Button,
   ConfirmModal,
   Container,
@@ -31,7 +30,6 @@ import {
 import config from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 
-import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
@@ -411,56 +409,37 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             Delete all transformations
           </Button>
         </ButtonGroup>
+        <ConfirmModal
+          isOpen={Boolean(this.state.showRemoveAllModal)}
+          title="Delete all transformations?"
+          body="By deleting all transformations, you will go back to the main selection screen."
+          confirmText="Delete all"
+          onConfirm={() => this.onTransformationRemoveAll()}
+          onDismiss={() => this.setState({ showRemoveAllModal: false })}
+        />
       </>
     );
   }
 
   render() {
-    const styles = getStyles(config.theme2);
-    const {
-      panel: { alert },
-    } = this.props;
+    const { panel: { alert } } = this.props;
     const { transformations } = this.state;
-
     const hasTransforms = transformations.length > 0;
 
-    if (!hasTransforms && alert) {
-      return <PanelNotSupported message="Transformations can't be used on a panel with existing alerts" />;
-    }
+    // If there are any alerts then 
+    // we can't use transformations
+    if (alert) {
+      const message = hasTransforms ? 
+        "Transformations can't be used on a panel with alerts" : 
+        "Transformations can't be used on a panel with existing alerts";
+      return <PanelNotSupported message={message} />;
+    } 
 
     return (
       <CustomScrollbar scrollTop={this.state.scrollTop} autoHeightMin="100%">
         <Container padding="lg">
           <div data-testid={selectors.components.TransformTab.content}>
-            {hasTransforms && alert ? (
-              <Alert
-                severity={AppNotificationSeverity.Error}
-                title="Transformations can't be used on a panel with alerts"
-              />
-            ) : null}
-            {!hasTransforms && config.featureToggles.transformationsRedesign && <div>Empty message here</div>}
-            {hasTransforms && config.featureToggles.transformationsRedesign && !this.state.showPicker && (
-              <div className={styles.listInformationLineWrapper}>
-                {/* <span className={styles.listInformationLineText}>Transformations in use</span>{' '} */}
-                {/* <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    this.setState({ showRemoveAllModal: true });
-                  }}
-                >
-                  Delete all transformations
-                </Button> */}
-                <ConfirmModal
-                  isOpen={Boolean(this.state.showRemoveAllModal)}
-                  title="Delete all transformations?"
-                  body="By deleting all transformations, you will go back to the main selection screen."
-                  confirmText="Delete all"
-                  onConfirm={() => this.onTransformationRemoveAll()}
-                  onDismiss={() => this.setState({ showRemoveAllModal: false })}
-                />
-              </div>
-            )}
+            {!hasTransforms && config.featureToggles.transformationsRedesign && this.renderEmptyMessage()}
             {hasTransforms && this.renderTransformationEditors()}
             {this.renderTransformsPicker()}
           </div>
@@ -469,21 +448,5 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     );
   }
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    hide: css({
-      display: 'none',
-    }),
-    listInformationLineWrapper: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      marginBottom: '24px',
-    }),
-    listInformationLineText: css({
-      fontSize: '16px',
-    }),
-  };
-};
 
 export const TransformationsEditor = withTheme(UnThemedTransformationsEditor);
