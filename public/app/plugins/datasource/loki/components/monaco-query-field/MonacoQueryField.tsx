@@ -212,11 +212,7 @@ const MonacoQueryField = ({
             onTypeDebounced(query);
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
-          const dataProvider = new CompletionDataProvider(
-            langProviderRef.current,
-            historyRef,
-            timeRange ?? langProviderRef.current.getDefaultTimeRange()
-          );
+          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef, timeRange);
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

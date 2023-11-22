@@ -16,7 +16,7 @@ export class CompletionDataProvider {
   constructor(
     private languageProvider: LanguageProvider,
     private historyRef: HistoryRef = { current: [] },
-    private timeRange: TimeRange
+    private timeRange: TimeRange | undefined
   ) {
     this.queryToLabelKeysCache = new Map();
   }
