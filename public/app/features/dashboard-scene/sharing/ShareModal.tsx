@@ -87,7 +87,7 @@ function SharePanelModalRenderer({ model }: SceneComponentProps<ShareModal>) {
 
   const modalTabs = tabs?.map((tab) => ({
     label: tab.getTabLabel(),
-    value: tab.getTabLabel(),
+    value: tab.tabId,
   }));
 
   const header = (
@@ -100,7 +100,7 @@ function SharePanelModalRenderer({ model }: SceneComponentProps<ShareModal>) {
     />
   );
 
-  const currentTab = tabs.find((t) => t.getTabLabel() === activeTab);
+  const currentTab = tabs.find((t) => t.tabId === activeTab);
 
   return (
     <Modal isOpen={true} title={header} onDismiss={model.onDismiss}>

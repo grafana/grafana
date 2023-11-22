@@ -25,6 +25,7 @@ interface ShareExportTabState extends SceneShareTabState {
 }
 
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
+  public tabId = 'Export';
   static Component = ShareExportTabRenderer;
 
   private _exporter = new DashboardExporter();

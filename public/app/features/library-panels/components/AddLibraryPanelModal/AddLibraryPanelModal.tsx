@@ -23,10 +23,12 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
   const [waiting, setWaiting] = useState(false);
 
+  console.log('folderUid', folderUid);
   useEffect(() => setWaiting(true), [panelName]);
   useDebounce(() => setDebouncedPanelName(panelName), 350, [panelName]);
 
   const { saveLibraryPanel } = usePanelSave();
+
   const onCreate = useCallback(() => {
     panel.libraryPanel = { uid: '', name: panelName };
     saveLibraryPanel(panel, folderUid!).then((res: LibraryElementDTO | FetchError) => {
@@ -37,6 +39,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
       }
     });
   }, [panel, panelName, folderUid, onDismiss, saveLibraryPanel]);
+
   const isValidName = useAsync(async () => {
     try {
       return !(await getLibraryPanelByName(panelName)).some((lp) => lp.folderUid === folderUid);
@@ -50,6 +53,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
     }
   }, [debouncedPanelName, folderUid]);
 
+  console.log('isValidName:', isValidName);
   const invalidInput =
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 

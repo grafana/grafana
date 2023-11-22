@@ -17,6 +17,7 @@ export interface ShareLibraryPanelTabState extends SceneShareTabState {
 }
 
 export class ShareLibraryPanelTab extends SceneObjectBase<ShareLibraryPanelTabState> {
+  public tabId = 'Library panel';
   static Component = ShareLibraryPanelTabRenderer;
 
   public getTabLabel() {
@@ -34,14 +35,16 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
   const vizPanel = panelRef.resolve();
 
   if (vizPanel.parent instanceof SceneGridItem || vizPanel.parent instanceof PanelRepeaterGridItem) {
+    const dashboardScene = dashboardRef.resolve();
     const panelJson = gridItemToPanel(vizPanel.parent);
     const panelModel = new PanelModel(panelJson);
 
-    const dashboardJson = transformSceneToSaveModel(dashboardRef.resolve());
+    const dashboardJson = transformSceneToSaveModel(dashboardScene);
     const dashboardModel = new DashboardModel(dashboardJson);
 
     return (
       <ShareLibraryPanel
+        initialFolderUid={dashboardScene.state.meta.folderUid}
         dashboard={dashboardModel}
         panel={panelModel}
         onDismiss={() => {
