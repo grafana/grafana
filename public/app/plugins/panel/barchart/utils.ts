@@ -493,7 +493,18 @@ export function prepareBarChartDisplayValues(
   let legendFields: Field[] = fields;
   if (options.stacking === StackingMode.Percent) {
     legendFields = fields.map((field) => {
-      const alignedFrameField = frame.fields.find((f) => f.state?.displayName === field.state?.displayName)!;
+      let alignedFrameField: Field;
+
+      // if displayNameFromDS is set, use that to align the legend fields, otherwise use the displayName
+      if (field.config.displayNameFromDS) {
+        alignedFrameField = frame.fields.find(
+          (frameField) => frameField.config.displayNameFromDS === field.config.displayNameFromDS
+        )!;
+      } else {
+        alignedFrameField = frame.fields.find(
+          (frameField) => frameField.state?.displayName === field.state?.displayName
+        )!;
+      }
 
       const copy = {
         ...field,
