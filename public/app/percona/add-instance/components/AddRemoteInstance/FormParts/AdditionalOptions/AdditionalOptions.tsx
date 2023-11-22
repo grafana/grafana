@@ -48,7 +48,7 @@ export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> =
   const validators = [platformCoreValidators.containsNumber, ...platformCoreValidators.int32];
 
   const getAutoDiscoveryLimitValue = (type: AutoDiscoveryOptionsInterface) =>
-    type === AutoDiscoveryOptionsInterface.enabled ? 0 : type === AutoDiscoveryOptionsInterface.disabled ? -1 : 10;
+    type === AutoDiscoveryOptionsInterface.disabled ? -1 : 10;
 
   useEffect(() => {
     setSelectedValue(selectedOption);
