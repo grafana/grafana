@@ -458,7 +458,7 @@ export class LokiDatasource
   }
 
   /**
-   * Retrieve the current time range as Loki parameters.
+   * Given a time range, returns it as Loki parameters.
    * @returns An object containing the start and end times in nanoseconds since the Unix epoch.
    */
   getTimeRangeParams(timeRange?: TimeRange) {
