@@ -74,10 +74,14 @@ func TestIntegrationFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
 
+		ac := acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
+		})
 		alertingStore := ngstore.DBstore{
-			SQLStore: db,
-			Cfg:      cfg.UnifiedAlerting,
-			Logger:   log.New("test-alerting-store"),
+			SQLStore:      db,
+			Cfg:           cfg.UnifiedAlerting,
+			Logger:        log.New("test-alerting-store"),
+			AccessControl: ac,
 		}
 
 		service := &Service{
@@ -374,8 +378,10 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
-			dashboards.ActionFoldersCreate: {},
-			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
+			dashboards.ActionFoldersCreate:         {},
+			dashboards.ActionFoldersWrite:          {dashboards.ScopeFoldersAll},
+			accesscontrol.ActionAlertingRuleDelete: {dashboards.ScopeFoldersAll},
+		},
 	}}
 	createCmd := folder.CreateFolderCommand{
 		OrgID:        orgID,
