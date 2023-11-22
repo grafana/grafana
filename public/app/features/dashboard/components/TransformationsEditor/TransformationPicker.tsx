@@ -17,6 +17,7 @@ interface TransformationPickerProps {
   onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
   onTransformationAdd: Function;
   suffix: ReactNode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   xforms: Array<TransformerRegistryItem<any>>;
 }
 
@@ -87,6 +88,7 @@ export function TransformationPicker(props: TransformationPickerProps) {
 }
 
 interface TransformationCardProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transform: TransformerRegistryItem<any>;
   onClick: () => void;
 }

@@ -21,6 +21,7 @@ const viewAllLabel = 'View all';
 const VIEW_ALL_VALUE = 'viewAll';
 const filterCategoriesLabels: Array<[FilterCategory, string]> = [
   [VIEW_ALL_VALUE, viewAllLabel],
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   ...(Object.entries(categoriesLabels) as Array<[FilterCategory, string]>),
 ];
 
@@ -30,6 +31,7 @@ interface TransformationPickerNgProps {
   onSearchChange: FormEventHandler<HTMLInputElement>;
   onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
   noTransforms: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   xforms: Array<TransformerRegistryItem<any>>;
   search: string;
   suffix: ReactNode;
@@ -138,6 +140,7 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
 }
 
 interface TransformationsGridProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transformations: Array<TransformerRegistryItem<any>>;
   showIllustrations?: boolean;
   onClick: (id: string) => void;
@@ -218,6 +221,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
 
 function getTransformationGridStyles(theme: GrafanaTheme2) {
   return {
+    // eslint-disable-next-line @emotion/syntax-preference
     heading: css`
             font-weight: 400,
             > button: {
