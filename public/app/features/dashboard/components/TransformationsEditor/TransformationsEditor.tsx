@@ -310,6 +310,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
   renderTransformsPicker() {
     const { transformations, search, showPicker } = this.state;
+    const { transformationsRedesign } = config.featureToggles;
     const noTransforms = !transformations?.length;
     let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
@@ -358,63 +359,80 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       );
     }
 
-    const redesignPicker = (
-      <TransformationPickerNg
-        noTransforms={noTransforms}
-        search={search}
-        suffix={suffix}
-        xforms={xforms}
-        setState={this.setState.bind(this)}
-        onSearchChange={this.onSearchChange}
-        onSearchKeyDown={this.onSearchKeyDown}
-        onTransformationAdd={this.onTransformationAdd}
-        data={this.state.data}
-        selectedFilter={this.state.selectedFilter}
-        showIllustrations={this.state.showIllustrations}
-      />
-    );
+    let picker = null;
+    let deleteAll = null;
 
-    const oldPicker = (
-      <TransformationPicker
-        noTransforms={noTransforms}
-        search={search}
-        suffix={suffix}
-        xforms={xforms}
-        onSearchChange={this.onSearchChange}
-        onSearchKeyDown={this.onSearchKeyDown}
-        onTransformationAdd={this.onTransformationAdd}
-      />
-    );
+    // If we're in the transformation redesign
+    // we have the add transformation add the
+    // delete all control
+    if (transformationsRedesign) {
+      picker =
+        <TransformationPickerNg
+          noTransforms={noTransforms}
+          search={search}
+          suffix={suffix}
+          xforms={xforms}
+          setState={this.setState.bind(this)}
+          onSearchChange={this.onSearchChange}
+          onSearchKeyDown={this.onSearchKeyDown}
+          onTransformationAdd={this.onTransformationAdd}
+          data={this.state.data}
+          selectedFilter={this.state.selectedFilter}
+          showIllustrations={this.state.showIllustrations}
+        />;
 
-    const { transformationsRedesign } = config.featureToggles;
-    const picker = transformationsRedesign ? redesignPicker : oldPicker;
+
+      deleteAll = 
+        <>
+          <Button icon="times" variant="secondary" onClick={() => this.setState({ showRemoveAllModal: true })}>
+            Delete all transformations
+          </Button>
+          <ConfirmModal
+            isOpen={Boolean(this.state.showRemoveAllModal)}
+            title="Delete all transformations?"
+            body="By deleting all transformations, you will go back to the main selection screen."
+            confirmText="Delete all"
+            onConfirm={() => this.onTransformationRemoveAll()}
+            onDismiss={() => this.setState({ showRemoveAllModal: false })}
+          />
+        </>;
+    }
+    // Otherwise we use the old picker
+    else {
+      picker = 
+        <TransformationPicker
+          noTransforms={noTransforms}
+          search={search}
+          suffix={suffix}
+          xforms={xforms}
+          onSearchChange={this.onSearchChange}
+          onSearchKeyDown={this.onSearchKeyDown}
+          onTransformationAdd={this.onTransformationAdd}
+        />;
+    }
+
+    // Compose actions, if we're in the 
+    // redesign a "Delete All Transformations"
+    // button (with confirm modal) is added
+    const actions = 
+      <ButtonGroup>
+        <Button
+          icon="plus"
+          variant="secondary"
+          onClick={() => {
+            this.setState({ showPicker: true });
+          }}
+          data-testid={selectors.components.Transforms.addTransformationButton}
+        >
+          Add another transformation
+        </Button>
+        { deleteAll }
+      </ButtonGroup>;
 
     return (
       <>
         {showPicker && picker}
-        <ButtonGroup>
-          <Button
-            icon="plus"
-            variant="secondary"
-            onClick={() => {
-              this.setState({ showPicker: true });
-            }}
-            data-testid={selectors.components.Transforms.addTransformationButton}
-          >
-            Add another transformation
-          </Button>
-          <Button icon="times" variant="secondary" onClick={() => this.setState({ showRemoveAllModal: true })}>
-            Delete all transformations
-          </Button>
-        </ButtonGroup>
-        <ConfirmModal
-          isOpen={Boolean(this.state.showRemoveAllModal)}
-          title="Delete all transformations?"
-          body="By deleting all transformations, you will go back to the main selection screen."
-          confirmText="Delete all"
-          onConfirm={() => this.onTransformationRemoveAll()}
-          onDismiss={() => this.setState({ showRemoveAllModal: false })}
-        />
+        { !noTransforms && actions }
       </>
     );
   }
