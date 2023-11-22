@@ -36,6 +36,8 @@ export enum VariableSort {
   numericalDesc,
   alphabeticalCaseInsensitiveAsc,
   alphabeticalCaseInsensitiveDesc,
+  naturalAsc,
+  naturalDesc,
 }
 
 export enum VariableHide {

@@ -458,7 +458,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			namespaceMap[hit.UID] = &folder.Folder{
-				ID:        hit.ID,
+				ID:        hit.ID, // nolint:staticcheck
 				UID:       hit.UID,
 				Title:     hit.Title,
 				ParentUID: hit.FolderUID,
@@ -624,48 +624,21 @@ var GenerateNewAlertRuleUID = func(sess *db.Session, orgID int64, ruleTitle stri
 	return "", ngmodels.ErrAlertRuleFailedGenerateUniqueUID
 }
 
-// validateAlertRule validates the alert rule interval and organisation.
+// validateAlertRule validates the alert rule including db-level restrictions on field lengths.
 func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
-	if len(alertRule.Data) == 0 {
-		return fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if alertRule.Title == "" {
-		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.Cfg.BaseInterval.Seconds())); err != nil {
+	if err := alertRule.ValidateAlertRule(st.Cfg); err != nil {
 		return err
 	}
 
-	// enfore max name length in SQLite
+	// enforce max name length.
 	if len(alertRule.Title) > AlertRuleMaxTitleLength {
 		return fmt.Errorf("%w: name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxTitleLength)
 	}
 
-	// enfore max rule group name length in SQLite
+	// enforce max rule group name length.
 	if len(alertRule.RuleGroup) > AlertRuleMaxRuleGroupNameLength {
 		return fmt.Errorf("%w: rule group name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxRuleGroupNameLength)
 	}
 
-	if alertRule.OrgID == 0 {
-		return fmt.Errorf("%w: no organisation is found", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if alertRule.DashboardUID == nil && alertRule.PanelID != nil {
-		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if _, err := ngmodels.ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-		return err
-	}
-
-	if _, err := ngmodels.NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
-		return err
-	}
-
-	if alertRule.For < 0 {
-		return fmt.Errorf("%w: field `for` cannot be negative", ngmodels.ErrAlertRuleFailedValidation)
-	}
 	return nil
 }

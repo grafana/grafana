@@ -273,7 +273,8 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 
 			pubDashService := publicdashboards.NewFakePublicDashboardService(t)
 			pubDashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil).Maybe()
-			hs.PublicDashboardsApi = api.ProvideApi(pubDashService, nil, hs.AccessControl, featuremgmt.WithFeatures())
+			middleware := publicdashboards.NewFakePublicDashboardMiddleware(t)
+			hs.PublicDashboardsApi = api.ProvideApi(pubDashService, nil, hs.AccessControl, featuremgmt.WithFeatures(), middleware)
 
 			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 		})
@@ -415,6 +416,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			// nolint:staticcheck
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2, FolderUID: folderUID, FolderID: folderID}, nil)
+			// nolint:staticcheck
 			mockFolderService := &foldertest.FakeService{
 				ExpectedFolder: &folder.Folder{ID: 1, UID: folderUID, Title: "Folder"},
 			}
@@ -451,6 +453,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
 				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2}, nil)
 
+			// nolint:staticcheck
 			mockFolder := &foldertest.FakeService{
 				ExpectedFolder: &folder.Folder{ID: 1, UID: "folderUID", Title: "Folder"},
 			}
