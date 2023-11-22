@@ -72,10 +72,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
           // don't think we can avoid the type assertion here :(
           ref={ref as React.ForwardedRef<HTMLButtonElement>}
         >
-          {icon && <Icon name={icon} />}
-          {label}
-          {typeof counter === 'number' && <Counter value={counter} />}
-          {Suffix && <Suffix className={tabsStyles.suffix} />}
+          {content()}
         </button>
       </div>
     );
