@@ -13,7 +13,7 @@ type Props = {
   sortOrder: LogsSortOrder;
 };
 
-export const InfiniteScroll = ({ children, loadMoreLogs, range, rows, scrollElement, sortOrder }: Props) => {
+export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, scrollElement, sortOrder }: Props) => {
   useEffect(() => {
     if (!scrollElement || !loadMoreLogs) {
       return;
@@ -32,9 +32,13 @@ export const InfiniteScroll = ({ children, loadMoreLogs, range, rows, scrollElem
     return () => {
       scrollElement.removeEventListener('scroll', handleScroll);
     };
-  }, [loadMoreLogs, range, rows, scrollElement, sortOrder]);
+  }, [loadMoreLogs, range, rows, scrollElement, sortOrder, loading]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      </>
+    );
 };
 
 function shouldLoadMore(element: HTMLDivElement, sortOrder: LogsSortOrder) {
