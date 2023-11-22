@@ -7,42 +7,44 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
+import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
 
 import { Counter } from './Counter';
 
-export interface TabProps extends HTMLProps<HTMLAnchorElement> {
+interface BaseProps {
   label: string;
   active?: boolean;
-  /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
-  href?: string;
   icon?: IconName;
-  onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
 }
 
-export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
+interface ButtonProps extends BaseProps, Omit<HTMLProps<HTMLButtonElement>, 'label'> {
+  onChangeTab?: (event?: React.MouseEvent<HTMLButtonElement>) => void;
+}
+
+interface LinkProps extends BaseProps, Omit<HTMLProps<HTMLAnchorElement>, 'label'> {
+  /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
+  href: string;
+  onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
+}
+
+export type TabProps = ButtonProps | LinkProps;
+
+export const Tab = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
     const tabsStyles = useStyles2(getStyles);
-    const content = () => (
-      <>
-        {icon && <Icon name={icon} />}
-        {label}
-        {typeof counter === 'number' && <Counter value={counter} />}
-        {Suffix && <Suffix className={tabsStyles.suffix} />}
-      </>
-    );
-
-    const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
+    const clearStyles = useStyles2(clearButtonStyles);
+    const Element = href ? 'a' : 'button';
+    const linkClass = cx(clearStyles, tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     return (
       <div className={tabsStyles.item}>
-        <a
-          // in case there is no href '#' is set in order to maintain a11y
-          href={href ? href : '#'}
+        <Element
+          href={href}
           className={linkClass}
           {...otherProps}
           onClick={onChangeTab}
@@ -51,8 +53,11 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
           aria-selected={active}
           ref={ref}
         >
-          {content()}
-        </a>
+          {icon && <Icon name={icon} />}
+          {label}
+          {typeof counter === 'number' && <Counter value={counter} />}
+          {Suffix && <Suffix className={tabsStyles.suffix} />}
+        </Element>
       </div>
     );
   }
@@ -107,10 +112,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'activeTabStyle',
       color: theme.colors.text.primary,
       overflow: 'hidden',
-
-      a: {
-        color: theme.colors.text.primary,
-      },
 
       '&::before': {
         backgroundImage: theme.colors.gradients.brandHorizontal,
