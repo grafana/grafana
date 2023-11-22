@@ -148,7 +148,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       <EditorHeader>
         <Stack gap={1}>
           <Button
-            aria-label={selectors.components.QueryBuilder.queryPatterns}
+            data-testid={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"
             size="sm"
             onClick={() => {
