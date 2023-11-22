@@ -121,7 +121,6 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	am.log.Debug("start readiness check for remote Alertmanager", "url", am.url)
 	err := am.checkReadiness(ctx)
 	if err != nil {
-		// TODO: Should we be returning nil here?
 		am.log.Error("unable to pass the readiness check", "err", err)
 		return err
 	}
@@ -130,7 +129,6 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	am.log.Debug("start configuration upload to remote Alertmanager", "url", am.url)
 	ok := am.compareRemoteConfig(ctx, config)
 	if !ok {
-		// TODO: We probably need to parse the config anyways.
 		err = am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
 		if err != nil {
 			am.log.Error("unable to upload the configuration to the remote Alertmanager", "err", err)
