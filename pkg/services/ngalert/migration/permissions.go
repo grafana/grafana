@@ -103,6 +103,7 @@ func (om *OrgMigration) getOrCreateMigratedFolder(ctx context.Context, l log.Log
 
 	// Check if the dashboard has custom permissions. If it does, we need to create a new folder for it.
 	// This folder will be cached for re-use for each dashboard in the folder with the same permissions.
+	// nolint:staticcheck
 	permissionsToFolder, ok := om.permissionsMap[parentFolder.ID]
 	if !ok {
 		permissionsToFolder = make(map[permissionHash]*folder.Folder)

@@ -274,8 +274,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       query: variable.query,
       isMulti: variable.multi,
@@ -288,8 +288,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'query') {
     return new QueryVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       query: variable.query,
       datasource: variable.datasource,
@@ -306,8 +306,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       regex: variable.regex,
       pluginId: variable.query,

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -105,15 +106,19 @@ func (s *SSOSettingsStore) Patch(ctx context.Context, provider string, data map[
 }
 
 func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		existing := new(models.SSOSetting)
-		found, err := sess.Where("provider = ? AND is_deleted = ?", provider, s.sqlStore.GetDialect().BooleanStr(false)).Get(existing)
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		existing := &models.SSOSetting{
+			Provider:  provider,
+			IsDeleted: false,
+		}
+
+		found, err := sess.UseBool("is_deleted").Get(existing)
 		if err != nil {
 			return err
 		}
 
 		if !found {
-			return nil // nothing to delete
+			return ssosettings.ErrNotFound
 		}
 
 		existing.Updated = time.Now().UTC()
@@ -122,5 +127,4 @@ func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
 		_, err = sess.ID(existing.ID).MustCols("updated", "is_deleted").Update(existing)
 		return err
 	})
-	return err
 }

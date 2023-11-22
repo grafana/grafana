@@ -23,9 +23,6 @@ export type PluginFilters = {
   type?: PluginType;
 
   // (Optional, only applied if set)
-  isCore?: boolean;
-
-  // (Optional, only applied if set)
   isInstalled?: boolean;
 
   // (Optional, only applied if set)
@@ -48,10 +45,6 @@ export const selectPlugins = (filters: PluginFilters) =>
       }
 
       if (filters.isInstalled !== undefined && plugin.isInstalled !== filters.isInstalled) {
-        return false;
-      }
-
-      if (filters.isCore !== undefined && plugin.isCore !== filters.isCore) {
         return false;
       }
 
