@@ -3,11 +3,22 @@ import React, { ChangeEvent } from 'react';
 import { PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
-import { Box, Field, HorizontalGroup, Input, Label, RadioButtonGroup, TagsInput, TextArea } from '@grafana/ui';
+import {
+  Box,
+  CollapsableSection,
+  Field,
+  HorizontalGroup,
+  Input,
+  Label,
+  RadioButtonGroup,
+  TagsInput,
+  TextArea,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
+import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -21,6 +32,12 @@ const EDITABLE_OPTIONS = [
   { label: 'Read-only', value: false },
 ];
 
+const GRAPH_TOOLTIP_OPTIONS = [
+  { value: 0, label: 'Default' },
+  { value: 1, label: 'Shared crosshair' },
+  { value: 2, label: 'Shared Tooltip' },
+];
+
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
@@ -32,7 +49,8 @@ export class GeneralSettingsEditView
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const dashboard = getDashboardSceneFor(model);
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-    const { title, description, tags, meta, editable, timepicker, timezone, weekStart, liveNow } = dashboard.useState();
+    const { title, description, tags, meta, editable, timepicker, timezone, weekStart, liveNow, graphTooltip } =
+      dashboard.useState();
 
     const onTitleChange = (value: string) => {
       dashboard.setState({ title: value });
@@ -98,6 +116,10 @@ export class GeneralSettingsEditView
 
     const onLiveNowChange = (value: boolean) => {
       dashboard.setState({ liveNow: value });
+    };
+
+    const onTooltipChange = (value: number) => {
+      dashboard.setState({ graphTooltip: value });
     };
 
     return (
@@ -180,11 +202,29 @@ export class GeneralSettingsEditView
             onLiveNowChange={onLiveNowChange}
             refreshIntervals={timepicker.refresh_intervals}
             timePickerHidden={timepicker.hidden}
-            nowDelay={timepicker.nowDelay}
+            nowDelay={timepicker.nowDelay || ''}
             timezone={timezone}
             weekStart={weekStart}
             liveNow={liveNow}
           />
+
+          {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
+          <CollapsableSection
+            label={t('dashboard-settings.general.panel-options-label', 'Panel options')}
+            isOpen={true}
+          >
+            <Field
+              label={t('dashboard-settings.general.panel-options-graph-tooltip-label', 'Graph tooltip')}
+              description={t(
+                'dashboard-settings.general.panel-options-graph-tooltip-description',
+                'Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect'
+              )}
+            >
+              <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={graphTooltip} />
+            </Field>
+          </CollapsableSection>
+
+          <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton />}</Box>
         </div>
       </Page>
     );
