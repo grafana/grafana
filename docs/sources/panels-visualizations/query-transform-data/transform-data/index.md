@@ -1136,6 +1136,19 @@ For each generated "Trend" field value calculation function can be selected. Def
 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file][] to use it.
 
+### Regression
+
+Use this transformation to create a new data frame, containing values predicted by a statistical model. This is useful for finding a trend in chaotic data. It works by fitting a mathematical function to the data, using either linear or polynomial regression. The dataframe can then be used in a visualization to display a trendline.
+
+There are two different models:
+
+- **Linear regression** - Fits a linear function to the data.
+  {{< figure src="/static/img/docs/transformations/linear-regression.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+- **Polynomial regression** - Fits a polynomial function to the data.
+  {{< figure src="/static/img/docs/transformations/polynomial-regression.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+**Note:** This mode is an experimental feature. Engineering and on-call support is not available.
+
 {{% docs/reference %}}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 [Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
@@ -1163,4 +1176,4 @@ For each generated "Trend" field value calculation function can be selected. Def
 
 {{% /docs/reference %}}
 
-[Data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/
+[data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/
