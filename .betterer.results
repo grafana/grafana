@@ -817,9 +817,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/PanelChrome/index.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-ui/src/components/QueryField/QueryField.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "packages/grafana-ui/src/components/Segment/SegmentSelect.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
