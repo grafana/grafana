@@ -48,9 +48,25 @@ func (e ErrResponse4xx) Error() string {
 }
 
 var (
-	ErrVersionUnsupportedMsg  = "{ .Public.PluginID } v{ .Public.Version } is not supported on your system { .Public.SysInfo }"
+	ErrVersionUnsupportedMsg  = "{{.Public.PluginID}} v{{.Public.Version}} is not supported on your system {{.Public.SysInfo}}"
 	ErrVersionUnsupportedBase = errutil.NewBase(errutil.StatusConflict, "plugin.unsupportedVersion").
 					MustTemplate(ErrVersionUnsupportedMsg, errutil.WithPublic(ErrVersionUnsupportedMsg))
+
+	ErrVersionNotFoundMsg  = "{{.Public.PluginID}} v{{.Public.Version}} either does not exist or is not supported on your system {{.Public.SysInfo}}"
+	ErrVersionNotFoundBase = errutil.NewBase(errutil.StatusNotFound, "plugin.versionNotFound").
+				MustTemplate(ErrVersionNotFoundMsg, errutil.WithPublic(ErrVersionNotFoundMsg))
+
+	ErrArcNotFoundMsg  = "{{.Public.PluginID}} is not compatible with your system architecture: {{.Public.SysInfo}}"
+	ErrArcNotFoundBase = errutil.NewBase(errutil.StatusNotFound, "plugin.archNotFound").
+				MustTemplate(ErrArcNotFoundMsg, errutil.WithPublic(ErrArcNotFoundMsg))
+
+	ErrChecksumMismatchMsg  = "expected SHA256 checksum does not match the downloaded archive ({{.Public.ArchiveURL}}) - please contact security@grafana.com"
+	ErrChecksumMismatchBase = errutil.NewBase(errutil.StatusInternal, "plugin.checksumMismatch").
+				MustTemplate(ErrChecksumMismatchMsg, errutil.WithPublic(ErrChecksumMismatchMsg))
+
+	ErrCorePluginMsg  = "plugin {{.Public.PluginID}} is a core plugin and cannot be installed separately"
+	ErrCorePluginBase = errutil.NewBase(errutil.StatusForbidden, "plugin.forbiddenCorePluginInstall").
+				MustTemplate(ErrCorePluginMsg, errutil.WithPublic(ErrCorePluginMsg))
 )
 
 func ErrVersionUnsupported(pluginID, requestedVersion, systemInfo string) error {
@@ -58,30 +74,19 @@ func ErrVersionUnsupported(pluginID, requestedVersion, systemInfo string) error 
 		Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
 }
 
-var ErrVersionNotFoundBase = errutil.NewBase(errutil.StatusNotFound, "plugin.versionNotFound",
-	errutil.WithPublicMessage("Plugin version not found."))
-
 func ErrVersionNotFound(pluginID, requestedVersion, systemInfo string) error {
-	return ErrVersionNotFoundBase.Errorf("%s v%s either does not exist or is not supported on your system (%s)", pluginID, requestedVersion, systemInfo)
+	return ErrVersionNotFoundBase.Build(errutil.TemplateData{
+		Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
 }
-
-var ErrArcNotFoundBase = errutil.NewBase(errutil.StatusNotFound, "plugin.archNotFound",
-	errutil.WithPublicMessage("Plugin is not compatible with your system architecture."))
 
 func ErrArcNotFound(pluginID, systemInfo string) error {
-	return ErrArcNotFoundBase.Errorf("%s is not compatible with your system architecture: %s", pluginID, systemInfo)
+	return ErrArcNotFoundBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "SysInfo": systemInfo}})
 }
-
-var ErrChecksumMismatchBase = errutil.NewBase(errutil.StatusInternal, "plugin.checksumMismatch",
-	errutil.WithPublicMessage("Plugin SHA256 checksum does not match the downloaded archive - please contact security@grafana.com"))
 
 func ErrChecksumMismatch(archiveURL string) error {
-	return ErrChecksumMismatchBase.Errorf("expected SHA256 checksum does not match the downloaded archive (%s) - please contact security@grafana.com", archiveURL)
+	return ErrChecksumMismatchBase.Build(errutil.TemplateData{Public: map[string]any{"ArchiveURL": archiveURL}})
 }
 
-var ErrCorePluginBase = errutil.NewBase(errutil.StatusForbidden, "plugin.forbiddenCorePluginInstall",
-	errutil.WithPublicMessage("core plugins cannot be installed separately"))
-
 func ErrCorePlugin(pluginID string) error {
-	return ErrCorePluginBase.Errorf("plugin %s is a core plugin and cannot be installed separately", pluginID)
+	return ErrCorePluginBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID}})
 }
