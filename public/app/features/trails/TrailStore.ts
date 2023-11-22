@@ -59,7 +59,7 @@ export class TrailStore {
     t.history.map((step) => {
       this._loadFromUrl(trail, step.urlValues);
       trail.state.history.state.steps.push({
-        description: 'Test',
+        description: step.description,
         type: step.type,
         trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: trail.state.history }),
       });
@@ -88,18 +88,20 @@ export class TrailStore {
     node.forEachChild((child) => this._loadFromUrl(child, urlValues));
   }
 
+  // Recent Trails
   getRecentTrails() {
     return this._recent;
-  }
-
-  getBookmarkedTrails() {
-    return this._bookmarks;
   }
 
   setRecentTrail(trail: DataTrail) {
     this._recent = this._recent.filter((t) => t !== trail.getRef());
     this._recent.unshift(trail.getRef());
     this._save();
+  }
+
+  // Bookmarked Trails
+  getBookmarkedTrails() {
+    return this._bookmarks;
   }
 
   isBookmarked(trail: DataTrail) {
