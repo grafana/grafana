@@ -2,7 +2,13 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { createRef, CSSProperties, RefObject } from 'react';
-import { TransformWrapper, TransformComponent, ReactZoomPanPinchContentRef, MiniMap } from 'react-zoom-pan-pinch';
+import {
+  TransformWrapper,
+  TransformComponent,
+  ReactZoomPanPinchContentRef,
+  MiniMap,
+  ReactZoomPanPinchRef,
+} from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -85,6 +91,14 @@ export class Scene {
     }
   };
 
+  checkMiniMap = (ref: ReactZoomPanPinchRef) => {
+    const miniMap = this.minimapComponentWrapperRef?.current;
+    if (miniMap) {
+      const scale = ref.state.scale;
+      miniMap.style.display = scale === 1 ? 'none' : 'block';
+    }
+  };
+
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
   inlineEditingCallback?: () => void;
@@ -100,6 +114,7 @@ export class Scene {
 
   targetsToSelect = new Set<HTMLDivElement>();
   transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
+  minimapComponentWrapperRef: RefObject<HTMLDivElement> | undefined;
 
   constructor(
     cfg: CanvasFrameOptions,
@@ -121,6 +136,7 @@ export class Scene {
     this.panel = panel;
     this.connections = new Connections(this);
     this.transformComponentRef = createRef();
+    this.minimapComponentWrapperRef = createRef();
   }
 
   getNextElementName = (isFrame = false) => {
@@ -683,40 +699,6 @@ export class Scene {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
-    const element = (
-      <div
-        key={this.revId}
-        className={this.styles.wrap}
-        style={this.style}
-        ref={this.setRef}
-        onMouseDown={(e) => {
-          const transformInstance = this.transformComponentRef?.current?.instance;
-          // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
-          if (transformInstance?.setup.disabled && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
-          if (!this.contextMenuVisible && (e.button === 0 || (e.button === 2 && !e.ctrlKey))) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        }}
-      >
-        {this.connections.render()}
-        {this.root.render()}
-        {canShowContextMenu && (
-          <Portal>
-            <CanvasContextMenu scene={this} panel={this.panel} visibleFun={this.contextMenuVisibleFun} />
-          </Portal>
-        )}
-        {canShowElementTooltip && (
-          <Portal>
-            <CanvasTooltip scene={this} />
-          </Portal>
-        )}
-      </div>
-    );
 
     return (
       <TransformWrapper
@@ -727,6 +709,12 @@ export class Scene {
           if (this.moveable && scale > 0) {
             this.moveable.zoom = 1 / scale;
           }
+        }}
+        onInit={(r) => {
+          this.checkMiniMap(r);
+        }}
+        onTransformed={(r) => {
+          this.checkMiniMap(r);
         }}
         limitToBounds={true}
         disabled={!config.featureToggles.canvasPanelPanZoom}
@@ -741,12 +729,47 @@ export class Scene {
           }}
         >
           {config.featureToggles.canvasPanelPanZoom && this.shouldDisplayMiniMap && (
-            <MiniMap width={200} borderColor={config.theme2.colors.border.weak}>
-              {element}
-            </MiniMap>
+            <div ref={this.minimapComponentWrapperRef}>
+              <MiniMap width={200} borderColor={config.theme2.colors.border.weak}>
+                <></>
+              </MiniMap>
+            </div>
           )}
         </div>
-        <TransformComponent>{element}</TransformComponent>
+        <TransformComponent>
+          <div
+            key={this.revId}
+            className={this.styles.wrap}
+            style={this.style}
+            ref={this.setRef}
+            onMouseDown={(e) => {
+              const transformInstance = this.transformComponentRef?.current?.instance;
+              // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
+              if (transformInstance?.setup.disabled && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+              // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
+              if (!this.contextMenuVisible && (e.button === 0 || (e.button === 2 && !e.ctrlKey))) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+          >
+            {this.connections.render()}
+            {this.root.render()}
+            {canShowContextMenu && (
+              <Portal>
+                <CanvasContextMenu scene={this} panel={this.panel} visibleFun={this.contextMenuVisibleFun} />
+              </Portal>
+            )}
+            {canShowElementTooltip && (
+              <Portal>
+                <CanvasTooltip scene={this} />
+              </Portal>
+            )}
+          </div>
+        </TransformComponent>
       </TransformWrapper>
     );
   }
