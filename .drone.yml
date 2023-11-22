@@ -975,7 +975,7 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/remote/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
@@ -2326,7 +2326,7 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/remote/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
@@ -3989,7 +3989,7 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/remote/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
@@ -4685,6 +4685,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e5f8ac3263b36e17d1b6c0b4ec7f9658babff30065f4742d3b570a918e1f680d
+hmac: 17c2cbd392c7dbc9d931d2ffce8c51a742ad2b4cb55cd6b9196a07c566568979
 
 ...
