@@ -7,6 +7,7 @@ import {
   TransformerCategory,
   fieldMatchers,
   FieldMatcherID,
+  Field,
 } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -36,8 +37,8 @@ export const RegressionTransformerEditor = ({
   ];
 
   useEffect(() => {
-    let x;
-    let y;
+    let x: Field | undefined;
+    let y: Field | undefined;
     if (!options.xFieldName) {
       const timeMatcher = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
       for (const frame of input) {
@@ -47,7 +48,7 @@ export const RegressionTransformerEditor = ({
         }
       }
       if (!x) {
-        const firstMatcher = fieldMatchers.get(FieldMatcherID.first).get({});
+        const firstMatcher = fieldMatchers.get(FieldMatcherID.numeric).get({});
         for (const frame of input) {
           x = frame.fields.find((field) => firstMatcher(field, frame, input));
           if (x) {
@@ -59,7 +60,7 @@ export const RegressionTransformerEditor = ({
     if (!options.yFieldName) {
       const numberMatcher = fieldMatchers.get(FieldMatcherID.numeric).get({});
       for (const frame of input) {
-        y = frame.fields.find((field) => numberMatcher(field, frame, input));
+        y = frame.fields.find((field) => numberMatcher(field, frame, input) && field !== x);
         if (y) {
           break;
         }
@@ -137,5 +138,5 @@ export const regressionTransformerRegistryItem: TransformerRegistryItem<Regressi
   name: RegressionTransformer.name,
   description: RegressionTransformer.description,
   categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(DataTransformerID.merge).helperDocs,
+  help: getTransformationContent(DataTransformerID.regression).helperDocs,
 };

@@ -62,6 +62,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
 
       let xMin = xField.values[0];
       let xMax = xField.values[0];
+
       for (let i = 1; i < xField.values.length; i++) {
         if (xField.values[i] < xMin) {
           xMin = xField.values[i];
@@ -71,7 +72,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
         }
       }
 
-      const resolution = (xMax - xMin) / predictionCount;
+      const resolution = (xMax - xMin + 1) / predictionCount;
 
       // These are the X values for which we should predict Y
       const predictionPoints = [...[...Array(predictionCount - 1).keys()].map((_, i) => i * resolution + xMin), xMax];
