@@ -68,7 +68,7 @@ func ProvideRegisterer(cfg *setting.Cfg) prometheus.Registerer {
 
 func ProvideGatherer(cfg *setting.Cfg) prometheus.Gatherer {
 	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		return newK8sGathererWrapper(legacyregistry.DefaultGatherer)
+		return newAddPrefixWrapper(legacyregistry.DefaultGatherer)
 	}
 	return prometheus.DefaultGatherer
 }
@@ -83,19 +83,23 @@ func ProvideGathererForTest(reg prometheus.Registerer) prometheus.Gatherer {
 	return reg.(*prometheus.Registry)
 }
 
-type k8sGathererWrapper struct {
+var _ prometheus.Gatherer = (*addPrefixWrapper)(nil)
+
+// addPrefixWrapper wraps a prometheus.Gatherer, and ensures that all metric names are prefixed with `grafana_`.
+// metrics with the prefix `grafana_` or `go_` are not modified.
+type addPrefixWrapper struct {
 	orig prometheus.Gatherer
 	reg  *regexp.Regexp
 }
 
-func newK8sGathererWrapper(orig prometheus.Gatherer) *k8sGathererWrapper {
-	return &k8sGathererWrapper{
+func newAddPrefixWrapper(orig prometheus.Gatherer) *addPrefixWrapper {
+	return &addPrefixWrapper{
 		orig: orig,
-		reg:  regexp.MustCompile("^((?:grafana|go).*)"),
+		reg:  regexp.MustCompile("^((?:grafana_|go_).*)"),
 	}
 }
 
-func (g *k8sGathererWrapper) Gather() ([]*dto.MetricFamily, error) {
+func (g *addPrefixWrapper) Gather() ([]*dto.MetricFamily, error) {
 	mf, err := g.orig.Gather()
 	if err != nil {
 		return nil, err

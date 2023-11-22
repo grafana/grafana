@@ -9,7 +9,7 @@ import (
 
 func TestK8sGathererWrapper_Gather(t *testing.T) {
 	orig := &mockGatherer{}
-	g := newK8sGathererWrapper(orig)
+	g := newAddPrefixWrapper(orig)
 
 	t.Run("metrics with grafana and go prefix are not modified", func(t *testing.T) {
 		originalMF := []*dto.MetricFamily{
