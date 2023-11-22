@@ -161,7 +161,7 @@ function getTopSceneFor(metric?: string) {
   }
 }
 
-export function getVariableSet(initialDS?: string, metric?: string, initialFilters?: AdHocVariableFilter[]) {
+function getVariableSet(initialDS?: string, metric?: string, initialFilters?: AdHocVariableFilter[]) {
   return new SceneVariableSet({
     variables: [
       new DataSourceVariable({
