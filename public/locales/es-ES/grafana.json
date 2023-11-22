@@ -46,19 +46,14 @@
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
-      "alertRule_many": "",
       "alertRule_other": "{{count}} reglas de alerta",
       "dashboard_one": "{{count}} panel de control",
-      "dashboard_many": "",
       "dashboard_other": "{{count}} paneles de control",
       "folder_one": "{{count}} carpeta",
-      "folder_many": "",
       "folder_other": "{{count}} carpetas",
       "libraryPanel_one": "{{count}} panel de librería",
-      "libraryPanel_many": "",
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
-      "total_many": "",
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
@@ -245,7 +240,7 @@
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
       "add-widget-body": "Crear listas, reducciones y otros «widgets»",
-      "add-widget-button": "Añadir «widget»",
+      "add-widget-button": "Añadir widget",
       "add-widget-header": "Añadir un «widget»",
       "import-a-dashboard-body": "Importar el tablero desde el archivo o <1>grafana.com</1>.",
       "import-a-dashboard-header": "Importar un tablero",
@@ -320,8 +315,8 @@
     "validation": {
       "invalid-dashboard-id": "No se ha podido encontrar un ID de Grafana.com válido",
       "invalid-json": "JSON no válido",
-      "tags-expected-array": "etiquetas de matriz prevista",
-      "tags-expected-strings": "matrices de cadenas de las etiquetas previstas"
+      "tags-expected-array": "etiquetas: matriz prevista",
+      "tags-expected-strings": "etiquetas: matriz de cadenas prevista"
     }
   },
   "dashboard-import": {
@@ -452,7 +447,7 @@
       "star-query-tooltip": "Consulta destacada",
       "switch-datasource-button": "Cambiar la fuente de datos y ejecutar la consulta",
       "unstar-query-tooltip": "Desmarcar consulta",
-      "update-comment-form": "Actualizar el formulario de comentario"
+      "update-comment-form": "Actualizar el formulario de comentarios"
     },
     "rich-history-container": {
       "loading": "Cargando..."
@@ -602,7 +597,7 @@
       "toggle-auto-fit": "Cambiar los paneles de ajuste automático (característica experimental)",
       "toggle-exemplars": "Alternar los ejemplares en todo el panel",
       "toggle-graph-crosshair": "Alternar la retícula del gráfico compartido",
-      "toggle-kiosk": "Alternar al modo de quiosco (oculta la navegación superior)",
+      "toggle-kiosk": "Alternar el modo quiosco (oculta la navegación superior)",
       "toggle-panel-edit": "Cambiar la vista de edición del panel",
       "toggle-panel-fullscreen": "Cambiar la vista de pantalla completa del panel",
       "toggle-panel-legend": "Cambiar leyenda del panel",
@@ -616,7 +611,7 @@
       "copy-to-clipboard": "Copiar al portapapeles",
       "description": "El inspector de consultas le permite ver la solicitud y la respuesta sin procesar. Para recopilar estos datos, Grafana necesita emitir una nueva consulta. Haga clic en el botón actualizar situado debajo para activar una nueva consulta.",
       "expand-all": "Expandir todo",
-      "no-data": "Aún no se ha recogido ninguna solicitud o respuesta. Pulse el botón para actualizar",
+      "no-data": "Aún no se ha recogido ninguna solicitud o respuesta. Pulse el botón de actualizar",
       "refresh": "Actualizar"
     }
   },
@@ -635,16 +630,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
-      "body_many": "",
-      "body_other": "Este panel se está utilizando en {{count}} tableros. Por favor, elija qué tablero quiere ver en el panel:",
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Ver panel en {{label}}...",
       "button-view-panel2": "Ver panel en el panel de control...",
-      "panel-not-linked": "El panel no está vinculado a un panel de control. Añádelo a un panel de control y vuelva a intentarlo.",
+      "panel-not-linked": "El panel no está vinculado a un panel de control. Añádalo a un panel de control y vuelva a intentarlo.",
       "select-no-options-message": "No se ha encontrado ningún tablero",
       "select-placeholder": "Empezar a escribir para buscar el panel de control",
-      "title": "Ver el panel en el tablero"
+      "title": "Ver el panel en el tablero",
+      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
+      "body_other": "Este panel se está utilizando en {{count}} paneles de control. Elija qué panel quiere ver en el panel de control:"
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -653,7 +647,7 @@
   },
   "login": {
     "error": {
-      "blocked": "Ha excedido el número de intentos de inicio de sesión para este usuario. Por favor, inténtelo de nuevo más tarde.",
+      "blocked": "Ha excedido el número de intentos de inicio de sesión para este usuario. Inténtelo de nuevo más tarde.",
       "invalid-user-or-password": "Nombre de usuario o contraseña no válidos",
       "title": "Error al iniciar sesión",
       "unknown": "Se ha producido un error desconocido"
@@ -767,7 +761,7 @@
       "title": "Paneles de control"
     },
     "data-sources": {
-      "subtitle": "Ver y gestionar las conexiones de sus fuentes de datos",
+      "subtitle": "Vea y gestione las conexiones de sus fuentes de datos",
       "title": "Orígenes de datos"
     },
     "datasources": {
@@ -876,7 +870,7 @@
       "title": "Consultas grabadas"
     },
     "reporting": {
-      "title": "Cración de informes"
+      "title": "Creación de informes"
     },
     "scenes": {
       "title": "Escenas"
