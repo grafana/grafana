@@ -70,13 +70,11 @@ var (
 )
 
 func ErrVersionUnsupported(pluginID, requestedVersion, systemInfo string) error {
-	return ErrVersionUnsupportedBase.Build(errutil.TemplateData{
-		Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
+	return ErrVersionUnsupportedBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
 }
 
 func ErrVersionNotFound(pluginID, requestedVersion, systemInfo string) error {
-	return ErrVersionNotFoundBase.Build(errutil.TemplateData{
-		Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
+	return ErrVersionNotFoundBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
 }
 
 func ErrArcNotFound(pluginID, systemInfo string) error {
