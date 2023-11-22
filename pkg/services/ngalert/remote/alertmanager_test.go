@@ -88,18 +88,19 @@ func TestApplyConfig(t *testing.T) {
 	am, err := NewAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
+	config := &ngmodels.AlertConfiguration{}
 	ctx := context.Background()
-	require.Error(t, am.ApplyConfig(ctx, nil))
+	require.Error(t, am.ApplyConfig(ctx, config))
 	require.False(t, am.Ready())
 
 	// A 200 status code response should make the check succeed.
 	server.Config.Handler = okHandler
-	require.NoError(t, am.ApplyConfig(ctx, nil))
+	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.True(t, am.Ready())
 
 	// If we already got a 200 status code response, we shouldn't make the HTTP request again.
 	server.Config.Handler = errorHandler
-	require.NoError(t, am.ApplyConfig(ctx, nil))
+	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.True(t, am.Ready())
 }
 
