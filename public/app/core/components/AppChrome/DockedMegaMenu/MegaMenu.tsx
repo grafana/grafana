@@ -57,12 +57,7 @@ export const MegaMenu = React.memo(
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link, index) => (
-                <Stack key={link.text} direction="row" alignItems="center">
-                  <MegaMenuItem
-                    link={link}
-                    onClick={state.megaMenu === 'open' ? onClose : undefined}
-                    activeItem={activeItem}
-                  />
+                <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="center">
                   {index === 0 && (
                     <IconButton
                       id="dock-menu-button"
@@ -77,6 +72,11 @@ export const MegaMenu = React.memo(
                       variant="secondary"
                     />
                   )}
+                  <MegaMenuItem
+                    link={link}
+                    onClick={state.megaMenu === 'open' ? onClose : undefined}
+                    activeItem={activeItem}
+                  />
                 </Stack>
               ))}
             </ul>
