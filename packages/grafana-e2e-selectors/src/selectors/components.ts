@@ -132,21 +132,21 @@ export const Components = {
   },
   PanelEditor: {
     General: {
-      content: 'Panel editor content',
+      content: 'data-testid Panel editor content',
     },
     OptionsPane: {
-      content: 'Panel editor option pane content',
+      content: 'data-testid Panel editor option pane content',
       select: 'Panel editor option pane select',
       fieldLabel: (type: string) => `${type} field property editor`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
-      content: 'Panel editor data pane content',
+      content: 'data-testid Panel editor data pane content',
     },
     applyButton: 'data-testid Apply changes and go back to dashboard',
     toggleVizPicker: 'data-testid toggle-viz-picker',
     toggleVizOptions: 'data-testid toggle-viz-options',
-    toggleTableView: 'toggle-table-view',
+    toggleTableView: 'data-testid toggle-table-view',
 
     // [Geomap] Map controls
     showZoomField: 'Map controls Show zoom control field property editor',
@@ -165,7 +165,7 @@ export const Components = {
       content: 'Panel inspector Stats content',
     },
     Json: {
-      content: 'Panel inspector Json content',
+      content: 'data-testid Panel inspector Json content',
     },
     Query: {
       content: 'Panel inspector Query content',
@@ -282,8 +282,9 @@ export const Components = {
     backArrow: 'Go Back',
   },
   OptionsGroup: {
-    group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
-    toggle: (title?: string) => (title ? `Options group ${title} toggle` : 'Options group toggle'),
+    group: (title?: string) => (title ? `data-testid Options group ${title}` : 'data-testid Options group'),
+    toggle: (title?: string) =>
+      title ? `data-testid Options group ${title} toggle` : 'data-testid Options group toggle',
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,
@@ -432,8 +433,8 @@ export const Components = {
     variableOption: 'data-testid variable-option',
   },
   Annotations: {
-    annotationsTypeInput: 'annotations-type-input',
-    annotationsChoosePanelInput: 'choose-panels-input',
+    annotationsTypeInput: 'data-testid annotations-type-input',
+    annotationsChoosePanelInput: 'data-testid choose-panels-input',
   },
   Tooltip: {
     container: 'data-testid tooltip',

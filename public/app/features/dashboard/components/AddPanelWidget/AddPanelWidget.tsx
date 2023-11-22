@@ -150,7 +150,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
           <div className={styles.actionsWrapper}>
             <CardButton
               icon="file-blank"
-              aria-label={selectors.pages.AddDashboard.addNewPanel}
+              data-testid={selectors.pages.AddDashboard.addNewPanel}
               onClick={() => {
                 reportInteraction('Create new panel');
                 onCreateNewPanel();
@@ -160,7 +160,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
             </CardButton>
             <CardButton
               icon="wrap-text"
-              aria-label={selectors.pages.AddDashboard.addNewRow}
+              data-testid={selectors.pages.AddDashboard.addNewRow}
               onClick={() => {
                 reportInteraction('Create new row');
                 onCreateNewRow();
@@ -170,7 +170,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
             </CardButton>
             <CardButton
               icon="book-open"
-              aria-label={selectors.pages.AddDashboard.addNewPanelLibrary}
+              data-testid={selectors.pages.AddDashboard.addNewPanelLibrary}
               onClick={() => {
                 reportInteraction('Add a panel from the panel library');
                 setAddPanelView(true);
@@ -181,7 +181,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
             {copiedPanelPlugins.length === 1 && (
               <CardButton
                 icon="clipboard-alt"
-                aria-label={selectors.pages.AddDashboard.addNewPanelLibrary}
+                data-testid={selectors.pages.AddDashboard.addNewPanelLibrary}
                 onClick={() => {
                   reportInteraction('Paste panel from clipboard');
                   onPasteCopiedPanel(copiedPanelPlugins[0]);
