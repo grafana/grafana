@@ -89,7 +89,8 @@ export function useFlameRender(options: RenderOptions) {
     foundLabels,
     focusedItemData ? focusedItemData.item.level : 0
   );
-  const renderFunc = useRenderFunc(ctx, data, getBarColor, textAlign, collapsedMap);
+
+  const { renderFunc, mutedPath2D } = useRenderFunc(ctx, data, getBarColor, textAlign, collapsedMap);
 
   useEffect(() => {
     if (!ctx) {
@@ -98,7 +99,22 @@ export function useFlameRender(options: RenderOptions) {
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     walkTree(root, direction, data, totalViewTicks, rangeMin, rangeMax, wrapperWidth, collapsedMap, renderFunc);
-  }, [ctx, data, root, wrapperWidth, rangeMin, rangeMax, totalViewTicks, direction, renderFunc, collapsedMap]);
+    // Only fill the muted rects
+    ctx.fillStyle = '#666'; // getBarColor(item, label, muted); // TODO: fix
+    ctx.fill(mutedPath2D);
+  }, [
+    ctx,
+    data,
+    root,
+    wrapperWidth,
+    rangeMin,
+    rangeMax,
+    totalViewTicks,
+    direction,
+    renderFunc,
+    collapsedMap,
+    mutedPath2D,
+  ]);
 }
 
 type RenderFunc = (
@@ -118,29 +134,29 @@ function useRenderFunc(
   getBarColor: (item: LevelItem, label: string, muted: boolean) => string,
   textAlign: TextAlign,
   collapsedMap: CollapsedMap
-): RenderFunc {
+) {
   return useMemo(() => {
+    const mutedPath2D = new Path2D();
+
     if (!ctx) {
-      return () => {};
+      return { renderFunc: () => {}, mutedPath2D };
     }
 
-    return (item, x, y, width, height, label, muted) => {
-      ctx.beginPath();
-      ctx.rect(x + (muted ? 0 : BAR_BORDER_WIDTH), y, width, height);
-      ctx.fillStyle = getBarColor(item, label, muted);
-
-      const collapsedItemConfig = collapsedMap.get(item);
-      if (collapsedItemConfig && collapsedItemConfig.collapsed) {
-        const numberOfCollapsedItems = collapsedItemConfig.items.length;
-        label = `(${numberOfCollapsedItems}) ` + label;
-      }
-
+    const renderFunc: RenderFunc = (item, x, y, width, height, label, muted) => {
       if (muted) {
-        // Only fill the muted rects
-        ctx.fill();
+        mutedPath2D.rect(x, y, width, height);
       } else {
+        ctx.beginPath();
+        ctx.rect(x + BAR_BORDER_WIDTH, y, width, height);
+        ctx.fillStyle = getBarColor(item, label, muted);
         ctx.stroke();
         ctx.fill();
+
+        const collapsedItemConfig = collapsedMap.get(item);
+        if (collapsedItemConfig && collapsedItemConfig.collapsed) {
+          const numberOfCollapsedItems = collapsedItemConfig.items.length;
+          label = `(${numberOfCollapsedItems}) ` + label;
+        }
 
         if (collapsedItemConfig) {
           if (width >= LABEL_THRESHOLD) {
@@ -164,6 +180,8 @@ function useRenderFunc(
         }
       }
     };
+
+    return { renderFunc, mutedPath2D };
   }, [ctx, getBarColor, textAlign, data, collapsedMap]);
 }
 
