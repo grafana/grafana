@@ -13,6 +13,7 @@ import {
   cloneQueryResponse,
   combineResponses,
 } from './responseUtils';
+import { LabelType } from './types';
 
 const frame: DataFrame = {
   length: 1,
@@ -34,6 +35,36 @@ const frame: DataFrame = {
       config: {},
       type: FieldType.string,
       values: ['line1'],
+    },
+  ],
+};
+
+const frameWithTypes: DataFrame = {
+  length: 1,
+  fields: [
+    {
+      name: 'Time',
+      config: {},
+      type: FieldType.time,
+      values: [1],
+    },
+    {
+      name: 'labels',
+      config: {},
+      type: FieldType.other,
+      values: [{ level: 'info', structured: 'foo' }],
+    },
+    {
+      name: 'Line',
+      config: {},
+      type: FieldType.string,
+      values: ['line1'],
+    },
+    {
+      name: 'labelTypes',
+      config: {},
+      type: FieldType.other,
+      values: [{ level: 'I', structured: 'S' }],
     },
   ],
 };
@@ -104,9 +135,20 @@ describe('extractLabelKeysFromDataFrame', () => {
     input.fields[1].values = [];
     expect(extractLabelKeysFromDataFrame(input)).toEqual([]);
   });
+
   it('extracts label keys', () => {
     const input = cloneDeep(frame);
     expect(extractLabelKeysFromDataFrame(input)).toEqual(['level']);
+  });
+
+  it('extracts indexed label keys', () => {
+    const input = cloneDeep(frameWithTypes);
+    expect(extractLabelKeysFromDataFrame(input)).toEqual(['level']);
+  });
+
+  it('extracts structured metadata label keys', () => {
+    const input = cloneDeep(frameWithTypes);
+    expect(extractLabelKeysFromDataFrame(input, LabelType.structuredMetadata)).toEqual(['structured']);
   });
 });
 

@@ -65,6 +65,10 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType 
     return [];
   }
 
+  if (!labelTypeArray?.length) {
+    return Object.keys(labelsArray[0]);
+  }
+
   const labelTypes = labelTypeArray[0];
 
   const allLabelKeys = Object.keys(labelsArray[0]).filter((k) => labelTypes[k] === type);
