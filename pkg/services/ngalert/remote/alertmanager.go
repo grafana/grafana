@@ -10,8 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"encoding/base64"
+
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -23,6 +26,7 @@ import (
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+	"github.com/prometheus/alertmanager/cluster/clusterpb"
 )
 
 const readyPath = "/-/ready"
@@ -36,6 +40,7 @@ type Alertmanager struct {
 	amClient    *amclient.AlertmanagerAPI
 	mimirClient *mimirClient.Mimir
 	httpClient  *http.Client
+	kvstore     kvstore.KVStore
 	ready       bool
 	sender      *sender.ExternalAlertmanager
 }
@@ -46,7 +51,7 @@ type AlertmanagerConfig struct {
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, kvstore kvstore.KVStore) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &mimirClient.MimirAuthRoundTripper{
 			TenantID: cfg.TenantID,
@@ -100,6 +105,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 		mimirClient: mc,
 		amClient:    amclient.New(transport, nil),
 		httpClient:  &client,
+		kvstore:     kvstore,
 		sender:      s,
 		orgID:       orgID,
 		tenantID:    cfg.TenantID,
@@ -121,8 +127,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	am.log.Debug("start readiness check for remote Alertmanager", "url", am.url)
 	err := am.checkReadiness(ctx)
 	if err != nil {
-		// TODO: Should we be returning nil here?
-		return nil
+		return err
 	}
 	am.log.Debug("completed readiness check for remote Alertmanager", "url", am.url)
 
@@ -138,13 +143,56 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	am.log.Debug("completed configuration upload to remote Alertmanager", "url", am.url)
 
 	am.log.Debug("start state upload to remote Alertmanager", "url", am.url)
-	ok = am.compareRemoteState(ctx, "")
+	keys, err := am.kvstore.GetAll(ctx, 1, "alertmanager")
+	if err != nil {
+		return err
+	}
+	silences, ok := keys[1]["silences"]
 	if !ok {
-		err = am.mimirClient.CreateGrafanaAlertmanagerState(ctx, "")
+		// TODO(santiago): do we really want to return an error?
+		return fmt.Errorf("state for silences not found")
+	}
+	notifications, ok := keys[1]["notifications"]
+	if !ok {
+		// TODO(santiago): do we really want to return an error?
+		return fmt.Errorf("state for notifications not found")
+	}
+	// TODO(santiago): borrar.
+	s, err := base64.StdEncoding.DecodeString(silences)
+	if err != nil {
+		return err
+	}
+	silencesPart := clusterpb.Part{
+		Key:  "silences",
+		Data: s,
+	}
+	fmt.Println("Silences:", string(s))
+	n, err := base64.StdEncoding.DecodeString(notifications)
+	if err != nil {
+		return err
+	}
+	nflogPart := clusterpb.Part{
+		Key:  "silences",
+		Data: s,
+	}
+	fmt.Println("Notifications:", string(n))
+	fs := clusterpb.FullState{
+		Parts: []clusterpb.Part{silencesPart, nflogPart},
+	}
+	b, err := fs.Marshal()
+	if err != nil {
+		return err
+	}
+	encoded := base64.StdEncoding.EncodeToString(b)
+
+	if ok := am.compareRemoteState(ctx, encoded); !ok {
+		// TODO(santiago): send the state the to remote AM.
+		err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, encoded)
 		if err != nil {
-			am.log.Error("unable to upload the state to the remote Alertmanager")
+			am.log.Error("unable to upload the state to the remote Alertmanager", "err", err)
 		}
 	}
+	// TODO(santiago): not necessarily.
 	am.log.Debug("completed state upload to remote Alertmanager", "url", am.url)
 	// upload the state
 
@@ -406,7 +454,9 @@ func (am *Alertmanager) compareRemoteConfig(ctx context.Context, config *models.
 }
 
 // compareRemoteState gets the remote Alertmanager state and compares it to the existing state.
+// TODO(santiago): accept bytes instead of string?
 func (am *Alertmanager) compareRemoteState(ctx context.Context, state string) bool {
+	// Note(santiago): we'll have very different states in remote primary mode
 	rs, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 	if err != nil {
 		// If we get an error trying to compare log it and return false so that we try to upload it anyway.
@@ -414,9 +464,5 @@ func (am *Alertmanager) compareRemoteState(ctx context.Context, state string) bo
 		return false
 	}
 
-	if rs.State == state {
-		return true
-	}
-
-	return false
+	return rs.State == state
 }

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	grafanaAlertmanagerConfigPath = "/grafana/config"
+	grafanaAlertmanagerConfigPath = "/api/v1/grafana/config"
 )
 
 type UserGrafanaConfig struct {

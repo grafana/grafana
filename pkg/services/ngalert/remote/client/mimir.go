@@ -84,14 +84,14 @@ func New(cfg *Config) (*Mimir, error) {
 }
 
 // do execute an HTTP requests against the specified path and method using the specified payload. It returns the HTTP response.
-func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, contentLength int64, out any) (*http.Response, error) {
+func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, contentLength int64, out interface{}) (*http.Response, error) {
 	pathURL, err := url.Parse(p)
 	if err != nil {
 		return nil, err
 	}
 
 	endpoint := *mc.endpoint
-	endpoint.Path = path.Join(endpoint.Path, pathURL.Path)
+	endpoint.Path = path.Join(strings.TrimSuffix(endpoint.Path, "/alertmanager"), pathURL.Path)
 
 	r, err := http.NewRequestWithContext(ctx, method, endpoint.String(), payload)
 	if err != nil {
@@ -138,9 +138,8 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 	}
 
 	if resp.StatusCode/100 != 2 {
-		errResponse := &errorResponse{}
-		jsonErr := json.Unmarshal(body, errResponse)
-
+		var errResponse errorResponse
+		jsonErr := json.Unmarshal(body, &errResponse)
 		if jsonErr == nil && errResponse.Error() != "" {
 			msg := "error response from the Mimir API"
 			logger.Error(msg, "err", errResponse)
@@ -152,7 +151,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 		return nil, fmt.Errorf("%s: %w", msg, jsonErr)
 	}
 
-	if err = json.Unmarshal(body, &out); err != nil {
+	if err = json.Unmarshal(body, out); err != nil {
 		msg := "failed to decode 2xx JSON response"
 		logger.Error(msg, "err", err)
 		return nil, fmt.Errorf("%s: %w", msg, err)
@@ -163,7 +162,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 
 func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader, contentLength int64) error {
 	var sr successResponse
-	resp, err := mc.do(ctx, p, method, payload, contentLength, sr)
+	resp, err := mc.do(ctx, p, method, payload, contentLength, &sr)
 	if err != nil {
 		return err
 	}
