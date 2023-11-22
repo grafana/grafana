@@ -518,11 +518,6 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 
 // hasPluginRequestedPermissions logs if the plugin installer does not have the permissions that the plugin requests to have on Grafana.
 func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID, version string) {
-	if c.IsGrafanaAdmin {
-		hs.log.Debug("user is a grafana admin, skipping plugin requested permissions check", "pluginID", pluginID)
-		return
-	}
-
 	repoCompatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 
 	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, version, repoCompatOpts)
