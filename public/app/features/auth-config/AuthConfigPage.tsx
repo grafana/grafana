@@ -2,10 +2,11 @@ import React, { JSX, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { reportInteraction } from '@grafana/runtime';
-import { Grid } from '@grafana/ui';
+import { Grid, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 
+import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
 
@@ -58,30 +59,30 @@ export const AuthConfigPageUnconnected = ({
       subTitle={
         <>
           Manage your auth settings and configure single sign-on. Find out more in our{' '}
-          <a
-            className="external-link"
-            href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            documentation.
-          </a>
+          <TextLink href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication">
+            documentation
+          </TextLink>
+          .
         </>
       }
     >
       <Page.Contents isLoading={isLoading}>
-        <Grid gap={3} minColumnWidth={34}>
-          {providerList.map(({ provider, settings }) => (
-            <ProviderCard
-              key={provider}
-              authType={settings.type || 'OAuth'}
-              providerId={provider}
-              displayName={provider}
-              enabled={settings.enabled}
-              onClick={() => onProviderCardClick(provider)}
-            />
-          ))}
-        </Grid>
+        {!providerList.length ? (
+          <ConfigureAuthCTA />
+        ) : (
+          <Grid gap={3} minColumnWidth={34}>
+            {providerList.map(({ provider, settings }) => (
+              <ProviderCard
+                key={provider}
+                authType={settings.type || 'OAuth'}
+                providerId={provider}
+                displayName={provider}
+                enabled={settings.enabled}
+                onClick={() => onProviderCardClick(provider)}
+              />
+            ))}
+          </Grid>
+        )}
       </Page.Contents>
     </Page>
   );
