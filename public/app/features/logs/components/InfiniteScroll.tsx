@@ -15,23 +15,47 @@ type Props = {
 };
 
 export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, scrollElement, sortOrder }: Props) => {
-  const [outOfRange, setOutOfRange] = useState(false);
+  const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
+  const [upperOutOfRange, setUpperOutOfRange] = useState(false);
+  const [lastScroll, setLastScroll] = useState(scrollElement?.scrollTop || 0);
+
   useEffect(() => {
     if (!scrollElement || !loadMoreLogs) {
       return;
     }
 
     function handleScroll() {
-      if (!scrollElement || !loadMoreLogs || !rows.length || !shouldLoadMore(scrollElement, sortOrder)) {
+      if (!scrollElement || !loadMoreLogs || !rows.length) {
         return;
       }
-      const nextRange = getNextRange(getVisibleRange(rows), range);
-      if (isOutOfRange(range, nextRange)) {
-        setOutOfRange(true);
+      setLastScroll(scrollElement.scrollTop);
+      const scrollDirection = shouldLoadMore(scrollElement, lastScroll);
+      if (scrollDirection === ScrollDirection.NoScroll) {
         return;
+      } else if (scrollDirection === ScrollDirection.Top) {
+        scrollTop();
+      } else {
+        scrollBottom();
       }
-      loadMoreLogs(nextRange);
       scrollElement?.removeEventListener('scroll', handleScroll);
+    }
+
+    function scrollTop() {
+      if (!canScrollTop(getVisibleRange(rows), range, sortOrder)) {
+        setUpperOutOfRange(true);
+        return;
+      }
+      const newRange = sortOrder === LogsSortOrder.Descending ? getNextRange(getVisibleRange(rows), range) : getPrevRange(getVisibleRange(rows), range);
+      loadMoreLogs?.(newRange);
+    };
+  
+    function scrollBottom() {
+      if (!canScrollBottom(getVisibleRange(rows), range, sortOrder)) {
+        setLowerOutOfRange(true);
+        return;
+      }
+      const newRange = sortOrder === LogsSortOrder.Descending ? getPrevRange(getVisibleRange(rows), range) : getNextRange(getVisibleRange(rows), range);
+      loadMoreLogs?.(newRange);
     }
 
     scrollElement.addEventListener('scroll', handleScroll);
@@ -39,14 +63,13 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
     return () => {
       scrollElement.removeEventListener('scroll', handleScroll);
     };
-  }, [loadMoreLogs, range, rows, scrollElement, sortOrder, loading]);
+  }, [loadMoreLogs, range, rows, scrollElement, sortOrder, loading, lastScroll]);
 
   return (
     <>
+      {upperOutOfRange && outOfRangeMessage}
       {children}
-      {outOfRange && (
-        <div className={styles.limitReached}>Limit reached for the current time range.</div>
-      )}
+      {lowerOutOfRange && outOfRangeMessage}
     </>
   );
 };
@@ -58,15 +81,26 @@ const styles = {
   })
 }
 
-function shouldLoadMore(element: HTMLDivElement, sortOrder: LogsSortOrder) {
-  const delta = 1;
-  // Oldest logs on top: scrollTop near 0
-  // Oldest logs at the bottom: scrollTop near scroll limit
-  const diff =
-    sortOrder === LogsSortOrder.Ascending
-      ? element.scrollTop
-      : element.scrollHeight - element.scrollTop - element.clientHeight;
-  return diff <= delta;
+const outOfRangeMessage = <div className={styles.limitReached}>Limit reached for the current time range.</div>;
+
+enum ScrollDirection {
+  Top = -1,
+  Bottom = 1,
+  NoScroll = 0
+}
+function shouldLoadMore(element: HTMLDivElement, lastScroll: number): ScrollDirection {
+  const delta = element.scrollTop - lastScroll;
+  if (delta === 0) {
+    return ScrollDirection.NoScroll;
+  }
+
+  const scrollDirection = delta < 0 ? ScrollDirection.Top : ScrollDirection.Bottom;
+  const diff = scrollDirection === ScrollDirection.Top ? 
+    element.scrollTop :
+    element.scrollHeight - element.scrollTop - element.clientHeight;
+  const coef = 1;
+  
+  return diff <= coef ? scrollDirection : ScrollDirection.NoScroll;
 }
 
 function getVisibleRange(rows: LogRowModel[]) {
@@ -81,10 +115,20 @@ function getVisibleRange(rows: LogRowModel[]) {
   return visibleRange;
 }
 
-function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) {
+function getPrevRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) {
   return { from: currentRange.from.valueOf(), to: visibleRange.from };
 }
 
-function isOutOfRange(currentRange: TimeRange, nextRange: AbsoluteTimeRange) {
-  return nextRange.from <= currentRange.from.valueOf() || nextRange.to >= currentRange.to.valueOf();
+function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) {
+  return { from: visibleRange.to, to: currentRange.to.valueOf() };
+}
+
+function canScrollTop(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, sortOrder: LogsSortOrder) {
+  return true;
+  //return sortOrder === LogsSortOrder.Descending ? visibleRange.to < currentRange.to.valueOf() : visibleRange.from > currentRange.from.valueOf();
+}
+
+function canScrollBottom(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, sortOrder: LogsSortOrder) {
+  return true;
+  //return sortOrder === LogsSortOrder.Descending ? visibleRange.from < currentRange.from.valueOf() : visibleRange.to < currentRange.to.valueOf();
 }
