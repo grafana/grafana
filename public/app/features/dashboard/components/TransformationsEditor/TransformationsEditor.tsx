@@ -14,8 +14,9 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Alert, Button, ConfirmModal, Container, CustomScrollbar, Themeable, withTheme, IconButton, ButtonGroup } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Container, CustomScrollbar, Themeable, withTheme, IconButton, ButtonGroup, Box, Text } from '@grafana/ui';
 import config from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 
 import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
@@ -238,6 +239,41 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     update.splice(endIndex, 0, removed);
     this.onChange(update);
   };
+
+  renderEmptyMessage = () => {
+    return (
+      <Box alignItems="center" padding={4}>
+        <Flex direction="column" alignItems="center" gap={2}>
+          <Text element="h3" textAlignment="center">
+            <Trans key="transformations.empty.add-transformation-header">Start transforming data</Trans>
+          </Text>
+          <Text
+            element="p"
+            textAlignment="center"
+            data-testid={selectors.components.Transforms.noTransformationsMessage}
+          >
+            <Trans key="transformations.empty.add-transformation-body">
+              Transformations allow data to be changed in various ways before your visualization is shown.
+              <br />
+              This includes joining data together, renaming fields, making calculations, formatting data for
+              display, and more.
+            </Trans>
+          </Text>
+          <Button
+            icon="plus"
+            variant="primary"
+            size="md"
+            onClick={() => {
+              this.setState({ showPicker: true });
+            }}
+            data-testid={selectors.components.Transforms.addTransformationButton}
+          >
+            Add transformation
+          </Button>
+        </Flex>
+      </Box>
+    )
+  }
 
   renderTransformationEditors = () => {
     const { data, transformations } = this.state;
