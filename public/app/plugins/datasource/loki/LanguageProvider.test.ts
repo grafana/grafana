@@ -1,4 +1,4 @@
-import { AbstractLabelOperator, DataFrame, TimeRange, dateTime } from '@grafana/data';
+import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, getDefaultTimeRange } from '@grafana/data';
 
 import LanguageProvider from './LanguageProvider';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
@@ -32,6 +32,17 @@ const mockTimeRange = {
     to: dateTime(1546380000000),
   },
 };
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  getDefaultTimeRange: jest.fn().mockReturnValue({
+    from: 0,
+    to: 1,
+    raw: {
+      from: 0,
+      to: 1,
+    },
+  }),
+}));
 
 describe('Language completion provider', () => {
   describe('fetchSeries', () => {
@@ -161,9 +172,8 @@ describe('Language completion provider', () => {
         .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
       const languageProvider = new LanguageProvider(datasource);
       languageProvider.request = jest.fn().mockResolvedValue([]);
-      languageProvider.getDefaultTimeRange = jest.fn().mockReturnValue({ from: dateTime(0), to: dateTime(1) });
       languageProvider.fetchLabelValues('testKey');
-      expect(languageProvider.getDefaultTimeRange).toHaveBeenCalled();
+      expect(getDefaultTimeRange).toHaveBeenCalled();
       expect(languageProvider.request).toHaveBeenCalled();
       expect(languageProvider.request).toHaveBeenCalledWith('label/testKey/values', {
         end: 1,

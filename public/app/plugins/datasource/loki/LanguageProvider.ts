@@ -290,7 +290,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *
    * @returns {TimeRange} The default time range
    */
-  getDefaultTimeRange(): TimeRange {
+  private getDefaultTimeRange(): TimeRange {
     return getDefaultTimeRange();
   }
 }
