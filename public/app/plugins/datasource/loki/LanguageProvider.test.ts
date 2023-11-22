@@ -96,8 +96,7 @@ describe('Language completion provider', () => {
         .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
       const languageProvider = new LanguageProvider(datasource);
       languageProvider.request = jest.fn().mockResolvedValue([]);
-      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
-      fetchSeriesLabels('stream', { timeRange: mockTimeRange });
+      languageProvider.fetchSeriesLabels('stream', { timeRange: mockTimeRange });
       // time range was passed to getTimeRangeParams
       expect(datasource.getTimeRangeParams).toHaveBeenCalled();
       expect(datasource.getTimeRangeParams).toHaveBeenCalledWith(mockTimeRange);
