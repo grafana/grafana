@@ -149,8 +149,10 @@ describe('VariableEditor', () => {
         // change filter key
         const keySelect = screen.getByRole('combobox', { name: 'Dimensions filter key' });
         // confirms getDimensionKeys was called with filter and that the element uses keysForDimensionFilter
-        await select(keySelect, 'v4', {
-          container: document.body,
+        await waitFor(() => {
+          select(keySelect, 'v4', {
+            container: document.body,
+          });
         });
         expect(ds.datasource.resources.getDimensionKeys).toHaveBeenCalledWith({
           namespace: 'z2',
@@ -158,14 +160,16 @@ describe('VariableEditor', () => {
           metricName: 'i3',
           dimensionFilters: undefined,
         });
-        expect(onChange).toHaveBeenCalledWith({
-          ...defaultQuery,
-          queryType: VariableQueryType.DimensionValues,
-          namespace: 'z2',
-          region: 'a1',
-          metricName: 'i3',
-          dimensionKey: 's4',
-          dimensionFilters: { v4: undefined },
+        await waitFor(() => {
+          expect(onChange).toHaveBeenCalledWith({
+            ...defaultQuery,
+            queryType: VariableQueryType.DimensionValues,
+            namespace: 'z2',
+            region: 'a1',
+            metricName: 'i3',
+            dimensionKey: 's4',
+            dimensionFilters: { v4: undefined },
+          });
         });
 
         // set filter value
