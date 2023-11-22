@@ -422,6 +422,7 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/Athena":                  {"QueryState", "QueryType", "WorkGroup"},
 	"AWS/AutoScaling":             {"AutoScalingGroupName"},
 	"AWS/Backup":                  {"BackupVaultName", "ResourceType"},
+	"AWS/Bedrock":                 {"ModelId", "ImageSize", "BucketedStepSize"},
 	"AWS/Billing":                 {"Currency", "LinkedAccount", "ServiceName"},
 	"AWS/CertificateManager":      {"CertificateArn"},
 	"AWS/Chatbot":                 {"ConfigurationName"},
