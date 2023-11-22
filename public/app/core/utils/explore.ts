@@ -329,15 +329,6 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalY
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
   RefreshPicker.isLive(refreshInterval) ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
 
-export const convertToWebSocketUrl = (url: string) => {
-  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
-  if (backend.endsWith('/')) {
-    backend = backend.slice(0, -1);
-  }
-  return `${backend}${url}`;
-};
-
 export const stopQueryState = (querySubscription: Unsubscribable | undefined) => {
   if (querySubscription) {
     querySubscription.unsubscribe();
