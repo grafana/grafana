@@ -61,6 +61,7 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
     const defaultQuery = applyQueryDefaults(query);
     return {
       ...defaultQuery,
+      dataset: 'iox',
       sql: {
         ...defaultQuery.sql,
         limit: undefined,
