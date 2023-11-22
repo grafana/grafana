@@ -76,7 +76,9 @@
     "manage-folder-nav": {
       "alert-rules": "警报规则",
       "dashboards": "仪表板",
-      "panels": "面板"
+      "panels": "面板",
+      "permissions": "",
+      "settings": ""
     },
     "new-folder-form": {
       "cancel-label": "取消",
@@ -623,14 +625,14 @@
   },
   "library-panels": {
     "modal": {
+      "body_other": "此面板在 {{count}} 个仪表板中使用。请选择要在哪个仪表板中查看此面板：",
       "button-cancel": "<0>取消</0>",
       "button-view-panel1": "在 {{label}} 中查看面板...",
       "button-view-panel2": "在仪表板中查看面板...",
       "panel-not-linked": "面板没有链接到仪表板。请将面板添加到仪表板，然后重试。",
       "select-no-options-message": "未找到仪表板",
       "select-placeholder": "开始输入以搜索仪表板",
-      "title": "在仪表板中查看面板",
-      "body_other": "此面板在 {{count}} 个仪表板中使用。请选择要在哪个仪表板中查看此面板："
+      "title": "在仪表板中查看面板"
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
@@ -1077,6 +1079,15 @@
       "new-dashboard": "新建仪表板",
       "new-folder": "新建文件夹"
     },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "result-kind": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
+    },
     "results-table": {
       "datasource-header": "数据源",
       "location-header": "位置",
@@ -1089,6 +1100,12 @@
     "search-input": {
       "include-panels-placeholder": "搜索仪表板和面板",
       "placeholder": "搜索仪表板"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
     }
   },
   "share-modal": {
