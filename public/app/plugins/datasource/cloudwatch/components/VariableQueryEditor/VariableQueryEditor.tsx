@@ -37,12 +37,11 @@ const queryTypes: Array<{ value: string; label: string }> = [
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const parsedQuery = migrateVariableQuery(query);
 
-  const { region, namespace, metricName, dimensionKey, dimensionFilters } = parsedQuery;
+  const { region, namespace, metricName, dimensionKey } = parsedQuery;
   const [regions, regionIsLoading] = useRegions(datasource);
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, { region, namespace });
   const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName });
-  const keysForDimensionFilter = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters });
   const accountState = useAccountOptions(datasource.resources, query.region);
 
   const newFormStylingEnabled = config.featureToggles.awsDatasourcesNewFormStyling;
@@ -188,7 +187,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
                 onChange={(dimensions) => {
                   onChange({ ...parsedQuery, dimensionFilters: dimensions });
                 }}
-                dimensionKeys={keysForDimensionFilter}
                 disableExpressions={true}
                 datasource={datasource}
               />
@@ -205,7 +203,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
                 onChange={(dimensions) => {
                   onChange({ ...parsedQuery, dimensionFilters: dimensions });
                 }}
-                dimensionKeys={keysForDimensionFilter}
                 disableExpressions={true}
                 datasource={datasource}
               />
