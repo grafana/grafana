@@ -17,7 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Icon } from '@grafana/ui';
 
@@ -26,7 +26,7 @@ import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../typ
 
 import FlameGraphCanvas from './FlameGraphCanvas';
 import FlameGraphMetadata from './FlameGraphMetadata';
-import { FlameGraphDataContainer } from './dataTransform';
+import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -44,6 +44,7 @@ type Props = {
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  collapsing?: boolean;
 };
 
 const FlameGraph = ({
@@ -61,25 +62,45 @@ const FlameGraph = ({
   onFocusPillClick,
   onSandwichPillClick,
   colorScheme,
+  collapsing,
 }: Props) => {
   const styles = getStyles();
 
-  const [levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks] = useMemo(() => {
-    let levels = data.getLevels();
-    let totalProfileTicks = levels.length ? levels[0][0].value : 0;
-    let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
-    let totalViewTicks = totalProfileTicks;
-    let levelsCallers = undefined;
+  const [collapsedMap, setCollapsedMap] = useState<CollapsedMap>(new Map());
+  const [levels, setLevels] = useState<LevelItem[][]>();
+  const [levelsCallers, setLevelsCallers] = useState<LevelItem[][]>();
+  const [totalProfileTicks, setTotalProfileTicks] = useState<number>(0);
+  const [totalProfileTicksRight, setTotalProfileTicksRight] = useState<number>();
+  const [totalViewTicks, setTotalViewTicks] = useState<number>(0);
 
-    if (sandwichItem) {
-      const [callers, callees] = data.getSandwichLevels(sandwichItem);
-      levels = callees;
-      levelsCallers = callers;
-      // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
-      totalViewTicks = callees[0]?.[0]?.value ?? 0;
+  useEffect(() => {
+    if (data) {
+      setCollapsedMap(data.getCollapsedMap());
+
+      let levels = data.getLevels();
+      let totalProfileTicks = levels.length ? levels[0][0].value : 0;
+      let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
+      let totalViewTicks = totalProfileTicks;
+      let levelsCallers = undefined;
+
+      if (sandwichItem) {
+        const [callers, callees] = data.getSandwichLevels(sandwichItem);
+        levels = callees;
+        levelsCallers = callers;
+        // We need this separate as in case of diff profile we want to compute diff colors based on the original ticks.
+        totalViewTicks = callees[0]?.[0]?.value ?? 0;
+      }
+      setLevels(levels);
+      setLevelsCallers(levelsCallers);
+      setTotalProfileTicks(totalProfileTicks);
+      setTotalProfileTicksRight(totalProfileTicksRight);
+      setTotalViewTicks(totalViewTicks);
     }
-    return [levels, levelsCallers, totalProfileTicks, totalProfileTicksRight, totalViewTicks];
   }, [data, sandwichItem]);
+
+  if (!levels) {
+    return null;
+  }
 
   const commonCanvasProps = {
     data,
@@ -96,6 +117,9 @@ const FlameGraph = ({
     totalProfileTicks,
     totalProfileTicksRight,
     totalViewTicks,
+    collapsedMap,
+    setCollapsedMap,
+    collapsing,
   };
   const canvas = levelsCallers ? (
     <>
@@ -109,6 +133,8 @@ const FlameGraph = ({
           root={levelsCallers[levelsCallers.length - 1][0]}
           depth={levelsCallers.length}
           direction={'parents'}
+          // We do not support collapsing in sandwich view for now.
+          collapsing={false}
         />
       </div>
 
@@ -117,7 +143,13 @@ const FlameGraph = ({
           <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
           Callees
         </div>
-        <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
+        <FlameGraphCanvas
+          {...commonCanvasProps}
+          root={levels[0][0]}
+          depth={levels.length}
+          direction={'children'}
+          collapsing={false}
+        />
       </div>
     </>
   ) : (

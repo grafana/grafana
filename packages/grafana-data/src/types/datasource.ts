@@ -547,6 +547,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;
+  skipQueryCache?: boolean;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
@@ -674,8 +675,6 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
-
-  angularDetected?: boolean;
 }
 
 /**

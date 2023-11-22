@@ -120,6 +120,11 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     //return onUpdatePanelSnapshotData(this.props.panel, frames);
     return Promise.resolve(true);
   };
+
+  // Backward compatibility with id
+  context.instanceState = {
+    legacyPanelId: getPanelIdForVizPanel(vizPanel),
+  };
 }
 
 function getBuiltInAnnotationsLayer(scene: DashboardScene): dataLayers.AnnotationsDataLayer | undefined {

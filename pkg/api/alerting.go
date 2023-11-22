@@ -13,6 +13,7 @@ import (
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
@@ -113,7 +114,7 @@ func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 			DashboardIds: dashboardIDs,
 			Type:         string(model.DashHitDB),
 			FolderIds:    folderIDs, // nolint:staticcheck
-			Permission:   dashboards.PERMISSION_VIEW,
+			Permission:   dashboardaccess.PERMISSION_VIEW,
 		}
 
 		hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
@@ -921,6 +922,8 @@ type GetAlertsParams struct {
 	// required:false
 	// type array
 	// collectionFormat: multi
+	//
+	// Deprecated: use FolderUID instead
 	FolderID []string `json:"folderId"`
 	// Limit response to alerts having a dashboard name like this value./ Limit response to alerts having a dashboard name like this value.
 	// in:query

@@ -365,6 +365,7 @@ trigger:
     - go.sum
     - go.mod
     - public/app/plugins/**/plugin.json
+    - docs/sources/setup-grafana/configure-grafana/feature-toggles/**
     - devenv/**
 type: docker
 volumes:
@@ -974,7 +975,7 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
@@ -2325,7 +2326,7 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
@@ -3988,7 +3989,7 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/notifier/...
+  - go test -run TestIntegrationRemoteAlertmanager -covermode=atomic -timeout=2m ./pkg/services/ngalert/...
   depends_on:
   - wire-install
   - wait-for-remote-alertmanager
@@ -4684,6 +4685,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b3a77df22aa83cf39c768ab7efcd8724d242a431298ddf53ca1f4402f3e7d8a7
+hmac: 64302d9316abab775d7ec1132f26ea4f1829558fa0bfd85812597182c1abe61a
 
 ...
