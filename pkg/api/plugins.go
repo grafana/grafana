@@ -450,6 +450,14 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
+		var versionUnsupportedErr repo.ErrVersionUnsupported
+		if errors.As(err, &versionUnsupportedErr) {
+			return response.Error(http.StatusConflict, "Plugin version not supported", err)
+		}
+		var versionNotFoundErr repo.ErrVersionNotFound
+		if errors.As(err, &versionNotFoundErr) {
+			return response.Error(http.StatusNotFound, "Plugin version not found", err)
+		}
 		var clientError repo.ErrResponse4xx
 		if errors.As(err, &clientError) {
 			return response.Error(clientError.StatusCode(), clientError.Message(), err)
@@ -457,7 +465,12 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
 		}
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to install plugin", err)
+		var archError repo.ErrArcNotFound
+		if errors.As(err, &archError) {
+			return response.Error(http.StatusNotFound, archError.Error(), nil)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
 	return response.JSON(http.StatusOK, []byte{})

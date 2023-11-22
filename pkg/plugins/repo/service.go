@@ -123,7 +123,7 @@ func (m *Manager) PluginVersion(pluginID, version string, compatOpts CompatOpts)
 	_, hasAnyArch := compatibleVer.Arch["any"]
 	if isGrafanaCorePlugin && hasAnyArch {
 		// Trying to install a coupled core plugin
-		return VersionData{}, ErrCorePlugin(pluginID)
+		return VersionData{}, ErrCorePlugin{id: pluginID}
 	}
 
 	return compatibleVer, nil
