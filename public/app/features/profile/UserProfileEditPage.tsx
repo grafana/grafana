@@ -1,8 +1,9 @@
+import { keys, toPairs } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
-import { PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionComponent, PluginExtensionPoints } from '@grafana/data';
 import { getPluginComponentExtensions } from '@grafana/runtime';
 import { Tab, TabsBar, TabContent, VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -15,15 +16,7 @@ import UserSessions from './UserSessions';
 import { UserTeams } from './UserTeams';
 import { changeUserOrg, initUserProfilePage, revokeUserSession, updateUserProfile } from './state/actions';
 
-type TabType = {
-  value: string;
-  label: string;
-};
-
-const CORE_SETTINGS_TAB: TabType = {
-  value: 'core_settings_tab',
-  label: 'Core Settings',
-};
+const CORE_SETTINGS_TAB = 'Core Settings';
 
 export interface OwnProps {}
 
@@ -67,7 +60,7 @@ export function UserProfileEditPage({
   changeUserOrg,
   updateUserProfile,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<string>(CORE_SETTINGS_TAB.value);
+  const [activeTab, setActiveTab] = useState<string>(CORE_SETTINGS_TAB);
 
   useMount(() => initUserProfilePage());
 
@@ -75,57 +68,71 @@ export function UserProfileEditPage({
     const { extensions } = getPluginComponentExtensions({
       extensionPointId: PluginExtensionPoints.UserProfileSettings,
       context: {},
-      /**
-       * only allow one extension component per plugin for this particular extension point
-       * this restriction makes it easier to group plugin settings into tabs
-       */
-      limitPerPlugin: 1,
     });
 
     return extensions;
   }, []);
 
+  const groupedExtensionComponents = extensionComponents.reduce<Record<string, PluginExtensionComponent[]>>(
+    (acc, extension) => {
+      const { title } = extension;
+      if (acc[title]) {
+        acc[title].push(extension);
+      } else {
+        acc[title] = [extension];
+      }
+      return acc;
+    },
+    {}
+  );
+
   const showTabs = extensionComponents.length > 0;
-  const tabs: TabType[] = [
-    CORE_SETTINGS_TAB,
-    ...extensionComponents.map(({ title }) => ({ value: title, label: title })),
-  ];
+  const tabs = [CORE_SETTINGS_TAB, ...keys(groupedExtensionComponents).map((title) => title)];
 
   const UserProfile = () => (
-    <>
+    <VerticalGroup spacing="md">
       <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
       <SharedPreferences resourceUri="user" preferenceType="user" />
       <UserTeams isLoading={teamsAreLoading} teams={teams} />
       <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
       <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
-    </>
+    </VerticalGroup>
   );
 
   return (
     <Page navId="profile/settings">
       <Page.Contents isLoading={!user}>
-        <VerticalGroup spacing="md">
-          {showTabs ? (
-            <>
-              <TabsBar>
-                {tabs.map(({ value, label }) => (
-                  <Tab key={value} label={label} active={activeTab === value} onChangeTab={() => setActiveTab(value)} />
-                ))}
-              </TabsBar>
-              <TabContent>
-                {activeTab === CORE_SETTINGS_TAB.value && <UserProfile />}
-                {extensionComponents.map(({ component: Component, title }) => {
-                  if (activeTab === title) {
-                    return <Component key={title} />;
-                  }
-                  return null;
-                })}
-              </TabContent>
-            </>
-          ) : (
-            <UserProfile />
-          )}
-        </VerticalGroup>
+        {showTabs ? (
+          <VerticalGroup spacing="md">
+            <TabsBar>
+              {tabs.map((tabTitle) => (
+                <Tab
+                  key={tabTitle}
+                  label={tabTitle}
+                  active={activeTab === tabTitle}
+                  onChangeTab={() => setActiveTab(tabTitle)}
+                />
+              ))}
+            </TabsBar>
+            <TabContent>
+              {activeTab === CORE_SETTINGS_TAB && <UserProfile />}
+              {toPairs(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
+                if (activeTab === title) {
+                  return (
+                    <React.Fragment key={title}>
+                      {pluginExtensionComponents.map(({ component: Component }, index) => (
+                        <Component key={`${title}-${index}`} />
+                      ))}
+                    </React.Fragment>
+                  );
+                }
+                return null;
+              })}
+            </TabContent>
+          </VerticalGroup>
+        ) : (
+          <UserProfile />
+        )}
       </Page.Contents>
     </Page>
   );
