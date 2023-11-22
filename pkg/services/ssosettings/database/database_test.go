@@ -80,45 +80,120 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 	t.Run("insert a new SSO setting successfully", func(t *testing.T) {
 		setup()
 
-		expected := &models.SSOSetting{
-			Provider: "azuread",
-			Settings: map[string]interface{}{
-				"enabled": true,
-			},
+		provider := "azuread"
+		settings := map[string]interface{}{
+			"enabled":   true,
+			"client_id": "azuread-client",
 		}
 
-		err := ssoSettingsStore.Upsert(context.Background(), "azuread", map[string]interface{}{
-			"enabled": true,
-		})
+		err := ssoSettingsStore.Upsert(context.Background(), provider, settings)
 		require.NoError(t, err)
 
-		actual, err := ssoSettingsStore.Get(context.Background(), "azuread")
+		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
 		require.NoError(t, err)
+		require.Equal(t, settings, actual.Settings)
+		require.WithinDuration(t, time.Now(), actual.Created, 5*time.Minute)
+		require.WithinDuration(t, time.Now(), actual.Updated, 5*time.Minute)
 
-		require.True(t, maps.Equal(expected.Settings, actual.Settings))
+		deleted, notDeleted, err := getSSOSettingsCountByDeleted(sqlStore)
+		require.NoError(t, err)
+		require.EqualValues(t, 0, deleted)
+		require.EqualValues(t, 1, notDeleted)
 	})
 
 	t.Run("replaces an existing SSO setting for the specified provider", func(t *testing.T) {
 		setup()
 
-		err := ssoSettingsStore.Upsert(context.Background(), "azuread", map[string]interface{}{
-			"enabled": true,
-		})
+		provider := "github"
+		settings := map[string]interface{}{
+			"enabled":       true,
+			"client_id":     "azuread-client",
+			"client_secret": "this-is-a-secret",
+		}
+		err := populateSSOSettings(sqlStore, settings, false, provider)
 		require.NoError(t, err)
 
-		err = ssoSettingsStore.Upsert(context.Background(), "azuread", map[string]interface{}{
-			"enabled": false,
-		})
+		newSettings := map[string]interface{}{
+			"enabled":       true,
+			"client_id":     "new-azuread-client",
+			"client_secret": "this-is-a-new-secret",
+		}
+		err = ssoSettingsStore.Upsert(context.Background(), provider, newSettings)
 		require.NoError(t, err)
 
-		actual, err := ssoSettingsStore.Get(context.Background(), "azuread")
+		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
+		require.NoError(t, err)
+		require.Equal(t, newSettings, actual.Settings)
+		require.WithinDuration(t, time.Now(), actual.Updated, 5*time.Minute)
+
+		deleted, notDeleted, err := getSSOSettingsCountByDeleted(sqlStore)
+		require.NoError(t, err)
+		require.EqualValues(t, 0, deleted)
+		require.EqualValues(t, 1, notDeleted)
+	})
+
+	t.Run("trying to update a deleted SSO Settings will insert a new record", func(t *testing.T) {
+		setup()
+
+		provider := "azuread"
+		settings := map[string]interface{}{
+			"enabled":       true,
+			"client_id":     "azuread-client",
+			"client_secret": "this-is-a-secret",
+		}
+		err := populateSSOSettings(sqlStore, settings, true, provider)
 		require.NoError(t, err)
 
-		list, err := ssoSettingsStore.List(context.Background())
+		newSettings := map[string]interface{}{
+			"enabled":       true,
+			"client_id":     "new-azuread-client",
+			"client_secret": "this-is-a-new-secret",
+		}
+
+		err = ssoSettingsStore.Upsert(context.Background(), provider, newSettings)
 		require.NoError(t, err)
 
-		require.Equal(t, 1, len(list))
-		require.Equal(t, false, actual.Settings["enabled"])
+		actual, err := getSSOSettingsByProvider(sqlStore, provider, false)
+		require.NoError(t, err)
+		require.Equal(t, newSettings, actual.Settings)
+		require.WithinDuration(t, time.Now(), actual.Created, 5*time.Minute)
+		require.WithinDuration(t, time.Now(), actual.Updated, 5*time.Minute)
+
+		old, err := getSSOSettingsByProvider(sqlStore, provider, true)
+		require.NoError(t, err)
+		require.Equal(t, settings, old.Settings)
+	})
+
+	t.Run("replaces the settings only for the specified provider leaving the other provider's settings unchanged", func(t *testing.T) {
+		setup()
+
+		providers := []string{"github", "gitlab", "google"}
+		settings := map[string]interface{}{
+			"enabled":       true,
+			"client_id":     "my-client",
+			"client_secret": "this-is-a-secret",
+		}
+		err := populateSSOSettings(sqlStore, settings, false, providers...)
+		require.NoError(t, err)
+
+		newSettings := map[string]interface{}{
+			"enabled":       true,
+			"client_id":     "my-new-client",
+			"client_secret": "this-is-a-new-secret",
+		}
+		err = ssoSettingsStore.Upsert(context.Background(), providers[0], newSettings)
+		require.NoError(t, err)
+
+		actual, err := getSSOSettingsByProvider(sqlStore, providers[0], false)
+		require.NoError(t, err)
+		require.Equal(t, newSettings, actual.Settings)
+		require.WithinDuration(t, time.Now(), actual.Updated, 5*time.Minute)
+
+		for index := 1; index < len(providers); index++ {
+			existing, err := getSSOSettingsByProvider(sqlStore, providers[index], false)
+			require.NoError(t, err)
+			require.Equal(t, settings, existing.Settings)
+		}
 	})
 }
 
@@ -173,18 +248,15 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 
 		providers := []string{"azuread", "github", "google"}
 
-		err := populateSSOSettings(sqlStore, false, providers...)
+		err := populateSSOSettings(sqlStore, nil, false, providers...)
 		require.NoError(t, err)
 
 		err = ssoSettingsStore.Delete(context.Background(), providers[0])
 		require.NoError(t, err)
 
-		deleted, err := getSSOSettingsCountByDeleted(sqlStore, true)
+		deleted, notDeleted, err := getSSOSettingsCountByDeleted(sqlStore)
 		require.NoError(t, err)
 		require.EqualValues(t, 1, deleted)
-
-		notDeleted, err := getSSOSettingsCountByDeleted(sqlStore, false)
-		require.NoError(t, err)
 		require.EqualValues(t, len(providers)-1, notDeleted)
 	})
 
@@ -194,19 +266,16 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 		providers := []string{"github", "google", "okta"}
 		invalidProvider := "azuread"
 
-		err := populateSSOSettings(sqlStore, false, providers...)
+		err := populateSSOSettings(sqlStore, nil, false, providers...)
 		require.NoError(t, err)
 
 		err = ssoSettingsStore.Delete(context.Background(), invalidProvider)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ssosettings.ErrNotFound)
 
-		deleted, err := getSSOSettingsCountByDeleted(sqlStore, true)
+		deleted, notDeleted, err := getSSOSettingsCountByDeleted(sqlStore)
 		require.NoError(t, err)
 		require.EqualValues(t, 0, deleted)
-
-		notDeleted, err := getSSOSettingsCountByDeleted(sqlStore, false)
-		require.NoError(t, err)
 		require.EqualValues(t, len(providers), notDeleted)
 	})
 
@@ -215,16 +284,17 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 
 		providers := []string{"azuread", "github", "google"}
 
-		err := populateSSOSettings(sqlStore, true, providers...)
+		err := populateSSOSettings(sqlStore, nil, true, providers...)
 		require.NoError(t, err)
 
 		err = ssoSettingsStore.Delete(context.Background(), providers[0])
 		require.Error(t, err)
 		require.ErrorIs(t, err, ssosettings.ErrNotFound)
 
-		deleted, err := getSSOSettingsCountByDeleted(sqlStore, true)
+		deleted, notDeleted, err := getSSOSettingsCountByDeleted(sqlStore)
 		require.NoError(t, err)
 		require.EqualValues(t, len(providers), deleted)
+		require.EqualValues(t, 0, notDeleted)
 	})
 
 	t.Run("delete one record if more valid sso settings are available for a provider", func(t *testing.T) {
@@ -233,20 +303,17 @@ func TestIntegrationDeleteSSOSettings(t *testing.T) {
 		provider := "azuread"
 
 		// insert sso for the same provider 2 times in the database
-		err := populateSSOSettings(sqlStore, false, provider)
+		err := populateSSOSettings(sqlStore, nil, false, provider)
 		require.NoError(t, err)
-		err = populateSSOSettings(sqlStore, false, provider)
+		err = populateSSOSettings(sqlStore, nil, false, provider)
 		require.NoError(t, err)
 
 		err = ssoSettingsStore.Delete(context.Background(), provider)
 		require.NoError(t, err)
 
-		deleted, err := getSSOSettingsCountByDeleted(sqlStore, true)
+		deleted, notDeleted, err := getSSOSettingsCountByDeleted(sqlStore)
 		require.NoError(t, err)
 		require.EqualValues(t, 1, deleted)
-
-		notDeleted, err := getSSOSettingsCountByDeleted(sqlStore, false)
-		require.NoError(t, err)
 		require.EqualValues(t, 1, notDeleted)
 	})
 }
@@ -260,12 +327,13 @@ func insertSSOSetting(ssoSettingsStore ssosettings.Store, provider string, setti
 	return ssoSettingsStore.Upsert(context.Background(), provider, settings)
 }
 
-func populateSSOSettings(sqlStore *sqlstore.SQLStore, deleted bool, providers ...string) error {
+func populateSSOSettings(sqlStore *sqlstore.SQLStore, settings map[string]interface{}, deleted bool, providers ...string) error {
 	return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		for _, provider := range providers {
 			_, err := sess.Insert(&models.SSOSetting{
 				ID:        uuid.New().String(),
 				Provider:  provider,
+				Settings:  settings,
 				Created:   time.Now().UTC(),
 				IsDeleted: deleted,
 			})
@@ -277,14 +345,27 @@ func populateSSOSettings(sqlStore *sqlstore.SQLStore, deleted bool, providers ..
 	})
 }
 
-func getSSOSettingsCountByDeleted(sqlStore *sqlstore.SQLStore, deleted bool) (int64, error) {
-	var count int64
-	var err error
-
+func getSSOSettingsCountByDeleted(sqlStore *sqlstore.SQLStore) (deleted, notDeleted int64, err error) {
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		count, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(deleted)).Count()
+		deleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(true)).Count()
+		if err != nil {
+			return err
+		}
+		notDeleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(false)).Count()
 		return err
 	})
 
-	return count, err
+	return
+}
+
+func getSSOSettingsByProvider(sqlStore *sqlstore.SQLStore, provider string, deleted bool) (*models.SSOSetting, error) {
+	var model models.SSOSetting
+	var err error
+
+	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err = sess.Table("sso_setting").Where("provider = ? AND is_deleted = ?", provider, sqlStore.GetDialect().BooleanStr(deleted)).Get(&model)
+		return err
+	})
+
+	return &model, err
 }
