@@ -111,7 +111,7 @@ export class BigValue extends PureComponent<Props> {
         <div className={className} style={panelStyles} title={tooltip}>
           <div style={valueAndTitleContainerStyles}>
             {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
-            <div style={valueContainerStyles}>
+            <div style={percentChange ? valueContainerStyles : undefined}>
               <FormattedValueDisplay value={textValues} style={valueStyles} />
               {percentChange && (
                 <div style={percentChangeStyles}>
