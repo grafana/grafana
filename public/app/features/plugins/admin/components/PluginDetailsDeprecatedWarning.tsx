@@ -14,12 +14,21 @@ export function PluginDetailsDeprecatedWarning(props: Props): React.ReactElement
   const { className, plugin } = props;
   const [dismissed, setDismissed] = useState(false);
   const isWarningVisible = plugin.isDeprecated && !dismissed;
-  let deprecationMessage = `This ${plugin.type} plugin is deprecated and has been removed from the catalog. No further updates will be made to the
-  plugin.`;
 
   return isWarningVisible ? (
     <Alert severity="warning" title="Deprecated" className={className} onRemove={() => setDismissed(true)}>
-      <p>{deprecationMessage}</p>
+      <p>
+        This {plugin.type} plugin is{' '}
+        <a
+          className="external-link"
+          href="https://grafana.com/legal/plugin-deprecation/"
+          rel="noreferrer"
+          target="_blank"
+        >
+          deprecated
+        </a>{' '}
+        and has been removed from the catalog.
+      </p>
 
       {/* Additional contextual deprecation message supporting markdown */}
       {plugin.details?.statusContext && (

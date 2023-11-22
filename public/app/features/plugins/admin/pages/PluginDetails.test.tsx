@@ -744,34 +744,28 @@ describe('Plugin details page', () => {
     });
 
     it('should display a deprecation warning if the plugin is deprecated', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { findByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: true,
       });
 
-      await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).toBeInTheDocument()
-      );
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
     });
 
     it('should not display a deprecation warning in the plugin is not deprecated', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { queryByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: false,
       });
 
-      await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and has been removed from the catalog/i)).not.toBeInTheDocument()
-      );
+      await waitFor(() => expect(queryByRole('link', { name: 'deprecated' })).not.toBeInTheDocument());
     });
 
     it('should display a custom deprecation message if the plugin has it set', async () => {
-      const defaultMessage =
-        'This app plugin is deprecated and has been removed from the catalog. No further updates will be made to the plugin.';
       const statusContext = 'A detailed explanation of why this plugin is deprecated.';
-      const { findByText } = renderPluginDetails({
+      const { findByText, findByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: true,
@@ -781,13 +775,11 @@ describe('Plugin details page', () => {
         },
       });
 
-      expect(await findByText(defaultMessage)).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
       expect(await findByText(statusContext)).toBeInTheDocument();
     });
 
     it('should be possible to render markdown inside a custom deprecation message', async () => {
-      const defaultMessage =
-        'This app plugin is deprecated and has been removed from the catalog. No further updates will be made to the plugin.';
       const statusContext =
         '**This is a custom deprecation message.** [Link 1](https://grafana.com) <a href="https://grafana.com" target="_blank">Link 2</a>';
       const { findByText, findByRole } = renderPluginDetails({
@@ -800,7 +792,7 @@ describe('Plugin details page', () => {
         },
       });
 
-      expect(await findByText(defaultMessage)).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
       expect(await findByText('This is a custom deprecation message.')).toBeInTheDocument();
       expect(await findByRole('link', { name: 'Link 1' })).toBeInTheDocument();
       expect(await findByRole('link', { name: 'Link 2' })).toBeInTheDocument();
