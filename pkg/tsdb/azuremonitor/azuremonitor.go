@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -50,11 +51,11 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, f
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return s.queryMux.QueryData(ctx, req)
+	return s.queryMux.QueryData(azusercontext.WithUserFromQueryReq(ctx, req), req)
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return s.resourceHandler.CallResource(ctx, req, sender)
+	return s.resourceHandler.CallResource(azusercontext.WithUserFromResourceReq(ctx, req), req, sender)
 }
 
 type Service struct {
@@ -408,6 +409,7 @@ func parseSubscriptions(res *http.Response) ([]string, error) {
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ctx = azusercontext.WithUserFromHealthCheckReq(ctx, req)
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return &backend.CheckHealthResult{
