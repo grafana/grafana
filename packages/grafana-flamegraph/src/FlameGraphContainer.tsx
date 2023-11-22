@@ -138,6 +138,7 @@ const FlameGraphContainer = ({
     return null;
   }
 
+  console.log('flamegraph container log');
   return (
     // We add the theme context to bridge the gap if this is rendered in non grafana environment where the context
     // isn't already provided.
