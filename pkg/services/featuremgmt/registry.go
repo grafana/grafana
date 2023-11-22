@@ -359,10 +359,12 @@ var (
 			AllowSelfServe: falsePtr,
 		},
 		{
-			Name:        "clientTokenRotation",
-			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
-			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
+			Name:           "clientTokenRotation",
+			Description:    "Replaces the current in-request token rotation so that the client initiates the rotation",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true",
+			Owner:          identityAccessTeam,
+			AllowSelfServe: falsePtr,
 		},
 		{
 			Name:           "prometheusDataplane",
@@ -717,13 +719,11 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:           "dashgpt",
-			Description:    "Enable AI powered features in dashboards",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          grafanaDashboardsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: truePtr,
+			Name:         "dashgpt",
+			Description:  "Enable AI powered features in dashboards",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:            "reportingRetries",
@@ -732,15 +732,6 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaSharingSquad,
 			RequiresRestart: true,
-		},
-		{
-			Name:           "newBrowseDashboards",
-			Description:    "New browse/manage dashboards UI",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaFrontendPlatformSquad,
-			FrontendOnly:   true,
-			Expression:     "true", // on by default
-			AllowSelfServe: truePtr,
 		},
 		{
 			Name:        "sseGroupByDatasource",
@@ -877,13 +868,6 @@ var (
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:         "navAdminSubsections",
-			Description:  "Splits the administration section of the nav tree into subsections",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:            "recoveryThreshold",

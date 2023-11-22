@@ -81,9 +81,7 @@
     "manage-folder-nav": {
       "alert-rules": "Åľęřŧ řūľęş",
       "dashboards": "Đäşĥþőäřđş",
-      "panels": "Päŉęľş",
-      "permissions": "Pęřmįşşįőŉş",
-      "settings": "Ŝęŧŧįŉģş"
+      "panels": "Päŉęľş"
     },
     "new-folder-form": {
       "cancel-label": "Cäŉčęľ",
@@ -937,7 +935,8 @@
     },
     "megamenu": {
       "close": "Cľőşę męŉū",
-      "dock": "Đőčĸ męŉū"
+      "dock": "Đőčĸ męŉū",
+      "undock": "Ůŉđőčĸ męŉū"
     },
     "toolbar": {
       "close-menu": "Cľőşę męŉū",
@@ -1085,15 +1084,6 @@
       "new-dashboard": "Ńęŵ đäşĥþőäřđ",
       "new-folder": "Ńęŵ ƒőľđęř"
     },
-    "folder-view": {
-      "go-to-folder": "Ğő ŧő ƒőľđęř",
-      "select-folder": "Ŝęľęčŧ ƒőľđęř"
-    },
-    "result-kind": {
-      "dashboard": "Đäşĥþőäřđ",
-      "folder": "Főľđęř",
-      "panel": "Päŉęľ"
-    },
     "results-table": {
       "datasource-header": "Đäŧä şőūřčę",
       "location-header": "Ŀőčäŧįőŉ",
@@ -1106,12 +1096,6 @@
     "search-input": {
       "include-panels-placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş, ƒőľđęřş, äŉđ päŉęľş",
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ ƒőľđęřş"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
-      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
     }
   },
   "share-modal": {

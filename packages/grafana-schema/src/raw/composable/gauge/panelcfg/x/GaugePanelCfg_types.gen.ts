@@ -18,11 +18,13 @@ export interface Options extends common.SingleStatBaseOptions {
   minVizWidth: number;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
+  sizing: common.BarGaugeSizing;
 }
 
 export const defaultOptions: Partial<Options> = {
-  minVizHeight: 75,
-  minVizWidth: 75,
+  minVizHeight: 200,
+  minVizWidth: 200,
   showThresholdLabels: false,
   showThresholdMarkers: true,
+  sizing: common.BarGaugeSizing.Auto,
 };

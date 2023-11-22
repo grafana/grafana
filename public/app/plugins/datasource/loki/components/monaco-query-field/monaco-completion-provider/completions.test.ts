@@ -1,3 +1,4 @@
+import { dateTime } from '@grafana/data';
 import { Monaco, monacoTypes } from '@grafana/ui/src';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
@@ -30,6 +31,15 @@ const history = [
     },
   },
 ];
+
+const mockTimeRange = {
+  from: dateTime(1546372800000),
+  to: dateTime(1546380000000),
+  raw: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+  },
+};
 
 const labelNames = ['place', 'source'];
 const labelValues = ['moon', 'luna', 'server\\1'];
@@ -195,9 +205,13 @@ describe('getCompletions', () => {
   beforeEach(() => {
     datasource = createLokiDatasource();
     languageProvider = new LokiLanguageProvider(datasource);
-    completionProvider = new CompletionDataProvider(languageProvider, {
-      current: history,
-    });
+    completionProvider = new CompletionDataProvider(
+      languageProvider,
+      {
+        current: history,
+      },
+      mockTimeRange
+    );
 
     jest.spyOn(completionProvider, 'getLabelNames').mockResolvedValue(labelNames);
     jest.spyOn(completionProvider, 'getLabelValues').mockResolvedValue(labelValues);
@@ -433,9 +447,13 @@ describe('getAfterSelectorCompletions', () => {
   beforeEach(() => {
     datasource = createLokiDatasource();
     languageProvider = new LokiLanguageProvider(datasource);
-    completionProvider = new CompletionDataProvider(languageProvider, {
-      current: history,
-    });
+    completionProvider = new CompletionDataProvider(
+      languageProvider,
+      {
+        current: history,
+      },
+      mockTimeRange
+    );
 
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys: ['abc', 'def'],
@@ -524,9 +542,13 @@ describe('IN_LOGFMT completions', () => {
   beforeEach(() => {
     datasource = createLokiDatasource();
     languageProvider = new LokiLanguageProvider(datasource);
-    completionProvider = new CompletionDataProvider(languageProvider, {
-      current: history,
-    });
+    completionProvider = new CompletionDataProvider(
+      languageProvider,
+      {
+        current: history,
+      },
+      mockTimeRange
+    );
 
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys: ['label1', 'label2'],
