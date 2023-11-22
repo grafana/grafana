@@ -1,33 +1,33 @@
 import { reportInteraction } from '@grafana/runtime';
-
+export const shareAnalyticsEventNames: {
+  [key: string]: string;
+} = {
+  dashboardsToolbarActionsClicked: 'dashboards_toolbar_actions_clicked',
+};
 export function trackToolbarFavoritesClick() {
-  reportInteraction('dashboards_toolbar_favorites_clicked', { item: 'favorites' });
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'favorites' });
 }
-
 export function trackToolbarSettingsClick() {
-  reportInteraction('dashboards_toolbar_settings_clicked', { item: 'settings' });
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'settings' });
 }
-
 export function trackToolbarRefreshClick() {
-  reportInteraction('dashboards_toolbar_refresh_clicked', { item: 'refresh' });
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'refresh' });
 }
-
 export function trackToolbarTimePickerClick() {
-  reportInteraction('dashboards_toolbar_time_picker_clicked', { item: 'time_picker' });
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'time_picker' });
 }
-
 export function trackToolbarZoomClick() {
-  reportInteraction('dashboards_toolbar_zoom_out_time_range_clicked', { item: 'zoom_out_time_range' });
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'zoom_out_time_range' });
 }
 
 export function trackToolbarShareClick() {
-  reportInteraction('dashboards_toolbar_share_clicked', { item: 'share' });
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'share' });
 }
 
 export function trackToolbarSaveClick() {
-  reportInteraction('dashboards_toolbar_save_clicked', { item: 'save' });
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'save' });
 }
 
 export function trackToolbarAddClick() {
-  reportInteraction('dashboards_toolbar_add_clicked', { item: 'add' });
+  reportInteraction(shareAnalyticsEventNames.dashboardsToolbarActionsClicked, { item: 'add' });
 }
