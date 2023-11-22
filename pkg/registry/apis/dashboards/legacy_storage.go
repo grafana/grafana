@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"errors"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -112,9 +113,9 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	// The resource needs both
+	// Check if it is a provisioned resource
 	provisioningData, err := s.builder.provisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, info.OrgID, name)
-	if err != nil {
+	if err != nil && !errors.Is(err, dashboardssvc.ErrProvisionedDashboardNotFound) {
 		return nil, err
 	}
 	//if provisioningData != nil {
