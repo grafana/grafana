@@ -232,6 +232,9 @@ func makeTmpUser(ctx context.Context, service Service, cache userCache,
 		tmpUser.UserID = id
 	case identity.NamespaceAPIKey:
 		tmpUser.ApiKeyID = id
+		if tmpUser.OrgID != targetOrgID {
+			return nil, errors.New("API key does not belong to target org")
+		}
 	case identity.NamespaceServiceAccount:
 		tmpUser.UserID = id
 		tmpUser.IsServiceAccount = true
@@ -273,10 +276,6 @@ func makeTmpUser(ctx context.Context, service Service, cache userCache,
 			return nil, err
 		}
 
-		// guard against nil map
-		if tmpUser.Permissions == nil {
-			tmpUser.Permissions = make(map[int64]map[string][]string)
-		}
 		tmpUser.Permissions[targetOrgID] = GroupScopesByAction(permissions)
 	}
 

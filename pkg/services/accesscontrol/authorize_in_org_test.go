@@ -120,6 +120,19 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			expectedStatus:  http.StatusForbidden,
 		},
 		{
+			name: "should return 403 early when api key org ID doesn't match",
+			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
+				return 2, nil
+			},
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl:   ac,
+			userCache:       &usertest.FakeUserService{},
+			acService:       &actest.FakeService{},
+			ctxSignedInUser: &user.SignedInUser{ApiKeyID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			teamService:     &teamtest.FakeService{},
+			expectedStatus:  http.StatusForbidden,
+		},
+		{
 			name: "should fetch user permissions when they are empty",
 			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
 				return 1, nil
