@@ -35,7 +35,7 @@ describe('MySQL datasource', () => {
   });
 
   it('code editor autocomplete should handle table name escaping/quoting', () => {
-    cy.get("label[for^='option-code']").should('be.visible').click();
+    cy.get('[data-testid="radio-button"]').contains('label', 'Code').siblings('input').click();
     cy.get('textarea').type('S{downArrow}{enter}');
     cy.wait('@tables');
     cy.get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');

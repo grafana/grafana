@@ -78,7 +78,7 @@ describe('Loki query builder', () => {
     cy.contains(finalQuery).should('be.visible');
 
     // Change to code editor
-    cy.contains('label', 'Code').click();
+    cy.get('[data-testid="radio-button"]').contains('label', 'Code').siblings('input').click();
     // We need to test this manually because the final query is split into separate DOM elements using cy.contains(finalQuery).should('be.visible'); does not detect the query.
     cy.contains('rate').should('be.visible');
     cy.contains('instance1|instance2').should('be.visible');

@@ -12,7 +12,7 @@ describe('Query editor', () => {
     cy.contains('gdev-prometheus').scrollIntoView().should('be.visible').click();
     const queryText = `rate(http_requests_total{job="grafana"}[5m])`;
 
-    cy.contains('label', 'Code').click();
+    cy.get('[data-testid="radio-button"]').contains('label', 'Code').siblings('input').click();
 
     // we need to wait for the query-field being lazy-loaded, in two steps:
     // it is a two-step process:
