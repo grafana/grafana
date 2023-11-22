@@ -102,11 +102,11 @@ export const RegressionTransformerEditor = ({
           options={modelTypeOptions}
         ></Select>
       </InlineField>
-      <InlineField labelWidth={LABEL_WIDTH} label="Resolution">
+      <InlineField labelWidth={LABEL_WIDTH} label="Predicted points" tooltip={'Number of X,Y points to predict'}>
         <NumberInput
-          value={options.resolution ?? DEFAULTS.resolution}
+          value={options.predictionCount ?? DEFAULTS.predictionCount}
           onChange={(v) => {
-            onChange({ ...options, resolution: v });
+            onChange({ ...options, predictionCount: v });
           }}
         ></NumberInput>
       </InlineField>

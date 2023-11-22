@@ -21,10 +21,10 @@ export interface RegressionTransformerOptions {
   degree?: number;
   xFieldName?: string;
   yFieldName?: string;
-  resolution?: number;
+  predictionCount?: number;
 }
 
-export const DEFAULTS = { resolution: 100, modelType: ModelType.linear, degree: 2 };
+export const DEFAULTS = { predictionCount: 100, modelType: ModelType.linear, degree: 2 };
 
 export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTransformerOptions> = {
   id: DataTransformerID.regression,
@@ -33,7 +33,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
     source.pipe(map((data) => RegressionTransformer.transformer(options, ctx)(data))),
   transformer: (options, ctx) => {
     return (frames: DataFrame[]) => {
-      const { resolution, modelType, degree } = { ...DEFAULTS, ...options };
+      const { predictionCount, modelType, degree } = { ...DEFAULTS, ...options };
       if (frames.length === 0) {
         return frames;
       }
@@ -60,22 +60,31 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
         return frames;
       }
 
-      // If x is a time field we normalize the time to the start of the timeseries data
-      const xFieldIsTime = xField.type === FieldType.time;
+      let xMin = xField.values[0];
+      let xMax = xField.values[0];
+      for (let i = 1; i < xField.values.length; i++) {
+        if (xField.values[i] < xMin) {
+          xMin = xField.values[i];
+        }
+        if (xField.values[i] > xMax) {
+          xMax = xField.values[i];
+        }
+      }
 
-      const lowest = Math.min(...xField.values);
-      const highest = Math.max(...xField.values);
+      const resolution = (xMax - xMin) / predictionCount;
 
-      const xToRes = (highest - lowest) / resolution;
+      // These are the X values for which we should predict Y
+      const predictionPoints = [...[...Array(predictionCount - 1).keys()].map((_, i) => i * resolution + xMin), xMax];
 
-      const points = [...[...Array(resolution).keys()].map((_, i) => i * xToRes + lowest), highest];
+      // If X is a time field we normalize the time to the start of the timeseries data
+      const normalizationSubtrahend = xField.type === FieldType.time ? xMin : 0;
 
       const yValues = [];
       const xValues = [];
 
       for (let i = 0; i < xField.values.length; i++) {
         if (yField.values[i] !== null) {
-          xValues.push(xField.values[i] - (xFieldIsTime ? lowest : 0));
+          xValues.push(xField.values[i] - normalizationSubtrahend);
           yValues.push(yField.values[i]);
         }
       }
@@ -94,13 +103,13 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
 
       const newFrame: DataFrame = {
         name: `${modelType} regression`,
-        length: points.length,
+        length: predictionPoints.length,
         fields: [
-          { name: xField.name, type: xField.type, values: points, config: {} },
+          { name: xField.name, type: xField.type, values: predictionPoints, config: {} },
           {
             name: `${yField.name} predicted`,
             type: yField.type,
-            values: points.map((x) => result.predict(x - (xFieldIsTime ? lowest : 0))),
+            values: predictionPoints.map((x) => result.predict(x - normalizationSubtrahend)),
             config: {},
           },
         ],
