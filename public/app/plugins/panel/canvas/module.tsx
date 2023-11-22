@@ -28,7 +28,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     path: 'displayMiniMap',
     name: 'Mini Map',
     description: 'Display mini map during zoom',
-    defaultValue: true,
+    defaultValue: false,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
   });
 };
