@@ -1052,6 +1052,11 @@
       "table": "Table",
       "select-table-placeholder": "Select table",
       "loading-tables-placeholder": "Loading tables"
+    },
+    "sql-select-row": {
+      "column": "Column",
+      "aggregation": "Aggregation",
+      "alias": "Alias"
     }
   },
   "query-operation": {
