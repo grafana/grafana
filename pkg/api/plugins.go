@@ -513,7 +513,7 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 	}
 
 	// No registration => Early return
-	if jsonData.ExternalServiceRegistration == nil || len(jsonData.ExternalServiceRegistration.Permissions) == 0 {
+	if jsonData == nil || jsonData.ExternalServiceRegistration == nil || len(jsonData.ExternalServiceRegistration.Permissions) == 0 {
 		return
 	}
 

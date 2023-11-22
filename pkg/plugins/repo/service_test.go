@@ -42,7 +42,7 @@ func TestGetPluginArchive(t *testing.T) {
 			sha:      "69f698961b6ea651211a187874434821c4727cc22de022e3a7059116d21c75b1",
 			apiOpSys: "any",
 			apiUrl:   "https://github.com/grafana/grafana/tree/main/public/app/plugins/test",
-			err:      &ErrCorePlugin{},
+			err:      ErrCorePluginBase,
 		},
 		{
 			name:   "Decoupled core plugin",

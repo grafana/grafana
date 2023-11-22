@@ -83,6 +83,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 			hs.pluginInstaller = NewFakePluginInstaller()
 			hs.pluginFileStore = &fakes.FakePluginFileStore{}
+			hs.pluginRepo = &fakes.FakePluginRepo{}
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
