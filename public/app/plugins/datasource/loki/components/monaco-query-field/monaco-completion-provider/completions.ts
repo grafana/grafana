@@ -332,7 +332,7 @@ export async function getAfterSelectorCompletions(
       type: 'LABEL_NAME',
       label: `${key} (detected)`,
       insertText: `${prefix}${key}`,
-      documentation: `"${key}" was suggested based on the content of your log lines for the label filter expression.`,
+      documentation: `"${key}" was suggested based on structured metadata attached to your loglines.`,
     });
   });
 
