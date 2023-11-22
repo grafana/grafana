@@ -715,6 +715,8 @@ interface RunLoadMoreLogsQueriesOptions {
 export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQueriesOptions>(
   'explore/runQueries',
   async ({ exploreId, absoluteRange }, { dispatch, getState }) => {
+    dispatch(cancelQueries(exploreId));
+
     const correlations$ = getCorrelations(exploreId);
     const {
       datasourceInstance,
@@ -779,6 +781,8 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       scopedVars
     );
 
+    dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
+
     newQuerySource = combineLatest([
       runRequest(datasourceInstance, transaction.request),
       correlations$,
@@ -809,7 +813,11 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       },
       error(error) {
         dispatch(notifyApp(createErrorNotification('Query processing error', error)));
+        dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
         console.error(error);
+      },
+      complete() {
+        dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
       },
     });
   }
