@@ -60,6 +60,10 @@ export function UserProfileEditPage({
   changeUserOrg,
   updateUserProfile,
 }: Props) {
+  /**
+   * TODO: a nice thing to have would be the ability to read the active tab initial state from a URL
+   * query param. This would allow users to link to a specific tab in the user profile page.
+   */
   const [activeTab, setActiveTab] = useState<string>(CORE_SETTINGS_TAB);
 
   useMount(() => initUserProfilePage());
