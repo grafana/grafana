@@ -16,6 +16,9 @@ export type SSOProvider = {
     enabled: boolean;
     name: string;
     type: string;
+
+    // Legacy fields
+    configPath?: string;
   };
 };
 

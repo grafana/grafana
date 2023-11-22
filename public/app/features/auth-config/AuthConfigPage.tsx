@@ -10,7 +10,7 @@ import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
 
-import { getRegisteredAuthProviders } from '.';
+import { getRegisteredAuthProviders } from './index';
 
 interface OwnProps {}
 
@@ -49,7 +49,10 @@ export const AuthConfigPageUnconnected = ({
 
   const providerList = availableProviders.length
     ? [
-        ...availableProviders.map((p) => ({ provider: p.id, settings: { ...providerStatuses[p.id], type: p.type } })),
+        ...availableProviders.map((p) => ({
+          provider: p.id,
+          settings: { ...providerStatuses[p.id], configPath: p.configPath, type: p.type },
+        })),
         ...providers,
       ]
     : providers;
@@ -79,6 +82,7 @@ export const AuthConfigPageUnconnected = ({
                 displayName={provider}
                 enabled={settings.enabled}
                 onClick={() => onProviderCardClick(provider)}
+                configPath={settings.configPath}
               />
             ))}
           </Grid>
