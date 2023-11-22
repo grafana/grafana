@@ -309,11 +309,20 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderTransformsPicker() {
-    const { transformations, search, showPicker } = this.state;
+    let { showPicker } = this.state;
+    const { transformations, search } = this.state;
     const { transformationsRedesign } = config.featureToggles;
     const noTransforms = !transformations?.length;
+    const hasTransforms = transformations.length > 0;
     let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+
+    // In the case we're not on the transformation
+    // redesign and there are no transformations
+    // then we show the picker in that case
+    if (!transformationsRedesign && noTransforms) {
+      showPicker = true;
+    }
 
     if (this.state.selectedFilter !== VIEW_ALL_VALUE) {
       xforms = xforms.filter(
@@ -359,14 +368,13 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       );
     }
 
-    let picker = null;
-    let deleteAll = null;
-
     // If we're in the transformation redesign
     // we have the add transformation add the
     // delete all control
+    let picker = null;
+    let deleteAll = null;
     if (transformationsRedesign) {
-      picker =
+      picker = (
         <TransformationPickerNg
           noTransforms={noTransforms}
           search={search}
@@ -379,10 +387,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           data={this.state.data}
           selectedFilter={this.state.selectedFilter}
           showIllustrations={this.state.showIllustrations}
-        />;
+        />
+      );
 
-
-      deleteAll = 
+      deleteAll = (
         <>
           <Button icon="times" variant="secondary" onClick={() => this.setState({ showRemoveAllModal: true })}>
             Delete all transformations
@@ -395,11 +403,12 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             onConfirm={() => this.onTransformationRemoveAll()}
             onDismiss={() => this.setState({ showRemoveAllModal: false })}
           />
-        </>;
+        </>
+      );
     }
     // Otherwise we use the old picker
     else {
-      picker = 
+      picker = (
         <TransformationPicker
           noTransforms={noTransforms}
           search={search}
@@ -408,13 +417,14 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           onSearchChange={this.onSearchChange}
           onSearchKeyDown={this.onSearchKeyDown}
           onTransformationAdd={this.onTransformationAdd}
-        />;
+        />
+      );
     }
 
-    // Compose actions, if we're in the 
+    // Compose actions, if we're in the
     // redesign a "Delete All Transformations"
     // button (with confirm modal) is added
-    const actions = 
+    const actions = (
       <ButtonGroup>
         <Button
           icon="plus"
@@ -426,13 +436,21 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         >
           Add another transformation
         </Button>
-        { deleteAll }
-      </ButtonGroup>;
+        {deleteAll}
+      </ButtonGroup>
+    );
 
     return (
       <>
         {showPicker && picker}
-        { !noTransforms && actions }
+        {
+          // If the transformation redesign is enabled
+          // and there are transforms then show actions
+          (transformationsRedesign && hasTransforms && actions) ||
+            // If it's not enabled only show actions when there are
+            // transformations and the (old) picker isn't being shown
+            (!transformationsRedesign && !showPicker && hasTransforms && actions)
+        }
       </>
     );
   }
