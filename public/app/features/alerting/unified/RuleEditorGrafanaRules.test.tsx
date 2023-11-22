@@ -16,7 +16,7 @@ import { searchFolders } from '../../../../app/features/manage-dashboards/state/
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
+import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -150,20 +150,6 @@ describe('RuleEditor grafana managed rules', () => {
         },
       ],
     });
-    // mocks.api.fetchRulerRules.mockResolvedValue({
-    //   'Folder A': [
-    //     {
-    //       name: 'group1',
-    //       rules: [],
-    //     },
-    //   ],
-    //   namespace2: [
-    //     {
-    //       name: 'group2',
-    //       rules: [],
-    //     },
-    //   ],
-    // });
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
@@ -196,7 +182,7 @@ describe('RuleEditor grafana managed rules', () => {
 
     await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
 
-    const folderInput = ui.inputs.folder.get();
+    const folderInput = await ui.inputs.folder.find();
     await clickSelectOption(folderInput, 'Folder A');
     const groupInput = await ui.inputs.group.find();
     await userEvent.click(byRole('combobox').get(groupInput));

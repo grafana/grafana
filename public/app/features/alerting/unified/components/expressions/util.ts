@@ -40,7 +40,11 @@ const formatLabels = (labels: Labels): string => {
     .join(', ');
 };
 
-const formatFolderName = (namespace: CombinedRuleNamespace): string => {
+/**
+ * After https://github.com/grafana/grafana/pull/74600, Grafana rule names will be returned from the API as a combination of the folder name and parent UID separated by /.
+ * For this reason, we need to format this namespace , removing the folder uid and the / separator.
+ */
+const decodeGrafanaNamespace = (namespace: CombinedRuleNamespace): string => {
   const nameSpaceName = namespace.name;
 
   if (isCloudRulesSource(namespace.rulesSource)) {
@@ -56,4 +60,4 @@ const isEmptySeries = (series: DataFrame[]): boolean => {
   return isEmpty;
 };
 
-export { getSeriesName, getSeriesValue, getSeriesLabels, formatLabels, formatFolderName, isEmptySeries };
+export { decodeGrafanaNamespace, formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries };
