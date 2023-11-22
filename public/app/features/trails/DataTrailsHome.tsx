@@ -2,14 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  SceneComponentProps,
-  sceneGraph,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-} from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2, Stack } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 
@@ -19,9 +12,7 @@ import { DataTrailsApp } from './DataTrailsApp';
 import { getTrailStore } from './TrailStore';
 import { newMetricsTrail } from './utils';
 
-export interface DataTrailsHomeState extends SceneObjectState {
-  bookmarks: Array<SceneObjectRef<DataTrail>>;
-}
+export interface DataTrailsHomeState extends SceneObjectState {}
 
 export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   public constructor(state: DataTrailsHomeState) {
@@ -44,7 +35,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {
-    const { bookmarks } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -79,9 +69,11 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           <div className={styles.column}>
             <Text variant="h4">Bookmarks</Text>
             <div className={styles.trailList}>
-              {bookmarks.map((trail, index) => (
-                <DataTrailCard key={index} trail={trail.resolve()} onSelect={model.onSelectTrail} />
-              ))}
+              {getTrailStore()
+                .getBookmarkedTrails()
+                .map((trail, index) => (
+                  <DataTrailCard key={index} trail={trail.resolve()} onSelect={model.onSelectTrail} />
+                ))}
             </div>
           </div>
         </Stack>

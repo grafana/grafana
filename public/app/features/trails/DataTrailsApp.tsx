@@ -85,9 +85,7 @@ export function getDataTrailsApp() {
   if (!dataTrailsApp) {
     dataTrailsApp = new DataTrailsApp({
       trail: newMetricsTrail(),
-      home: new DataTrailsHome({
-        bookmarks: [],
-      }),
+      home: new DataTrailsHome({}),
     });
   }
 

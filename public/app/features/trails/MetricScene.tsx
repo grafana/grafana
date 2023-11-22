@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
   SceneObjectState,
@@ -12,13 +12,14 @@ import {
   PanelBuilders,
   sceneGraph,
 } from '@grafana/scenes';
-import { ToolbarButton, Box, Stack } from '@grafana/ui';
+import { ToolbarButton, Box, Stack, Icon } from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
 import { buildBreakdownActionScene } from './BreakdownScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { SelectMetricAction } from './SelectMetricAction';
+import { getTrailStore } from './TrailStore';
 import {
   ActionViewDefinition,
   getVariablesWithMetricConstant,
@@ -104,7 +105,17 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
     const trail = getTrailFor(model);
+    const [isBookmarked, setBookmarked] = useState(getTrailStore().isBookmarked(trail));
     const { actionView } = metricScene.useState();
+
+    const onBookmarkTrail = () => {
+      if (isBookmarked) {
+        getTrailStore().removeBookmark(trail);
+      } else {
+        getTrailStore().addBookmark(trail);
+      }
+      setBookmarked(!isBookmarked);
+    };
 
     return (
       <Box paddingY={1}>
@@ -120,7 +131,18 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
           ))}
           <ToolbarButton variant={'canvas'}>Add to dashboard</ToolbarButton>
           <ToolbarButton variant={'canvas'} icon="compass" tooltip="Open in explore (todo)" disabled />
-          <ToolbarButton variant={'canvas'} icon="star" tooltip="Bookmark (todo)" disabled />
+          <ToolbarButton
+            variant={'canvas'}
+            icon={
+              isBookmarked ? (
+                <Icon name={'favorite'} type={'mono'} size={'lg'} />
+              ) : (
+                <Icon name={'star'} type={'default'} size={'lg'} />
+              )
+            }
+            tooltip={isBookmarked ? 'Remove bookmark' : ' Bookmark'}
+            onClick={onBookmarkTrail}
+          />
           <ToolbarButton variant={'canvas'} icon="share-alt" tooltip="Copy url (todo)" disabled />
           {trail.state.embedded && (
             <ToolbarButton variant={'canvas'} onClick={model.onOpenTrail}>
