@@ -45,9 +45,12 @@ export function SimplifiedRouting() {
 
   const allAlertManagersByPermission = getAlertManagerDataSourcesByPermission('notification');
 
-  const alertManagersDataSources = allAlertManagersByPermission.availableInternalDataSources.concat(
-    allAlertManagersByPermission.availableExternalDataSources
-  );
+  // We decided to only show internal alert manager for now. Once we want to show external alert managers we can use this code
+  // const alertManagersDataSources = allAlertManagersByPermission.availableInternalDataSources.concat(
+  //   allAlertManagersByPermission.availableExternalDataSources
+  // );
+
+  const alertManagersDataSources = allAlertManagersByPermission.availableInternalDataSources;
 
   const alertManagersDataSourcesWithConfigAPI = alertManagersDataSources.filter((am) => am.hasConfigurationAPI);
 
