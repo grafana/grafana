@@ -103,7 +103,7 @@ function toUrlParams(a: any, encodeAsAngularJS = true) {
 }
 
 /**
- * Converts an object into a URL-encoded query string.
+ * Converts params into a URL-encoded query string.
  *
  * @param params data to serialize
  * @returns A URL-encoded string representing the provided data.
