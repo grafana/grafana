@@ -553,6 +553,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+    const numberOfLogVolumes = logsVolumeData?.data?.length ?? 1;
+    console.log('numberOfLogVolumes', numberOfLogVolumes);
+    console.log('logsVolumeData', logsVolumeData);
 
     return (
       <>
@@ -573,7 +576,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           collapsible
           collapsed={!logsVolumeEnabled}
           onToggleCollapse={this.onToggleLogsVolumeCollapse}
-          height={210} // define height to prevent the page jumping when interacting with elements that modify the query below the logs volume panel
+          height={150 * (numberOfLogVolumes > 0 ? numberOfLogVolumes : 1) + 60} // define height to prevent the page jumping when interacting with elements that modify the query below the logs volume panel
           width={width + 16} // Why can't we define width as undefined to use 100%?
         >
           {(w, h) => (
