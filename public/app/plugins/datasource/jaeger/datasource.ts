@@ -47,7 +47,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
   }
 
-  async metadataRequest(url: string, params?: Record<string, string | number | boolean>) {
+  async metadataRequest(url: string, params?: Record<string, unknown>) {
     const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
     return res.data.data;
   }
@@ -232,7 +232,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
 
   private _request(
     apiUrl: string,
-    data?: Record<string, string | number | boolean>,
+    data?: Record<string, unknown>,
     options?: Partial<BackendSrvRequest>
   ): Observable<Record<string, any>> {
     const params = data ? urlUtil.serializeParams(data) : '';

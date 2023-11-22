@@ -316,18 +316,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
         const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
         const searchQuery = this.buildSearchQuery(query, timeRange);
-        // Params can't have undefined values that are possible in SearchQueryParams
-        const params: Record<string, string | number> = {};
-        for (const key in searchQuery) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const value = searchQuery[key as keyof SearchQueryParams];
-          if (value !== undefined) {
-            params[key] = value;
-          }
-        }
-
         subQueries.push(
-          this._request('/api/search', params).pipe(
+          this._request('/api/search', searchQuery).pipe(
             map((response) => {
               return {
                 data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
@@ -698,7 +688,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   private _request(
     apiUrl: string,
-    data?: Record<string, string | number>,
+    data?: unknown,
     options?: Partial<BackendSrvRequest>
   ): Observable<Record<string, any>> {
     const params = data ? urlUtil.serializeParams(data) : '';
