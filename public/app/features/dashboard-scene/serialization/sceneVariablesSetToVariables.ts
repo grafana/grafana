@@ -9,7 +9,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
-      description: variable.state.description,
+      description: variable.state.description ?? undefined,
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: variable.state.hide || VariableHide.dontHide,
       type: variable.state.type,
@@ -95,6 +95,16 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         auto: variable.state.autoEnabled,
         auto_min: variable.state.autoMinInterval,
         auto_count: variable.state.autoStepCount,
+      });
+    } else if (sceneUtils.isTextBoxVariable(variable)) {
+      variables.push({
+        ...commonProperties,
+        current: {
+          text: variable.state.value,
+          value: variable.state.value,
+        },
+        query: variable.state.value,
+        hide: VariableHide.hideVariable,
       });
     } else {
       throw new Error('Unsupported variable type');
