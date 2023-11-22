@@ -50,7 +50,3 @@ export class MetricSelectedEvent extends BusEventWithPayload<string> {
 export class OpenEmbeddedTrailEvent extends BusEventBase {
   public static type = 'open-embedded-trail-event';
 }
-
-export class NewStepTrailEvent extends BusEventBase {
-  public static type = 'new-step-trail-event';
-}
