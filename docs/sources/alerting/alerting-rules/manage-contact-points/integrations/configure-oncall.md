@@ -7,7 +7,7 @@ keywords:
   - oncall
   - integration
 aliases:
-  - ./integrations/configure-oncall/ # /docs/grafana/latest/alerting/alerting-rules/manage-contact-points/configure-oncall/
+  - ../configure-oncall/ # /docs/grafana/latest/alerting/alerting-rules/manage-contact-points/configure-oncall/
 labels:
   products:
     - cloud
