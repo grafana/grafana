@@ -28,7 +28,9 @@ You can create and manage recording rules for an external Grafana Mimir or Loki 
 Recording rules are executed as instant queries. Evaluations take place at regular intervals according to the group evaluation interval, with a default of `1m`. Each group's evaluation interval can be modified, however cannot be less than the `min_interval` configured within Grafana.
 {{% /admonition %}}
 
-> **Note:** [min_interval][configure-grafana] sets the minimum interval to enforce between rule evaluations. The default value is 10s which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiples of the scheduler interval (10s). Higher values can help with resource management as fewer evaluations are scheduled over time. This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
+{{% admonition type="note" %}}
+[min_interval][configure-grafana] sets the minimum interval to enforce between rule evaluations. The default value is `10s`, which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiples of the scheduler interval (`10s`). Higher values can help with resource management as fewer evaluations are scheduled over time. This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
+{{% /admonition %}}
 
 ## Before you begin
 
