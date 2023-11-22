@@ -75,7 +75,7 @@ func ErrChecksumMismatch(archiveURL string) error {
 	return ErrChecksumMismatchBase.Errorf("expected SHA256 checksum does not match the downloaded archive (%s) - please contact security@grafana.com", archiveURL)
 }
 
-var ErrCorePluginBase = errutil.NewBase(errutil.StatusConflict, "plugin.corePluginInstall",
+var ErrCorePluginBase = errutil.NewBase(errutil.StatusForbidden, "plugin.forbiddenCorePluginInstall",
 	errutil.WithPublicMessage("core plugins cannot be installed separately"))
 
 func ErrCorePlugin(pluginID string) error {
