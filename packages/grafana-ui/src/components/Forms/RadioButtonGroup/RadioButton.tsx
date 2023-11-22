@@ -60,7 +60,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
       />
     );
     return description ? (
-      <div className={styles.radioOption}>
+      <div className={styles.radioOption} data-testid="radio-button">
         <Tooltip content={description} placement="bottom">
           {inputRadioButton}
         </Tooltip>
@@ -69,7 +69,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
         </label>
       </div>
     ) : (
-      <div className={styles.radioOption}>
+      <div className={styles.radioOption} data-testid="radio-button">
         {inputRadioButton}
         <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
           {children}
