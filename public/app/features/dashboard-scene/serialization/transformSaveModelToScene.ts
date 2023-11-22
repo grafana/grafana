@@ -25,6 +25,7 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   AdHocFilterSet,
+  TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -335,6 +336,14 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     });
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
+      ...commonProperties,
+      description: variable.description,
+      value: variable.query,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+  } else if (variable.type === 'textbox') {
+    return new TextBoxVariable({
       ...commonProperties,
       description: variable.description,
       value: variable.query,
