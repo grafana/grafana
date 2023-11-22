@@ -13,6 +13,7 @@ import {
   outerJoinDataFrames,
   TimeZone,
   VizOrientation,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
@@ -493,18 +494,9 @@ export function prepareBarChartDisplayValues(
   let legendFields: Field[] = fields;
   if (options.stacking === StackingMode.Percent) {
     legendFields = fields.map((field) => {
-      let alignedFrameField: Field;
-
-      // if displayNameFromDS is set, use that to align the legend fields, otherwise use the displayName
-      if (field.config.displayNameFromDS) {
-        alignedFrameField = frame.fields.find(
-          (frameField) => frameField.config.displayNameFromDS === field.config.displayNameFromDS
-        )!;
-      } else {
-        alignedFrameField = frame.fields.find(
-          (frameField) => frameField.state?.displayName === field.state?.displayName
-        )!;
-      }
+      const alignedFrameField = frame.fields.find(
+        (f) => getFieldDisplayName(f, frame) === getFieldDisplayName(field, frame)
+      )!;
 
       const copy = {
         ...field,
