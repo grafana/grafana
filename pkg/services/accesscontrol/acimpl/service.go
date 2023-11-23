@@ -35,7 +35,7 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-var SharedWithMeFolderPermission = accesscontrol.Permission{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersPrefix + folder.SharedFolderUID}
+var SharedWithMeFolderPermission = accesscontrol.Permission{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersPrefix + folder.SharedWithMeFolderUID}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {

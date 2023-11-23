@@ -115,7 +115,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID != nil && *cmd.UID == folder.SharedFolderUID {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID != nil && *cmd.UID == folder.SharedWithMeFolderUID {
 		return folder.SharedWithMeFolder.WithURL(), nil
 	}
 
@@ -189,7 +189,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID == folder.SharedFolderUID {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID == folder.SharedWithMeFolderUID {
 		return s.GetSharedWithMe(ctx, cmd)
 	}
 

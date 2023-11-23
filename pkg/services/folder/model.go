@@ -18,10 +18,10 @@ var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errut
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 
 const (
-	GeneralFolderUID     = "general"
-	RootFolderUID        = ""
-	MaxNestedFolderDepth = 4
-	SharedFolderUID      = "sharedwithme"
+	GeneralFolderUID      = "general"
+	RootFolderUID         = ""
+	MaxNestedFolderDepth  = 4
+	SharedWithMeFolderUID = "sharedwithme"
 )
 
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
@@ -52,7 +52,7 @@ var GeneralFolder = Folder{ID: 0, Title: "General"}
 var SharedWithMeFolder = Folder{
 	Title:       "Shared with me",
 	Description: "Dashboards and folders shared with me",
-	UID:         SharedFolderUID,
+	UID:         SharedWithMeFolderUID,
 	ParentUID:   GeneralFolderUID,
 	ID:          -1,
 }

@@ -13,6 +13,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -156,6 +157,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
+		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
