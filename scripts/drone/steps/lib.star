@@ -971,7 +971,6 @@ def remote_alertmanager_integration_tests_steps():
 
     environment = {
         "AM_TENANT_ID": "test",
-        "AM_PASSWORD": "test",
         "AM_URL": "http://mimir_backend:8080",
     }
 

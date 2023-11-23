@@ -980,7 +980,6 @@ steps:
   - wire-install
   - wait-for-remote-alertmanager
   environment:
-    AM_PASSWORD: test
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   image: golang:1.21.3-alpine
@@ -2331,7 +2330,6 @@ steps:
   - wire-install
   - wait-for-remote-alertmanager
   environment:
-    AM_PASSWORD: test
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   image: golang:1.21.3-alpine
@@ -3994,7 +3992,6 @@ steps:
   - wire-install
   - wait-for-remote-alertmanager
   environment:
-    AM_PASSWORD: test
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   image: golang:1.21.3-alpine
@@ -4685,6 +4682,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d9813a22ff4c27f10390121d7df90ed3359381c2f28bf2cd64b8fa6af167664a
+hmac: 0e9f67184e414d3afbda81c86dfa58b3c2cf7c1a668be5313c851ff5f42de44d
 
 ...
