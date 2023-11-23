@@ -752,20 +752,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/DateTimePickers/TimeRangeInput.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/CalendarHeader.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerCalendar.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerFooter.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimeRangeContent.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
-    ],
     "packages/grafana-ui/src/components/Drawer/Drawer.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
