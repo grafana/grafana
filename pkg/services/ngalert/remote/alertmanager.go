@@ -361,8 +361,6 @@ func (am *Alertmanager) compareRemoteConfig(ctx context.Context, config *models.
 	}
 
 	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) == md5.Sum([]byte(config.AlertmanagerConfiguration))
-
-	return false
 }
 
 // compareRemoteState gets the remote Alertmanager state and compares it to the existing state.
@@ -375,6 +373,4 @@ func (am *Alertmanager) compareRemoteState(ctx context.Context, state string) bo
 	}
 
 	return rs.State == state
-
-	return false
 }
