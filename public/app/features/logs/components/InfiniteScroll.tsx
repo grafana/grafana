@@ -24,10 +24,11 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
       return;
     }
 
-    function handleScroll() {
-      if (!scrollElement || !loadMoreLogs || !rows.length) {
+    function handleScroll(e: Event) {
+      if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
         return;
       }
+      e.stopImmediatePropagation();
       setLastScroll(scrollElement.scrollTop);
       const scrollDirection = shouldLoadMore(scrollElement, lastScroll);
       if (scrollDirection === ScrollDirection.NoScroll) {
@@ -37,7 +38,6 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
       } else {
         scrollBottom();
       }
-      scrollElement?.removeEventListener('scroll', handleScroll);
     }
 
     function scrollTop() {
@@ -59,9 +59,11 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
     }
 
     scrollElement.addEventListener('scroll', handleScroll);
+    scrollElement.addEventListener('wheel', handleScroll);
 
     return () => {
       scrollElement.removeEventListener('scroll', handleScroll);
+      scrollElement.removeEventListener('wheel', handleScroll);
     };
   }, [loadMoreLogs, range, rows, scrollElement, sortOrder, loading, lastScroll]);
 
@@ -90,11 +92,7 @@ enum ScrollDirection {
 }
 function shouldLoadMore(element: HTMLDivElement, lastScroll: number): ScrollDirection {
   const delta = element.scrollTop - lastScroll;
-  if (delta === 0) {
-    return ScrollDirection.NoScroll;
-  }
-
-  const scrollDirection = delta < 0 ? ScrollDirection.Top : ScrollDirection.Bottom;
+  const scrollDirection = delta <= 0 ? ScrollDirection.Top : ScrollDirection.Bottom;
   const diff = scrollDirection === ScrollDirection.Top ? 
     element.scrollTop :
     element.scrollHeight - element.scrollTop - element.clientHeight;
