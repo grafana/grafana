@@ -14,15 +14,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// Client contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
-type Client interface {
-	GetGrafanaAlertmanagerConfiguration()
-	SetGrafanaAlertmanagerConfiguration()
-	DeleteGrafanaAlertmanagerConfiguration()
+// MimirClient contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
+type MimirClient interface {
+	GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error)
+	CreateGrafanaAlertmanagerState(ctx context.Context, s string) error
+	DeleteGrafanaAlertmanagerState(ctx context.Context) error
 
-	GetGrafanaAlertmanagerState()
-	SetGrafanaAlertmanagerState()
-	DeleteGrafanaAlertmanagerState()
+	GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error)
+	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration string, hash string, id int64, at int64, d bool) error
+	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 }
 
 type Mimir struct {
@@ -109,20 +109,20 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 	logger := mc.logger.New("url", r.URL.String(), "method", r.Method)
 	resp, err := mc.client.Do(r)
 	if err != nil {
-		msg := "unable to fulfill request to the Mimir API"
+		msg := "Unable to fulfill request to the Mimir API"
 		logger.Error(msg, "err", err)
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Error("error closing HTTP body", "err", err)
+			logger.Error("Error closing HTTP body", "err", err)
 		}
 	}()
 
 	logger = logger.New("status", resp.StatusCode)
 	ct := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(ct, "application/json") {
-		msg := "response content-type is not application/json"
+		msg := "Response content-type is not application/json"
 		logger.Error(msg, "content-type", ct)
 		return nil, fmt.Errorf("%s: %s", msg, ct)
 	}
@@ -133,28 +133,28 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		msg := "failed to read the request body"
+		msg := "Failed to read the request body"
 		logger.Error(msg, "err", err)
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 
 	if resp.StatusCode/100 != 2 {
 		errResponse := &errorResponse{}
-		jsonErr := json.Unmarshal(body, errResponse)
+		err = json.Unmarshal(body, errResponse)
 
-		if jsonErr == nil && errResponse.Error() != "" {
-			msg := "error response from the Mimir API"
+		if err == nil && errResponse.Error() != "" {
+			msg := "Error response from the Mimir API"
 			logger.Error(msg, "err", errResponse)
 			return nil, fmt.Errorf("%s: %w", msg, errResponse)
 		}
 
-		msg := "failed to decode non-2xx JSON response"
-		logger.Error(msg, "err", jsonErr)
-		return nil, fmt.Errorf("%s: %w", msg, jsonErr)
+		msg := "Failed to decode non-2xx JSON response"
+		logger.Error(msg, "err", err)
+		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 
 	if err = json.Unmarshal(body, out); err != nil {
-		msg := "failed to decode 2xx JSON response"
+		msg := "Failed to decode 2xx JSON response"
 		logger.Error(msg, "err", err)
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
@@ -170,7 +170,7 @@ func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader, 
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			mc.logger.Error("error closing HTTP body", "err", err)
+			mc.logger.Error("Error closing HTTP body", "err", err)
 		}
 	}()
 
