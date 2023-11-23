@@ -137,13 +137,11 @@ export class ShareLink extends PureComponent<Props, State> {
         {panel && config.rendererAvailable && (
           <>
             {isDashboardSaved && (
-              <div className="gf-form">
-                <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
-                  <Icon name="camera" />
-                  &nbsp;
-                  <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>
-                </a>
-              </div>
+              <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
+                <Icon name="camera" />
+                &nbsp;
+                <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>
+              </a>
             )}
 
             {!isDashboardSaved && (
