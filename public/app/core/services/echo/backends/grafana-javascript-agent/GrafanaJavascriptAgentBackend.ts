@@ -69,8 +69,10 @@ export class GrafanaJavascriptAgentBackend
       ],
       sessionTracking: {
         enabled: true,
-        // session are sticky across page loads and browsing contexts
         persistent: true,
+      },
+      batching: {
+        sendTimeout: 1000,
       },
     };
     this.faroInstance = initializeFaro(grafanaJavaScriptAgentOptions);
