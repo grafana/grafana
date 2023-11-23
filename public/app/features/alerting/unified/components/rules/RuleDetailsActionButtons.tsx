@@ -64,11 +64,11 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
     ? rulesSource
     : getAlertmanagerByUid(rulesSource.jsonData.alertmanagerUid)?.name;
 
-  const [duplicateSupported, duplicateAllowed] = useAlertRuleAbility(rule, AlertRuleAction.DuplicateAlertRule);
-  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.SilenceAlertRule);
-  const [exploreSupported, exploreAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ExploreRule);
-  const [deleteSupported, deleteAllowed] = useAlertRuleAbility(rule, AlertRuleAction.DeleteAlertRule);
-  const [editSupported, editAllowed] = useAlertRuleAbility(rule, AlertRuleAction.UpdateAlertRule);
+  const [duplicateSupported, duplicateAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Duplicate);
+  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
+  const [exploreSupported, exploreAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Explore);
+  const [deleteSupported, deleteAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
+  const [editSupported, editAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
 
   const buttons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];

@@ -15,9 +15,11 @@ import { useIsRuleEditable } from './useIsRuleEditable';
 
 /**
  * These hooks will determine if
- *  1. the action is supported in the current alertmanager or data source context
+ *  1. the action is supported in the current context (alertmanager, alert rule or general context)
  *  2. user is allowed to perform actions based on their set of permissions / assigned role
  */
+
+// this enum lists all of the available actions we can perform within the context of an alertmanager
 export enum AlertmanagerAction {
   // configuration
   ViewExternalConfiguration = 'view-external-configuration',
@@ -56,16 +58,19 @@ export enum AlertmanagerAction {
   DeleteMuteTiming = 'delete-mute-timing',
 }
 
+// this enum lists all of the available actions we can take on a single alert rule
 export enum AlertRuleAction {
-  CreateAlertRule = 'create-alert-rule',
-  DuplicateAlertRule = 'duplicate-alert-rule',
-  ViewAlertRule = 'view-alert-rule',
-  UpdateAlertRule = 'update-alert-rule',
-  DeleteAlertRule = 'delete-alert-rule',
-  ExploreRule = 'explore-alert-rule',
-  SilenceAlertRule = 'SilenceAlertRule',
+  Duplicate = 'duplicate-alert-rule',
+  View = 'view-alert-rule',
+  Update = 'update-alert-rule',
+  Delete = 'delete-alert-rule',
+  Explore = 'explore-alert-rule',
+  Silence = 'silence-alert-rule',
+  ModifyExport = 'modify-export-rule',
 }
 
+// this enum lists all of the actions we can perform within alerting in general, not linked to a specific
+// alert source, rule or alertmanager
 export enum AlertingAction {
   // internal (Grafana managed)
   CreateAlertRule = 'create-alert-rule',
@@ -73,6 +78,7 @@ export enum AlertingAction {
   UpdateAlertRule = 'update-alert-rule',
   DeleteAlertRule = 'delete-alert-rule',
   ExportGrafanaManagedRules = 'export-grafana-managed-rules',
+
   // external (any compatible alerting data source)
   CreateExternalAlertRule = 'create-external-alert-rule',
   ViewExternalAlertRule = 'view-external-alert-rule',
@@ -80,10 +86,11 @@ export enum AlertingAction {
   DeleteExternalAlertRule = 'delete-external-alert-rule',
 }
 
-const AlwaysSupported = true; // this just makes it easier to understand the code
+// these just makes it easier to read the code :)
+const AlwaysSupported = true;
 const NotSupported = false;
-export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction;
 
+export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction;
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
@@ -91,17 +98,18 @@ export type Abilities<T extends Action> = Record<T, Ability>;
  * This one will check for alerting abilities that don't apply to any particular alert source or alert rule
  */
 export const useAlertingAbilities = (): Abilities<AlertingAction> => {
+  const canExportGMARules =
+    ctx.hasPermission(AccessControlAction.AlertingProvisioningRead) ||
+    ctx.hasPermission(AccessControlAction.AlertingProvisioningReadSecrets);
+
   return {
     // internal (Grafana managed)
     [AlertingAction.CreateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleCreate)],
     [AlertingAction.ViewAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleRead)],
     [AlertingAction.UpdateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleUpdate)],
     [AlertingAction.DeleteAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleDelete)],
-    [AlertingAction.ExportGrafanaManagedRules]: [
-      AlwaysSupported,
-      ctx.hasPermission(AccessControlAction.AlertingProvisioningRead) ||
-        ctx.hasPermission(AccessControlAction.AlertingProvisioningReadSecrets),
-    ],
+    [AlertingAction.ExportGrafanaManagedRules]: [AlwaysSupported, canExportGMARules],
+
     // external
     [AlertingAction.CreateExternalAlertRule]: [
       AlwaysSupported,
@@ -138,6 +146,14 @@ export function useAlertRuleAbility(rule: CombinedRule, action: AlertRuleAction)
   }, [abilities, action]);
 }
 
+export function useAlertRuleAbilities(rule: CombinedRule, actions: AlertRuleAction[]): Ability[] {
+  const abilities = useAllAlertRuleAbilities(rule);
+
+  return useMemo(() => {
+    return actions.map((action) => abilities[action]);
+  }, [abilities, actions]);
+}
+
 export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRuleAction> {
   const rulesSource = rule.namespace.rulesSource;
   const rulesSourceName = typeof rulesSource === 'string' ? rulesSource : rulesSource.name;
@@ -149,21 +165,29 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const immutableRule = isProvisioned || isFederated;
 
   // TODO refactor this hook maybe
-  const { isEditable, isRemovable, loading } = useIsRuleEditable(rulesSourceName, rule.rulerRule);
-  const MaybeSupported = immutableRule ? NotSupported : loading ? NotSupported : AlwaysSupported; // while we gather info, pretend it's not supported
+  const {
+    isEditable,
+    isRemovable,
+    isRulerAvailable = false,
+    loading,
+  } = useIsRuleEditable(rulesSourceName, rule.rulerRule);
+  const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+
+  // while we gather info, pretend it's not supported
+  const MaybeSupported = loading ? NotSupported : isRulerAvailable;
+  const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
   const rulesPermissions = getRulesPermissions(rulesSourceName);
   const canSilence = useCanSilence(rulesSource);
 
-  // TODO check if alert source supports actions!
   const abilities: Abilities<AlertRuleAction> = {
-    [AlertRuleAction.CreateAlertRule]: [AlwaysSupported, ctx.hasPermission(rulesPermissions.create)],
-    [AlertRuleAction.DuplicateAlertRule]: [AlwaysSupported, ctx.hasPermission(rulesPermissions.create)],
-    [AlertRuleAction.ViewAlertRule]: [AlwaysSupported, ctx.hasPermission(rulesPermissions.read)],
-    [AlertRuleAction.UpdateAlertRule]: [MaybeSupported, isEditable ?? false],
-    [AlertRuleAction.DeleteAlertRule]: [MaybeSupported, isRemovable ?? false],
-    [AlertRuleAction.ExploreRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.DataSourcesExplore)],
-    [AlertRuleAction.SilenceAlertRule]: canSilence,
+    [AlertRuleAction.Duplicate]: [MaybeSupported, ctx.hasPermission(rulesPermissions.create)],
+    [AlertRuleAction.View]: [AlwaysSupported, ctx.hasPermission(rulesPermissions.read)],
+    [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
+    [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
+    [AlertRuleAction.Explore]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.DataSourcesExplore)],
+    [AlertRuleAction.Silence]: canSilence,
+    [AlertRuleAction.ModifyExport]: [MaybeSupported, exportAllowed],
   };
 
   return abilities;
