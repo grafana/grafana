@@ -118,7 +118,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		}
 	}
 
-	if options.WithSharedFolderPermission {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
 
