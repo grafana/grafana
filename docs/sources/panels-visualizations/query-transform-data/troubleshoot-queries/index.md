@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Troubleshoot queries
-weight: 2000
+weight: 200
 ---
 
 # Troubleshoot queries
