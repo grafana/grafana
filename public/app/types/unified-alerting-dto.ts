@@ -210,7 +210,8 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
   namespace_uid: string;
-  namespace_id: number;
+  /** @deprecated use namespace_uid instead */
+  namespace_id?: number;
   provenance?: string;
 }
 

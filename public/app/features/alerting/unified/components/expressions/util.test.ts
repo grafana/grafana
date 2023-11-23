@@ -1,6 +1,18 @@
 import { DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { getSeriesName, formatLabels, getSeriesValue, isEmptySeries, getSeriesLabels } from './util';
+import { mockDataSource } from '../../mocks';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+
+import {
+  GRAFANA_PARENT_FOLDER_SEPARATOR,
+  decodeGrafanaNamespace,
+  formatLabels,
+  getSeriesLabels,
+  getSeriesName,
+  getSeriesValue,
+  isEmptySeries,
+} from './util';
 
 const EMPTY_FRAME: DataFrame = toDataFrame([]);
 const NAMED_FRAME: DataFrame = {
@@ -31,6 +43,57 @@ describe('formatLabels', () => {
 
   it('should work with multiple labels', () => {
     expect(formatLabels({ foo: 'bar', baz: 'qux' })).toBe('foo=bar, baz=qux');
+  });
+});
+
+describe('decodeGrafanaNamespace', () => {
+  it('should work for Grafana namespaces', () => {
+    const grafanaNamespace: CombinedRuleNamespace = {
+      name: `${GRAFANA_PARENT_FOLDER_SEPARATOR}my_rule_namespace`,
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      groups: [
+        {
+          name: 'group1',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe('my_rule_namespace');
+  });
+
+  it('should not change output for cloud namespaces', () => {
+    const cloudNamespace: CombinedRuleNamespace = {
+      name: `${GRAFANA_PARENT_FOLDER_SEPARATOR}etc/prometheus/rules`,
+      rulesSource: mockDataSource(),
+      groups: [
+        {
+          name: 'Prom group',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+
+    expect(decodeGrafanaNamespace(cloudNamespace)).toBe('/etc/prometheus/rules');
+  });
+
+  it('should work when there is more than one separator', () => {
+    const grafanaNamespace: CombinedRuleNamespace = {
+      name: `${GRAFANA_PARENT_FOLDER_SEPARATOR}my_rule_namespace${GRAFANA_PARENT_FOLDER_SEPARATOR}with${GRAFANA_PARENT_FOLDER_SEPARATOR}slashes`,
+      rulesSource: GRAFANA_RULES_SOURCE_NAME,
+      groups: [
+        {
+          name: 'group1',
+          rules: [],
+          totals: {},
+        },
+      ],
+    };
+    expect(decodeGrafanaNamespace(grafanaNamespace)).toBe(
+      `my_rule_namespace${GRAFANA_PARENT_FOLDER_SEPARATOR}with${GRAFANA_PARENT_FOLDER_SEPARATOR}slashes`
+    );
   });
 });
 
