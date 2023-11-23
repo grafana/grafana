@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { PureComponent, useRef } from 'react';
+import React, { PureComponent, useRef, useCallback } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { IconButton, Spinner, stylesFactory, useStyles2 } from '@grafana/ui';
+import { IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -31,7 +31,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     const checkedStepsPromises: Array<Promise<SetupStep>> = steps.map(async (step: SetupStep) => {
       const checkedCardsPromises = step.cards.map(async (card) => {
         return card.check().then((passed) => {
-          return { ...card, done: false };
+          return { ...card, done: passed };
         });
       });
       const checkedCards = await Promise.all(checkedCardsPromises);
@@ -122,23 +122,24 @@ function scrollElement(element: HTMLElement, scrollBy: number) {
 function StepCarousel({ steps }: { steps: SetupStep[] }) {
   const styles = useStyles2(getStyles);
 
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = React.useState(0);
+  const [{ scrollWidth, offsetWidth, scrollLeft }, setScrollData] = React.useState({
+    scrollWidth: 0,
+    offsetWidth: 0,
+    scrollLeft: 0,
+  });
 
-  const calcScrollProgress = (el: HTMLDivElement) => {
-    const { scrollWidth, offsetWidth, scrollLeft } = el;
-    const scrollableWidth = scrollWidth - offsetWidth;
-    setScrollProgress(scrollLeft / scrollableWidth);
+  const handleScroll = (ev: { currentTarget: HTMLDivElement }) => {
+    const { scrollWidth, offsetWidth, scrollLeft } = ev.currentTarget;
+    setScrollData({ scrollWidth, offsetWidth, scrollLeft });
   };
 
-  React.useEffect(() => {
-    carouselRef.current && calcScrollProgress(carouselRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [carouselRef.current]);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const handleCarouselRef = useCallback((el: HTMLDivElement) => {
+    handleScroll({ currentTarget: el });
+    carouselRef.current = el;
+  }, []);
 
-  const handleScroll = (ev: React.UIEvent<HTMLDivElement>) => {
-    calcScrollProgress(ev.target as HTMLDivElement);
-  };
+  const scrollProgress = scrollLeft / (scrollWidth - offsetWidth);
 
   return (
     <div className={styles.carouselWrapper}>
@@ -161,7 +162,7 @@ function StepCarousel({ steps }: { steps: SetupStep[] }) {
         size="xl"
       />
 
-      <div className={styles.stepCarousel} ref={carouselRef} onScroll={handleScroll}>
+      <div className={styles.stepCarousel} ref={handleCarouselRef} onScroll={handleScroll}>
         {steps.map((step, index) => {
           return (
             <div key={index} className={styles.step}>
@@ -174,7 +175,7 @@ function StepCarousel({ steps }: { steps: SetupStep[] }) {
   );
 }
 
-const getStyles = stylesFactory(() => {
+const getStyles = () => {
   const theme = config.theme2;
 
   const nextPrevSpacing = 1;
@@ -251,4 +252,4 @@ const getStyles = stylesFactory(() => {
       marginRight: theme.spacing(1),
     }),
   };
-});
+};
