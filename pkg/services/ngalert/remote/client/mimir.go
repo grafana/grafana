@@ -83,9 +83,9 @@ func New(cfg *Config) (*Mimir, error) {
 	}, nil
 }
 
-// do executes an HTTP requests against the specified path and method using the specified payload.
+// do execute an HTTP requests against the specified path and method using the specified payload.
 // It returns the HTTP response.
-func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, contentLength int64, out any) (*http.Response, error) {
+func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, out any) (*http.Response, error) {
 	pathURL, err := url.Parse(p)
 	if err != nil {
 		return nil, err
@@ -101,10 +101,6 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 
 	r.Header.Set("Accept", "application/json")
 	r.Header.Set("Content-Type", "application/json")
-
-	if contentLength > 0 {
-		r.ContentLength = contentLength
-	}
 
 	resp, err := mc.client.Do(r)
 	if err != nil {
@@ -160,9 +156,9 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 	return resp, nil
 }
 
-func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader, contentLength int64) error {
+func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader) error {
 	var sr successResponse
-	resp, err := mc.do(ctx, p, method, payload, contentLength, &sr)
+	resp, err := mc.do(ctx, p, method, payload, &sr)
 	if err != nil {
 		return err
 	}

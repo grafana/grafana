@@ -27,7 +27,7 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 	}
 	// nolint:bodyclose
 	// closed within `do`
-	_, err := mc.do(ctx, grafanaAlertmanagerConfigPath, http.MethodGet, nil, -1, &response)
+	_, err := mc.do(ctx, grafanaAlertmanagerConfigPath, http.MethodGet, nil, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -51,9 +51,9 @@ func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, c, hash st
 		return err
 	}
 
-	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodPost, bytes.NewBuffer(payload), int64(len(payload)))
+	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodPost, bytes.NewBuffer(payload))
 }
 
 func (mc *Mimir) DeleteGrafanaAlertmanagerConfig(ctx context.Context) error {
-	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodDelete, nil, -1)
+	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodDelete, nil)
 }
