@@ -107,14 +107,16 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     return (
       <div className={styles.container}>
         <div className={styles.heading}>Trail</div>
-        {steps.map((step, index) => (
-          <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
-            <button
-              className={cx(styles.step, styles.stepTypes[step.type])}
-              onClick={() => trail.goBackToStep(step)}
-            ></button>
-          </Tooltip>
-        ))}
+        <div className={styles.container}>
+          {steps.map((step, index) => (
+            <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
+              <button
+                className={cx(styles.step, styles.stepTypes[step.type])}
+                onClick={() => trail.goBackToStep(step)}
+              ></button>
+            </Tooltip>
+          ))}
+        </div>
       </div>
     );
   };
@@ -146,17 +148,17 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         transform: 'scale(1.1)',
       },
-      '&:after': {
+      '&:before': {
         content: '""',
         position: 'absolute',
         width: 10,
         height: 2,
-        left: 8,
+        left: -10,
         top: 3,
         background: theme.colors.primary.border,
       },
-      '&:last-child': {
-        '&:after': {
+      '&:first-child': {
+        '&:before': {
           display: 'none',
         },
       },
@@ -164,25 +166,25 @@ function getStyles(theme: GrafanaTheme2) {
     stepTypes: {
       start: css({
         background: visTheme.getColorByName('green'),
-        '&:after': {
+        '&:before': {
           background: visTheme.getColorByName('green'),
         },
       }),
       filters: css({
         background: visTheme.getColorByName('purple'),
-        '&:after': {
+        '&:before': {
           background: visTheme.getColorByName('purple'),
         },
       }),
       metric: css({
         background: visTheme.getColorByName('orange'),
-        '&:after': {
+        '&:before': {
           background: visTheme.getColorByName('orange'),
         },
       }),
       time: css({
         background: theme.colors.primary.main,
-        '&:after': {
+        '&:before': {
           background: theme.colors.primary.main,
         },
       }),
