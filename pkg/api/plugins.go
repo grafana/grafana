@@ -521,9 +521,9 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 
 // hasPluginRequestedPermissions logs if the plugin installer does not have the permissions that the plugin requests to have on Grafana.
 func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID, version string) {
-	repoCompatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
+	compatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 
-	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, version, repoCompatOpts)
+	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, version, compatOpts)
 	if err != nil {
 		hs.log.Warn("could not fetch plugin json data", "error", err)
 	}
@@ -535,10 +535,10 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
 	evaluator := evalAllPermissions(jsonData.ExternalServiceRegistration.Permissions)
-	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	if !hs.Cfg.RBACSingleOrganization {
-		// If this is not in a single organization setup, the installer needs to have plugin's permissions across all orgs
-		hasAccess = ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
+	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
+	if hs.Cfg.RBACSingleOrganization {
+		// In a single organization setup, no need for a global check
+		hasAccess = ac.HasAccess(hs.AccessControl, c)
 	}
 
 	// Log a warning if the user does not have the plugin requested permissions
