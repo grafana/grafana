@@ -14,6 +14,7 @@ import {
   dateTime,
   FieldType,
   SupplementaryQueryType,
+  TimeRange,
   ToggleFilterAction,
 } from '@grafana/data';
 import {
@@ -110,6 +111,12 @@ const testLogsResponse: FetchResponse = {
   type: 'default',
   url: '',
   config: {} as unknown as BackendSrvRequest,
+};
+
+const mockTimeRange = {
+  from: dateTime(0),
+  to: dateTime(1),
+  raw: { from: dateTime(0), to: dateTime(1) },
 };
 
 interface AdHocFilter {
@@ -1349,22 +1356,22 @@ describe('LokiDatasource', () => {
     beforeEach(() => {
       ds = createLokiDatasource(templateSrvStub);
       ds.statsMetadataRequest = jest.fn().mockResolvedValue({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
-      ds.interpolateString = jest.fn().mockImplementation((value: string) => value.replace('$__interval', '1m'));
+      ds.interpolateString = jest.fn().mockImplementation((value: string) => value.replace('$__auto', '1m'));
 
       query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
     });
 
     it('uses statsMetadataRequest', async () => {
       query.expr = '{foo="bar"}';
-      const result = await ds.getQueryStats(query);
+      const result = await ds.getQueryStats(query, mockTimeRange);
 
       expect(ds.statsMetadataRequest).toHaveBeenCalled();
       expect(result).toEqual({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
     });
 
     it('supports queries with template variables', async () => {
-      query.expr = 'rate({instance="server\\1"}[$__interval])';
-      const result = await ds.getQueryStats(query);
+      query.expr = 'rate({instance="server\\1"}[$__auto])';
+      const result = await ds.getQueryStats(query, mockTimeRange);
 
       expect(result).toEqual({
         streams: 1,
@@ -1376,7 +1383,7 @@ describe('LokiDatasource', () => {
 
     it('does not call stats if the query is invalid', async () => {
       query.expr = 'rate({label="value"}';
-      const result = await ds.getQueryStats(query);
+      const result = await ds.getQueryStats(query, mockTimeRange);
 
       expect(ds.statsMetadataRequest).not.toHaveBeenCalled();
       expect(result).toBe(undefined);
@@ -1384,7 +1391,7 @@ describe('LokiDatasource', () => {
 
     it('combines the stats of each label matcher', async () => {
       query.expr = 'count_over_time({foo="bar"}[1m]) + count_over_time({test="test"}[1m])';
-      const result = await ds.getQueryStats(query);
+      const result = await ds.getQueryStats(query, mockTimeRange);
 
       expect(ds.statsMetadataRequest).toHaveBeenCalled();
       expect(result).toEqual({ streams: 2, chunks: 2, bytes: 2, entries: 2 });
@@ -1492,6 +1499,10 @@ describe('applyTemplateVariables', () => {
   describe('getStatsTimeRange', () => {
     let query: LokiQuery;
     let datasource: LokiDatasource;
+    const timeRange = {
+      from: 167255280000000, // 01 Jan 2023 06:00:00 GMT
+      to: 167263920000000, //   02 Jan 2023 06:00:00 GMT
+    } as unknown as TimeRange;
 
     beforeEach(() => {
       query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
@@ -1508,7 +1519,7 @@ describe('applyTemplateVariables', () => {
       // in this case (1 day)
       query.expr = '{job="grafana"}';
 
-      expect(datasource.getStatsTimeRange(query, 0)).toEqual({
+      expect(datasource.getStatsTimeRange(query, 0, timeRange)).toEqual({
         start: 1672552800000000000, // 01 Jan 2023 06:00:00 GMT
         end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
       });
@@ -1519,18 +1530,18 @@ describe('applyTemplateVariables', () => {
       query.queryType = LokiQueryType.Instant;
       query.expr = '{job="grafana"}';
 
-      expect(datasource.getStatsTimeRange(query, 0)).toEqual({
+      expect(datasource.getStatsTimeRange(query, 0, timeRange)).toEqual({
         start: undefined,
         end: undefined,
       });
     });
 
-    it('should return the ds picker timerange', () => {
+    it('should return the ds picker time range', () => {
       // metric queries with range type should request ds picker timerange
       // in this case (1 day)
       query.expr = 'rate({job="grafana"}[5m])';
 
-      expect(datasource.getStatsTimeRange(query, 0)).toEqual({
+      expect(datasource.getStatsTimeRange(query, 0, timeRange)).toEqual({
         start: 1672552800000000000, // 01 Jan 2023 06:00:00 GMT
         end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
       });
@@ -1542,7 +1553,7 @@ describe('applyTemplateVariables', () => {
       query.queryType = LokiQueryType.Instant;
       query.expr = 'rate({job="grafana"}[5m])';
 
-      expect(datasource.getStatsTimeRange(query, 0)).toEqual({
+      expect(datasource.getStatsTimeRange(query, 0, timeRange)).toEqual({
         start: 1672638900000000000, // 02 Jan 2023 05:55:00 GMT
         end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
       });
@@ -1560,18 +1571,18 @@ describe('makeStatsRequest', () => {
 
   it('should return null if there is no query', () => {
     query.expr = '';
-    expect(datasource.getStats(query)).resolves.toBe(null);
+    expect(datasource.getStats(query, mockTimeRange)).resolves.toBe(null);
   });
 
   it('should return null if the query is invalid', () => {
     query.expr = '{job="grafana",';
-    expect(datasource.getStats(query)).resolves.toBe(null);
+    expect(datasource.getStats(query, mockTimeRange)).resolves.toBe(null);
   });
 
   it('should return null if the response has no data', () => {
     query.expr = '{job="grafana"}';
     datasource.getQueryStats = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
-    expect(datasource.getStats(query)).resolves.toBe(null);
+    expect(datasource.getStats(query, mockTimeRange)).resolves.toBe(null);
   });
 
   it('should return the stats if the response has data', () => {
@@ -1580,7 +1591,7 @@ describe('makeStatsRequest', () => {
     datasource.getQueryStats = jest
       .fn()
       .mockResolvedValue({ streams: 1, chunks: 12611, bytes: 12913664, entries: 78344 });
-    expect(datasource.getStats(query)).resolves.toEqual({
+    expect(datasource.getStats(query, mockTimeRange)).resolves.toEqual({
       streams: 1,
       chunks: 12611,
       bytes: 12913664,
@@ -1597,7 +1608,7 @@ describe('makeStatsRequest', () => {
     datasource.getQueryStats = jest
       .fn()
       .mockResolvedValue({ streams: 1, chunks: 12611, bytes: 12913664, entries: 78344 });
-    expect(datasource.getStats(query)).resolves.toEqual({
+    expect(datasource.getStats(query, mockTimeRange)).resolves.toEqual({
       streams: 1,
       chunks: 12611,
       bytes: 12913664,
