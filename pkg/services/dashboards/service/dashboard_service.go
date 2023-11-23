@@ -690,10 +690,14 @@ func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) model.HitList {
 	hitList := make([]*model.Hit, 0)
-	hits := make(map[int64]*model.Hit)
+	hits := make(map[string]*model.Hit)
 
 	for _, item := range res {
-		hit, exists := hits[item.ID]
+		key := "dashboard:" + item.UID
+		if item.IsFolder {
+			key = "folder:" + item.UID
+		}
+		hit, exists := hits[key]
 		if !exists {
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 			hit = &model.Hit{
@@ -720,7 +724,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			}
 
 			hitList = append(hitList, hit)
-			hits[item.ID] = hit
+			hits[key] = hit
 		}
 		if len(item.Term) > 0 {
 			hit.Tags = append(hit.Tags, item.Term)

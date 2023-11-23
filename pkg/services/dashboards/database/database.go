@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"xorm.io/xorm"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -974,6 +976,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	sql, params := sb.ToSQL(limit, page)
 
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		start := time.Now()
+		defer func() {
+			d.log.Info("Original search query", "time", time.Since(start), "results", len(res))
+		}()
 		return sess.SQL(sql, params...).Find(&res)
 	})
 
@@ -981,7 +987,134 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		return nil, err
 	}
 
+	// Only use modified search for non-empty search queries, otherwise it's just listing and new query can't help there yet.
+	if query.Title != "" {
+		results, err := d.findDashboards(ctx, query)
+		if err != nil {
+			d.log.Info("new search failed", "error", err)
+		}
+		return results, nil
+	}
 	return res, nil
+}
+
+func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	hits := []struct {
+		OrgID       int64  `xorm:"org_id"`
+		ID          int64  `xorm:"id"`
+		Kind        string `xorm:"kind"`
+		UID         string `xorm:"uid"`
+		Title       string `xorm:"title"`
+		FolderTitle string `xorm:"folder_title"`
+		FolderUID   string `xorm:"folder_uid"`
+	}{}
+
+	// Only handle non-empty search queries
+	if query.Title == "" {
+		return nil, nil
+	}
+	title := "%" + query.Title + "%"
+
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		start := time.Now()
+		defer func() {
+			d.log.Info("Modified search query", "time", time.Since(start), "results", len(hits))
+		}()
+		sql := `
+		SELECT DISTINCT entity.org_id, entity.kind, entity.uid, entity.id, entity.title, f1.uid as folder_uid, f1.title as folder_title FROM (
+			SELECT org_id, "dashboard" as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title LIKE ? AND is_folder = 0
+			UNION ALL
+			SELECT org_id, "folder" as kind, uid, 0, parent_uid, title FROM folder WHERE title LIKE ?
+		) AS entity
+		LEFT JOIN folder f1
+		ON (entity.parent_uid = f1.uid AND entity.org_id = f1.org_id)
+		LEFT JOIN folder f2
+		ON (f1.parent_uid = f2.uid AND f1.org_id = f2.org_id)
+		LEFT JOIN folder f3
+		ON (f2.parent_uid = f3.uid AND f2.org_id = f3.org_id)
+		LEFT JOIN folder f4
+		ON (f3.parent_uid = f4.uid AND f3.org_id = f4.org_id)
+		`
+		params := []any{title, title}
+
+		if !query.SignedInUser.GetIsGrafanaAdmin() {
+			// Get OrgID from query or from user
+			orgID := query.OrgId
+			if orgID == 0 {
+				orgID = query.SignedInUser.GetOrgID()
+			}
+
+			// Get UserID, if possible
+			userID := int64(0)
+			namespaceID, identifier := query.SignedInUser.GetNamespacedID()
+			switch namespaceID {
+			case identity.NamespaceUser, identity.NamespaceServiceAccount:
+				userID, _ = identity.IntIdentifier(namespaceID, identifier)
+			}
+
+			// Get team IDs
+			teams := query.SignedInUser.GetTeams()
+			teamSQL := ""
+			teamIDs := []any{}
+			if len(teams) > 0 {
+				teamSQL = "?" + strings.Repeat(", ?", len(teams)-1)
+				for _, t := range teams {
+					teamIDs = append(teamIDs, t)
+				}
+			}
+
+			role := "Viewer" // TODO: When do we need "Editor"?
+
+			sql = sql + `
+			INNER JOIN permission p ON 
+			p.role_id IN (
+				SELECT ur.role_id FROM user_role AS ur    WHERE ur.user_id = ? AND (ur.org_id = ? OR ur.org_id = 0)
+				UNION
+				SELECT tr.role_id FROM team_role AS tr    WHERE tr.team_id IN (` + teamSQL + `) AND tr.org_id = ?
+				UNION
+				SELECT br.role_id FROM builtin_role AS br WHERE br.role IN (?) AND (br.org_id = ? OR br.org_id = 0)
+			) AND ((
+				p.scope LIKE "folders:uid:%" AND 
+				p.action = "folders:read" AND (
+					substr(scope, 13) = f4.uid OR substr(scope, 13) = f3.uid OR
+					substr(scope, 13) = f2.uid OR substr(scope, 13) = f1.uid OR
+					substr(scope, 13) = entity.uid
+				)
+			) OR (
+				p.scope LIKE "dashboards:uid:%" AND 
+				p.action = "dashboards:read" AND (
+					substr(scope, 16) = entity.uid
+				)
+			))
+			`
+			params = append(params, userID, orgID)
+			params = append(params, teamIDs...)
+			params = append(params, orgID, role, orgID)
+		}
+		// TODO: join with dashboard_tag + filter by tag
+		// TODO: order, limit, page
+		if err := sess.SQL(sql, params...).Find(&hits); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	results := []dashboards.DashboardSearchProjection{}
+	for _, hit := range hits {
+		d.log.Debug("Search hit", "org_id", hit.OrgID, "kind", hit.Kind, "uid", hit.UID, "title", hit.Title, "folder_uid", hit.FolderUID, "folder", hit.FolderTitle)
+		results = append(results, dashboards.DashboardSearchProjection{
+			ID:          hit.ID,
+			UID:         hit.UID,
+			Title:       hit.Title,
+			IsFolder:    hit.Kind == "folder",
+			FolderUID:   hit.FolderUID,
+			FolderTitle: hit.FolderTitle,
+			// TODO
+			//Term     string
+		})
+	}
+
+	return results, err
 }
 
 func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
