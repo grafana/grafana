@@ -1,5 +1,6 @@
 import { of } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
+import { v4 as uuidv4 } from 'uuid';
 
 import { dateTime, LoadingState } from '@grafana/data';
 
@@ -12,6 +13,9 @@ import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryType } from './types';
 
 jest.mock('./tracking');
+jest.mock('uuid', () => ({
+  v4: jest.fn().mockReturnValue('uuid'),
+}));
 
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
@@ -36,6 +40,14 @@ describe('runSplitQuery()', () => {
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Returns a DataQueryResponse with the expected attributes', async () => {
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      expect(response[0].data).toBeDefined();
+      expect(response[0].state).toBe(LoadingState.Done);
+      expect(response[0].key).toBeDefined();
     });
   });
 
@@ -201,6 +213,7 @@ describe('runSplitQuery()', () => {
           {
             data: [],
             state: LoadingState.Done,
+            key: 'uuid',
           },
           [
             {
@@ -233,6 +246,7 @@ describe('runSplitQuery()', () => {
           {
             data: [],
             state: LoadingState.Done,
+            key: 'uuid',
           },
           [
             {
