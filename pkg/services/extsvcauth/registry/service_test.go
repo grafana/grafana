@@ -2,7 +2,6 @@ package registry
 
 import (
 	"context"
-	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,7 +28,6 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		oauthReg:        env.oauthReg,
 		saReg:           env.saReg,
 		extSvcProviders: map[string]extsvcauth.AuthProvider{},
-		lock:            sync.Mutex{},
 	}
 	return &env
 }

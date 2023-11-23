@@ -672,6 +672,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+			Name:         "tracesEmbeddedFlameGraph",
+			Description:  "Enables embedding a flame graph in traces",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
@@ -732,15 +739,6 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaSharingSquad,
 			RequiresRestart: true,
-		},
-		{
-			Name:           "newBrowseDashboards",
-			Description:    "New browse/manage dashboards UI",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaFrontendPlatformSquad,
-			FrontendOnly:   true,
-			Expression:     "true", // on by default
-			AllowSelfServe: truePtr,
 		},
 		{
 			Name:        "sseGroupByDatasource",
