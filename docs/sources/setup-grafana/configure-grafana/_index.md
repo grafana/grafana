@@ -148,6 +148,20 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
 
+## force_migration
+
+{{% admonition type="note" %}}
+This option is deprecated - [See `clean_upgrade` option]({{< relref "#clean_upgrade" >}}) instead.
+{{% /admonition %}}
+
+When you restart Grafana to rollback from Grafana Alerting to legacy alerting, delete any existing Grafana Alerting data, such as alert rules, contact points, and notification policies. Default is `false`.
+
+If `false` or unset, existing Grafana Alerting data is not changed or deleted when rolling back to legacy alerting.
+
+{{% admonition type="note" %}}
+It should be kept false or unset when not needed, as it may cause unintended data loss if left enabled.
+{{% /admonition %}}
+
 <hr />
 
 ## [paths]

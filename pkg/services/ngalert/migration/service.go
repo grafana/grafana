@@ -78,17 +78,19 @@ func newTransition(currentType migrationStore.AlertingType, cfg *setting.Cfg) tr
 		desiredType = migrationStore.UnifiedAlerting
 	}
 	return transition{
-		CurrentType:    currentType,
-		DesiredType:    desiredType,
-		CleanOnUpgrade: cfg.UnifiedAlerting.Upgrade.CleanUpgrade,
+		CurrentType:      currentType,
+		DesiredType:      desiredType,
+		CleanOnDowngrade: cfg.ForceMigration,
+		CleanOnUpgrade:   cfg.UnifiedAlerting.Upgrade.CleanUpgrade,
 	}
 }
 
 // transition represents a migration from one alerting type to another.
 type transition struct {
-	CurrentType    migrationStore.AlertingType
-	DesiredType    migrationStore.AlertingType
-	CleanOnUpgrade bool
+	CurrentType      migrationStore.AlertingType
+	DesiredType      migrationStore.AlertingType
+	CleanOnDowngrade bool
+	CleanOnUpgrade   bool
 }
 
 // isNoChange returns true if the migration is a no-op.
@@ -108,18 +110,20 @@ func (t transition) isDowngrading() bool {
 
 // shouldClean returns true if the migration should delete all unified alerting data.
 func (t transition) shouldClean() bool {
-	return t.isUpgrading() && t.CleanOnUpgrade
+	return t.isDowngrading() && t.CleanOnDowngrade || t.isUpgrading() && t.CleanOnUpgrade
 }
 
 // applyTransition applies the transition to the database.
 // If the transition is a no-op, nothing will be done.
-// If the transition is a downgrade, nothing will be done.
-// If the transition is an upgrade, all orgs will be migrated.
+// If the transition is a downgrade and CleanOnDowngrade is false, nothing will be done.
+// If the transition is a downgrade and CleanOnDowngrade is true, all unified alerting data will be deleted.
+// If the transition is an upgrade and CleanOnUpgrade is false, all orgs will be migrated.
 // If the transition is an upgrade and CleanOnUpgrade is true, all unified alerting data will be deleted and then all orgs will be migrated.
 func (ms *migrationService) applyTransition(ctx context.Context, t transition) error {
 	l := ms.log.New(
 		"CurrentType", t.CurrentType,
 		"DesiredType", t.DesiredType,
+		"CleanOnDowngrade", t.CleanOnDowngrade,
 		"CleanOnUpgrade", t.CleanOnUpgrade,
 	)
 	if t.isNoChange() {

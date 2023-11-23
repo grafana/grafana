@@ -199,9 +199,7 @@ func TestServiceRevert(t *testing.T) {
 		cfg := &setting.Cfg{
 			UnifiedAlerting: setting.UnifiedAlertingSettings{
 				Enabled: pointer(true),
-				Upgrade: setting.UnifiedAlertingUpgradeSettings{
-					CleanUpgrade: true,
-				},
+				Upgrade: setting.UnifiedAlertingUpgradeSettings{},
 			},
 		}
 		service := NewTestMigrationService(t, sqlStore, cfg)
@@ -315,7 +313,7 @@ func TestServiceRevert(t *testing.T) {
 		checkAlertRulesCount(t, x, 1, 1)
 
 		// Add another alert.
-		// Enable UA without force flag.
+		// Enable UA without clean flag.
 		// This run should not remigrate org, new alert is not migrated.
 		_, alertErr := x.Insert(createAlert(t, 1, 1, 2, "alert2", []string{"notifier1"}))
 		require.NoError(t, alertErr)
@@ -325,7 +323,7 @@ func TestServiceRevert(t *testing.T) {
 		checkMigrationStatus(t, ctx, service, 1, true)
 		checkAlertRulesCount(t, x, 1, 1) // Still 1
 
-		// Disable UA with force flag.
+		// Disable UA with clean flag.
 		// This run should not revert UA data.
 		service.cfg.UnifiedAlerting.Enabled = pointer(false)
 		service.cfg.UnifiedAlerting.Upgrade.CleanUpgrade = true
@@ -334,13 +332,25 @@ func TestServiceRevert(t *testing.T) {
 		checkMigrationStatus(t, ctx, service, 1, true)
 		checkAlertRulesCount(t, x, 1, 1) // Still 1
 
-		// Enable UA with force flag.
+		// Enable UA with clean flag.
 		// This run should revert and remigrate org, new alert is migrated.
 		service.cfg.UnifiedAlerting.Enabled = pointer(true)
 		require.NoError(t, service.Run(ctx))
 		checkAlertingType(t, ctx, service, migrationStore.UnifiedAlerting)
 		checkMigrationStatus(t, ctx, service, 1, true)
 		checkAlertRulesCount(t, x, 1, 2) // Now we have 2
+
+		// The following tests ForceMigration which is deprecated and will be removed in v11.
+		service.cfg.UnifiedAlerting.Upgrade.CleanUpgrade = false
+
+		// Disable UA with force flag.
+		// This run should not revert UA data.
+		service.cfg.UnifiedAlerting.Enabled = pointer(false)
+		service.cfg.ForceMigration = true
+		require.NoError(t, service.Run(ctx))
+		checkAlertingType(t, ctx, service, migrationStore.Legacy)
+		checkMigrationStatus(t, ctx, service, 1, false)
+		checkAlertRulesCount(t, x, 1, 0)
 	})
 }
 

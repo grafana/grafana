@@ -72,8 +72,8 @@ func TestServiceStart(t *testing.T) {
 					},
 				},
 			},
-			starting:    migrationStore.UnifiedAlerting,
-			expected:    migrationStore.Legacy,
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
 		},
 		{
 			name: "when unified alerting enabled and migration is already run, then do nothing",
@@ -93,6 +93,28 @@ func TestServiceStart(t *testing.T) {
 				},
 			},
 			starting: migrationStore.Legacy,
+			expected: migrationStore.Legacy,
+		},
+		{
+			name: "when unified alerting disabled, migration is already run and force migration is enabled, then revert migration",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(false),
+				},
+				ForceMigration: true,
+			},
+			starting: migrationStore.UnifiedAlerting,
+			expected: migrationStore.Legacy,
+		},
+		{
+			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration status should set to false",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: pointer(false),
+				},
+				ForceMigration: false,
+			},
+			starting: migrationStore.UnifiedAlerting,
 			expected: migrationStore.Legacy,
 		},
 	}
