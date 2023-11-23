@@ -516,16 +516,13 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
-  validateDashboard(dashboard: DashboardModel) {
-    // We want to send the dashboard as a JSON string (in the JSON body payload) so we can get accurate error line numbers back
-    const dashboardJson = JSON.stringify(dashboard, replaceJsonNulls, 2);
-
-    return this.request<ValidateDashboardResponse>({
-      method: 'POST',
-      url: `/api/dashboards/validate`,
-      data: { dashboard: dashboardJson },
-      showSuccessAlert: false,
-      showErrorAlert: false,
+  validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
+    // support for this function will be implemented in the k8s flavored api-server
+    // hidden by experimental feature flag:
+    //  config.featureToggles.showDashboardValidationWarnings
+    return Promise.resolve({
+      isValid: false,
+      message: 'dashboard validation is supported',
     });
   }
 
