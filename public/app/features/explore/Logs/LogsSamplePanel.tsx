@@ -126,20 +126,13 @@ export function LogsSamplePanel(props: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
-
   return {
-    logsSamplePanel: css`
-      ${scrollableLogsContainer && 'max-height: calc(100vh - 115px);'}
-    `,
     logSamplesButton: css`
       position: absolute;
       top: ${theme.spacing(1)};
       right: ${theme.spacing(1)};
     `,
     logContainer: css`
-      ${scrollableLogsContainer && 'position: relative;'}
-      ${scrollableLogsContainer && 'height: 100%;'}
       overflow: scroll;
     `,
     infoTooltip: css`
