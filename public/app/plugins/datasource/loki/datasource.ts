@@ -41,7 +41,6 @@ import {
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
@@ -83,7 +82,7 @@ import {
   isQueryWithError,
   requestSupportsSplitting,
 } from './queryUtils';
-import { doLokiChannelStream } from './streaming';
+import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
   LokiOptions,
