@@ -3,7 +3,7 @@ import React, { PureComponent, useRef } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Spinner, stylesFactory, useStyles2 } from '@grafana/ui';
+import { IconButton, Spinner, stylesFactory, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -31,7 +31,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     const checkedStepsPromises: Array<Promise<SetupStep>> = steps.map(async (step: SetupStep) => {
       const checkedCardsPromises = step.cards.map(async (card) => {
         return card.check().then((passed) => {
-          return { ...card, done: passed };
+          return { ...card, done: false };
         });
       });
       const checkedCards = await Promise.all(checkedCardsPromises);
@@ -78,6 +78,8 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   render() {
     const { checksDone, steps } = this.state;
     const styles = getStyles();
+
+    // TODO: restore "Remove this panel" link / button
 
     return (
       <div className={styles.container}>
@@ -140,21 +142,23 @@ function StepCarousel({ steps }: { steps: SetupStep[] }) {
 
   return (
     <div className={styles.carouselWrapper}>
-      <Button
+      <IconButton
         className={styles.prevButton}
         variant="secondary"
-        icon="angle-left"
+        name="angle-left"
         tooltip="Previous"
         disabled={scrollProgress === 0}
         onClick={() => carouselRef.current && scrollElement(carouselRef.current, -1)}
+        size="xl"
       />
-      <Button
+      <IconButton
         className={styles.nextButton}
         variant="secondary"
-        icon="angle-right"
+        name="angle-right"
         tooltip="Next"
         disabled={scrollProgress === 1}
         onClick={() => carouselRef.current && scrollElement(carouselRef.current, 1)}
+        size="xl"
       />
 
       <div className={styles.stepCarousel} ref={carouselRef} onScroll={handleScroll}>
@@ -171,9 +175,12 @@ function StepCarousel({ steps }: { steps: SetupStep[] }) {
 }
 
 const getStyles = stylesFactory(() => {
-  const DEV_FLAG_DONT_MERGE_SMUSH = window.location.search.includes('smush');
-
   const theme = config.theme2;
+
+  const nextPrevSpacing = 1;
+  const nextPrevSize = 4; // xl button grid size
+  const nextPrevGutter = nextPrevSize + nextPrevSpacing * 2;
+
   const buttonBase = {
     position: 'absolute',
     top: '50%',
@@ -187,20 +194,20 @@ const getStyles = stylesFactory(() => {
   } as const;
 
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background-size: cover;
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      backgroundSize: 'cover',
+    }),
     carouselWrapper: css({
       position: 'relative',
     }),
     nextButton: css(buttonBase, {
-      right: theme.spacing(1),
+      right: theme.spacing(0.5 + nextPrevSpacing),
     }),
     prevButton: css(buttonBase, {
-      left: theme.spacing(1),
+      left: theme.spacing(0.5 + nextPrevSpacing),
     }),
     stepCarousel: css({
       position: 'relative',
@@ -209,80 +216,39 @@ const getStyles = stylesFactory(() => {
       display: 'flex',
       flexWrap: 'nowrap',
       scrollSnapType: 'x proximity',
-      paddingBottom: theme.spacing(2),
+      padding: theme.spacing(2, 0),
     }),
-    step: css(
-      {
-        padding: theme.spacing(2, 2, 0, 2),
-        scrollSnapAlign: 'start',
+    step: css({
+      scrollSnapAlign: 'start',
+      flexShrink: 0,
+      paddingLeft: theme.spacing(nextPrevGutter),
+
+      display: 'flex',
+      '& > div': {
+        flex: 1,
       },
-      !DEV_FLAG_DONT_MERGE_SMUSH && {
-        flexShrink: 0,
+
+      // Make last step full width so when it scrolls it can snap to the start of the container
+      '&:last-of-type': {
         minWidth: '100%',
-      }
-    ),
-    header: css`
-      label: header;
-      margin-bottom: ${theme.spacing(3)};
-      display: flex;
-      flex-direction: column;
+        // paddingRight: theme.spacing(nextPrevGutter),
+      },
 
-      ${theme.breakpoints.down('lg')} {
-        flex-direction: row;
-      }
-    `,
-    headerLogo: css`
-      height: 58px;
-      padding-right: ${theme.spacing(2)};
-      display: none;
-
-      ${theme.breakpoints.up('md')} {
-        display: block;
-      }
-    `,
-    heading: css`
-      label: heading;
-      margin-right: ${theme.spacing(3)};
-      margin-bottom: ${theme.spacing(3)};
-      flex-grow: 1;
-      display: flex;
-
-      ${theme.breakpoints.up('md')} {
-        margin-bottom: 0;
-      }
-    `,
-    backForwardButtons: css`
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-    `,
-    previous: css`
-      left: 10px;
-
-      ${theme.breakpoints.down('md')} {
-        left: 0;
-      }
-    `,
-    forward: css`
-      right: 10px;
-
-      ${theme.breakpoints.down('md')} {
-        right: 0;
-      }
-    `,
-    dismiss: css`
-      align-self: flex-end;
-      text-decoration: underline;
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    loading: css`
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-    `,
-    loadingText: css`
-      margin-right: ${theme.spacing(1)};
-    `,
+      '&:first-of-type': {},
+    }),
+    dismiss: css({
+      alignSelf: 'flex-end',
+      textDecoration: 'underline',
+      marginBottom: theme.spacing(1),
+    }),
+    loading: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100%',
+    }),
+    loadingText: css({
+      marginRight: theme.spacing(1),
+    }),
   };
 });

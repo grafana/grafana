@@ -31,7 +31,7 @@ export const Step = ({ step }: Props) => {
         <Text>{step.info}</Text>
       </Stack>
 
-      <Stack gap={4} direction="row">
+      <Stack gap={4} direction="row" grow={1}>
         {step.cards.map((card, index) => {
           return <SetupCard key={index} card={card} />;
         })}
