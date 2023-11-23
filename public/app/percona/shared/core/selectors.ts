@@ -31,3 +31,4 @@ export const getAdvisors = (state: StoreState) => state.percona.advisors;
 export const getCategorizedAdvisors = createSelector([getAdvisors], (advisors) =>
   groupAdvisorsIntoCategories(advisors.result || [])
 );
+export const getDumps = (state: StoreState) => state.percona.pmmDumps;

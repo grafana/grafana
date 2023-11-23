@@ -15,6 +15,13 @@ export interface FooterLink {
 export let getFooterLinks = (): FooterLink[] => {
   return [
     {
+      id: 'pmm-dump',
+      text: 'PMM Dump',
+      icon: 'brain',
+      url: '/graph/pmm-dump',
+      target: '_self',
+    },
+    {
       id: 'pmm-logs',
       text: 'PMM Logs',
       icon: 'download-alt',

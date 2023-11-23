@@ -4,6 +4,7 @@ export const availableIconsIndex = {
   github: true,
   gitlab: true,
   okta: true,
+  brain: true,
   anchor: true,
   'angle-double-down': true,
   'angle-double-right': true,

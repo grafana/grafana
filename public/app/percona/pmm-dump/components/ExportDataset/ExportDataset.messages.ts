@@ -1,0 +1,21 @@
+export const Messages = {
+  summary:
+    'Simplify troubleshooting and accelerate issue resolution by securely sharing relevant data, ensuring a smoother support experience.',
+  breadCrumbTitle: 'PMM Export / Export new dataset',
+  title: 'Select data to export',
+  selectServiceNames: 'Service names',
+  allNodes: 'All nodes',
+  selectStart: 'Start time',
+  selectEnd: 'End time',
+  backupName: 'Backup name',
+  createDataset: 'Create dataset',
+  timeRangeValidation: 'Please select a valid time range',
+  date: 'Date',
+  ignoreLoad: 'Ignore load',
+  qan: 'Export QAN',
+  ignoreLoadTooltip: 'Bypass the default resource limit restrictions to export faster.',
+  qanTootltip: 'Include Query Analytics (QAN) metrics alongside core metrics in the export.',
+  allServices: 'All Services',
+  noService: 'No Services available',
+  cancel: 'Cancel',
+};
