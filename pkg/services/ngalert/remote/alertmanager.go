@@ -106,45 +106,42 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 	}, nil
 }
 
-// ApplyConfig is called everytime we've determined we need to apply a configuration to the Alertmanager,
+// ApplyConfig is called everytime we've determined we need to apply an existing configuration to the Alertmanager,
 // including the first time the Alertmanager is started. In the context of a "remote Alertmanager" it's as good of a heuristic,
 // for "a function that gets called when the Alertmanager starts". As a result we do two things:
 // 1. Execute a readiness check to make sure the remote Alertmanager we're about to communicate with is up and ready.
 // 2. Upload the configuration and state we currently hold.
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.ready {
-		am.log.Debug("Alertmanager is already ready")
+		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check")
 		return nil
 	}
 
 	// First, execute a readiness check to make sure the remote Alertmanager is ready.
-	am.log.Debug("start readiness check for remote Alertmanager", "url", am.url)
-	err := am.checkReadiness(ctx)
-	if err != nil {
+	am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
+	if err := am.checkReadiness(ctx); err != nil {
 		am.log.Error("unable to pass the readiness check", "err", err)
 		return err
 	}
-	am.log.Debug("completed readiness check for remote Alertmanager", "url", am.url)
+	am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
 
-	am.log.Debug("start configuration upload to remote Alertmanager", "url", am.url)
-	ok := am.compareRemoteConfig(ctx, config)
-	if !ok {
-		err = am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
+	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
+	if ok := am.compareRemoteConfig(ctx, config); !ok {
+		err := am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
 		if err != nil {
-			am.log.Error("unable to upload the configuration to the remote Alertmanager", "err", err)
+			am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
+		} else {
+			am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 		}
 	}
-	am.log.Debug("completed configuration upload to remote Alertmanager", "url", am.url)
 
-	am.log.Debug("start state upload to remote Alertmanager", "url", am.url)
-	ok = am.compareRemoteState(ctx, "")
-	if !ok {
-		err = am.mimirClient.CreateGrafanaAlertmanagerState(ctx, "")
-		if err != nil {
-			am.log.Error("unable to upload the state to the remote Alertmanager", "err", err)
+	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
+	if ok := am.compareRemoteState(ctx, ""); !ok {
+		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, ""); err != nil {
+			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 		}
 	}
-	am.log.Debug("completed state upload to remote Alertmanager", "url", am.url)
+	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 	// upload the state
 
 	return nil
@@ -359,13 +356,11 @@ func (am *Alertmanager) compareRemoteConfig(ctx context.Context, config *models.
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// If we get an error trying to compare log it and return false so that we try to upload it anyway.
-		am.log.Error("unable to get the remote Alertmanager Configuration for comparison", "err", err)
+		am.log.Error("Unable to get the remote Alertmanager Configuration for comparison", "err", err)
 		return false
 	}
 
-	if md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) == md5.Sum([]byte(config.AlertmanagerConfiguration)) {
-		return true
-	}
+	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) == md5.Sum([]byte(config.AlertmanagerConfiguration))
 
 	return false
 }
@@ -375,13 +370,11 @@ func (am *Alertmanager) compareRemoteState(ctx context.Context, state string) bo
 	rs, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 	if err != nil {
 		// If we get an error trying to compare log it and return false so that we try to upload it anyway.
-		am.log.Error("unable to get the remote Alertmanager state for comparison", "err", err)
+		am.log.Error("Unable to get the remote Alertmanager state for comparison", "err", err)
 		return false
 	}
 
-	if rs.State == state {
-		return true
-	}
+	return rs.State == state
 
 	return false
 }

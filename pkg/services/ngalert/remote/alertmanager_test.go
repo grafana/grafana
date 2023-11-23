@@ -151,7 +151,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	{
 		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
 
-		// First, we need to verify that passed the readiness check.
+		// First, we need to verify that the readiness check passes.
 		require.True(t, am.Ready())
 
 		// Next, we need to verify that Mimir received the configuration.
@@ -166,7 +166,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		// TODO: Check that the state was uploaded.
 	}
 
-	// Calling `ApplyConfig` aagain with a changed configuration yields no effect.
+	// Calling `ApplyConfig` again with a changed configuration yields no effect.
 	{
 		fakeConfig.ID = 30000000000000000
 		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))

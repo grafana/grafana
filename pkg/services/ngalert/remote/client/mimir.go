@@ -83,7 +83,8 @@ func New(cfg *Config) (*Mimir, error) {
 	}, nil
 }
 
-// do execute an HTTP requests against the specified path and method using the specified payload. It returns the HTTP response.
+// do executes an HTTP requests against the specified path and method using the specified payload.
+// It returns the HTTP response.
 func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, contentLength int64, out any) (*http.Response, error) {
 	pathURL, err := url.Parse(p)
 	if err != nil {
