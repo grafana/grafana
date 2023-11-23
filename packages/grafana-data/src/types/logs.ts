@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse } from './datasource';
+import { DataQueryRequest, DataQueryResponse, QueryFixAction } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -298,14 +298,6 @@ export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
     'queryHasFilter' in datasource
   );
 };
-
-export type QueryFixType = 'ADD_FILTER' | 'ADD_FILTER_OUT' | 'ADD_STRING_FILTER' | 'ADD_STRING_FILTER_OUT';
-export interface QueryFixAction {
-  type: QueryFixType | string;
-  query?: string;
-  preventSubmit?: boolean;
-  options?: KeyValue<string>;
-}
 
 /**
  * Data sources that support query modification actions from Log Details (ADD_FILTER, ADD_FILTER_OUT),

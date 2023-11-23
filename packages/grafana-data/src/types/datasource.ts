@@ -8,7 +8,6 @@ import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotatio
 import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { QueryFixAction } from './logs';
 import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
@@ -579,6 +578,14 @@ export interface QueryFix {
   title?: string;
   label: string;
   action?: QueryFixAction;
+}
+
+export type QueryFixType = 'ADD_FILTER' | 'ADD_FILTER_OUT' | 'ADD_STRING_FILTER' | 'ADD_STRING_FILTER_OUT';
+export interface QueryFixAction {
+  type: QueryFixType | string;
+  query?: string;
+  preventSubmit?: boolean;
+  options?: KeyValue<string>;
 }
 
 export interface QueryHint {
