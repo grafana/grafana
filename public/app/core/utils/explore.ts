@@ -28,8 +28,6 @@ import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
 
-import { config } from '../config';
-
 import { getNextRefIdChar } from './query';
 
 export const DEFAULT_UI_STATE = {
