@@ -1236,9 +1236,3 @@ type DashboardVersionResponse struct {
 	// in: body
 	Body *dashver.DashboardVersionMeta `json:"body"`
 }
-
-// swagger:response validateDashboardResponse
-type ValidateDashboardResponse struct {
-	IsValid bool   `json:"isValid"`
-	Message string `json:"message,omitempty"`
-}
