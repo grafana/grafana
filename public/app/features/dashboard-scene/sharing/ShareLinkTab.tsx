@@ -30,6 +30,8 @@ interface ShareOptions {
 }
 
 export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
+  public tabId = 'Link';
+
   static Component = ShareLinkTabRenderer;
 
   constructor(state: Omit<ShareLinkTabState, keyof ShareOptions>) {
