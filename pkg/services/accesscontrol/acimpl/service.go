@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -34,7 +35,7 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-var SharedWithMeFolderPermission = accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:" + folder.SharedFolderUID}
+var SharedWithMeFolderPermission = accesscontrol.Permission{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersPrefix + folder.SharedFolderUID}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {

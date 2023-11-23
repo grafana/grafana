@@ -576,6 +576,9 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 	filteredDashboards := make([]*dashboards.Dashboard, 0)
 	for _, dashboard := range userDashboards {
 		// Filter out dashboards if user has access to parent folder
+		if dashboard.FolderUID == "" {
+			continue
+		}
 		g, err := guardian.NewByUID(ctx, dashboard.FolderUID, user.GetOrgID(), user)
 		if err != nil {
 			return nil, err
