@@ -295,6 +295,15 @@ describe('pipelineRenderer', () => {
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | keep foo');
   });
 
+  it('correctly renders keep expression with multiple params', () => {
+    const model: QueryBuilderOperation = {
+      id: LokiOperationId.Keep,
+      params: ['foo', 'bar', 'baz'],
+    };
+    const definition = definitions.find((def) => def.id === LokiOperationId.Keep);
+    expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | keep foo, bar, baz');
+  });
+
   it('correctly renders drop expression', () => {
     const model: QueryBuilderOperation = {
       id: LokiOperationId.Drop,
@@ -302,5 +311,14 @@ describe('pipelineRenderer', () => {
     };
     const definition = definitions.find((def) => def.id === LokiOperationId.Keep);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | drop foo');
+  });
+
+  it('correctly renders drop expression with multiple params', () => {
+    const model: QueryBuilderOperation = {
+      id: LokiOperationId.Drop,
+      params: ['foo', 'bar', 'baz'],
+    };
+    const definition = definitions.find((def) => def.id === LokiOperationId.Keep);
+    expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | drop foo, bar, baz');
   });
 });

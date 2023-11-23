@@ -193,9 +193,9 @@ export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilder
     case LokiOperationId.Json:
       return `${innerExpr} | json ${model.params.filter((param) => param).join(', ')}`.trim();
     case LokiOperationId.Drop:
-      return `${innerExpr} | drop ${model.params.filter((param) => param).join(',')}`;
+      return `${innerExpr} | drop ${model.params.filter((param) => param).join(', ')}`.trim();
     case LokiOperationId.Keep:
-      return `${innerExpr} | keep ${model.params.filter((param) => param).join(',')}`;
+      return `${innerExpr} | keep ${model.params.filter((param) => param).join(', ')}`.trim();
     default:
       return `${innerExpr} | ${model.id}`;
   }
