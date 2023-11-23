@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { ReactNode, useEffect, useState } from 'react';
 
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
-import { LogsSortOrder } from '@grafana/schema';
+import { LogsSortOrder, TimeZone } from '@grafana/schema';
+import { convertRawToRange, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 
 type Props = {
   children: ReactNode;
@@ -12,9 +13,10 @@ type Props = {
   rows: LogRowModel[];
   scrollElement?: HTMLDivElement;
   sortOrder: LogsSortOrder;
+  timeZone: TimeZone;
 };
 
-export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, scrollElement, sortOrder }: Props) => {
+export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, scrollElement, sortOrder, timeZone }: Props) => {
   const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
   const [upperOutOfRange, setUpperOutOfRange] = useState(false);
   const [lastScroll, setLastScroll] = useState(scrollElement?.scrollTop || 0);
@@ -41,20 +43,24 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
     }
 
     function scrollTop() {
-      if (!canScrollTop(getVisibleRange(rows), range, sortOrder)) {
+      const currentRange = getCurrentRange(range, timeZone);
+      if (!canScrollTop(getVisibleRange(rows), currentRange, sortOrder)) {
         setUpperOutOfRange(true);
         return;
       }
-      const newRange = sortOrder === LogsSortOrder.Descending ? getNextRange(getVisibleRange(rows), range) : getPrevRange(getVisibleRange(rows), range);
+      setUpperOutOfRange(false);
+      const newRange = sortOrder === LogsSortOrder.Descending ? getNextRange(getVisibleRange(rows), currentRange) : getPrevRange(getVisibleRange(rows), range);
       loadMoreLogs?.(newRange);
     };
   
     function scrollBottom() {
-      if (!canScrollBottom(getVisibleRange(rows), range, sortOrder)) {
+      const currentRange = getCurrentRange(range, timeZone);
+      if (!canScrollBottom(getVisibleRange(rows), currentRange, sortOrder)) {
         setLowerOutOfRange(true);
         return;
       }
-      const newRange = sortOrder === LogsSortOrder.Descending ? getPrevRange(getVisibleRange(rows), range) : getNextRange(getVisibleRange(rows), range);
+      setLowerOutOfRange(false);
+      const newRange = sortOrder === LogsSortOrder.Descending ? getPrevRange(getVisibleRange(rows), range) : getNextRange(getVisibleRange(rows), currentRange);
       loadMoreLogs?.(newRange);
     }
 
@@ -65,7 +71,7 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [loadMoreLogs, range, rows, scrollElement, sortOrder, loading, lastScroll]);
+  }, [lastScroll, loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone]);
 
   return (
     <>
@@ -122,11 +128,22 @@ function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) 
 }
 
 function canScrollTop(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, sortOrder: LogsSortOrder) {
-  return true;
-  //return sortOrder === LogsSortOrder.Descending ? visibleRange.to < currentRange.to.valueOf() : visibleRange.from > currentRange.from.valueOf();
+  if (sortOrder === LogsSortOrder.Descending) {
+    // To get newer logs, the difference between the last log and the current time should be 1 second or more.
+    return (currentRange.to.valueOf() - visibleRange.to) > 1e3;
+  }
+  return visibleRange.from > currentRange.from.valueOf();
 }
 
 function canScrollBottom(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, sortOrder: LogsSortOrder) {
-  return true;
-  //return sortOrder === LogsSortOrder.Descending ? visibleRange.from < currentRange.from.valueOf() : visibleRange.to < currentRange.to.valueOf();
+  if (sortOrder === LogsSortOrder.Descending) {
+    return visibleRange.from > currentRange.from.valueOf();  
+  }
+  // To get newer logs, the difference between the last log and the current time should be 1 second or more.
+  return (currentRange.to.valueOf() - visibleRange.to) > 1e3;
+}
+
+// Given a TimeRange, returns a new instance if using relative time, or else the same.
+function getCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
+  return isRelativeTimeRange(timeRange.raw) ? convertRawToRange(timeRange.raw, timeZone) : timeRange;
 }
