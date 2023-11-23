@@ -227,6 +227,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     title: oldModel.title,
     uid: oldModel.uid,
     id: oldModel.id,
+    description: oldModel.description,
+    tags: oldModel.tags,
+    editable: oldModel.editable,
     meta: oldModel.meta,
     body: new SceneGridLayout({
       isLazy: true,

@@ -227,10 +227,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTrackerSub = this.subscribeToEvent(
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
-        if (event.payload.changedObject instanceof SceneGridItem) {
-          this.setIsDirty();
-        }
-        if (event.payload.changedObject instanceof DashboardScene) {
+        if (
+          event.payload.changedObject instanceof SceneGridItem ||
+          event.payload.changedObject instanceof DashboardScene
+        ) {
           this.setIsDirty();
         }
       }
