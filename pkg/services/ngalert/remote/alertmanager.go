@@ -88,7 +88,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 	s.Run()
 
 	err = s.ApplyConfig(orgID, 0, []sender.ExternalAMcfg{{
-		URL: cfg.URL,
+		URL: cfg.URL + "/alertmanager",
 	}})
 	if err != nil {
 		return nil, err
