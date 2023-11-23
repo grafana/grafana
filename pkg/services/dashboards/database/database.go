@@ -1005,6 +1005,7 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 		Kind        string `xorm:"kind"`
 		UID         string `xorm:"uid"`
 		Title       string `xorm:"title"`
+		Term        string `xorm:"term"`
 		FolderTitle string `xorm:"folder_title"`
 		FolderUID   string `xorm:"folder_uid"`
 	}{}
@@ -1022,7 +1023,7 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 		}()
 		dialect := d.store.GetDialect()
 		sql := `
-		SELECT DISTINCT entity.org_id, entity.kind, entity.uid, entity.id, entity.title, f1.uid as folder_uid, f1.title as folder_title FROM (
+		SELECT DISTINCT entity.org_id, entity.kind, entity.uid, entity.id, entity.title, dashboard_tag.term as term, f1.uid as folder_uid, f1.title as folder_title FROM (
 			SELECT org_id, 'dashboard' as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title ` +
 			dialect.LikeStr() + ` ? AND is_folder = ` + dialect.BooleanStr(false) + `
 			UNION ALL
@@ -1093,7 +1094,8 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 			params = append(params, teamIDs...)
 			params = append(params, orgID, role, orgID)
 		}
-		// TODO: join with dashboard_tag + filter by tag
+		sql = sql + `LEFT JOIN dashboard_tag ON dashboard_tag.dashboard_id = entity.id`
+		// TODO: filter by tag
 		// TODO: order, limit, page
 		if err := sess.SQL(sql, params...).Find(&hits); err != nil {
 			return err
@@ -1103,16 +1105,15 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 
 	results := []dashboards.DashboardSearchProjection{}
 	for _, hit := range hits {
-		d.log.Debug("Search hit", "org_id", hit.OrgID, "kind", hit.Kind, "uid", hit.UID, "title", hit.Title, "folder_uid", hit.FolderUID, "folder", hit.FolderTitle)
+		d.log.Debug("Search hit", "org_id", hit.OrgID, "kind", hit.Kind, "uid", hit.UID, "title", hit.Title, "folder_uid", hit.FolderUID, "folder", hit.FolderTitle, "term", hit.Term)
 		results = append(results, dashboards.DashboardSearchProjection{
 			ID:          hit.ID,
 			UID:         hit.UID,
 			Title:       hit.Title,
+			Term:        hit.Term,
 			IsFolder:    hit.Kind == "folder",
 			FolderUID:   hit.FolderUID,
 			FolderTitle: hit.FolderTitle,
-			// TODO
-			//Term     string
 		})
 	}
 
