@@ -50,7 +50,7 @@ var _ dashboards.Store = (*dashboardStore)(nil)
 func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (dashboards.Store, error) {
 	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 
-	if features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) {
 		s.DBMigration(sqlStore)
 	}
 
@@ -477,7 +477,7 @@ func (d *dashboardStore) saveDashboard(sess *db.Session, cmd *dashboards.SaveDas
 		dash.SetUID(util.GenerateShortUID())
 	}
 
-	if d.features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && !dash.IsFolder {
+	if d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && !dash.IsFolder {
 		if err := d.savePanels(sess, dash); err != nil {
 			return nil, err
 		}
@@ -1050,7 +1050,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	sql, params := sb.ToSQL(limit, page)
 
 	// #TODO: look for better way to do this
-	if d.features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && len(query.PanelTitle) > 0 &&
+	if d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && len(query.PanelTitle) > 0 &&
 		query.Type == searchstore.TypePanel {
 		panelTitle := "%" + query.PanelTitle + "%"
 		if d.store.GetDialect().DriverName() == migrator.Postgres || d.store.GetDialect().DriverName() == migrator.MySQL {

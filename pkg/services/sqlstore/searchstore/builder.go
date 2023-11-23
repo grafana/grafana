@@ -52,7 +52,7 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 
 	// #TODO for FTS
 	// #TODO figure out if there's a better way overall to update the query
-	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
+	if b.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
 		// #TODO make sure that inner join is ok
 		b.sql.WriteString("\n" + `INNER JOIN pt ON dashboard.id = pt.dashid`)
 	}
@@ -66,7 +66,7 @@ func (b *Builder) buildSelect() {
 	var recQuery string
 	var recQueryParams []any
 
-	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
+	if b.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
 		if b.Dialect.DriverName() == migrator.MySQL {
 			b.sql.WriteString(
 				`WITH pt AS (SELECT panel.dashid FROM panel WHERE MATCH(panel.title) AGAINST (? IN NATURAL LANGUAGE MODE))`)
@@ -97,7 +97,7 @@ func (b *Builder) buildSelect() {
 		b.sql.WriteString(`
 			folder.slug AS folder_slug,`)
 	}
-	if b.Features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
+	if b.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
 		b.sql.WriteString(`
 			pt.dashid,`)
 	}
