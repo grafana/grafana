@@ -108,7 +108,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 
 // ApplyConfig is called everytime we've determined we need to apply a configuration to the Alertmanager,
 // including the first time the Alertmanager is started. In the context of a "remote Alertmanager" it's as good of a heuristic,
-// for "a function that gets called when the Alertmanager starts. As a result we do two things:
+// for "a function that gets called when the Alertmanager starts". As a result we do two things:
 // 1. Execute a readiness check to make sure the remote Alertmanager we're about to communicate with is up and ready.
 // 2. Upload the configuration and state we currently hold.
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
