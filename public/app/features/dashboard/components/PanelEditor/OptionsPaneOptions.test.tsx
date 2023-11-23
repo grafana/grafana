@@ -244,7 +244,7 @@ describe('OptionsPaneOptions', () => {
 
     scenario.render();
 
-    const thresholdsSection = screen.getByLabelText(selectors.components.OptionsGroup.group('Thresholds'));
+    const thresholdsSection = screen.getByTestId(selectors.components.OptionsGroup.group('Thresholds'));
     expect(
       within(thresholdsSection).getByLabelText(OptionsPaneSelector.fieldLabel('Thresholds CustomThresholdOption'))
     ).toBeInTheDocument();
