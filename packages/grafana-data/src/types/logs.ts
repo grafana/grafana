@@ -319,7 +319,7 @@ export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery
   /**
    * Returns a list of supported action types for `modifyQuery()`.
    */
-  getSupportedQueryModifications(): Array<QueryFixType | String>;
+  getSupportedQueryModifications(): Array<QueryFixType | string>;
 }
 
 /**
