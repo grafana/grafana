@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { StringSelector } from '@grafana/e2e-selectors';
+import { StringSelector, selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
@@ -59,7 +59,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
       />
     );
     return description ? (
-      <div className={styles.radioOption} data-testid="radio-button">
+      <div className={styles.radioOption} data-testid={selectors.components.RadioButton.container}>
         <Tooltip content={description} placement="bottom">
           {inputRadioButton}
         </Tooltip>
@@ -68,7 +68,7 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
         </label>
       </div>
     ) : (
-      <div className={styles.radioOption} data-testid="radio-button">
+      <div className={styles.radioOption} data-testid={selectors.components.RadioButton.container}>
         {inputRadioButton}
         <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
           {children}
