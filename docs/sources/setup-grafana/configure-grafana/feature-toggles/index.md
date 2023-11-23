@@ -74,7 +74,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `dashgpt`                        | Enable AI powered features in dashboards                                                                                                                                                     |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
-| `alertingContactPointsV2`        | Show the new contacpoints list view                                                                                                                                                          |
 | `cloudWatchBatchQueries`         | Runs CloudWatch metrics queries as separate batches                                                                                                                                          |
 
 ## Experimental feature toggles

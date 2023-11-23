@@ -779,13 +779,6 @@ var (
 			HideFromAdminPage: true, // This is moving away from being a feature toggle.
 		},
 		{
-			Name:         "alertingContactPointsV2",
-			Description:  "Show the new contacpoints list view",
-			FrontendOnly: true,
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaAlertingSquad,
-		},
-		{
 			Name:        "externalCorePlugins",
 			Description: "Allow core plugins to be loaded as external",
 			Stage:       FeatureStageExperimental,

@@ -122,7 +122,6 @@ export interface FeatureToggles {
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
-  alertingContactPointsV2?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;

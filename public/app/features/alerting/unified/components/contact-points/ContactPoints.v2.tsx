@@ -135,6 +135,7 @@ const ContactPoints = () => {
                           {addContactPointSupported && (
                             <LinkButton
                               icon="plus"
+                              aria-label="add contact point"
                               variant="primary"
                               href="/alerting/notifications/receivers/new"
                               disabled={!addContactPointAllowed}
@@ -364,6 +365,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         <Menu.Item
           icon="download-alt"
           label="Export"
+          ariaLabel="export"
           disabled={!exportAllowed}
           data-testid="export"
           onClick={() => openExportDrawer(name)}
@@ -386,6 +388,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
       >
         <Menu.Item
           label="Delete"
+          ariaLabel="delete"
           icon="trash-alt"
           destructive
           disabled={disabled || !canDelete}
