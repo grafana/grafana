@@ -1,7 +1,14 @@
 import React, { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneRefreshPicker,
+  SceneTimePicker,
+  sceneGraph,
+} from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
   Box,
@@ -49,8 +56,10 @@ export class GeneralSettingsEditView
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const dashboard = getDashboardSceneFor(model);
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-    const { title, description, tags, meta, editable, timepicker, timezone, weekStart, liveNow, graphTooltip } =
-      dashboard.useState();
+    const { title, description, tags, meta, editable, graphTooltip } = dashboard.useState();
+    const timeRange = sceneGraph.getTimeRange(dashboard);
+    let refreshPicker = dashboard.state.controls?.find((c) => c instanceof SceneRefreshPicker);
+    refreshPicker = refreshPicker instanceof SceneRefreshPicker ? refreshPicker : undefined;
 
     const onTitleChange = (value: string) => {
       dashboard.setState({ title: value });
@@ -80,42 +89,44 @@ export class GeneralSettingsEditView
     };
 
     const onTimeZoneChange = (value: TimeZone) => {
-      dashboard.setState({ timezone: value });
+      dashboard.state.$timeRange?.setState({
+        timeZone: value,
+      });
     };
 
     const onWeekStartChange = (value: string) => {
-      dashboard.setState({ weekStart: value });
+      dashboard.state.$timeRange?.setState({
+        weekStart: value,
+      });
     };
 
     const onRefreshIntervalChange = (value: string[]) => {
-      dashboard.setState({
-        timepicker: {
-          ...timepicker,
-          refresh_intervals: value,
-        },
-      });
+      const refreshPicker = dashboard.state.controls?.find((c) => c instanceof SceneRefreshPicker);
+
+      if (refreshPicker instanceof SceneRefreshPicker) {
+        refreshPicker?.setState({
+          intervals: value,
+        });
+      }
     };
 
     const onNowDelayChange = (value: string) => {
-      dashboard.setState({
-        timepicker: {
-          ...timepicker,
-          nowDelay: value,
-        },
-      });
+      // TODO: Figure out how to store nowDelay in Dashboard Scene
     };
 
     const onHideTimePickerChange = (value: boolean) => {
-      dashboard.setState({
-        timepicker: {
-          ...timepicker,
-          hidden: value,
-        },
-      });
+      const timePicker = dashboard.state.controls?.find((c) => c instanceof SceneTimePicker);
+
+      if (timePicker instanceof SceneTimePicker) {
+        timePicker?.setState({
+          // TODO: Control visibility from DashboardControls
+          // hidden: value,
+        });
+      }
     };
 
     const onLiveNowChange = (value: boolean) => {
-      dashboard.setState({ liveNow: value });
+      // TODO: Figure out how to store liveNow in Dashboard Scene
     };
 
     const onTooltipChange = (value: number) => {
@@ -144,7 +155,7 @@ export class GeneralSettingsEditView
                 id="title-input"
                 name="title"
                 value={title}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => onTitleChange(e.target.value)}
+                onBlur={(e: ChangeEvent<HTMLInputElement>) => onTitleChange(e.target.value)}
               />
             </Field>
             <Field
@@ -200,12 +211,16 @@ export class GeneralSettingsEditView
             onNowDelayChange={onNowDelayChange}
             onHideTimePickerChange={onHideTimePickerChange}
             onLiveNowChange={onLiveNowChange}
-            refreshIntervals={timepicker.refresh_intervals}
-            timePickerHidden={timepicker.hidden}
-            nowDelay={timepicker.nowDelay || ''}
-            timezone={timezone}
-            weekStart={weekStart}
-            liveNow={liveNow}
+            refreshIntervals={refreshPicker?.state?.intervals}
+            // TODO: Control visibility of time picker
+            // timePickerHidden={timepicker?.state?.hidden}
+            // TODO: Implement this in dashboard scene
+            // nowDelay={timepicker.nowDelay || ''}
+            // TODO: Implement this in dashboard scene
+            // liveNow={liveNow}
+            liveNow={false}
+            timezone={timeRange.state.timeZone || ''}
+            weekStart={timeRange.state.weekStart || ''}
           />
 
           {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
