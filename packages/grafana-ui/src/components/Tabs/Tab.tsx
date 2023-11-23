@@ -41,35 +41,36 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
 
     const linkClass = cx(clearStyles, tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
+    const commonProps = {
+      className: linkClass,
+      ...otherProps,
+      onClick: onChangeTab,
+      'aria-label': otherProps['aria-label'] || selectors.components.Tab.title(label),
+      role: 'tab',
+      'aria-selected': active,
+    };
+
     if (href) {
-      <div className={tabsStyles.item}>
-        <a
-          href={href}
-          className={linkClass}
-          {...otherProps}
-          onClick={onChangeTab}
-          aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
-          role="tab"
-          aria-selected={active}
-          // don't think we can avoid the type assertion here :(
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          ref={ref as React.ForwardedRef<HTMLAnchorElement>}
-        >
-          {content()}
-        </a>
-      </div>;
+      return (
+        <div className={tabsStyles.item}>
+          <a
+            {...commonProps}
+            href={href}
+            // don't think we can avoid the type assertion here :(
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            ref={ref as React.ForwardedRef<HTMLAnchorElement>}
+          >
+            {content()}
+          </a>
+        </div>
+      );
     }
 
     return (
       <div className={tabsStyles.item}>
         <button
-          className={linkClass}
-          {...otherProps}
-          onClick={onChangeTab}
-          aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
-          role="tab"
+          {...commonProps}
           type="button"
-          aria-selected={active}
           // don't think we can avoid the type assertion here :(
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           ref={ref as React.ForwardedRef<HTMLButtonElement>}
