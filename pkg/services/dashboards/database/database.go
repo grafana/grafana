@@ -1020,11 +1020,13 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 		defer func() {
 			d.log.Info("Modified search query", "time", time.Since(start), "results", len(hits))
 		}()
+		dialect := d.store.GetDialect()
 		sql := `
 		SELECT DISTINCT entity.org_id, entity.kind, entity.uid, entity.id, entity.title, f1.uid as folder_uid, f1.title as folder_title FROM (
-			SELECT org_id, "dashboard" as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title LIKE ? AND is_folder = 0
+			SELECT org_id, 'dashboard' as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title ` +
+			dialect.LikeStr() + ` ? AND is_folder = ` + dialect.BooleanStr(false) + `
 			UNION ALL
-			SELECT org_id, "folder" as kind, uid, 0, parent_uid, title FROM folder WHERE title LIKE ?
+			SELECT org_id, 'folder' as kind, uid, 0, parent_uid, title FROM folder WHERE title ` + dialect.LikeStr() + ` ?
 		) AS entity
 		LEFT JOIN folder f1
 		ON (entity.parent_uid = f1.uid AND entity.org_id = f1.org_id)
@@ -1074,15 +1076,15 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 				UNION
 				SELECT br.role_id FROM builtin_role AS br WHERE br.role IN (?) AND (br.org_id = ? OR br.org_id = 0)
 			) AND ((
-				p.scope LIKE "folders:uid:%" AND 
-				p.action = "folders:read" AND (
+				p.scope LIKE 'folders:uid:%' AND
+				p.action = 'folders:read' AND (
 					substr(scope, 13) = f4.uid OR substr(scope, 13) = f3.uid OR
 					substr(scope, 13) = f2.uid OR substr(scope, 13) = f1.uid OR
 					substr(scope, 13) = entity.uid
 				)
 			) OR (
-				p.scope LIKE "dashboards:uid:%" AND 
-				p.action = "dashboards:read" AND (
+				p.scope LIKE 'dashboards:uid:%' AND
+				p.action = 'dashboards:read' AND (
 					substr(scope, 16) = entity.uid
 				)
 			))
