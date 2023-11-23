@@ -550,10 +550,3 @@ interface ValidateDashboardResponse {
   isValid: boolean;
   message?: string;
 }
-
-function replaceJsonNulls<T extends unknown>(key: string, value: T): T | undefined {
-  if (typeof value === 'number' && !Number.isFinite(value)) {
-    return undefined;
-  }
-  return value;
-}
