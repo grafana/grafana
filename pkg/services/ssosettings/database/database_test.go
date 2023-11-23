@@ -107,7 +107,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 		provider := "github"
 		settings := map[string]interface{}{
 			"enabled":       true,
-			"client_id":     "azuread-client",
+			"client_id":     "github-client",
 			"client_secret": "this-is-a-secret",
 		}
 		err := populateSSOSettings(sqlStore, settings, false, provider)
@@ -115,7 +115,7 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 
 		newSettings := map[string]interface{}{
 			"enabled":       true,
-			"client_id":     "new-azuread-client",
+			"client_id":     "new-github-client",
 			"client_secret": "this-is-a-new-secret",
 		}
 		err = ssoSettingsStore.Upsert(context.Background(), provider, newSettings)
