@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -38,9 +37,9 @@ type Alertmanager struct {
 	url      string
 
 	amClient    *amclient.AlertmanagerAPI
-	mimirClient *mimirClient.Mimir
 	httpClient  *http.Client
 	kvstore     kvstore.KVStore
+	mimirClient mimirClient.MimirClient
 	ready       bool
 	sender      *sender.ExternalAlertmanager
 }
@@ -83,7 +82,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, kvstore kvstore.KVStor
 		return nil, err
 	}
 
-	u = u.JoinPath(amclient.DefaultBasePath)
+	u = u.JoinPath("/alertmanager", amclient.DefaultBasePath)
 	transport := httptransport.NewWithClient(u.Host, u.Path, []string{u.Scheme}, &client)
 
 	// Using our client with custom headers and basic auth credentials.
@@ -94,7 +93,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, kvstore kvstore.KVStor
 	s.Run()
 
 	err = s.ApplyConfig(orgID, 0, []sender.ExternalAMcfg{{
-		URL: cfg.URL,
+		URL: cfg.URL + "/alertmanager",
 	}})
 	if err != nil {
 		return nil, err
@@ -113,36 +112,36 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, kvstore kvstore.KVStor
 	}, nil
 }
 
-// ApplyConfig is called everytime we've determined we need to apply a configuration to the Alertmanager,
+// ApplyConfig is called everytime we've determined we need to apply an existing configuration to the Alertmanager,
 // including the first time the Alertmanager is started. In the context of a "remote Alertmanager" it's as good of a heuristic,
-// for "a function that gets called when the Alertmanager starts. As a result we do two things:
+// for "a function that gets called when the Alertmanager starts". As a result we do two things:
 // 1. Execute a readiness check to make sure the remote Alertmanager we're about to communicate with is up and ready.
 // 2. Upload the configuration and state we currently hold.
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.ready {
+		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check")
 		return nil
 	}
 
 	// First, execute a readiness check to make sure the remote Alertmanager is ready.
-	am.log.Debug("start readiness check for remote Alertmanager", "url", am.url)
-	err := am.checkReadiness(ctx)
-	if err != nil {
+	am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
+	if err := am.checkReadiness(ctx); err != nil {
+		am.log.Error("unable to pass the readiness check", "err", err)
 		return err
 	}
-	am.log.Debug("completed readiness check for remote Alertmanager", "url", am.url)
+	am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
 
-	am.log.Debug("start configuration upload to remote Alertmanager", "url", am.url)
-	ok := am.compareRemoteConfig(ctx, config)
-	if !ok {
-		// TODO: We probably need to parse the config anyways.
-		err = am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, nil)
+	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
+	if ok := am.compareRemoteConfig(ctx, config); !ok {
+		err := am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
 		if err != nil {
-			am.log.Error("unable to upload the configuration to the remote Alertmanager")
+			am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
+		} else {
+			am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 		}
 	}
-	am.log.Debug("completed configuration upload to remote Alertmanager", "url", am.url)
 
-	am.log.Debug("start state upload to remote Alertmanager", "url", am.url)
+	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
 	keys, err := am.kvstore.GetAll(ctx, 1, "alertmanager")
 	if err != nil {
 		return err
@@ -187,20 +186,18 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 
 	if ok := am.compareRemoteState(ctx, encoded); !ok {
 		// TODO(santiago): send the state the to remote AM.
-		err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, encoded)
-		if err != nil {
-			am.log.Error("unable to upload the state to the remote Alertmanager", "err", err)
+		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, encoded); err != nil {
+			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 		}
 	}
-	// TODO(santiago): not necessarily.
-	am.log.Debug("completed state upload to remote Alertmanager", "url", am.url)
+	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 	// upload the state
 
 	return nil
 }
 
 func (am *Alertmanager) checkReadiness(ctx context.Context) error {
-	readyURL := strings.TrimSuffix(am.url, "/") + readyPath
+	readyURL := strings.TrimSuffix(am.url, "/") + "/alertmanager" + readyPath
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, readyURL, nil)
 	if err != nil {
 		return fmt.Errorf("error creating readiness request: %w", err)
@@ -389,7 +386,7 @@ func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 }
 
 // StopAndWait is called when the grafana server is instructed to shut down or an org is deleted.
-// In the context of a "remote Alertmanager" is a good heuristic for Grafana is about to shut down or we no longer need you.
+// In the context of a "remote Alertmanager" it is a good heuristic for Grafana is about to shut down or we no longer need you.
 func (am *Alertmanager) StopAndWait() {
 	am.sender.Stop()
 
@@ -403,64 +400,24 @@ func (am *Alertmanager) Ready() bool {
 // CleanUp does not have an equivalent in a "remote Alertmanager" context, we don't have files on disk, no-op.
 func (am *Alertmanager) CleanUp() {}
 
-// TODO: change implementation, this is only useful for testing other methods.
-func (am *Alertmanager) postConfig(ctx context.Context, rawConfig string) error {
-	alertsURL := strings.TrimSuffix(am.url, "/alertmanager") + "/api/v1/alerts"
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, alertsURL, strings.NewReader(rawConfig))
-	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
-	}
-
-	res, err := am.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("config not found")
-	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			am.log.Warn("Error while closing body", "err", err)
-		}
-	}()
-
-	_, err = io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("error reading request response: %w", err)
-	}
-
-	if res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("setting config failed with status code %d", res.StatusCode)
-	}
-	return nil
-}
-
 // compareRemoteConfig gets the remote Alertmanager config and compares it to the existing configuration.
 func (am *Alertmanager) compareRemoteConfig(ctx context.Context, config *models.AlertConfiguration) bool {
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// If we get an error trying to compare log it and return false so that we try to upload it anyway.
-		am.log.Error("unable to get the remote Alertmanager Configuration for comparison", "err", err)
+		am.log.Error("Unable to get the remote Alertmanager Configuration for comparison", "err", err)
 		return false
 	}
 
-	if md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) == md5.Sum([]byte(config.AlertmanagerConfiguration)) {
-		return true
-	}
-
-	return false
+	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) == md5.Sum([]byte(config.AlertmanagerConfiguration))
 }
 
 // compareRemoteState gets the remote Alertmanager state and compares it to the existing state.
-// TODO(santiago): accept bytes instead of string?
 func (am *Alertmanager) compareRemoteState(ctx context.Context, state string) bool {
-	// Note(santiago): we'll have very different states in remote primary mode
 	rs, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 	if err != nil {
 		// If we get an error trying to compare log it and return false so that we try to upload it anyway.
-		am.log.Error("unable to get the remote Alertmanager state for comparison", "err", err)
+		am.log.Error("Unable to get the remote Alertmanager state for comparison", "err", err)
 		return false
 	}
 

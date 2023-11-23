@@ -27,7 +27,6 @@ import { AccessControlAction, DataSourcePluginCategory, ThunkDispatch, ThunkResu
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
-import { findNewName, nameExits } from '../utils';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -232,26 +231,11 @@ export function addDataSource(
   plugin: DataSourcePluginMeta,
   editRoute = DATASOURCES_ROUTES.Edit
 ): ThunkResult<Promise<void>> {
-  return async (dispatch, getStore) => {
-    // update the list of datasources first.
-    // We later use this list to check whether the name of the datasource
-    // being created is unuque or not and assign a new name to it if needed.
-    const response = await api.getDataSources();
-    dispatch(dataSourcesLoaded(response));
-
-    const dataSources = getStore().dataSources.dataSources;
-    const isFirstDataSource = dataSources.length === 0;
+  return async () => {
     const newInstance = {
-      name: plugin.name,
       type: plugin.id,
       access: 'proxy',
-      isDefault: isFirstDataSource,
     };
-
-    // TODO: typo in name
-    if (nameExits(dataSources, newInstance.name)) {
-      newInstance.name = findNewName(dataSources, newInstance.name);
-    }
 
     const result = await api.createDataSource(newInstance);
     const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);

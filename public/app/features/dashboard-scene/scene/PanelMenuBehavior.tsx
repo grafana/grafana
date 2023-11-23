@@ -12,6 +12,7 @@ import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPan
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks } from './PanelLinks';
 
 /**
@@ -24,6 +25,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const panel = menu.parent as VizPanel;
     const location = locationService.getLocation();
     const items: PanelMenuItem[] = [];
+    const moreSubMenu: PanelMenuItem[] = [];
     const panelId = getPanelIdForVizPanel(panel);
     const dashboard = panel.getRoot();
 
@@ -63,6 +65,25 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         shortcut: 'p s',
       });
 
+      if (panel instanceof LibraryVizPanel) {
+        // TODO: Implement unlinking library panel
+      } else {
+        moreSubMenu.push({
+          text: t('panel.header-menu.create-library-panel', `Create library panel`),
+          iconClassName: 'share-alt',
+          onClick: () => {
+            reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
+            dashboard.showModal(
+              new ShareModal({
+                panelRef: panel.getRef(),
+                dashboardRef: dashboard.getRef(),
+                activeTab: 'Library panel',
+              })
+            );
+          },
+        });
+      }
+
       if (config.featureToggles.datatrails) {
         addDataTrailPanelAction(dashboard, panel, items);
       }
@@ -86,6 +107,18 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data }),
       href: getInspectUrl(panel),
     });
+
+    if (moreSubMenu.length) {
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.more', `More...`),
+        iconClassName: 'cube',
+        subMenu: moreSubMenu,
+        onClick: (e) => {
+          e.preventDefault();
+        },
+      });
+    }
 
     menu.setState({ items });
   };

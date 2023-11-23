@@ -9,28 +9,30 @@ import (
 )
 
 const (
-	grafanaAlertmanagerStatePath = "/api/v1/grafana/state"
+	grafanaAlertmanagerStatePath = "/grafana/state"
 )
 
 type UserGrafanaState struct {
-	successResponse
 	State string `json:"state"`
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error) {
-	var state UserGrafanaState
+	gs := &UserGrafanaState{}
+	response := successResponse{
+		Data: gs,
+	}
 	// nolint:bodyclose
 	// closed within `do`
-	_, err := mc.do(ctx, grafanaAlertmanagerStatePath, http.MethodGet, nil, -1, &state)
+	_, err := mc.do(ctx, grafanaAlertmanagerStatePath, http.MethodGet, nil, &response)
 	if err != nil {
 		return nil, err
 	}
 
-	if state.Status != "success" {
-		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", state.Status)
+	if response.Status != "success" {
+		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", response.Status)
 	}
 
-	return &state, nil
+	return gs, nil
 }
 
 func (mc *Mimir) CreateGrafanaAlertmanagerState(ctx context.Context, state string) error {
@@ -41,9 +43,9 @@ func (mc *Mimir) CreateGrafanaAlertmanagerState(ctx context.Context, state strin
 		return err
 	}
 
-	return mc.doOK(ctx, grafanaAlertmanagerStatePath, http.MethodPost, bytes.NewBuffer(payload), int64(len(payload)))
+	return mc.doOK(ctx, grafanaAlertmanagerStatePath, http.MethodPost, bytes.NewBuffer(payload))
 }
 
 func (mc *Mimir) DeleteGrafanaAlertmanagerState(ctx context.Context) error {
-	return mc.doOK(ctx, grafanaAlertmanagerStatePath, http.MethodDelete, nil, -1)
+	return mc.doOK(ctx, grafanaAlertmanagerStatePath, http.MethodDelete, nil)
 }

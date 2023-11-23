@@ -18,7 +18,7 @@ export const AlertRuleNameInput = () => {
     register,
     watch,
     formState: { errors },
-  } = useFormContext<RuleFormValues & { location?: string }>();
+  } = useFormContext<RuleFormValues>();
 
   const ruleFormType = watch('type');
   const entityName = ruleFormType === RuleFormType.cloudRecording ? 'recording rule' : 'alert rule';
