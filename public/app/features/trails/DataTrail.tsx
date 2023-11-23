@@ -42,6 +42,9 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
+
+  // Indicates that the new state is actually an historical state
+  inHistory?: boolean;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -89,7 +92,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       step.trailState.metric = undefined;
     }
 
-    this.setState(step.trailState);
+    this.setState({ ...step.trailState, inHistory: true });
 
     if (!this.state.embedded) {
       locationService.replace(getUrlForTrail(this));
