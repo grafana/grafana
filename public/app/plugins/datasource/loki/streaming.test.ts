@@ -20,7 +20,7 @@ describe('convertToWebSocketUrl', () => {
     window.location = location;
   });
   it('should convert HTTP URL to WebSocket URL', () => {
-    window.location.protocol = 'http';
+    window.location.protocol = 'http:';
     window.location.host = 'example.com';
 
     const httpUrl = '/api/ds/proxy/1/api/v1/tail/loki?query=a';
@@ -32,11 +32,11 @@ describe('convertToWebSocketUrl', () => {
   });
 
   it('should convert HTTPS URL to WebSocket URL', () => {
-    window.location.protocol = 'https';
+    window.location.protocol = 'https:';
     window.location.host = 'example.com';
 
     const httpsUrl = '/api/ds/proxy/1/api/v1/tail/loki?query=a';
-    const expectedWebSocketUrl = 'ws://example.com/grafana/api/ds/proxy/1/api/v1/tail/loki?query=a';
+    const expectedWebSocketUrl = 'wss://example.com/grafana/api/ds/proxy/1/api/v1/tail/loki?query=a';
 
     const result = convertToWebSocketUrl(httpsUrl);
 
