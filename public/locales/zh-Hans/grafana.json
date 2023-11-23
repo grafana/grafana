@@ -474,7 +474,7 @@
       "delete-title": "删除",
       "history-time-span": "历史记录时间范围",
       "history-time-span-description": "选择 Grafana 将保存您查询历史记录的时间段。将存储最多 {{MAX_HISTORY_ITEMS}} 个条目。",
-      "only-show-active-datasource": "只显示当前在 Explore 中活动状态数据源的查询",
+      "only-show-active-datasource": "只显示当前在 浏览 中活动状态数据源的查询",
       "query-history-deleted": "查询历史记录已删除",
       "retention-period": {
         "1-week": "1 周",
@@ -521,7 +521,7 @@
       "title-with-name": "表格 - {{name}}"
     },
     "toolbar": {
-      "aria-label": "Explore 工具栏",
+      "aria-label": "浏览 工具栏",
       "copy-shortened-link": "复制短链接",
       "refresh-picker-cancel": "取消",
       "refresh-picker-run": "运行查询",
@@ -573,7 +573,7 @@
       "exit-edit/setting-views": "退出编辑/设置视图",
       "expand-all-rows": "展开所有行",
       "go-to-dashboards": "转到仪表板",
-      "go-to-explore": "转到 Explore",
+      "go-to-explore": "转到 浏览",
       "go-to-home-dashboard": "转到主仪表板",
       "go-to-profile": "转到个人资料",
       "make-time-range-permanent": "使时间范围成为绝对/永久",
