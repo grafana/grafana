@@ -64,7 +64,7 @@ describe('DataTrail', () => {
 
       it('Should restore state and url', () => {
         expect(trail.state.metric).toBe('first_metric');
-        expect(trail.state.inHistory).toBe(true);
+        expect(trail.state.stepIndex).toBe(1);
         expect(locationService.getSearchObject().metric).toBe('first_metric');
       });
 
