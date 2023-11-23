@@ -291,8 +291,6 @@ require github.com/grafana/pyroscope/api v0.2.1 // @grafana/observability-traces
 
 require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
 
-replace github.com/apache/arrow/go/v13 => github.com/toddtreece/arrow/go/v13 v13.0.0-20231123012327-08bed04bb974 // @grafana/observability-metrics
-
 require (
 	cloud.google.com/go v0.110.8 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -335,6 +333,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
+	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.1 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
