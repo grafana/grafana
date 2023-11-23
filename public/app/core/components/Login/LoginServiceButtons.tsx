@@ -42,8 +42,7 @@ const loginServices: () => LoginServices = () => {
     },
     github: {
       bgColor: '#464646',
-      // enabled: oauthEnabled && Boolean(config.oauth.github),
-      enabled: true,
+      enabled: oauthEnabled && Boolean(config.oauth.github),
       name: config.oauth?.github?.name || 'GitHub',
       icon: config.oauth?.github?.icon || ('github' as const),
     },
