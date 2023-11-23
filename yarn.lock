@@ -3135,26 +3135,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:1.2.1, @grafana/faro-core@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "@grafana/faro-core@npm:1.2.1"
+"@grafana/faro-core@npm:^1.2.8":
+  version: 1.2.8
+  resolution: "@grafana/faro-core@npm:1.2.8"
   dependencies:
     "@opentelemetry/api": "npm:^1.4.1"
     "@opentelemetry/api-metrics": "npm:^0.33.0"
     "@opentelemetry/otlp-transformer": "npm:^0.41.2"
     murmurhash-js: "npm:^1.0.0"
-  checksum: aa5f2a950465695caca5e796604dac1a9d0b6c01036cbfd55e29d676c45d2996ce0715a1a38b70b2325258d4c717b9affafd0e4bd7f6a8b6b3b53d76cf8b4f8b
+  checksum: c1b11588a5430e1f17949ccdce92f3a5004c3131259ba8bed7c63b9a2103c32ff29bc42daa2d5fd23a73e62836d6bd7a1f83efb745e535f5d275783d4febb544
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.2.1":
-  version: 1.2.1
-  resolution: "@grafana/faro-web-sdk@npm:1.2.1"
+"@grafana/faro-web-sdk@npm:^1.2.8":
+  version: 1.2.8
+  resolution: "@grafana/faro-web-sdk@npm:1.2.8"
   dependencies:
-    "@grafana/faro-core": "npm:^1.2.1"
+    "@grafana/faro-core": "npm:^1.2.8"
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^3.1.1"
-  checksum: 2b8eeec1cae0647ff87f9142fb2a65016f557474d4a6ff62a3cf128a729c833118715c441a9ce5dfb8746ffcf0b897bf26dbc4a95829558b3d5b9033443f68a6
+  checksum: f47c2df91ff48d66a00b8b17fee2edf81e71562bf58e871dbaa9ef61a33a489b09acdef778482554e0a1d5616a0f6ac9fe5ede7a8c87399bd674e1ae897d1c36
   languageName: node
   linkType: hard
 
@@ -3264,7 +3264,7 @@ __metadata:
   dependencies:
     "@grafana/data": "npm:10.3.0-pre"
     "@grafana/e2e-selectors": "npm:10.3.0-pre"
-    "@grafana/faro-web-sdk": "npm:1.2.1"
+    "@grafana/faro-web-sdk": "npm:^1.2.8"
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
     "@grafana/ui": "npm:10.3.0-pre"
     "@rollup/plugin-commonjs": "npm:25.0.2"
@@ -3363,7 +3363,7 @@ __metadata:
     "@emotion/react": "npm:11.11.1"
     "@grafana/data": "npm:10.3.0-pre"
     "@grafana/e2e-selectors": "npm:10.3.0-pre"
-    "@grafana/faro-web-sdk": "npm:1.2.1"
+    "@grafana/faro-web-sdk": "npm:^1.2.8"
     "@grafana/schema": "npm:10.3.0-pre"
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
     "@leeoniya/ufuzzy": "npm:1.0.8"
@@ -17299,8 +17299,8 @@ __metadata:
     "@grafana/eslint-config": "npm:6.0.1"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": "npm:1.7.4"
-    "@grafana/faro-core": "npm:1.2.1"
-    "@grafana/faro-web-sdk": "npm:1.2.1"
+    "@grafana/faro-core": "npm:^1.2.8"
+    "@grafana/faro-web-sdk": "npm:^1.2.8"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.1"
     "@grafana/lezer-logql": "npm:0.2.1"

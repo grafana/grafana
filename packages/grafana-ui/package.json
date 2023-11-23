@@ -51,7 +51,7 @@
     "@emotion/react": "11.11.1",
     "@grafana/data": "10.3.0-pre",
     "@grafana/e2e-selectors": "10.3.0-pre",
-    "@grafana/faro-web-sdk": "1.2.1",
+    "@grafana/faro-web-sdk": "^1.2.8",
     "@grafana/schema": "10.3.0-pre",
     "@leeoniya/ufuzzy": "1.0.8",
     "@monaco-editor/react": "4.6.0",
