@@ -16,10 +16,10 @@ import { LoginLayout, InnerBox } from './LoginLayout';
 import { LoginServiceButtons } from './LoginServiceButtons';
 import { UserSignup } from './UserSignup';
 
-const forgottenPasswordStyles = css`
-  padding: 0;
-  margin-top: 4px;
-`;
+const forgottenPasswordStyles = css({
+  padding: 0,
+  marginTop: '4px',
+});
 
 const alertStyles = css({
   width: '100%',

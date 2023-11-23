@@ -42,7 +42,8 @@ const loginServices: () => LoginServices = () => {
     },
     github: {
       bgColor: '#464646',
-      enabled: oauthEnabled && Boolean(config.oauth.github),
+      // enabled: oauthEnabled && Boolean(config.oauth.github),
+      enabled: true,
       name: config.oauth?.github?.name || 'GitHub',
       icon: config.oauth?.github?.icon || ('github' as const),
     },
@@ -77,30 +78,30 @@ const loginServices: () => LoginServices = () => {
 
 const getServiceStyles = (theme: GrafanaTheme2) => {
   return {
-    button: css`
-      color: #d8d9da;
-      position: relative;
-    `,
-    buttonIcon: css`
-      position: absolute;
-      left: ${theme.spacing(1)};
-      top: 50%;
-      transform: translateY(-50%);
-    `,
+    button: css({
+      color: '#d8d9da',
+      position: 'relative',
+    }),
+    buttonIcon: css({
+      position: 'absolute',
+      left: theme.spacing(1),
+      top: '50%',
+      transform: 'translateY(-50%)',
+    }),
     divider: {
-      base: css`
-        color: ${theme.colors.text};
-        display: flex;
-        margin-bottom: ${theme.spacing(1)};
-        justify-content: space-between;
-        text-align: center;
-        width: 100%;
-      `,
-      line: css`
-        width: 100px;
-        height: 10px;
-        border-bottom: 1px solid ${theme.colors.text};
-      `,
+      base: css({
+        color: theme.colors.text.primary,
+        display: 'flex',
+        marginBottom: theme.spacing(1),
+        justifyContent: 'space-between',
+        textAlign: 'center',
+        width: '100%',
+      }),
+      line: css({
+        width: '100px',
+        height: '10px',
+        borderBottom: `1px solid ${theme.colors.text}`,
+      }),
     },
   };
 };

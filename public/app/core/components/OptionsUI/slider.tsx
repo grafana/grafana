@@ -130,13 +130,13 @@ function getTextWidth(text: string, font: string): number | null {
 
 const getStylesSlider = (theme: GrafanaTheme2, width: number) => {
   return {
-    numberInputWrapper: css`
-      margin-left: ${theme.spacing(3)};
-      max-height: 32px;
-      max-width: ${width}px;
-      min-width: ${width}px;
-      overflow: visible;
-      width: 100%;
-    `,
+    numberInputWrapper: css({
+      marginLeft: theme.spacing(3),
+      maxHeight: '32px',
+      maxWidth: width,
+      minWidth: width,
+      overflow: 'visible',
+      width: '100%',
+    }),
   };
 };

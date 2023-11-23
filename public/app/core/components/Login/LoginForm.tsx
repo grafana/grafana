@@ -16,15 +16,15 @@ interface Props {
   loginHint: string;
 }
 
-const wrapperStyles = css`
-  width: 100%;
-  padding-bottom: 16px;
-`;
+const wrapperStyles = css({
+  width: '100%',
+  paddingBottom: '16px',
+});
 
-export const submitButton = css`
-  justify-content: center;
-  width: 100%;
-`;
+export const submitButton = css({
+  justifyContent: 'center',
+  width: '100%',
+});
 
 export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, loginHint }: Props) => {
   return (
