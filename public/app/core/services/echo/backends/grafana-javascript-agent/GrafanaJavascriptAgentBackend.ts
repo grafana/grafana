@@ -64,9 +64,7 @@ export class GrafanaJavascriptAgentBackend
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
       ],
-      metas: [
-        ...defaultMetas,
-      ],
+      metas: [...defaultMetas],
       sessionTracking: {
         enabled: true,
         persistent: true,
