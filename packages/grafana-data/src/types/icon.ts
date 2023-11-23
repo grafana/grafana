@@ -10,6 +10,7 @@ export const availableIconsIndex = {
   'google-hangouts-alt': true,
   pagerduty: true,
   line: true,
+  brain: true,
   anchor: true,
   'adjust-circle': true,
   'angle-double-down': true,

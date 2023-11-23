@@ -1,0 +1,37 @@
+export const Messages = {
+  dumps: {
+    columns: {
+      id: 'Id',
+      status: 'Status',
+      created: 'Created',
+      startDate: 'Start Date',
+      endDate: 'End Date',
+      timeRange: 'Time Range',
+      startTime: 'Start Time',
+      endTime: 'End Time',
+      serviceNames: 'Service Names',
+    },
+    actions: {
+      download: 'Download',
+      sendToSupport: 'Send to Support',
+      delete: 'Delete',
+      viewLogs: 'View logs',
+      deleteDumpMessage: 'Are you sure you want to delete this PMM dump?',
+      deleteMultipleDumpsMessage: 'Are you sure you want to delete these PMM dumps?',
+      selectServices: 'Select multiple datasets to bulk edit them.',
+      addressRequired: 'Address is required.',
+      nameRequired: 'Name is required.',
+      passwordRequired: 'Password is required.',
+      directoryRequired: 'Directory is required.',
+      addressPlaceholder: 'sftp.percona.com',
+      savingButton: 'Saving...',
+      sendButton: 'Send',
+      cancelButton: 'Cancel',
+    },
+    emptyTable: 'No dumps available',
+    createDataset: 'Create dataset',
+  },
+  dumpLogs: {
+    getLogsTitle: (name: string) => `Logs for ${name}`,
+  },
+};

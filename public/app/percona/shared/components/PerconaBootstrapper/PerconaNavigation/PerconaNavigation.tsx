@@ -27,6 +27,7 @@ import {
   PMM_ENVIRONMENT_OVERVIEW_PAGE,
   PMM_INVENTORY_PAGE,
   PMM_TICKETS_PAGE,
+  PMM_DUMP_PAGE,
 } from './PerconaNavigation.constants';
 import {
   addAccessRolesLink,
@@ -53,6 +54,7 @@ const PerconaNavigation: FC = () => {
 
   dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
   dispatch(updateNavIndex(PMM_DBAAS_PAGE));
+  dispatch(updateNavIndex(PMM_DUMP_PAGE));
   dispatch(updateNavIndex(PMM_BACKUP_PAGE));
   dispatch(updateNavIndex(PMM_INVENTORY_PAGE));
   dispatch(updateNavIndex(PMM_ADD_INSTANCE_PAGE));
