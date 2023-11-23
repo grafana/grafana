@@ -203,7 +203,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
-		URL:               amURL + "/alertmanager",
+		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
@@ -282,7 +282,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
-		URL:               amURL + "/alertmanager",
+		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
@@ -343,7 +343,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
-		URL:               amURL + "/alertmanager",
+		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
