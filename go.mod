@@ -289,6 +289,8 @@ require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana
 
 require github.com/grafana/pyroscope/api v0.2.1 // @grafana/observability-traces-and-profiling
 
+require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
+
 replace github.com/apache/arrow/go/v13 => github.com/toddtreece/arrow/go/v13 v13.0.0-20231123012327-08bed04bb974 // @grafana/observability-metrics
 
 require (
@@ -480,8 +482,6 @@ require (
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
-
-require github.com/apache/arrow/go/v13 v13.0.0
 
 require (
 	github.com/google/gnostic-models v0.6.8 // indirect
