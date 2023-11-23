@@ -24,7 +24,7 @@ type DashboardService interface {
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
 	CountInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) (int64, error)
-	GetUserDashboards(ctx context.Context, query *GetUserDashboardsQuery) ([]*Dashboard, error)
+	GetUserSharedDashboards(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.

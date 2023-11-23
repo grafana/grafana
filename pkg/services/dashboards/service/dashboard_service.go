@@ -539,8 +539,12 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetUserDashboards(ctx context.Context, query *dashboards.GetUserDashboardsQuery) ([]*dashboards.Dashboard, error) {
-	permissions := query.User.GetPermissions()
+func (dr *DashboardServiceImpl) GetUserSharedDashboards(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
+	return dr.getUserSharedDashboards(ctx, user)
+}
+
+func (dr *DashboardServiceImpl) getUserSharedDashboards(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
+	permissions := user.GetPermissions()
 	dashboardPermissions := permissions["dashboards:read"]
 	sharedDashboards := make([]*dashboards.Dashboard, 0)
 	dashboardUids := make([]string, 0)
@@ -558,18 +562,18 @@ func (dr *DashboardServiceImpl) GetUserDashboards(ctx context.Context, query *da
 
 	dashboardsQuery := &dashboards.GetDashboardsQuery{
 		DashboardUIDs: dashboardUids,
-		OrgID:         query.OrgID,
+		OrgID:         user.GetOrgID(),
 	}
 	sharedDashboards, err := dr.dashboardStore.GetDashboards(ctx, dashboardsQuery)
-	return sharedDashboards, err
-}
-
-func (dr *DashboardServiceImpl) getUserDashboardUIDs(ctx context.Context, user identity.Requester) ([]string, error) {
-	userDashboards, err := dr.GetUserDashboards(ctx, &dashboards.GetUserDashboardsQuery{User: user, OrgID: user.GetOrgID()})
 	if err != nil {
 		return nil, err
 	}
-	userDashboardUIDs := make([]string, 0)
+	return dr.filterUserSharedDashboards(ctx, user, sharedDashboards)
+}
+
+// filterUserSharedDashboards filter dashboards directly assigned to user, but not located in folders with view permissions
+func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, user identity.Requester, userDashboards []*dashboards.Dashboard) ([]*dashboards.Dashboard, error) {
+	filteredDashboards := make([]*dashboards.Dashboard, 0)
 	for _, dashboard := range userDashboards {
 		// Filter out dashboards if user has access to parent folder
 		g, err := guardian.NewByUID(ctx, dashboard.FolderUID, user.GetOrgID(), user)
@@ -582,15 +586,27 @@ func (dr *DashboardServiceImpl) getUserDashboardUIDs(ctx context.Context, user i
 			return nil, err
 		}
 		if !canView {
-			userDashboardUIDs = append(userDashboardUIDs, dashboard.UID)
+			filteredDashboards = append(filteredDashboards, dashboard)
 		}
+	}
+	return filteredDashboards, nil
+}
+
+func (dr *DashboardServiceImpl) getUserSharedDashboardUIDs(ctx context.Context, user identity.Requester) ([]string, error) {
+	userDashboards, err := dr.getUserSharedDashboards(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	userDashboardUIDs := make([]string, 0)
+	for _, dashboard := range userDashboards {
+		userDashboardUIDs = append(userDashboardUIDs, dashboard.UID)
 	}
 	return userDashboardUIDs, nil
 }
 
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	if len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, "sharedwithme") {
-		userDashboardUIDs, err := dr.getUserDashboardUIDs(ctx, query.SignedInUser)
+		userDashboardUIDs, err := dr.getUserSharedDashboardUIDs(ctx, query.SignedInUser)
 		if err != nil {
 			return nil, err
 		}

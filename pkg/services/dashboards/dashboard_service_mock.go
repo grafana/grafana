@@ -286,24 +286,24 @@ func (_m *FakeDashboardService) SearchDashboards(ctx context.Context, query *Fin
 	return r0, r1
 }
 
-func (_m *FakeDashboardService) GetUserDashboards(ctx context.Context, query *GetUserDashboardsQuery) ([]*Dashboard, error) {
-	ret := _m.Called(ctx, query)
+func (_m *FakeDashboardService) GetUserSharedDashboards(ctx context.Context, user identity.Requester) ([]*Dashboard, error) {
+	ret := _m.Called(ctx, user)
 
 	var r0 []*Dashboard
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *GetUserDashboardsQuery) ([]*Dashboard, error)); ok {
-		return rf(ctx, query)
+	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) ([]*Dashboard, error)); ok {
+		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *GetUserDashboardsQuery) []*Dashboard); ok {
-		r0 = rf(ctx, query)
+	if rf, ok := ret.Get(0).(func(context.Context, identity.Requester) []*Dashboard); ok {
+		r0 = rf(ctx, user)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*Dashboard)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *GetUserDashboardsQuery) error); ok {
-		r1 = rf(ctx, query)
+	if rf, ok := ret.Get(1).(func(context.Context, identity.Requester) error); ok {
+		r1 = rf(ctx, user)
 	} else {
 		r1 = ret.Error(1)
 	}
