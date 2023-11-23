@@ -3303,7 +3303,7 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:1.24.1":
-  version: 1.24.1
+  version: 0.0.0-use.local
   resolution: "@grafana/scenes@npm:1.24.1"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.0.2"
@@ -3318,7 +3318,7 @@ __metadata:
     "@grafana/ui": 10.0.3
   checksum: 38967dd3977a9b9feb4c295da58bb378d2f9c810c43b34c67c65858782b9593421dfb58d29bc3fa0e86fc63f9af37f7a381ac958ef43bf38d6443a0a7e4de059
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@grafana/schema@npm:10.3.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
