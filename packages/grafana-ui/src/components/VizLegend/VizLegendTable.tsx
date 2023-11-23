@@ -1,8 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { orderBy } from 'lodash';
 import React from 'react';
 
-import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
