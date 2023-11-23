@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { Subscription, throttleTime } from 'rxjs';
+import { debounceTime, Subscription } from 'rxjs';
 
 import {
   DashboardCursorSync,
@@ -103,7 +103,7 @@ export function TablePanel(props: Props) {
     subs.add(
       panelContext.eventBus
         .getStream(DataHoverEvent)
-        .pipe(throttleTime(50))
+        .pipe(debounceTime(200))
         .subscribe({
           next: (evt) => {
             if (panelContext.eventBus === evt.origin) {
@@ -118,7 +118,7 @@ export function TablePanel(props: Props) {
     subs.add(
       panelContext.eventBus
         .getStream(DataHoverClearEvent)
-        .pipe(throttleTime(50))
+        .pipe(debounceTime(200))
         .subscribe({
           next: (evt) => {
             if (panelContext.eventBus === evt.origin) {
