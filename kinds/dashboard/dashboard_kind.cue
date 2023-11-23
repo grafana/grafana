@@ -243,7 +243,9 @@ lineage: schemas: [{
 		// `4`: Numerical DESC
 		// `5`: Alphabetical Case Insensitive ASC
 		// `6`: Alphabetical Case Insensitive DESC
-		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc")
+		// `7`: Natural ASC
+		// `8`: Natural DESC
+		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc|naturalAsc|naturalDesc")
 
 		// Ref to a DataSource instance
 		#DataSourceRef: {
@@ -265,7 +267,7 @@ lineage: schemas: [{
 			// Tooltip to display when the user hovers their mouse over it
 			tooltip: string
 			// Link URL. Only required/valid if the type is link
-			url: string
+			url?: string
 			// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards

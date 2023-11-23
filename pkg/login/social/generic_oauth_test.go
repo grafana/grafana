@@ -8,28 +8,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-kit/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-)
 
-func newLogger(name string, lev string) log.Logger {
-	logger := log.New(name)
-	logger.Swap(level.NewFilter(logger.GetLogger(), level.AllowInfo()))
-	return logger
-}
+	"github.com/grafana/grafana/pkg/setting"
+)
 
 func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name                 string
@@ -113,11 +105,8 @@ func TestSearchJSONForEmail(t *testing.T) {
 
 func TestSearchJSONForGroups(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name                 string
@@ -176,11 +165,8 @@ func TestSearchJSONForGroups(t *testing.T) {
 
 func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name                 string
@@ -238,12 +224,10 @@ func TestSearchJSONForRole(t *testing.T) {
 }
 
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
-	provider := SocialGenericOAuth{
-		SocialBase: &SocialBase{
-			log: newLogger("generic_oauth_test", "debug"),
-		},
-		emailAttributePath: "email",
-	}
+	provider, err := NewGenericOAuthProvider(map[string]any{
+		"email_attribute_path": "email",
+	}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	tests := []struct {
 		Name                    string
@@ -508,12 +492,10 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 func TestUserInfoSearchesForLogin(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-			loginAttributePath: "login",
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{
+			"login_attribute_path": "login",
+		}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name               string
@@ -603,12 +585,10 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 
 func TestUserInfoSearchesForName(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-			nameAttributePath: "name",
-		}
+		provider, err := NewGenericOAuthProvider(map[string]any{
+			"name_attribute_path": "name",
+		}, &setting.Cfg{}, featuremgmt.WithFeatures())
+		require.NoError(t, err)
 
 		tests := []struct {
 			Name              string
@@ -701,12 +681,6 @@ func TestUserInfoSearchesForName(t *testing.T) {
 
 func TestUserInfoSearchesForGroup(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-		}
-
 		tests := []struct {
 			name                string
 			groupsAttributePath string
@@ -742,7 +716,6 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				provider.groupsAttributePath = test.groupsAttributePath
 				body, err := json.Marshal(test.responseBody)
 				require.NoError(t, err)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -752,7 +725,13 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 					_, err := w.Write(body)
 					require.NoError(t, err)
 				}))
-				provider.apiUrl = ts.URL
+
+				provider, err := NewGenericOAuthProvider(map[string]any{
+					"groups_attribute_path": test.groupsAttributePath,
+					"api_url":               ts.URL,
+				}, &setting.Cfg{}, featuremgmt.WithFeatures())
+				require.NoError(t, err)
+
 				token := &oauth2.Token{
 					AccessToken:  "",
 					TokenType:    "",
@@ -769,12 +748,10 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 }
 
 func TestPayloadCompression(t *testing.T) {
-	provider := SocialGenericOAuth{
-		SocialBase: &SocialBase{
-			log: newLogger("generic_oauth_test", "debug"),
-		},
-		emailAttributePath: "email",
-	}
+	provider, err := NewGenericOAuthProvider(map[string]any{
+		"email_attribute_path": "email",
+	}, &setting.Cfg{}, featuremgmt.WithFeatures())
+	require.NoError(t, err)
 
 	tests := []struct {
 		Name          string
@@ -833,6 +810,100 @@ func TestPayloadCompression(t *testing.T) {
 				require.NotNil(t, userInfo, "Testing case %q", test.Name)
 				require.Equal(t, test.ExpectedEmail, userInfo.Email)
 			}
+		})
+	}
+}
+
+func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
+	type settingFields struct {
+		nameAttributePath    string
+		loginAttributePath   string
+		idTokenAttributeName string
+		teamIds              []string
+		allowedOrganizations []string
+	}
+	testCases := []struct {
+		name     string
+		settings map[string]any
+		want     settingFields
+	}{
+		{
+			name: "nameAttributePath is set",
+			settings: map[string]any{
+				"name_attribute_path": "name",
+			},
+			want: settingFields{
+				nameAttributePath:    "name",
+				loginAttributePath:   "",
+				idTokenAttributeName: "",
+				teamIds:              []string{},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "loginAttributePath is set",
+			settings: map[string]any{
+				"login_attribute_path": "login",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "login",
+				idTokenAttributeName: "",
+				teamIds:              []string{},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "idTokenAttributeName is set",
+			settings: map[string]any{
+				"id_token_attribute_name": "id_token",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "",
+				idTokenAttributeName: "id_token",
+				teamIds:              []string{},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "teamIds is set",
+			settings: map[string]any{
+				"team_ids": "[\"team1\", \"team2\"]",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "",
+				idTokenAttributeName: "",
+				teamIds:              []string{"team1", "team2"},
+				allowedOrganizations: []string{},
+			},
+		},
+		{
+			name: "allowedOrganizations is set",
+			settings: map[string]any{
+				"allowed_organizations": "org1, org2",
+			},
+			want: settingFields{
+				nameAttributePath:    "",
+				loginAttributePath:   "",
+				idTokenAttributeName: "",
+				teamIds:              []string{},
+				allowedOrganizations: []string{"org1", "org2"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
+			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
+			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
+			require.Equal(t, tc.want.idTokenAttributeName, s.idTokenAttributeName)
+			require.Equal(t, tc.want.teamIds, s.teamIds)
+			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
 		})
 	}
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -206,6 +207,7 @@ type HTTPServer struct {
 	starApi              *starApi.API
 	promRegister         prometheus.Registerer
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	namespacer           request.NamespaceMapper
 }
 
 type ServerOptions struct {
@@ -348,6 +350,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		starApi:                      starApi,
 		promRegister:                 promRegister,
 		clientConfigProvider:         clientConfigProvider,
+		namespacer:                   request.GetNamespaceMapper(cfg),
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -355,7 +358,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.registerRoutes()
 
 	// Register access control scope resolver for annotations
-	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
+	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, features, dashboardService, folderService))
 
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err

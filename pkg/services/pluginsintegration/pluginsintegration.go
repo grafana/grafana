@@ -152,7 +152,7 @@ func NewClientDecorator(
 func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
 	var middlewares []plugins.ClientMiddleware
 
-	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		middlewares = []plugins.ClientMiddleware{
 			clientmiddleware.NewPluginRequestMetaMiddleware(),
 		}
@@ -172,11 +172,11 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	)
 
 	// Placing the new service implementation behind a feature flag until it is known to be stable
-	if features.IsEnabled(featuremgmt.FlagUseCachingService) {
+	if features.IsEnabledGlobally(featuremgmt.FlagUseCachingService) {
 		middlewares = append(middlewares, clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features))
 	}
 
-	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
+	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
 		middlewares = append(middlewares, clientmiddleware.NewForwardIDMiddleware())
 	}
 
@@ -186,7 +186,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
-	if features.IsEnabled(featuremgmt.FlagPluginsInstrumentationStatusSource) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
 		// StatusSourceMiddleware should be at the very bottom, or any middlewares below it won't see the
 		// correct status source in their context.Context
 		middlewares = append(middlewares, clientmiddleware.NewStatusSourceMiddleware())

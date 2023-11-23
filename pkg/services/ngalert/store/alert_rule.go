@@ -11,13 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -426,7 +426,7 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 }
 
 // GetUserVisibleNamespaces returns the folders that are visible to the user and have at least one alert in it
-func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user *user.SignedInUser) (map[string]*folder.Folder, error) {
+func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error) {
 	namespaceMap := make(map[string]*folder.Folder)
 
 	searchQuery := dashboards.FindPersistedDashboardsQuery{
@@ -434,7 +434,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 		SignedInUser: user,
 		Type:         searchstore.TypeAlertFolder,
 		Limit:        -1,
-		Permission:   dashboards.PERMISSION_VIEW,
+		Permission:   dashboardaccess.PERMISSION_VIEW,
 		Sort:         model.SortOption{},
 		Filters: []any{
 			searchstore.FolderWithAlertsFilter{},
@@ -459,7 +459,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			namespaceMap[hit.UID] = &folder.Folder{
-				ID:    hit.ID,
+				ID:    hit.ID, // nolint:staticcheck
 				UID:   hit.UID,
 				Title: hit.Title,
 			}
@@ -470,7 +470,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 }
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *user.SignedInUser) (*folder.Folder, error) {
+func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user identity.Requester) (*folder.Folder, error) {
 	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &namespace, SignedInUser: user})
 	if err != nil {
 		return nil, err
@@ -480,7 +480,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser) (*folder.Folder, error) {
+func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
 	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &uid, SignedInUser: user})
 	if err != nil {
 		return nil, err
@@ -634,48 +634,21 @@ var GenerateNewAlertRuleUID = func(sess *db.Session, orgID int64, ruleTitle stri
 	return "", ngmodels.ErrAlertRuleFailedGenerateUniqueUID
 }
 
-// validateAlertRule validates the alert rule interval and organisation.
+// validateAlertRule validates the alert rule including db-level restrictions on field lengths.
 func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
-	if len(alertRule.Data) == 0 {
-		return fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if alertRule.Title == "" {
-		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if err := ngmodels.ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(st.Cfg.BaseInterval.Seconds())); err != nil {
+	if err := alertRule.ValidateAlertRule(st.Cfg); err != nil {
 		return err
 	}
 
-	// enfore max name length in SQLite
+	// enforce max name length.
 	if len(alertRule.Title) > AlertRuleMaxTitleLength {
 		return fmt.Errorf("%w: name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxTitleLength)
 	}
 
-	// enfore max rule group name length in SQLite
+	// enforce max rule group name length.
 	if len(alertRule.RuleGroup) > AlertRuleMaxRuleGroupNameLength {
 		return fmt.Errorf("%w: rule group name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxRuleGroupNameLength)
 	}
 
-	if alertRule.OrgID == 0 {
-		return fmt.Errorf("%w: no organisation is found", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if alertRule.DashboardUID == nil && alertRule.PanelID != nil {
-		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ngmodels.ErrAlertRuleFailedValidation)
-	}
-
-	if _, err := ngmodels.ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-		return err
-	}
-
-	if _, err := ngmodels.NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
-		return err
-	}
-
-	if alertRule.For < 0 {
-		return fmt.Errorf("%w: field `for` cannot be negative", ngmodels.ErrAlertRuleFailedValidation)
-	}
 	return nil
 }
