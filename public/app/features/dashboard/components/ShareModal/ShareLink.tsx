@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ThemePicker } from './ThemePicker';
-import { trackDashboardSharingActionPerType } from './analytics';
 import { ShareModalTabProps } from './types';
-import { buildImageUrl, buildShareUrl, shareDashboardType } from './utils';
+import { buildImageUrl, buildShareUrl } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -75,7 +75,7 @@ export class ShareLink extends PureComponent<Props, State> {
   };
 
   onCopy() {
-    trackDashboardSharingActionPerType('copy_link', shareDashboardType.link, {
+    reportInteraction('dashboards_sharing_link_copy_clicked', {
       currentTimeRange: this.state.useCurrentTimeRange,
       theme: this.state.selectedTheme,
       shortenURL: this.state.useShortUrl,
