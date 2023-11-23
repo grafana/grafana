@@ -1233,6 +1233,7 @@
     "calendar": {
       "apply-button": "Aplicar intervalo de tiempo",
       "cancel-button": "Cancelar",
+      "close": "",
       "select-time": "Seleccionar un intervalo de tiempo"
     },
     "content": {
@@ -1252,6 +1253,7 @@
       "default-error": "Introducir una fecha anterior o «ahora»",
       "fiscal-year": "Ejercicio fiscal",
       "from-input": "Desde",
+      "open-input-calendar": "",
       "range-error": "«Desde» no puede ser posterior a «hasta»",
       "to-input": "Hasta"
     },
