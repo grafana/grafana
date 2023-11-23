@@ -11,9 +11,9 @@ export enum LokiResultType {
 }
 
 export enum LabelType {
-  'indexed' = 'I',
-  'structuredMetadata' = 'S',
-  'parsed' = 'P',
+  Indexed = 'I',
+  StructuredMetadata = 'S',
+  Parsed = 'P',
 }
 
 export interface LokiQuery extends LokiQueryFromSchema {

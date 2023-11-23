@@ -285,7 +285,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     return {
       extractedLabelKeys: extractLabelKeysFromDataFrame(series[0]),
-      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LabelType.structuredMetadata),
+      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LabelType.StructuredMetadata),
       unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
       hasJSON,
       hasPack,

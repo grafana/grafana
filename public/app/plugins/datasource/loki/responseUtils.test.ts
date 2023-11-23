@@ -148,12 +148,12 @@ describe('extractLabelKeysFromDataFrame', () => {
 
   it('extracts structured metadata label keys', () => {
     const input = cloneDeep(frameWithTypes);
-    expect(extractLabelKeysFromDataFrame(input, LabelType.structuredMetadata)).toEqual(['structured']);
+    expect(extractLabelKeysFromDataFrame(input, LabelType.StructuredMetadata)).toEqual(['structured']);
   });
 
   it('does not extract structured metadata label keys from non-typed frame', () => {
     const input = cloneDeep(frame);
-    expect(extractLabelKeysFromDataFrame(input, LabelType.structuredMetadata)).toEqual([]);
+    expect(extractLabelKeysFromDataFrame(input, LabelType.StructuredMetadata)).toEqual([]);
   });
 });
 

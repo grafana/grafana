@@ -338,7 +338,7 @@ describe('Query imports', () => {
       datasource = createLokiDatasource();
       languageProvider = new LanguageProvider(datasource);
       jest.mocked(extractLabelKeysFromDataFrame).mockImplementation((_, type) => {
-        if (type === LabelType.indexed || !type) {
+        if (type === LabelType.Indexed || !type) {
           return extractedLabelKeys;
         } else {
           return structuredMetadataKeys;

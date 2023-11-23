@@ -55,7 +55,7 @@ export function extractLogParserFromDataFrame(frame: DataFrame): {
   return { hasLogfmt, hasJSON, hasPack };
 }
 
-export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType = LabelType.indexed): string[] {
+export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType = LabelType.Indexed): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
     frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
   const labelTypeArray: Array<{ [key: string]: string }> | undefined =
@@ -67,7 +67,7 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType 
 
   // if there are no label types, only return indexed labels if requested
   if (!labelTypeArray?.length) {
-    if (type === LabelType.indexed) {
+    if (type === LabelType.Indexed) {
       return Object.keys(labelsArray[0]);
     }
     return [];
