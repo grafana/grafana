@@ -43,8 +43,8 @@ export interface DataTrailState extends SceneObjectState {
   // Synced with url
   metric?: string;
 
-  // Indicates that the new state is actually an historical state
-  inHistory?: boolean;
+  // Indicates which step in the data trail this is
+  stepIndex: number;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -62,18 +62,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       ],
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
+      stepIndex: state.stepIndex ?? 0,
       ...state,
     });
 
     this.addActivationHandler(this._onActivate.bind(this));
-  }
-
-  public setState(state: Partial<DataTrailState>) {
-    super.setState({ ...state, inHistory: false });
-  }
-
-  private setStateFromHistory(state: Partial<DataTrailState>) {
-    super.setState({ ...state, inHistory: true });
   }
 
   public _onActivate() {
@@ -100,7 +93,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       step.trailState.metric = undefined;
     }
 
-    this.setStateFromHistory(step.trailState);
+    this.setState(step.trailState);
 
     if (!this.state.embedded) {
       locationService.replace(getUrlForTrail(this));

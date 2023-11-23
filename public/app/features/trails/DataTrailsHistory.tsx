@@ -50,7 +50,11 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
           this.state.steps[0].trailState = sceneUtils.cloneSceneObjectState(oldState, { history: this });
         }
 
-        if (newState.metric && !newState.inHistory) {
+        // Check if new and old state are at the same step index
+        // Then we know this isn't a history transition
+        const isMovingThroughHistory = newState.stepIndex !== oldState.stepIndex;
+
+        if (newState.metric && !isMovingThroughHistory) {
           this.addTrailStep(trail, 'metric');
         }
       }
@@ -70,6 +74,10 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   }
 
   public addTrailStep(trail: DataTrail, type: TrailStepType) {
+    const stepIndex = this.state.steps.length;
+    // Update the trail's current step state.  It is being given a step index.
+    trail.setState({ ...trail.state, stepIndex });
+
     this.setState({
       steps: [
         ...this.state.steps,
