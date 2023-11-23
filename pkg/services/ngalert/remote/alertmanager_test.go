@@ -136,7 +136,6 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	// store := notifier.NewFakeConfigStore(t, make(map[int64]*ngmodels.AlertConfiguration))
 	am, err := NewAlertmanager(cfg, 1)
 	require.NoError(t, err)
 
