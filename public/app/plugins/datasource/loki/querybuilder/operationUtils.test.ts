@@ -309,7 +309,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Drop,
       params: ['foo', ''],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Keep);
+    const definition = definitions.find((def) => def.id === LokiOperationId.Drop);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | drop foo');
   });
 
@@ -318,7 +318,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Drop,
       params: ['foo', 'bar', 'baz'],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Keep);
+    const definition = definitions.find((def) => def.id === LokiOperationId.Drop);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | drop foo, bar, baz');
   });
 });
