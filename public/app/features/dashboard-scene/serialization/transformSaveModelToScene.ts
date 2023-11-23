@@ -25,6 +25,7 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   AdHocFilterSet,
+  TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -274,8 +275,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       query: variable.query,
       isMulti: variable.multi,
@@ -288,8 +289,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'query') {
     return new QueryVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       query: variable.query,
       datasource: variable.datasource,
@@ -306,8 +307,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       regex: variable.regex,
       pluginId: variable.query,
@@ -335,6 +336,14 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     });
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
+      ...commonProperties,
+      description: variable.description,
+      value: variable.query,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+  } else if (variable.type === 'textbox') {
+    return new TextBoxVariable({
       ...commonProperties,
       description: variable.description,
       value: variable.query,
