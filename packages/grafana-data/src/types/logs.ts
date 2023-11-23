@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse, QueryFixAction } from './datasource';
+import { DataQueryRequest, DataQueryResponse, QueryFixAction, QueryFixType } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -319,7 +319,7 @@ export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery
   /**
    * Returns a list of supported action types for `modifyQuery()`.
    */
-  getSupportedQueryModifications(): string[];
+  getSupportedQueryModifications(): Array<QueryFixType | String>;
 }
 
 /**
