@@ -8,9 +8,10 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 
 import { LegendTableItem } from './VizLegendTableItem';
-import { VizLegendTableProps } from './types';
+import { VizLegendItem, VizLegendTableProps } from './types';
 
 const nameSortKey = 'Name';
+const naturalCompare = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
 
 /**
  * @internal
@@ -43,26 +44,39 @@ export const VizLegendTable = <T extends unknown>({
     }
   }
 
-  const sortedItems = sortKey
-    ? orderBy(
-        items,
-        (item) => {
-          if (sortKey === nameSortKey) {
-            return item.label;
-          }
+  if (sortKey != null) {
+    let itemVals = new Map<VizLegendItem, string | number>();
 
-          if (item.getDisplayValues) {
-            const stat = item.getDisplayValues().filter((stat) => stat.title === sortKey)[0];
+    items.forEach((item) => {
+      if (sortKey === nameSortKey) {
+        itemVals.set(item, item.label);
+      } else if (item.getDisplayValues) {
+        const stat = item.getDisplayValues().find((stat) => stat.title === sortKey);
+        const val = stat == null || Number.isNaN(stat.numeric) ? -Infinity : stat.numeric;
+        itemVals.set(item, val);
+      }
+    });
 
-            if (stat) {
-              return isNaN(stat.numeric) ? -Infinity : stat.numeric;
-            }
-          }
-          return undefined;
-        },
-        sortDesc ? 'desc' : 'asc'
-      )
-    : items;
+    let sortMult = sortDesc ? -1 : 1;
+
+    if (sortKey === nameSortKey) {
+      // string sort
+      items.sort((a, b) => {
+        let aVal = itemVals.get(a) as string;
+        let bVal = itemVals.get(b) as string;
+
+        return sortMult * naturalCompare(aVal, bVal);
+      });
+    } else {
+      // numeric sort
+      items.sort((a, b) => {
+        let aVal = itemVals.get(a) as number;
+        let bVal = itemVals.get(b) as number;
+
+        return sortMult * (aVal - bVal);
+      });
+    }
+  }
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
@@ -102,7 +116,7 @@ export const VizLegendTable = <T extends unknown>({
           ))}
         </tr>
       </thead>
-      <tbody>{sortedItems.map(itemRenderer!)}</tbody>
+      <tbody>{items.map(itemRenderer!)}</tbody>
     </table>
   );
 };
