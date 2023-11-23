@@ -68,6 +68,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
+  public setState(state: Partial<DataTrailState>) {
+    super.setState({ ...state, inHistory: false });
+  }
+
+  private setStateFromHistory(state: Partial<DataTrailState>) {
+    super.setState({ ...state, inHistory: true });
+  }
+
   public _onActivate() {
     if (!this.state.topScene) {
       this.setState({ topScene: getTopSceneFor(this.state.metric) });
@@ -92,7 +100,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       step.trailState.metric = undefined;
     }
 
-    this.setState({ ...step.trailState, inHistory: true });
+    this.setStateFromHistory(step.trailState);
 
     if (!this.state.embedded) {
       locationService.replace(getUrlForTrail(this));
