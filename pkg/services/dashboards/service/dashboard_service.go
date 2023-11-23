@@ -605,7 +605,7 @@ func (dr *DashboardServiceImpl) getUserSharedDashboardUIDs(ctx context.Context, 
 }
 
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	if len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, "sharedwithme") {
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, "sharedwithme") {
 		userDashboardUIDs, err := dr.getUserSharedDashboardUIDs(ctx, query.SignedInUser)
 		if err != nil {
 			return nil, err
