@@ -66,13 +66,12 @@ export class GrafanaJavascriptAgentBackend
       ],
       metas: [
         ...defaultMetas,
-        {
-          session: {
-            // new session id for every page load
-            id: (Math.random() + 1).toString(36).substring(2),
-          },
-        },
       ],
+      sessionTracking: {
+        enabled: true,
+        // session are sticky across page loads and browsing contexts
+        persistent: true,
+      },
     };
     this.faroInstance = initializeFaro(grafanaJavaScriptAgentOptions);
 
