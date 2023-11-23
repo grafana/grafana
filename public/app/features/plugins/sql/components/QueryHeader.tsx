@@ -8,7 +8,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
 
 import { QueryWithDefaults } from '../defaults';
-import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB } from '../types';
+import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB, SQLDialect } from '../types';
 
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
@@ -17,8 +17,7 @@ import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
   db: DB;
-  isPostgresInstance?: boolean;
-  isFsqlInstance?: boolean;
+  dialect: SQLDialect;
   isQueryRunnable: boolean;
   onChange: (query: SQLQuery) => void;
   onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
@@ -35,8 +34,7 @@ const editorModes = [
 
 export function QueryHeader({
   db,
-  isPostgresInstance,
-  isFsqlInstance,
+  dialect,
   isQueryRunnable,
   onChange,
   onQueryRowChange,
@@ -110,12 +108,12 @@ export function QueryHeader({
   };
 
   const datasetDropdownIsAvailable = () => {
-    if (isFsqlInstance) {
+    if (dialect === 'influx') {
       return false;
     }
-    // If the feature flag is DISABLED, && the datasource is Postgres (`isPostgresInstance`),
+    // If the feature flag is DISABLED, && the datasource is Postgres (`dialect = 'postgres`),
     // we want to hide the dropdown - as per previous behavior.
-    if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && isPostgresInstance) {
+    if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && dialect === 'postgres') {
       return false;
     }
 
@@ -295,7 +293,7 @@ export function QueryHeader({
                 <DatasetSelector
                   db={db}
                   dataset={query.dataset}
-                  isPostgresInstance={isPostgresInstance}
+                  dialect={dialect}
                   preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
                 />
