@@ -13,6 +13,17 @@ export interface ContactPoints {
   selectedContactPoint?: string;
 }
 
+// export interface ManualRoutingSettings {
+//   overrideGrouping: boolean;
+//   groupBy?: string[];
+//   overrideTimings: boolean;
+//   groupWaitValue?: string;
+//   groupIntervalValue?: string;
+//   repeatIntervalValue?: string;
+//   muteTimeIntervals: string[];
+
+// }
+
 export interface RuleFormValues {
   // common
   name: string;
@@ -34,6 +45,13 @@ export interface RuleFormValues {
   isPaused?: boolean;
   contactPoints?: ContactPoints[];
   manualRouting: boolean;
+  overrideGrouping: boolean;
+  groupBy?: string[];
+  overrideTimings: boolean;
+  groupWaitValue?: string;
+  groupIntervalValue?: string;
+  repeatIntervalValue?: string;
+  muteTimeIntervals: string[];
 
   // cortex / loki rules
   namespace: string;

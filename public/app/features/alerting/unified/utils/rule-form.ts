@@ -69,6 +69,9 @@ export const getDefaultFormValues = (): RuleFormValues => {
     evaluateEvery: MINUTE,
     manualRouting: false, // let's decide this later
     contactPoints: [],
+    overrideGrouping: false,
+    overrideTimings: false,
+    muteTimeIntervals: [],
 
     // cortex / loki
     namespace: '',

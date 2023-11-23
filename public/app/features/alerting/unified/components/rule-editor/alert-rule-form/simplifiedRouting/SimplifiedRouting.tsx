@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { createAction, createReducer } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
@@ -14,20 +15,42 @@ import {
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
 import { ContactPointSelector } from './ContactPointSelector';
+import { MuteTimingFields } from './MuteTimingFields';
+import { RoutingSettings } from './RouteSettings';
 
 export interface AMContactPoint {
   alertManager: AlertManagerDataSource;
   selectedContactPoint?: string;
+  muteTimeIntervals: string[];
+  overrideGrouping: boolean;
+  groupBy?: string[];
+  overrideTimings: boolean;
+  groupWaitValue?: string;
+  groupIntervalValue?: string;
+  repeatIntervalValue?: string;
 }
 
 export const selectContactPoint = createAction<{ receiver: string | undefined; alertManager: AlertManagerDataSource }>(
   'simplifiedRouting/selectContactPoint'
 );
+export const updateMuteTimings = createAction<{ muteTimings: string[]; alertManager: string }>(
+  'simplifiedRouting/updateMuteTimings'
+);
+
+export const updateOverrideGrouping = createAction<{ overrideGrouping: boolean; alertManager: string }>(
+  'simplifiedRouting/overrideGrouping'
+);
 
 export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) => {
   builder.addCase(selectContactPoint, (state, action) => {
     const { receiver, alertManager } = action.payload;
-    const newContactPoint: AMContactPoint = { selectedContactPoint: receiver, alertManager };
+    const newContactPoint: AMContactPoint = {
+      selectedContactPoint: receiver,
+      alertManager,
+      overrideGrouping: false,
+      muteTimeIntervals: [],
+      overrideTimings: false,
+    };
     const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManager.name);
 
     if (existingContactPoint) {
@@ -36,12 +59,28 @@ export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) =>
       state.push(newContactPoint);
     }
   });
+  builder.addCase(updateMuteTimings, (state, action) => {
+    const { muteTimings, alertManager } = action.payload;
+    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManager);
+    if (existingContactPoint) {
+      existingContactPoint.muteTimeIntervals = muteTimings;
+    }
+  });
+  // builder.addCase(updateOverrideGrouping, (state, action) => {
+  //   const { overrideGrouping, alertManager } = action.payload;
+  //   const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManager);
+  //   if (existingContactPoint) {
+  //     existingContactPoint.overrideGrouping = overrideGrouping;
+  //   }
+  // });
 });
 
 export function SimplifiedRouting() {
   const { getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
   const contactPointsInAlert = getValues('contactPoints');
+  const muteIntervals = getValues('muteTimeIntervals');
+  const overrideGrouping = getValues('overrideGrouping');
 
   const allAlertManagersByPermission = getAlertManagerDataSourcesByPermission('notification');
 
@@ -57,7 +96,13 @@ export function SimplifiedRouting() {
   // we merge the selected contact points with the alert manager meta data
   const alertManagersWithSelectedContactPoints = alertManagersDataSourcesWithConfigAPI.map((am) => {
     const selectedContactPoint = contactPointsInAlert?.find((cp) => cp.alertManager === am.name);
-    return { alertManager: am, selectedContactPoint: selectedContactPoint?.selectedContactPoint };
+    return {
+      alertManager: am,
+      selectedContactPoint: selectedContactPoint?.selectedContactPoint,
+      muteTimeIntervals: muteIntervals,
+      overrideGrouping: overrideGrouping,
+      overrideTimings: false,
+    };
   });
 
   // use reducer to keep this alertManagersWithSelectedContactPoints in the state
@@ -77,7 +122,14 @@ export function SimplifiedRouting() {
 
   const shouldShowAM = true;
 
+  function onChangeMuteTimings(value: string[]) {
+    dispatch(updateMuteTimings({ muteTimings: value, alertManager: '' }));
+  }
+
+  const [isOpenRoutingSettings, toggleOpenRoutingSettings] = useToggle(false);
+
   return alertManagersWithCPState.map((alertManagerContactPoint, index) => {
+    const alertManagerName = alertManagerContactPoint.alertManager.name;
     return (
       <div key={index}>
         <Stack direction="column">
@@ -92,16 +144,13 @@ export function SimplifiedRouting() {
                   alt="Alert manager logo"
                   className={styles.img}
                 />
-                {alertManagerContactPoint.alertManager.name}
+                {alertManagerName}
               </div>
               <div className={styles.secondAlertManagerLine}></div>
             </Stack>
           )}
           <Stack direction="row" gap={1} alignItems="center">
-            <AlertmanagerProvider
-              accessType={'notification'}
-              alertmanagerSourceName={alertManagerContactPoint.alertManager.name}
-            >
+            <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerName}>
               <ContactPointSelector
                 selectedReceiver={alertManagerContactPoint.selectedContactPoint}
                 dispatch={dispatch}
@@ -110,6 +159,17 @@ export function SimplifiedRouting() {
             </AlertmanagerProvider>
             <LinkToContactPoints />
           </Stack>
+          <CollapsableSection
+            label="Muting, grouping and timings"
+            isOpen={isOpenRoutingSettings}
+            className={styles.collapsableSection}
+            onToggle={toggleOpenRoutingSettings}
+          >
+            <Stack direction="column" gap={1}>
+              <MuteTimingFields alertManager={alertManagerName} onChange={onChangeMuteTimings} />
+              <RoutingSettings dispatch={dispatch} alertManagerName={alertManagerName} />
+            </Stack>
+          </CollapsableSection>
         </Stack>
       </div>
     );
@@ -149,5 +209,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: theme.spacing(3),
     height: theme.spacing(3),
     marginRight: theme.spacing(1),
+  }),
+  collapsableSection: css({
+    width: 'fit-content',
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });
