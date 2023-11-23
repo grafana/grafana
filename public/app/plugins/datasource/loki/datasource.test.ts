@@ -27,12 +27,12 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 
+import { LokiVariableSupport } from './LokiVariableSupport';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { runSplitQuery } from './querySplitting';
 import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
-import { LokiVariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => {
   return {
