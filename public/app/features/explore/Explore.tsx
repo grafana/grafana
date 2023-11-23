@@ -7,6 +7,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   AbsoluteTimeRange,
+  DataFrame,
   EventBus,
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
@@ -219,15 +220,41 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (key: string, value: string, refId?: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } }, refId);
+  onClickFilterLabel = (
+    key: string,
+    value: string,
+    refId?: string,
+    frameAndIndex?: { frame: DataFrame; fieldIndex: number }
+  ) => {
+    this.onModifyQueries(
+      {
+        type: 'ADD_FILTER',
+        options: { key, value },
+        frame: frameAndIndex?.frame,
+        fieldIndex: frameAndIndex?.fieldIndex,
+      },
+      refId
+    );
   };
 
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (key: string, value: string, refId?: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } }, refId);
+  onClickFilterOutLabel = (
+    key: string,
+    value: string,
+    refId?: string,
+    frameAndIndex?: { frame: DataFrame; fieldIndex: number }
+  ) => {
+    this.onModifyQueries(
+      {
+        type: 'ADD_FILTER_OUT',
+        options: { key, value },
+        frame: frameAndIndex?.frame,
+        fieldIndex: frameAndIndex?.fieldIndex,
+      },
+      refId
+    );
   };
 
   /**
@@ -269,6 +296,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return ds.toggleQueryFilter(query, {
           type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
           options: modification.options ?? {},
+          frame: modification.frame,
+          fieldIndex: modification.fieldIndex,
         });
       }
       if (ds.modifyQuery) {

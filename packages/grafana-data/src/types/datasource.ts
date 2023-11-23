@@ -586,6 +586,9 @@ export interface QueryFixAction {
   query?: string;
   preventSubmit?: boolean;
   options?: KeyValue<string>;
+
+  frame?: DataFrame;
+  fieldIndex?: number;
 }
 
 export interface QueryHint {
