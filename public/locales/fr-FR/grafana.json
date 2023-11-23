@@ -1239,6 +1239,7 @@
     "calendar": {
       "apply-button": "Appliquer la plage de temps",
       "cancel-button": "Annuler",
+      "close": "",
       "select-time": "Sélectionner une plage de temps"
     },
     "content": {
@@ -1258,6 +1259,7 @@
       "default-error": "Entrez une date dans le passé ou « maintenant »",
       "fiscal-year": "Exercice fiscal",
       "from-input": "De",
+      "open-input-calendar": "",
       "range-error": "« De » ne peut pas être ultérieur à « À »",
       "to-input": "À"
     },
