@@ -794,6 +794,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   loading={loading}
                   loadMoreLogs={loadMoreLogs}
                   range={this.props.range}
+                  timeZone={timeZone}
                   rows={logRows}
                   scrollElement={this.state.logsContainer}
                   sortOrder={logsSortOrder}
