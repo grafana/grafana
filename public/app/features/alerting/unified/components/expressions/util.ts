@@ -52,8 +52,12 @@ const decodeGrafanaNamespace = (namespace: CombinedRuleNamespace): string => {
   if (isCloudRulesSource(namespace.rulesSource)) {
     return nameSpaceName;
   }
-
-  return nameSpaceName.substring(nameSpaceName.indexOf(GRAFANA_PARENT_FOLDER_SEPARATOR) + 1);
+  const nameSpaceWithoutSeparator = nameSpaceName.substring(nameSpaceName.indexOf(GRAFANA_PARENT_FOLDER_SEPARATOR) + 1);
+  // replace \/ with / and \\ with \
+  const nameSpaceWitoutSeparatorAndSlashesUnescaped = nameSpaceWithoutSeparator
+    .replace(/\\\//g, '/')
+    .replace(/\\\\/g, '\\');
+  return nameSpaceWitoutSeparatorAndSlashesUnescaped;
 };
 
 const isEmptySeries = (series: DataFrame[]): boolean => {
