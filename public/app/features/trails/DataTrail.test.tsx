@@ -36,6 +36,10 @@ describe('DataTrail', () => {
       expect(trail.state.topScene).toBeInstanceOf(MetricSelectScene);
     });
 
+    it('Should set stepIndex to 0', () => {
+      expect(trail.state.stepIndex).toBe(0);
+    });
+
     describe('And metric is selected', () => {
       beforeEach(() => {
         trail.publishEvent(new MetricSelectedEvent('metric_bucket'));
@@ -53,6 +57,10 @@ describe('DataTrail', () => {
       it('should add history step', () => {
         expect(trail.state.history.state.steps[1].type).toBe('metric');
       });
+
+      it('Should set stepIndex to 1', () => {
+        expect(trail.state.stepIndex).toBe(1);
+      });
     });
 
     describe('When going back to history step', () => {
@@ -64,8 +72,11 @@ describe('DataTrail', () => {
 
       it('Should restore state and url', () => {
         expect(trail.state.metric).toBe('first_metric');
-        expect(trail.state.stepIndex).toBe(1);
         expect(locationService.getSearchObject().metric).toBe('first_metric');
+      });
+
+      it('Should set stepIndex to 1', () => {
+        expect(trail.state.stepIndex).toBe(1);
       });
 
       it('Should not create another history step', () => {
