@@ -157,7 +157,8 @@ function buildAfterSelectorCompletions(
   detectedParser: string,
   otherParser: string,
   afterPipe: boolean,
-  hasSpace: boolean
+  hasSpace: boolean,
+  structuredMetadataKeys?: string[]
 ) {
   const explanation = '(detected)';
   let expectedCompletions = afterSelectorCompletions.map((completion) => {
@@ -196,6 +197,20 @@ function buildAfterSelectorCompletions(
     if (completion.type !== 'LINE_FILTER') {
       completion.insertText = hasSpace ? completion.insertText.trimStart() : ` ${completion.insertText}`;
     }
+  });
+
+  structuredMetadataKeys?.forEach((key) => {
+    let text = `${afterPipe ? ' ' : ' | '}${key}`;
+    if (hasSpace) {
+      text = text.trimStart();
+    }
+
+    expectedCompletions.push({
+      insertText: text,
+      label: `${key} ${explanation}`,
+      documentation: `"${key}" was suggested based on structured metadata attached to your loglines.`,
+      type: 'LABEL_NAME',
+    });
   });
 
   return expectedCompletions;
@@ -361,7 +376,7 @@ describe('getCompletions', () => {
       const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '{job="grafana"}', afterPipe, hasSpace };
       const completions = await getCompletions(situation, completionProvider);
 
-      const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe, hasSpace);
+      const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe, hasSpace, structuredMetadataKeys);
       expect(completions).toEqual(expected);
     }
   );
@@ -380,7 +395,7 @@ describe('getCompletions', () => {
       const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe, hasSpace: true };
       const completions = await getCompletions(situation, completionProvider);
 
-      const expected = buildAfterSelectorCompletions('logfmt', 'json', afterPipe, true);
+      const expected = buildAfterSelectorCompletions('logfmt', 'json', afterPipe, true, structuredMetadataKeys);
       expect(completions).toEqual(expected);
     }
   );
