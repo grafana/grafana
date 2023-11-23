@@ -13,21 +13,20 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/prometheus/client_golang/prometheus"
-	dto "github.com/prometheus/client_model/go"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -36,8 +35,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_PluginsInstallAndUninstall(t *testing.T) {
@@ -636,5 +641,85 @@ func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *p
 		JSONData: jd,
 		Class:    class,
 		FS:       files,
+	}
+}
+
+func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
+	newStr := func(s string) *string {
+		return &s
+	}
+	pluginReg := &plugins.JSONData{
+		ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
+			Permissions: []plugindef.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}},
+		},
+	}
+
+	tests := []struct {
+		name        string
+		data        *plugins.JSONData
+		orgID       int64
+		singleOrg   bool
+		permissions map[int64]map[string][]string
+		warnCount   int
+	}{
+		{
+			name: "plugin without registration",
+			data: nil,
+		},
+		{
+			name:  "user does not have plugin permissions globally",
+			data:  pluginReg,
+			orgID: 1,
+			permissions: map[int64]map[string][]string{
+				1: {ac.ActionUsersRead: {ac.ScopeUsersAll}},
+			},
+			warnCount: 1,
+		},
+		{
+			name:  "user has plugin permissions globally",
+			data:  pluginReg,
+			orgID: 0,
+			permissions: map[int64]map[string][]string{
+				0: {ac.ActionUsersRead: {ac.ScopeUsersAll}},
+			},
+			warnCount: 0,
+		},
+		{
+			name:      "user has plugin permissions in single organization",
+			data:      pluginReg,
+			singleOrg: true,
+			orgID:     1,
+			permissions: map[int64]map[string][]string{
+				1: {ac.ActionUsersRead: {ac.ScopeUsersAll}},
+			},
+			warnCount: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := &logtest.Fake{}
+			hs := &HTTPServer{}
+			httpReq, err := http.NewRequest(http.MethodGet, "", nil)
+			require.NoError(t, err)
+
+			hs.Cfg = setting.NewCfg()
+			hs.Cfg.RBACSingleOrganization = tt.singleOrg
+			hs.pluginRepo = &fakes.FakePluginRepo{
+				GetPluginJsonFunc: func(_ context.Context, _ string, _ string, _ repo.CompatOpts) (*plugins.JSONData, error) {
+					return tt.data, nil
+				},
+			}
+			hs.log = logger
+			hs.accesscontrolService = actest.FakeService{}
+			hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
+
+			c := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: httpReq},
+				SignedInUser: &user.SignedInUser{OrgID: tt.orgID, Permissions: tt.permissions},
+			}
+			hs.hasPluginRequestedPermissions(c, "grafana-test-app", "1.0.0")
+
+			assert.Equal(t, tt.warnCount, logger.WarnLogs.Calls)
+		})
 	}
 }
