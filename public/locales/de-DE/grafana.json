@@ -81,9 +81,7 @@
     "manage-folder-nav": {
       "alert-rules": "Warnregeln",
       "dashboards": "Dashboards",
-      "panels": "Fenster",
-      "permissions": "",
-      "settings": ""
+      "panels": "Fenster"
     },
     "new-folder-form": {
       "cancel-label": "Abbrechen",
@@ -630,15 +628,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
-      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
       "button-cancel": "<0>Abbrechen</0>",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
       "select-no-options-message": "Keine Dashboards gefunden",
       "select-placeholder": "Tippen, um nach Dashboard zu suchen",
-      "title": "Fenster im Dashboard anzeigen"
+      "title": "Fenster im Dashboard anzeigen",
+      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
+      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:"
     },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
@@ -937,7 +935,8 @@
     },
     "megamenu": {
       "close": "Menü schließen",
-      "dock": "Menü andocken"
+      "dock": "Menü andocken",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "Menü schließen",
@@ -1085,15 +1084,6 @@
       "new-dashboard": "Neues Dashboard",
       "new-folder": "Neuer Ordner"
     },
-    "folder-view": {
-      "go-to-folder": "",
-      "select-folder": ""
-    },
-    "result-kind": {
-      "dashboard": "",
-      "folder": "",
-      "panel": ""
-    },
     "results-table": {
       "datasource-header": "Datenquelle",
       "location-header": "Standort",
@@ -1106,12 +1096,6 @@
     "search-input": {
       "include-panels-placeholder": "Nach Dashboards und Panels suchen",
       "placeholder": "Nach Dashboards suchen"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "",
-      "text": ""
     }
   },
   "share-modal": {
@@ -1249,6 +1233,7 @@
     "calendar": {
       "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
+      "close": "",
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
@@ -1268,6 +1253,7 @@
       "default-error": "Ein vergangenes Datum oder \"heutiges\" eingeben",
       "fiscal-year": "Geschäftsjahr",
       "from-input": "Von",
+      "open-input-calendar": "",
       "range-error": "„Von“ darf nicht nach „Bis“ sein",
       "to-input": "Bis"
     },
