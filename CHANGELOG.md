@@ -1,3 +1,16 @@
+<!-- 10.2.2 START -->
+
+# 10.2.2 (2023-11-20)
+
+### Bug fixes
+
+- **FeatureToggle:** Disable `dashgpt` by default and mark it as preview. [#78349](https://github.com/grafana/grafana/issues/78349), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **SaveDashboardPrompt:** Reduce time to open drawer when many changes applied. [#78308](https://github.com/grafana/grafana/issues/78308), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Alerting:** Fix export with modifications URL when mounted on subpath. [#78217](https://github.com/grafana/grafana/issues/78217), [@gillesdemey](https://github.com/gillesdemey)
+- **Explore:** Fix queries (cached & non) count in usage insights. [#78216](https://github.com/grafana/grafana/issues/78216), [@Elfo404](https://github.com/Elfo404)
+- **Plugins:** Keep working when there is no internet access. [#78092](https://github.com/grafana/grafana/issues/78092), [@leventebalogh](https://github.com/leventebalogh)
+
+<!-- 10.2.2 END -->
 <!-- 10.2.1 START -->
 
 # 10.2.1 (2023-11-13)
@@ -10,6 +23,7 @@
 
 - **Dashboards:** Fix dashboard listing when user can't list any folders. [#77988](https://github.com/grafana/grafana/issues/77988), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **Search:** Modify query for better performance. [#77713](https://github.com/grafana/grafana/issues/77713), [@papagian](https://github.com/papagian)
+- **Dashboards:** Fix issue causing crashes when saving new dashboard. [#77641](https://github.com/grafana/grafana/issues/77641), [@kaydelaney](https://github.com/kaydelaney)
 - **RBAC:** Allow scoping access to root level dashboards. [#77608](https://github.com/grafana/grafana/issues/77608), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **CloudWatch Logs:** Add labels to alert and expression queries. [#77594](https://github.com/grafana/grafana/issues/77594), [@iwysiu](https://github.com/iwysiu)
 - **Bug Fix:** Respect data source version when provisioning. [#77542](https://github.com/grafana/grafana/issues/77542), [@andresmgot](https://github.com/andresmgot)
@@ -1350,6 +1364,18 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.14 START -->
+
+# 9.5.14 (2023-11-13)
+
+### Bug fixes
+
+- **Alerting:** Fix state manager to not keep datasource_uid and ref_id labels in state after Error. [#77391](https://github.com/grafana/grafana/issues/77391), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Transformations:** Config overrides being lost when config from query transform is applied. [#75347](https://github.com/grafana/grafana/issues/75347), [@IbrahimCSAE](https://github.com/IbrahimCSAE)
+- **LDAP:** FIX Enable users on successfull login . [#75192](https://github.com/grafana/grafana/issues/75192), [@gamab](https://github.com/gamab)
+- **Auditing and UsageInsights:** FIX Loki configuration to use proxy env variables. (Enterprise)
+
+<!-- 9.5.14 END -->
 <!-- 9.5.13 START -->
 
 # 9.5.13 (2023-10-11)

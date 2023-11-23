@@ -32,6 +32,7 @@ type Props = {
   totalProfileTicks: number;
   totalProfileTicksRight?: number;
   totalViewTicks: number;
+  showFlameGraphOnly?: boolean;
 
   collapsedMap: CollapsedMap;
   setCollapsedMap: (collapsedMap: CollapsedMap) => void;
@@ -56,6 +57,7 @@ const FlameGraphCanvas = ({
   root,
   direction,
   depth,
+  showFlameGraphOnly,
   collapsedMap,
   setCollapsedMap,
   collapsing,
@@ -182,7 +184,7 @@ const FlameGraphCanvas = ({
         totalTicks={totalViewTicks}
         collapseConfig={tooltipItem ? collapsedMap.get(tooltipItem) : undefined}
       />
-      {clickedItemData && (
+      {!showFlameGraphOnly && clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}
           collapsing={collapsing}

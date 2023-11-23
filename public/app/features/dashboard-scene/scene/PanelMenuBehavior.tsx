@@ -1,16 +1,18 @@
 import { InterpolateFunction, PanelMenuItem } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
-import { sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks } from './PanelLinks';
 
 /**
@@ -23,6 +25,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const panel = menu.parent as VizPanel;
     const location = locationService.getLocation();
     const items: PanelMenuItem[] = [];
+    const moreSubMenu: PanelMenuItem[] = [];
     const panelId = getPanelIdForVizPanel(panel);
     const dashboard = panel.getRoot();
 
@@ -61,6 +64,29 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         },
         shortcut: 'p s',
       });
+
+      if (panel instanceof LibraryVizPanel) {
+        // TODO: Implement unlinking library panel
+      } else {
+        moreSubMenu.push({
+          text: t('panel.header-menu.create-library-panel', `Create library panel`),
+          iconClassName: 'share-alt',
+          onClick: () => {
+            reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
+            dashboard.showModal(
+              new ShareModal({
+                panelRef: panel.getRef(),
+                dashboardRef: dashboard.getRef(),
+                activeTab: 'Library panel',
+              })
+            );
+          },
+        });
+      }
+
+      if (config.featureToggles.datatrails) {
+        addDataTrailPanelAction(dashboard, panel, items);
+      }
     }
 
     const exploreUrl = await tryGetExploreUrlForPanel(panel);
@@ -81,6 +107,18 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data }),
       href: getInspectUrl(panel),
     });
+
+    if (moreSubMenu.length) {
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.more', `More...`),
+        iconClassName: 'cube',
+        subMenu: moreSubMenu,
+        onClick: (e) => {
+          e.preventDefault();
+        },
+      });
+    }
 
     menu.setState({ items });
   };

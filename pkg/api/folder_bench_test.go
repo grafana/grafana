@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -270,7 +271,7 @@ func setupDB(b testing.TB) benchScenario {
 				UserID:     userID,
 				TeamID:     teamID,
 				OrgID:      orgID,
-				Permission: dashboards.PERMISSION_VIEW,
+				Permission: dashboardaccess.PERMISSION_VIEW,
 				Created:    now,
 				Updated:    now,
 			})
@@ -346,7 +347,7 @@ func setupDB(b testing.TB) benchScenario {
 				OrgID:    signedInUser.OrgID,
 				IsFolder: false,
 				UID:      str,
-				FolderID: f0.ID,
+				FolderID: f0.ID, // nolint:staticcheck
 				Slug:     str,
 				Title:    str,
 				Data:     simplejson.New(),
@@ -373,7 +374,7 @@ func setupDB(b testing.TB) benchScenario {
 					OrgID:    signedInUser.OrgID,
 					IsFolder: false,
 					UID:      str,
-					FolderID: f1.ID,
+					FolderID: f1.ID, // nolint:staticcheck
 					Slug:     str,
 					Title:    str,
 					Data:     simplejson.New(),
@@ -400,7 +401,7 @@ func setupDB(b testing.TB) benchScenario {
 						OrgID:    signedInUser.OrgID,
 						IsFolder: false,
 						UID:      str,
-						FolderID: f2.ID,
+						FolderID: f2.ID, // nolint:staticcheck
 						Slug:     str,
 						Title:    str,
 						Data:     simplejson.New(),

@@ -90,6 +90,22 @@ func (_m *MockSocialConnector) Exchange(ctx context.Context, code string, authOp
 	return r0, r1
 }
 
+// GetOAuthInfo provides a mock function with given fields:
+func (_m *MockSocialConnector) GetOAuthInfo() *social.OAuthInfo {
+	ret := _m.Called()
+
+	var r0 *social.OAuthInfo
+	if rf, ok := ret.Get(0).(func() *social.OAuthInfo); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*social.OAuthInfo)
+		}
+	}
+
+	return r0
+}
+
 // IsEmailAllowed provides a mock function with given fields: email
 func (_m *MockSocialConnector) IsEmailAllowed(email string) bool {
 	ret := _m.Called(email)
