@@ -551,16 +551,10 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
 				continue
 			}
-			// This was added to mitigate the high load that could be created by loki range queries.
-			// In previous versions of Grafana, Loki datasources would default to range queries
-			// instead of instant queries, sometimes creating unnecessary load. This is only
-			// done for Grafana Cloud.
-			if optimizations, migratable := canBeInstant(rule); migratable {
-				if err := migrateToInstant(rule, optimizations); err != nil {
-					st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
-				} else {
-					st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(optimizations))
-				}
+			if optimizations, err := OptimizeAlertQueries(rule.Data); err != nil {
+				st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
+			} else if len(optimizations) > 0 {
+				st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(optimizations))
 			}
 			rules = append(rules, rule)
 		}
