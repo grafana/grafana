@@ -17,12 +17,14 @@ export const TutorialCard = ({ card }: Props) => {
   const styles = useStyles2(getStyles, card.done);
   const iconStyles = useStyles2(iconStyle, card.done);
 
+  const href = card.href + '?utm_source=grafana_gettingstarted';
+
   return (
     <a
       className={styles.card}
       target="_blank"
       rel="noreferrer"
-      href={`${card.href}?utm_source=grafana_gettingstarted`}
+      href={href}
       onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}
     >
       <div className={cardContent}>
@@ -37,7 +39,6 @@ export const TutorialCard = ({ card }: Props) => {
 };
 
 const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: TutorialCardType) => {
-  event.preventDefault();
   const isSet = store.get(card.key);
   if (!isSet) {
     store.set(card.key, true);
