@@ -20,7 +20,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
-import { AlertRuleAction, useAlertRuleAbilities } from '../../hooks/useAbilities';
+import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { deleteRuleAction } from '../../state/actions';
 import { getRulesSourceName } from '../../utils/datasource';
 import { createShareLink, createViewLink } from '../../utils/misc';
@@ -55,17 +55,10 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
-  const [
-    [editRuleSupported, editRuleAllowed],
-    [deleteRuleSupported, deleteRuleAllowed],
-    [duplicateRuleSupported, duplicateRuleAllowed],
-    [modifyExportSupported, modifyExportAllowed],
-  ] = useAlertRuleAbilities(rule, [
-    AlertRuleAction.Update,
-    AlertRuleAction.Delete,
-    AlertRuleAction.Duplicate,
-    AlertRuleAction.ModifyExport,
-  ]);
+  const [editRuleSupported, editRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
+  const [deleteRuleSupported, deleteRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
+  const [duplicateRuleSupported, duplicateRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Duplicate);
+  const [modifyExportSupported, modifyExportAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ModifyExport);
 
   const canEditRule = editRuleSupported && editRuleAllowed;
   const canDeleteRule = deleteRuleSupported && deleteRuleAllowed;
