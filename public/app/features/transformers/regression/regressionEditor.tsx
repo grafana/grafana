@@ -24,7 +24,7 @@ const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },
 };
 
-const LABEL_WIDTH = 16;
+const LABEL_WIDTH = 20;
 
 export const RegressionTransformerEditor = ({
   input,
@@ -74,7 +74,7 @@ export const RegressionTransformerEditor = ({
 
   return (
     <>
-      <InlineField labelWidth={LABEL_WIDTH} label="x field">
+      <InlineField labelWidth={LABEL_WIDTH} label="X field">
         <FieldNamePicker
           context={{ data: input }}
           value={options.xFieldName ?? ''}
@@ -84,7 +84,7 @@ export const RegressionTransformerEditor = ({
           }}
         ></FieldNamePicker>
       </InlineField>
-      <InlineField labelWidth={LABEL_WIDTH} label="y field">
+      <InlineField labelWidth={LABEL_WIDTH} label="Y field">
         <FieldNamePicker
           context={{ data: input }}
           value={options.yFieldName ?? ''}
