@@ -143,7 +143,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	{
 		_, err = am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.Error(t, err)
-		require.Equal(t, "error response from the Mimir API: alertmanager storage object not found", err.Error())
+		require.Equal(t, "Error response from the Mimir API: alertmanager storage object not found", err.Error())
 	}
 
 	// Using `ApplyConfig` as a heuristic of a function that gets called when the Alertmanager starts
