@@ -700,7 +700,7 @@ export class LokiDatasource
    * Used in `metricFindQuery` to process legacy query strings (label_name() and label_values()) to variable query objects.
    * @returns LokiVariableQuery object based on the provided query string, or undefined if string can't be parsed.
    */
-  parseStringToVariableQuery(query: string): LokiVariableQuery | undefined {
+  private parseStringToVariableQuery(query: string): LokiVariableQuery | undefined {
     const refId = 'LokiVariableQueryEditor-VariableQuery';
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
