@@ -106,24 +106,22 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 		r.ContentLength = contentLength
 	}
 
-	logger := mc.logger.New("url", r.URL.String(), "method", r.Method)
 	resp, err := mc.client.Do(r)
 	if err != nil {
 		msg := "Unable to fulfill request to the Mimir API"
-		logger.Error(msg, "err", err)
+		mc.logger.Error(msg, "err", err, "url", r.URL.String(), "method", r.Method)
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Error("Error closing HTTP body", "err", err)
+			mc.logger.Error("Error closing HTTP body", "err", err, "url", r.URL.String(), "method", r.Method)
 		}
 	}()
 
-	logger = logger.New("status", resp.StatusCode)
 	ct := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(ct, "application/json") {
 		msg := "Response content-type is not application/json"
-		logger.Error(msg, "content-type", ct)
+		mc.logger.Error(msg, "content-type", "url", r.URL.String(), "method", r.Method, ct, "status", resp.StatusCode)
 		return nil, fmt.Errorf("%s: %s", msg, ct)
 	}
 
@@ -134,7 +132,7 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		msg := "Failed to read the request body"
-		logger.Error(msg, "err", err)
+		mc.logger.Error(msg, "err", err, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 
@@ -144,18 +142,18 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, co
 
 		if err == nil && errResponse.Error() != "" {
 			msg := "Error response from the Mimir API"
-			logger.Error(msg, "err", errResponse)
+			mc.logger.Error(msg, "err", errResponse, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
 			return nil, fmt.Errorf("%s: %w", msg, errResponse)
 		}
 
 		msg := "Failed to decode non-2xx JSON response"
-		logger.Error(msg, "err", err)
+		mc.logger.Error(msg, "err", err, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 
 	if err = json.Unmarshal(body, out); err != nil {
 		msg := "Failed to decode 2xx JSON response"
-		logger.Error(msg, "err", err)
+		mc.logger.Error(msg, "err", err, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 
