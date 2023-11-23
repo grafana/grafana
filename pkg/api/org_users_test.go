@@ -437,6 +437,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				}
 				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tc.permissions)}
+				hs.accesscontrolService = &actest.FakeService{}
 			})
 
 			u := userWithPermissions(1, tc.permissions)
@@ -482,6 +483,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),
 				}
+				hs.accesscontrolService = &actest.FakeService{}
 			})
 
 			u := userWithPermissions(1, tt.permissions)

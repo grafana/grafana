@@ -185,7 +185,7 @@ test-go-integration-alertmanager: ## Run integration tests for the remote alertm
 	@echo "test remote alertmanager integration tests"
 	$(GO) clean -testcache
 	AM_URL=http://localhost:8080 AM_TENANT_ID=test AM_PASSWORD=test \
-	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/notifier/...
+	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.

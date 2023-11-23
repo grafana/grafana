@@ -50,6 +50,7 @@ export interface ShareSnapshotTabState extends SceneShareTabState {
 }
 
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
+  public tabId = 'Snapshot';
   static Component = ShareSnapshoTabRenderer;
 
   public constructor(state: ShareSnapshotTabState) {
