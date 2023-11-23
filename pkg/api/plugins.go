@@ -26,6 +26,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -441,7 +442,9 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	hs.hasPluginRequestedPermissions(c, pluginID, dto.Version)
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+		hs.hasPluginRequestedPermissions(c, pluginID, dto.Version)
+	}
 
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
