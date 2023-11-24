@@ -3,13 +3,12 @@ package remote
 import (
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-
-	"encoding/base64"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
@@ -147,9 +146,9 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 		return fmt.Errorf("error getting the Alertmanager's full state: %w", err)
 	}
 
-	// Encode into base64 and send.
+	// Encode into base64 and send if needed.
 	encoded := base64.StdEncoding.EncodeToString(b)
-	if ok := am.compareRemoteState(ctx, encoded); !ok {
+	if am.shouldSendState(ctx, encoded) {
 		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, encoded); err != nil {
 			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 		} else {
@@ -376,20 +375,21 @@ func (am *Alertmanager) compareRemoteConfig(ctx context.Context, config *models.
 	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) == md5.Sum([]byte(config.AlertmanagerConfiguration))
 }
 
-// compareRemoteState gets the remote Alertmanager state and compares it to the existing state.
-func (am *Alertmanager) compareRemoteState(ctx context.Context, state string) bool {
+// shouldSendState gets the remote Alertmanager state and compares it to the existing one.
+// If the states are different, we should update the remote state with our local one.
+func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool {
 	rs, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 	if err != nil {
-		// If we get an error trying to compare log it and return false so that we try to upload it anyway.
+		// Log the error and return true so we try to upload our state anyway.
 		am.log.Error("Unable to get the remote Alertmanager state for comparison", "err", err)
-		return false
+		return true
 	}
 
-	return rs.State == state
+	return rs.State != state
 }
 
-// getFullState returns a slice of bytes containing the Alertmanager's silences and notification log,
-// representing its internal state.
+// getFullState returns a slice of bytes representing the Alertmanager's internal state.
+// These bytes contain the Alertmanager's silences and notification log.
 func (am *Alertmanager) getFullState(ctx context.Context) ([]byte, error) {
 	keys, err := am.kvstore.GetAll(ctx, 1, "alertmanager")
 	if err != nil {
