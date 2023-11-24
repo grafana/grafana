@@ -143,12 +143,6 @@ function getMatchersWithFilter(query: string, label: string, operator: string, v
  *
  * This operates on substrings of the query with labels and operates just on those. This makes this
  * more robust and can alter even invalid queries, and preserves in general the query structure and whitespace.
- *
- * @param {string} query
- * @param {string} key
- * @param {string} operator
- * @param {string} value
- * @param {boolean} [forceAsLabelFilter=false]  - if true, it will add a LabelFilter expression even if there is no parser in the query
  */
 export function addLabelToQuery(
   query: string,
