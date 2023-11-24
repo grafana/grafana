@@ -1,6 +1,6 @@
 import { rangeUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneTimePicker, VizPanel } from '@grafana/scenes';
 import { OptionsWithLegend } from '@grafana/schema';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
@@ -9,6 +9,9 @@ import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPan
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
+import { DashboardControls } from './DashboardControls';
+import { time } from 'console';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -94,6 +97,20 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     },
   });
 
+  keybindings.addBinding({
+    key: 't left',
+    onTrigger: () => {
+      handleTimeRangeShift(scene, 'left');
+    },
+  });
+
+  keybindings.addBinding({
+    key: 't right',
+    onTrigger: () => {
+      handleTimeRangeShift(scene, 'right');
+    },
+  });
+
   // Dashboard settings
   keybindings.addBinding({
     key: 'd s',
@@ -145,7 +162,21 @@ function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is Opti
 }
 
 function handleZoomOut(scene: DashboardScene) {
-  const timeRange = sceneGraph.getTimeRange(scene);
-  const zoomedTimeRange = rangeUtil.zoomOutTimeRange(timeRange.state.value, 2);
-  timeRange.onTimeRangeChange(zoomedTimeRange);
+  const timePicker = dashboardSceneGraph.getTimePicker(scene);
+  timePicker?.onZoom();
+}
+
+function handleTimeRangeShift(scene: DashboardScene, direction: 'left' | 'right') {
+  const timePicker = dashboardSceneGraph.getTimePicker(scene);
+
+  if (!timePicker) {
+    return;
+  }
+
+  if (direction === 'left') {
+    timePicker.onMoveBackward();
+  }
+  if (direction === 'right') {
+    timePicker.onMoveForward();
+  }
 }
