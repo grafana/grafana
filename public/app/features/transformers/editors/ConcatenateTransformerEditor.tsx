@@ -59,7 +59,7 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
       <div>
         <InlineField label="Name" labelWidth={16} grow>
           <Select
-            className="width-18"
+            width={36}
             options={nameModes}
             value={nameModes.find((v) => v.value === frameNameMode)}
             onChange={this.onModeChanged}
@@ -67,12 +67,7 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
         </InlineField>
         {frameNameMode === ConcatenateFrameNameMode.Label && (
           <InlineField label="Label" labelWidth={16} grow>
-            <Input
-              className="width-18"
-              value={options.frameNameLabel ?? ''}
-              placeholder="frame"
-              onChange={this.onLabelChanged}
-            />
+            <Input width={36} value={options.frameNameLabel ?? ''} placeholder="frame" onChange={this.onLabelChanged} />
           </InlineField>
         )}
       </div>

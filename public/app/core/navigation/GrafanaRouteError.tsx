@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { ErrorInfo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { locationUtil, PageLayoutType } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, PageLayoutType } from '@grafana/data';
 import { Button, ErrorWithStack, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../components/Page/Page';
@@ -49,9 +49,9 @@ export function GrafanaRouteError({ error, errorInfo }: Props) {
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     width: '500px',
-    margin: '64px auto',
+    margin: theme.spacing(8, 'auto'),
   }),
 });
