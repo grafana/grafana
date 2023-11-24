@@ -37,6 +37,9 @@ import {
   LegacyMetricFindQueryOptions,
   AdHocVariableFilter,
   urlUtil,
+  MetricFindValue,
+  DataSourceGetTagValuesOptions,
+  DataSourceGetTagKeysOptions,
   DataSourceWithQueryModificationSupport,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
@@ -51,6 +54,7 @@ import { replaceVariables, returnVariables } from '../prometheus/querybuilder/sh
 import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { LogContextProvider } from './LogContextProvider';
+import { LokiVariableSupport } from './LokiVariableSupport';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
@@ -94,7 +98,6 @@ import {
   QueryStats,
   SupportingQueryType,
 } from './types';
-import { LokiVariableSupport } from './variables';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -646,23 +649,31 @@ export class LokiDatasource
    * Implemented as part of DataSourceAPI and used for template variable queries.
    * @returns A Promise that resolves to an array of results from the metric find query.
    */
-  async metricFindQuery(query: LokiVariableQuery | string, options?: LegacyMetricFindQueryOptions) {
+  async metricFindQuery(
+    query: LokiVariableQuery | string,
+    options?: LegacyMetricFindQueryOptions
+  ): Promise<MetricFindValue[]> {
     if (!query) {
       return Promise.resolve([]);
     }
 
+    let interpolatedVariableQuery: LokiVariableQuery | undefined;
+
     if (typeof query === 'string') {
-      const interpolated = this.interpolateString(query, options?.scopedVars);
-      return await this.legacyProcessMetricFindQuery(interpolated);
+      interpolatedVariableQuery = this.parseStringToVariableQuery(this.interpolateString(query, options?.scopedVars));
+    } else {
+      interpolatedVariableQuery = {
+        ...query,
+        label: this.interpolateString(query.label || '', options?.scopedVars),
+        stream: this.interpolateString(query.stream || '', options?.scopedVars),
+      };
     }
 
-    const interpolatedQuery = {
-      ...query,
-      label: this.interpolateString(query.label || '', options?.scopedVars),
-      stream: this.interpolateString(query.stream || '', options?.scopedVars),
-    };
+    if (interpolatedVariableQuery) {
+      return await this.processMetricFindQuery(interpolatedVariableQuery, options?.range);
+    }
 
-    return await this.processMetricFindQuery(interpolatedQuery);
+    return Promise.resolve([]);
   }
 
   /**
@@ -670,9 +681,10 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of variable results based on the query type and parameters.
    */
 
-  private async processMetricFindQuery(query: LokiVariableQuery) {
+  private async processMetricFindQuery(query: LokiVariableQuery, timeRange?: TimeRange): Promise<MetricFindValue[]> {
     if (query.type === LokiVariableQueryType.LabelNames) {
-      return this.labelNamesQuery();
+      const result = await this.languageProvider.fetchLabels({ timeRange });
+      return result.map((value: string) => ({ text: value }));
     }
 
     if (!query.label) {
@@ -681,81 +693,38 @@ export class LokiDatasource
 
     // If we have stream selector, use /series endpoint
     if (query.stream) {
-      return this.labelValuesSeriesQuery(query.stream, query.label);
+      const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
+      return result[query.label].map((value: string) => ({ text: value }));
     }
 
-    return this.labelValuesQuery(query.label);
+    const result = await this.languageProvider.fetchLabelValues(query.label, { timeRange });
+    return result.map((value: string) => ({ text: value }));
   }
 
   /**
-   * Used in `metricFindQuery` to process legacy query strings (label_name() and label_values()) and return variable results.
-   * @returns A Promise that resolves to an array of variables based on the legacy query string.
-   * @todo It can be refactored in the future to return a LokiVariableQuery and be used in `processMetricFindQuery`
-   * to not duplicate querying logic.
+   * Used in `metricFindQuery` to process legacy query strings (label_name() and label_values()) to variable query objects.
+   * @returns LokiVariableQuery object based on the provided query string, or undefined if string can't be parsed.
    */
-  async legacyProcessMetricFindQuery(query: string) {
+  private parseStringToVariableQuery(query: string): LokiVariableQuery | undefined {
+    const refId = 'LokiVariableQueryEditor-VariableQuery';
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
-      return await this.labelNamesQuery();
+      return {
+        type: LokiVariableQueryType.LabelNames,
+        refId,
+      };
     }
 
     const labelValues = query.match(labelValuesRegex);
     if (labelValues) {
-      // If we have stream selector, use /series endpoint
-      if (labelValues[1]) {
-        return await this.labelValuesSeriesQuery(labelValues[1], labelValues[2]);
-      }
-      return await this.labelValuesQuery(labelValues[2]);
+      return {
+        type: LokiVariableQueryType.LabelValues,
+        label: labelValues[2],
+        stream: labelValues[1],
+        refId,
+      };
     }
-
-    return Promise.resolve([]);
-  }
-
-  /**
-   * Private method used in `processMetricFindQuery`, `legacyProcessMetricFindQuery` and `getTagKeys` to fetch label names.
-   * @returns A Promise that resolves to an array of label names as text values.
-   * @todo Future exploration may involve using the `languageProvider.fetchLabels()` to avoid duplicating logic.
-   */
-  async labelNamesQuery() {
-    const url = 'labels';
-    const params = this.getTimeRangeParams();
-    const result = await this.metadataRequest(url, params);
-    return result.map((value: string) => ({ text: value }));
-  }
-
-  /**
-   * Private method used in `processMetricFindQuery`, `legacyProcessMetricFindQuery` `getTagValues` to fetch label values.
-   * @returns A Promise that resolves to an array of label values as text values.
-   * @todo Future exploration may involve using the `languageProvider.fetchLabelValues()` method to avoid duplicating logic.
-   */
-  private async labelValuesQuery(label: string) {
-    const params = this.getTimeRangeParams();
-    const url = `label/${label}/values`;
-    const result = await this.metadataRequest(url, params);
-    return result.map((value: string) => ({ text: value }));
-  }
-
-  /**
-   * Private method used in `processMetricFindQuery` and `legacyProcessMetricFindQuery` to fetch label values for specified stream.
-   * @returns A Promise that resolves to an array of label values as text values.
-   * @todo Future exploration may involve using the `languageProvider.fetchLabelValues()` or `languageProvider.fetchSeriesLabels()` method to avoid duplicating logic.
-   */
-  private async labelValuesSeriesQuery(expr: string, label: string) {
-    const timeParams = this.getTimeRangeParams();
-    const params = {
-      ...timeParams,
-      'match[]': expr,
-    };
-    const url = 'series';
-    const streams = new Set();
-    const result = await this.metadataRequest(url, params);
-    result.forEach((stream: { [key: string]: string }) => {
-      if (stream[label]) {
-        streams.add({ text: stream[label] });
-      }
-    });
-
-    return Array.from(streams);
+    return undefined;
   }
 
   /**
@@ -784,18 +753,20 @@ export class LokiDatasource
 
   /**
    * Implemented as part of the DataSourceAPI. Retrieves tag keys that can be used for ad-hoc filtering.
-   * @returns A Promise that resolves to an array of label names.
+   * @returns A Promise that resolves to an array of label names represented as MetricFindValue objects.
    */
-  async getTagKeys() {
-    return await this.labelNamesQuery();
+  async getTagKeys(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+    const result = await this.languageProvider.fetchLabels({ timeRange: options?.timeRange });
+    return result.map((value: string) => ({ text: value }));
   }
 
   /**
    * Implemented as part of the DataSourceAPI. Retrieves tag values that can be used for ad-hoc filtering.
-   * @returns A Promise that resolves to an array of label values.
+   * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
    */
-  async getTagValues(options: any = {}) {
-    return await this.labelValuesQuery(options.key);
+  async getTagValues(options: DataSourceGetTagValuesOptions): Promise<MetricFindValue[]> {
+    const result = await this.languageProvider.fetchLabelValues(options.key, { timeRange: options.timeRange });
+    return result.map((value: string) => ({ text: value }));
   }
 
   /**
