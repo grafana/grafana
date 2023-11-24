@@ -184,7 +184,7 @@ test-go-integration: ## Run integration tests for backend with flags.
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
 	@echo "test remote alertmanager integration tests"
 	$(GO) clean -testcache
-	AM_URL=http://localhost:8080 AM_TENANT_ID=test AM_PASSWORD=test \
+	AM_URL=http://localhost:8080 AM_TENANT_ID=test \
 	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
 
 .PHONY: test-go-integration-postgres
