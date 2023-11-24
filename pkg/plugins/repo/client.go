@@ -164,7 +164,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
 	}
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
-		return ErrChecksumMismatch{archiveURL: pluginURL}
+		return ErrChecksumMismatch(pluginURL)
 	}
 	return nil
 }

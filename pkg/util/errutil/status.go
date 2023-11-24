@@ -20,6 +20,10 @@ const (
 	// corresponding document to return to the request.
 	// HTTP status code 404.
 	StatusNotFound CoreStatus = "Not found"
+	// StatusConflict means that the server cannot fulfilling the request
+	// there is a conflict in the current state of a resource
+	// HTTP status code 409.
+	StatusConflict CoreStatus = "Conflict"
 	// StatusTooManyRequests means that the client is rate limited
 	// by the server and should back-off before trying again.
 	// HTTP status code 429.
@@ -92,6 +96,8 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusNotFound
 	case StatusTimeout, StatusGatewayTimeout:
 		return http.StatusGatewayTimeout
+	case StatusConflict:
+		return http.StatusConflict
 	case StatusTooManyRequests:
 		return http.StatusTooManyRequests
 	case StatusBadRequest, StatusValidationFailed:
@@ -119,6 +125,8 @@ func (s CoreStatus) LogLevel() LogLevel {
 	case StatusNotFound:
 		return LevelInfo
 	case StatusTimeout:
+		return LevelInfo
+	case StatusConflict:
 		return LevelInfo
 	case StatusTooManyRequests:
 		return LevelInfo
