@@ -75,23 +75,29 @@ export const language: languages.IMonarchLanguage = {
 
       // keywords
       [
+        // match only prefefined keywords
         `(?:${keywords.join('|')})`,
         {
           cases: {
             '@keywords': 'keyword',
-            '@default': 'tag',
+            '@default': 'tag', // fallback, but should never happen
           },
         },
       ],
 
       // functions and predefined values
       [
+        // If not inside quotes, namely outside of open and closed `"`,
+        // allow only word characters (those matching `\w`) and full stop (`.`).
+        //
+        // If inside quotes, e.g. `"here"`, allow for any character,
+        // including escaped quotes (`\"`) and escaped backslack (`\\`).
         /(?:\w|[.]|"(?:\\"|\\\\|[^\\"])*")+/,
         {
           cases: {
             '@functions': 'predefined',
             '@statusValues': 'type',
-            '@default': 'tag',
+            '@default': 'tag', // fallback, used for tag names
           },
         },
       ],
