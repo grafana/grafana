@@ -4,6 +4,7 @@ package eval
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"runtime/debug"
@@ -280,18 +281,17 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 	datasources := make(map[string]*datasources.DataSource, len(data))
 
 	for _, q := range data {
-		model, err := q.GetModel()
+		modelProps, err := q.CalculateModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
 		}
-		interval, err := q.GetIntervalDuration()
+		interval, err := modelProps.GetIntervalDuration()
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
 		}
-
-		maxDatapoints, err := q.GetMaxDatapoints()
+		maxDataPoints, err := modelProps.GetMaxDataPoints()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
+			return nil, fmt.Errorf("failed to retrieve maxDataPoints from '%s': %w", q.RefID, err)
 		}
 
 		ds, ok := datasources[q.DatasourceUID]
@@ -308,13 +308,17 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 			datasources[q.DatasourceUID] = ds
 		}
 
+		model, err := json.Marshal(modelProps)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal query model from '%s': %w", q.RefID, err)
+		}
 		req.Queries = append(req.Queries, expr.Query{
 			TimeRange:     q.RelativeTimeRange.ToTimeRange(),
 			DataSource:    ds,
 			JSON:          model,
 			Interval:      interval,
 			RefID:         q.RefID,
-			MaxDataPoints: maxDatapoints,
+			MaxDataPoints: maxDataPoints,
 			QueryType:     q.QueryType,
 		})
 	}

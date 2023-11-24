@@ -299,13 +299,13 @@ func (alertRule *AlertRule) GetEvalCondition() Condition {
 // Diff calculates diff between two alert rules. Returns nil if two rules are equal. Otherwise, returns cmputil.DiffReport
 func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.DiffReport {
 	var reporter cmputil.DiffReporter
-	ops := make([]cmp.Option, 0, 5)
+	ops := make([]cmp.Option, 0, 4)
 
 	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
 	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
 		return string(in)
 	})
-	ops = append(ops, cmp.Reporter(&reporter), cmpopts.IgnoreFields(AlertQuery{}, "modelProps"), jsonCmp, cmpopts.EquateEmpty())
+	ops = append(ops, cmp.Reporter(&reporter), jsonCmp, cmpopts.EquateEmpty())
 
 	if len(ignore) > 0 {
 		ops = append(ops, cmpopts.IgnoreFields(AlertRule{}, ignore...))
@@ -428,6 +428,12 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSettings) error {
 	if len(alertRule.Data) == 0 {
 		return fmt.Errorf("%w: no queries or expressions are found", ErrAlertRuleFailedValidation)
+	}
+
+	for _, q := range alertRule.Data {
+		if err := q.Validate(); err != nil {
+			return fmt.Errorf("%w: query with RefID '%s' failed validation: %s", ErrAlertRuleFailedValidation, q.RefID, err.Error())
+		}
 	}
 
 	if alertRule.Title == "" {

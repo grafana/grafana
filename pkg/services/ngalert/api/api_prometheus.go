@@ -434,7 +434,13 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 	var queries []string
 
 	for _, q := range rule.Data {
-		q, err := q.GetQuery()
+		modelProps, err := q.CalculateModel()
+		if err != nil {
+			logger.Debug("Failed to parse a query model", "error", err)
+			queryErr = err
+			break
+		}
+		expr, err := modelProps.GetQuery()
 		if err != nil {
 			// If we can't find the query simply omit it, and try the rest.
 			// Even single query alerts would have 2 `AlertQuery`, one for the query and one for the condition.
@@ -448,7 +454,7 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 			break
 		}
 
-		queries = append(queries, q)
+		queries = append(queries, expr)
 	}
 
 	// If we were able to extract at least one query without failure use it.

@@ -610,28 +610,9 @@ func TestDiff(t *testing.T) {
 			},
 			DatasourceUID: util.GenerateShortUID(),
 			Model:         json.RawMessage(`{ "test": "data"}`),
-			modelProps: map[string]any{
-				"test": 1,
-			},
 		}
 
 		rule1.Data = []AlertQuery{query1}
-
-		t.Run("should ignore modelProps", func(t *testing.T) {
-			query2 := query1
-			query2.modelProps = map[string]any{
-				"some": "other value",
-			}
-			rule2.Data = []AlertQuery{query2}
-
-			diff := rule1.Diff(rule2)
-
-			assert.Nil(t, diff)
-
-			if t.Failed() {
-				t.Logf("rule1: %#v, rule2: %#v\ndiff: %v", rule1, rule2, diff)
-			}
-		})
 
 		t.Run("should detect changes inside the query", func(t *testing.T) {
 			query2 := query1

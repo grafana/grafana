@@ -2,6 +2,7 @@ package eval
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -697,8 +698,12 @@ func TestCreate(t *testing.T) {
 
 			// Set expected raw json to be the same as the model.
 			for i, query := range testCase.condition.Data {
-				model, err := query.GetModel()
+				cm, err := query.CalculateModel()
 				require.NoError(t, err)
+
+				model, err := json.Marshal(cm)
+				require.NoError(t, err)
+
 				testCase.expRequest.Queries[i].JSON = model
 			}
 
