@@ -90,9 +90,9 @@ export const language: languages.IMonarchLanguage = {
         // If not inside quotes, namely outside of open and closed `"`,
         // allow only word characters (those matching `\w`) and full stop (`.`).
         //
-        // If inside quotes, e.g. `"here"`, allow for any character,
-        // including escaped quotes (`\"`) and escaped backslack (`\\`).
-        // This is necessary to support all possible tag names, such as those with spaces (e.g., `my tag`).
+        // If inside quotes, e.g. `"here"`, allow for any character, except for `"` and `\` which must be
+        // escaped with a backslash (`\"` and `\\` respectively).
+        // Quotes can be used to support special tag names, such as those with spaces (e.g., `my tag`).
         /(?:\w|[.]|"(?:\\"|\\\\|[^\\"])*")+/,
         {
           cases: {
