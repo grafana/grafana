@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,7 +39,6 @@ type Service struct {
 
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, identity.Requester) *oauth2.Token
-	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 	HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error)
 	TryTokenRefresh(context.Context, *login.UserAuth) error
 	InvalidateOAuthTokens(context.Context, *login.UserAuth) error
@@ -97,11 +95,6 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	}
 
 	return token
-}
-
-// IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
-func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
-	return IsOAuthPassThruEnabled(ds)
 }
 
 // HasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
@@ -255,11 +248,6 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.Use
 	}
 
 	return token, nil
-}
-
-// IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
-func IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
-	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }
 
 func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus.HistogramVec {

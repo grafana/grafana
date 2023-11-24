@@ -5,10 +5,8 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
@@ -41,20 +39,13 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 		return nil
 	}
 
-	settings := pCtx.DataSourceInstanceSettings
-	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
+	jd, err := pCtx.DataSourceInstanceSettings.JSONDataMap()
 	if err != nil {
 		return err
 	}
+	oauthPassThru, _ := backend.JSONDataGet[bool](jd, "oauthPassThru")
 
-	ds := &datasources.DataSource{
-		ID:       settings.ID,
-		OrgID:    pCtx.OrgID,
-		JsonData: jsonDataBytes,
-		Updated:  settings.Updated,
-	}
-
-	if m.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
+	if oauthPassThru {
 		if token := m.oAuthTokenService.GetCurrentOAuthToken(ctx, reqCtx.SignedInUser); token != nil {
 			authorizationHeader := fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
 			idTokenHeader := ""

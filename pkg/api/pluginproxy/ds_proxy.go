@@ -259,7 +259,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}, proxy.cfg)
 	}
 
-	if proxy.oAuthTokenService.IsOAuthPassThruEnabled(proxy.ds) {
+	if oauthPassThru, ok := jsonData["oauthPassThru"]; ok && oauthPassThru.(bool) {
 		if token := proxy.oAuthTokenService.GetCurrentOAuthToken(req.Context(), proxy.ctx.SignedInUser); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 

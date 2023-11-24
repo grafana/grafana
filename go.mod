@@ -105,8 +105,8 @@ require (
 	go.opentelemetry.io/collector/pdata v1.0.0-rc8 // @grafana/backend-platform
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.46.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/sdk v1.20.0 // @grafana/backend-platform
-	go.opentelemetry.io/otel/trace v1.20.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/sdk v1.21.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel/trace v1.21.0 // @grafana/backend-platform
 	golang.org/x/crypto v0.15.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // @grafana/alerting-squad-backend
 	golang.org/x/net v0.18.0 // @grafana/oss-big-tent @grafana/partner-datasources
@@ -244,8 +244,8 @@ require (
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/backend-platform
 	github.com/matryer/is v1.4.0 // @grafana/grafana-as-code
 	github.com/urfave/cli v1.22.14 // @grafana/backend-platform
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0 // @grafana/plugins-platform-backend
-	go.opentelemetry.io/contrib/propagators/jaeger v1.20.0 // @grafana/backend-platform
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1 // @grafana/plugins-platform-backend
+	go.opentelemetry.io/contrib/propagators/jaeger v1.21.1 // @grafana/backend-platform
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.20.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.20.0 // @grafana/backend-platform
 	gocloud.dev v0.25.0 // @grafana/grafana-app-platform-squad
@@ -257,7 +257,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1 // @grafana/grafana-delivery
 	github.com/alicebob/miniredis/v2 v2.30.1 // @grafana/alerting-squad-backend
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
-	github.com/go-jose/go-jose/v3 v3.0.0 // @grafana/backend-platform
+	github.com/go-jose/go-jose/v3 v3.0.1 // @grafana/backend-platform
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
@@ -268,7 +268,7 @@ require (
 	github.com/redis/go-redis/v9 v9.0.2 // @grafana/alerting-squad-backend
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903 // @grafana/alerting-squad-backend
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // @grafana/grafana-as-code
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.14.0 // @grafana/backend-platform
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.15.1 // @grafana/backend-platform
 	golang.org/x/mod v0.12.0 // @grafana/backend-platform
 	gopkg.in/square/go-jose.v2 v2.6.0 // @grafana/grafana-authnz-team
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // @grafana/partner-datasources
@@ -276,7 +276,7 @@ require (
 
 require (
 	github.com/spf13/cobra v1.7.0 // @grafana/grafana-app-platform-squad
-	go.opentelemetry.io/otel v1.20.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel v1.21.0 // @grafana/backend-platform
 	k8s.io/apimachinery v0.28.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.28.3 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.28.3 // @grafana/grafana-app-platform-squad
@@ -400,7 +400,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.9 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.9 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.0 // indirect
-	go.opentelemetry.io/otel/metric v1.20.0 // indirect
+	go.opentelemetry.io/otel/metric v1.21.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
@@ -507,3 +507,5 @@ replace xorm.io/xorm => ./pkg/util/xorm
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20231027171310-70c52bf65758
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
