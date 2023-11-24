@@ -5,7 +5,6 @@ import { useOverlay } from '@react-aria/overlays';
 import React, { memo, createRef, useState, useEffect } from 'react';
 
 import {
-  isDateTime,
   rangeUtil,
   GrafanaTheme2,
   dateTimeFormat,
@@ -294,6 +293,3 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-function isRelativeTime(from: string | import('@grafana/data').DateTime) {
-  throw new Error('Function not implemented.');
-}
