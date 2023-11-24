@@ -13,17 +13,21 @@ import {
 import { DataSourceRef } from '@grafana/schema';
 import { Link, useStyles2 } from '@grafana/ui';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
 import { createUrl } from '../../utils/url';
 import { InsightsRatingModal } from '../RatingModal';
 
 export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle: string) {
+  const expr = INSTANCE_ID
+    ? `'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history", instance_id="${INSTANCE_ID}"} | json | current = 'Alerting' [1w])))`
+    : 'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
+
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: 'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))',
+        expr,
         instant: true,
       },
     ],
