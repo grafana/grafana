@@ -142,7 +142,6 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	}
 
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-
 	b, err := am.getFullState(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting the Alertmanager's full state: %w", err)
