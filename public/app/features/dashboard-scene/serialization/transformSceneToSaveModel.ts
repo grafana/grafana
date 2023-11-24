@@ -98,6 +98,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const dashboard: Dashboard = {
     ...defaultDashboard,
     title: state.title,
+    description: state.description,
     uid: state.uid,
     id: state.id,
     time: {
@@ -114,6 +115,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     timezone: timeRange.timeZone,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart,
+    tags: state.tags,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);

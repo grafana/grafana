@@ -58,8 +58,8 @@ export class GeneralSettingsEditView
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     const { title, description, tags, meta, editable, graphTooltip } = dashboard.useState();
     const timeRange = sceneGraph.getTimeRange(dashboard);
-    let refreshPicker = dashboard.state.controls?.find((c) => c instanceof SceneRefreshPicker);
-    refreshPicker = refreshPicker instanceof SceneRefreshPicker ? refreshPicker : undefined;
+    let pickerControl = dashboard.state.controls?.find((c) => c instanceof SceneRefreshPicker);
+    const refreshPicker = pickerControl instanceof SceneRefreshPicker ? pickerControl : undefined;
 
     const onTitleChange = (value: string) => {
       dashboard.setState({ title: value });
@@ -154,7 +154,7 @@ export class GeneralSettingsEditView
               <Input
                 id="title-input"
                 name="title"
-                value={title}
+                defaultValue={title}
                 onBlur={(e: ChangeEvent<HTMLInputElement>) => onTitleChange(e.target.value)}
               />
             </Field>
@@ -174,8 +174,8 @@ export class GeneralSettingsEditView
               <TextArea
                 id="description-input"
                 name="description"
-                value={description}
-                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onDescriptionChange(e.target.value)}
+                defaultValue={description}
+                onBlur={(e: ChangeEvent<HTMLTextAreaElement>) => onDescriptionChange(e.target.value)}
               />
             </Field>
             <Field label={t('dashboard-settings.general.tags-label', 'Tags')}>
