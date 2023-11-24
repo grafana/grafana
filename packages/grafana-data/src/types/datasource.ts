@@ -586,23 +586,14 @@ export interface QueryFixAction {
   preventSubmit?: boolean;
   /**
    * The type of action to perform. Will be passed to the data source to handle.
-   *
-   * @type {(QueryFixType | string)}
-   * @memberof QueryFixAction
    */
   type: QueryFixType | string;
   /**
    * A key value map of options that will be passed. Usually used to pass e.g. the label and value.
-   *
-   * @type {KeyValue<string>}
-   * @memberof QueryFixAction
    */
   options?: KeyValue<string>;
   /**
    * An optional single row data frame containing the row that triggered the the QueryFixAction.
-   *
-   * @type {DataFrame}
-   * @memberof QueryFixAction
    */
   frame?: DataFrame;
 }
