@@ -108,7 +108,8 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   const styles = useStyles2(getStyles);
   const { modalBackdrop } = useStyles2(getModalStyles);
-  const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
+  const hasAbsolute = !rangeUtil.isRelativeTime(value.raw.from) || !rangeUtil.isRelativeTime(value.raw.to);
+
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
   const currentTimeRange = formattedRange(value, timeZone);
@@ -293,3 +294,6 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+function isRelativeTime(from: string | import('@grafana/data').DateTime) {
+  throw new Error('Function not implemented.');
+}
