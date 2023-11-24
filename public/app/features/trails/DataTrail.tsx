@@ -45,6 +45,7 @@ export interface DataTrailState extends SceneObjectState {
 
   // Indicates which step in the data trail this is
   stepIndex: number;
+  parentIndex: number; // If there is no parent, this will be -1
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -63,6 +64,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
       stepIndex: state.stepIndex ?? 0,
+      parentIndex: state.parentIndex ?? -1,
       ...state,
     });
 
