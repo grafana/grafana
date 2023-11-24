@@ -127,19 +127,18 @@ function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) 
   return { from: visibleRange.to, to: currentRange.to.valueOf() };
 }
 
+// To get more logs, the difference between the visible range and the current range should be 1 second or more.
 function canScrollTop(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, sortOrder: LogsSortOrder) {
   if (sortOrder === LogsSortOrder.Descending) {
-    // To get newer logs, the difference between the last log and the current time should be 1 second or more.
     return (currentRange.to.valueOf() - visibleRange.to) > 1e3;
   }
-  return visibleRange.from > currentRange.from.valueOf();
+  return Math.abs(currentRange.from.valueOf() - visibleRange.from) > 1e3;
 }
 
 function canScrollBottom(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, sortOrder: LogsSortOrder) {
   if (sortOrder === LogsSortOrder.Descending) {
-    return visibleRange.from > currentRange.from.valueOf();  
+    return Math.abs(currentRange.from.valueOf() - visibleRange.from) > 1e3;  
   }
-  // To get newer logs, the difference between the last log and the current time should be 1 second or more.
   return (currentRange.to.valueOf() - visibleRange.to) > 1e3;
 }
 
