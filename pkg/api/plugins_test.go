@@ -696,14 +696,12 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			warnCount: 0,
 		},
 		{
-			name:      "warn if user does not have all plugin permissions",
-			plugin:    pluginReg,
-			singleOrg: true,
-			orgID:     1,
-			permissions: map[int64]map[string][]string{
-				1: {ac.ActionUsersCreate: {}},
-			},
-			warnCount: 1,
+			name:        "warn if user does not have all plugin permissions",
+			plugin:      pluginReg,
+			singleOrg:   true,
+			orgID:       1,
+			permissions: map[int64]map[string][]string{1: {ac.ActionUsersCreate: {}}},
+			warnCount:   1,
 		},
 	}
 	for _, tt := range tests {
