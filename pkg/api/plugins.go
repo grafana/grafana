@@ -526,13 +526,13 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID string) {
 	plugin, ok := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !ok {
-		hs.log.Debug("could plugin has not been installed", "pluginID", pluginID)
+		hs.log.Debug("plugin has not been installed", "pluginID", pluginID)
 		return
 	}
 
 	// No registration => Early return
 	if plugin.JSONData.ExternalServiceRegistration == nil || len(plugin.JSONData.ExternalServiceRegistration.Permissions) == 0 {
-		hs.log.Debug("could plugin has not been installed", "pluginID", pluginID)
+		hs.log.Debug("plugin did not request permissions on Grafana", "pluginID", pluginID)
 		return
 	}
 
