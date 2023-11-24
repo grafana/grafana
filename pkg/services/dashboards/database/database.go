@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -84,7 +85,6 @@ func (d *dashboardStore) DBMigration(db db.DB) {
 
 		// #TODO: we might want truncate the table after this if block just in case panels were inserted if
 		// "_, err = sess.Table(migTable).Insert(&mig)" failed
-		// #TODO: is there a uniqueness constraint for panels within a dashboard?
 		if exists, err := sess.Table(migTable).Get(&mig); exists || (err != nil) {
 			d.log.Info("DB migration on dashboard store start skipped")
 			return err
@@ -99,8 +99,14 @@ func (d *dashboardStore) DBMigration(db db.DB) {
 			// given a dashboard it wipes out any entries related to it and adds them fresh...
 			panels := getPanelTitles(d)
 			for _, p := range panels {
-				// #TODO make sure this is the correct syntax for all three DBs
-				_, err = sess.Exec("INSERT INTO panel (dashid, title) VALUES (?, ?)", p, d.ID)
+				_, err = sess.Exec(
+					fmt.Sprintf(
+						"INSERT INTO panel (%s, %s, title) VALUES (%d, %d, %s)",
+						migrations.DashUIDinPanelTable,
+						migrations.OrgIDinPanelTable,
+						d.ID,
+						d.OrgID,
+						p))
 				if err != nil {
 					return err
 				}
@@ -560,13 +566,26 @@ func (d *dashboardStore) saveDashboard(sess *db.Session, cmd *dashboards.SaveDas
 }
 
 func (d *dashboardStore) savePanels(sess *db.Session, dash *dashboards.Dashboard) error {
-	if _, err := sess.Exec(fmt.Sprintf("DELETE FROM panel WHERE dashid = %d", dash.ID)); err != nil {
+	if _, err := sess.Exec(
+		fmt.Sprintf(
+			"DELETE FROM panel WHERE %s = %d AND %s = %d",
+			migrations.DashUIDinPanelTable,
+			dash.ID,
+			migrations.OrgIDinPanelTable,
+			dash.OrgID,
+		)); err != nil {
 		return err
 	}
 
 	for _, p := range getPanelTitles(dash) {
-		// #TODO make sure this is the correct syntax for all three DBs
-		_, err := sess.Exec("INSERT INTO panel (dashid, title) VALUES (?, ?)", dash.ID, p)
+		_, err := sess.Exec(
+			fmt.Sprintf(
+				"INSERT INTO panel (%s, %s, title) VALUES (%d, %d, %s)",
+				migrations.DashUIDinPanelTable,
+				migrations.OrgIDinPanelTable,
+				dash.ID,
+				dash.OrgID,
+				p))
 		if err != nil {
 			return err
 		}
@@ -1049,7 +1068,6 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	sql, params := sb.ToSQL(limit, page)
 
-	// #TODO: look for better way to do this
 	if d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && len(query.PanelTitle) > 0 &&
 		query.Type == searchstore.TypePanel {
 		panelTitle := "%" + query.PanelTitle + "%"

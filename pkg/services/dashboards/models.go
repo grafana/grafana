@@ -489,10 +489,8 @@ type FindPersistedDashboardsQuery struct {
 	Filters []any
 }
 
-// #TODO: rename struct
-// #TODO update the name of the dashid field
-// Panel model
-type Panel struct {
-	Dashid int64
-	Title  string
+type PanelTitle struct {
+	DashboardUID int64 `xorm:"dashboard_uid"`
+	Title        string
+	OrgID        int64 `xorm:"org_id"`
 }

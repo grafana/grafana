@@ -26,7 +26,6 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	starred := c.Query("starred")
 	limit := c.QueryInt64("limit")
 	page := c.QueryInt64("page")
-	// #TODO: is setting "type" how we want to toggle on panel title search?
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
 	panelTitle := c.Query("panelTitle")

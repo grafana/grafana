@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -50,11 +51,12 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 	b.sql.WriteString(`
 	LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
 
-	// #TODO for FTS
-	// #TODO figure out if there's a better way overall to update the query
 	if b.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
-		// #TODO make sure that inner join is ok
-		b.sql.WriteString("\n" + `INNER JOIN pt ON dashboard.id = pt.dashid`)
+		b.sql.WriteString(
+			fmt.Sprintf(
+				"\nINNER JOIN pt ON dashboard.id = pt.%s AND dashboard.org_id = pt.%s",
+				migrations.DashUIDinPanelTable,
+				migrations.OrgIDinPanelTable))
 	}
 	b.sql.WriteString("\n")
 	b.sql.WriteString(orderQuery)
@@ -69,12 +71,22 @@ func (b *Builder) buildSelect() {
 	if b.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
 		if b.Dialect.DriverName() == migrator.MySQL {
 			b.sql.WriteString(
-				`WITH pt AS (SELECT panel.dashid FROM panel WHERE MATCH(panel.title) AGAINST (? IN NATURAL LANGUAGE MODE))`)
+				fmt.Sprintf(
+					`WITH pt AS (SELECT panel.%s, panel.%s FROM panel WHERE MATCH(panel.title) AGAINST (? IN NATURAL LANGUAGE MODE))`,
+					migrations.DashUIDinPanelTable,
+					migrations.OrgIDinPanelTable))
 		} else if b.Dialect.DriverName() == migrator.Postgres {
 			b.sql.WriteString(
-				`WITH pt AS (SELECT panel.dashid FROM panel WHERE panel.title @@ to_tsquery('english', ?))`)
+				fmt.Sprintf(
+					`WITH pt AS (SELECT panel.%s, panel.%s FROM panel WHERE panel.title @@ to_tsquery('english', ?))`,
+					migrations.DashUIDinPanelTable,
+					migrations.OrgIDinPanelTable))
 		} else {
-			b.sql.WriteString(`WITH pt AS (SELECT panel.dashid FROM panel WHERE panel.title LIKE ?)`)
+			b.sql.WriteString(
+				fmt.Sprintf(
+					`WITH pt AS (SELECT panel.%s, panel.%s FROM panel WHERE panel.title LIKE ?)`,
+					migrations.DashUIDinPanelTable,
+					migrations.OrgIDinPanelTable))
 		}
 		b.sql.WriteString("\n")
 	}
@@ -98,8 +110,11 @@ func (b *Builder) buildSelect() {
 			folder.slug AS folder_slug,`)
 	}
 	if b.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearchInV1) && b.SearchType == TypePanel {
-		b.sql.WriteString(`
-			pt.dashid,`)
+		b.sql.WriteString(
+			fmt.Sprintf(`
+			pt.%s,
+			pt.%s,
+			`, migrations.DashUIDinPanelTable, migrations.OrgIDinPanelTable))
 	}
 	b.sql.WriteString(`
 			folder.title AS folder_title `)

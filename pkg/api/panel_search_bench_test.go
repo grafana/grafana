@@ -80,7 +80,6 @@ func BenchmarkPanelTitleSearch(b *testing.B) {
 	}
 }
 
-// #TODO refactor so that there is less repetition with setupDB()
 func setupDBPanelTitle(b testing.TB) benchScenario {
 	b.Helper()
 	db := sqlstore.InitTestDB(b)
@@ -118,9 +117,8 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 
 	now := time.Now()
 
-	// #TODO: add more dashboards and choose a later panel/dash to search for
 	dashs := make([]*dashboards.Dashboard, 0, dashNum)
-	panels := make([]*dashboards.Panel, 0, dashNum)
+	panels := make([]*dashboards.PanelTitle, 0, dashNum)
 	for j := 0; j < dashNum; j++ {
 		str := fmt.Sprintf("dashboard_%d", j)
 		dashID := generateID(IDs)
@@ -139,15 +137,17 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 
 		for k := 0; k < panelNum; k++ {
 			panelTitle := fmt.Sprintf("panel_%d_%d ", j, k)
-			// #TODO: refactor
+			// Include the queried word in the title of the last panel of the
+			// last dashboard. The process is different for Postgres.
 			if j == dashNum-1 && k == panelNum-1 &&
 				db.GetDialect().DriverName() != migrator.Postgres {
 				panelTitle += fmt.Sprintf("%s ", panelQuery)
 			}
 
-			panels = append(panels, &dashboards.Panel{
-				Dashid: dashID,
-				Title:  panelTitle,
+			panels = append(panels, &dashboards.PanelTitle{
+				DashboardUID: dashID,
+				Title:        panelTitle,
+				OrgID:        signedInUser.OrgID,
 			})
 		}
 	}
@@ -159,7 +159,8 @@ func setupDBPanelTitle(b testing.TB) benchScenario {
 		_, err = sess.BulkInsert("panel", panels, opts)
 		require.NoError(b, err)
 
-		// #TODO refactor
+		// Convert panel titles to tsvector type and
+		// include the queried word in the title of the last panel of the last dashboard.
 		if db.GetDialect().DriverName() == migrator.Postgres {
 			queriedPanel := fmt.Sprintf("panel_%d_%d ", dashNum-1, panelNum-1)
 
