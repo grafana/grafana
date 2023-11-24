@@ -330,7 +330,7 @@ function getCenteredWindowValues(frame: DataFrame, reducer: ReducerID, selectedF
         }
         if (first > 0) {
           // Remove values that have fallen outside of the window, if the start of the window isn't outside of the data.
-          if (selectedField.values[first - 1] !== null && selectedField.values[last] !== undefined) {
+          if (selectedField.values[first - 1] !== null && selectedField.values[first] !== undefined) {
             sum -= selectedField.values[first - 1];
             count--;
           }
