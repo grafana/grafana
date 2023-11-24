@@ -2,20 +2,25 @@ package remote
 
 import (
 	"context"
+	"crypto/md5"
+	"fmt"
 	"math/rand"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/go-openapi/strfmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/stretchr/testify/require"
 )
 
-// Valid config for Cloud AM, no `grafana_managed_receievers` field.
-const upstreamConfig = `{"template_files": {}, "alertmanager_config": "{\"global\": {\"smtp_from\": \"test@test.com\"}, \"route\": {\"receiver\": \"discord\"}, \"receivers\": [{\"name\": \"discord\", \"discord_configs\": [{\"webhook_url\": \"http://localhost:1234\"}]}]}"}`
+// Valid Grafana Alertmanager configuration.
+const testGrafanaConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
 
 func TestNewAlertmanager(t *testing.T) {
 	tests := []struct {
@@ -66,6 +71,124 @@ func TestNewAlertmanager(t *testing.T) {
 	}
 }
 
+func TestApplyConfig(t *testing.T) {
+	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// ApplyConfig performs a readiness check at startup.
+	// A non-200 response should result in an error.
+	server := httptest.NewServer(errorHandler)
+	cfg := AlertmanagerConfig{
+		URL: server.URL,
+	}
+	am, err := NewAlertmanager(cfg, 1)
+	require.NoError(t, err)
+
+	config := &ngmodels.AlertConfiguration{}
+	ctx := context.Background()
+	require.Error(t, am.ApplyConfig(ctx, config))
+	require.False(t, am.Ready())
+
+	// A 200 status code response should make the check succeed.
+	server.Config.Handler = okHandler
+	require.NoError(t, am.ApplyConfig(ctx, config))
+	require.True(t, am.Ready())
+
+	// If we already got a 200 status code response, we shouldn't make the HTTP request again.
+	server.Config.Handler = errorHandler
+	require.NoError(t, am.ApplyConfig(ctx, config))
+	require.True(t, am.Ready())
+}
+
+func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
+	tenantID := os.Getenv("AM_TENANT_ID")
+	password := os.Getenv("AM_PASSWORD")
+
+	// ApplyConfig performs a readiness check.
+	cfg := AlertmanagerConfig{
+		URL:               amURL,
+		TenantID:          tenantID,
+		BasicAuthPassword: password,
+	}
+
+	fakeConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig)))
+	fakeConfigCreatedAt := time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC).Unix()
+	fakeConfig := &ngmodels.AlertConfiguration{
+		ID:                        100,
+		AlertmanagerConfiguration: testGrafanaConfig,
+		ConfigurationHash:         fakeConfigHash,
+		ConfigurationVersion:      "v2",
+		CreatedAt:                 fakeConfigCreatedAt,
+		Default:                   true,
+		OrgID:                     1,
+	}
+
+	ctx := context.Background()
+	am, err := NewAlertmanager(cfg, 1)
+	require.NoError(t, err)
+
+	// We should have no configuration at first.
+	{
+		_, err = am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+		require.Error(t, err)
+		require.Equal(t, "Error response from the Mimir API: alertmanager storage object not found", err.Error())
+	}
+
+	// Using `ApplyConfig` as a heuristic of a function that gets called when the Alertmanager starts
+	// We call it as if the Alertmanager were starting.
+	{
+		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
+
+		// First, we need to verify that the readiness check passes.
+		require.True(t, am.Ready())
+
+		// Next, we need to verify that Mimir received the configuration.
+		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+		require.NoError(t, err)
+		require.Equal(t, int64(100), config.ID)
+		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
+		require.Equal(t, fakeConfigHash, config.Hash)
+		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
+		require.Equal(t, true, config.Default)
+
+		// TODO: Check that the state was uploaded.
+	}
+
+	// Calling `ApplyConfig` again with a changed configuration yields no effect.
+	{
+		fakeConfig.ID = 30000000000000000
+		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
+
+		// The remote Alertmanager continues to be ready.
+		require.True(t, am.Ready())
+
+		// Next, we need to verify that the config that was uploaded remains the same.
+		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+		require.NoError(t, err)
+		require.Equal(t, int64(100), config.ID)
+		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
+		require.Equal(t, fakeConfigHash, config.Hash)
+		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
+		require.Equal(t, true, config.Default)
+	}
+
+	// TODO: Now, shutdown the Alertmanager and we expect the latest configuration to be uploaded.
+	{
+	}
+}
+
 func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -79,7 +202,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
-		URL:               amURL + "/alertmanager",
+		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
@@ -158,7 +281,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
-		URL:               amURL + "/alertmanager",
+		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
@@ -219,7 +342,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	password := os.Getenv("AM_PASSWORD")
 
 	cfg := AlertmanagerConfig{
-		URL:               amURL + "/alertmanager",
+		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
@@ -231,14 +354,6 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	rcvs, err := am.GetReceivers(context.Background())
 	require.NoError(t, err)
 	require.Equal(t, "empty-receiver", *rcvs[0].Name)
-
-	// After changing the configuration, we should have a new `discord` receiver.
-	require.NoError(t, am.postConfig(context.Background(), upstreamConfig))
-	require.Eventually(t, func() bool {
-		rcvs, err = am.GetReceivers(context.Background())
-		require.NoError(t, err)
-		return *rcvs[0].Name == "discord"
-	}, 16*time.Second, 1*time.Second)
 }
 
 func genSilence(createdBy string) apimodels.PostableSilence {

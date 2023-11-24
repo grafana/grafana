@@ -15,7 +15,6 @@ import { createRoot } from 'react-dom/client';
 import {
   locationUtil,
   monacoLanguageRegistry,
-  OrgRole,
   setLocale,
   setTimeZoneResolver,
   setWeekStart,
@@ -280,7 +279,7 @@ function initEchoSrv() {
     }
   });
 
-  if (contextSrv.user.orgRole !== OrgRole.None) {
+  if (contextSrv.user.orgRole !== '') {
     registerEchoBackend(new PerformanceBackend({}));
   }
 

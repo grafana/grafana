@@ -367,6 +367,10 @@ const (
 	// Enables linking between traces and profiles
 	FlagTraceToProfiles = "traceToProfiles"
 
+	// FlagTracesEmbeddedFlameGraph
+	// Enables embedding a flame graph in traces
+	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"
+
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
@@ -398,10 +402,6 @@ const (
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
-
-	// FlagNewBrowseDashboards
-	// New browse/manage dashboards UI
-	FlagNewBrowseDashboards = "newBrowseDashboards"
 
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions

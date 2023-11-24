@@ -49,10 +49,13 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 		condIdxes := refIDtoCondIdx[refID]
 
 		if len(condIdxes) == 1 {
-			// If the refID is used in only condition, keep the letter a new refID
-			newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[0])
-			newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[0]].Query.Params[1], set.Conditions[condIdxes[0]].Query.Params[2]}
-			continue
+			// If the refID does not exist yet and the condition only has one reference, we can add it directly.
+			if _, exists := newRefIDstoCondIdx[refID]; !exists {
+				// If the refID is used in only condition, keep the letter a new refID
+				newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[0])
+				newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[0]].Query.Params[1], set.Conditions[condIdxes[0]].Query.Params[2]}
+				continue
+			}
 		}
 
 		// track unique time ranges within the same refID
@@ -65,12 +68,15 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 		}
 
 		if len(timeRangesToCondIdx) == 1 {
-			// if all shared time range, no need to create a new query with a new RefID
-			for i := range condIdxes {
-				newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[i])
-				newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[i]].Query.Params[1], set.Conditions[condIdxes[i]].Query.Params[2]}
+			// If the refID does not exist yet and the condition only has one reference, we can add it directly.
+			if _, exists := newRefIDstoCondIdx[refID]; !exists {
+				// if all shared time range, no need to create a new query with a new RefID
+				for i := range condIdxes {
+					newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[i])
+					newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[i]].Query.Params[1], set.Conditions[condIdxes[i]].Query.Params[2]}
+				}
+				continue
 			}
-			continue
 		}
 
 		// This referenced query/refID has different time ranges, so new queries are needed for each unique time range.
