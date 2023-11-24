@@ -49,32 +49,42 @@ func (authz *AuthService) Authorize(ctx context.Context, orgID int64, user ident
 	if !has {
 		return nil, ErrReadForbidden.Errorf("user does not have permission to read annotations")
 	}
-
 	scopeTypes := annotationScopeTypes(scopes)
+	_, canAccessOrgAnnotations := scopeTypes[annotations.Organization.String()]
+	_, canAccessDashAnnotations := scopeTypes[annotations.Dashboard.String()]
+	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
+		canAccessDashAnnotations = true
+	}
 
 	var visibleDashboards map[string]int64
 	var err error
-	if _, ok := scopeTypes[annotations.Dashboard.String()]; ok {
-		visibleDashboards, err = authz.userVisibleDashboards(ctx, user, orgID)
+	if canAccessDashAnnotations {
+		visibleDashboards, err = authz.dashboardsWithVisibleAnnotations(ctx, user, orgID)
 		if err != nil {
 			return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
 		}
 	}
 
 	return &AccessResources{
-		Dashboards: visibleDashboards,
-		ScopeTypes: scopeTypes,
+		Dashboards:               visibleDashboards,
+		CanAccessDashAnnotations: canAccessDashAnnotations,
+		CanAccessOrgAnnotations:  canAccessOrgAnnotations,
 	}, nil
 }
 
-func (authz *AuthService) userVisibleDashboards(ctx context.Context, user identity.Requester, orgID int64) (map[string]int64, error) {
+func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, user identity.Requester, orgID int64) (map[string]int64, error) {
 	recursiveQueriesSupported, err := authz.db.RecursiveQueriesAreSupported()
 	if err != nil {
 		return nil, err
 	}
 
+	filterType := searchstore.TypeDashboard
+	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
+		filterType = searchstore.TypeAnnotation
+	}
+
 	filters := []any{
-		permissions.NewAccessControlDashboardPermissionFilter(user, dashboardaccess.PERMISSION_VIEW, searchstore.TypeDashboard, authz.features, recursiveQueriesSupported),
+		permissions.NewAccessControlDashboardPermissionFilter(user, dashboardaccess.PERMISSION_VIEW, filterType, authz.features, recursiveQueriesSupported),
 		searchstore.OrgFilter{OrgId: orgID},
 	}
 
