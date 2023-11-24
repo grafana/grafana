@@ -582,11 +582,28 @@ export interface QueryFix {
 
 export type QueryFixType = 'ADD_FILTER' | 'ADD_FILTER_OUT' | 'ADD_STRING_FILTER' | 'ADD_STRING_FILTER_OUT';
 export interface QueryFixAction {
-  type: QueryFixType | string;
   query?: string;
   preventSubmit?: boolean;
+  /**
+   * The type of action to perform. Will be passed to the data source to handle.
+   *
+   * @type {(QueryFixType | string)}
+   * @memberof QueryFixAction
+   */
+  type: QueryFixType | string;
+  /**
+   * A key value map of options that will be passed. Usually used to pass e.g. the label and value.
+   *
+   * @type {KeyValue<string>}
+   * @memberof QueryFixAction
+   */
   options?: KeyValue<string>;
-
+  /**
+   * An optional single row data frame containing the row that triggered the the QueryFixAction.
+   *
+   * @type {DataFrame}
+   * @memberof QueryFixAction
+   */
   frame?: DataFrame;
 }
 
