@@ -75,7 +75,7 @@ export const language: languages.IMonarchLanguage = {
 
       // keywords
       [
-        // match only prefefined keywords
+        // match only predefined keywords
         `(?:${keywords.join('|')})`,
         {
           cases: {
