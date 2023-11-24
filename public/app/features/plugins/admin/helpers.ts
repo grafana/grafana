@@ -161,6 +161,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     accessControl: accessControl,
     angularDetected,
     isFullyInstalled: true,
+    externalServiceRegistration: plugin.externalServiceRegistration,
   };
 }
 
