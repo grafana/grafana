@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import React, { PureComponent, useRef, useCallback } from 'react';
+import React, { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { IconButton, Spinner, useStyles2 } from '@grafana/ui';
+import { Spinner, stylesFactory } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { Carousel } from './components/Carousel';
 import { Step } from './components/Step';
 import { getSteps } from './steps';
 import { SetupStep } from './types';
@@ -43,25 +44,14 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     });
 
     const checkedSteps = await Promise.all(checkedStepsPromises);
+    const firstIncompleteStep = checkedSteps.findIndex((step) => !step.done);
 
     this.setState({
-      currentStep: !checkedSteps[0].done ? 0 : 1,
+      currentStep: firstIncompleteStep === -1 ? checkedSteps.length - 1 : firstIncompleteStep,
       steps: checkedSteps,
       checksDone: true,
     });
   }
-
-  onForwardClick = () => {
-    this.setState((prevState) => ({
-      currentStep: prevState.currentStep + 1,
-    }));
-  };
-
-  onPreviousClick = () => {
-    this.setState((prevState) => ({
-      currentStep: prevState.currentStep - 1,
-    }));
-  };
 
   dismiss = () => {
     const { id } = this.props;
@@ -89,110 +79,19 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
             <Spinner size="xl" inline />
           </div>
         ) : (
-          <StepCarousel steps={steps} />
+          <Carousel page={this.state.currentStep}>
+            {steps.map((step, index) => (
+              <Step key={index} step={step} />
+            ))}
+          </Carousel>
         )}
       </div>
     );
   }
 }
 
-function getElementWidth(el: HTMLElement): number {
-  const baseWidth = el.clientWidth;
-  const computedStyles = window.getComputedStyle(el);
-  const pageWidth =
-    baseWidth - parseFloat(computedStyles.paddingLeft || '0') - parseFloat(computedStyles.paddingRight || '0');
-
-  return pageWidth;
-}
-
-/**
- * Scrolls an element by a given percentage of its width
- * @param element Element to scroll
- * @param scrollBy Percentage of the element's width to scroll. Positive values scroll right, negative values scroll left
- */
-function scrollElement(element: HTMLElement, scrollBy: number) {
-  const scrollByPx = getElementWidth(element) * scrollBy;
-
-  element.scrollTo({
-    left: element.scrollLeft + scrollByPx,
-    behavior: 'smooth',
-  });
-}
-
-function StepCarousel({ steps }: { steps: SetupStep[] }) {
-  const styles = useStyles2(getStyles);
-
-  const [{ scrollWidth, offsetWidth, scrollLeft }, setScrollData] = React.useState({
-    scrollWidth: 0,
-    offsetWidth: 0,
-    scrollLeft: 0,
-  });
-
-  const handleScroll = (ev: { currentTarget: HTMLDivElement }) => {
-    const { scrollWidth, offsetWidth, scrollLeft } = ev.currentTarget;
-    setScrollData({ scrollWidth, offsetWidth, scrollLeft });
-  };
-
-  const carouselRef = useRef<HTMLDivElement | null>(null);
-  const handleCarouselRef = useCallback((el: HTMLDivElement) => {
-    handleScroll({ currentTarget: el });
-    carouselRef.current = el;
-  }, []);
-
-  const scrollProgress = scrollLeft / (scrollWidth - offsetWidth);
-
-  return (
-    <div className={styles.carouselWrapper}>
-      <IconButton
-        className={styles.prevButton}
-        variant="secondary"
-        name="angle-left"
-        tooltip="Previous"
-        disabled={scrollProgress === 0}
-        onClick={() => carouselRef.current && scrollElement(carouselRef.current, -1)}
-        size="xl"
-      />
-      <IconButton
-        className={styles.nextButton}
-        variant="secondary"
-        name="angle-right"
-        tooltip="Next"
-        disabled={scrollProgress === 1}
-        onClick={() => carouselRef.current && scrollElement(carouselRef.current, 1)}
-        size="xl"
-      />
-
-      <div className={styles.stepCarousel} ref={handleCarouselRef} onScroll={handleScroll}>
-        {steps.map((step, index) => {
-          return (
-            <div key={index} className={styles.step}>
-              <Step step={step} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-const getStyles = () => {
+const getStyles = stylesFactory(() => {
   const theme = config.theme2;
-
-  const nextPrevSpacing = 1;
-  const nextPrevSize = 4; // xl button grid size
-  const nextPrevGutter = nextPrevSize + nextPrevSpacing * 2;
-
-  const buttonBase = {
-    position: 'absolute',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    zIndex: 2,
-
-    ['&:disabled']: {
-      opacity: 0,
-      pointerEvents: 'none',
-    },
-  } as const;
 
   return {
     container: css({
@@ -201,55 +100,22 @@ const getStyles = () => {
       height: '100%',
       backgroundSize: 'cover',
     }),
-    carouselWrapper: css({
-      position: 'relative',
-    }),
-    nextButton: css(buttonBase, {
-      right: theme.spacing(0.5 + nextPrevSpacing),
-    }),
-    prevButton: css(buttonBase, {
-      left: theme.spacing(0.5 + nextPrevSpacing),
-    }),
-    stepCarousel: css({
-      position: 'relative',
-      zIndex: 1,
-      overflowX: 'auto',
-      display: 'flex',
-      flexWrap: 'nowrap',
-      scrollSnapType: 'x proximity',
-      padding: theme.spacing(2, 0),
-    }),
-    step: css({
-      scrollSnapAlign: 'start',
-      flexShrink: 0,
-      paddingLeft: theme.spacing(nextPrevGutter),
 
-      display: 'flex',
-      '& > div': {
-        flex: 1,
-      },
-
-      // Make last step full width so when it scrolls it can snap to the start of the container
-      '&:last-of-type': {
-        minWidth: '100%',
-        // paddingRight: theme.spacing(nextPrevGutter),
-      },
-
-      '&:first-of-type': {},
-    }),
     dismiss: css({
       alignSelf: 'flex-end',
       textDecoration: 'underline',
       marginBottom: theme.spacing(1),
     }),
+
     loading: css({
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       height: '100%',
     }),
+
     loadingText: css({
       marginRight: theme.spacing(1),
     }),
   };
-};
+});
