@@ -1,7 +1,7 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
-import { walkTree } from './rendering';
+import { getItemsDimensions } from './rendering';
 import { textToDataContainer } from './testHelpers';
 
 function makeDataFrame(fields: Record<string, Array<number | string>>) {
@@ -14,16 +14,6 @@ function makeDataFrame(fields: Record<string, Array<number | string>>) {
   });
 }
 
-type RenderData = {
-  item: LevelItem;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  label: string;
-  muted: boolean;
-};
-
 describe('walkTree', () => {
   it('correctly compute sizes for a single item', () => {
     const root: LevelItem = { start: 0, itemIndexes: [0], children: [], value: 100, level: 0 };
@@ -32,25 +22,17 @@ describe('walkTree', () => {
       { collapsing: true }
     );
 
-    walkTree(
-      root,
-      'children',
-      container,
-      100,
-      0,
-      1,
-      100,
-      container.getCollapsedMap(),
-      (item, x, y, width, height, label, collapsed) => {
-        expect(item).toEqual(root);
-        expect(x).toEqual(0);
-        expect(y).toEqual(0);
-        expect(width).toEqual(99); // -1 for border
-        expect(height).toEqual(22);
-        expect(label).toEqual('1');
-        expect(collapsed).toEqual(false);
-      }
-    );
+    const renderObjects = getItemsDimensions(root, 'children', container, 100, 0, 1, 100, container.getCollapsedMap());
+    expect(renderObjects).toHaveLength(1);
+    expect(renderObjects[0]).toMatchObject({
+      item: root,
+      x: 0,
+      y: 0,
+      width: 99,
+      height: 22,
+      label: '1',
+      muted: false,
+    });
   });
 
   it('should render a multiple items', () => {
@@ -68,21 +50,8 @@ describe('walkTree', () => {
       makeDataFrame({ value: [100, 50, 50], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 50, 50] }),
       { collapsing: true }
     );
-    const renderData: RenderData[] = [];
-    walkTree(
-      root,
-      'children',
-      container,
-      100,
-      0,
-      1,
-      100,
-      container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
-        renderData.push({ item, x, y, width, height, label, muted });
-      }
-    );
-    expect(renderData).toEqual([
+    const renderObjects = getItemsDimensions(root, 'children', container, 100, 0, 1, 100, container.getCollapsedMap());
+    expect(renderObjects).toEqual([
       { item: root, width: 99, height: 22, x: 0, y: 0, muted: false, label: '1' },
       { item: root.children[0], width: 49, height: 22, x: 0, y: 22, muted: false, label: '2' },
       { item: root.children[1], width: 49, height: 22, x: 50, y: 22, muted: false, label: '3' },
@@ -104,20 +73,7 @@ describe('walkTree', () => {
       makeDataFrame({ value: [100, 1, 1], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 1, 1] }),
       { collapsing: true }
     );
-    const renderData: RenderData[] = [];
-    walkTree(
-      root,
-      'children',
-      container,
-      100,
-      0,
-      1,
-      100,
-      container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
-        renderData.push({ item, x, y, width, height, label, muted });
-      }
-    );
+    const renderData = getItemsDimensions(root, 'children', container, 100, 0, 1, 100, container.getCollapsedMap());
     expect(renderData).toEqual([
       { item: root, width: 99, height: 22, x: 0, y: 0, muted: false, label: '1' },
       { item: root.children[0], width: 1, height: 22, x: 0, y: 22, muted: true, label: '2' },
@@ -140,20 +96,7 @@ describe('walkTree', () => {
       makeDataFrame({ value: [100, 0.1, 0.1], level: [0, 1, 1], label: ['1', '2', '3'], self: [0, 0.1, 0.1] }),
       { collapsing: true }
     );
-    const renderData: RenderData[] = [];
-    walkTree(
-      root,
-      'children',
-      container,
-      100,
-      0,
-      1,
-      100,
-      container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
-        renderData.push({ item, x, y, width, height, label, muted });
-      }
-    );
+    const renderData = getItemsDimensions(root, 'children', container, 100, 0, 1, 100, container.getCollapsedMap());
     expect(renderData).toEqual([{ item: root, width: 99, height: 22, x: 0, y: 0, muted: false, label: '1' }]);
   });
 
@@ -166,20 +109,7 @@ describe('walkTree', () => {
 
     const root = container.getLevels()[0][0];
 
-    const renderData: RenderData[] = [];
-    walkTree(
-      root,
-      'children',
-      container,
-      14,
-      0,
-      1,
-      14,
-      container.getCollapsedMap(),
-      (item, x, y, width, height, label, muted) => {
-        renderData.push({ item, x, y, width, height, label, muted });
-      }
-    );
+    const renderData = getItemsDimensions(root, 'children', container, 14, 0, 1, 14, container.getCollapsedMap());
     expect(renderData).toEqual([
       { item: root, width: 13, height: 22, x: 0, y: 0, muted: false, label: '0' },
       { item: root.children[0], width: 3, height: 22, x: 0, y: 22, muted: true, label: '1' },

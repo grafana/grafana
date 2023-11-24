@@ -103,11 +103,14 @@ export function useFlameRender(options: RenderOptions) {
       return;
     }
 
-    console.time('render');
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     const mutedPath2D = new Path2D();
-    const renderObjects = walkTree(
+
+    //
+    // Walk the tree and compute the dimensions for each item in the falmegraph.
+    //
+    const renderObjects = getItemsDimensions(
       root,
       direction,
       data,
@@ -118,6 +121,9 @@ export function useFlameRender(options: RenderOptions) {
       collapsedMap
     );
 
+    //
+    // Iterate over the dimensions objects and render each one onto canvas.
+    //
     for (const obj of renderObjects) {
       if (obj.muted) {
         // We do a bit of optimization for muted regions, and we render them all in single fill later on as they don't
@@ -131,8 +137,6 @@ export function useFlameRender(options: RenderOptions) {
     // Only fill the muted rects
     ctx.fillStyle = mutedColor;
     ctx.fill(mutedPath2D);
-
-    console.timeEnd('render');
   }, [
     ctx,
     data,
@@ -150,6 +154,14 @@ export function useFlameRender(options: RenderOptions) {
 
 type RenderFunc = (renderObj: RenderObject) => void;
 
+/**
+ * Create a render function with some memoization to prevent excesive repainting of the canvas.
+ * @param ctx
+ * @param data
+ * @param getBarColor
+ * @param textAlign
+ * @param collapsedMap
+ */
 function useRenderFunc(
   ctx: CanvasRenderingContext2D | undefined,
   data: FlameGraphDataContainer,
@@ -265,7 +277,7 @@ type RenderObject = {
  * Walks the tree and computes coordinates, dimensions and other data needed for rendering. For each item in the tree
  * it defers the rendering to the renderFunc.
  */
-export function walkTree(
+export function getItemsDimensions(
   root: LevelItem,
   // In sandwich view we use parents direction to show all callers.
   direction: 'children' | 'parents',
