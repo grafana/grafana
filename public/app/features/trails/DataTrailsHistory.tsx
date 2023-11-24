@@ -152,6 +152,8 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
                   model.state.currentStep === index ? styles.stepSelected : '',
                   // To alter the look of steps with distant non-directly preceding parent
                   alternatePredecessorStyle.get(index) ?? '',
+                  // To remove direct link for steps that don't have a direct parent
+                  index !== step.trailState.parentIndex + 1 ? styles.stepHasIndirectParent : '',
                   // To darken steps that aren't the current step's ancesters
                   !ancestry.has(index) ? styles.stepIsNotAncestorOfCurrent : ''
                 )}
@@ -223,6 +225,11 @@ function getStyles(theme: GrafanaTheme2) {
         left: -4,
         top: -4,
         boxShadow: `0px 0px 0px 2px inset ${theme.colors.background.canvas}`,
+      },
+    }),
+    stepHasIndirectParent: css({
+      '&:before': {
+        background: 'none',
       },
     }),
     stepIsNotAncestorOfCurrent: css({
