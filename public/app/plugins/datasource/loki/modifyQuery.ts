@@ -19,11 +19,13 @@ import {
   LogfmtParser,
   JsonExpressionParser,
   LogfmtExpressionParser,
+  Expr,
 } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
 import { unescapeLabelValue } from './languageUtils';
+import { getNodePositionsFromQuery } from './queryUtils';
 import { lokiQueryModeller as modeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString, handleQuotes } from './querybuilder/parsing';
 import { LabelType } from './types';
@@ -170,11 +172,32 @@ export function addLabelToQuery(
   const filter = toLabelFilter(key, value, operator);
   // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
   // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
-  if (labelType !== LabelType.Indexed) {
+  if (labelType === LabelType.Parsed || labelType === LabelType.StructuredMetadata) {
     const positionToAdd = findLastPosition([...streamSelectorPositions, ...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
-  } else {
+  } else if (labelType === LabelType.Indexed) {
     return addFilterToStreamSelector(query, streamSelectorPositions, filter);
+  } else {
+    // labelType is not set, so we need to figure out where to add the label
+    // if we don't have a parser, we will just add it to the stream selector
+    if (parserPositions.length === 0) {
+      return addFilterToStreamSelector(query, streamSelectorPositions, filter);
+    } else {
+      // in case we are not adding the label to stream selectors we need to find the last position to add in each expression
+      const subExpressions = findLeaves(getNodePositionsFromQuery(query, [Expr]));
+      const parserFilterPositions = [...parserPositions, ...labelFilterPositions];
+
+      // find last position for each subexpression
+      const lastPositionsPerExpression = subExpressions.map((subExpression) => {
+        return findLastPosition(
+          parserFilterPositions.filter((p) => {
+            return subExpression.contains(p);
+          })
+        );
+      });
+
+      return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
+    }
   }
 }
 
@@ -538,4 +561,14 @@ function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabe
  */
 export function findLastPosition(positions: NodePosition[]): NodePosition {
   return positions.reduce((prev, current) => (prev.to > current.to ? prev : current));
+}
+
+/**
+ * Gets all leaves of the nodes given. Leaves are nodes that don't contain any other nodes.
+ *
+ * @param {NodePosition[]} nodes
+ * @return
+ */
+function findLeaves(nodes: NodePosition[]): NodePosition[] {
+  return nodes.filter((node) => nodes.every((n) => node.contains(n) === false || node === n));
 }
