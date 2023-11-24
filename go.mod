@@ -290,6 +290,8 @@ require github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces
 
 require github.com/apache/arrow/go/v13 v13.0.0 // @grafana/observability-metrics
 
+replace github.com/apache/arrow/go/v13 => github.com/toddtreece/arrow/go/v13 v13.0.0-20231124161401-6ed0257c1060 // @grafana/observability-metrics
+
 require (
 	cloud.google.com/go v0.110.8 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
