@@ -96,7 +96,7 @@ recent_users_age = 10m
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-In the search view, you can use insights data to help you find most-used, broken, and unused dashbaords.
+In the search view, you can use insights data to help you find most-used, broken, and unused dashboards.
 
 You can sort the dashboards by:
 
