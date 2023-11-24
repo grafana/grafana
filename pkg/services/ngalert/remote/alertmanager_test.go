@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -391,5 +392,37 @@ func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
 			GeneratorURL: "http://localhost:8080",
 			Labels:       labels,
 		},
+	}
+}
+
+func TestNewAlertmanager1(t *testing.T) {
+	orgID := int64(1)
+	tc := []struct {
+		name        string
+		cfg         AlertmanagerConfig
+		expectedErr error
+	}{
+		{
+			name:        "when no tenant ID is given - it fails",
+			expectedErr: errors.New("empty remote Alertmanager URL for tenant ''"),
+		},
+		{
+			name:        "when no URL is given - it fails",
+			cfg:         AlertmanagerConfig{TenantID: "user"},
+			expectedErr: errors.New("empty remote Alertmanager URL for tenant 'user'"),
+		},
+		{
+			name:        "when no valid URL is given - it fails",
+			cfg:         AlertmanagerConfig{TenantID: "user", URL: "asdasd%sasdsd"},
+			expectedErr: errors.New("unable to parse remote Alertmanager URL: parse \"asdasd%sasdsd\": invalid URL escape \"%sa\""),
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := NewAlertmanager(tt.cfg, orgID)
+
+			require.EqualError(t, tt.expectedErr, err.Error())
+		})
 	}
 }

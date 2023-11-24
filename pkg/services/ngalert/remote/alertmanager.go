@@ -55,24 +55,24 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 	}
 
 	if cfg.URL == "" {
-		return nil, fmt.Errorf("empty URL for tenant %s", cfg.TenantID)
+		return nil, fmt.Errorf("empty remote Alertmanager URL for tenant '%s'", cfg.TenantID)
+	}
+
+	u, err := url.Parse(cfg.URL)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse remote Alertmanager URL: %w", err)
 	}
 
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &mimirClient.Config{
-		Address:  cfg.URL,
+		URL:      u,
 		TenantID: cfg.TenantID,
 		Password: cfg.BasicAuthPassword,
 		Logger:   logger,
 	}
 
 	mc, err := mimirClient.New(mcCfg)
-	if err != nil {
-		return nil, err
-	}
-
-	u, err := url.Parse(cfg.URL)
 	if err != nil {
 		return nil, err
 	}
