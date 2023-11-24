@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React, { ReactNode, useEffect, useState } from 'react';
 
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
-import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { convertRawToRange, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
+import { LogsSortOrder, TimeZone } from '@grafana/schema';
 
 type Props = {
   children: ReactNode;
