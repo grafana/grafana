@@ -98,35 +98,19 @@ export type Abilities<T extends Action> = Record<T, Ability>;
  * This one will check for alerting abilities that don't apply to any particular alert source or alert rule
  */
 export const useAlertingAbilities = (): Abilities<AlertingAction> => {
-  const canExportGMARules =
-    ctx.hasPermission(AccessControlAction.AlertingProvisioningRead) ||
-    ctx.hasPermission(AccessControlAction.AlertingProvisioningReadSecrets);
-
   return {
     // internal (Grafana managed)
-    [AlertingAction.CreateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleCreate)],
-    [AlertingAction.ViewAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleRead)],
-    [AlertingAction.UpdateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleUpdate)],
-    [AlertingAction.DeleteAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleDelete)],
-    [AlertingAction.ExportGrafanaManagedRules]: [AlwaysSupported, canExportGMARules],
+    [AlertingAction.CreateAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleCreate),
+    [AlertingAction.ViewAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleRead),
+    [AlertingAction.UpdateAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleUpdate),
+    [AlertingAction.DeleteAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleDelete),
+    [AlertingAction.ExportGrafanaManagedRules]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleRead),
 
     // external
-    [AlertingAction.CreateExternalAlertRule]: [
-      AlwaysSupported,
-      ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
-    ],
-    [AlertingAction.ViewExternalAlertRule]: [
-      AlwaysSupported,
-      ctx.hasPermission(AccessControlAction.AlertingRuleExternalRead),
-    ],
-    [AlertingAction.UpdateExternalAlertRule]: [
-      AlwaysSupported,
-      ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
-    ],
-    [AlertingAction.DeleteExternalAlertRule]: [
-      AlwaysSupported,
-      ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
-    ],
+    [AlertingAction.CreateExternalAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleExternalWrite),
+    [AlertingAction.ViewExternalAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleExternalRead),
+    [AlertingAction.UpdateExternalAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleExternalWrite),
+    [AlertingAction.DeleteExternalAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleExternalWrite),
   };
 };
 
@@ -181,11 +165,11 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const canSilence = useCanSilence(rulesSource);
 
   const abilities: Abilities<AlertRuleAction> = {
-    [AlertRuleAction.Duplicate]: [MaybeSupported, ctx.hasPermission(rulesPermissions.create)],
-    [AlertRuleAction.View]: [AlwaysSupported, ctx.hasPermission(rulesPermissions.read)],
+    [AlertRuleAction.Duplicate]: toAbility(MaybeSupported, rulesPermissions.create),
+    [AlertRuleAction.View]: toAbility(AlwaysSupported, rulesPermissions.read),
     [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
     [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
-    [AlertRuleAction.Explore]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.DataSourcesExplore)],
+    [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
     [AlertRuleAction.Silence]: canSilence,
     [AlertRuleAction.ModifyExport]: [MaybeSupported, exportAllowed],
   };
@@ -208,72 +192,48 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
   // list out all of the abilities, and if the user has permissions to perform them
   const abilities: Abilities<AlertmanagerAction> = {
     // -- configuration --
-    [AlertmanagerAction.ViewExternalConfiguration]: [
+    [AlertmanagerAction.ViewExternalConfiguration]: toAbility(
       AlwaysSupported,
-      ctx.hasPermission(AccessControlAction.AlertingNotificationsExternalRead),
-    ],
-    [AlertmanagerAction.UpdateExternalConfiguration]: [
+      AccessControlAction.AlertingNotificationsExternalRead
+    ),
+    [AlertmanagerAction.UpdateExternalConfiguration]: toAbility(
       hasConfigurationAPI,
-      ctx.hasPermission(AccessControlAction.AlertingNotificationsExternalWrite),
-    ],
+      AccessControlAction.AlertingNotificationsExternalWrite
+    ),
     // -- contact points --
-    [AlertmanagerAction.CreateContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.create)],
-    [AlertmanagerAction.ViewContactPoint]: [AlwaysSupported, ctx.hasPermission(notificationsPermissions.read)],
-    [AlertmanagerAction.UpdateContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.update)],
-    [AlertmanagerAction.DeleteContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.delete)],
+    [AlertmanagerAction.CreateContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
+    [AlertmanagerAction.ViewContactPoint]: toAbility(AlwaysSupported, notificationsPermissions.read),
+    [AlertmanagerAction.UpdateContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
+    [AlertmanagerAction.DeleteContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
     // only Grafana flavored alertmanager supports exporting
-    [AlertmanagerAction.ExportContactPoint]: [
-      isGrafanaFlavoredAlertmanager,
-      ctx.hasPermission(notificationsPermissions.read),
-    ],
+    [AlertmanagerAction.ExportContactPoint]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
     // -- notification templates --
-    [AlertmanagerAction.CreateNotificationTemplate]: [
-      hasConfigurationAPI,
-      ctx.hasPermission(notificationsPermissions.create),
-    ],
-    [AlertmanagerAction.ViewNotificationTemplate]: [AlwaysSupported, ctx.hasPermission(notificationsPermissions.read)],
-    [AlertmanagerAction.UpdateNotificationTemplate]: [
-      hasConfigurationAPI,
-      ctx.hasPermission(notificationsPermissions.update),
-    ],
-    [AlertmanagerAction.DeleteNotificationTemplate]: [
-      hasConfigurationAPI,
-      ctx.hasPermission(notificationsPermissions.delete),
-    ],
+    [AlertmanagerAction.CreateNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
+    [AlertmanagerAction.ViewNotificationTemplate]: toAbility(AlwaysSupported, notificationsPermissions.read),
+    [AlertmanagerAction.UpdateNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
+    [AlertmanagerAction.DeleteNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
     // -- notification policies --
-    [AlertmanagerAction.CreateNotificationPolicy]: [
-      hasConfigurationAPI,
-      ctx.hasPermission(notificationsPermissions.create),
-    ],
-    [AlertmanagerAction.ViewNotificationPolicyTree]: [
-      AlwaysSupported,
-      ctx.hasPermission(notificationsPermissions.read),
-    ],
-    [AlertmanagerAction.UpdateNotificationPolicyTree]: [
-      hasConfigurationAPI,
-      ctx.hasPermission(notificationsPermissions.update),
-    ],
-    [AlertmanagerAction.DeleteNotificationPolicy]: [
-      hasConfigurationAPI,
-      ctx.hasPermission(notificationsPermissions.delete),
-    ],
-    [AlertmanagerAction.ExportNotificationPolicies]: [
+    [AlertmanagerAction.CreateNotificationPolicy]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
+    [AlertmanagerAction.ViewNotificationPolicyTree]: toAbility(AlwaysSupported, notificationsPermissions.read),
+    [AlertmanagerAction.UpdateNotificationPolicyTree]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
+    [AlertmanagerAction.DeleteNotificationPolicy]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
+    [AlertmanagerAction.ExportNotificationPolicies]: toAbility(
       isGrafanaFlavoredAlertmanager,
-      ctx.hasPermission(notificationsPermissions.read),
-    ],
-    [AlertmanagerAction.DecryptSecrets]: [
+      notificationsPermissions.read
+    ),
+    [AlertmanagerAction.DecryptSecrets]: toAbility(
       isGrafanaFlavoredAlertmanager,
-      ctx.hasPermission(notificationsPermissions.provisioning.readSecrets),
-    ],
+      notificationsPermissions.provisioning.readSecrets
+    ),
     // -- silences --
-    [AlertmanagerAction.CreateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.create)],
-    [AlertmanagerAction.ViewSilence]: [AlwaysSupported, ctx.hasPermission(instancePermissions.read)],
-    [AlertmanagerAction.UpdateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.update)],
+    [AlertmanagerAction.CreateSilence]: toAbility(hasConfigurationAPI, instancePermissions.create),
+    [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
+    [AlertmanagerAction.UpdateSilence]: toAbility(hasConfigurationAPI, instancePermissions.update),
     // -- mute timtings --
-    [AlertmanagerAction.CreateMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.create)],
-    [AlertmanagerAction.ViewMuteTiming]: [AlwaysSupported, ctx.hasPermission(notificationsPermissions.read)],
-    [AlertmanagerAction.UpdateMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.update)],
-    [AlertmanagerAction.DeleteMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.delete)],
+    [AlertmanagerAction.CreateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
+    [AlertmanagerAction.ViewMuteTiming]: toAbility(AlwaysSupported, notificationsPermissions.read),
+    [AlertmanagerAction.UpdateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
+    [AlertmanagerAction.DeleteMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
   };
 
   return abilities;
@@ -314,11 +274,12 @@ export function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
     return [false, false];
   }
 
-  const hasPermissions = ctx.hasPermission(AccessControlAction.AlertingInstanceCreate);
-
   const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
   const silenceSupported = !interactsOnlyWithExternalAMs || interactsWithAll;
 
-  return [silenceSupported, hasPermissions];
+  return toAbility(silenceSupported, AccessControlAction.AlertingInstanceCreate);
 }
+
+// just a convenient function
+const toAbility = (supported: boolean, action: AccessControlAction): Ability => [supported, ctx.hasPermission(action)];
