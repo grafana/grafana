@@ -20,7 +20,7 @@ const (
 	// corresponding document to return to the request.
 	// HTTP status code 404.
 	StatusNotFound CoreStatus = "Not found"
-	// StatusConflict means that the server cannot fulfilling the request
+	// StatusConflict means that the server cannot fulfill the request
 	// there is a conflict in the current state of a resource
 	// HTTP status code 409.
 	StatusConflict CoreStatus = "Conflict"
