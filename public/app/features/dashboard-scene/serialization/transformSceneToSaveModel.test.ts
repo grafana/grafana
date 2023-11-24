@@ -120,6 +120,7 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
     })
   );
 });
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -135,7 +136,9 @@ jest.mock('@grafana/runtime', () => ({
     return runRequestMock(ds, request);
   },
   config: {
-    panels: [],
+    panels: {
+      text: { skipDataQuery: true },
+    },
     featureToggles: {
       dataTrails: false,
     },

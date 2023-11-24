@@ -55,6 +55,11 @@ export type Props = {
   vertical?: boolean;
 
   /**
+   * If true only the flamegraph will be rendered.
+   */
+  showFlameGraphOnly?: boolean;
+
+  /**
    * Disable behaviour where similar items in the same stack will be collapsed into single item.
    */
   disableCollapsing?: boolean;
@@ -70,6 +75,7 @@ const FlameGraphContainer = ({
   stickyHeader,
   extraHeaderElements,
   vertical,
+  showFlameGraphOnly,
   disableCollapsing,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
@@ -143,35 +149,37 @@ const FlameGraphContainer = ({
     // isn't already provided.
     <ThemeContext.Provider value={theme}>
       <div ref={sizeRef} className={styles.container}>
-        <FlameGraphHeader
-          search={search}
-          setSearch={setSearch}
-          selectedView={selectedView}
-          setSelectedView={(view) => {
-            setSelectedView(view);
-            onViewSelected?.(view);
-          }}
-          containerWidth={containerWidth}
-          onReset={() => {
-            resetFocus();
-            resetSandwich();
-          }}
-          textAlign={textAlign}
-          onTextAlignChange={(align) => {
-            setTextAlign(align);
-            onTextAlignSelected?.(align);
-          }}
-          showResetButton={Boolean(focusedItemData || sandwichItem)}
-          colorScheme={colorScheme}
-          onColorSchemeChange={setColorScheme}
-          stickyHeader={Boolean(stickyHeader)}
-          extraHeaderElements={extraHeaderElements}
-          vertical={vertical}
-          isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
-        />
+        {!showFlameGraphOnly && (
+          <FlameGraphHeader
+            search={search}
+            setSearch={setSearch}
+            selectedView={selectedView}
+            setSelectedView={(view) => {
+              setSelectedView(view);
+              onViewSelected?.(view);
+            }}
+            containerWidth={containerWidth}
+            onReset={() => {
+              resetFocus();
+              resetSandwich();
+            }}
+            textAlign={textAlign}
+            onTextAlignChange={(align) => {
+              setTextAlign(align);
+              onTextAlignSelected?.(align);
+            }}
+            showResetButton={Boolean(focusedItemData || sandwichItem)}
+            colorScheme={colorScheme}
+            onColorSchemeChange={setColorScheme}
+            stickyHeader={Boolean(stickyHeader)}
+            extraHeaderElements={extraHeaderElements}
+            vertical={vertical}
+            isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
+          />
+        )}
 
         <div className={styles.body}>
-          {selectedView !== SelectedView.FlameGraph && (
+          {!showFlameGraphOnly && selectedView !== SelectedView.FlameGraph && (
             <FlameGraphTopTableContainer
               data={dataContainer}
               onSymbolClick={onSymbolClick}
@@ -204,6 +212,7 @@ const FlameGraphContainer = ({
               onFocusPillClick={resetFocus}
               onSandwichPillClick={resetSandwich}
               colorScheme={colorScheme}
+              showFlameGraphOnly={showFlameGraphOnly}
               collapsing={!disableCollapsing}
             />
           )}

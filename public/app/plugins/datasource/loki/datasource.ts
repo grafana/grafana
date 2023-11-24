@@ -534,7 +534,7 @@ export class LokiDatasource
    * Used in `getStats`. Retrieves statistics for a Loki query and processes them into a QueryStats object.
    * @returns A Promise that resolves to a QueryStats object containing the query statistics or undefined if the query is invalid.
    */
-  async getQueryStats(query: LokiQuery): Promise<QueryStats | undefined> {
+  async getQueryStats(query: LokiQuery, timeRange: TimeRange): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
     if (isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return undefined;
@@ -544,7 +544,7 @@ export class LokiDatasource
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
     for (const idx in labelMatchers) {
-      const { start, end } = this.getStatsTimeRange(query, Number(idx));
+      const { start, end } = this.getStatsTimeRange(query, Number(idx), timeRange);
 
       if (start === undefined || end === undefined) {
         return { streams: 0, chunks: 0, bytes: 0, entries: 0, message: 'Query size estimate not available.' };
@@ -581,7 +581,11 @@ export class LokiDatasource
    * @returns An object containing the start and end time in nanoseconds (NS_IN_MS) or undefined if the time range cannot be estimated.
    */
 
-  getStatsTimeRange(query: LokiQuery, idx: number): { start: number | undefined; end: number | undefined } {
+  getStatsTimeRange(
+    query: LokiQuery,
+    idx: number,
+    timeRange: TimeRange
+  ): { start: number | undefined; end: number | undefined } {
     let start: number, end: number;
     const NS_IN_MS = 1000000;
     const durationNodes = getNodesFromQuery(query.expr, [Duration]);
@@ -593,7 +597,7 @@ export class LokiDatasource
         return { start: undefined, end: undefined };
       }
       // logs query with range type
-      return this.getTimeRangeParams();
+      return this.getTimeRangeParams(timeRange);
     }
 
     if (query.queryType === LokiQueryType.Instant) {
@@ -601,7 +605,7 @@ export class LokiDatasource
 
       if (!!durations[idx]) {
         // if query has a duration e.g. [1m]
-        end = this.getTimeRangeParams().end;
+        end = this.getTimeRangeParams(timeRange).end;
         start = end - rangeUtil.intervalToMs(durations[idx]) * NS_IN_MS;
         return { start, end };
       } else {
@@ -609,7 +613,7 @@ export class LokiDatasource
 
         if (/(\$__auto|\$__range)/.test(query.expr)) {
           // if $__auto or $__range is used, we can estimate the time range using the selected range
-          return this.getTimeRangeParams();
+          return this.getTimeRangeParams(timeRange);
         }
 
         // otherwise we cant estimate the time range
@@ -618,19 +622,19 @@ export class LokiDatasource
     }
 
     // metric query with range type
-    return this.getTimeRangeParams();
+    return this.getTimeRangeParams(timeRange);
   }
 
   /**
    * Retrieves statistics for a Loki query and returns the QueryStats object.
    * @returns A Promise that resolves to a QueryStats object or null if the query is invalid or has no statistics.
    */
-  async getStats(query: LokiQuery): Promise<QueryStats | null> {
-    if (!query) {
+  async getStats(query: LokiQuery, timeRange: TimeRange): Promise<QueryStats | null> {
+    if (!query.expr) {
       return null;
     }
 
-    const response = await this.getQueryStats(query);
+    const response = await this.getQueryStats(query, timeRange);
 
     if (!response) {
       return null;
