@@ -30,7 +30,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `internationalization`              | Enables internationalization                                                         | Yes                |
 | `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                             | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
-| `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                 |                    |
+| `disablePrometheusExemplarSampling` | Disable Prometheus exemplar sampling                                                 |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                 | Yes                |
 
 ## Beta feature toggles

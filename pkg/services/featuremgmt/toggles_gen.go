@@ -276,7 +276,7 @@ const (
 	FlagSessionRemoteCache = "sessionRemoteCache"
 
 	// FlagDisablePrometheusExemplarSampling
-	// Disable Prometheus examplar sampling
+	// Disable Prometheus exemplar sampling
 	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
 
 	// FlagAlertingBacktesting

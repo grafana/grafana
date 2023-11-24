@@ -8,7 +8,7 @@ weight: 500
 
 # Manage dashboard permissions
 
-Dashboard and dasboard folder permissions enable you to grant a viewer the ability to edit and save dashboard changes, or limit an editor's permission to modify a dashboard.
+Dashboard and dashboard folder permissions enable you to grant a viewer the ability to edit and save dashboard changes, or limit an editor's permission to modify a dashboard.
 
 For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../roles-and-permissions/#dashboard-permissions" >}}).
 
