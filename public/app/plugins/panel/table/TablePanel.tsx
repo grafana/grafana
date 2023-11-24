@@ -103,7 +103,7 @@ export function TablePanel(props: Props) {
     subs.add(
       panelContext.eventBus
         .getStream(DataHoverEvent)
-        .pipe(debounceTime(100))
+        .pipe(debounceTime(200))
         .subscribe({
           next: (evt) => {
             if (panelContext.eventBus === evt.origin) {
@@ -118,7 +118,7 @@ export function TablePanel(props: Props) {
     subs.add(
       panelContext.eventBus
         .getStream(DataHoverClearEvent)
-        .pipe(debounceTime(100))
+        .pipe(debounceTime(200))
         .subscribe({
           next: (evt) => {
             if (panelContext.eventBus === evt.origin) {
