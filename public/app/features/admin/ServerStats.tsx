@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
 import { AccessControlAction } from 'app/types';
 
@@ -80,6 +81,12 @@ export const ServerStats = () => {
               { name: 'Organisations', value: stats.orgs },
               { name: 'Users total', value: stats.users },
               { name: 'Active users in last 30 days', value: stats.activeUsers },
+              ...(!!stats.activeDevices && !!stats.activeAnonymousUsers && config.featureToggles.anonymousAccess
+                ? [
+                    { name: 'Active devices in last 30 days', value: stats.activeDevices },
+                    { name: 'Active anonymous users in last 30 days', value: Math.floor(stats.activeAnonymousUsers) },
+                  ]
+                : []),
               { name: 'Active sessions', value: stats.activeSessions },
             ]}
             footer={

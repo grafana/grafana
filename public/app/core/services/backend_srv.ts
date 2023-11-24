@@ -161,8 +161,7 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    // Add device id header if not OSS build
-    if (config.buildInfo?.edition !== GrafanaEdition.OpenSource && this.deviceID) {
+    if (this.deviceID) {
       options.headers = options.headers ?? {};
       options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }

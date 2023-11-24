@@ -146,3 +146,4 @@ alertingSimplifiedRouting,experimental,@grafana/alerting-squad,false,false,false
 logRowsPopoverMenu,experimental,@grafana/observability-logs,false,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false,false
 regressionTransformation,experimental,@grafana/grafana-bi-squad,false,false,false,true
+anonymousAccess,experimental,@grafana/identity-access-team,false,false,false,true

@@ -165,4 +165,5 @@ export interface FeatureToggles {
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
   regressionTransformation?: boolean;
+  anonymousAccess?: boolean;
 }

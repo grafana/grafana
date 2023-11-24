@@ -594,4 +594,8 @@ const (
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
+
+	// FlagAnonymousAccess
+	// Enables anonymous access UI for Grafana
+	FlagAnonymousAccess = "anonymousAccess"
 )

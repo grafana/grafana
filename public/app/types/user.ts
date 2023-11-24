@@ -131,3 +131,25 @@ export interface UserListAdminState {
   isLoading: boolean;
   sort?: string;
 }
+
+export interface UserAnonymousDTO {
+  login?: string;
+  client_ip: string;
+  device_id: string;
+  user_agent: string;
+  updated_at: string;
+  lastSeenAt: string;
+  avatarUrl?: string;
+}
+
+export interface UserListAnonymousState {
+  devices: UserAnonymousDTO[];
+  query: string;
+  perPage: number;
+  page: number;
+  totalPages: number;
+  showPaging: boolean;
+  filters: UserFilter[];
+  isLoading: boolean;
+  sort?: string;
+}
