@@ -9,6 +9,7 @@ import { getPluginComponentExtensions } from '@grafana/runtime';
 import { Tab, TabsBar, TabContent, VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { StoreState } from 'app/types';
 
 import UserOrganizations from './UserOrganizations';
@@ -17,6 +18,7 @@ import UserSessions from './UserSessions';
 import { UserTeams } from './UserTeams';
 import { changeUserOrg, initUserProfilePage, revokeUserSession, updateUserProfile } from './state/actions';
 
+const TAB_QUERY_PARAM = 'tab';
 const CORE_SETTINGS_TAB = 'Core';
 
 export interface OwnProps {}
@@ -61,11 +63,11 @@ export function UserProfileEditPage({
   changeUserOrg,
   updateUserProfile,
 }: Props) {
-  /**
-   * TODO: a nice thing to have would be the ability to read the active tab initial state from a URL
-   * query param. This would allow users to link to a specific tab in the user profile page.
-   */
-  const [activeTab, setActiveTab] = useState<string>(CORE_SETTINGS_TAB);
+  const [queryParams, updateQueryParams] = useQueryParams();
+  const tabQueryParam = queryParams[TAB_QUERY_PARAM];
+  const [activeTab, setActiveTab] = useState<string>(
+    (typeof tabQueryParam === 'string' ? tabQueryParam : CORE_SETTINGS_TAB).toLowerCase()
+  );
 
   useMount(() => initUserProfilePage());
 
@@ -108,20 +110,27 @@ export function UserProfileEditPage({
     <div data-testid={selectors.components.UserProfile.extensionPointTabs}>
       <VerticalGroup spacing="md">
         <TabsBar>
-          {tabs.map((tabTitle) => (
-            <Tab
-              key={tabTitle}
-              label={tabTitle}
-              active={activeTab === tabTitle}
-              onChangeTab={() => setActiveTab(tabTitle)}
-              data-testid={selectors.components.UserProfile.extensionPointTab(tabTitle)}
-            />
-          ))}
+          {tabs.map((tabTitle) => {
+            const queryParamCompatibleTabTitle = tabTitle.toLowerCase();
+
+            return (
+              <Tab
+                key={tabTitle}
+                label={tabTitle}
+                active={activeTab === queryParamCompatibleTabTitle}
+                onChangeTab={() => {
+                  setActiveTab(queryParamCompatibleTabTitle);
+                  updateQueryParams({ [TAB_QUERY_PARAM]: queryParamCompatibleTabTitle });
+                }}
+                data-testid={selectors.components.UserProfile.extensionPointTab(tabTitle)}
+              />
+            );
+          })}
         </TabsBar>
         <TabContent>
-          {activeTab === CORE_SETTINGS_TAB && <UserProfile />}
+          {activeTab === CORE_SETTINGS_TAB.toLowerCase() && <UserProfile />}
           {toPairs(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
-            if (activeTab === title) {
+            if (activeTab === title.toLowerCase()) {
               return (
                 <React.Fragment key={title}>
                   {pluginExtensionComponents.map(({ component: Component }, index) => (

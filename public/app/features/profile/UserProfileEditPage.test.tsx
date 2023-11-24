@@ -5,6 +5,7 @@ import React from 'react';
 import { OrgRole, PluginExtensionComponent, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginExtensionGetter, GetPluginExtensions } from '@grafana/runtime';
+import * as useQueryParams from 'app/core/hooks/useQueryParams';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
 import { backendSrv } from '../../core/services/backend_srv';
@@ -13,6 +14,13 @@ import { getMockTeam } from '../teams/__mocks__/teamMocks';
 
 import { Props, UserProfileEditPage } from './UserProfileEditPage';
 import { initialUserState } from './state/reducers';
+
+const mockUseQueryParams = useQueryParams as { useQueryParams: typeof useQueryParams.useQueryParams };
+
+jest.mock('app/core/hooks/useQueryParams', () => ({
+  __esModule: true,
+  useQueryParams: () => [{}],
+}));
 
 const defaultProps: Props = {
   ...initialUserState,
@@ -115,6 +123,8 @@ enum ExtensionPointComponentTabs {
 }
 
 const _createTabName = (tab: ExtensionPointComponentTabs) => `Tab ${tab}`;
+const tabOneName = _createTabName(ExtensionPointComponentTabs.One);
+const tabTwoName = _createTabName(ExtensionPointComponentTabs.Two);
 
 const _createPluginExtensionPointComponent = (
   id: string,
@@ -321,11 +331,35 @@ describe('UserProfileEditPage', () => {
 
         expect(extensionPointTabs()).toBeInTheDocument();
         _assertTab('Core', true);
-        _assertTab(_createTabName(ExtensionPointComponentTabs.One));
-        _assertTab(_createTabName(ExtensionPointComponentTabs.Two));
+        _assertTab(tabOneName);
+        _assertTab(tabTwoName);
       });
-    });
 
-    it.todo('should set the default active tab based on a tab query parameter');
+      it.each([tabOneName, tabOneName.toUpperCase(), tabOneName.toLowerCase()])(
+        'should set the active tab based on the "tab" query param and be case-insensitive',
+        async (tabQueryParam) => {
+          mockUseQueryParams.useQueryParams = () => [{ tab: tabQueryParam }, () => {}];
+
+          await getTestContext({
+            extensions: [
+              PluginExtensionPointComponent1,
+              PluginExtensionPointComponent2,
+              PluginExtensionPointComponent3,
+            ],
+          });
+
+          const { extensionPointTab } = getSelectors();
+
+          const _assertTab = (tabName: string, isDefault = false) => {
+            const tab = extensionPointTab(tabName);
+            expect(tab).toBeInTheDocument();
+            expect(tab).toHaveAttribute('aria-selected', isDefault.toString());
+          };
+
+          _assertTab('Core');
+          _assertTab(tabOneName, true);
+        }
+      );
+    });
   });
 });
