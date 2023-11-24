@@ -4,7 +4,6 @@ import { Subscription } from 'rxjs';
 import {
   AnnotationQuery,
   AppEvent,
-  DashboardCursorSync,
   dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
@@ -18,7 +17,7 @@ import {
   UrlQueryValue,
 } from '@grafana/data';
 import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
-import { Dashboard, DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink, DashboardCursorSync } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -144,7 +143,7 @@ export class DashboardModel implements TimeModel {
     this.timezone = data.timezone ?? '';
     this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;
-    this.graphTooltip = data.graphTooltip || 0;
+    this.graphTooltip = data.graphTooltip || DashboardCursorSync.Crosshair;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};
     this.liveNow = Boolean(data.liveNow);

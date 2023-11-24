@@ -455,8 +455,8 @@ export class DashboardMigrator {
       });
     }
 
-    if (oldVersion < 14) {
-      this.dashboard.graphTooltip = old.sharedCrosshair ? 1 : 0;
+    if (oldVersion < 14 && old.sharedCrosshair) {
+      this.dashboard.graphTooltip = 1;
     }
 
     if (oldVersion < 16) {

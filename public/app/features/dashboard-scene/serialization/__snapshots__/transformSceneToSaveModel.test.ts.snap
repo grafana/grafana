@@ -82,7 +82,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "links": [],
   "panels": [
     {
@@ -303,7 +303,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   },
   "editable": true,
   "fiscalYearStartMonth": 1,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": 1351,
   "links": [],
   "panels": [

@@ -29,7 +29,7 @@ import { SettingsPageProps } from './types';
 export type Props = SettingsPageProps & ConnectedProps<typeof connector>;
 
 const GRAPH_TOOLTIP_OPTIONS = [
-  { value: 0, label: 'Default' },
+  { value: 0, label: 'Off' },
   { value: 1, label: 'Shared crosshair' },
   { value: 2, label: 'Shared Tooltip' },
 ];
@@ -208,10 +208,10 @@ export function GeneralSettingsUnconnected({
         {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
         <CollapsableSection label={t('dashboard-settings.general.panel-options-label', 'Panel options')} isOpen={true}>
           <Field
-            label={t('dashboard-settings.general.panel-options-graph-tooltip-label', 'Graph tooltip')}
+            label={t('dashboard-settings.general.panel-options-graph-tooltip-label', 'Cursor sync')}
             description={t(
               'dashboard-settings.general.panel-options-graph-tooltip-description',
-              'Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect'
+              'Controls syncronized hover effect across different panels. Reload the dashboard for changes to take effect'
             )}
           >
             <RadioButtonGroup

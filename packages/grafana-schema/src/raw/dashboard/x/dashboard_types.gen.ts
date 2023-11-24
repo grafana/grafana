@@ -636,7 +636,7 @@ export enum DashboardCursorSync {
   Tooltip = 2,
 }
 
-export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSync.Off;
+export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSync.Crosshair;
 
 /**
  * Dashboard panels are the basic visualization building blocks.
@@ -1163,7 +1163,7 @@ export interface Dashboard {
 export const defaultDashboard: Partial<Dashboard> = {
   editable: true,
   fiscalYearStartMonth: 0,
-  graphTooltip: DashboardCursorSync.Off,
+  graphTooltip: DashboardCursorSync.Crosshair,
   links: [],
   panels: [],
   schemaVersion: 36,
