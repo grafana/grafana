@@ -92,6 +92,7 @@ export const language: languages.IMonarchLanguage = {
         //
         // If inside quotes, e.g. `"here"`, allow for any character,
         // including escaped quotes (`\"`) and escaped backslack (`\\`).
+        // This is necessary to support all possible tag names, such as those with spaces (e.g., `my tag`).
         /(?:\w|[.]|"(?:\\"|\\\\|[^\\"])*")+/,
         {
           cases: {
