@@ -33,12 +33,18 @@ export interface AMContactPoint {
 export const selectContactPoint = createAction<{ receiver: string | undefined; alertManager: AlertManagerDataSource }>(
   'simplifiedRouting/selectContactPoint'
 );
-export const updateMuteTimings = createAction<{ muteTimings: string[]; alertManager: string }>(
+export const updateMuteTimings = createAction<{ muteTimings: string[]; alertManagerName: string }>(
   'simplifiedRouting/updateMuteTimings'
 );
 
-export const updateOverrideGrouping = createAction<{ overrideGrouping: boolean; alertManager: string }>(
+export const updateOverrideGrouping = createAction<{ overrideGrouping: boolean; alertManagerName: string }>(
   'simplifiedRouting/overrideGrouping'
+);
+export const updateOverrideTimimgs = createAction<{ overrideTimimgs: boolean; alertManagerName: string }>(
+  'simplifiedRouting/overrideTimimgs'
+);
+export const updateGrouping = createAction<{ groupBy: string[]; alertManagerName: string }>(
+  'simplifiedRouting/groupBy'
 );
 
 export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) => {
@@ -60,27 +66,39 @@ export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) =>
     }
   });
   builder.addCase(updateMuteTimings, (state, action) => {
-    const { muteTimings, alertManager } = action.payload;
-    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManager);
+    const { muteTimings, alertManagerName } = action.payload;
+    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManagerName);
     if (existingContactPoint) {
       existingContactPoint.muteTimeIntervals = muteTimings;
     }
   });
-  // builder.addCase(updateOverrideGrouping, (state, action) => {
-  //   const { overrideGrouping, alertManager } = action.payload;
-  //   const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManager);
-  //   if (existingContactPoint) {
-  //     existingContactPoint.overrideGrouping = overrideGrouping;
-  //   }
-  // });
+  builder.addCase(updateOverrideGrouping, (state, action) => {
+    const { overrideGrouping, alertManagerName } = action.payload;
+    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManagerName);
+    if (existingContactPoint) {
+      existingContactPoint.overrideGrouping = overrideGrouping;
+    }
+  });
+  builder.addCase(updateOverrideTimimgs, (state, action) => {
+    const { overrideTimimgs, alertManagerName } = action.payload;
+    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManagerName);
+    if (existingContactPoint) {
+      existingContactPoint.overrideTimings = overrideTimimgs;
+    }
+  });
+  builder.addCase(updateGrouping, (state, action) => {
+    const { groupBy, alertManagerName } = action.payload;
+    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManagerName);
+    if (existingContactPoint) {
+      existingContactPoint.groupBy = groupBy;
+    }
+  });
 });
 
 export function SimplifiedRouting() {
   const { getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
   const contactPointsInAlert = getValues('contactPoints');
-  const muteIntervals = getValues('muteTimeIntervals');
-  const overrideGrouping = getValues('overrideGrouping');
 
   const allAlertManagersByPermission = getAlertManagerDataSourcesByPermission('notification');
 
@@ -93,14 +111,15 @@ export function SimplifiedRouting() {
 
   const alertManagersDataSourcesWithConfigAPI = alertManagersDataSources.filter((am) => am.hasConfigurationAPI);
 
-  // we merge the selected contact points with the alert manager meta data
+  // we merge the selected contact points data for each alert manager, with the alert manager meta data
   const alertManagersWithSelectedContactPoints = alertManagersDataSourcesWithConfigAPI.map((am) => {
     const selectedContactPoint = contactPointsInAlert?.find((cp) => cp.alertManager === am.name);
     return {
       alertManager: am,
       selectedContactPoint: selectedContactPoint?.selectedContactPoint,
-      muteTimeIntervals: muteIntervals,
-      overrideGrouping: overrideGrouping,
+      muteTimeIntervals: selectedContactPoint?.muteTimeIntervals ?? [],
+      overrideGrouping: selectedContactPoint?.overrideGrouping ?? false,
+      groupBy: [],
       overrideTimings: false,
     };
   });
@@ -110,7 +129,7 @@ export function SimplifiedRouting() {
 
   function getContactPointsForForm(alertManagersWithCP: AMContactPoint[]) {
     return alertManagersWithCP.map((am) => {
-      return { alertManager: am.alertManager.name, selectedContactPoint: am.selectedContactPoint };
+      return { ...am, alertManager: am.alertManager.name };
     });
   }
 
@@ -122,10 +141,18 @@ export function SimplifiedRouting() {
 
   const shouldShowAM = true;
 
-  function onChangeMuteTimings(value: string[]) {
-    dispatch(updateMuteTimings({ muteTimings: value, alertManager: '' }));
+  function onChangeMuteTimings(value: string[], alertManagerName: string) {
+    dispatch(updateMuteTimings({ muteTimings: value, alertManagerName }));
   }
-
+  function onChangeOverrideGrouping(value: boolean, alertManagerName: string) {
+    dispatch(updateOverrideGrouping({ overrideGrouping: value, alertManagerName }));
+  }
+  function onChangeOverrideTimimgs(value: boolean, alertManagerName: string) {
+    dispatch(updateOverrideTimimgs({ overrideTimimgs: value, alertManagerName }));
+  }
+  function onChangeGrouping(value: string[], alertManagerName: string) {
+    dispatch(updateGrouping({ groupBy: value, alertManagerName }));
+  }
   const [isOpenRoutingSettings, toggleOpenRoutingSettings] = useToggle(false);
 
   return alertManagersWithCPState.map((alertManagerContactPoint, index) => {
@@ -149,27 +176,35 @@ export function SimplifiedRouting() {
               <div className={styles.secondAlertManagerLine}></div>
             </Stack>
           )}
-          <Stack direction="row" gap={1} alignItems="center">
-            <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerName}>
+          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerName}>
+            <Stack direction="row" gap={1} alignItems="center">
               <ContactPointSelector
                 selectedReceiver={alertManagerContactPoint.selectedContactPoint}
                 dispatch={dispatch}
                 alertManager={alertManagerContactPoint.alertManager}
               />
-            </AlertmanagerProvider>
-            <LinkToContactPoints />
-          </Stack>
-          <CollapsableSection
-            label="Muting, grouping and timings"
-            isOpen={isOpenRoutingSettings}
-            className={styles.collapsableSection}
-            onToggle={toggleOpenRoutingSettings}
-          >
-            <Stack direction="column" gap={1}>
-              <MuteTimingFields alertManager={alertManagerName} onChange={onChangeMuteTimings} />
-              <RoutingSettings dispatch={dispatch} alertManagerName={alertManagerName} />
+              <LinkToContactPoints />
             </Stack>
-          </CollapsableSection>
+            <CollapsableSection
+              label="Muting, grouping and timings"
+              isOpen={isOpenRoutingSettings}
+              className={styles.collapsableSection}
+              onToggle={toggleOpenRoutingSettings}
+            >
+              <Stack direction="column" gap={1}>
+                <MuteTimingFields
+                  onChange={(values) => onChangeMuteTimings(values, alertManagerName)}
+                  muteTimmings={alertManagerContactPoint.muteTimeIntervals}
+                />
+                <RoutingSettings
+                  onOverrideGroupingChange={(value) => onChangeOverrideGrouping(value, alertManagerName)}
+                  onOverrideTimimgsChange={(value) => onChangeOverrideTimimgs(value, alertManagerName)}
+                  onChangeGrouping={(values) => onChangeGrouping(values, alertManagerName)}
+                  alertManagerContactPoint={alertManagerContactPoint}
+                />
+              </Stack>
+            </CollapsableSection>
+          </AlertmanagerProvider>
         </Stack>
       </div>
     );

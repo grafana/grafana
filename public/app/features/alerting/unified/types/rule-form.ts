@@ -8,21 +8,17 @@ export enum RuleFormType {
   cloudRecording = 'cloud-recording',
 }
 
-export interface ContactPoints {
+export interface ContactPoint {
   alertManager: string;
   selectedContactPoint?: string;
+  overrideGrouping: boolean;
+  groupBy?: string[];
+  overrideTimings: boolean;
+  groupWaitValue?: string;
+  groupIntervalValue?: string;
+  repeatIntervalValue?: string;
+  muteTimeIntervals: string[];
 }
-
-// export interface ManualRoutingSettings {
-//   overrideGrouping: boolean;
-//   groupBy?: string[];
-//   overrideTimings: boolean;
-//   groupWaitValue?: string;
-//   groupIntervalValue?: string;
-//   repeatIntervalValue?: string;
-//   muteTimeIntervals: string[];
-
-// }
 
 export interface RuleFormValues {
   // common
@@ -43,15 +39,8 @@ export interface RuleFormValues {
   evaluateEvery: string;
   evaluateFor: string;
   isPaused?: boolean;
-  contactPoints?: ContactPoints[];
+  contactPoints?: ContactPoint[];
   manualRouting: boolean;
-  overrideGrouping: boolean;
-  groupBy?: string[];
-  overrideTimings: boolean;
-  groupWaitValue?: string;
-  groupIntervalValue?: string;
-  repeatIntervalValue?: string;
-  muteTimeIntervals: string[];
 
   // cortex / loki rules
   namespace: string;
