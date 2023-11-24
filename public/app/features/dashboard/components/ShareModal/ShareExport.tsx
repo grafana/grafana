@@ -39,7 +39,7 @@ export class ShareExport extends PureComponent<Props, State> {
     const { dashboard } = this.props;
     const { shareExternally } = this.state;
 
-    reportInteraction('dashboards_sharing_export_download_json_clicked', { externally: shareExternally });
+    reportInteraction('dashboards_sharing_export_save_json_clicked', { externally: shareExternally });
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson) => {
