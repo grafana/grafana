@@ -665,7 +665,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 		warnCount   int
 	}{
 		{
-			name: "plugin without registration",
+			name: "no warn if plugin has no registration",
 		},
 		{
 			name:   "warn if user does not have plugin permissions globally",
