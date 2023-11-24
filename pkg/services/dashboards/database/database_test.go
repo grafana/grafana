@@ -318,7 +318,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, len(hits), 1)
 		hit := hits[0]
 		require.Equal(t, hit.Type, model.DashHitFolder)
-		require.Equal(t, hit.URL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.UID, savedFolder.Slug))
+		require.Equal(t, hit.UID, savedFolder.UID)
+		require.Equal(t, hit.FolderUID, "")
 		require.Equal(t, hit.FolderTitle, "")
 	})
 
@@ -1085,6 +1086,7 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store,
 // SearchDashboards, which is a wrapper around FindDashboards.
 func testSearchDashboards(d dashboards.Store, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
 	res, err := d.FindDashboards(context.Background(), query)
+	fmt.Println("res", res, err)
 	if err != nil {
 		return nil, err
 	}
