@@ -1396,6 +1396,21 @@ describe('LokiDatasource', () => {
       expect(ds.statsMetadataRequest).toHaveBeenCalled();
       expect(result).toEqual({ streams: 2, chunks: 2, bytes: 2, entries: 2 });
     });
+
+    it('calls statsMetadataRequest with the right properties', async () => {
+      query.expr = 'count_over_time({foo="bar"}[1m])';
+      await ds.getQueryStats(query, mockTimeRange);
+
+      expect(ds.statsMetadataRequest).toHaveBeenCalledWith(
+        `index/stats`,
+        {
+          start: 0,
+          end: 1000000,
+          query: '{foo="bar"}',
+        },
+        { requestId: 'log-sample-A', showErrorAlert: false }
+      );
+    });
   });
 
   describe('statsMetadataRequest', () => {
