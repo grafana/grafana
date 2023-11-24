@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { Fragment, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -16,6 +16,7 @@ import {
   Menu,
   useStyles2,
 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -57,7 +58,9 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal();
   const dispatch = useDispatch();
   const location = useLocation();
+  const { chrome } = useGrafana();
   const notifyApp = useAppNotification();
+  const history = useHistory();
 
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
   const [redirectToClone, setRedirectToClone] = useState<
@@ -136,16 +139,18 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
     if (dashboardUID) {
       buttons.push(
-        <LinkButton
+        <Button
           size="sm"
           key="dashboard"
           variant="primary"
           icon="apps"
-          target="__blank"
-          href={`d/${encodeURIComponent(dashboardUID)}`}
+          onClick={() => {
+            chrome.setReturnToPrevious({ show: true, href: location.pathname, title: 'Test' });
+            history.push(`/d/${encodeURIComponent(dashboardUID)}`);
+          }}
         >
           Go to dashboard
-        </LinkButton>
+        </Button>
       );
       const panelId = rule.annotations[Annotation.panelID];
       if (panelId) {
