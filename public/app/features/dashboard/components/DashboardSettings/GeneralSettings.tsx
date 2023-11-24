@@ -211,7 +211,7 @@ export function GeneralSettingsUnconnected({
             label={t('dashboard-settings.general.panel-options-graph-tooltip-label', 'Cursor sync')}
             description={t(
               'dashboard-settings.general.panel-options-graph-tooltip-description',
-              'Controls syncronized hover effect across different panels. Reload the dashboard for changes to take effect'
+              'Controls the synchronized hover effect across different panels. Reload the dashboard for changes to take effect'
             )}
           >
             <RadioButtonGroup
