@@ -1147,7 +1147,7 @@ There are two different models:
 - **Polynomial regression** - Fits a polynomial function to the data.
   {{< figure src="/static/img/docs/transformations/polynomial-regression.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-> **Note:** This mode is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `regressionTransformation` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+> **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `regressionTransformation` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 {{% docs/reference %}}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
@@ -1176,4 +1176,4 @@ There are two different models:
 
 {{% /docs/reference %}}
 
-[data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/
+[Data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/
