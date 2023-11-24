@@ -90,11 +90,35 @@ describe('LogDetails', () => {
 
         await userEvent.click(screen.getByLabelText('Filter for value in query A'));
         expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
-        expect(onClickFilterLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
+        expect(onClickFilterLabelMock).toHaveBeenCalledWith(
+          'key1',
+          'label1',
+          mockRow.dataFrame.refId,
+          expect.objectContaining({
+            fields: [
+              expect.objectContaining({ values: [0] }),
+              expect.objectContaining({ values: ['line1'] }),
+              expect.objectContaining({ values: [{ app: 'app01' }] }),
+            ],
+            length: 1,
+          })
+        );
 
         await userEvent.click(screen.getByLabelText('Filter out value in query A'));
         expect(onClickFilterOutLabelMock).toHaveBeenCalledTimes(1);
-        expect(onClickFilterOutLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledWith(
+          'key1',
+          'label1',
+          mockRow.dataFrame.refId,
+          expect.objectContaining({
+            fields: [
+              expect.objectContaining({ values: [0] }),
+              expect.objectContaining({ values: ['line1'] }),
+              expect.objectContaining({ values: [{ app: 'app01' }] }),
+            ],
+            length: 1,
+          })
+        );
       });
     });
     it('should not render filter controls when the callbacks are not provided', () => {
