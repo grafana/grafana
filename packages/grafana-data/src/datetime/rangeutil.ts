@@ -4,7 +4,7 @@ import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, T
 
 import * as dateMath from './datemath';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
-import { isDateTime, DateTime, dateTime, toUtc } from './moment_wrapper';
+import { isDateTime, DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
@@ -468,16 +468,4 @@ export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: D
     to,
     raw: { from, to },
   };
-}
-
-export function zoomOutTimeRange(timeRange: TimeRange, factor: number): TimeRange {
-  const timespan = timeRange.to.valueOf() - timeRange.from.valueOf();
-  const center = timeRange.to.valueOf() - timespan / 2;
-  // If the timepsan is 0, zooming out would do nothing, so we force a zoom out to 30s
-  const newTimespan = timespan === 0 ? 30000 : timespan * factor;
-
-  const to = center + newTimespan / 2;
-  const from = center - newTimespan / 2;
-
-  return { from: toUtc(from), to: toUtc(to), raw: { from: toUtc(from), to: toUtc(to) } };
 }
