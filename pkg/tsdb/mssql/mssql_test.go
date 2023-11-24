@@ -463,7 +463,6 @@ func TestMSSQL(t *testing.T) {
 				m.TimeFloat32, m.TimeFloat32Nullable,
 				m.Measurement, m.ValueOne, m.ValueTwo)
 			require.NoError(t, err)
-
 		}
 
 		t.Run("When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in time.Time", func(t *testing.T) {
