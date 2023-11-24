@@ -263,14 +263,12 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 				reqClone := req.Clone(req.Context())
-				// Create a header on the request as if it had been set by some other logic e.g. preceding middleware
-				reqClone.Header.Set(backend.OAuthIdentityTokenHeaderName, "bearer test-token")
 				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
 				require.Len(t, reqClone.Header, 5)
 				require.Equal(t, "true", reqClone.Header.Get(ngalertmodels.FromAlertHeaderName))
-				require.Equal(t, "bearer test-token", reqClone.Header.Get(backend.OAuthIdentityTokenHeaderName))
+				require.Equal(t, "bearer token", reqClone.Header.Get(backend.OAuthIdentityTokenHeaderName))
 				require.Equal(t, "id-token", reqClone.Header.Get(backend.OAuthIdentityIDTokenHeaderName))
 				require.Equal(t, "uname", reqClone.Header.Get(proxyutil.UserHeaderName))
 				require.Len(t, reqClone.Cookies(), 3)
@@ -293,12 +291,14 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 				reqClone := req.Clone(req.Context())
+				// Create a header on the request as if it had been set by some other logic e.g. preceding middleware
+				reqClone.Header.Set(backend.OAuthIdentityTokenHeaderName, "bearer test-token")
 				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
 				require.Len(t, reqClone.Header, 5)
 				require.Equal(t, "true", reqClone.Header.Get(ngalertmodels.FromAlertHeaderName))
-				require.Equal(t, "bearer token", reqClone.Header.Get(backend.OAuthIdentityTokenHeaderName))
+				require.Equal(t, "bearer test-token", reqClone.Header.Get(backend.OAuthIdentityTokenHeaderName))
 				require.Equal(t, "id-token", reqClone.Header.Get(backend.OAuthIdentityIDTokenHeaderName))
 				require.Equal(t, "uname", reqClone.Header.Get(proxyutil.UserHeaderName))
 				require.Len(t, reqClone.Cookies(), 3)
