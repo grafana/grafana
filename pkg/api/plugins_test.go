@@ -666,6 +666,12 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 	}{
 		{
 			name: "no warn if plugin has no registration",
+			plugin: pluginstore.Plugin{
+				JSONData: plugins.JSONData{
+					ID: "grafana-test-app",
+				},
+			},
+			warnCount: 0,
 		},
 		{
 			name:   "warn if user does not have plugin permissions globally",
