@@ -25,4 +25,5 @@ export interface SetupStep {
   info: string;
   cards: Array<Card | TutorialCardType>;
   done: boolean;
+  showRemovePanel: boolean;
 }

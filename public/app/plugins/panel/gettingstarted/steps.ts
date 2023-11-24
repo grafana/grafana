@@ -17,6 +17,7 @@ export const getSteps = (): SetupStep[] => [
     title: 'Basic',
     info: 'The steps below will guide you to quickly finish setting up your Grafana installation.',
     done: false,
+    showRemovePanel: false,
     cards: [
       {
         type: 'tutorial',
@@ -71,6 +72,7 @@ export const getSteps = (): SetupStep[] => [
     title: 'Advanced',
     info: ' Manage your users and teams and add plugins. These steps are optional',
     done: false,
+    showRemovePanel: true,
     cards: [
       {
         type: 'tutorial',

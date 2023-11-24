@@ -81,7 +81,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         ) : (
           <Carousel page={this.state.currentStep}>
             {steps.map((step, index) => (
-              <Step key={index} step={step} />
+              <Step key={index} step={step} onDismiss={this.dismiss} />
             ))}
           </Carousel>
         )}
