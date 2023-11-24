@@ -1,0 +1,7 @@
+//  
+//  ERROR: error parsing query: found THING🌟 This was machine generated.  Do not edit. 🌟
+{
+  "error": "error parsing query: found THING",
+  "errorSource": "",
+  "status": 500
+}

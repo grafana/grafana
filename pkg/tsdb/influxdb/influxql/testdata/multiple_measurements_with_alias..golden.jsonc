@@ -1,0 +1,143 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "graph",
+//      "executedQueryString": "Test raw query"
+//  }
+//  Name: alias cpu.upc
+//  Dimensions: 2 Fields by 1 Rows
+//  +-----------------------------------+----------------------------------------------------------------------------+
+//  | Name: Time                        | Name: Value                                                                |
+//  | Labels:                           | Labels: cluster-name=Cluster, datacenter=America, dc.region.name=Northeast |
+//  | Type: []time.Time                 | Type: []*float64                                                           |
+//  +-----------------------------------+----------------------------------------------------------------------------+
+//  | 1970-01-01 00:00:00.111 +0000 UTC | 222                                                                        |
+//  +-----------------------------------+----------------------------------------------------------------------------+
+//  
+//  
+//  
+//  Frame[1] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "graph",
+//      "executedQueryString": "Test raw query"
+//  }
+//  Name: alias logins.count
+//  Dimensions: 2 Fields by 1 Rows
+//  +-----------------------------------+----------------------------------------------------------------------------+
+//  | Name: Time                        | Name: Value                                                                |
+//  | Labels:                           | Labels: cluster-name=Cluster, datacenter=America, dc.region.name=Northeast |
+//  | Type: []time.Time                 | Type: []*float64                                                           |
+//  +-----------------------------------+----------------------------------------------------------------------------+
+//  | 1970-01-01 00:00:00.111 +0000 UTC | 222                                                                        |
+//  +-----------------------------------+----------------------------------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "alias cpu.upc",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "graph",
+          "executedQueryString": "Test raw query"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster-name": "Cluster",
+              "datacenter": "America",
+              "dc.region.name": "Northeast"
+            },
+            "config": {
+              "displayNameFromDS": "alias cpu.upc"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            111
+          ],
+          [
+            222
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "name": "alias logins.count",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "graph",
+          "executedQueryString": "Test raw query"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "cluster-name": "Cluster",
+              "datacenter": "America",
+              "dc.region.name": "Northeast"
+            },
+            "config": {
+              "displayNameFromDS": "alias logins.count"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            111
+          ],
+          [
+            222
+          ]
+        ]
+      }
+    }
+  ]
+}

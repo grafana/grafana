@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -19,8 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const shouldUpdate = true
+
 func readJsonFile(filePath string) io.ReadCloser {
-	bytes, err := os.ReadFile(filepath.Join("testdata", filePath))
+	bytes, err := os.ReadFile(filepath.Join("testdata", filePath+".json"))
 	if err != nil {
 		panic("cannot read the file")
 	}
@@ -40,6 +43,15 @@ func generateQuery(query models.Query) *models.Query {
 		query.ResultFormat = "time_series"
 	}
 	return &query
+}
+
+func verifyGoldenResponse(t *testing.T, fileName string, query models.Query, goldenFileExt string) *backend.DataResponse {
+	rsp := ResponseParse(readJsonFile(fileName), 200, generateQuery(query))
+	golden := fileName + "." + goldenFileExt + "." + "golden"
+	experimental.CheckGoldenJSONResponse(t, "testdata", golden, rsp, shouldUpdate)
+	// require.NoError(t, rsp.Error)
+
+	return rsp
 }
 
 func TestInfluxdbResponseParser(t *testing.T) {
@@ -107,7 +119,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		boolFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
-		result := ResponseParse(readJsonFile("response_with_nil_bools_and_nil_strings.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "response_with_nil_bools_and_nil_strings", query, "")
 
 		if diff := cmp.Diff(floatFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -129,7 +141,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 
-		result := ResponseParse(readJsonFile("metric_find_queries.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "metric_find_queries", query, "")
 
 		if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -146,7 +158,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 
-		result := ResponseParse(readJsonFile("show_tag_values_response.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "show_tag_values_response", query, "")
 
 		if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -156,7 +168,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser populates the RawQuery in the response meta ExecutedQueryString", func(t *testing.T) {
 		query := models.Query{}
 		query.RawQuery = "Test raw query"
-		result := ResponseParse(readJsonFile("simple_response.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "simple_response", query, "")
 
 		assert.Equal(t, result.Frames[0].Meta.ExecutedQueryString, "Test raw query")
 	})
@@ -179,7 +191,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
-		result := ResponseParse(readJsonFile("invalid_value_format.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "invalid_value_format", query, "")
 
 		if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -203,7 +215,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
-		result := ResponseParse(readJsonFile("invalid_timestamp_format.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "invalid_timestamp_format", query, "")
 
 		if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -212,14 +224,14 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 	t.Run("Influxdb response parser with $measurement alias when multiple measurement in response", func(t *testing.T) {
 		query := models.Query{Alias: "alias $measurement"}
-		result := ResponseParse(readJsonFile("multiple_measurements_with_alias.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "multiple_measurements_with_alias", query, "")
 		assert.Equal(t, "alias cpu.upc", result.Frames[0].Name)
 		assert.Equal(t, "alias logins.count", result.Frames[1].Name)
 	})
 
 	t.Run("Influxdb response parser when multiple measurement in response", func(t *testing.T) {
 		query := models.Query{}
-		result := ResponseParse(readJsonFile("multiple_measurements.json"), 200, generateQuery(query))
+		result := ResponseParse(readJsonFile("multiple_measurements"), 200, generateQuery(query))
 		assert.True(t, strings.Contains(result.Frames[0].Name, ","))
 		assert.True(t, strings.Contains(result.Frames[1].Name, ","))
 	})
@@ -240,7 +252,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
-		result := ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "response", query, "")
 
 		t.Run("should parse aliases", func(t *testing.T) {
 			if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -248,7 +260,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias $m $measurement", Measurement: "10m"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 
 			name := "alias cpu.upc cpu.upc"
 			testFrame.Name = name
@@ -258,7 +270,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias $col", Measurement: "10m"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias mean"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -277,7 +289,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias $tag_datacenter"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
@@ -290,7 +302,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias $tag_datacenter/$tag_datacenter"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias America/America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
@@ -303,7 +315,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias [[col]]", Measurement: "10m"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias mean"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -312,7 +324,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias $0 $1 $2 $3 $4"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias cpu upc $2 $3 $4"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -321,7 +333,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias $0, $1 - $2 - $3, $4: something"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias cpu, upc - $2 - $3, $4: something"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -330,7 +342,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias $1"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias upc"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -339,7 +351,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias $5"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias $5"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -348,7 +360,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "series alias"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "series alias"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -357,7 +369,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias cpu.upc cpu.upc"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -366,7 +378,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias [[tag_datacenter]]"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias America"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -375,7 +387,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias [[tag_dc.region.name]]"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias Northeast"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -384,7 +396,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias [[tag_cluster-name]]"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias Cluster"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -393,7 +405,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias [[tag_/cluster/name/]]"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias Cluster/"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -402,7 +414,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias [[tag_@cluster@name@]]"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias Cluster@"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -413,7 +425,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		t.Run("shouldn't parse aliases", func(t *testing.T) {
 			query = models.Query{Alias: "alias words with no brackets"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name := "alias words with no brackets"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -422,7 +434,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias Test 1.5"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias Test 1.5"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -431,7 +443,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = models.Query{Alias: "alias Test -1"}
-			result = ResponseParse(readJsonFile("response.json"), 200, generateQuery(query))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery(query))
 			name = "alias Test -1"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -459,7 +471,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
-		result := ResponseParse(readJsonFile("error_response.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "error_response", query, "")
 
 		require.EqualError(t, result.Error, "query-timeout limit exceeded")
 	})
@@ -467,7 +479,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser with top-level error", func(t *testing.T) {
 		query := models.Query{}
 
-		result := ResponseParse(readJsonFile("error_on_top_level_response.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "error_on_top_level_response", query, "")
 
 		require.Nil(t, result.Frames)
 
@@ -504,7 +516,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 	t.Run("InfluxDB returns empty DataResponse when there is empty response", func(t *testing.T) {
 		query := models.Query{}
-		result := ResponseParse(readJsonFile("empty_response.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "empty_response", query, "")
 		assert.NotNil(t, result.Frames)
 		assert.Equal(t, 0, len(result.Frames))
 	})
@@ -519,7 +531,7 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 			}),
 		)
 
-		result := ResponseParse(readJsonFile("retention_policy.json"), 200, generateQuery(query))
+		result := verifyGoldenResponse(t, "retention_policy", query, "")
 
 		if diff := cmp.Diff(policyFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -529,7 +541,7 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 
 func TestResponseParser_table_format(t *testing.T) {
 	t.Run("test table result format parsing", func(t *testing.T) {
-		resp := ResponseParse(readJsonFile("simple_response.json"), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := verifyGoldenResponse(t, "simple_response", models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"}, "table")
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		assert.Equal(t, 3, len(resp.Frames[0].Fields))
@@ -543,7 +555,7 @@ func TestResponseParser_table_format(t *testing.T) {
 	})
 
 	t.Run("test table result format parsing with grouping", func(t *testing.T) {
-		resp := ResponseParse(readJsonFile("multiple_series_with_tags_and_multiple_columns.json"), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := verifyGoldenResponse(t, "multiple_series_with_tags_and_multiple_columns", models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"}, "table")
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		assert.Equal(t, 7, len(resp.Frames[0].Fields))
@@ -563,7 +575,7 @@ func TestResponseParser_table_format(t *testing.T) {
 	})
 
 	t.Run("parse result as table group by tag", func(t *testing.T) {
-		resp := ResponseParse(readJsonFile("multiple_series_with_tags.json"), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := verifyGoldenResponse(t, "multiple_series_with_tags", models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"}, "table")
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		for i := range resp.Frames[0].Fields {
@@ -580,7 +592,7 @@ func TestResponseParser_table_format(t *testing.T) {
 	})
 
 	t.Run("parse result without tags as table", func(t *testing.T) {
-		resp := ResponseParse(readJsonFile("one_measurement_with_two_columns.json"), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := verifyGoldenResponse(t, "one_measurement_with_two_columns", models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"}, "table")
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		for i := range resp.Frames[0].Fields {
@@ -592,7 +604,7 @@ func TestResponseParser_table_format(t *testing.T) {
 	})
 
 	t.Run("parse show measurements response as table", func(t *testing.T) {
-		resp := ResponseParse(readJsonFile("measurements.json"), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := verifyGoldenResponse(t, "measurements", models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"}, "table")
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		for i := range resp.Frames[0].Fields {
@@ -603,7 +615,7 @@ func TestResponseParser_table_format(t *testing.T) {
 	})
 
 	t.Run("parse retention policy response as table", func(t *testing.T) {
-		resp := ResponseParse(readJsonFile("retention_policy.json"), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := verifyGoldenResponse(t, "retention_policy", models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"}, "table")
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		for i := range resp.Frames[0].Fields {
@@ -628,7 +640,7 @@ func TestResponseParser_Parse(t *testing.T) {
 		{
 			name:      "Influxdb response parser with valid value when null values returned",
 			resFormat: "time_series",
-			input:     "some_values_are_null.json",
+			input:     "some_values_are_null",
 			f: func(t *testing.T, got backend.DataResponse) {
 				newField := data.NewField("Value", nil, []*float64{nil, nil, util.Pointer(52.0)})
 				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
@@ -648,7 +660,7 @@ func TestResponseParser_Parse(t *testing.T) {
 		{
 			name:      "Influxdb response parser with valid value when all values are null",
 			resFormat: "time_series",
-			input:     "all_values_are_null.json",
+			input:     "all_values_are_null",
 			f: func(t *testing.T, got backend.DataResponse) {
 				newField := data.NewField("Value", nil, []*float64{nil, nil, nil})
 				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
@@ -668,7 +680,7 @@ func TestResponseParser_Parse(t *testing.T) {
 		{
 			name:      "Influxdb response parser with table result",
 			resFormat: "table",
-			input:     "simple_response_with_diverse_data_types.json",
+			input:     "simple_response_with_diverse_data_types",
 			f: func(t *testing.T, got backend.DataResponse) {
 				assert.Equal(t, "Annotation", got.Frames[0].Name)
 				assert.Equal(t, "domain", got.Frames[0].Fields[1].Config.DisplayNameFromDS)
@@ -679,7 +691,7 @@ func TestResponseParser_Parse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ResponseParse(readJsonFile(tt.input), 200, generateQuery(models.Query{ResultFormat: tt.resFormat}))
+			got := verifyGoldenResponse(t, tt.input, models.Query{ResultFormat: tt.resFormat}, tt.resFormat)
 			require.NotNil(t, got)
 			if tt.f != nil {
 				tt.f(t, *got)

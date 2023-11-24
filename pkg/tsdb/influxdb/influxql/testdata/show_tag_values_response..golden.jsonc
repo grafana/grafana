@@ -1,0 +1,45 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: cpu
+//  Dimensions: 1 Fields by 3 Rows
+//  +----------------+
+//  | Name: Value    |
+//  | Labels:        |
+//  | Type: []string |
+//  +----------------+
+//  | cpu-total      |
+//  | cpu0           |
+//  | cpu1           |
+//  +----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "cpu",
+        "fields": [
+          {
+            "name": "Value",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "cpu-total",
+            "cpu0",
+            "cpu1"
+          ]
+        ]
+      }
+    }
+  ]
+}
