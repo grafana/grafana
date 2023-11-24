@@ -93,7 +93,6 @@ describe('LogDetails', () => {
         expect(onClickFilterLabelMock).toHaveBeenCalledWith(
           'key1',
           'label1',
-          mockRow.dataFrame.refId,
           expect.objectContaining({
             fields: [
               expect.objectContaining({ values: [0] }),
@@ -109,7 +108,6 @@ describe('LogDetails', () => {
         expect(onClickFilterOutLabelMock).toHaveBeenCalledWith(
           'key1',
           'label1',
-          mockRow.dataFrame.refId,
           expect.objectContaining({
             fields: [
               expect.objectContaining({ values: [0] }),

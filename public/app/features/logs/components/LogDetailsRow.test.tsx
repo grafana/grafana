@@ -73,7 +73,6 @@ describe('LogDetailsRow', () => {
       expect(onClickFilterOutLabel).toHaveBeenCalledWith(
         'key',
         'value',
-        'A',
         expect.objectContaining({
           fields: [
             expect.objectContaining({ values: [0] }),
@@ -91,7 +90,6 @@ describe('LogDetailsRow', () => {
       expect(onClickFilterLabel).toHaveBeenCalledWith(
         'key',
         'value',
-        'A',
         expect.objectContaining({
           fields: [
             expect.objectContaining({ values: [0] }),
