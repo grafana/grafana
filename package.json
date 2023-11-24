@@ -343,6 +343,8 @@
     "marked": "5.1.1",
     "marked-mangle": "1.1.0",
     "memoize-one": "6.0.0",
+    "ml-regression-polynomial": "^3.0.0",
+    "ml-regression-simple-linear": "^3.0.0",
     "moment": "2.29.4",
     "moment-timezone": "0.5.43",
     "monaco-editor": "0.34.0",

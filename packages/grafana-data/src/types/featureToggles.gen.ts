@@ -165,4 +165,5 @@ export interface FeatureToggles {
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
   tableSharedCrosshair?: boolean;
+  regressionTransformation?: boolean;
 }

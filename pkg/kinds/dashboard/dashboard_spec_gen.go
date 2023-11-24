@@ -52,16 +52,6 @@ const (
 	FieldColorSeriesByModeMin  FieldColorSeriesByMode = "min"
 )
 
-// Defines values for GraphPanelType.
-const (
-	GraphPanelTypeGraph GraphPanelType = "graph"
-)
-
-// Defines values for HeatmapPanelType.
-const (
-	HeatmapPanelTypeHeatmap HeatmapPanelType = "heatmap"
-)
-
 // Defines values for MappingType.
 const (
 	MappingTypeRange   MappingType = "range"
@@ -453,21 +443,6 @@ type FieldConfigSource struct {
 	} `json:"overrides"`
 }
 
-// Support for legacy graph panel.
-// @deprecated this a deprecated panel type
-type GraphPanel struct {
-	// @deprecated this is part of deprecated graph panel
-	Legend *struct {
-		Show     bool    `json:"show"`
-		Sort     *string `json:"sort,omitempty"`
-		SortDesc *bool   `json:"sortDesc,omitempty"`
-	} `json:"legend,omitempty"`
-	Type GraphPanelType `json:"type"`
-}
-
-// GraphPanelType defines model for GraphPanel.Type.
-type GraphPanelType string
-
 // Position and dimensions of a panel in the grid
 type GridPos struct {
 	// Panel height. The height is the number of rows from the top edge of the panel.
@@ -485,15 +460,6 @@ type GridPos struct {
 	// Panel y. The y coordinate is the number of rows from the top edge of the grid
 	Y int `json:"y"`
 }
-
-// Support for legacy heatmap panel.
-// @deprecated this a deprecated panel type
-type HeatmapPanel struct {
-	Type HeatmapPanelType `json:"type"`
-}
-
-// HeatmapPanelType defines model for HeatmapPanel.Type.
-type HeatmapPanelType string
 
 // A library panel is a reusable panel that you can use in any dashboard.
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
@@ -672,7 +638,7 @@ type RowPanel struct {
 	Id int `json:"id"`
 
 	// List of panels in the row
-	Panels []any `json:"panels"`
+	Panels []Panel `json:"panels"`
 
 	// Name of template variable to repeat for.
 	Repeat *string `json:"repeat,omitempty"`

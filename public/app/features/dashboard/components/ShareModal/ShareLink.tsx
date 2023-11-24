@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
+import { Alert, ClipboardButton, Field, FieldSet, Input, Switch, TextLink } from '@grafana/ui';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -137,13 +137,9 @@ export class ShareLink extends PureComponent<Props, State> {
         {panel && config.rendererAvailable && (
           <>
             {isDashboardSaved && (
-              <div className="gf-form">
-                <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
-                  <Icon name="camera" />
-                  &nbsp;
-                  <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>
-                </a>
-              </div>
+              <TextLink href={imageUrl} external icon={'camera'} aria-label={selectors.linkToRenderedImage}>
+                {t('share-modal.link.rendered-image', 'Direct link rendered image')}
+              </TextLink>
             )}
 
             {!isDashboardSaved && (
@@ -168,14 +164,9 @@ export class ShareLink extends PureComponent<Props, State> {
           >
             <Trans i18nKey="share-modal.link.render-instructions">
               To render a panel image, you must install the
-              <a
-                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="external-link"
-              >
+              <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
                 Grafana image renderer plugin
-              </a>
+              </TextLink>
               . Please contact your Grafana administrator to install the plugin.
             </Trans>
           </Alert>
