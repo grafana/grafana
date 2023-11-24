@@ -148,29 +148,6 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 	return nil
 }
 
-// type AnonStore interface {
-// 	// ListDevices returns all devices that have been updated between the given times.
-// 	ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*Device, error)
-// 	// CreateOrUpdateDevice creates or updates a device.
-// 	CreateOrUpdateDevice(ctx context.Context, device *Device) error
-// 	// CountDevices returns the number of devices that have been updated between the given times.
-// 	CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error)
-// 	// DeleteDevice deletes a device by its ID.
-// 	DeleteDevice(ctx context.Context, deviceID string) error
-// 	// DeleteDevicesOlderThan deletes all devices that have no been updated since the given time.
-// 	DeleteDevicesOlderThan(ctx context.Context, olderThan time.Time) error
-// }
-
-// ListDevices returns all devices that have been updated between the given times.
-func (a *AnonDeviceService) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*anonstore.Device, error) {
-	return a.anonStore.ListDevices(ctx, from, to)
-}
-
-// CountDevices returns the number of devices that have been updated between the given times.
-func (a *AnonDeviceService) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
-	return a.anonStore.CountDevices(ctx, from, to)
-}
-
 func (a *AnonDeviceService) Run(ctx context.Context) error {
 	ticker := time.NewTicker(2 * time.Hour)
 

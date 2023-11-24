@@ -47,19 +47,6 @@ func (api *AnonDeviceServiceAPI) RegisterAPIEndpoints() {
 	})
 }
 
-// type AnonStore interface {
-// 	// ListDevices returns all devices that have been updated between the given times.
-// 	ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*Device, error)
-// 	// CreateOrUpdateDevice creates or updates a device.
-// 	CreateOrUpdateDevice(ctx context.Context, device *Device) error
-// 	// CountDevices returns the number of devices that have been updated between the given times.
-// 	CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error)
-// 	// DeleteDevice deletes a device by its ID.
-// 	DeleteDevice(ctx context.Context, deviceID string) error
-// 	// DeleteDevicesOlderThan deletes all devices that have no been updated since the given time.
-// 	DeleteDevicesOlderThan(ctx context.Context, olderThan time.Time) error
-// }
-
 func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) response.Response {
 	fromTime := time.Now().Add(-anonymous.ThirtyDays)
 	toTime := time.Now().Add(time.Minute)
@@ -67,16 +54,6 @@ func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) respons
 	devices, err := api.store.ListDevices(c.Req.Context(), &fromTime, &toTime)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to list devices", err)
-	}
-	devices = []*anonstore.Device{
-		{
-			ID:        1,
-			DeviceID:  "1",
-			ClientIP:  "192",
-			UserAgent: "Moziilla",
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
 	}
 	type resDevice struct {
 		anonstore.Device
@@ -114,6 +91,5 @@ func (api *AnonDeviceServiceAPI) CountDevices(c *contextmodel.ReqContext) respon
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to list devices", err)
 	}
-	devices = 2
 	return response.JSON(http.StatusOK, devices)
 }

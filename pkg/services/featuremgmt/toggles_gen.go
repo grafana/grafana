@@ -590,4 +590,8 @@ const (
 	// FlagPluginsSkipHostEnvVars
 	// Disables passing host environment variable to plugin processes
 	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
+
+	// FlagAnonymousAccess
+	// Enables anonymous access UI for Grafana
+	FlagAnonymousAccess = "anonymousAccess"
 )

@@ -36,8 +36,8 @@ const PublicDashboardsTab = ({ view, setView }: { view: TabView | null; setView:
 const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
   [TabView.ADMIN]: <UserListAdminPageContent />,
   [TabView.ORG]: <UsersListPageContent />,
-  [TabView.ANON]: <UserListAnonymousPageContent />,
   [TabView.PUBLIC_DASHBOARDS]: <UserListPublicDashboardPage />,
+  [TabView.ANON]: <UserListAnonymousPageContent />,
 };
 
 export default function UserListPage() {
@@ -77,12 +77,14 @@ export default function UserListPage() {
             onChangeTab={() => setView(TabView.ORG)}
             data-testid={selectors.tabs.orgUsers}
           />
-          <Tab
-            label="Anonymous users"
-            active={view === TabView.ANON}
-            onChangeTab={() => setView(TabView.ANON)}
-            data-testid={selectors.tabs.anonUsers}
-          />
+          {config.featureToggles.anonymousAccess && (
+            <Tab
+              label="Anonymous users"
+              active={view === TabView.ANON}
+              onChangeTab={() => setView(TabView.ANON)}
+              data-testid={selectors.tabs.anonUsers}
+            />
+          )}
           {hasEmailSharingEnabled && <PublicDashboardsTab view={view} setView={setView} />}
         </TabsBar>
       ) : (

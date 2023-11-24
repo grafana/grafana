@@ -1,6 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 
 interface AnonServerStat {
+  activeDevices?: number;
   activeAnonymousUsers?: number;
 }
 
@@ -38,10 +39,9 @@ export const getServerStats = async (): Promise<ServerStat | null> => {
   return getBackendSrv()
     .get('api/admin/stats')
     .then((res) => {
-      console.log(`resp`);
-      console.log(resp);
       if (resp) {
-        res.activeAnonymousUsers = resp;
+        res.activeDevices = resp;
+        res.activeAnonymousUsers = resp / 3;
       }
       return res;
     })

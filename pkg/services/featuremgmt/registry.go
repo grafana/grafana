@@ -1075,6 +1075,13 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:         "anonymousAccess",
+			Description:  "Enables anonymous access UI for Grafana",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        identityAccessTeam,
+		},
 	}
 )
 

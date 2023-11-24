@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CardContainer, LinkButton, useStyles2 } from '@grafana/ui';
 import { AccessControlAction } from 'app/types';
 
@@ -32,7 +33,6 @@ export const ServerStats = () => {
     return null;
   }
 
-  console.log('stats', stats);
   return (
     <>
       <h2 className={styles.title}>Instance statistics</h2>
@@ -81,10 +81,13 @@ export const ServerStats = () => {
               { name: 'Organisations', value: stats.orgs },
               { name: 'Users total', value: stats.users },
               { name: 'Active users in last 30 days', value: stats.activeUsers },
-              { name: 'Active sessions', value: stats.activeSessions },
-              ...(!!stats.activeAnonymousUsers
-                ? [{ name: 'Active anonymous users in last 30 days', value: stats.activeAnonymousUsers }]
+              ...(!!stats.activeDevices && !!stats.activeAnonymousUsers && config.featureToggles.anonymousAccess
+                ? [
+                    { name: 'Active devices in last 30 days', value: stats.activeDevices },
+                    { name: 'Active anonymous users in last 30 days', value: Math.floor(stats.activeAnonymousUsers) },
+                  ]
                 : []),
+              { name: 'Active sessions', value: stats.activeSessions },
             ]}
             footer={
               hasAccessToAdminUsers && (
