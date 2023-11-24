@@ -1,0 +1,25 @@
+{
+  "results": [
+    {
+      "series": [
+        {
+          "name": "cpu",
+          "values": [
+            [
+              "values",
+              "cpu-total"
+            ],
+            [
+              "values",
+              "cpu0"
+            ],
+            [
+              "values",
+              "cpu1"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

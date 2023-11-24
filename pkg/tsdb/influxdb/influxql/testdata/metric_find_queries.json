@@ -1,0 +1,23 @@
+{
+  "results": [
+    {
+      "series": [
+        {
+          "refId": "metricFindQuery",
+          "name": "cpu",
+          "values": [
+            [
+              "cpu"
+            ],
+            [
+              "disk"
+            ],
+            [
+              "logs"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}
