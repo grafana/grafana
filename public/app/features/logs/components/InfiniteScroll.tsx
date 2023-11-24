@@ -43,24 +43,22 @@ export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, s
     }
 
     function scrollTop() {
-      const currentRange = getCurrentRange(range, timeZone);
-      if (!canScrollTop(getVisibleRange(rows), currentRange, sortOrder)) {
+      if (!canScrollTop(getVisibleRange(rows), range, timeZone, sortOrder)) {
         setUpperOutOfRange(true);
         return;
       }
       setUpperOutOfRange(false);
-      const newRange = sortOrder === LogsSortOrder.Descending ? getNextRange(getVisibleRange(rows), currentRange) : getPrevRange(getVisibleRange(rows), range);
+      const newRange = sortOrder === LogsSortOrder.Descending ? getNextRange(getVisibleRange(rows), range, timeZone) : getPrevRange(getVisibleRange(rows), range);
       loadMoreLogs?.(newRange);
     };
   
     function scrollBottom() {
-      const currentRange = getCurrentRange(range, timeZone);
-      if (!canScrollBottom(getVisibleRange(rows), currentRange, sortOrder)) {
+      if (!canScrollBottom(getVisibleRange(rows), range, timeZone, sortOrder)) {
         setLowerOutOfRange(true);
         return;
       }
       setLowerOutOfRange(false);
-      const newRange = sortOrder === LogsSortOrder.Descending ? getPrevRange(getVisibleRange(rows), range) : getNextRange(getVisibleRange(rows), currentRange);
+      const newRange = sortOrder === LogsSortOrder.Descending ? getPrevRange(getVisibleRange(rows), range) : getNextRange(getVisibleRange(rows), range, timeZone);
       loadMoreLogs?.(newRange);
     }
 
@@ -123,26 +121,32 @@ function getPrevRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) 
   return { from: currentRange.from.valueOf(), to: visibleRange.from };
 }
 
-function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) {
+function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, timeZone: TimeZone) {
+  // When requesting new logs, update the current range if using relative time ranges.
+  currentRange = updateCurrentRange(currentRange, timeZone);
   return { from: visibleRange.to, to: currentRange.to.valueOf() };
 }
 
 // To get more logs, the difference between the visible range and the current range should be 1 second or more.
-function canScrollTop(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, sortOrder: LogsSortOrder) {
+function canScrollTop(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, timeZone: TimeZone, sortOrder: LogsSortOrder) {
   if (sortOrder === LogsSortOrder.Descending) {
+    // When requesting new logs, update the current range if using relative time ranges.
+    currentRange = updateCurrentRange(currentRange, timeZone);
     return (currentRange.to.valueOf() - visibleRange.to) > 1e3;
   }
   return Math.abs(currentRange.from.valueOf() - visibleRange.from) > 1e3;
 }
 
-function canScrollBottom(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, sortOrder: LogsSortOrder) {
+function canScrollBottom(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, timeZone: TimeZone, sortOrder: LogsSortOrder) {
   if (sortOrder === LogsSortOrder.Descending) {
     return Math.abs(currentRange.from.valueOf() - visibleRange.from) > 1e3;  
   }
+  // When requesting new logs, update the current range if using relative time ranges.
+  currentRange = updateCurrentRange(currentRange, timeZone);
   return (currentRange.to.valueOf() - visibleRange.to) > 1e3;
 }
 
 // Given a TimeRange, returns a new instance if using relative time, or else the same.
-function getCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
+function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
   return isRelativeTimeRange(timeRange.raw) ? convertRawToRange(timeRange.raw, timeZone) : timeRange;
 }
