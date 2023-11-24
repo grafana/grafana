@@ -27,8 +27,8 @@ export interface Props extends Themeable2 {
   disableActions: boolean;
   wrapLogMessage?: boolean;
   isLabel?: boolean;
-  onClickFilterLabel?: (key: string, value: string, refId?: string, frame?: DataFrame) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string, frame?: DataFrame) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
@@ -154,12 +154,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterLabel = () => {
     const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(
-        parsedKeys[0],
-        parsedValues[0],
-        row.dataFrame?.refId,
-        logRowToSingleRowDataFrame(row) || undefined
-      );
+      onClickFilterLabel(parsedKeys[0], parsedValues[0], logRowToSingleRowDataFrame(row) || undefined);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -172,12 +167,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterOutLabel = () => {
     const { onClickFilterOutLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(
-        parsedKeys[0],
-        parsedValues[0],
-        row.dataFrame?.refId,
-        logRowToSingleRowDataFrame(row) || undefined
-      );
+      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], logRowToSingleRowDataFrame(row) || undefined);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {

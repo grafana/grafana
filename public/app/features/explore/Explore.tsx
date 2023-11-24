@@ -220,28 +220,28 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (key: string, value: string, refId?: string, frame?: DataFrame) => {
+  onClickFilterLabel = (key: string, value: string, frame?: DataFrame) => {
     this.onModifyQueries(
       {
         type: 'ADD_FILTER',
         options: { key, value },
         frame,
       },
-      refId
+      frame?.refId
     );
   };
 
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (key: string, value: string, refId?: string, frame?: DataFrame) => {
+  onClickFilterOutLabel = (key: string, value: string, frame?: DataFrame) => {
     this.onModifyQueries(
       {
         type: 'ADD_FILTER_OUT',
         options: { key, value },
         frame,
       },
-      refId
+      frame?.refId
     );
   };
 
