@@ -81,6 +81,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				query.TimeRange.To.UnixMilli(),
 				qm.GroupBy,
 				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
+				qm.Aggregation,
 			)
 			if err != nil {
 				span.RecordError(err)

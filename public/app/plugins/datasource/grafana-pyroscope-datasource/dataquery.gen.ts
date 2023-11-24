@@ -16,6 +16,10 @@ export const defaultPyroscopeQueryType: PyroscopeQueryType = 'both';
 
 export interface GrafanaPyroscope extends common.DataQuery {
   /**
+   * Sets the aggregation function applied to the time series. Has no impact on the resulting flamegraph.
+   */
+  aggregation?: string;
+  /**
    * Allows to group the results.
    */
   groupBy: Array<string>;

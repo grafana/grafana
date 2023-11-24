@@ -48,6 +48,9 @@ type GrafanaPyroscopeDataQuery struct {
 	// properties for the given context.
 	DataQuery
 
+	// Sets the aggregation function applied to the time series. Has no impact on the resulting flamegraph.
+	Aggregation *string `json:"aggregation,omitempty"`
+
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema

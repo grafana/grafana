@@ -3,7 +3,7 @@ import React from 'react';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2, RadioButtonGroup, MultiSelect, Input } from '@grafana/ui';
+import { useStyles2, RadioButtonGroup, MultiSelect, Input, Select } from '@grafana/ui';
 
 import { QueryOptionGroup } from '../../prometheus/querybuilder/shared/QueryOptionGroup';
 import { Query } from '../types';
@@ -43,6 +43,10 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
         value: l,
       }))
     : [];
+  const aggregationOptions = ['sum', 'avg'].map((l) => ({
+    label: l,
+    value: l,
+  }))
 
   let collapsedInfo = [`Type: ${query.queryType}`];
   if (query.groupBy?.length) {
@@ -99,6 +103,21 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               />
             </EditorField>
           )}
+          <EditorField
+            label={'Aggregation'}
+            tooltip={
+              <>
+                Aggregation function applied to the time series. Does not affect how the flamegraph is computed.
+              </>
+            }>
+            <Select
+              value={query.aggregation || 'sum'}
+              options={aggregationOptions}
+              onChange={(change) => {
+                onQueryChange({ ...query, aggregation: change.value || '' });
+              }}
+            />
+          </EditorField>
           <EditorField label={'Max Nodes'} tooltip={<>Sets the maximum number of nodes to return in the flamegraph.</>}>
             <Input
               value={query.maxNodes || ''}

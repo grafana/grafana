@@ -18,7 +18,7 @@ func Test_PyroscopeClient(t *testing.T) {
 	}
 
 	t.Run("GetSeries", func(t *testing.T) {
-		resp, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, 15)
+		resp, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, 15, nil)
 		require.Nil(t, err)
 
 		series := &SeriesResponse{

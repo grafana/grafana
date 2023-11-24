@@ -40,6 +40,8 @@ composableKinds: DataQuery: {
 				// Sets the maximum number of nodes in the flamegraph.
 				maxNodes?:           int64
 				#PyroscopeQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
+				// Sets the aggregation function applied to the time series. Has no impact on the resulting flamegraph.
+        aggregation?: string
 			}
 		}]
 		lenses: []

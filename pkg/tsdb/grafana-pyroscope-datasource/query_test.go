@@ -328,8 +328,8 @@ func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSel
 	}, nil
 }
 
-func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
-	f.Args = []any{profileTypeID, labelSelector, start, end, groupBy, step}
+func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64, aggregation *string) (*SeriesResponse, error) {
+	f.Args = []any{profileTypeID, labelSelector, start, end, groupBy, step, aggregation}
 	return &SeriesResponse{
 		Series: []*Series{
 			{
