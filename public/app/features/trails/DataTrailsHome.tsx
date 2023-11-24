@@ -58,8 +58,8 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
                   const resolvedTrail = trail.resolve();
                   return (
                     <DataTrailCard
-                      key={resolvedTrail.state.key || index}
-                      trail={trail.resolve()}
+                      key={(resolvedTrail.state.key || '') + index}
+                      trail={resolvedTrail}
                       onSelect={model.onSelectTrail}
                     />
                   );
@@ -71,9 +71,17 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             <div className={styles.trailList}>
               {getTrailStore()
                 .getBookmarkedTrails()
-                .map((trail, index) => (
-                  <DataTrailCard key={index} trail={trail.resolve()} onSelect={model.onSelectTrail} />
-                ))}
+                .map((trail, index) => {
+                  const resolvedTrail = trail.resolve();
+                  return (
+                    <DataTrailCard
+                      key={(resolvedTrail.state.key || '') + index}
+                      trail={resolvedTrail}
+                      onSelect={model.onSelectTrail}
+                      onDelete={() => getTrailStore().removeBookmark(index)}
+                    />
+                  );
+                })}
             </div>
           </div>
         </Stack>

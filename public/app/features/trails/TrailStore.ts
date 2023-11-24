@@ -1,5 +1,4 @@
 import { debounce } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
 
 import { SceneObject, SceneObjectRef, SceneObjectUrlValues, getUrlSyncManager, sceneUtils } from '@grafana/scenes';
 
@@ -10,7 +9,6 @@ import { BOOKMARKED_TRAILS_KEY, RECENT_TRAILS_KEY } from './shared';
 const MAX_RECENT_TRAILS = 20;
 
 export interface SerializedTrail {
-  key: string;
   history: Array<{
     urlValues: SceneObjectUrlValues;
     type: TrailStepType;
@@ -54,15 +52,11 @@ export class TrailStore {
 
   private _deserializeTrail(t: SerializedTrail): DataTrail {
     // reconstruct the trail based on the the serialized history
-    const trail = new DataTrail({ key: t.key });
+    const trail = new DataTrail({});
 
     t.history.map((step) => {
       this._loadFromUrl(trail, step.urlValues);
-      trail.state.history.state.steps.push({
-        description: step.description,
-        type: step.type,
-        trailState: sceneUtils.cloneSceneObjectState(trail.state, { history: trail.state.history }),
-      });
+      trail.state.history.addTrailStep(trail, step.type);
     });
 
     return trail;
@@ -70,7 +64,7 @@ export class TrailStore {
 
   private _serializeTrail(trail: DataTrail): SerializedTrail {
     const history = trail.state.history.state.steps.map((step) => {
-      const stepTrail = new DataTrail(step.trailState);
+      const stepTrail = new DataTrail(sceneUtils.cloneSceneObjectState(step.trailState));
       return {
         urlValues: getUrlSyncManager().getUrlState(stepTrail),
         type: step.type,
@@ -78,7 +72,6 @@ export class TrailStore {
       };
     });
     return {
-      key: trail.state.key || uuidv4(),
       history,
     };
   }
@@ -101,11 +94,7 @@ export class TrailStore {
 
   // Bookmarked Trails
   getBookmarkedTrails() {
-    return this._bookmarks;
-  }
-
-  isBookmarked(trail: DataTrail) {
-    return this._bookmarks.includes(trail.getRef());
+    return this._bookmarks.map((t) => new DataTrail(sceneUtils.cloneSceneObjectState(t.resolve().state)).getRef());
   }
 
   addBookmark(trail: DataTrail) {
@@ -113,9 +102,11 @@ export class TrailStore {
     this._save();
   }
 
-  removeBookmark(trail: DataTrail) {
-    this._bookmarks = this._bookmarks.filter((t) => t !== trail.getRef());
-    this._save();
+  removeBookmark(index: number) {
+    if (index < this._bookmarks.length) {
+      this._bookmarks.splice(index, 1);
+      this._save();
+    }
   }
 }
 

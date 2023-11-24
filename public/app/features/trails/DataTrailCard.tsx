@@ -11,6 +11,7 @@ import { LOGS_METRIC, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
 export interface Props {
   trail: DataTrail;
   onSelect: (trail: DataTrail) => void;
+  onDelete?: () => void;
 }
 
 export function DataTrailCard({ trail, onSelect }: Props) {

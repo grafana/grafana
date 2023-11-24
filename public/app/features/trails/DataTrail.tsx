@@ -26,6 +26,7 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
+import { getTrailStore } from './TrailStore';
 import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
 import { getUrlForTrail } from './utils';
 
@@ -76,6 +77,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     return () => {
       if (!this.state.embedded) {
         getUrlSyncManager().cleanUp(this);
+        getTrailStore().setRecentTrail(this);
       }
     };
   }

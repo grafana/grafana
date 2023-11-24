@@ -14,7 +14,6 @@ import {
 import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
 import { DataTrail, DataTrailState } from './DataTrail';
-import { getTrailStore } from './TrailStore';
 import { VAR_FILTERS } from './shared';
 import { getTrailFor } from './utils';
 
@@ -81,7 +80,6 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         },
       ],
     });
-    getTrailStore().setRecentTrail(trail);
   }
 
   renderStepTooltip(step: DataTrailHistoryStep) {

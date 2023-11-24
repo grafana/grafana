@@ -105,15 +105,11 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   public static Component = ({ model }: SceneComponentProps<MetricActionBar>) => {
     const metricScene = sceneGraph.getAncestor(model, MetricScene);
     const trail = getTrailFor(model);
-    const [isBookmarked, setBookmarked] = useState(getTrailStore().isBookmarked(trail));
+    const [isBookmarked, setBookmarked] = useState(false);
     const { actionView } = metricScene.useState();
 
     const onBookmarkTrail = () => {
-      if (isBookmarked) {
-        getTrailStore().removeBookmark(trail);
-      } else {
-        getTrailStore().addBookmark(trail);
-      }
+      getTrailStore().addBookmark(trail);
       setBookmarked(!isBookmarked);
     };
 
@@ -140,7 +136,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
                 <Icon name={'star'} type={'default'} size={'lg'} />
               )
             }
-            tooltip={isBookmarked ? 'Remove bookmark' : ' Bookmark'}
+            tooltip={'Bookmark'}
             onClick={onBookmarkTrail}
           />
           <ToolbarButton variant={'canvas'} icon="share-alt" tooltip="Copy url (todo)" disabled />
