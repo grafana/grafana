@@ -11,7 +11,7 @@ import {
   SplitOpen,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
@@ -107,7 +107,6 @@ export function LogsSamplePanel(props: Props) {
 
   return queryResponse?.state !== LoadingState.NotStarted ? (
     <Collapse
-      className={styles.logsSamplePanel}
       label={
         <div>
           Logs sample
