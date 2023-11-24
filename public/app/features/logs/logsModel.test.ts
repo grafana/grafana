@@ -28,7 +28,7 @@ import {
   filterLogLevels,
   getSeriesProperties,
   LIMIT_LABEL,
-  logRowToDataFrame,
+  logRowToSingleRowDataFrame,
   logSeriesToLogsModel,
   queryLogsSample,
   queryLogsVolume,
@@ -1477,7 +1477,7 @@ const mockLogRow = {
 
 describe('logRowToDataFrame', () => {
   it('should return a DataFrame with the values from the specified row', () => {
-    const result = logRowToDataFrame(mockLogRow);
+    const result = logRowToSingleRowDataFrame(mockLogRow);
 
     expect(result?.length).toBe(1);
 
@@ -1487,7 +1487,7 @@ describe('logRowToDataFrame', () => {
   });
 
   it('should return a DataFrame with the values from the specified different row', () => {
-    const result = logRowToDataFrame({ ...mockLogRow, rowIndex: 1 });
+    const result = logRowToSingleRowDataFrame({ ...mockLogRow, rowIndex: 1 });
 
     expect(result?.length).toBe(1);
 
@@ -1498,14 +1498,14 @@ describe('logRowToDataFrame', () => {
 
   it('should handle an empty DataFrame', () => {
     const emptyLogRow = { dataFrame: { fields: [] }, rowIndex: 0 } as unknown as LogRowModel;
-    const result = logRowToDataFrame(emptyLogRow);
+    const result = logRowToSingleRowDataFrame(emptyLogRow);
 
     expect(result?.length).toBe(0);
   });
 
   it('should handle rowIndex exceeding array bounds', () => {
     const invalidRowIndex = 10;
-    const result = logRowToDataFrame({ ...mockLogRow, rowIndex: invalidRowIndex });
+    const result = logRowToSingleRowDataFrame({ ...mockLogRow, rowIndex: invalidRowIndex });
 
     expect(result).toBe(null);
   });

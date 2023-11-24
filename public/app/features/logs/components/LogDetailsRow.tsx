@@ -16,7 +16,7 @@ import {
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
 
-import { logRowToDataFrame } from '../logsModel';
+import { logRowToSingleRowDataFrame } from '../logsModel';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -154,7 +154,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterLabel = () => {
     const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId, logRowToDataFrame(row) || undefined);
+      onClickFilterLabel(
+        parsedKeys[0],
+        parsedValues[0],
+        row.dataFrame?.refId,
+        logRowToSingleRowDataFrame(row) || undefined
+      );
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -167,7 +172,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterOutLabel = () => {
     const { onClickFilterOutLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId, logRowToDataFrame(row) || undefined);
+      onClickFilterOutLabel(
+        parsedKeys[0],
+        parsedValues[0],
+        row.dataFrame?.refId,
+        logRowToSingleRowDataFrame(row) || undefined
+      );
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {

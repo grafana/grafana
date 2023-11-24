@@ -792,19 +792,16 @@ function getIntervalInfo(scopedVars: ScopedVars, timespanMs: number): { interval
 }
 
 /**
- * Converts log row into data frame with a single row.
- *
- * @export
- * @param {LogRowModel} logRow
- * @return {DataFrame}
+ * Creates a new data frame containing only the single row from `logRow`.
  */
-export function logRowToDataFrame(logRow: LogRowModel): DataFrame | null {
+export function logRowToSingleRowDataFrame(logRow: LogRowModel): DataFrame | null {
   const originFrame = logRow.dataFrame;
 
   if (originFrame.length === 0 || originFrame.length <= logRow.rowIndex) {
     return null;
   }
 
+  // create a new data frame containing only the single row from `logRow`
   const frame = createDataFrame({
     fields: originFrame.fields.map((field) => ({ ...field, values: [field.values[logRow.rowIndex]] })),
   });
