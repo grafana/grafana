@@ -651,7 +651,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID: "grafana-test-app",
 			ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
-				Permissions: []plugindef.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}},
+				Permissions: []plugindef.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}, {Action: ac.ActionUsersCreate}},
 			},
 		},
 	}
@@ -668,32 +668,42 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			name: "plugin without registration",
 		},
 		{
-			name:   "user does not have plugin permissions globally",
+			name:   "warn if user does not have plugin permissions globally",
 			plugin: pluginReg,
 			orgID:  1,
 			permissions: map[int64]map[string][]string{
-				1: {ac.ActionUsersRead: {ac.ScopeUsersAll}},
+				1: {ac.ActionUsersRead: {ac.ScopeUsersAll}, ac.ActionUsersCreate: {}},
 			},
 			warnCount: 1,
 		},
 		{
-			name:   "user has plugin permissions globally",
+			name:   "no warn if user has plugin permissions globally",
 			plugin: pluginReg,
 			orgID:  0,
 			permissions: map[int64]map[string][]string{
-				0: {ac.ActionUsersRead: {ac.ScopeUsersAll}},
+				0: {ac.ActionUsersRead: {ac.ScopeUsersAll}, ac.ActionUsersCreate: {}},
 			},
 			warnCount: 0,
 		},
 		{
-			name:      "user has plugin permissions in single organization",
+			name:      "no warn if user has plugin permissions in single organization",
 			plugin:    pluginReg,
 			singleOrg: true,
 			orgID:     1,
 			permissions: map[int64]map[string][]string{
-				1: {ac.ActionUsersRead: {ac.ScopeUsersAll}},
+				1: {ac.ActionUsersRead: {ac.ScopeUsersAll}, ac.ActionUsersCreate: {}},
 			},
 			warnCount: 0,
+		},
+		{
+			name:      "warn if user does not have all plugin permissions",
+			plugin:    pluginReg,
+			singleOrg: true,
+			orgID:     1,
+			permissions: map[int64]map[string][]string{
+				1: {ac.ActionUsersCreate: {}},
+			},
+			warnCount: 1,
 		},
 	}
 	for _, tt := range tests {

@@ -554,11 +554,11 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 func evalAllPermissions(ps []plugindef.Permission) ac.Evaluator {
 	res := []ac.Evaluator{}
 	for _, p := range ps {
-		scope := ""
+		ev := ac.EvalPermission(p.Action)
 		if p.Scope != nil {
-			scope = *p.Scope
+			ev = ac.EvalPermission(p.Action, *p.Scope)
 		}
-		res = append(res, ac.EvalPermission(p.Action, scope))
+		res = append(res, ev)
 	}
 	return ac.EvalAll(res...)
 }
