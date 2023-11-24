@@ -48,6 +48,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser should parse everything normally including nil bools and nil strings", func(t *testing.T) {
+		// response_with_nil_bools_and_nil_strings.json
 		response := `
 		{
 			"results": [
@@ -234,6 +235,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with invalid value-format", func(t *testing.T) {
+		// invalid_value_format.json
 		response := `
 		{
 			"results": [
@@ -324,6 +326,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with $measurement alias when multiple measurement in response", func(t *testing.T) {
+		// multiple_measurements_with_alias.json
 		response := `
 		{
 			"results": [
@@ -366,6 +369,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser when multiple measurement in response", func(t *testing.T) {
+		// multiple_measurements.json
 		response := `
 		{
 			"results": [
@@ -406,6 +410,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with alias", func(t *testing.T) {
+		// response.json
 		response := `
 		{
 			"results": [
@@ -648,6 +653,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
+		// error_response.json
 		response := `
 		{
 			"results": [
@@ -725,6 +731,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("InfluxDB returns empty DataResponse when there is empty response", func(t *testing.T) {
+		// empty_response.json
 		response := `
 		{
 			"results": [
@@ -744,6 +751,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 	t.Run("Influxdb response parser should parse metricFindQueries->SHOW RETENTION POLICIES normally", func(t *testing.T) {
+		// retention_policy.json
 		response := `
 		{
 		  "results": [
@@ -812,7 +820,7 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 
 func TestResponseParser_table_format(t *testing.T) {
 	t.Run("test table result format parsing", func(t *testing.T) {
-		resp := ResponseParse(prepare(tableResultFormatInfluxResponse1), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := ResponseParse(prepare(simpleResponse), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		assert.Equal(t, 3, len(resp.Frames[0].Fields))
@@ -826,7 +834,7 @@ func TestResponseParser_table_format(t *testing.T) {
 	})
 
 	t.Run("test table result format parsing with grouping", func(t *testing.T) {
-		resp := ResponseParse(prepare(tableResultFormatInfluxResponse2), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := ResponseParse(prepare(multipleSeriesWithTagsAndMultipleColumns), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		assert.Equal(t, 7, len(resp.Frames[0].Fields))
@@ -846,7 +854,7 @@ func TestResponseParser_table_format(t *testing.T) {
 	})
 
 	t.Run("parse result as table group by tag", func(t *testing.T) {
-		resp := ResponseParse(prepare(tableResultFormatInfluxResponse3), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := ResponseParse(prepare(multipleSeriesWithTags), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		for i := range resp.Frames[0].Fields {
@@ -863,7 +871,7 @@ func TestResponseParser_table_format(t *testing.T) {
 	})
 
 	t.Run("parse result without tags as table", func(t *testing.T) {
-		resp := ResponseParse(prepare(tableResultFormatInfluxResponse4), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
+		resp := ResponseParse(prepare(oneMeasurementWithTwoColumns), 200, &models.Query{RefID: "A", RawQuery: `a nice query`, ResultFormat: "table"})
 		assert.Equal(t, 1, len(resp.Frames))
 		assert.Equal(t, "a nice query", resp.Frames[0].Meta.ExecutedQueryString)
 		for i := range resp.Frames[0].Fields {
@@ -910,7 +918,7 @@ func TestResponseParser_Parse(t *testing.T) {
 	}{
 		{
 			name:      "Influxdb response parser with valid value when null values returned",
-			resFormat: "time_series",
+			resFormat: "time_series", // some_values_are_null.json
 			input: `{ "results": [ { "series": [ {
 				"name": "cpu",
 				"columns": ["time","mean"],
@@ -938,7 +946,7 @@ func TestResponseParser_Parse(t *testing.T) {
 		},
 		{
 			name:      "Influxdb response parser with valid value when all values are null",
-			resFormat: "time_series",
+			resFormat: "time_series", // all_values_are_null.json
 			input: `{ "results": [ { "series": [ {
 				"name": "cpu",
 				"columns": ["time","mean"],
@@ -966,7 +974,7 @@ func TestResponseParser_Parse(t *testing.T) {
 		},
 		{
 			name:      "Influxdb response parser with table result",
-			resFormat: "table",
+			resFormat: "table", // simple_response_with_diverse_data_types.json
 			input: `{
 					  "results": [
 					    {
@@ -1025,7 +1033,7 @@ func toPtr[T any](v T) *T {
 	return &v
 }
 
-const tableResultFormatInfluxResponse1 = `{
+const simpleResponse = `{
   "results": [
     {
       "statement_id": 0,
@@ -1070,7 +1078,7 @@ const tableResultFormatInfluxResponse1 = `{
   ]
 }`
 
-const tableResultFormatInfluxResponse2 = `{
+const multipleSeriesWithTagsAndMultipleColumns = `{
   "results": [
     {
       "statement_id": 0,
@@ -1345,7 +1353,7 @@ const tableResultFormatInfluxResponse2 = `{
 }
 `
 
-const tableResultFormatInfluxResponse3 = `{
+const multipleSeriesWithTags = `{
   "results": [
     {
       "statement_id": 0,
@@ -1496,7 +1504,7 @@ const tableResultFormatInfluxResponse3 = `{
 }
 `
 
-const tableResultFormatInfluxResponse4 = `{
+const oneMeasurementWithTwoColumns = `{
   "results": [
     {
       "statement_id": 0,
