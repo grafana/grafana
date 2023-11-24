@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "declarationDir": "./dist/esm",
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
+    "rootDirs": ["."]
+  },
+  "exclude": ["dist/**/*"],
+  "extends": "@grafana/tsconfig",
+  "include": ["src/**/*.ts*"]
+}

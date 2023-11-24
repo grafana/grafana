@@ -1,0 +1,56 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "name": "@grafana/traces",
+  "version": "0.1.0",
+  "description": "Library to manage traces in Grafana.",
+  "keywords": [
+    "typescript"
+  ],
+  "private": true,
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-traces"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "./README.md",
+    "./CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
+  "scripts": {
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
+    "bundle": "rollup -c rollup.config.ts",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
+  },
+  "devDependencies": {
+    "@grafana/tsconfig": "^1.2.0-rc1",
+    "@rollup/plugin-commonjs": "25.0.2",
+    "@rollup/plugin-json": "6.0.0",
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "esbuild": "0.18.12",
+    "glob": "^10.2.7",
+    "rimraf": "5.0.1",
+    "rollup": "2.79.1",
+    "rollup-plugin-dts": "^5.0.0",
+    "rollup-plugin-esbuild": "5.0.0",
+    "rollup-plugin-node-externals": "^5.0.0",
+    "typescript": "5.2.2"
+  },
+  "dependencies": {
+    "tslib": "2.6.0"
+  }
+}
