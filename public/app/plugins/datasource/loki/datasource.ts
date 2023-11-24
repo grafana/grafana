@@ -45,7 +45,6 @@ import {
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
@@ -150,8 +149,7 @@ export class LokiDatasource
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
 
@@ -454,20 +452,11 @@ export class LokiDatasource
   }
 
   /**
-   * Retrieve the current time range.
-   * @returns The current time range as provided by the timeSrv.
-   */
-  getTimeRange() {
-    return this.timeSrv.timeRange();
-  }
-
-  /**
    * Given a time range, returns it as Loki parameters.
    * @returns An object containing the start and end times in nanoseconds since the Unix epoch.
    */
-  getTimeRangeParams(timeRange?: TimeRange) {
-    const range = timeRange ?? this.getTimeRange();
-    return { start: range.from.valueOf() * NS_IN_MS, end: range.to.valueOf() * NS_IN_MS };
+  getTimeRangeParams(timeRange: TimeRange) {
+    return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
   /**
@@ -732,7 +721,7 @@ export class LokiDatasource
    * Currently, it works for logs data only.
    * @returns A Promise that resolves to an array of DataFrames containing data samples.
    */
-  async getDataSamples(query: LokiQuery, timeRange?: TimeRange): Promise<DataFrame[]> {
+  async getDataSamples(query: LokiQuery, timeRange: TimeRange): Promise<DataFrame[]> {
     // Currently works only for logs sample
     if (!isLogsQuery(query.expr) || isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return [];
@@ -746,8 +735,7 @@ export class LokiDatasource
       supportingQueryType: SupportingQueryType.DataSample,
     };
 
-    const range = timeRange ?? this.getTimeRange();
-    const request = makeRequest(lokiLogsQuery, range, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
+    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Unknown, REF_ID_DATA_SAMPLES, true);
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }
 
