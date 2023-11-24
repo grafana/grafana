@@ -168,6 +168,13 @@ export function addLabelToQuery(
 
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
+  const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
+    hasStreamSelectorMatchers.some(
+      (matcherPosition) =>
+        matcherPosition.from >= streamSelectorPosition.from && matcherPosition.to <= streamSelectorPosition.to
+    )
+  );
 
   const filter = toLabelFilter(key, value, operator);
   // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
@@ -179,8 +186,8 @@ export function addLabelToQuery(
     return addFilterToStreamSelector(query, streamSelectorPositions, filter);
   } else {
     // labelType is not set, so we need to figure out where to add the label
-    // if we don't have a parser, we will just add it to the stream selector
-    if (parserPositions.length === 0) {
+    // if we don't have a parser, or have empty stream selectors, we will just add it to the stream selector
+    if (parserPositions.length === 0 || everyStreamSelectorHasMatcher === false) {
       return addFilterToStreamSelector(query, streamSelectorPositions, filter);
     } else {
       // in case we are not adding the label to stream selectors we need to find the last position to add in each expression
@@ -560,6 +567,9 @@ function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabe
  * @param positions
  */
 export function findLastPosition(positions: NodePosition[]): NodePosition {
+  if (!positions.length) {
+    return new NodePosition(0, 0);
+  }
   return positions.reduce((prev, current) => (prev.to > current.to ? prev : current));
 }
 
@@ -571,4 +581,33 @@ export function findLastPosition(positions: NodePosition[]): NodePosition {
  */
 function findLeaves(nodes: NodePosition[]): NodePosition[] {
   return nodes.filter((node) => nodes.every((n) => node.contains(n) === false || node === n));
+}
+
+function getAllPositionsInNodeByType(node: SyntaxNode, type: number): NodePosition[] {
+  if (node.type.id === type) {
+    return [NodePosition.fromNode(node)];
+  }
+
+  const positions: NodePosition[] = [];
+  let pos = 0;
+  let child = node.childAfter(pos);
+  while (child) {
+    positions.push(...getAllPositionsInNodeByType(child, type));
+    pos = child.to;
+    child = node.childAfter(pos);
+  }
+  return positions;
+}
+
+function getMatcherInStreamPositions(query: string): NodePosition[] {
+  const tree = parser.parse(query);
+  const positions: NodePosition[] = [];
+  tree.iterate({
+    enter: ({ node }): false | void => {
+      if (node.type.id === Selector) {
+        positions.push(...getAllPositionsInNodeByType(node, Matcher));
+      }
+    },
+  });
+  return positions;
 }
