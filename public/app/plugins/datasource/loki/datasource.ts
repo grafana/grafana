@@ -54,7 +54,7 @@ import { LogContextProvider } from './LogContextProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
+import { escapeLabelValueInSelector, isRegexSelector, getLabelTypeFromFrame } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -86,7 +86,6 @@ import {
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
-  LabelType,
   LokiOptions,
   LokiQuery,
   LokiQueryType,
@@ -1205,25 +1204,4 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
     }
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
-}
-
-function getLabelTypeFromFrame(labelKey: string, frame?: DataFrame, index?: number): null | LabelType {
-  if (!frame || index === undefined) {
-    return null;
-  }
-
-  const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
-  if (!typeField) {
-    return null;
-  }
-  switch (typeField[labelKey]) {
-    case 'I':
-      return LabelType.Indexed;
-    case 'S':
-      return LabelType.StructuredMetadata;
-    case 'P':
-      return LabelType.Parsed;
-    default:
-      return null;
-  }
 }
