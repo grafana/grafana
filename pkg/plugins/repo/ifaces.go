@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // Service is responsible for retrieving plugin archive information from a repository.
@@ -16,8 +14,6 @@ type Service interface {
 	GetPluginArchiveByURL(ctx context.Context, archiveURL string, opts CompatOpts) (*PluginArchive, error)
 	// GetPluginArchiveInfo fetches information needed for downloading the requested plugin.
 	GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts CompatOpts) (*PluginArchiveInfo, error)
-	// GetPluginJson fetches the requested plugin JSON data.
-	GetPluginJson(ctx context.Context, pluginID, version string, opts CompatOpts) (*plugins.JSONData, error)
 	// PluginVersion will return plugin version based on the requested information.
 	PluginVersion(pluginID, version string, compatOpts CompatOpts) (VersionData, error)
 }

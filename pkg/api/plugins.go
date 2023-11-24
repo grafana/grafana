@@ -442,10 +442,6 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
-		hs.hasPluginRequestedPermissions(c, pluginID, dto.Version)
-	}
-
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
 	if err != nil {
@@ -474,6 +470,13 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
+	}
+
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+		// This is a non-blocking function that verifies that the installer has
+		// the permissions that the plugin requests to have on Grafana.
+		// If we want to make this blocking, the check will have to happen before or during the installation.
+		hs.hasPluginRequestedPermissions(c, pluginID)
 	}
 
 	return response.JSON(http.StatusOK, []byte{})
@@ -520,21 +523,21 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 }
 
 // hasPluginRequestedPermissions logs if the plugin installer does not have the permissions that the plugin requests to have on Grafana.
-func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID, version string) {
-	compatOpts := repo.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-
-	jsonData, err := hs.pluginRepo.GetPluginJson(c.Req.Context(), pluginID, version, compatOpts)
-	if err != nil {
-		hs.log.Warn("could not fetch plugin json data", "error", err)
+func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, pluginID string) {
+	plugin, ok := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
+	if !ok {
+		hs.log.Debug("could plugin has not been installed", "pluginID", pluginID)
+		return
 	}
 
 	// No registration => Early return
-	if jsonData == nil || jsonData.ExternalServiceRegistration == nil || len(jsonData.ExternalServiceRegistration.Permissions) == 0 {
+	if plugin.JSONData.ExternalServiceRegistration == nil || len(plugin.JSONData.ExternalServiceRegistration.Permissions) == 0 {
+		hs.log.Debug("could plugin has not been installed", "pluginID", pluginID)
 		return
 	}
 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
-	evaluator := evalAllPermissions(jsonData.ExternalServiceRegistration.Permissions)
+	evaluator := evalAllPermissions(plugin.JSONData.ExternalServiceRegistration.Permissions)
 	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 	if hs.Cfg.RBACSingleOrganization {
 		// In a single organization setup, no need for a global check

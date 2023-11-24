@@ -10,7 +10,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -76,30 +75,6 @@ func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version stri
 		Checksum: v.Checksum,
 		URL:      m.downloadURL(pluginID, v.Version),
 	}, nil
-}
-
-// GetPluginJson returns the json data of the requested plugin (with optional `version`)
-func (m *Manager) GetPluginJson(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*plugins.JSONData, error) {
-	v, err := m.PluginVersion(pluginID, version, compatOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	u, err := url.Parse(m.baseURL)
-	if err != nil {
-		return nil, err
-	}
-
-	u.Path = path.Join(u.Path, pluginID, "versions", v.Version)
-	data, err := m.client.SendReq(u, compatOpts)
-	if err != nil {
-		return nil, err
-	}
-	res := PluginInfo{}
-	if err := json.Unmarshal(data, &res); err != nil {
-		return nil, err
-	}
-	return &res.JSONData, nil
 }
 
 // PluginVersion will return plugin version based on the requested information

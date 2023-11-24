@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/plugins/repo"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -89,7 +88,6 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 			hs.pluginInstaller = NewFakePluginInstaller()
 			hs.pluginFileStore = &fakes.FakePluginFileStore{}
-			hs.pluginRepo = &fakes.FakePluginRepo{}
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
@@ -649,15 +647,18 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 	newStr := func(s string) *string {
 		return &s
 	}
-	pluginReg := &plugins.JSONData{
-		ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
-			Permissions: []plugindef.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}},
+	pluginReg := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "grafana-test-app",
+			ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
+				Permissions: []plugindef.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}},
+			},
 		},
 	}
 
 	tests := []struct {
 		name        string
-		data        *plugins.JSONData
+		plugin      pluginstore.Plugin
 		orgID       int64
 		singleOrg   bool
 		permissions map[int64]map[string][]string
@@ -665,21 +666,20 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 	}{
 		{
 			name: "plugin without registration",
-			data: nil,
 		},
 		{
-			name:  "user does not have plugin permissions globally",
-			data:  pluginReg,
-			orgID: 1,
+			name:   "user does not have plugin permissions globally",
+			plugin: pluginReg,
+			orgID:  1,
 			permissions: map[int64]map[string][]string{
 				1: {ac.ActionUsersRead: {ac.ScopeUsersAll}},
 			},
 			warnCount: 1,
 		},
 		{
-			name:  "user has plugin permissions globally",
-			data:  pluginReg,
-			orgID: 0,
+			name:   "user has plugin permissions globally",
+			plugin: pluginReg,
+			orgID:  0,
 			permissions: map[int64]map[string][]string{
 				0: {ac.ActionUsersRead: {ac.ScopeUsersAll}},
 			},
@@ -687,7 +687,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 		},
 		{
 			name:      "user has plugin permissions in single organization",
-			data:      pluginReg,
+			plugin:    pluginReg,
 			singleOrg: true,
 			orgID:     1,
 			permissions: map[int64]map[string][]string{
@@ -705,10 +705,8 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 
 			hs.Cfg = setting.NewCfg()
 			hs.Cfg.RBACSingleOrganization = tt.singleOrg
-			hs.pluginRepo = &fakes.FakePluginRepo{
-				GetPluginJsonFunc: func(_ context.Context, _ string, _ string, _ repo.CompatOpts) (*plugins.JSONData, error) {
-					return tt.data, nil
-				},
+			hs.pluginStore = &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{tt.plugin},
 			}
 			hs.log = logger
 			hs.accesscontrolService = actest.FakeService{}
@@ -718,7 +716,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 				Context:      &web.Context{Req: httpReq},
 				SignedInUser: &user.SignedInUser{OrgID: tt.orgID, Permissions: tt.permissions},
 			}
-			hs.hasPluginRequestedPermissions(c, "grafana-test-app", "1.0.0")
+			hs.hasPluginRequestedPermissions(c, "grafana-test-app")
 
 			assert.Equal(t, tt.warnCount, logger.WarnLogs.Calls)
 		})

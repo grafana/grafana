@@ -204,7 +204,6 @@ type FakePluginRepo struct {
 	GetPluginArchiveFunc      func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveByURLFunc func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveInfoFunc  func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error)
-	GetPluginJsonFunc         func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*plugins.JSONData, error)
 	PluginVersionFunc         func(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error)
 }
 
@@ -232,14 +231,6 @@ func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, ver
 		return r.GetPluginArchiveInfoFunc(ctx, pluginID, version, opts)
 	}
 	return &repo.PluginArchiveInfo{}, nil
-}
-
-// GetPluginJson fetches the requested plugin JSON data.
-func (r *FakePluginRepo) GetPluginJson(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*plugins.JSONData, error) {
-	if r.GetPluginJsonFunc != nil {
-		return r.GetPluginJsonFunc(ctx, pluginID, version, opts)
-	}
-	return &plugins.JSONData{}, nil
 }
 
 func (r *FakePluginRepo) PluginVersion(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error) {

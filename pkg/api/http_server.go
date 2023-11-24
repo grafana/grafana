@@ -37,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -134,7 +133,6 @@ type HTTPServer struct {
 	DataProxy                    *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator       validations.PluginRequestValidator
 	pluginClient                 plugins.Client
-	pluginRepo                   repo.Service
 	pluginStore                  pluginstore.Store
 	pluginInstaller              plugins.Installer
 	pluginFileStore              plugins.FileStore
@@ -221,7 +219,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
-	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, pluginRepo repo.Service, settingsProvider setting.Provider,
+	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
 	correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -267,7 +265,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                     sqlStore,
 		AlertEngine:                  alertEngine,
 		PluginRequestValidator:       pluginRequestValidator,
-		pluginRepo:                   pluginRepo,
 		pluginInstaller:              pluginInstaller,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,

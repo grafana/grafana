@@ -1,10 +1,6 @@
 package repo
 
-import (
-	"archive/zip"
-
-	"github.com/grafana/grafana/pkg/plugins"
-)
+import "archive/zip"
 
 type PluginArchive struct {
 	File *zip.ReadCloser
@@ -29,9 +25,4 @@ type Version struct {
 
 type ArchMeta struct {
 	SHA256 string `json:"sha256"`
-}
-
-// PluginInfo is (a subset of) the JSON response from /api/plugins/$pluginID/versions/$version
-type PluginInfo struct {
-	JSONData plugins.JSONData `json:"json"`
 }
