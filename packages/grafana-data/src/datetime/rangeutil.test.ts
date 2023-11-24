@@ -1,8 +1,8 @@
 import { RawTimeRange, TimeRange } from '../types/time';
 
-import { timeRangeToRelative } from './rangeutil';
+import { timeRangeToRelative, zoomOutTimeRange } from './rangeutil';
 
-import { dateTime, rangeUtil } from './index';
+import { dateTime, rangeUtil, toUtc } from './index';
 
 describe('Range Utils', () => {
   // These tests probably wrap the dateTimeParser tests to some extent
@@ -273,6 +273,34 @@ describe('Range Utils', () => {
 
       expect(relativeTimeRange.from).toEqual(1209600);
       expect(relativeTimeRange.to).toEqual(604800);
+    });
+  });
+
+  describe('zoomOutTimeRange', () => {
+    it('calculates zoomed time range correctly', () => {
+      // 07:48:27 on Dec 17 - 07:48:27 on Dec 18
+      const from = dateTime('2023-12-17T07:48:27.433Z');
+      const to = dateTime('2023-12-18T07:48:27.433Z');
+
+      const timeRange = {
+        from,
+        to,
+        raw: { from, to },
+      };
+      // zoom out by 2
+      const zoomedTimeRange = zoomOutTimeRange(timeRange, 2);
+
+      // 19:48:27 on Dec 16 - 19:48:27 on Dec 18
+      const zoomedFrom = dateTime('2023-12-16T19:48:27.433Z').valueOf();
+      const zoomedTo = dateTime('2023-12-18T19:48:27.433Z').valueOf();
+      expect(zoomedTimeRange).toEqual({
+        from: toUtc(zoomedFrom),
+        to: toUtc(zoomedTo),
+        raw: {
+          from: toUtc(zoomedFrom),
+          to: toUtc(zoomedTo),
+        },
+      });
     });
   });
 });
