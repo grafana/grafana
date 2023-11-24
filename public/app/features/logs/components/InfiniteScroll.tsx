@@ -17,9 +17,14 @@ type Props = {
 };
 
 export const InfiniteScroll = ({ children, loading, loadMoreLogs, range, rows, scrollElement, sortOrder, timeZone }: Props) => {
-  const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
   const [upperOutOfRange, setUpperOutOfRange] = useState(false);
+  const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
   const [lastScroll, setLastScroll] = useState(scrollElement?.scrollTop || 0);
+
+  useEffect(() => {
+    setUpperOutOfRange(false);
+    setLowerOutOfRange(false);
+  }, [range, rows, sortOrder]);
 
   useEffect(() => {
     if (!scrollElement || !loadMoreLogs) {
