@@ -16,7 +16,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'v',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      if (!scene.state.viewPanelKey) {
+      if (!scene.state.viewPanelScene) {
         locationService.push(getViewPanelUrl(vizPanel));
       }
     }),

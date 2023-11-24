@@ -16,7 +16,7 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const { actions = [], isEditing, viewPanelKey, isDirty, uid, meta, editview } = dashboard.useState();
+  const { actions = [], isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if (uid && !editview) {
@@ -62,7 +62,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 
   toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="separator" />);
 
-  if (viewPanelKey) {
+  if (viewPanelScene) {
     toolbarActions.push(
       <Button
         onClick={() => locationService.partial({ viewPanel: null })}
