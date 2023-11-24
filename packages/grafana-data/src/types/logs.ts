@@ -266,7 +266,6 @@ export interface ToggleFilterAction {
   options: QueryFilterOptions;
 
   frame?: DataFrame;
-  fieldIndex?: number;
 }
 /**
  * Data sources that support toggleable filters through `toggleQueryFilter`, and displaying the active

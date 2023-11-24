@@ -220,18 +220,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (
-    key: string,
-    value: string,
-    refId?: string,
-    frameAndIndex?: { frame: DataFrame; fieldIndex: number }
-  ) => {
+  onClickFilterLabel = (key: string, value: string, refId?: string, frame?: DataFrame) => {
     this.onModifyQueries(
       {
         type: 'ADD_FILTER',
         options: { key, value },
-        frame: frameAndIndex?.frame,
-        fieldIndex: frameAndIndex?.fieldIndex,
+        frame,
       },
       refId
     );
@@ -240,18 +234,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (
-    key: string,
-    value: string,
-    refId?: string,
-    frameAndIndex?: { frame: DataFrame; fieldIndex: number }
-  ) => {
+  onClickFilterOutLabel = (key: string, value: string, refId?: string, frame?: DataFrame) => {
     this.onModifyQueries(
       {
         type: 'ADD_FILTER_OUT',
         options: { key, value },
-        frame: frameAndIndex?.frame,
-        fieldIndex: frameAndIndex?.fieldIndex,
+        frame,
       },
       refId
     );
@@ -297,7 +285,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
           options: modification.options ?? {},
           frame: modification.frame,
-          fieldIndex: modification.fieldIndex,
         });
       }
       if (ds.modifyQuery) {

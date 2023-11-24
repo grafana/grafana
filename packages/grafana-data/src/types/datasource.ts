@@ -588,7 +588,6 @@ export interface QueryFixAction {
   options?: KeyValue<string>;
 
   frame?: DataFrame;
-  fieldIndex?: number;
 }
 
 export interface QueryHint {

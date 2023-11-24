@@ -821,7 +821,7 @@ export class LokiDatasource
    */
   toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
-    const labelType = getLabelTypeFromFrame(filter.options.key, filter.frame, filter.fieldIndex);
+    const labelType = getLabelTypeFromFrame(filter.options.key, filter.frame, 0);
     switch (filter.type) {
       case 'FILTER_FOR': {
         if (filter.options?.key && filter.options?.value) {
@@ -879,7 +879,7 @@ export class LokiDatasource
     switch (action.type) {
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
-          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, action.fieldIndex);
+          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
           const value = escapeLabelValueInSelector(action.options.value);
           expression = addLabelToQuery(expression, action.options.key, '=', value, labelType);
         }
@@ -887,7 +887,7 @@ export class LokiDatasource
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
-          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, action.fieldIndex);
+          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
           const value = escapeLabelValueInSelector(action.options.value);
           expression = addLabelToQuery(expression, action.options.key, '!=', value, labelType);
         }
