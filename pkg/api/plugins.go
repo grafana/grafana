@@ -129,40 +129,20 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	result := make(dtos.PluginList, 0)
 	for _, pluginDef := range filteredPluginDefinitions {
 		listItem := dtos.PluginListItem{
-			Id:              pluginDef.ID,
-			Name:            pluginDef.Name,
-			Type:            string(pluginDef.Type),
-			Category:        pluginDef.Category,
-			Info:            pluginDef.Info,
-			Dependencies:    pluginDef.Dependencies,
-			DefaultNavUrl:   path.Join(hs.Cfg.AppSubURL, pluginDef.DefaultNavURL),
-			State:           pluginDef.State,
-			Signature:       pluginDef.Signature,
-			SignatureType:   pluginDef.SignatureType,
-			SignatureOrg:    pluginDef.SignatureOrg,
-			AccessControl:   pluginsMetadata[pluginDef.ID],
-			AngularDetected: pluginDef.Angular.Detected,
-
-			ExternalServiceRegistration: &dtos.ExternalServiceRegistration{
-				Permissions: []dtos.PluginPermission{
-					{
-						Action: "dashboards:create",
-						Scope:  "folders:*",
-					},
-					{
-						Action: "dashboards:read",
-						Scope:  "dashboards:*",
-					},
-					{
-						Action: "dashboards:read",
-						Scope:  "folders:*",
-					},
-					{
-						Action: "folders:read",
-						Scope:  "folders:*",
-					},
-				},
-			},
+			Id:                          pluginDef.ID,
+			Name:                        pluginDef.Name,
+			Type:                        string(pluginDef.Type),
+			Category:                    pluginDef.Category,
+			Info:                        pluginDef.Info,
+			Dependencies:                pluginDef.Dependencies,
+			DefaultNavUrl:               path.Join(hs.Cfg.AppSubURL, pluginDef.DefaultNavURL),
+			State:                       pluginDef.State,
+			Signature:                   pluginDef.Signature,
+			SignatureType:               pluginDef.SignatureType,
+			SignatureOrg:                pluginDef.SignatureOrg,
+			AccessControl:               pluginsMetadata[pluginDef.ID],
+			AngularDetected:             pluginDef.Angular.Detected,
+			ExternalServiceRegistration: pluginDef.ExternalServiceRegistration,
 		}
 
 		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)

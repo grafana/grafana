@@ -2,6 +2,7 @@ package dtos
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -30,34 +31,24 @@ type PluginSetting struct {
 }
 
 type PluginListItem struct {
-	Name            string                  `json:"name"`
-	Type            string                  `json:"type"`
-	Id              string                  `json:"id"`
-	Enabled         bool                    `json:"enabled"`
-	Pinned          bool                    `json:"pinned"`
-	Info            plugins.Info            `json:"info"`
-	Dependencies    plugins.Dependencies    `json:"dependencies"`
-	LatestVersion   string                  `json:"latestVersion"`
-	HasUpdate       bool                    `json:"hasUpdate"`
-	DefaultNavUrl   string                  `json:"defaultNavUrl"`
-	Category        string                  `json:"category"`
-	State           plugins.ReleaseState    `json:"state"`
-	Signature       plugins.SignatureStatus `json:"signature"`
-	SignatureType   plugins.SignatureType   `json:"signatureType"`
-	SignatureOrg    string                  `json:"signatureOrg"`
-	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
-	AngularDetected bool                    `json:"angularDetected"`
-
-	ExternalServiceRegistration *ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
-}
-
-type ExternalServiceRegistration struct {
-	Permissions []PluginPermission `json:"permissions"`
-}
-
-type PluginPermission struct {
-	Action string `json:"action"`
-	Scope  string `json:"scope"`
+	Name                        string                                 `json:"name"`
+	Type                        string                                 `json:"type"`
+	Id                          string                                 `json:"id"`
+	Enabled                     bool                                   `json:"enabled"`
+	Pinned                      bool                                   `json:"pinned"`
+	Info                        plugins.Info                           `json:"info"`
+	Dependencies                plugins.Dependencies                   `json:"dependencies"`
+	LatestVersion               string                                 `json:"latestVersion"`
+	HasUpdate                   bool                                   `json:"hasUpdate"`
+	DefaultNavUrl               string                                 `json:"defaultNavUrl"`
+	Category                    string                                 `json:"category"`
+	State                       plugins.ReleaseState                   `json:"state"`
+	Signature                   plugins.SignatureStatus                `json:"signature"`
+	SignatureType               plugins.SignatureType                  `json:"signatureType"`
+	SignatureOrg                string                                 `json:"signatureOrg"`
+	AccessControl               accesscontrol.Metadata                 `json:"accessControl,omitempty"`
+	AngularDetected             bool                                   `json:"angularDetected"`
+	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
 }
 
 type PluginList []PluginListItem
