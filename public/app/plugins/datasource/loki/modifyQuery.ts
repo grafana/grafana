@@ -177,8 +177,6 @@ export function addLabelToQuery(
   );
 
   const filter = toLabelFilter(key, value, operator);
-  // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
-  // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
   if (labelType === LabelType.Parsed || labelType === LabelType.StructuredMetadata) {
     const positionToAdd = findLastPosition([...streamSelectorPositions, ...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
