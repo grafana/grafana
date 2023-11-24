@@ -1,3 +1,4 @@
+import { rangeUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { OptionsWithLegend } from '@grafana/schema';
@@ -79,6 +80,20 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
   });
 
+  // Zoom out
+  keybindings.addBinding({
+    key: 't z',
+    onTrigger: () => {
+      handleZoomOut(scene);
+    },
+  });
+  keybindings.addBinding({
+    key: 'ctrl+z',
+    onTrigger: () => {
+      handleZoomOut(scene);
+    },
+  });
+
   // Dashboard settings
   keybindings.addBinding({
     key: 'd s',
@@ -127,4 +142,10 @@ export function toggleVizPanelLegend(vizPanel: VizPanel) {
 
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
   return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
+}
+
+function handleZoomOut(scene: DashboardScene) {
+  const timeRange = sceneGraph.getTimeRange(scene);
+  const zoomedTimeRange = rangeUtil.zoomOutTimeRange(timeRange.state.value, 2);
+  timeRange.onTimeRangeChange(zoomedTimeRange);
 }
