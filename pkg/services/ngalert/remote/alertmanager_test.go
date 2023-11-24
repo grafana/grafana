@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/stretchr/testify/require"
@@ -85,7 +86,9 @@ func TestApplyConfig(t *testing.T) {
 	cfg := AlertmanagerConfig{
 		URL: server.URL,
 	}
-	am, err := NewAlertmanager(cfg, 1, nil)
+	store := fakes.NewFakeKVStore(t)
+
+	am, err := NewAlertmanager(cfg, 1, store)
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{}
@@ -136,7 +139,9 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	am, err := NewAlertmanager(cfg, 1, nil)
+	store := fakes.NewFakeKVStore(t)
+
+	am, err := NewAlertmanager(cfg, 1, store)
 	require.NoError(t, err)
 
 	// We should have no configuration at first.
