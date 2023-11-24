@@ -2,8 +2,9 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 
-import { OrgRole } from '@grafana/data';
+import { OrgRole, PluginExtensionComponent, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginExtensionGetter, GetPluginExtensions } from '@grafana/runtime';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
 import { backendSrv } from '../../core/services/backend_srv';
@@ -91,16 +92,59 @@ function getSelectors() {
       within(sessionsTable()).getByRole('row', {
         name: /now January 1, 2021 localhost chrome on mac os x 11/i,
       }),
+    /**
+     * using queryByTestId instead of getByTestId because the tabs are not always rendered
+     * and getByTestId throws an TestingLibraryElementError error if the element is not found
+     * whereas queryByTestId returns null if the element is not found. There are some test cases
+     * where we'd explicitly like to assert that the tabs are not rendered.
+     */
+    extensionPointTabs: () => screen.queryByTestId(selectors.components.UserProfile.extensionPointTabs),
+    /**
+     * here lets use getByTestId because a specific tab should always be rendered within the tabs container
+     */
+    extensionPointTab: (tabTitle: string) =>
+      within(screen.getByTestId(selectors.components.UserProfile.extensionPointTabs)).getByTestId(
+        selectors.components.UserProfile.extensionPointTab(tabTitle)
+      ),
   };
 }
 
-async function getTestContext(overrides: Partial<Props> = {}) {
+enum ExtensionPointComponentTabs {
+  One = '1',
+  Two = '2',
+}
+
+const _createTabName = (tab: ExtensionPointComponentTabs) => `Tab ${tab}`;
+
+const _createPluginExtensionPointComponent = (
+  id: string,
+  tab: ExtensionPointComponentTabs
+): PluginExtensionComponent => ({
+  id,
+  type: PluginExtensionTypes.component,
+  title: _createTabName(tab),
+  description: '', // description isn't used here..
+  component: () => <p>{`this is settings for component ${id}`}</p>,
+  pluginId: 'grafana-plugin',
+});
+
+const PluginExtensionPointComponent1 = _createPluginExtensionPointComponent('1', ExtensionPointComponentTabs.One);
+const PluginExtensionPointComponent2 = _createPluginExtensionPointComponent('2', ExtensionPointComponentTabs.One);
+const PluginExtensionPointComponent3 = _createPluginExtensionPointComponent('3', ExtensionPointComponentTabs.Two);
+
+async function getTestContext(overrides: Partial<Props & { extensions: PluginExtensionComponent[] }> = {}) {
+  const extensions = overrides.extensions || [];
+
   jest.clearAllMocks();
   const putSpy = jest.spyOn(backendSrv, 'put');
   const getSpy = jest
     .spyOn(backendSrv, 'get')
     .mockResolvedValue({ timezone: 'UTC', homeDashboardUID: 'home-dashboard', theme: 'dark' });
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
+
+  const getter: GetPluginExtensions<PluginExtensionComponent> = jest.fn().mockReturnValue({ extensions });
+
+  setPluginExtensionGetter(getter);
 
   const props = { ...defaultProps, ...overrides };
   const { rerender } = render(
@@ -254,5 +298,34 @@ describe('UserProfileEditPage', () => {
         expect(props.revokeUserSession).toHaveBeenCalledWith(0);
       });
     });
+
+    describe('and a plugin registers a component against the user profile settings extension point', () => {
+      it('should not show tabs when no components are registered', async () => {
+        await getTestContext();
+        const { extensionPointTabs } = getSelectors();
+        expect(extensionPointTabs()).not.toBeInTheDocument();
+      });
+
+      it('should group registered components into tabs', async () => {
+        await getTestContext({
+          extensions: [PluginExtensionPointComponent1, PluginExtensionPointComponent2, PluginExtensionPointComponent3],
+        });
+
+        const { extensionPointTabs, extensionPointTab } = getSelectors();
+
+        const _assertTab = (tabName: string, isDefault = false) => {
+          const tab = extensionPointTab(tabName);
+          expect(tab).toBeInTheDocument();
+          expect(tab).toHaveAttribute('aria-selected', isDefault.toString());
+        };
+
+        expect(extensionPointTabs()).toBeInTheDocument();
+        _assertTab('Core', true);
+        _assertTab(_createTabName(ExtensionPointComponentTabs.One));
+        _assertTab(_createTabName(ExtensionPointComponentTabs.Two));
+      });
+    });
+
+    it.todo('should set the default active tab based on a tab query parameter');
   });
 });

@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
 import { PluginExtensionComponent, PluginExtensionPoints } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { getPluginComponentExtensions } from '@grafana/runtime';
 import { Tab, TabsBar, TabContent, VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -16,7 +17,7 @@ import UserSessions from './UserSessions';
 import { UserTeams } from './UserTeams';
 import { changeUserOrg, initUserProfilePage, revokeUserSession, updateUserProfile } from './state/actions';
 
-const CORE_SETTINGS_TAB = 'Core Settings';
+const CORE_SETTINGS_TAB = 'Core';
 
 export interface OwnProps {}
 
@@ -103,41 +104,42 @@ export function UserProfileEditPage({
     </VerticalGroup>
   );
 
+  const UserProfileWithTabs = () => (
+    <div data-testid={selectors.components.UserProfile.extensionPointTabs}>
+      <VerticalGroup spacing="md">
+        <TabsBar>
+          {tabs.map((tabTitle) => (
+            <Tab
+              key={tabTitle}
+              label={tabTitle}
+              active={activeTab === tabTitle}
+              onChangeTab={() => setActiveTab(tabTitle)}
+              data-testid={selectors.components.UserProfile.extensionPointTab(tabTitle)}
+            />
+          ))}
+        </TabsBar>
+        <TabContent>
+          {activeTab === CORE_SETTINGS_TAB && <UserProfile />}
+          {toPairs(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
+            if (activeTab === title) {
+              return (
+                <React.Fragment key={title}>
+                  {pluginExtensionComponents.map(({ component: Component }, index) => (
+                    <Component key={`${title}-${index}`} />
+                  ))}
+                </React.Fragment>
+              );
+            }
+            return null;
+          })}
+        </TabContent>
+      </VerticalGroup>
+    </div>
+  );
+
   return (
     <Page navId="profile/settings">
-      <Page.Contents isLoading={!user}>
-        {showTabs ? (
-          <VerticalGroup spacing="md">
-            <TabsBar>
-              {tabs.map((tabTitle) => (
-                <Tab
-                  key={tabTitle}
-                  label={tabTitle}
-                  active={activeTab === tabTitle}
-                  onChangeTab={() => setActiveTab(tabTitle)}
-                />
-              ))}
-            </TabsBar>
-            <TabContent>
-              {activeTab === CORE_SETTINGS_TAB && <UserProfile />}
-              {toPairs(groupedExtensionComponents).map(([title, pluginExtensionComponents]) => {
-                if (activeTab === title) {
-                  return (
-                    <React.Fragment key={title}>
-                      {pluginExtensionComponents.map(({ component: Component }, index) => (
-                        <Component key={`${title}-${index}`} />
-                      ))}
-                    </React.Fragment>
-                  );
-                }
-                return null;
-              })}
-            </TabContent>
-          </VerticalGroup>
-        ) : (
-          <UserProfile />
-        )}
-      </Page.Contents>
+      <Page.Contents isLoading={!user}>{showTabs ? <UserProfileWithTabs /> : <UserProfile />}</Page.Contents>
     </Page>
   );
 }
