@@ -164,4 +164,5 @@ export interface FeatureToggles {
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
+  regressionTransformation?: boolean;
 }
