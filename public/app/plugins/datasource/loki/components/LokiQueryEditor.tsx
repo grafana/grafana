@@ -104,7 +104,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       query.queryType,
       previousQueryType
     );
-    // Time range check duplicated to satisfy typescript. Already checked in shouldUpdateStats.
     if (update && timeRange) {
       const makeAsyncRequest = async () => {
         const stats = await datasource.getStats(query, timeRange);
