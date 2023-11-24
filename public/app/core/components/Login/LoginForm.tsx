@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useId } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Form, Input, Field } from '@grafana/ui';
@@ -16,17 +16,20 @@ interface Props {
   loginHint: string;
 }
 
-const wrapperStyles = css`
-  width: 100%;
-  padding-bottom: 16px;
-`;
+const wrapperStyles = css({
+  width: '100%',
+  paddingBottom: 16,
+});
 
-export const submitButton = css`
-  justify-content: center;
-  width: 100%;
-`;
+export const submitButton = css({
+  justifyContent: 'center',
+  width: '100%',
+});
 
 export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, loginHint }: Props) => {
+  const usernameId = useId();
+  const passwordId = useId();
+
   return (
     <div className={wrapperStyles}>
       <Form onSubmit={onSubmit} validateOn="onChange">
@@ -35,23 +38,24 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
             <Field label="Email or username" invalid={!!errors.user} error={errors.user?.message}>
               <Input
                 {...register('user', { required: 'Email or username is required' })}
+                id={usernameId}
                 autoFocus
                 autoCapitalize="none"
                 placeholder={loginHint}
-                aria-label={selectors.pages.Login.username}
+                data-testid={selectors.pages.Login.username}
               />
             </Field>
             <Field label="Password" invalid={!!errors.password} error={errors.password?.message}>
               <PasswordField
-                id="current-password"
-                autoComplete="current-password"
-                passwordHint={passwordHint}
                 {...register('password', { required: 'Password is required' })}
+                id={passwordId}
+                autoComplete="current-password"
+                placeholder={passwordHint}
               />
             </Field>
             <Button
               type="submit"
-              aria-label={selectors.pages.Login.submit}
+              data-testid={selectors.pages.Login.submit}
               className={submitButton}
               disabled={isLoggingIn}
             >

@@ -29,20 +29,20 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
           )}
           <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
             <PasswordField
+              {...register('newPassword', { required: 'New Password is required' })}
               id="new-password"
               autoFocus
               autoComplete="new-password"
-              {...register('newPassword', { required: 'New Password is required' })}
             />
           </Field>
           <Field label="Confirm new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
             <PasswordField
-              id="confirm-new-password"
-              autoComplete="new-password"
               {...register('confirmNew', {
                 required: 'Confirmed Password is required',
                 validate: (v: string) => v === getValues().newPassword || 'Passwords must match!',
               })}
+              id="confirm-new-password"
+              autoComplete="new-password"
             />
           </Field>
           <VerticalGroup>
@@ -55,7 +55,7 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
                 content="If you skip you will be prompted to change password next time you log in."
                 placement="bottom"
               >
-                <Button fill="text" onClick={onSkip} type="button" aria-label={selectors.pages.Login.skip}>
+                <Button fill="text" onClick={onSkip} type="button" data-testid={selectors.pages.Login.skip}>
                   Skip
                 </Button>
               </Tooltip>
