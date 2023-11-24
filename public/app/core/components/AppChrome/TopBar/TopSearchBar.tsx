@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -14,6 +15,7 @@ import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
+import { ReturnToPrevious } from '../ReturnToPrevious/ReturnToPrevious';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { SignInLink } from './SignInLink';
@@ -25,6 +27,8 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
 
   const helpNode = cloneDeep(navIndex['help']);
   const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
@@ -34,16 +38,23 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
     homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
   }
+  const showReturnToPrevious = state?.returnToPrevious?.show;
 
   return (
-    <div className={styles.layout}>
+    <div className={cx(styles.layout, showReturnToPrevious && styles.showReturnButton)}>
       <TopSearchBarSection>
         <a className={styles.logo} href={homeUrl} title="Go to home">
           <Branding.MenuLogo className={styles.img} />
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
-
+      {showReturnToPrevious && (
+        <TopSearchBarSection>
+          <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title}>
+            {state.returnToPrevious.title}
+          </ReturnToPrevious>
+        </TopSearchBarSection>
+      )}
       <TopSearchBarSection>
         <TopSearchBarCommandPaletteTrigger />
       </TopSearchBarSection>
@@ -87,6 +98,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       display: 'grid',
 
       justifyContent: 'flex-start',
+    },
+  }),
+  showReturnButton: css({
+    [theme.breakpoints.up('sm')]: {
+      gridTemplateColumns: '1.5fr 0.25fr minmax(240px, 1fr) 1.5fr',
     },
   }),
   img: css({
