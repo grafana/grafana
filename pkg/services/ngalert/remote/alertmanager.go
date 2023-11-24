@@ -391,7 +391,7 @@ func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool 
 // getFullState returns a slice of bytes representing the Alertmanager's internal state.
 // These bytes contain the Alertmanager's silences and notification log.
 func (am *Alertmanager) getFullState(ctx context.Context) ([]byte, error) {
-	keys, err := am.kvstore.GetAll(ctx, 1, "alertmanager")
+	keys, err := am.kvstore.GetAll(ctx, am.orgID, "alertmanager")
 	if err != nil {
 		return nil, err
 	}

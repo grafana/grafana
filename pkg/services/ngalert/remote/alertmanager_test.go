@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/cluster/clusterpb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -139,7 +141,22 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	silences := []byte("test-silences")
+	nflog := []byte("test-notifications")
+
 	store := fakes.NewFakeKVStore(t)
+	require.NoError(t, store.Set(ctx, 1, "alertmanager", "silences", base64.StdEncoding.EncodeToString(silences)))
+	require.NoError(t, store.Set(ctx, 1, "alertmanager", "notifications", base64.StdEncoding.EncodeToString(nflog)))
+
+	fs := clusterpb.FullState{
+		Parts: []clusterpb.Part{
+			{Key: "silences", Data: silences},
+			{Key: "notifications", Data: nflog},
+		},
+	}
+	fullState, err := fs.Marshal()
+	require.NoError(t, err)
+	encodedFullState := base64.StdEncoding.EncodeToString(fullState)
 
 	am, err := NewAlertmanager(cfg, 1, store)
 	require.NoError(t, err)
@@ -168,11 +185,16 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
 		require.Equal(t, true, config.Default)
 
-		// TODO: Check that the state was uploaded.
+		// Check that the state was saved.
+		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
+		require.NoError(t, err)
+		require.Equal(t, encodedFullState, state.State)
 	}
 
-	// Calling `ApplyConfig` again with a changed configuration yields no effect.
+	// Calling `ApplyConfig` again with a changed configuration and state yields no effect.
 	{
+		require.NoError(t, store.Set(ctx, 1, "alertmanager", "silences", base64.StdEncoding.EncodeToString([]byte("abc123"))))
+		require.NoError(t, store.Set(ctx, 1, "alertmanager", "notifications", base64.StdEncoding.EncodeToString([]byte("abc123"))))
 		fakeConfig.ID = 30000000000000000
 		require.NoError(t, am.ApplyConfig(ctx, fakeConfig))
 
@@ -187,6 +209,11 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 		require.Equal(t, fakeConfigHash, config.Hash)
 		require.Equal(t, fakeConfigCreatedAt, config.CreatedAt)
 		require.Equal(t, true, config.Default)
+
+		// Check that the state is the same as before.
+		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
+		require.NoError(t, err)
+		require.Equal(t, encodedFullState, state.State)
 	}
 
 	// TODO: Now, shutdown the Alertmanager and we expect the latest configuration to be uploaded.

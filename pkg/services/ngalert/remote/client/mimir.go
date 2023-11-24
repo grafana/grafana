@@ -132,8 +132,6 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 		return nil, fmt.Errorf("%s: %w", msg, err)
 	}
 
-	// TODO(santiago): 400 status code?
-
 	if resp.StatusCode/100 != 2 {
 		errResponse := &errorResponse{}
 		err = json.Unmarshal(body, errResponse)
