@@ -19,13 +19,4 @@ Choose where to display the legend.
 
 ### Legend values
 
-<!-- Choose which of the [standard calculations]({{< relref "../../panels-visualizations/query-transform-data/calculation-types/" >}}) to show in the legend. You can have more than one. -->
-
-Choose which of the [standard calculations][] to show in the legend. You can have more than one.
-
-{{% docs/reference %}}
-
-[standard calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-
-{{% /docs/reference %}}
+Choose which of the [standard calculations]({{< relref "../../panels-visualizations/query-transform-data/calculation-types/" >}}) to show in the legend. You can have more than one.
