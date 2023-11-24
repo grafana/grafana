@@ -10,7 +10,7 @@ import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
-import { TraceqlFilter } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { traceqlGrammar } from '../traceql/traceql';
@@ -29,6 +29,8 @@ interface Props {
   onChange: (value: TempoQuery) => void;
   onBlur?: () => void;
 }
+
+const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
 const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   const styles = useStyles2(getStyles);
@@ -95,9 +97,10 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   staticTags.push('duration');
 
   // Dynamic filters are all filters that don't match the ID of a filter in the datasource configuration
-  // The duration tag is a special case since its selector is hard-coded
+  // The duration and status fields are a special case since its selector is hard-coded
   const dynamicFilters = (query.filters || []).filter(
-    (f) => f.tag !== 'duration' && (datasource.search?.filters?.findIndex((sf) => sf.id === f.id) || 0) === -1
+    (f) =>
+      !hardCodedFilterIds.includes(f.id) && (datasource.search?.filters?.findIndex((sf) => sf.id === f.id) || 0) === -1
   );
 
   return (
@@ -127,8 +130,27 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
                 </InlineSearchField>
               )
           )}
+          <InlineSearchField label={'Status'}>
+            <SearchField
+              filter={
+                findFilter('status') || {
+                  id: 'status',
+                  tag: 'status',
+                  scope: TraceqlSearchScope.Intrinsic,
+                  operator: '=',
+                }
+              }
+              datasource={datasource}
+              setError={setError}
+              updateFilter={updateFilter}
+              tags={[]}
+              hideScope={true}
+              hideTag={true}
+              query={traceQlQuery}
+            />
+          </InlineSearchField>
           <InlineSearchField
-            label={'Duration'}
+            label={'Span Duration'}
             tooltip="The span duration, i.e.	end - start time of the span. Accepted units are ns, ms, s, m, h"
           >
             <HorizontalGroup spacing={'sm'}>

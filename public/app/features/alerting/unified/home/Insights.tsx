@@ -28,7 +28,7 @@ import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstanc
 import { getPausedGrafanaAlertsScene } from '../insights/grafana/Paused';
 import { getGrafanaRulesByEvaluationScene } from '../insights/grafana/RulesByEvaluation';
 import { getGrafanaRulesByEvaluationPercentageScene } from '../insights/grafana/RulesByEvaluationPercentage';
-import { getGrafanaAlertmanagerNotificationsScene } from '../insights/grafana/alertmanager/NotificationsScene';
+import { getAlertsByStateScene as getGrafanaAlertsByStateScene } from '../insights/grafana/alertmanager/AlertsByState';
 import { getGrafanaAlertmanagerSilencesScene } from '../insights/grafana/alertmanager/SilencesByStateScene';
 import { getAlertsByStateScene } from '../insights/mimir/AlertsByState';
 import { getInvalidConfigScene } from '../insights/mimir/InvalidConfig';
@@ -175,7 +175,7 @@ export function getInsightsScenes() {
 
 function getGrafanaManagedScenes() {
   return new NestedScene({
-    title: 'Grafana-managed rules',
+    title: 'Grafana-managed alert rules',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -267,7 +267,8 @@ function getGrafanaAlertmanagerScenes() {
       children: [
         new SceneFlexLayout({
           children: [
-            getGrafanaAlertmanagerNotificationsScene(cloudUsageDs, 'Notification delivery'),
+            getGrafanaAlertsByStateScene(cloudUsageDs, 'Firing alerts by state'),
+            // getGrafanaAlertmanagerNotificationsScene(cloudUsageDs, 'Notification delivery'),
             getGrafanaAlertmanagerSilencesScene(cloudUsageDs, 'Silences'),
           ],
         }),
@@ -281,7 +282,7 @@ function getGrafanaAlertmanagerScenes() {
 
 function getCloudScenes() {
   return new NestedScene({
-    title: 'Mimir alertmanager',
+    title: 'Mimir Alertmanager',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -315,7 +316,7 @@ function getCloudScenes() {
 
 function getMimirManagedRulesScenes() {
   return new NestedScene({
-    title: 'Mimir-managed rules',
+    title: 'Mimir-managed alert rules',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({
@@ -363,7 +364,7 @@ function getMimirManagedRulesPerGroupScenes() {
   });
 
   return new NestedScene({
-    title: 'Mimir-managed Rules - Per Rule Group',
+    title: 'Mimir-managed alert rules - per rule group',
     canCollapse: true,
     isCollapsed: false,
     body: new SceneFlexLayout({

@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PluginState } from '@grafana/data/src';
 import { TextDimensionMode } from '@grafana/schema';
-import { Button, stylesFactory } from '@grafana/ui';
-import { config } from 'app/core/config';
+import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -40,26 +39,33 @@ export const defaultStyleConfig: ButtonStyleConfig = {
   variant: 'primary',
 };
 
-class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, ButtonData>> {
-  render() {
-    const { data } = this.props;
-    const styles = getStyles(config.theme2, data);
+const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) => {
+  const styles = useStyles2(getStyles, data);
 
-    const onClick = () => {
-      if (data?.api && data?.api?.endpoint) {
-        callApi(data.api);
-      }
-    };
+  const [isLoading, setIsLoading] = React.useState(false);
 
-    return (
-      <Button type="submit" variant={data?.style?.variant} onClick={onClick} className={styles.button}>
+  const updateLoadingStateCallback = (loading: boolean) => {
+    setIsLoading(loading);
+  };
+
+  const onClick = () => {
+    if (data?.api && data?.api?.endpoint) {
+      setIsLoading(true);
+      callApi(data.api, updateLoadingStateCallback);
+    }
+  };
+
+  return (
+    <Button type="submit" variant={data?.style?.variant} onClick={onClick} className={styles.button}>
+      <span>
+        {isLoading && <Spinner inline={true} className={styles.buttonSpinner} />}
         {data?.text}
-      </Button>
-    );
-  }
-}
+      </span>
+    </Button>
+  );
+};
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, data: ButtonData | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, data: ButtonData | undefined) => ({
   button: css({
     height: '100%',
     width: '100%',
@@ -67,18 +73,22 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data: ButtonData | undefi
 
     '> span': {
       display: 'inline-grid',
+      gridAutoFlow: 'column',
       textAlign: data?.align,
       fontSize: `${data?.size}px`,
       color: data?.color,
     },
   }),
-}));
+  buttonSpinner: css({
+    marginRight: theme.spacing(0.5),
+  }),
+});
 
 export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   id: 'button',
   name: 'Button',
   description: 'Button',
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   standardEditorConfig: {
     background: false,
@@ -137,7 +147,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
     const data: ButtonData = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
       align: cfg.align ?? Align.Center,
-      size: cfg.size,
+      size: cfg.size ?? 14,
       api: getCfgApi(),
       style: cfg?.style ?? defaultStyleConfig,
     };

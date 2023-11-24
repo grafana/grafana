@@ -19,6 +19,12 @@ var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
 )
 
+const (
+	graphVisType data.VisType = "graph"
+	tableVisType data.VisType = "table"
+	logsVisType  data.VisType = "logs"
+)
+
 func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
 	return parse(buf, statusCode, query)
 }
@@ -43,9 +49,13 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 	result := response.Results[0]
 	if result.Error != "" {
 		return &backend.DataResponse{Error: fmt.Errorf(result.Error)}
-	} else {
-		return &backend.DataResponse{Frames: transformRows(result.Series, *query)}
 	}
+
+	if query.ResultFormat == "table" {
+		return &backend.DataResponse{Frames: transformRowsForTable(result.Series, *query)}
+	}
+
+	return &backend.DataResponse{Frames: transformRowsForTimeSeries(result.Series, *query)}
 }
 
 func parseJSON(buf io.Reader) (models.Response, error) {
@@ -59,20 +69,141 @@ func parseJSON(buf io.Reader) (models.Response, error) {
 	return response, err
 }
 
-func transformRows(rows []models.Row, query models.Query) data.Frames {
+func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
+	if len(rows) == 0 {
+		return make([]*data.Frame, 0)
+	}
+
+	frames := make([]*data.Frame, 0, 1)
+
+	newFrame := data.NewFrame(rows[0].Name)
+	newFrame.Meta = &data.FrameMeta{
+		ExecutedQueryString:    query.RawQuery,
+		PreferredVisualization: getVisType(query.ResultFormat),
+	}
+
+	conLen := len(rows[0].Columns)
+	if rows[0].Columns[0] == "time" {
+		newFrame.Fields = append(newFrame.Fields, newTimeField(rows))
+	} else {
+		newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 0, 1)...)
+	}
+
+	newFrame.Fields = append(newFrame.Fields, newTagField(rows, nil)...)
+	newFrame.Fields = append(newFrame.Fields, newValueFields(rows, nil, 1, conLen)...)
+
+	frames = append(frames, newFrame)
+	return frames
+}
+
+func newTimeField(rows []models.Row) *data.Field {
+	var timeArray []time.Time
+	for _, row := range rows {
+		for _, valuePair := range row.Values {
+			timestamp, timestampErr := parseTimestamp(valuePair[0])
+			// we only add this row if the timestamp is valid
+			if timestampErr != nil {
+				continue
+			}
+
+			timeArray = append(timeArray, timestamp)
+		}
+	}
+
+	timeField := data.NewField("Time", nil, timeArray)
+	return timeField
+}
+
+func newTagField(rows []models.Row, labels data.Labels) []*data.Field {
+	fields := make([]*data.Field, 0, len(rows[0].Tags))
+
+	for key := range rows[0].Tags {
+		tagField := data.NewField(key, labels, []*string{})
+		for _, row := range rows {
+			for range row.Values {
+				value := row.Tags[key]
+				tagField.Append(&value)
+			}
+		}
+		tagField.SetConfig(&data.FieldConfig{DisplayNameFromDS: key})
+		fields = append(fields, tagField)
+	}
+
+	return fields
+}
+
+func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEnd int) []*data.Field {
+	fields := make([]*data.Field, 0)
+
+	for colIdx := colIdxStart; colIdx < colIdxEnd; colIdx++ {
+		var valueField *data.Field
+		var floatArray []*float64
+		var stringArray []*string
+		var boolArray []*bool
+
+		for _, row := range rows {
+			valType := typeof(row.Values, colIdx)
+
+			for _, valuePair := range row.Values {
+				switch valType {
+				case "string":
+					value, ok := valuePair[colIdx].(string)
+					if ok {
+						stringArray = append(stringArray, &value)
+					} else {
+						stringArray = append(stringArray, nil)
+					}
+				case "json.Number":
+					value := parseNumber(valuePair[colIdx])
+					floatArray = append(floatArray, value)
+				case "bool":
+					value, ok := valuePair[colIdx].(bool)
+					if ok {
+						boolArray = append(boolArray, &value)
+					} else {
+						boolArray = append(boolArray, nil)
+					}
+				case "null":
+					floatArray = append(floatArray, nil)
+				}
+			}
+
+			switch valType {
+			case "string":
+				valueField = data.NewField(row.Columns[colIdx], labels, stringArray)
+			case "json.Number":
+				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+			case "bool":
+				valueField = data.NewField(row.Columns[colIdx], labels, boolArray)
+			case "null":
+				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+			}
+
+			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: row.Columns[colIdx]})
+		}
+		fields = append(fields, valueField)
+	}
+
+	return fields
+}
+
+func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Frames {
 	// pre-allocate frames - this can save many allocations
 	cols := 0
 	for _, row := range rows {
 		cols += len(row.Columns)
 	}
-	frames := make([]*data.Frame, 0, len(rows)+cols)
+
+	if len(rows) == 0 {
+		return make([]*data.Frame, 0)
+	}
+
+	// Preallocate for the worst-case scenario
+	frames := make([]*data.Frame, 0, len(rows)*len(rows[0].Columns))
 
 	// frameName is pre-allocated. So we can reuse it, saving memory.
 	// It's sized for a reasonably-large name, but will grow if needed.
 	frameName := make([]byte, 0, 128)
-
-	retentionPolicyQuery := isRetentionPolicyQuery(query)
-	tagValuesQuery := isTagValuesQuery(query)
 
 	for _, row := range rows {
 		var hasTimeCol = false
@@ -84,7 +215,7 @@ func transformRows(rows []models.Row, query models.Query) data.Frames {
 		}
 
 		if !hasTimeCol {
-			newFrame := newFrameWithoutTimeField(row, retentionPolicyQuery, tagValuesQuery)
+			newFrame := newFrameWithoutTimeField(row, query)
 			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
@@ -155,37 +286,16 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 
 	name := string(formatFrameName(row, column, query, frameName[:]))
 	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-	return newDataFrame(name, query.RawQuery, timeField, valueField)
+	return newDataFrame(name, query.RawQuery, timeField, valueField, getVisType(query.ResultFormat))
 }
 
-func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
+func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	var values []string
 
-	if retentionPolicyQuery {
-		values = make([]string, 1, len(row.Values))
-	} else {
-		values = make([]string, 0, len(row.Values))
-	}
-
 	for _, valuePair := range row.Values {
-		if tagValuesQuery {
+		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
 			if len(valuePair) >= 2 {
 				values = append(values, valuePair[1].(string))
-			}
-		} else if retentionPolicyQuery {
-			// We want to know whether the given retention policy is the default one or not.
-			// If it is default policy then we should add it to the beginning.
-			// The index 4 gives us if that policy is default or not.
-			// https://docs.influxdata.com/influxdb/v1.8/query_language/explore-schema/#show-retention-policies
-			// Only difference is v0.9. In that version we don't receive shardGroupDuration value.
-			// https://archive.docs.influxdata.com/influxdb/v0.9/query_language/schema_exploration/#show-retention-policies
-			// Since it is always the last value we will check that last value always.
-			if len(valuePair) >= 1 {
-				if valuePair[len(row.Columns)-1].(bool) {
-					values[0] = valuePair[0].(string)
-				} else {
-					values = append(values, valuePair[0].(string))
-				}
 			}
 		} else {
 			if len(valuePair) >= 1 {
@@ -198,10 +308,11 @@ func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValu
 	return data.NewFrame(row.Name, field)
 }
 
-func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field) *data.Frame {
+func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field, visType data.VisType) *data.Frame {
 	frame := data.NewFrame(name, timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		ExecutedQueryString: queryString,
+		ExecutedQueryString:    queryString,
+		PreferredVisualization: visType,
 	}
 
 	return frame
@@ -209,7 +320,7 @@ func newDataFrame(name string, queryString string, timeField *data.Field, valueF
 
 func formatFrameName(row models.Row, column string, query models.Query, frameName []byte) []byte {
 	if query.Alias == "" {
-		return buildFrameNameFromQuery(row, column, frameName)
+		return buildFrameNameFromQuery(row, column, frameName, query.ResultFormat)
 	}
 	nameSegment := strings.Split(row.Name, ".")
 
@@ -220,7 +331,7 @@ func formatFrameName(row models.Row, column string, query models.Query, frameNam
 		aliasFormat = strings.Replace(aliasFormat, "$", "", 1)
 
 		if aliasFormat == "m" || aliasFormat == "measurement" {
-			return []byte(query.Measurement)
+			return []byte(row.Name)
 		}
 		if aliasFormat == "col" {
 			return []byte(column)
@@ -247,9 +358,11 @@ func formatFrameName(row models.Row, column string, query models.Query, frameNam
 	return result
 }
 
-func buildFrameNameFromQuery(row models.Row, column string, frameName []byte) []byte {
-	frameName = append(frameName, row.Name...)
-	frameName = append(frameName, '.')
+func buildFrameNameFromQuery(row models.Row, column string, frameName []byte, resultFormat string) []byte {
+	if resultFormat != "table" {
+		frameName = append(frameName, row.Name...)
+		frameName = append(frameName, '.')
+	}
 	frameName = append(frameName, column...)
 
 	if len(row.Tags) > 0 {
@@ -257,6 +370,7 @@ func buildFrameNameFromQuery(row models.Row, column string, frameName []byte) []
 		first := true
 		for k, v := range row.Tags {
 			if !first {
+				frameName = append(frameName, ',')
 				frameName = append(frameName, ' ')
 			} else {
 				first = false
@@ -323,10 +437,13 @@ func parseNumber(value any) *float64 {
 	return &fvalue
 }
 
-func isTagValuesQuery(query models.Query) bool {
-	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES"))
-}
-
-func isRetentionPolicyQuery(query models.Query) bool {
-	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW RETENTION POLICIES"))
+func getVisType(resFormat string) data.VisType {
+	switch resFormat {
+	case "table":
+		return tableVisType
+	case "logs":
+		return logsVisType
+	default:
+		return graphVisType
+	}
 }

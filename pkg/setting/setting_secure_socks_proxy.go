@@ -3,7 +3,6 @@ package setting
 import (
 	"errors"
 
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"gopkg.in/ini.v1"
 )
 
@@ -43,21 +42,5 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 		return s, errors.New("proxy address required")
 	}
 
-	setDefaultProxyCli(s)
-
 	return s, nil
-}
-
-// setDefaultProxyCli overrides the default proxy cli for the sdk
-//
-// Note: Not optimal changing global state, but hard to not do in this case.
-func setDefaultProxyCli(cfg SecureSocksDSProxySettings) {
-	sdkproxy.Cli = sdkproxy.NewWithCfg(&sdkproxy.ClientCfg{
-		Enabled:      cfg.Enabled,
-		ClientCert:   cfg.ClientCert,
-		ClientKey:    cfg.ClientKey,
-		ServerName:   cfg.ServerName,
-		RootCA:       cfg.RootCA,
-		ProxyAddress: cfg.ProxyAddress,
-	})
 }

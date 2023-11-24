@@ -120,6 +120,8 @@ To filter on more columns, click the plus (`+`) button to the right of the condi
 
 To remove a filter, click the `x` button next to that filter's dropdown.
 
+After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column.
+
 ### Group results
 
 To group results by column, toggle the **Group** switch at the top of the editor.

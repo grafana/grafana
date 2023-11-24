@@ -143,6 +143,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         onClose={() => setLabelBrowserVisible(false)}
         onChange={onChangeInternal}
         onRunQuery={onRunQuery}
+        timeRange={timeRange}
       />
       <EditorHeader>
         <Stack gap={1}>
@@ -176,7 +177,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             variant={dataIsStale ? 'primary' : 'secondary'}
             size="sm"
             onClick={onRunQuery}
-            icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+            icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
             disabled={data?.state === LoadingState.Loading}
           >
             {queries && queries.length > 1 ? `Run queries` : `Run query`}
@@ -196,6 +197,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
             showExplain={explain}
+            timeRange={timeRange}
           />
         )}
         <LokiQueryBuilderOptions

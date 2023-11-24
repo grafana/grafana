@@ -32,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -165,7 +165,7 @@ type scenarioContext struct {
 	url                     string
 	userAuthTokenService    *authtest.FakeUserAuthTokenService
 	sqlStore                db.DB
-	authInfoService         *logintest.AuthInfoServiceFake
+	authInfoService         *authinfotest.FakeService
 	dashboardVersionService dashver.Service
 	userService             user.Service
 	ctxHdlr                 *contexthandler.ContextHandler
@@ -262,8 +262,8 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	if features == nil {
 		features = featuremgmt.WithFeatures()
 	}
-	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	// nolint:staticcheck
+	cfg := setting.NewCfgWithFeatures(features.IsEnabledGlobally)
 
 	return &HTTPServer{
 		Cfg:             cfg,
@@ -271,7 +271,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		License:         &licensing.OSSLicensingService{},
 		AccessControl:   acimpl.ProvideAccessControl(cfg),
 		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
-		authInfoService: &logintest.AuthInfoServiceFake{
+		authInfoService: &authinfotest.FakeService{
 			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
 		},
 	}

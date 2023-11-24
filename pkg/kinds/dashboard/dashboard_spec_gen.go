@@ -152,6 +152,8 @@ const (
 	VariableSortN4 VariableSort = 4
 	VariableSortN5 VariableSort = 5
 	VariableSortN6 VariableSort = 6
+	VariableSortN7 VariableSort = 7
+	VariableSortN8 VariableSort = 8
 )
 
 // Defines values for VariableType.
@@ -187,6 +189,9 @@ type AnnotationPanelFilter struct {
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 type AnnotationQuery struct {
+	// Set to 1 for the standard annotation query all dashboards have by default.
+	BuiltIn *float32 `json:"builtIn,omitempty"`
+
 	// Ref to a DataSource instance
 	Datasource DataSourceRef `json:"datasource"`
 
@@ -267,7 +272,7 @@ type Link struct {
 	Type LinkType `json:"type"`
 
 	// Link URL. Only required/valid if the type is link
-	Url string `json:"url"`
+	Url *string `json:"url,omitempty"`
 }
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
@@ -957,6 +962,8 @@ type VariableModel struct {
 	// `4`: Numerical DESC
 	// `5`: Alphabetical Case Insensitive ASC
 	// `6`: Alphabetical Case Insensitive DESC
+	// `7`: Natural ASC
+	// `8`: Natural DESC
 	Sort *VariableSort `json:"sort,omitempty"`
 
 	// Dashboard variable type
@@ -998,6 +1005,8 @@ type VariableRefresh int
 // `4`: Numerical DESC
 // `5`: Alphabetical Case Insensitive ASC
 // `6`: Alphabetical Case Insensitive DESC
+// `7`: Natural ASC
+// `8`: Natural DESC
 type VariableSort int
 
 // Dashboard variable type

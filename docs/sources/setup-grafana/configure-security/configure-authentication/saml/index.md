@@ -194,6 +194,7 @@ The table below describes all SAML configuration options. Continue reading below
 | `assertion_attribute_org`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user organization                                                                                                             |                                                       |
 | `allowed_organizations`                                    | No       | List of comma- or space-separated organizations. User should be a member of at least one organization to log in.                                                                                             |                                                       |
 | `org_mapping`                                              | No       | List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `Viewer`, `Editor` or `Admin`.          |                                                       |
+| `role_values_none`                                         | No       | List of comma- or space-separated roles which will be mapped into the None role                                                                                                                              |                                                       |
 | `role_values_editor`                                       | No       | List of comma- or space-separated roles which will be mapped into the Editor role                                                                                                                            |                                                       |
 | `role_values_admin`                                        | No       | List of comma- or space-separated roles which will be mapped into the Admin role                                                                                                                             |                                                       |
 | `role_values_grafana_admin`                                | No       | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role                                                                                                       |                                                       |
@@ -364,6 +365,7 @@ Available in Grafana version 7.0 and later.
 Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
 1. In the configuration file, set [`assertion_attribute_role`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_role" >}}) option to the attribute name where the role information will be extracted from.
+1. Set the [`role_values_none`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_none" >}}) option to the values mapped to the `None` role.
 1. Set the [`role_values_editor`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_editor" >}}) option to the values mapped to the `Editor` role.
 1. Set the [`role_values_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_admin" >}}) option to the values mapped to the organization `Admin` role.
 1. Set the [`role_values_grafana_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_grafana_admin" >}}) option to the values mapped to the `Grafana Admin` role.
@@ -377,6 +379,7 @@ Example configuration:
 ```ini
 [auth.saml]
 assertion_attribute_role = role
+role_values_none = none, external
 role_values_editor = editor, developer
 role_values_admin = admin, operator
 role_values_grafana_admin = superadmin

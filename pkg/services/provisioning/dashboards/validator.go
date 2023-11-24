@@ -102,6 +102,7 @@ func (c *duplicateValidator) logWarnings(duplicatesByOrg map[int64]duplicateEntr
 
 		for id, usage := range duplicates.Titles {
 			if usage.Sum > 1 {
+				// nolint:staticcheck
 				c.logger.Warn("dashboard title is not unique in folder", "orgId", orgID, "title", id.title, "folderID", id.folderID, "times",
 					usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
 			}

@@ -78,6 +78,10 @@ export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
  */
 export interface AnnotationQuery {
   /**
+   * Set to 1 for the standard annotation query all dashboards have by default.
+   */
+  builtIn?: number;
+  /**
    * Datasource where the annotations data is
    */
   datasource: DataSourceRef;
@@ -113,6 +117,7 @@ export interface AnnotationQuery {
 }
 
 export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
+  builtIn: 0,
   enable: true,
   hide: false,
 };
@@ -228,6 +233,8 @@ export enum VariableHide {
  * `4`: Numerical DESC
  * `5`: Alphabetical Case Insensitive ASC
  * `6`: Alphabetical Case Insensitive DESC
+ * `7`: Natural ASC
+ * `8`: Natural DESC
  */
 export enum VariableSort {
   alphabeticalAsc = 1,
@@ -235,6 +242,8 @@ export enum VariableSort {
   alphabeticalCaseInsensitiveDesc = 6,
   alphabeticalDesc = 2,
   disabled = 0,
+  naturalAsc = 7,
+  naturalDesc = 8,
   numericalAsc = 3,
   numericalDesc = 4,
 }
@@ -296,7 +305,7 @@ export interface DashboardLink {
   /**
    * Link URL. Only required/valid if the type is link
    */
-  url: string;
+  url?: string;
 }
 
 export const defaultDashboardLink: Partial<DashboardLink> = {

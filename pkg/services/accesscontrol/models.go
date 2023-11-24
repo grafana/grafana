@@ -319,22 +319,9 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 }
 
 const (
-	GlobalOrgID                  = 0
-	FixedRolePrefix              = "fixed:"
-	FixedRoleUIDPrefix           = "fixed_"
-	ManagedRolePrefix            = "managed:"
-	BasicRolePrefix              = "basic:"
-	PluginRolePrefix             = "plugins:"
-	ExternalServiceRolePrefix    = "externalservice:"
-	BasicRoleUIDPrefix           = "basic_"
-	ExternalServiceRoleUIDPrefix = "externalservice_"
-	RoleGrafanaAdmin             = "Grafana Admin"
-
+	GlobalOrgID      = 0
 	GeneralFolderUID = "general"
-
-	// Basic Role None
-	BasicRoleNoneUID  = "basic_none"
-	BasicRoleNoneName = "basic:none"
+	RoleGrafanaAdmin = "Grafana Admin"
 
 	// Permission actions
 
@@ -409,7 +396,6 @@ const (
 
 	// Settings scope
 	ScopeSettingsAll  = "settings:*"
-	ScopeSettingsAuth = "settings:auth:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
 
 	// Team related actions
@@ -479,6 +465,10 @@ const (
 var (
 	// Team scope
 	ScopeTeamsID = Scope("teams", "id", Parameter(":teamId"))
+
+	ScopeSettingsOAuth = func(provider string) string {
+		return Scope("settings", "auth."+provider, "*")
+	}
 
 	// Annotation scopes
 	ScopeAnnotationsRoot             = "annotations"

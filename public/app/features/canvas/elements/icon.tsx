@@ -25,11 +25,11 @@ interface IconData {
 }
 
 // When a stoke is defined, we want the path to be in page units
-const svgStrokePathClass = css`
-  path {
-    vector-effect: non-scaling-stroke;
-  }
-`;
+const svgStrokePathClass = css({
+  path: {
+    vectorEffect: 'non-scaling-stroke',
+  },
+});
 
 export function IconDisplay(props: CanvasElementProps) {
   const { data } = props;
@@ -115,6 +115,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         editor: ResourceDimensionEditor,
         settings: {
           resourceType: 'icon',
+          maxFiles: 2000,
         },
       })
       .addCustomEditor({
