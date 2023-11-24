@@ -126,7 +126,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	// First, execute a readiness check to make sure the remote Alertmanager is ready.
 	am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
 	if err := am.checkReadiness(ctx); err != nil {
-		am.log.Error("unable to pass the readiness check", "err", err)
+		am.log.Error("Unable to pass the readiness check", "err", err)
 		return err
 	}
 	am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
@@ -142,56 +142,21 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	}
 
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-	keys, err := am.kvstore.GetAll(ctx, 1, "alertmanager")
-	if err != nil {
-		return err
-	}
-	silences, ok := keys[1]["silences"]
-	if !ok {
-		// TODO(santiago): do we really want to return an error?
-		return fmt.Errorf("state for silences not found")
-	}
-	notifications, ok := keys[1]["notifications"]
-	if !ok {
-		// TODO(santiago): do we really want to return an error?
-		return fmt.Errorf("state for notifications not found")
-	}
-	// TODO(santiago): borrar.
-	s, err := base64.StdEncoding.DecodeString(silences)
-	if err != nil {
-		return err
-	}
-	silencesPart := clusterpb.Part{
-		Key:  "silences",
-		Data: s,
-	}
-	fmt.Println("Silences:", string(s))
-	n, err := base64.StdEncoding.DecodeString(notifications)
-	if err != nil {
-		return err
-	}
-	nflogPart := clusterpb.Part{
-		Key:  "silences",
-		Data: s,
-	}
-	fmt.Println("Notifications:", string(n))
-	fs := clusterpb.FullState{
-		Parts: []clusterpb.Part{silencesPart, nflogPart},
-	}
-	b, err := fs.Marshal()
-	if err != nil {
-		return err
-	}
-	encoded := base64.StdEncoding.EncodeToString(b)
 
+	b, err := am.getFullState(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting the Alertmanager's full state: %w", err)
+	}
+
+	// Encode into base64 and send.
+	encoded := base64.StdEncoding.EncodeToString(b)
 	if ok := am.compareRemoteState(ctx, encoded); !ok {
-		// TODO(santiago): send the state the to remote AM.
 		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, encoded); err != nil {
 			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
+		} else {
+			am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 		}
 	}
-	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
-	// upload the state
 
 	return nil
 }
@@ -422,4 +387,39 @@ func (am *Alertmanager) compareRemoteState(ctx context.Context, state string) bo
 	}
 
 	return rs.State == state
+}
+
+// getFullState returns a slice of bytes containing the Alertmanager's silences and notification log,
+// representing its internal state.
+func (am *Alertmanager) getFullState(ctx context.Context) ([]byte, error) {
+	keys, err := am.kvstore.GetAll(ctx, 1, "alertmanager")
+	if err != nil {
+		return nil, err
+	}
+	silences, ok := keys[am.orgID]["silences"]
+	if !ok {
+		am.log.Warn("No silences found in kvstore", "org", am.orgID)
+	}
+	notifications, ok := keys[am.orgID]["notifications"]
+	if !ok {
+		am.log.Warn("No nflog found in kvstore", "org", am.orgID)
+	}
+
+	// Decode base64-encoded values and add them as protobuf parts.
+	s, err := base64.StdEncoding.DecodeString(silences)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding silences: %w", err)
+	}
+	n, err := base64.StdEncoding.DecodeString(notifications)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding nflog: %w", err)
+	}
+
+	fs := clusterpb.FullState{
+		Parts: []clusterpb.Part{
+			{Key: "silences", Data: s},
+			{Key: "notifications", Data: n},
+		},
+	}
+	return fs.Marshal()
 }

@@ -55,7 +55,7 @@ func TestNewAlertmanager(t *testing.T) {
 				TenantID:          test.tenantID,
 				BasicAuthPassword: test.password,
 			}
-			am, err := NewAlertmanager(cfg, test.orgID)
+			am, err := NewAlertmanager(cfg, test.orgID, nil)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -85,7 +85,7 @@ func TestApplyConfig(t *testing.T) {
 	cfg := AlertmanagerConfig{
 		URL: server.URL,
 	}
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewAlertmanager(cfg, 1, nil)
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{}
@@ -136,7 +136,7 @@ func TestIntegrationRemoteAlertmanagerApplyConfigOnlyUploadsOnce(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewAlertmanager(cfg, 1, nil)
 	require.NoError(t, err)
 
 	// We should have no configuration at first.
@@ -206,7 +206,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewAlertmanager(cfg, 1, nil)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -285,7 +285,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
 	}
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewAlertmanager(cfg, 1, nil)
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -347,7 +347,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		BasicAuthPassword: password,
 	}
 
-	am, err := NewAlertmanager(cfg, 1)
+	am, err := NewAlertmanager(cfg, 1, nil)
 	require.NoError(t, err)
 
 	// We should start with the default config.

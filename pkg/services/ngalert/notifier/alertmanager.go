@@ -93,13 +93,13 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	if err != nil {
 		return nil, err
 	}
-	silencesFilePath, err := fileStore.FilepathFor(ctx, silencesFilename)
+	silencesFilepath, err := fileStore.FilepathFor(ctx, silencesFilename)
 	if err != nil {
 		return nil, err
 	}
 
 	silencesOptions := maintenanceOptions{
-		filepath:             silencesFilePath,
+		filepath:             silencesFilepath,
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: silenceMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
