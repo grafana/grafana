@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const shouldUpdate = true
+const shouldUpdate = false
 
 func readJsonFile(filePath string) io.ReadCloser {
 	bytes, err := os.ReadFile(filepath.Join("testdata", filepath.Clean(filePath)+".json"))
@@ -103,7 +103,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			stringField,
 		)
-		stringFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		bool_true := true
 		bool_false := false
@@ -120,7 +119,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			boolField,
 		)
-		boolFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := verifyGoldenResponse(t, "response_with_nil_bools_and_nil_strings", query, "")
 
@@ -254,6 +252,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		testFrameWithoutMeta := data.NewFrame("series alias",
+			data.NewField("Time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+				}),
+			newField,
+		)
 		result := verifyGoldenResponse(t, "response", query, "")
 
 		t.Run("should parse aliases", func(t *testing.T) {
@@ -280,13 +285,14 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 			name = "alias sum"
-			testFrame.Name = name
+			testFrameWithoutMeta.Name = name
 			newField = data.NewField("Value", labels, []*float64{
 				util.Pointer(333.0),
 			})
-			testFrame.Fields[1] = newField
-			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
-			if diff := cmp.Diff(testFrame, result.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
+			testFrameWithoutMeta.Fields[1] = newField
+			testFrameWithoutMeta.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
+			testFrameWithoutMeta.Meta = nil
+			if diff := cmp.Diff(testFrameWithoutMeta, result.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
