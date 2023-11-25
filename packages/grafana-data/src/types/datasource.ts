@@ -580,8 +580,9 @@ export interface QueryFix {
   action?: QueryFixAction;
 }
 
+export type QueryFixType = 'ADD_FILTER' | 'ADD_FILTER_OUT' | 'ADD_STRING_FILTER' | 'ADD_STRING_FILTER_OUT';
 export interface QueryFixAction {
-  type: string;
+  type: QueryFixType | string;
   query?: string;
   preventSubmit?: boolean;
   options?: KeyValue<string>;

@@ -21,6 +21,7 @@ import { RefObject } from 'react';
 import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
+import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
 import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
@@ -30,6 +31,7 @@ import { getColorByKey } from '../utils/color-generator';
 
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
+import { TraceFlameGraphs } from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import SpanDetailRow from './SpanDetailRow';
 import {
@@ -75,6 +77,7 @@ type TVirtualizedTraceViewOwnProps = {
   timeZone: TimeZone;
   findMatchesIDs: Set<string> | TNil;
   trace: Trace;
+  traceToProfilesOptions?: TraceToProfilesOptions;
   spanBarOptions: SpanBarOptions | undefined;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   childrenToggle: (spanID: string) => void;
@@ -103,6 +106,10 @@ type TVirtualizedTraceViewOwnProps = {
   datasourceType: string;
   headerHeight: number;
   criticalPath: CriticalPathSection[];
+  traceFlameGraphs: TraceFlameGraphs;
+  setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
+  redrawListView: {};
+  setRedrawListView: (redraw: {}) => void;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
@@ -537,6 +544,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       detailToggle,
       spanNameColumnWidth,
       trace,
+      traceToProfilesOptions,
       timeZone,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
@@ -547,6 +555,9 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       createFocusSpanLink,
       theme,
       datasourceType,
+      traceFlameGraphs,
+      setTraceFlameGraphs,
+      setRedrawListView,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -571,6 +582,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           warningsToggle={detailWarningsToggle}
           stackTracesToggle={detailStackTracesToggle}
           span={span}
+          traceToProfilesOptions={traceToProfilesOptions}
           timeZone={timeZone}
           tagsToggle={detailTagsToggle}
           traceStartTime={trace.startTime}
@@ -582,6 +594,9 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           createFocusSpanLink={createFocusSpanLink}
           datasourceType={datasourceType}
           visibleSpanIds={visibleSpanIds}
+          traceFlameGraphs={traceFlameGraphs}
+          setTraceFlameGraphs={setTraceFlameGraphs}
+          setRedrawListView={setRedrawListView}
         />
       </div>
     );
@@ -611,7 +626,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   render() {
     const styles = getStyles();
-    const { scrollElement } = this.props;
+    const { scrollElement, redrawListView } = this.props;
 
     return (
       <>
@@ -627,6 +642,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           getIndexFromKey={this.getIndexFromKey}
           windowScroller={false}
           scrollElement={scrollElement}
+          redraw={redrawListView}
         />
         {this.props.topOfViewRef && ( // only for panel as explore uses content outline to scroll to top
           <ToolbarButton

@@ -76,7 +76,17 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
         />
       </Field>
       <Modal.ButtonRow>
-        <ClipboardButton icon="copy" variant="primary" getText={() => iframeHtml}>
+        <ClipboardButton
+          icon="copy"
+          variant="primary"
+          getText={() => iframeHtml}
+          onClipboardCopy={() => {
+            reportInteraction('dashboards_sharing_embed_copy_clicked', {
+              currentTimeRange: useCurrentTimeRange,
+              theme: selectedTheme,
+            });
+          }}
+        >
           <Trans i18nKey="share-modal.embed.copy">Copy to clipboard</Trans>
         </ClipboardButton>
       </Modal.ButtonRow>
