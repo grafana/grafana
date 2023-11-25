@@ -73,7 +73,7 @@ export function UserProfileEditPage({
 
   const extensionComponents = useMemo(() => {
     const { extensions } = getPluginComponentExtensions({
-      extensionPointId: PluginExtensionPoints.UserProfileSettings,
+      extensionPointId: PluginExtensionPoints.UserProfileTab,
       context: {},
     });
 
