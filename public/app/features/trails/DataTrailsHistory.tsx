@@ -139,29 +139,29 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     return (
       <div className={styles.container}>
         <div className={styles.heading}>Trail</div>
-        <div className={styles.container}>
-          {steps.map((step, index) => (
-            <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
-              <button
-                className={cx(
-                  // Base for all steps
-                  styles.step,
-                  // Specifics per step type
-                  styles.stepTypes[step.type],
-                  // To highlight selected step
-                  model.state.currentStep === index ? styles.stepSelected : '',
-                  // To alter the look of steps with distant non-directly preceding parent
-                  alternatePredecessorStyle.get(index) ?? '',
-                  // To remove direct link for steps that don't have a direct parent
-                  index !== step.trailState.parentIndex + 1 ? styles.stepHasIndirectParent : '',
-                  // To darken steps that aren't the current step's ancesters
-                  !ancestry.has(index) ? styles.stepIsNotAncestorOfCurrent : ''
-                )}
-                onClick={() => trail.goBackToStep(step)}
-              ></button>
-            </Tooltip>
-          ))}
-        </div>
+        {steps.map((step, index) => (
+          <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
+            <button
+              className={cx(
+                // Base for all steps
+                styles.step,
+                // Specifics per step type
+                styles.stepTypes[step.type],
+                // To highlight selected step
+                model.state.currentStep === index ? styles.stepSelected : '',
+                // To alter the look of steps with distant non-directly preceding parent
+                alternatePredecessorStyle.get(index) ?? '',
+                // To remove direct link for steps that don't have a direct parent
+                index !== step.trailState.parentIndex + 1 ? styles.stepOmitsDirectLeftLink : '',
+                // To remove the direct parent link on the start node as well
+                index === 0 ? styles.stepOmitsDirectLeftLink : '',
+                // To darken steps that aren't the current step's ancesters
+                !ancestry.has(index) ? styles.stepIsNotAncestorOfCurrent : ''
+              )}
+              onClick={() => trail.goBackToStep(step)}
+            ></button>
+          </Tooltip>
+        ))}
       </div>
     );
   };
@@ -207,11 +207,6 @@ function getStyles(theme: GrafanaTheme2) {
         background: theme.colors.primary.border,
         pointerEvents: 'none',
       },
-      '&:first-child': {
-        '&:before': {
-          display: 'none',
-        },
-      },
     }),
     stepSelected: css({
       '&:after': {
@@ -227,7 +222,7 @@ function getStyles(theme: GrafanaTheme2) {
         boxShadow: `0px 0px 0px 2px inset ${theme.colors.background.canvas}`,
       },
     }),
-    stepHasIndirectParent: css({
+    stepOmitsDirectLeftLink: css({
       '&:before': {
         background: 'none',
       },
