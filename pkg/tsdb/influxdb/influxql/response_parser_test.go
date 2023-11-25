@@ -2,6 +2,7 @@ package influxql
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -25,7 +26,7 @@ const shouldUpdate = false
 func readJsonFile(filePath string) io.ReadCloser {
 	bytes, err := os.ReadFile(filepath.Join("testdata", filePath+".json"))
 	if err != nil {
-		panic("cannot read the file")
+		panic(fmt.Sprintf("cannot read the file: %s", filePath))
 	}
 
 	return io.NopCloser(strings.NewReader(string(bytes)))
@@ -47,9 +48,11 @@ func generateQuery(query models.Query) *models.Query {
 
 func verifyGoldenResponse(t *testing.T, fileName string, query models.Query, goldenFileExt string) *backend.DataResponse {
 	rsp := ResponseParse(readJsonFile(fileName), 200, generateQuery(query))
-	golden := fileName + "." + goldenFileExt + "." + "golden"
+	if goldenFileExt != "" {
+		goldenFileExt += "."
+	}
+	golden := fileName + "." + goldenFileExt + "golden"
 	experimental.CheckGoldenJSONResponse(t, "testdata", golden, rsp, shouldUpdate)
-	// require.NoError(t, rsp.Error)
 
 	return rsp
 }
@@ -471,7 +474,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
-		result := verifyGoldenResponse(t, "error_response", query, "")
+		result := ResponseParse(readJsonFile("error_response"), 200, generateQuery(query))
 
 		require.EqualError(t, result.Error, "query-timeout limit exceeded")
 	})
@@ -479,7 +482,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser with top-level error", func(t *testing.T) {
 		query := models.Query{}
 
-		result := verifyGoldenResponse(t, "error_on_top_level_response", query, "")
+		result := ResponseParse(readJsonFile("error_on_top_level_response"), 200, generateQuery(query))
 
 		require.Nil(t, result.Frames)
 
