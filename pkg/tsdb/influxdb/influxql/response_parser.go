@@ -26,12 +26,12 @@ const (
 )
 
 func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
-	defer func() {
-		if err := buf.Close(); err != nil {
-			fmt.Println("Failed to close response body", "err", err)
-		}
-	}()
+	return parse(buf, statusCode, query)
+}
 
+// parse is the same as Parse, but without the io.ReadCloser (we don't need to
+// close the buffer)
+func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResponse {
 	response, jsonErr := parseJSON(buf)
 
 	if statusCode/100 != 2 {
@@ -222,7 +222,7 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 				if column == "time" {
 					continue
 				}
-				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName, len(frames))
+				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
 				frames = append(frames, newFrame)
 			}
 		}
@@ -231,7 +231,7 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 	return frames
 }
 
-func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte, frameIndex int) *data.Frame {
+func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte) *data.Frame {
 	var timeArray []time.Time
 	var floatArray []*float64
 	var stringArray []*string
@@ -286,7 +286,7 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 
 	name := string(formatFrameName(row, column, query, frameName[:]))
 	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-	return newDataFrame(name, query.RawQuery, timeField, valueField, getVisType(query.ResultFormat), frameIndex)
+	return newDataFrame(name, query.RawQuery, timeField, valueField, getVisType(query.ResultFormat))
 }
 
 func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
@@ -308,13 +308,11 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	return data.NewFrame(row.Name, field)
 }
 
-func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field, visType data.VisType, frameIndex int) *data.Frame {
+func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field, visType data.VisType) *data.Frame {
 	frame := data.NewFrame(name, timeField, valueField)
-	if frameIndex == 0 {
-		frame.Meta = &data.FrameMeta{
-			ExecutedQueryString:    queryString,
-			PreferredVisualization: visType,
-		}
+	frame.Meta = &data.FrameMeta{
+		ExecutedQueryString:    queryString,
+		PreferredVisualization: visType,
 	}
 
 	return frame
