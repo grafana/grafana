@@ -24,14 +24,7 @@
 //  
 //  
 //  
-//  Frame[1] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "Test raw query"
-//  }
+//  Frame[1] 
 //  Name: cpu.usage_iowait
 //  Dimensions: 2 Fields by 5 Rows
 //  +-------------------------------+----------------------+
@@ -105,14 +98,6 @@
     {
       "schema": {
         "name": "cpu.usage_iowait",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "Test raw query"
-        },
         "fields": [
           {
             "name": "Time",

@@ -20,14 +20,7 @@
 //  
 //  
 //  
-//  Frame[1] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "Test raw query"
-//  }
+//  Frame[1] 
 //  Name: alias logins.count
 //  Dimensions: 2 Fields by 1 Rows
 //  +-----------------------------------+----------------------------------------------------------------------------+
@@ -94,14 +87,6 @@
     {
       "schema": {
         "name": "alias logins.count",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "Test raw query"
-        },
         "fields": [
           {
             "name": "Time",
