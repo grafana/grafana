@@ -39,4 +39,5 @@ export enum DataTransformerID {
   timeSeriesTable = 'timeSeriesTable',
   formatTime = 'formatTime',
   formatString = 'formatString',
+  regression = 'regression',
 }

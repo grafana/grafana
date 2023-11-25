@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
@@ -59,7 +59,7 @@ import { changePanelState } from '../state/explorePane';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsTableWrap } from './LogsTableWrap';
+import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
@@ -543,7 +543,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       contextRow,
     } = this.state;
 
-    const styles = getStyles(theme, wrapLogMessage);
+    const tableHeight = getLogsTableHeight();
+    const styles = getStyles(theme, wrapLogMessage, tableHeight);
     const hasData = logRows && logRows.length > 0;
     const hasUnescapedContent = this.checkUnescapedContent(logRows);
 
@@ -727,7 +728,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
               clearDetectedFields={this.clearDetectedFields}
             />
           </div>
-          <div className={styles.logsSection}>
+          <div
+            className={cx(styles.logsSection, this.state.visualisationType === 'table' ? styles.logsTable : undefined)}
+          >
             {this.state.visualisationType === 'table' && hasData && (
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logs navigation and padding */}
@@ -821,7 +824,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
 export const Logs = withTheme2(UnthemedLogs);
 
-const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
+const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
     noData: css`
       > * {
@@ -858,6 +861,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       flex-direction: row;
       justify-content: space-between;
     `,
+    logsTable: css({
+      maxHeight: `${tableHeight}px`,
+    }),
     logRows: css`
       overflow-x: ${scrollableLogsContainer ? 'scroll;' : `${wrapLogMessage ? 'unset' : 'scroll'};`}
       overflow-y: visible;

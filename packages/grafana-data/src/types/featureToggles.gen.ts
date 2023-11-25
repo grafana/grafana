@@ -108,6 +108,7 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   traceToProfiles?: boolean;
+  tracesEmbeddedFlameGraph?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
@@ -116,7 +117,6 @@ export interface FeatureToggles {
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   reportingRetries?: boolean;
-  newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
   libraryPanelRBAC?: boolean;
@@ -165,4 +165,5 @@ export interface FeatureToggles {
   alertingSimplifiedRouting?: boolean;
   logRowsPopoverMenu?: boolean;
   pluginsSkipHostEnvVars?: boolean;
+  regressionTransformation?: boolean;
 }
