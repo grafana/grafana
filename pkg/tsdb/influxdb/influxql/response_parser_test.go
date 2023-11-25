@@ -24,7 +24,7 @@ import (
 const shouldUpdate = true
 
 func readJsonFile(filePath string) io.ReadCloser {
-	bytes, err := os.ReadFile(filepath.Join("testdata", filePath+".json"))
+	bytes, err := os.ReadFile(filepath.Join("testdata", filepath.Clean(filePath)+".json"))
 	if err != nil {
 		panic(fmt.Sprintf("cannot read the file: %s", filePath))
 	}
@@ -152,7 +152,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser should parse metricFindQueries->SHOW TAG VALUES normally", func(t *testing.T) {
-
 		query := models.Query{RawQuery: "SHOW TAG VALUES", RefID: "metricFindQuery"}
 		newField := data.NewField("Value", nil, []string{
 			"cpu-total", "cpu0", "cpu1",
