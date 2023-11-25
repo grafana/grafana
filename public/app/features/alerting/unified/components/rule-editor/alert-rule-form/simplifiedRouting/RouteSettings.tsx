@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
-import { Field, MultiSelect, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Field, FieldValidationMessage, InputControl, MultiSelect, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,
   mapMultiSelectValueToStrings,
+  promDurationValidator,
+  repeatIntervalValidator,
   stringToSelectableValue,
   stringsToSelectableValues,
 } from 'app/features/alerting/unified/utils/amroutes';
@@ -11,39 +15,31 @@ import {
 import { PromDurationInput } from '../../../notification-policies/PromDurationInput';
 import { getFormStyles } from '../../../notification-policies/formStyles';
 
-import { AMContactPoint } from './SimplifiedRouting';
-
 export interface RoutingSettingsProps {
-  onOverrideTimimgsChange: (value: boolean) => void;
-  onOverrideGroupingChange: (value: boolean) => void;
-  onChangeGrouping: (value: string[]) => void;
-  alertManagerContactPoint: AMContactPoint;
+  contactPointIndex: number;
 }
-export const RoutingSettings = ({
-  onOverrideGroupingChange,
-  onOverrideTimimgsChange,
-  alertManagerContactPoint,
-  onChangeGrouping,
-}: RoutingSettingsProps) => {
+export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => {
   const formStyles = useStyles2(getFormStyles);
+  const {
+    control,
+    watch,
+    register,
+    formState: { errors },
+    getValues,
+  } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
-  const { overrideGrouping, overrideTimings } = alertManagerContactPoint;
 
   return (
     <Stack direction="column">
       <Field label="Override grouping">
-        <Switch
-          id="override-grouping-toggle"
-          value={overrideGrouping}
-          onChange={(e) => onOverrideGroupingChange(e.currentTarget.checked)}
-        />
+        <Switch id="override-grouping-toggle" {...register(`contactPoints.${contactPointIndex}.overrideGrouping`)} />
       </Field>
-      {overrideGrouping && (
+      {watch(`contactPoints.${contactPointIndex}.overrideGrouping`) && (
         <Field
           label="Group by"
           description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the default notification policy."
         >
-          {/* <InputControl
+          <InputControl
             rules={{
               validate: (value) => {
                 if (!value || value.length === 0) {
@@ -51,48 +47,55 @@ export const RoutingSettings = ({
                 }
                 return true;
               },
-            }} */}
-          {/* render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => ( */}
-          <>
-            <MultiSelect
-              aria-label="Group by"
-              // {...field}
-              // invalid={Boolean(error)}
-              value={stringsToSelectableValues(alertManagerContactPoint.groupBy)}
-              allowCustomValue
-              className={formStyles.input}
-              onCreateOption={(opt: string) => {
-                setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
-                onChangeGrouping([...(alertManagerContactPoint?.groupBy ?? []), opt]);
-              }}
-              onChange={(value) => onChangeGrouping(mapMultiSelectValueToStrings(value))}
-              options={[...commonGroupByOptions, ...groupByOptions]}
-            />
-            {/* {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>} */}
-          </>
-          {/* )} */}
-          {/* name="groupBy"
-          control={control} */}
-          {/* /> */}
+            }}
+            render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
+              <>
+                <MultiSelect
+                  aria-label="Group by"
+                  {...field}
+                  invalid={Boolean(error)}
+                  allowCustomValue
+                  className={formStyles.input}
+                  onCreateOption={(opt: string) => {
+                    setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
+
+                    // @ts-ignore-check: react-hook-form made me do this
+                    setValue(`contactPoints.${contactPointIndex}.groupBy`, [...field.value, opt]);
+                  }}
+                  onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
+                  options={[...commonGroupByOptions, ...groupByOptions]}
+
+                  // value={stringsToSelectableValues(groupBy)}
+                  // allowCustomValue
+                  // className={formStyles.input}
+                  // onCreateOption={(opt: string) => {
+                  //   setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
+                  //   onChangeGrouping([...(groupBy ?? []), opt]);
+                  // }}
+                  // onChange={(value) => onChangeGrouping(mapMultiSelectValueToStrings(value))}
+                  // options={[...commonGroupByOptions, ...groupByOptions]}
+                />
+                {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
+              </>
+            )}
+            name={`contactPoints.${contactPointIndex}.groupBy`}
+            control={control}
+          />
         </Field>
       )}
       <Field label="Override timings">
-        <Switch
-          id="override-timings-toggle"
-          value={overrideTimings}
-          onChange={(e) => onOverrideTimimgsChange(e.currentTarget.checked)}
-        />
+        <Switch id="override-timings-toggle" {...register(`contactPoints.${contactPointIndex}.overrideTimings`)} />
       </Field>
-      {overrideTimings && (
+      {watch(`contactPoints.${contactPointIndex}.overrideTimings`) && (
         <>
           <Field
             label="Group wait"
             description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
-            // invalid={!!errors.groupWaitValue}
-            // error={errors.groupWaitValue?.message}
+            invalid={!!errors.contactPoints?.[contactPointIndex]?.groupWaitValue}
+            error={errors.contactPoints?.[contactPointIndex]?.groupWaitValue?.message}
           >
             <PromDurationInput
-              // {...register('groupWaitValue', { validate: promDurationValidator })}
+              {...register(`contactPoints.${contactPointIndex}.groupWaitValue`, { validate: promDurationValidator })}
               aria-label="Group wait value"
               className={formStyles.promDurationInput}
             />
@@ -100,11 +103,13 @@ export const RoutingSettings = ({
           <Field
             label="Group interval"
             description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
-            // invalid={!!errors.groupIntervalValue}
-            // error={errors.groupIntervalValue?.message}
+            invalid={!!errors.contactPoints?.[contactPointIndex]?.groupIntervalValue}
+            error={errors.contactPoints?.[contactPointIndex]?.groupIntervalValue?.message}
           >
             <PromDurationInput
-              // {...register('groupIntervalValue', { validate: promDurationValidator })}
+              {...register(`contactPoints.${contactPointIndex}.groupIntervalValue`, {
+                validate: promDurationValidator,
+              })}
               aria-label="Group interval value"
               className={formStyles.promDurationInput}
             />
@@ -112,16 +117,16 @@ export const RoutingSettings = ({
           <Field
             label="Repeat interval"
             description="The waiting time to resend an alert after they have successfully been sent."
-            // invalid={!!errors.repeatIntervalValue}
-            // error={errors.repeatIntervalValue?.message}
+            invalid={!!errors.contactPoints?.[contactPointIndex]?.repeatIntervalValue}
+            error={errors.contactPoints?.[contactPointIndex]?.repeatIntervalValue?.message}
           >
             <PromDurationInput
-              // {...register('repeatIntervalValue', {
-              //   validate: (value: string) => {
-              //     const groupInterval = getValues('groupIntervalValue');
-              //     return repeatIntervalValidator(value, groupInterval);
-              //   },
-              // })}
+              {...register(`contactPoints.${contactPointIndex}.repeatIntervalValue`, {
+                validate: (value: string) => {
+                  const groupInterval = getValues(`contactPoints.${contactPointIndex}.repeatIntervalValue`);
+                  return repeatIntervalValidator(value, groupInterval);
+                },
+              })}
               aria-label="Repeat interval value"
               className={formStyles.promDurationInput}
             />

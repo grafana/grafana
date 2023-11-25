@@ -1,32 +1,44 @@
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 
-import { Field, MultiSelect, useStyles2 } from '@grafana/ui';
+import { Field, InputControl, MultiSelect, useStyles2 } from '@grafana/ui';
 import { useMuteTimingOptions } from 'app/features/alerting/unified/hooks/useMuteTimingOptions';
-import { mapMultiSelectValueToStrings, stringsToSelectableValues } from 'app/features/alerting/unified/utils/amroutes';
+import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { mapMultiSelectValueToStrings } from 'app/features/alerting/unified/utils/amroutes';
 
 import { getFormStyles } from '../../../notification-policies/formStyles';
 
-interface MuteTimingFieldsProps {
-  onChange: (value: string[]) => void;
-  muteTimmings: string[];
+export interface MuteTimingFieldsProps {
+  contactPointIndex: number;
 }
 
-export function MuteTimingFields({ onChange, muteTimmings }: MuteTimingFieldsProps) {
+export function MuteTimingFields({ contactPointIndex }: MuteTimingFieldsProps) {
   const styles = useStyles2(getFormStyles);
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<RuleFormValues>();
 
   const muteTimingOptions = useMuteTimingOptions();
   return (
     <Field
-      data-testid="am-mute-timing-select"
-      description="Select a mute timing to define when not to send notification for this alert rule"
       label="Mute timings"
+      data-testid="am-mute-timing-select"
+      description="Add mute timing to policy"
+      invalid={!!errors.contactPoints?.[contactPointIndex]?.muteTimeIntervals}
     >
-      <MultiSelect
-        aria-label="Mute timings"
-        className={styles.input}
-        onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-        options={muteTimingOptions}
-        value={stringsToSelectableValues(muteTimmings)}
+      <InputControl
+        render={({ field: { onChange, ref, ...field } }) => (
+          <MultiSelect
+            aria-label="Mute timings"
+            {...field}
+            className={styles.input}
+            onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
+            options={muteTimingOptions}
+          />
+        )}
+        control={control}
+        name={`contactPoints.${contactPointIndex}.muteTimeIntervals`}
       />
     </Field>
   );

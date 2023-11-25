@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { createAction, createReducer } from '@reduxjs/toolkit';
-import React, { useEffect, useReducer } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CollapsableSection, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -20,14 +19,14 @@ import { RoutingSettings } from './RouteSettings';
 
 export interface AMContactPoint {
   alertManager: AlertManagerDataSource;
-  selectedContactPoint?: string;
+  selectedContactPoint: string;
   muteTimeIntervals: string[];
   overrideGrouping: boolean;
-  groupBy?: string[];
+  groupBy: string[];
   overrideTimings: boolean;
-  groupWaitValue?: string;
-  groupIntervalValue?: string;
-  repeatIntervalValue?: string;
+  groupWaitValue: string;
+  groupIntervalValue: string;
+  repeatIntervalValue: string;
 }
 
 export const selectContactPoint = createAction<{ receiver: string | undefined; alertManager: AlertManagerDataSource }>(
@@ -51,16 +50,20 @@ export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) =>
   builder.addCase(selectContactPoint, (state, action) => {
     const { receiver, alertManager } = action.payload;
     const newContactPoint: AMContactPoint = {
-      selectedContactPoint: receiver,
+      selectedContactPoint: receiver ?? '',
       alertManager,
       overrideGrouping: false,
       muteTimeIntervals: [],
       overrideTimings: false,
+      groupBy: [],
+      groupWaitValue: '',
+      groupIntervalValue: '',
+      repeatIntervalValue: '',
     };
     const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManager.name);
 
     if (existingContactPoint) {
-      existingContactPoint.selectedContactPoint = receiver;
+      existingContactPoint.selectedContactPoint = receiver ?? '';
     } else {
       state.push(newContactPoint);
     }
@@ -72,31 +75,15 @@ export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) =>
       existingContactPoint.muteTimeIntervals = muteTimings;
     }
   });
-  builder.addCase(updateOverrideGrouping, (state, action) => {
-    const { overrideGrouping, alertManagerName } = action.payload;
-    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManagerName);
-    if (existingContactPoint) {
-      existingContactPoint.overrideGrouping = overrideGrouping;
-    }
-  });
-  builder.addCase(updateOverrideTimimgs, (state, action) => {
-    const { overrideTimimgs, alertManagerName } = action.payload;
-    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManagerName);
-    if (existingContactPoint) {
-      existingContactPoint.overrideTimings = overrideTimimgs;
-    }
-  });
-  builder.addCase(updateGrouping, (state, action) => {
-    const { groupBy, alertManagerName } = action.payload;
-    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManagerName);
-    if (existingContactPoint) {
-      existingContactPoint.groupBy = groupBy;
-    }
-  });
 });
 
-export function SimplifiedRouting() {
-  const { getValues, setValue } = useFormContext<RuleFormValues>();
+export interface SimplifiedRoutingProps {
+  toggleOpenRoutingSettings: (nextValue: boolean) => void;
+  isOpenRoutingSettings: boolean;
+}
+
+export function SimplifiedRouting({ toggleOpenRoutingSettings, isOpenRoutingSettings }: SimplifiedRoutingProps) {
+  const { getValues } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
   const contactPointsInAlert = getValues('contactPoints');
 
@@ -116,46 +103,35 @@ export function SimplifiedRouting() {
     const selectedContactPoint = contactPointsInAlert?.find((cp) => cp.alertManager === am.name);
     return {
       alertManager: am,
-      selectedContactPoint: selectedContactPoint?.selectedContactPoint,
+      selectedContactPoint: selectedContactPoint?.selectedContactPoint ?? '',
       muteTimeIntervals: selectedContactPoint?.muteTimeIntervals ?? [],
       overrideGrouping: selectedContactPoint?.overrideGrouping ?? false,
       groupBy: [],
       overrideTimings: false,
+      groupWaitValue: '',
+      groupIntervalValue: '',
+      repeatIntervalValue: '',
     };
   });
 
   // use reducer to keep this alertManagersWithSelectedContactPoints in the state
-  const [alertManagersWithCPState, dispatch] = useReducer(receiversReducer, alertManagersWithSelectedContactPoints);
+  // const [alertManagersWithCPState, dispatch] = useReducer(receiversReducer, alertManagersWithSelectedContactPoints);
 
-  function getContactPointsForForm(alertManagersWithCP: AMContactPoint[]) {
-    return alertManagersWithCP.map((am) => {
-      return { ...am, alertManager: am.alertManager.name };
-    });
-  }
+  // function getContactPointsForForm(alertManagersWithCP: AMContactPoint[]) {
+  //   return alertManagersWithCP.map((am) => {
+  //     return { ...am, alertManager: am.alertManager.name };
+  //   });
+  // }
 
   // whenever we update the receiversState we have to update the form too
-  useEffect(() => {
-    const contactPointsForForm = getContactPointsForForm(alertManagersWithCPState);
-    setValue('contactPoints', contactPointsForForm, { shouldValidate: false });
-  }, [alertManagersWithCPState, setValue]);
+  // useEffect(() => {
+  //   const contactPointsForForm = getContactPointsForForm(alertManagersWithCPState);
+  //   setValue('contactPoints', contactPointsForForm, { shouldValidate: false });
+  // }, [alertManagersWithCPState, setValue]);
 
   const shouldShowAM = true;
 
-  function onChangeMuteTimings(value: string[], alertManagerName: string) {
-    dispatch(updateMuteTimings({ muteTimings: value, alertManagerName }));
-  }
-  function onChangeOverrideGrouping(value: boolean, alertManagerName: string) {
-    dispatch(updateOverrideGrouping({ overrideGrouping: value, alertManagerName }));
-  }
-  function onChangeOverrideTimimgs(value: boolean, alertManagerName: string) {
-    dispatch(updateOverrideTimimgs({ overrideTimimgs: value, alertManagerName }));
-  }
-  function onChangeGrouping(value: string[], alertManagerName: string) {
-    dispatch(updateGrouping({ groupBy: value, alertManagerName }));
-  }
-  const [isOpenRoutingSettings, toggleOpenRoutingSettings] = useToggle(false);
-
-  return alertManagersWithCPState.map((alertManagerContactPoint, index) => {
+  return alertManagersWithSelectedContactPoints.map((alertManagerContactPoint, index) => {
     const alertManagerName = alertManagerContactPoint.alertManager.name;
     return (
       <div key={index}>
@@ -178,11 +154,7 @@ export function SimplifiedRouting() {
           )}
           <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerName}>
             <Stack direction="row" gap={1} alignItems="center">
-              <ContactPointSelector
-                selectedReceiver={alertManagerContactPoint.selectedContactPoint}
-                dispatch={dispatch}
-                alertManager={alertManagerContactPoint.alertManager}
-              />
+              <ContactPointSelector contactPointIndex={index} />
               <LinkToContactPoints />
             </Stack>
             <CollapsableSection
@@ -192,16 +164,8 @@ export function SimplifiedRouting() {
               onToggle={toggleOpenRoutingSettings}
             >
               <Stack direction="column" gap={1}>
-                <MuteTimingFields
-                  onChange={(values) => onChangeMuteTimings(values, alertManagerName)}
-                  muteTimmings={alertManagerContactPoint.muteTimeIntervals}
-                />
-                <RoutingSettings
-                  onOverrideGroupingChange={(value) => onChangeOverrideGrouping(value, alertManagerName)}
-                  onOverrideTimimgsChange={(value) => onChangeOverrideTimimgs(value, alertManagerName)}
-                  onChangeGrouping={(values) => onChangeGrouping(values, alertManagerName)}
-                  alertManagerContactPoint={alertManagerContactPoint}
-                />
+                <MuteTimingFields contactPointIndex={index} />
+                <RoutingSettings contactPointIndex={index} />
               </Stack>
             </CollapsableSection>
           </AlertmanagerProvider>

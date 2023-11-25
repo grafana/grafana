@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -54,6 +55,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
 
   const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
+  const [isOpenRoutingSettings, toggleOpenRoutingSettings] = useToggle(false);
 
   return (
     <RuleEditorSection
@@ -127,7 +129,10 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
         {manualRouting ? (
           <div className={styles.simplifiedRouting}>
-            <SimplifiedRouting />
+            <SimplifiedRouting
+              isOpenRoutingSettings={isOpenRoutingSettings}
+              toggleOpenRoutingSettings={toggleOpenRoutingSettings}
+            />
           </div>
         ) : (
           shouldRenderPreview && (
