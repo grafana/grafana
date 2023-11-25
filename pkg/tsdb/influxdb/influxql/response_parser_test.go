@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const shouldUpdate = true
+const shouldUpdate = false
 
 func readJsonFile(filePath string) io.ReadCloser {
 	bytes, err := os.ReadFile(filepath.Join("testdata", filePath+".json"))
