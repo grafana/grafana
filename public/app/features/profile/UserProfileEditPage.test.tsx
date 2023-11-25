@@ -117,30 +117,47 @@ function getSelectors() {
   };
 }
 
+enum ExtensionPointComponentId {
+  One = '1',
+  Two = '2',
+  Three = '3',
+}
+
 enum ExtensionPointComponentTabs {
   One = '1',
   Two = '2',
 }
 
 const _createTabName = (tab: ExtensionPointComponentTabs) => `Tab ${tab}`;
+const _createTabContent = (tabId: ExtensionPointComponentId) => `this is settings for component ${tabId}`;
+
 const tabOneName = _createTabName(ExtensionPointComponentTabs.One);
 const tabTwoName = _createTabName(ExtensionPointComponentTabs.Two);
 
 const _createPluginExtensionPointComponent = (
-  id: string,
+  id: ExtensionPointComponentId,
   tab: ExtensionPointComponentTabs
 ): PluginExtensionComponent => ({
   id,
   type: PluginExtensionTypes.component,
   title: _createTabName(tab),
   description: '', // description isn't used here..
-  component: () => <p>{`this is settings for component ${id}`}</p>,
+  component: () => <p>{_createTabContent(id)}</p>,
   pluginId: 'grafana-plugin',
 });
 
-const PluginExtensionPointComponent1 = _createPluginExtensionPointComponent('1', ExtensionPointComponentTabs.One);
-const PluginExtensionPointComponent2 = _createPluginExtensionPointComponent('2', ExtensionPointComponentTabs.One);
-const PluginExtensionPointComponent3 = _createPluginExtensionPointComponent('3', ExtensionPointComponentTabs.Two);
+const PluginExtensionPointComponent1 = _createPluginExtensionPointComponent(
+  ExtensionPointComponentId.One,
+  ExtensionPointComponentTabs.One
+);
+const PluginExtensionPointComponent2 = _createPluginExtensionPointComponent(
+  ExtensionPointComponentId.Two,
+  ExtensionPointComponentTabs.One
+);
+const PluginExtensionPointComponent3 = _createPluginExtensionPointComponent(
+  ExtensionPointComponentId.Three,
+  ExtensionPointComponentTabs.Two
+);
 
 async function getTestContext(overrides: Partial<Props & { extensions: PluginExtensionComponent[] }> = {}) {
   const extensions = overrides.extensions || [];
@@ -310,6 +327,12 @@ describe('UserProfileEditPage', () => {
     });
 
     describe('and a plugin registers a component against the user profile settings extension point', () => {
+      const extensions = [
+        PluginExtensionPointComponent1,
+        PluginExtensionPointComponent2,
+        PluginExtensionPointComponent3,
+      ];
+
       it('should not show tabs when no components are registered', async () => {
         await getTestContext();
         const { extensionPointTabs } = getSelectors();
@@ -317,10 +340,7 @@ describe('UserProfileEditPage', () => {
       });
 
       it('should group registered components into tabs', async () => {
-        await getTestContext({
-          extensions: [PluginExtensionPointComponent1, PluginExtensionPointComponent2, PluginExtensionPointComponent3],
-        });
-
+        await getTestContext({ extensions });
         const { extensionPointTabs, extensionPointTab } = getSelectors();
 
         const _assertTab = (tabName: string, isDefault = false) => {
@@ -333,6 +353,44 @@ describe('UserProfileEditPage', () => {
         _assertTab('Core', true);
         _assertTab(tabOneName);
         _assertTab(tabTwoName);
+      });
+
+      it('should change the active tab when a tab is clicked and update the "tab" query param', async () => {
+        const mockUpdateQueryParams = jest.fn();
+        mockUseQueryParams.useQueryParams = () => [{}, mockUpdateQueryParams];
+
+        await getTestContext({ extensions });
+        const { extensionPointTab } = getSelectors();
+
+        /**
+         * Tab one has two extension components registered against it, they'll both be registered in the same tab
+         * Tab two only has one extension component registered against it.
+         */
+        const tabOneContent1 = _createTabContent(ExtensionPointComponentId.One);
+        const tabOneContent2 = _createTabContent(ExtensionPointComponentId.Two);
+        const tabTwoContent = _createTabContent(ExtensionPointComponentId.Three);
+
+        // core should be the default content
+        expect(screen.queryByText(tabOneContent1)).toBeNull();
+        expect(screen.queryByText(tabOneContent2)).toBeNull();
+        expect(screen.queryByText(tabTwoContent)).toBeNull();
+
+        await userEvent.click(extensionPointTab(tabOneName));
+
+        expect(mockUpdateQueryParams).toHaveBeenCalledTimes(1);
+        expect(mockUpdateQueryParams).toHaveBeenCalledWith({ tab: tabOneName.toLowerCase() });
+        expect(screen.queryByText(tabOneContent1)).not.toBeNull();
+        expect(screen.queryByText(tabOneContent2)).not.toBeNull();
+        expect(screen.queryByText(tabTwoContent)).toBeNull();
+
+        mockUpdateQueryParams.mockClear();
+        await userEvent.click(extensionPointTab(tabTwoName));
+
+        expect(mockUpdateQueryParams).toHaveBeenCalledTimes(1);
+        expect(mockUpdateQueryParams).toHaveBeenCalledWith({ tab: tabTwoName.toLowerCase() });
+        expect(screen.queryByText(tabOneContent1)).toBeNull();
+        expect(screen.queryByText(tabOneContent2)).toBeNull();
+        expect(screen.queryByText(tabTwoContent)).not.toBeNull();
       });
 
       it.each([tabOneName, tabOneName.toUpperCase(), tabOneName.toLowerCase()])(
