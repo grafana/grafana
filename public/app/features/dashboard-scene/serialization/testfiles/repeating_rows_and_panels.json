@@ -182,6 +182,7 @@
             "y": 26
           },
           "id": 30,
+          "title": "Text panel in collapsed row",
           "options": {
             "code": {
               "language": "plaintext",

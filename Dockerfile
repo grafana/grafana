@@ -3,7 +3,7 @@
 ARG BASE_IMAGE=alpine:3.18.3
 ARG JS_IMAGE=node:20-alpine3.18
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.20.10-alpine3.18
+ARG GO_IMAGE=golang:1.21.3-alpine3.18
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -47,6 +47,9 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
+
+# Include vendored dependencies
+COPY pkg/util/xorm/go.* pkg/util/xorm/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \

@@ -21,7 +21,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		uidScope := ScopeLibraryPanelsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 
-		if l.features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
+		if l.features.IsEnabledGlobally(featuremgmt.FlagLibraryPanelRBAC) {
 			entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))
 			entities.Delete("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler))
 			entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))
@@ -62,6 +62,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 
 	if cmd.FolderUID != nil {
 		if *cmd.FolderUID == "" {
+			// nolint:staticcheck
 			cmd.FolderID = 0
 			generalFolderUID := ac.GeneralFolderUID
 			cmd.FolderUID = &generalFolderUID
@@ -70,6 +71,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 			if err != nil || folder == nil {
 				return response.ErrOrFallback(http.StatusBadRequest, "failed to get folder", err)
 			}
+			// nolint:staticcheck
 			cmd.FolderID = folder.ID
 		}
 	}
@@ -79,7 +81,9 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
+	// nolint:staticcheck
 	if element.FolderID != 0 {
+		// nolint:staticcheck
 		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "failed to get folder", err)
@@ -173,7 +177,7 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 		return toLibraryElementError(err, "Failed to get library elements")
 	}
 
-	if l.features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagLibraryPanelRBAC) {
 		filteredPanels, err := l.filterLibraryPanelsByPermission(c, elementsResult.Elements)
 		if err != nil {
 			return toLibraryElementError(err, "Failed to evaluate permissions")
@@ -206,12 +210,14 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 
 	if cmd.FolderUID != nil {
 		if *cmd.FolderUID == "" {
+			// nolint:staticcheck
 			cmd.FolderID = 0
 		} else {
 			folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
 				return response.Error(http.StatusBadRequest, "failed to get folder", err)
 			}
+			// nolint:staticcheck
 			cmd.FolderID = folder.ID
 		}
 	}
@@ -221,7 +227,9 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 		return toLibraryElementError(err, "Failed to update library element")
 	}
 
+	// nolint:staticcheck
 	if element.FolderID != 0 {
+		// nolint:staticcheck
 		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
@@ -272,7 +280,7 @@ func (l *LibraryElementService) getByNameHandler(c *contextmodel.ReqContext) res
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	if l.features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagLibraryPanelRBAC) {
 		filteredElements, err := l.filterLibraryPanelsByPermission(c, elements)
 		if err != nil {
 			return toLibraryElementError(err, err.Error())

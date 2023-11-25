@@ -3420,7 +3420,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AddCommand"
+              "$ref": "#/definitions/AddAPIKeyCommand"
             }
           }
         ],
@@ -3883,6 +3883,29 @@
         }
       }
     },
+    "/dashboards/public-dashboards": {
+      "get": {
+        "description": "Get list of public dashboards",
+        "tags": [
+          "dashboard_public"
+        ],
+        "operationId": "listPublicDashboards",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listPublicDashboardsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerPublicError"
+          }
+        }
+      }
+    },
     "/dashboards/tags": {
       "get": {
         "tags": [
@@ -3903,32 +3926,171 @@
         }
       }
     },
-    "/dashboards/trim": {
-      "post": {
+    "/dashboards/uid/{dashboardUid}/public-dashboards": {
+      "get": {
+        "description": "Get public dashboard by dashboardUid",
         "tags": [
-          "dashboards"
+          "dashboard_public"
         ],
-        "summary": "Trim defaults from dashboard.",
-        "operationId": "trimDashboard",
+        "operationId": "getPublicDashboard",
         "parameters": [
+          {
+            "type": "string",
+            "name": "dashboardUid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerPublicError"
+          }
+        }
+      },
+      "post": {
+        "description": "Create public dashboard for a dashboard",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "dashboard_public"
+        ],
+        "operationId": "createPublicDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboardUid",
+            "in": "path",
+            "required": true
+          },
           {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/TrimDashboardCommand"
+              "$ref": "#/definitions/PublicDashboardDTO"
             }
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/trimDashboardResponse"
+            "$ref": "#/responses/createPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestPublicError"
           },
           "401": {
-            "$ref": "#/responses/unauthorisedError"
+            "$ref": "#/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenPublicError"
           },
           "500": {
-            "$ref": "#/responses/internalServerError"
+            "$ref": "#/responses/internalServerPublicError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{dashboardUid}/public-dashboards/{uid}": {
+      "delete": {
+        "description": "Delete public dashboard for a dashboard",
+        "tags": [
+          "dashboard_public"
+        ],
+        "operationId": "deletePublicDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboardUid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerPublicError"
+          }
+        }
+      },
+      "patch": {
+        "description": "Update public dashboard for a dashboard",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "dashboard_public"
+        ],
+        "operationId": "updatePublicDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboardUid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PublicDashboardDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updatePublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenPublicError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerPublicError"
           }
         }
       }
@@ -5085,216 +5247,6 @@
         }
       }
     },
-    "/datasources/{datasourceId}/disable-permissions": {
-      "post": {
-        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Disable permissions for a data source.",
-        "operationId": "disablePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/enable-permissions": {
-      "post": {
-        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Enable permissions for a data source.",
-        "operationId": "enablePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/permissions": {
-      "get": {
-        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use GET /api/access-control/datasources/:uid",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Get permissions for a data source.",
-        "operationId": "getAllPermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAllPermissionseResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Add permissions for a data source.",
-        "operationId": "addPermission",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "userId",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "builtinRole",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "permission",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/addPermissionResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/permissions/{permissionId}": {
-      "delete": {
-        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Remove permission for a data source.",
-        "operationId": "deletePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "permissionId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          }
-        }
-      }
-    },
     "/datasources/{id}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDataSourceByUID) instead",
@@ -6256,10 +6208,8 @@
         ],
         "summary": "Get custom permissions report.",
         "operationId": "getCustomPermissionsReport",
+        "deprecated": true,
         "responses": {
-          "200": {
-            "$ref": "#/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -6278,10 +6228,8 @@
         ],
         "summary": "Get custom permissions report in CSV format.",
         "operationId": "getCustomPermissionsCSV",
+        "deprecated": true,
         "responses": {
-          "200": {
-            "$ref": "#/responses/getCustomPermissionsReportResponse"
-          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -7718,6 +7666,124 @@
         }
       }
     },
+    "/public/dashboards/{accessToken}": {
+      "get": {
+        "description": "Get public dashboard for view",
+        "tags": [
+          "dashboard_public"
+        ],
+        "operationId": "viewPublicDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "accessToken",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/viewPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerPublicError"
+          }
+        }
+      }
+    },
+    "/public/dashboards/{accessToken}/annotations": {
+      "get": {
+        "description": "Get annotations for a public dashboard",
+        "tags": [
+          "dashboard_public"
+        ],
+        "operationId": "getPublicAnnotations",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "accessToken",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getPublicAnnotationsResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerPublicError"
+          }
+        }
+      }
+    },
+    "/public/dashboards/{accessToken}/panels/{panelId}/query": {
+      "post": {
+        "description": "Get results for a given panel on a public dashboard",
+        "tags": [
+          "dashboard_public"
+        ],
+        "operationId": "queryPublicDashboard",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "accessToken",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "panelId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/queryPublicDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestPublicError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedPublicError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenPublicError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundPublicError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerPublicError"
+          }
+        }
+      }
+    },
     "/query-history": {
       "get": {
         "description": "Returns a list of queries in the query history that matches the search criteria.\nQuery history search supports pagination. Use the `limit` parameter to control the maximum number of queries returned; the default limit is 100.\nYou can also use the `page` query parameter to fetch queries from any page other than the first one.",
@@ -8427,6 +8493,21 @@
           {
             "type": "string",
             "name": "layout",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "title",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "scaleFactor",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "includeTables",
             "in": "query"
           }
         ],
@@ -10780,6 +10861,41 @@
           }
         }
       }
+    },
+    "/v1/sso-settings/{key}": {
+      "delete": {
+        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "tags": [
+          "sso_settings"
+        ],
+        "summary": "Remove SSO Settings",
+        "operationId": "removeProviderSettings",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "key",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -10822,7 +10938,7 @@
         }
       }
     },
-    "AddCommand": {
+    "AddAPIKeyCommand": {
       "type": "object",
       "properties": {
         "name": {
@@ -10928,25 +11044,6 @@
             "Editor",
             "Admin"
           ]
-        }
-      }
-    },
-    "AddPermissionDTO": {
-      "type": "object",
-      "properties": {
-        "builtinRole": {
-          "type": "string"
-        },
-        "permission": {
-          "$ref": "#/definitions/DsPermissionType"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -11747,6 +11844,80 @@
         }
       }
     },
+    "Annotation": {
+      "type": "object",
+      "properties": {
+        "alertId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "alertName": {
+          "type": "string"
+        },
+        "avatarUrl": {
+          "type": "string"
+        },
+        "created": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
+        "email": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "login": {
+          "type": "string"
+        },
+        "newState": {
+          "type": "string"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "prevState": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeEnd": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AnnotationActions": {
       "type": "object",
       "properties": {
@@ -11761,6 +11932,67 @@
         }
       }
     },
+    "AnnotationEvent": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isRegion": {
+          "type": "boolean"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "source": {
+          "$ref": "#/definitions/AnnotationQuery"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeEnd": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "AnnotationPanelFilter": {
+      "type": "object",
+      "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
+      "properties": {
+        "exclude": {
+          "description": "Should the specified panels be included or excluded",
+          "type": "boolean"
+        },
+        "ids": {
+          "description": "Panel IDs that should be included or excluded",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "AnnotationPermission": {
       "type": "object",
       "properties": {
@@ -11769,6 +12001,72 @@
         },
         "organization": {
           "$ref": "#/definitions/AnnotationActions"
+        }
+      }
+    },
+    "AnnotationQuery": {
+      "description": "TODO docs\nFROM: AnnotationQuery in grafana-data/src/types/annotations.ts",
+      "type": "object",
+      "properties": {
+        "builtIn": {
+          "description": "Set to 1 for the standard annotation query all dashboards have by default.",
+          "type": "number",
+          "format": "float"
+        },
+        "datasource": {
+          "$ref": "#/definitions/DataSourceRef"
+        },
+        "enable": {
+          "description": "When enabled the annotation query is issued with every dashboard refresh",
+          "type": "boolean"
+        },
+        "filter": {
+          "$ref": "#/definitions/AnnotationPanelFilter"
+        },
+        "hide": {
+          "description": "Annotation queries can be toggled on or off at the top of the dashboard.\nWhen hide is true, the toggle is not shown in the dashboard.",
+          "type": "boolean"
+        },
+        "iconColor": {
+          "description": "Color to use for the annotation event markers",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of annotation.",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/definitions/AnnotationTarget"
+        },
+        "type": {
+          "description": "TODO -- this should not exist here, it is based on the --grafana-- datasource",
+          "type": "string"
+        }
+      }
+    },
+    "AnnotationTarget": {
+      "description": "TODO: this should be a regular DataQuery that depends on the selected dashboard\nthese match the properties of the \"grafana\" datasouce that is default in most dashboards",
+      "type": "object",
+      "properties": {
+        "limit": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "integer",
+          "format": "int64"
+        },
+        "matchAny": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "string"
         }
       }
     },
@@ -12636,7 +12934,7 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "ID of the folder where the library element is stored.",
+          "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -12836,53 +13134,6 @@
         }
       }
     },
-    "CustomPermissionsRecordDTO": {
-      "type": "object",
-      "properties": {
-        "customPermissions": {
-          "type": "string"
-        },
-        "granteeName": {
-          "type": "string"
-        },
-        "granteeType": {
-          "type": "string"
-        },
-        "granteeUrl": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isFolder": {
-          "type": "boolean"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "orgRole": {
-          "type": "string"
-        },
-        "slug": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "usersCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "DashboardACLInfoDTO": {
       "type": "object",
       "properties": {
@@ -12895,6 +13146,7 @@
           "format": "int64"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -13049,6 +13301,7 @@
           "format": "date-time"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -13148,27 +13401,15 @@
         "externalUrl": {
           "type": "string"
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "key": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
         "updated": {
           "type": "string",
           "format": "date-time"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -13390,80 +13631,17 @@
         }
       }
     },
-    "DataSourcePermissionRuleDTO": {
+    "DataSourceRef": {
+      "description": "Ref to a DataSource instance",
       "type": "object",
       "properties": {
-        "builtInRole": {
+        "type": {
+          "description": "The plugin type-id",
           "type": "string"
         },
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "datasourceId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isManaged": {
-          "type": "boolean"
-        },
-        "permission": {
-          "$ref": "#/definitions/DsPermissionType"
-        },
-        "permissionName": {
+        "uid": {
+          "description": "Specific datasource instance",
           "type": "string"
-        },
-        "team": {
-          "type": "string"
-        },
-        "teamAvatarUrl": {
-          "type": "string"
-        },
-        "teamEmail": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "userAvatarUrl": {
-          "type": "string"
-        },
-        "userEmail": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userLogin": {
-          "type": "string"
-        }
-      }
-    },
-    "DataSourcePermissionsDTO": {
-      "type": "object",
-      "properties": {
-        "datasourceId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "permissions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataSourcePermissionRuleDTO"
-          }
         }
       }
     },
@@ -13598,6 +13776,17 @@
         },
         "to": {
           "description": "Email address to notify.",
+          "type": "string"
+        }
+      }
+    },
+    "EmailDTO": {
+      "type": "object",
+      "properties": {
+        "recipient": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -14045,6 +14234,7 @@
           "type": "boolean"
         },
         "id": {
+          "description": "Deprecated: use Uid instead",
           "type": "integer",
           "format": "int64"
         },
@@ -14783,6 +14973,7 @@
       "type": "object",
       "properties": {
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -14903,6 +15094,7 @@
           "$ref": "#/definitions/Json"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -14938,6 +15130,7 @@
           "type": "string"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -15043,80 +15236,6 @@
           "items": {
             "$ref": "#/definitions/LinkTransformationConfig"
           }
-        }
-      }
-    },
-    "ItemDTO": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "alertName": {
-          "type": "string"
-        },
-        "avatarUrl": {
-          "type": "string"
-        },
-        "created": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUID": {
-          "type": "string"
-        },
-        "data": {
-          "$ref": "#/definitions/Json"
-        },
-        "email": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "login": {
-          "type": "string"
-        },
-        "newState": {
-          "type": "string"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "prevState": {
-          "type": "string"
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "text": {
-          "type": "string"
-        },
-        "time": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "timeEnd": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updated": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -15341,6 +15460,7 @@
           "type": "string"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -16172,7 +16292,7 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "ID of the folder where the library element is stored.",
+          "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -16999,6 +17119,120 @@
         },
         "proxy_url": {
           "$ref": "#/definitions/URL"
+        }
+      }
+    },
+    "PublicDashboard": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "annotationsEnabled": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailDTO"
+          }
+        },
+        "share": {
+          "$ref": "#/definitions/ShareType"
+        },
+        "timeSelectionEnabled": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "PublicDashboardDTO": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "annotationsEnabled": {
+          "type": "boolean"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/definitions/ShareType"
+        },
+        "timeSelectionEnabled": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PublicDashboardListResponse": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PublicDashboardListResponseWithPagination": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "publicDashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PublicDashboardListResponse"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -18236,6 +18470,10 @@
           "format": "int64",
           "example": 1
         },
+        "requiredBy": {
+          "type": "string",
+          "example": "grafana-app"
+        },
         "role": {
           "type": "string",
           "example": "Editor"
@@ -18329,6 +18567,9 @@
           "format": "int64"
         }
       }
+    },
+    "ShareType": {
+      "type": "string"
     },
     "SigV4Config": {
       "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
@@ -19292,28 +19533,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/Transformation"
-      }
-    },
-    "TrimDashboardCommand": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        }
-      }
-    },
-    "TrimDashboardFullWithMeta": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "meta": {
-          "$ref": "#/definitions/Json"
-        }
       }
     },
     "Type": {
@@ -20615,6 +20834,34 @@
         }
       }
     },
+    "publicError": {
+      "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+      "type": "object",
+      "required": [
+        "statusCode",
+        "messageId"
+      ],
+      "properties": {
+        "extra": {
+          "description": "Extra Additional information about the error",
+          "type": "object",
+          "additionalProperties": false
+        },
+        "message": {
+          "description": "Message A human readable message",
+          "type": "string"
+        },
+        "messageId": {
+          "description": "MessageID A unique identifier for the error",
+          "type": "string"
+        },
+        "statusCode": {
+          "description": "StatusCode The HTTP status code returned",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "receiver": {
       "description": "Receiver receiver",
       "type": "object",
@@ -20764,21 +21011,6 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
-    "addPermissionResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "permissionId": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      }
-    },
     "adminCreateUserResponse": {
       "description": "(empty)",
       "schema": {
@@ -20810,6 +21042,12 @@
       "description": "BadRequestError is returned when the request is invalid and it cannot be processed.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "badRequestPublicError": {
+      "description": "BadRequestPublicError is returned when the request is invalid and it cannot be processed.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "calculateDashboardDiffResponse": {
@@ -20931,6 +21169,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/Playlist"
+      }
+    },
+    "createPublicDashboardResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
       }
     },
     "createReportResponse": {
@@ -21123,6 +21367,12 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "forbiddenPublicError": {
+      "description": "ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "genericError": {
       "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures.",
       "schema": {
@@ -21183,12 +21433,6 @@
         }
       }
     },
-    "getAllPermissionseResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/DataSourcePermissionsDTO"
-      }
-    },
     "getAllRolesResponse": {
       "description": "(empty)",
       "schema": {
@@ -21201,7 +21445,7 @@
     "getAnnotationByIDResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/ItemDTO"
+        "$ref": "#/definitions/Annotation"
       }
     },
     "getAnnotationTagsResponse": {
@@ -21215,7 +21459,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/ItemDTO"
+          "$ref": "#/definitions/Annotation"
         }
       }
     },
@@ -21247,15 +21491,6 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/OrgDetailsDTO"
-      }
-    },
-    "getCustomPermissionsReportResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/CustomPermissionsRecordDTO"
-        }
       }
     },
     "getDashboardPermissionsListResponse": {
@@ -21446,6 +21681,21 @@
         "$ref": "#/definitions/Spec"
       }
     },
+    "getPublicAnnotationsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AnnotationEvent"
+        }
+      }
+    },
+    "getPublicDashboardResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
+      }
+    },
     "getQueryHistoryDeleteQueryResponse": {
       "description": "(empty)",
       "schema": {
@@ -21628,6 +21878,12 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "internalServerPublicError": {
+      "description": "InternalServerPublicError is a general error indicating something went wrong internally.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "jwksResponse": {
       "description": "(empty)",
       "schema": {
@@ -21652,6 +21908,12 @@
             "$ref": "#/definitions/RoleDTO"
           }
         }
+      }
+    },
+    "listPublicDashboardsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboardListResponseWithPagination"
       }
     },
     "listRecordingRulesResponse": {
@@ -21695,13 +21957,22 @@
     "listTokensResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/TokenDTO"
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TokenDTO"
+        }
       }
     },
     "notFoundError": {
       "description": "NotFoundError is returned when the requested resource was not found.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "notFoundPublicError": {
+      "description": "NotFoundPublicError is returned when the requested resource was not found.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "okResponse": {
@@ -21798,6 +22069,10 @@
           "url"
         ],
         "properties": {
+          "folderUid": {
+            "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",
+            "type": "string"
+          },
           "id": {
             "description": "ID The unique identifier (id) of the created/updated dashboard.",
             "type": "integer",
@@ -21842,7 +22117,19 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "publicErrorResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "queryMetricsWithExpressionsRespons": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/QueryDataResponse"
+      }
+    },
+    "queryPublicDashboardResponse": {
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
@@ -21962,16 +22249,16 @@
         "$ref": "#/definitions/AlertTestResult"
       }
     },
-    "trimDashboardResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/TrimDashboardFullWithMeta"
-      }
-    },
     "unauthorisedError": {
       "description": "UnauthorizedError is returned when the request is not authenticated.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "unauthorisedPublicError": {
+      "description": "UnauthorisedPublicError is returned when the request is not authenticated.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "unprocessableEntityError": {
@@ -21990,6 +22277,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/PlaylistDTO"
+      }
+    },
+    "updatePublicDashboardResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
       }
     },
     "updateServiceAccountResponse": {
@@ -22028,6 +22321,12 @@
         "message": {
           "type": "string"
         }
+      }
+    },
+    "viewPublicDashboardResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
       }
     }
   },

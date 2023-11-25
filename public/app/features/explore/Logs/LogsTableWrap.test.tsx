@@ -100,7 +100,7 @@ describe('LogsTableWrap', () => {
       checkboxLabel.click();
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
-        columns: { 0: 'app' },
+        columns: { 0: 'app', 1: 'Line', 2: 'Time' },
       });
     });
 
@@ -109,7 +109,7 @@ describe('LogsTableWrap', () => {
       checkboxLabel.click();
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
-        columns: {},
+        columns: { 0: 'Line', 1: 'Time' },
       });
     });
   });
@@ -136,6 +136,27 @@ describe('LogsTableWrap', () => {
     expect(screen.getByLabelText('app')).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.queryByLabelText('cluster')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should update selected dataframe when dataFrames update', async () => {
+    const initialProps = { logsFrames: [getMockLokiFrameDataPlane(undefined, 3)] };
+    const render = setup(initialProps);
+    await waitFor(() => {
+      const rows = render.getAllByRole('row');
+      expect(rows.length).toBe(4);
+    });
+
+    render.rerender(
+      getComponent({
+        ...initialProps,
+        logsFrames: [getMockLokiFrameDataPlane(undefined, 4)],
+      })
+    );
+
+    await waitFor(() => {
+      const rows = render.getAllByRole('row');
+      expect(rows.length).toBe(5);
     });
   });
 

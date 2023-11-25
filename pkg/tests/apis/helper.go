@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -26,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -43,24 +43,16 @@ type K8sTestHelper struct {
 	env        server.TestEnv
 	namespacer request.NamespaceMapper
 
-	Org1 OrgUsers
-	Org2 OrgUsers
+	Org1 OrgUsers // default
+	OrgB OrgUsers // some other id
 
 	// // Registered groups
 	groups []metav1.APIGroup
 }
 
-func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
+func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	t.Helper()
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // do not start extra port 6443
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServer,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-		},
-	})
-
+	dir, path := testinfra.CreateGrafDir(t, opts)
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
 	c := &K8sTestHelper{
 		env:        *env,
@@ -68,8 +60,8 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 		namespacer: request.GetNamespaceMapper(nil),
 	}
 
-	c.Org1 = c.createTestUsers(int64(1))
-	c.Org2 = c.createTestUsers(int64(2))
+	c.Org1 = c.createTestUsers("Org1")
+	c.OrgB = c.createTestUsers("OrgB")
 
 	// Read the API groups
 	rsp := DoRequest(c, RequestParams{
@@ -79,6 +71,11 @@ func NewK8sTestHelper(t *testing.T) *K8sTestHelper {
 	}, &metav1.APIGroupList{})
 	c.groups = rsp.Result.Groups
 	return c
+}
+
+func (c *K8sTestHelper) Shutdown() {
+	err := c.env.Server.Shutdown(context.Background(), "done")
+	require.NoError(c.t, err)
 }
 
 type ResourceClientArgs struct {
@@ -126,7 +123,16 @@ func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
 func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	c.t.Helper()
 
-	copy := v.DeepCopy().Object
+	deep := v.DeepCopy()
+	anno := deep.GetAnnotations()
+	if anno["grafana.app/originKey"] != "" {
+		anno["grafana.app/originKey"] = "${originKey}"
+	}
+	if anno["grafana.app/updatedTimestamp"] != "" {
+		anno["grafana.app/updatedTimestamp"] = "${updatedTimestamp}"
+	}
+	deep.SetAnnotations(anno)
+	copy := deep.Object
 	meta, ok := copy["metadata"].(map[string]any)
 	require.True(c.t, ok)
 
@@ -139,6 +145,7 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	}
 
 	out, err := json.MarshalIndent(copy, "", "  ")
+	//fmt.Printf("%s", out)
 	require.NoError(c.t, err)
 	return string(out)
 }
@@ -317,20 +324,27 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: unstructuredMap}
 }
 
-func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
+func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 
 	store := c.env.SQLStore
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = int(orgId)
+	defer func() {
+		store.Cfg.AutoAssignOrg = false
+		store.Cfg.AutoAssignOrgId = 1 // the default
+	}()
+
 	quotaService := quotaimpl.ProvideService(store, store.Cfg)
 
 	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(c.t, err)
 
-	gotID, err := orgService.GetOrCreate(context.Background(), fmt.Sprintf("Org%d", orgId))
-	require.NoError(c.t, err)
-	require.Equal(c.t, orgId, gotID)
+	orgId := int64(1)
+	if orgName != "Org1" {
+		orgId, err = orgService.GetOrCreate(context.Background(), orgName)
+		require.NoError(c.t, err)
+	}
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = int(orgId)
 
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
 	cache := localcache.ProvideService()
@@ -344,7 +358,7 @@ func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			DefaultOrgRole: string(role),
 			Password:       key,
-			Login:          fmt.Sprintf("%s%d", key, orgId),
+			Login:          fmt.Sprintf("%s-%d", key, orgId),
 			OrgID:          orgId,
 		})
 		require.NoError(c.t, err)
@@ -383,7 +397,60 @@ func (c K8sTestHelper) createTestUsers(orgId int64) OrgUsers {
 	}
 }
 
-func (c K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
+func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
+	c.t.Helper()
+
+	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
+	conf := &rest.Config{
+		Host:     baseUrl,
+		Username: c.Org1.Admin.Identity.GetLogin(),
+		Password: c.Org1.Admin.password,
+	}
+	client, err := discovery.NewDiscoveryClientForConfig(conf)
+	require.NoError(c.t, err)
+	return client
+}
+
+func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
+	c.t.Helper()
+
+	disco := c.NewDiscoveryClient()
+	req := disco.RESTClient().Get().
+		Prefix("apis").
+		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json")
+
+	result := req.Do(context.Background())
+	require.NoError(c.t, result.Error())
+
+	type DiscoItem struct {
+		Metadata struct {
+			Name string `json:"name"`
+		} `json:"metadata"`
+		Versions []any `json:"versions,omitempty"`
+	}
+	type DiscoList struct {
+		Items []DiscoItem `json:"items"`
+	}
+
+	raw, err := result.Raw()
+	require.NoError(c.t, err)
+	all := &DiscoList{}
+	err = json.Unmarshal(raw, all)
+	require.NoError(c.t, err)
+
+	for _, item := range all.Items {
+		if item.Metadata.Name == group {
+			v, err := json.MarshalIndent(item.Versions, "", "  ")
+			require.NoError(c.t, err)
+			return string(v)
+		}
+	}
+
+	require.Fail(c.t, "could not find discovery info for: ", group)
+	return ""
+}
+
+func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
 	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)

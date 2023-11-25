@@ -34,13 +34,14 @@ export type CollapseConfig = {
   collapsed: boolean;
 };
 
-export type CollapsedMap = Map<LevelItem, CollapseConfig>;
-
 /**
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
  * rendering code.
  */
-export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelItem[][], Record<string, LevelItem[]>] {
+export function nestedSetToLevels(
+  container: FlameGraphDataContainer,
+  options?: Options
+): [LevelItem[][], Record<string, LevelItem[]>, CollapsedMap] {
   const levels: LevelItem[][] = [];
   let offset = 0;
 
@@ -85,12 +86,68 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
     if (parent) {
       parent.children.push(newItem);
     }
-    parent = newItem;
 
+    parent = newItem;
     levels[currentLevel].push(newItem);
   }
 
-  return [levels, uniqueLabels];
+  const collapsedMapContainer = new CollapsedMapContainer(options?.collapsingThreshold);
+  if (options?.collapsing) {
+    // We collapse similar items here, where it seems like parent and child are the same thing and so the distinction
+    // isn't that important. We create a map of items that should be collapsed together. We need to do it with complete
+    // tree as we need to know how many children an item has to know if we can collapse it.
+    collapsedMapContainer.addTree(levels[0][0]);
+  }
+
+  return [levels, uniqueLabels, collapsedMapContainer.getMap()];
+}
+
+export type CollapsedMap = Map<LevelItem, CollapseConfig>;
+export class CollapsedMapContainer {
+  private map = new Map();
+  private threshold = 0.99;
+
+  constructor(threshold?: number) {
+    if (threshold !== undefined) {
+      this.threshold = threshold;
+    }
+  }
+
+  addTree(root: LevelItem) {
+    const stack = [root];
+    while (stack.length) {
+      const current = stack.shift()!;
+
+      if (current.parents?.length) {
+        this.addItem(current, current.parents[0]);
+      }
+
+      if (current.children.length) {
+        stack.unshift(...current.children);
+      }
+    }
+  }
+
+  addItem(item: LevelItem, parent?: LevelItem) {
+    // The heuristics here is pretty simple right now. Just check if it's single child and if we are within threshold.
+    // We assume items with small self just aren't too important while we cannot really collapse items with siblings
+    // as it's not clear what to do with said sibling.
+    if (parent && item.value > parent.value * this.threshold && parent.children.length === 1) {
+      if (this.map.has(parent)) {
+        const config = this.map.get(parent)!;
+        this.map.set(item, config);
+        config.items.push(item);
+      } else {
+        const config = { items: [parent, item], collapsed: true };
+        this.map.set(parent, config);
+        this.map.set(item, config);
+      }
+    }
+  }
+
+  getMap() {
+    return new Map(this.map);
+  }
 }
 
 export function getMessageCheckFieldsResult(wrongFields: CheckFieldsResult) {
@@ -144,8 +201,15 @@ export function checkFields(data: DataFrame): CheckFieldsResult | undefined {
   return undefined;
 }
 
+export type Options = {
+  collapsing: boolean;
+  collapsingThreshold?: number;
+};
+
 export class FlameGraphDataContainer {
   data: DataFrame;
+  options: Options;
+
   labelField: Field;
   levelField: Field;
   valueField: Field;
@@ -161,9 +225,11 @@ export class FlameGraphDataContainer {
 
   private levels: LevelItem[][] | undefined;
   private uniqueLabelsMap: Record<string, LevelItem[]> | undefined;
+  private collapsedMap: Map<LevelItem, CollapseConfig> | undefined;
 
-  constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
+  constructor(data: DataFrame, options: Options, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
+    this.options = options;
 
     const wrongFields = checkFields(data);
     if (wrongFields) {
@@ -275,11 +341,17 @@ export class FlameGraphDataContainer {
     return this.uniqueLabelsMap![label];
   }
 
+  getCollapsedMap() {
+    this.initLevels();
+    return this.collapsedMap!;
+  }
+
   private initLevels() {
     if (!this.levels) {
-      const [levels, uniqueLabelsMap] = nestedSetToLevels(this);
+      const [levels, uniqueLabelsMap, collapsedMap] = nestedSetToLevels(this, this.options);
       this.levels = levels;
       this.uniqueLabelsMap = uniqueLabelsMap;
+      this.collapsedMap = collapsedMap;
     }
   }
 }

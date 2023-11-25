@@ -20,10 +20,15 @@ export interface DashboardUrlOptions {
   absolute?: boolean;
   // Add tz to query params
   timeZone?: string;
+
+  // Add tz to query params
+  useExperimentalURL?: boolean;
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
-  let path = `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`;
+  let path = options.useExperimentalURL
+    ? `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`
+    : `/d/${options.uid}${options.subPath ?? ''}`;
 
   if (options.soloRoute) {
     path = `/d-solo/${options.uid}${options.subPath ?? ''}`;
@@ -86,5 +91,6 @@ export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | u
     dsRef: queryRunner.state.datasource,
     timeRange: timeRange.state.value,
     scopedVars: { __sceneObject: { value: vizPanel } },
+    adhocFilters: queryRunner.state.data?.request?.filters,
   });
 }

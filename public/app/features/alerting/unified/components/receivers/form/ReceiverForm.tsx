@@ -177,7 +177,7 @@ export function ReceiverForm<R extends ChannelValues>({
               type="button"
               icon="plus"
               variant="secondary"
-              onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}
+              onClick={() => append({ ...defaultItem, __id: String(Math.random()) })}
             >
               Add contact point integration
             </Button>

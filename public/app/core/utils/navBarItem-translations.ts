@@ -21,7 +21,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'import':
       return t('nav.create-import.title', 'Import dashboard');
     case 'alert':
-      return t('nav.create-alert.title', 'Create alert rule');
+      return t('nav.create-alert.title', 'New alert rule');
     case 'starred':
       return t('nav.starred.title', 'Starred');
     case 'starred-empty':
@@ -135,7 +135,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-k8s-app':
       return t('nav.kubernetes.title', 'Kubernetes');
     case 'plugin-page-grafana-app-observability-app':
-      return t('nav.application.title', 'Application (preview)');
+      return t('nav.application.title', 'Application');
     case 'plugin-page-grafana-pyroscope-app':
       return t('nav.profiles.title', 'Profiles');
     case 'plugin-page-grafana-kowalski-app':
@@ -245,7 +245,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'apps':
       return t('nav.apps.subtitle', 'App plugins that extend the Grafana experience');
     case 'monitoring':
-      return t('nav.monitoring.subtitle', 'Monitoring and infrastructure apps');
+      return t('nav.monitoring.subtitle', 'Out-of-the-box observability solutions');
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.subtitle', 'Alerting and incident management apps');
     case 'connections-add-new-connection':

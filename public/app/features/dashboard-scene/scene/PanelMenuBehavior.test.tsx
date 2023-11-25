@@ -38,7 +38,7 @@ describe('panelMenuBehavior', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    expect(menu.state.items?.length).toBe(5);
+    expect(menu.state.items?.length).toBe(6);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
     expect(menu.state.items?.[0].href).toBe('/scenes/dashboard/dash-1?from=now-5m&to=now&viewPanel=panel-12');
     // verify edit url keeps url time range
@@ -80,6 +80,9 @@ async function buildTestScene(options: SceneOptions) {
   const scene = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
+    meta: {
+      canEdit: true,
+    },
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
