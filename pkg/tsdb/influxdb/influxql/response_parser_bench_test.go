@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-//go:embed testdata/response.json
+//go:embed testdata/many_columns.json
 var testResponse string
 
 // go test -benchmem -run=^$ -memprofile memprofile.out -count=10 -bench ^BenchmarkParseJson$ github.com/grafana/grafana/pkg/tsdb/influxdb/influxql
