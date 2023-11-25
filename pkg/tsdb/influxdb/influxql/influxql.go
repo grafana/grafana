@@ -50,7 +50,7 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.Quer
 			return &backend.QueryDataResponse{}, err
 		}
 
-		resp, err := execute(dsInfo, logger, query, request, features.IsEnabled(featuremgmt.FlagInfluxqlStreamingParser))
+		resp, err := execute(dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
 
 		if err != nil {
 			response.Responses[query.RefID] = backend.DataResponse{Error: err}
