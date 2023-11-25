@@ -17,7 +17,6 @@ import {
   SceneRefreshPicker,
   SceneGridItem,
   SceneObject,
-  SceneControlsSpacer,
   VizPanelMenu,
   behaviors,
   VizPanelState,
@@ -26,12 +25,16 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   AdHocFilterSet,
+  TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardLinksControls } from '../scene/DashboardLinksControls';
+import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
@@ -121,7 +124,13 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
 function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]): SceneGridItemLike {
   if (Boolean(row.collapsed)) {
     if (row.panels) {
-      content = row.panels.map(buildGridItemForPanel);
+      content = row.panels.map((saveModel) => {
+        // Collapsed panels are not actually PanelModel instances
+        if (!(saveModel instanceof PanelModel)) {
+          saveModel = new PanelModel(saveModel);
+        }
+        return buildGridItemForPanel(saveModel);
+      });
     }
   }
 
@@ -214,23 +223,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     );
   }
 
-  let controls: SceneObject[] = [
-    new VariableValueSelectors({}),
-    ...filtersSets,
-    new SceneDataLayerControls(),
-    new SceneControlsSpacer(),
-  ];
-
-  if (!Boolean(oldModel.timepicker.hidden)) {
-    controls = controls.concat([
-      new SceneTimePicker({}),
-      new SceneRefreshPicker({
-        refresh: oldModel.refresh,
-        intervals: oldModel.timepicker.refresh_intervals,
-      }),
-    ]);
-  }
-
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
@@ -249,6 +241,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
     $variables: variables,
     $behaviors: [
+      registerDashboardMacro,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
@@ -259,7 +252,24 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
             layers,
           })
         : undefined,
-    controls: controls,
+    controls: [
+      new DashboardControls({
+        variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
+        timeControls: Boolean(oldModel.timepicker.hidden)
+          ? []
+          : [
+              new SceneTimePicker({}),
+              new SceneRefreshPicker({
+                refresh: oldModel.refresh,
+                intervals: oldModel.timepicker.refresh_intervals,
+              }),
+            ],
+        linkControls: new DashboardLinksControls({
+          links: oldModel.links,
+          dashboardUID: oldModel.uid,
+        }),
+      }),
+    ],
   });
 }
 
@@ -271,8 +281,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       query: variable.query,
       isMulti: variable.multi,
@@ -285,8 +295,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'query') {
     return new QueryVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       query: variable.query,
       datasource: variable.datasource,
@@ -303,8 +313,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       regex: variable.regex,
       pluginId: variable.query,
@@ -332,6 +342,14 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     });
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
+      ...commonProperties,
+      description: variable.description,
+      value: variable.query,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+  } else if (variable.type === 'textbox') {
+    return new TextBoxVariable({
       ...commonProperties,
       description: variable.description,
       value: variable.query,

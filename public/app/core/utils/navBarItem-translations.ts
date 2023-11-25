@@ -245,7 +245,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'apps':
       return t('nav.apps.subtitle', 'App plugins that extend the Grafana experience');
     case 'monitoring':
-      return t('nav.monitoring.subtitle', 'Monitoring and infrastructure apps');
+      return t('nav.monitoring.subtitle', 'Out-of-the-box observability solutions');
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.subtitle', 'Alerting and incident management apps');
     case 'connections-add-new-connection':

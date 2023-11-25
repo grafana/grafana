@@ -9,6 +9,8 @@ import (
 type VersionData struct {
 	Version  string
 	Checksum string
+	Arch     map[string]ArchMeta
+	URL      string
 }
 
 // SelectSystemCompatibleVersion selects the most appropriate plugin version based on os + architecture
@@ -33,6 +35,8 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 		return VersionData{
 			Version:  latestForArch.Version,
 			Checksum: checksum(latestForArch, compatOpts),
+			Arch:     latestForArch.Arch,
+			URL:      latestForArch.URL,
 		}, nil
 	}
 	for _, v := range versions {
@@ -65,6 +69,8 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 	return VersionData{
 		Version:  ver.Version,
 		Checksum: checksum(ver, compatOpts),
+		Arch:     ver.Arch,
+		URL:      ver.URL,
 	}, nil
 }
 
