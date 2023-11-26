@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/grafana/grafana/pkg/util/converter/jsonitere"
 )
 
@@ -15,7 +17,7 @@ func rspErr(e error) backend.DataResponse {
 	return backend.DataResponse{Error: e}
 }
 
-func ReadInfluxQLStyleResult(jIter *jsoniter.Iterator) backend.DataResponse {
+func ReadInfluxQLStyleResult(jIter *jsoniter.Iterator, query *models.Query) backend.DataResponse {
 	iter := jsonitere.NewIterator(jIter)
 	var rsp backend.DataResponse
 	// status := "unknown"
@@ -33,7 +35,7 @@ l1Fields:
 		}
 		switch l1Field {
 		case "results":
-			rsp = readResults(frameName, iter)
+			rsp = readResults(iter, frameName, query)
 			if rsp.Error != nil {
 				return rsp
 			}
@@ -55,7 +57,7 @@ l1Fields:
 	return rsp
 }
 
-func readResults(frameName []byte, iter *jsonitere.Iterator) backend.DataResponse {
+func readResults(iter *jsonitere.Iterator, frameName []byte, query *models.Query) backend.DataResponse {
 	rsp := backend.DataResponse{}
 l1Fields:
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
@@ -68,7 +70,7 @@ l1Fields:
 			}
 			switch l1Field {
 			case "series":
-				rsp = readSeries(frameName, iter)
+				rsp = readSeries(iter, frameName, query)
 			case "":
 				break l1Fields
 			default:
@@ -83,7 +85,7 @@ l1Fields:
 	return rsp
 }
 
-func readSeries(frameName []byte, iter *jsonitere.Iterator) backend.DataResponse {
+func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query) backend.DataResponse {
 	var rsp backend.DataResponse
 	var measurement string
 	var tags map[string]string
@@ -106,9 +108,9 @@ func readSeries(frameName []byte, iter *jsonitere.Iterator) backend.DataResponse
 					return rspErr(err)
 				}
 			case "columns":
-				rsp = readColumns(measurement, tags, frameName[:], iter, rsp)
+				rsp = readColumns(iter, rsp, measurement, tags, frameName[:], query)
 			case "values":
-				rsp = readValues(tags, iter, rsp)
+				rsp = readValues(iter, rsp, tags)
 			default:
 				v, err := iter.Read()
 				if err != nil {
@@ -138,7 +140,7 @@ func readTags(iter *jsonitere.Iterator) (map[string]string, error) {
 	return tags, nil
 }
 
-func readColumns(measurement string, tags map[string]string, frameName []byte, iter *jsonitere.Iterator, rsp backend.DataResponse) backend.DataResponse {
+func readColumns(iter *jsonitere.Iterator, rsp backend.DataResponse, rowName string, tags map[string]string, frameName []byte, query *models.Query) backend.DataResponse {
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return rspErr(err)
@@ -149,8 +151,8 @@ func readColumns(measurement string, tags map[string]string, frameName []byte, i
 			return rspErr(err)
 		}
 		if l1Field != "time" {
-			// TODO create frame name with tags
-			frame := data.NewFrame(measurement + "." + l1Field)
+			formattedFrameName := util.FormatFrameName(rowName, l1Field, tags, *query, frameName)
+			frame := data.NewFrame(string(formattedFrameName))
 			rsp.Frames = append(rsp.Frames, frame)
 		}
 	}
@@ -158,7 +160,7 @@ func readColumns(measurement string, tags map[string]string, frameName []byte, i
 	return rsp
 }
 
-func readValues(tags map[string]string, iter *jsonitere.Iterator, rsp backend.DataResponse) backend.DataResponse {
+func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[string]string) backend.DataResponse {
 	timeFields := make(data.Fields, 0)
 	valueFields := make(data.Fields, 0)
 	var timeFieldDidRead bool

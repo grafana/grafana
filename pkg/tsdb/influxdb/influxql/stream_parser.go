@@ -24,7 +24,7 @@ func StreamParse(buf io.ReadCloser, statusCode int, query *models.Query) backend
 	// defer endSpan()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, buf, 1024)
-	r := converter.ReadInfluxQLStyleResult(iter)
+	r := converter.ReadInfluxQLStyleResult(iter, query)
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for i, frame := range r.Frames {
