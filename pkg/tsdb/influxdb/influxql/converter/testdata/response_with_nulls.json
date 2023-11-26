@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "series": [
+        {
+          "name": "cpu",
+          "tags": {
+            "datacenter": "America"
+          },
+          "columns": [
+            "time",
+            "mean",
+            "path",
+            "isActive"
+          ],
+          "values": [
+            [
+              111,
+              null,
+              null,
+              null
+            ],
+            [
+              111,
+              222,
+              "/usr/path",
+              false
+            ],
+            [
+              111,
+              333,
+              "/usr/path",
+              true
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

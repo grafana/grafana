@@ -120,7 +120,6 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 				}
 				fmt.Println(fmt.Sprintf("[data] TODO, support key: %s / %v\n", l1Field, v))
 			}
-
 		}
 	}
 
@@ -165,6 +164,7 @@ func readColumns(iter *jsonitere.Iterator, rsp backend.DataResponse, rowName str
 func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[string]string, frameLength int) backend.DataResponse {
 	timeField := data.NewField("Time", nil, make([]time.Time, 0))
 	valueFields := make(data.Fields, 0)
+	nullValuesForFields := make([][]bool, 0)
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -204,6 +204,7 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[str
 						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 						stringField.Name = "Value"
 						valueFields = append(valueFields, stringField)
+						appendNilsToField(valueFields, nullValuesForFields, colIdx)
 					}
 					valueFields[colIdx-1].Append(&s)
 				case jsoniter.NumberValue:
@@ -215,6 +216,7 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[str
 						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
 						numberField.Name = "Value"
 						valueFields = append(valueFields, numberField)
+						appendNilsToField(valueFields, nullValuesForFields, colIdx)
 					}
 					valueFields[colIdx-1].Append(&n)
 				case jsoniter.BoolValue:
@@ -226,16 +228,25 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[str
 						boolField := data.NewFieldFromFieldType(data.FieldTypeNullableBool, 0)
 						boolField.Name = "Value"
 						valueFields = append(valueFields, boolField)
+						appendNilsToField(valueFields, nullValuesForFields, colIdx)
 					}
-					valueFields[colIdx-1].Append(b.ToBool())
+					bv := b.ToBool()
+					valueFields[colIdx-1].Append(&bv)
 				case jsoniter.NilValue:
 					_, _ = iter.Read()
 					if len(valueFields) < colIdx {
-						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-						numberField.Name = "Value"
-						valueFields = append(valueFields, numberField)
+						// no value field created before
+						// we don't know the type of the values for this field, yet
+						// we cannot create a value field
+						// instead we add nil values to an array to be added
+						// when we learn the type of this field
+						if len(nullValuesForFields) < colIdx {
+							nullValuesForFields = append(nullValuesForFields, make([]bool, 0))
+						}
+						nullValuesForFields[colIdx-1] = append(nullValuesForFields[colIdx-1], true)
+					} else {
+						valueFields[colIdx-1].Append(nil)
 					}
-					valueFields[colIdx-1].Append(float64(0))
 				}
 			}
 
@@ -250,6 +261,15 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[str
 	}
 
 	return rsp
+}
+
+func appendNilsToField(fields data.Fields, nullValuesForFields [][]bool, idx int) {
+	// Append nil values if there is any
+	for range nullValuesForFields[idx-1] {
+		fields[idx-1].Append(nil)
+	}
+	// clean the nil value array
+	nullValuesForFields[idx-1] = nil
 }
 
 func timeFromFloat(fv float64) time.Time {

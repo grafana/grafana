@@ -49,6 +49,10 @@ var files = []testFile{
 		fileName: "select_value_from_measurement_with_multiple_tags",
 		rawQuery: "select_value from measurement grouped by multiple tag",
 	},
+	{
+		fileName: "response_with_nulls",
+		rawQuery: "response with nulls",
+	},
 }
 
 func TestReadPromFrames(t *testing.T) {
@@ -87,6 +91,7 @@ func runScenario(tf testFile) func(t *testing.T) {
 
 		fname := tf.fileName + ".golden"
 		if streamParser {
+			// fname = tf.fileName + ".stream"
 			rsp = influxql.StreamParse(f, 200, query)
 		} else {
 			rsp = *influxql.ResponseParse(io.NopCloser(f), 200, query)
