@@ -15,8 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-const update = true
-const streamParser = false
+var shouldUpdate = false
+
+const streamParser = true
 
 type testFile struct {
 	fileName string
@@ -64,7 +65,6 @@ func runScenario(tf testFile) func(t *testing.T) {
 		f, err := os.Open(path.Join("testdata", tf.fileName+".json"))
 		require.NoError(t, err)
 
-		shouldUpdate := update
 		var rsp backend.DataResponse
 
 		query := &models.Query{
@@ -85,8 +85,8 @@ func runScenario(tf testFile) func(t *testing.T) {
 			ResultFormat: "time_series",
 		}
 
+		fname := tf.fileName + ".golden"
 		if streamParser {
-			// shouldUpdate = false
 			rsp = influxql.StreamParse(f, 200, query)
 		} else {
 			rsp = *influxql.ResponseParse(io.NopCloser(f), 200, query)
@@ -98,7 +98,6 @@ func runScenario(tf testFile) func(t *testing.T) {
 		}
 		require.NoError(t, rsp.Error)
 
-		fname := tf.fileName + "-frame"
 		experimental.CheckGoldenJSONResponse(t, "testdata", fname, &rsp, shouldUpdate)
 	}
 }

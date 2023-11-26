@@ -86,13 +86,15 @@ l1Fields:
 }
 
 func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query) backend.DataResponse {
-	var rsp backend.DataResponse
 	var measurement string
 	var tags map[string]string
+	rsp := backend.DataResponse{Frames: make(data.Frames, 0)}
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return rspErr(err)
 		}
+
+		currentFrameLen := len(rsp.Frames)
 
 		for l1Field, err := iter.ReadObject(); l1Field != ""; l1Field, err = iter.ReadObject() {
 			if err != nil {
@@ -110,7 +112,7 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 			case "columns":
 				rsp = readColumns(iter, rsp, measurement, tags, frameName[:], query)
 			case "values":
-				rsp = readValues(iter, rsp, tags)
+				rsp = readValues(iter, rsp, tags, currentFrameLen)
 			default:
 				v, err := iter.Read()
 				if err != nil {
@@ -160,10 +162,9 @@ func readColumns(iter *jsonitere.Iterator, rsp backend.DataResponse, rowName str
 	return rsp
 }
 
-func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[string]string) backend.DataResponse {
-	timeFields := make(data.Fields, 0)
+func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[string]string, frameLength int) backend.DataResponse {
+	timeField := data.NewField("Time", nil, make([]time.Time, 0))
 	valueFields := make(data.Fields, 0)
-	var timeFieldDidRead bool
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -171,7 +172,6 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[str
 		}
 
 		var tt time.Time
-		timeFieldDidRead = false
 		colIdx := 0
 
 		for more2, err := iter.ReadArray(); more2; more2, err = iter.ReadArray() {
@@ -179,14 +179,14 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[str
 				return rspErr(err)
 			}
 
-			if !timeFieldDidRead {
+			if colIdx == 0 {
 				// Read time
 				var t float64
 				if t, err = iter.ReadFloat64(); err != nil {
 					return rspErr(err)
 				}
 				tt = timeFromFloat(t)
-				timeFieldDidRead = true
+				timeField.Append(tt)
 			} else {
 				// Read column values
 				next, err := iter.WhatIsNext()
@@ -200,60 +200,53 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[str
 					if err != nil {
 						return rspErr(err)
 					}
-					if len(valueFields) == colIdx {
+					if len(valueFields) < colIdx {
 						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 						stringField.Name = "Value"
 						valueFields = append(valueFields, stringField)
 					}
-					valueFields[colIdx].Append(&s)
+					valueFields[colIdx-1].Append(&s)
 				case jsoniter.NumberValue:
 					n, err := iter.ReadFloat64()
 					if err != nil {
 						return rspErr(err)
 					}
-					if len(valueFields) == colIdx {
+					if len(valueFields) < colIdx {
 						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
 						numberField.Name = "Value"
 						valueFields = append(valueFields, numberField)
 					}
-					valueFields[colIdx].Append(&n)
+					valueFields[colIdx-1].Append(&n)
 				case jsoniter.BoolValue:
 					b, err := iter.ReadAny()
 					if err != nil {
 						rspErr(err)
 					}
-					if len(valueFields) == colIdx {
+					if len(valueFields) < colIdx {
 						boolField := data.NewFieldFromFieldType(data.FieldTypeNullableBool, 0)
 						boolField.Name = "Value"
 						valueFields = append(valueFields, boolField)
 					}
-					valueFields[colIdx].Append(b.ToBool())
+					valueFields[colIdx-1].Append(b.ToBool())
 				case jsoniter.NilValue:
 					_, _ = iter.Read()
-					if len(valueFields) == colIdx {
+					if len(valueFields) < colIdx {
 						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
 						numberField.Name = "Value"
 						valueFields = append(valueFields, numberField)
 					}
-					valueFields[colIdx].Append(float64(0))
+					valueFields[colIdx-1].Append(float64(0))
 				}
-
-				if len(timeFields) == colIdx {
-					timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-					timeField.Name = data.TimeSeriesTimeFieldName
-					timeFields = append(timeFields, timeField)
-				}
-				timeFields[colIdx].Append(tt)
-
-				colIdx++
 			}
+
+			colIdx++
 		}
 	}
 
 	for i, v := range valueFields {
 		v.Labels = tags
-		v.Config = &data.FieldConfig{DisplayNameFromDS: rsp.Frames[i].Name}
-		rsp.Frames[i].Fields = append(rsp.Frames[i].Fields, timeFields[i], v)
+		v.Config = &data.FieldConfig{DisplayNameFromDS: rsp.Frames[frameLength+i].Name}
+		rsp.Frames[frameLength+i].Fields = append(rsp.Frames[frameLength+i].Fields, timeField, v)
 	}
 
 	return rsp
