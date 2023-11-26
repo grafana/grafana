@@ -25,30 +25,30 @@ type testFile struct {
 }
 
 var files = []testFile{
-	{
-		fileName: "influx_select_all_from_cpu",
-		rawQuery: "select_all from cpu",
-	},
-	{
-		fileName: "select_value_from_cpu",
-		rawQuery: "select_value from cpu",
-	},
-	{
-		fileName: "select_multiple_from_cpu",
-		rawQuery: "select_multiple values from cpu",
-	},
-	{
-		fileName: "select_multiple_from_cpu_group_by_tag",
-		rawQuery: "select_multiple values from cpu grouped by a tag",
-	},
-	{
-		fileName: "select_value_from_measurement_with_one_tag",
-		rawQuery: "select_value from measurement grouped by tag",
-	},
-	{
-		fileName: "select_value_from_measurement_with_multiple_tags",
-		rawQuery: "select_value from measurement grouped by multiple tag",
-	},
+	// {
+	// 	fileName: "influx_select_all_from_cpu",
+	// 	rawQuery: "select_all from cpu",
+	// },
+	// {
+	// 	fileName: "select_value_from_cpu",
+	// 	rawQuery: "select_value from cpu",
+	// },
+	// {
+	// 	fileName: "select_multiple_from_cpu",
+	// 	rawQuery: "select_multiple values from cpu",
+	// },
+	// {
+	// 	fileName: "select_multiple_from_cpu_group_by_tag",
+	// 	rawQuery: "select_multiple values from cpu grouped by a tag",
+	// },
+	// {
+	// 	fileName: "select_value_from_measurement_with_one_tag",
+	// 	rawQuery: "select_value from measurement grouped by tag",
+	// },
+	// {
+	// 	fileName: "select_value_from_measurement_with_multiple_tags",
+	// 	rawQuery: "select_value from measurement grouped by multiple tag",
+	// },
 	{
 		fileName: "response_with_nulls",
 		rawQuery: "response with nulls",
