@@ -8,7 +8,7 @@
 //      "preferredVisualisationType": "graph",
 //      "executedQueryString": "select_value from measurement grouped by multiple tag"
 //  }
-//  Name: disk.total { fstype: ext4 host: 41c9dcf3b960 }
+//  Name: disk.total { fstype: ext4, host: 41c9dcf3b960 }
 //  Dimensions: 2 Fields by 90 Rows
 //  +-------------------------------+----------------------------------------+
 //  | Name: Time                    | Name: Value                            |
@@ -30,7 +30,7 @@
 //  
 //  
 //  Frame[1] 
-//  Name: disk.total { fstype: fakeowner host: 41c9dcf3b960 }
+//  Name: disk.total { fstype: fakeowner, host: 41c9dcf3b960 }
 //  Dimensions: 2 Fields by 60 Rows
 //  +-------------------------------+---------------------------------------------+
 //  | Name: Time                    | Name: Value                                 |
@@ -56,7 +56,7 @@
   "frames": [
     {
       "schema": {
-        "name": "disk.total { fstype: ext4 host: 41c9dcf3b960 }",
+        "name": "disk.total { fstype: ext4, host: 41c9dcf3b960 }",
         "meta": {
           "typeVersion": [
             0,
@@ -85,7 +85,7 @@
               "host": "41c9dcf3b960"
             },
             "config": {
-              "displayNameFromDS": "disk.total { fstype: ext4 host: 41c9dcf3b960 }"
+              "displayNameFromDS": "disk.total { fstype: ext4, host: 41c9dcf3b960 }"
             }
           }
         ]
@@ -281,7 +281,7 @@
     },
     {
       "schema": {
-        "name": "disk.total { fstype: fakeowner host: 41c9dcf3b960 }",
+        "name": "disk.total { fstype: fakeowner, host: 41c9dcf3b960 }",
         "fields": [
           {
             "name": "Time",
@@ -302,7 +302,7 @@
               "host": "41c9dcf3b960"
             },
             "config": {
-              "displayNameFromDS": "disk.total { fstype: fakeowner host: 41c9dcf3b960 }"
+              "displayNameFromDS": "disk.total { fstype: fakeowner, host: 41c9dcf3b960 }"
             }
           }
         ]
