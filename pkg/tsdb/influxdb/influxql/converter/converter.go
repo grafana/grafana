@@ -97,8 +97,6 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 			return rspErr(err)
 		}
 
-		currentFrameLen := len(rsp.Frames)
-
 		for l1Field, err := iter.ReadObject(); l1Field != ""; l1Field, err = iter.ReadObject() {
 			if err != nil {
 				return rspErr(err)
@@ -113,12 +111,12 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 					return rspErr(err)
 				}
 			case "columns":
-				columns, err = readColumns(iter, rsp, measurement, tags, frameName[:], query)
+				columns, err = readColumns(iter)
 				if err != nil {
 					return rspErr(err)
 				}
 			case "values":
-				timeField, valueFields, err = readValues(iter, rsp, tags, currentFrameLen)
+				timeField, valueFields, err = readValues(iter)
 				if err != nil {
 					return rspErr(err)
 				}
@@ -167,7 +165,7 @@ func readTags(iter *jsonitere.Iterator) (map[string]string, error) {
 	return tags, nil
 }
 
-func readColumns(iter *jsonitere.Iterator, rsp backend.DataResponse, rowName string, tags map[string]string, frameName []byte, query *models.Query) (columns []string, err error) {
+func readColumns(iter *jsonitere.Iterator) (columns []string, err error) {
 	columns = make([]string, 0)
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -178,11 +176,6 @@ func readColumns(iter *jsonitere.Iterator, rsp backend.DataResponse, rowName str
 		if err != nil {
 			return nil, err
 		}
-		// if l1Field != "time" {
-		// 	formattedFrameName := util.FormatFrameName(rowName, l1Field, tags, *query, frameName)
-		// 	frame := data.NewFrame(string(formattedFrameName))
-		// 	rsp.Frames = append(rsp.Frames, frame)
-		// }
 		columns = append(columns, l1Field)
 	}
 
@@ -191,7 +184,7 @@ func readColumns(iter *jsonitere.Iterator, rsp backend.DataResponse, rowName str
 
 // readValues reads through the values array in each series
 // then returns the timeField and the value fields
-func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[string]string, frameLength int) (timeField *data.Field, valueFields data.Fields, err error) {
+func readValues(iter *jsonitere.Iterator) (timeField *data.Field, valueFields data.Fields, err error) {
 	timeField = data.NewField("Time", nil, make([]time.Time, 0))
 	valueFields = make(data.Fields, 0)
 	nullValuesForFields := make([][]bool, 0)
@@ -284,17 +277,13 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[str
 		}
 	}
 
-	// for i, v := range valueFields {
-	// 	v.Labels = tags
-	// 	v.Config = &data.FieldConfig{DisplayNameFromDS: rsp.Frames[frameLength+i].Name}
-	// rsp.Frames[frameLength+i].Fields = append(rsp.Frames[frameLength+i].Fields, timeField, v)
-	// }
-
 	return
-	// return rsp
 }
 
 func appendNilsToField(fields data.Fields, nullValuesForFields [][]bool, idx int) {
+	if len(nullValuesForFields) < idx {
+		return
+	}
 	// Append nil values if there is any
 	for range nullValuesForFields[idx-1] {
 		fields[idx-1].Append(nil)
