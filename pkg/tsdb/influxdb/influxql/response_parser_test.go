@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func prepare(text string) io.ReadCloser {
@@ -74,7 +74,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		require.Nil(t, err)
 
 		floatField := data.NewField("Value", labels, []*float64{
-			util.Pointer(222.0), util.Pointer(222.0), nil,
+			toPtr(222.0), toPtr(222.0), nil,
 		})
 		floatField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
 		floatFrame := data.NewFrame("cpu.mean { datacenter: America }",
@@ -86,7 +86,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			floatField,
 		)
-		floatFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		floatFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		string_test := "/usr/path"
 		stringField := data.NewField("Value", labels, []*string{
@@ -102,7 +102,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			stringField,
 		)
-		stringFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		stringFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		bool_true := true
 		bool_false := false
@@ -119,7 +119,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			boolField,
 		)
-		boolFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		boolFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
@@ -257,7 +257,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		query := models.Query{}
 
 		newField := data.NewField("Value", nil, []*float64{
-			util.Pointer(50.0), nil, util.Pointer(52.0),
+			toPtr(50.0), nil, toPtr(52.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 		testFrame := data.NewFrame("cpu.mean",
@@ -269,7 +269,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
@@ -303,7 +303,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		query := models.Query{}
 
 		newField := data.NewField("Value", nil, []*float64{
-			util.Pointer(50.0), util.Pointer(52.0),
+			toPtr(50.0), toPtr(52.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 		testFrame := data.NewFrame("cpu.mean",
@@ -314,7 +314,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
@@ -435,7 +435,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		labels, err := data.LabelsFromString("/cluster/name/=Cluster/, @cluster@name@=Cluster@, cluster-name=Cluster, datacenter=America, dc.region.name=Northeast")
 		require.Nil(t, err)
 		newField := data.NewField("Value", labels, []*float64{
-			util.Pointer(222.0),
+			toPtr(222.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "series alias"}
 		testFrame := data.NewFrame("series alias",
@@ -445,7 +445,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
 		t.Run("should parse aliases", func(t *testing.T) {
@@ -474,7 +474,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias sum"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
-				util.Pointer(333.0),
+				toPtr(333.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -487,7 +487,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
-				util.Pointer(222.0),
+				toPtr(222.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -500,7 +500,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias America/America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
-				util.Pointer(222.0),
+				toPtr(222.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -662,7 +662,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		labels, err := data.LabelsFromString("datacenter=America")
 		require.Nil(t, err)
 		newField := data.NewField("Value", labels, []*float64{
-			util.Pointer(222.0), util.Pointer(222.0), nil,
+			toPtr(222.0), toPtr(222.0), nil,
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
 		testFrame := data.NewFrame("cpu.mean { datacenter: America }",
@@ -674,7 +674,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
 		require.EqualError(t, result.Error, "query-timeout limit exceeded")
@@ -697,30 +697,30 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser parseNumber nil", func(t *testing.T) {
-		value := parseNumber(nil)
+		value := util.ParseNumber(nil)
 		require.Nil(t, value)
 	})
 
 	t.Run("Influxdb response parser parseNumber valid JSON.number", func(t *testing.T) {
-		value := parseNumber(json.Number("95.4"))
+		value := util.ParseNumber(json.Number("95.4"))
 		require.Equal(t, *value, 95.4)
 	})
 
 	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
-		value := parseNumber("95.4")
+		value := util.ParseNumber("95.4")
 		require.Nil(t, value)
 	})
 
 	t.Run("Influxdb response parser parseTimestamp valid JSON.number", func(t *testing.T) {
 		// currently we use milliseconds-precision with influxdb, so the test works with that.
 		// if we change this to for example nanoseconds-precision, the tests will have to change.
-		timestamp, err := parseTimestamp(json.Number("1609556645000"))
+		timestamp, err := util.ParseTimestamp(json.Number("1609556645000"))
 		require.NoError(t, err)
 		require.Equal(t, timestamp.Format(time.RFC3339), "2021-01-02T03:04:05Z")
 	})
 
 	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
-		_, err := parseTimestamp("hello")
+		_, err := util.ParseTimestamp("hello")
 		require.Error(t, err)
 	})
 
@@ -921,7 +921,7 @@ func TestResponseParser_Parse(t *testing.T) {
 				]
 			}]}]}`,
 			f: func(t *testing.T, got backend.DataResponse) {
-				newField := data.NewField("Value", nil, []*float64{nil, nil, util.Pointer(52.0)})
+				newField := data.NewField("Value", nil, []*float64{nil, nil, toPtr(52.0)})
 				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 				testFrame := data.NewFrame("cpu.mean",
 					data.NewField("Time", nil,
@@ -932,7 +932,7 @@ func TestResponseParser_Parse(t *testing.T) {
 						}),
 					newField,
 				)
-				testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+				testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 				assert.Equal(t, testFrame, got.Frames[0])
 			},
 		},
@@ -960,7 +960,7 @@ func TestResponseParser_Parse(t *testing.T) {
 						}),
 					newField,
 				)
-				testFrame.Meta = &data.FrameMeta{PreferredVisualization: graphVisType, ExecutedQueryString: "Test raw query"}
+				testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 				assert.Equal(t, testFrame, got.Frames[0])
 			},
 		},
@@ -1006,7 +1006,7 @@ func TestResponseParser_Parse(t *testing.T) {
 				assert.Equal(t, "Annotation", got.Frames[0].Name)
 				assert.Equal(t, "domain", got.Frames[0].Fields[1].Config.DisplayNameFromDS)
 				assert.Equal(t, "type", got.Frames[0].Fields[2].Config.DisplayNameFromDS)
-				assert.Equal(t, tableVisType, got.Frames[0].Meta.PreferredVisualization)
+				assert.Equal(t, util.TableVisType, got.Frames[0].Meta.PreferredVisualization)
 			},
 		},
 	}
