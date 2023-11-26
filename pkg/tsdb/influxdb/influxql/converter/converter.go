@@ -201,26 +201,37 @@ func readValues(iter *jsonitere.Iterator, rsp backend.DataResponse, tags map[str
 						return rspErr(err)
 					}
 					if len(valueFields) == colIdx {
-						stringField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 						stringField.Name = "Value"
 						valueFields = append(valueFields, stringField)
 					}
-					valueFields[colIdx].Append(s)
+					valueFields[colIdx].Append(&s)
 				case jsoniter.NumberValue:
 					n, err := iter.ReadFloat64()
 					if err != nil {
 						return rspErr(err)
 					}
 					if len(valueFields) == colIdx {
-						numberField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
 						numberField.Name = "Value"
 						valueFields = append(valueFields, numberField)
 					}
-					valueFields[colIdx].Append(n)
+					valueFields[colIdx].Append(&n)
+				case jsoniter.BoolValue:
+					b, err := iter.ReadAny()
+					if err != nil {
+						rspErr(err)
+					}
+					if len(valueFields) == colIdx {
+						boolField := data.NewFieldFromFieldType(data.FieldTypeNullableBool, 0)
+						boolField.Name = "Value"
+						valueFields = append(valueFields, boolField)
+					}
+					valueFields[colIdx].Append(b.ToBool())
 				case jsoniter.NilValue:
 					_, _ = iter.Read()
 					if len(valueFields) == colIdx {
-						numberField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
 						numberField.Name = "Value"
 						valueFields = append(valueFields, numberField)
 					}
