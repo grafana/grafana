@@ -89,7 +89,6 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 	var measurement string
 	var tags map[string]string
 	var columns []string
-	var timeField *data.Field
 	var valueFields data.Fields
 	rsp := backend.DataResponse{Frames: make(data.Frames, 0)}
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
@@ -116,7 +115,7 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 					return rspErr(err)
 				}
 			case "values":
-				timeField, valueFields, err = readValues(iter)
+				valueFields, err = readValues(iter)
 				if err != nil {
 					return rspErr(err)
 				}
@@ -132,16 +131,22 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 		if util.GetVisType(query.ResultFormat) == util.TableVisType {
 			// add the rsp.Frames[0]
 		} else {
-			n := 0
+			timeColExist := false
 			for i, v := range columns {
 				if v == "time" {
-					n = -1
+					timeColExist = true
 					continue
 				}
 				formattedFrameName := util.FormatFrameName(measurement, v, tags, *query, frameName)
-				valueFields[i+n].Labels = tags
-				valueFields[i+n].Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
-				frame := data.NewFrame(string(formattedFrameName), timeField, valueFields[i+n])
+				valueFields[i].Labels = tags
+				valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
+
+				var frame *data.Frame
+				if timeColExist {
+					frame = data.NewFrame(string(formattedFrameName), valueFields[0], valueFields[i])
+				} else {
+					frame = data.NewFrame(string(formattedFrameName), valueFields[i])
+				}
 				rsp.Frames = append(rsp.Frames, frame)
 			}
 		}
@@ -182,16 +187,15 @@ func readColumns(iter *jsonitere.Iterator) (columns []string, err error) {
 	return
 }
 
-// readValues reads through the values array in each series
-// then returns the timeField and the value fields
-func readValues(iter *jsonitere.Iterator) (timeField *data.Field, valueFields data.Fields, err error) {
-	timeField = data.NewField("Time", nil, make([]time.Time, 0))
+func readValues(iter *jsonitere.Iterator) (valueFields data.Fields, err error) {
 	valueFields = make(data.Fields, 0)
+	timeField := data.NewField("Time", nil, make([]time.Time, 0))
+	valueFields = append(valueFields, timeField)
 	nullValuesForFields := make([][]bool, 0)
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		var tt time.Time
@@ -199,14 +203,14 @@ func readValues(iter *jsonitere.Iterator) (timeField *data.Field, valueFields da
 
 		for more2, err := iter.ReadArray(); more2; more2, err = iter.ReadArray() {
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 
 			if colIdx == 0 {
 				// Read time
 				var t float64
 				if t, err = iter.ReadFloat64(); err != nil {
-					return nil, nil, err
+					return nil, err
 				}
 				tt = timeFromFloat(t)
 				timeField.Append(tt)
@@ -214,50 +218,50 @@ func readValues(iter *jsonitere.Iterator) (timeField *data.Field, valueFields da
 				// Read column values
 				next, err := iter.WhatIsNext()
 				if err != nil {
-					return nil, nil, err
+					return nil, err
 				}
 
 				switch next {
 				case jsoniter.StringValue:
 					s, err := iter.ReadString()
 					if err != nil {
-						return nil, nil, err
+						return nil, err
 					}
-					if len(valueFields) < colIdx {
+					if len(valueFields) == colIdx {
 						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 						stringField.Name = "Value"
 						valueFields = append(valueFields, stringField)
 						appendNilsToField(valueFields, nullValuesForFields, colIdx)
 					}
-					valueFields[colIdx-1].Append(&s)
+					valueFields[colIdx].Append(&s)
 				case jsoniter.NumberValue:
 					n, err := iter.ReadFloat64()
 					if err != nil {
-						return nil, nil, err
+						return nil, err
 					}
-					if len(valueFields) < colIdx {
+					if len(valueFields) == colIdx {
 						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
 						numberField.Name = "Value"
 						valueFields = append(valueFields, numberField)
 						appendNilsToField(valueFields, nullValuesForFields, colIdx)
 					}
-					valueFields[colIdx-1].Append(&n)
+					valueFields[colIdx].Append(&n)
 				case jsoniter.BoolValue:
 					b, err := iter.ReadAny()
 					if err != nil {
 						rspErr(err)
 					}
-					if len(valueFields) < colIdx {
+					if len(valueFields) == colIdx {
 						boolField := data.NewFieldFromFieldType(data.FieldTypeNullableBool, 0)
 						boolField.Name = "Value"
 						valueFields = append(valueFields, boolField)
 						appendNilsToField(valueFields, nullValuesForFields, colIdx)
 					}
 					bv := b.ToBool()
-					valueFields[colIdx-1].Append(&bv)
+					valueFields[colIdx].Append(&bv)
 				case jsoniter.NilValue:
 					_, _ = iter.Read()
-					if len(valueFields) < colIdx {
+					if len(valueFields) <= colIdx {
 						// no value field created before
 						// we don't know the type of the values for this field, yet
 						// we cannot create a value field
@@ -268,7 +272,7 @@ func readValues(iter *jsonitere.Iterator) (timeField *data.Field, valueFields da
 						}
 						nullValuesForFields[colIdx-1] = append(nullValuesForFields[colIdx-1], true)
 					} else {
-						valueFields[colIdx-1].Append(nil)
+						valueFields[colIdx].Append(nil)
 					}
 				}
 			}
@@ -284,9 +288,10 @@ func appendNilsToField(fields data.Fields, nullValuesForFields [][]bool, idx int
 	if len(nullValuesForFields) < idx {
 		return
 	}
-	// Append nil values if there is any
+	// Append nil values if there is any.
+	// we check the value at idx-1 because there is no null value for time column
 	for range nullValuesForFields[idx-1] {
-		fields[idx-1].Append(nil)
+		fields[idx].Append(nil)
 	}
 	// clean the nil value array
 	nullValuesForFields[idx-1] = nil
