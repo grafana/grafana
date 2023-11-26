@@ -273,7 +273,7 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 		valueField = data.NewField("Value", row.Tags, floatArray)
 	}
 
-	name := string(util.FormatFrameName(row, column, query, frameName[:]))
+	name := string(util.FormatFrameName(row.Name, column, row.Tags, query, frameName[:]))
 	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 	return newDataFrame(name, query.RawQuery, timeField, valueField, util.GetVisType(query.ResultFormat))
 }

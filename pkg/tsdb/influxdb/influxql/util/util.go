@@ -23,11 +23,11 @@ const (
 	LogsVisType  data.VisType = "logs"
 )
 
-func FormatFrameName(row models.Row, column string, query models.Query, frameName []byte) []byte {
+func FormatFrameName(rowName, column string, tags map[string]string, query models.Query, frameName []byte) []byte {
 	if query.Alias == "" {
-		return BuildFrameNameFromQuery(row, column, frameName, query.ResultFormat)
+		return BuildFrameNameFromQuery(rowName, column, tags, frameName, query.ResultFormat)
 	}
-	nameSegment := strings.Split(row.Name, ".")
+	nameSegment := strings.Split(rowName, ".")
 
 	result := legendFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
 		aliasFormat := string(in)
@@ -36,7 +36,7 @@ func FormatFrameName(row models.Row, column string, query models.Query, frameNam
 		aliasFormat = strings.Replace(aliasFormat, "$", "", 1)
 
 		if aliasFormat == "m" || aliasFormat == "measurement" {
-			return []byte(row.Name)
+			return []byte(rowName)
 		}
 		if aliasFormat == "col" {
 			return []byte(column)
@@ -52,7 +52,7 @@ func FormatFrameName(row models.Row, column string, query models.Query, frameNam
 		}
 
 		tagKey := strings.Replace(aliasFormat, "tag_", "", 1)
-		tagValue, exist := row.Tags[tagKey]
+		tagValue, exist := tags[tagKey]
 		if exist {
 			return []byte(tagValue)
 		}
@@ -63,17 +63,17 @@ func FormatFrameName(row models.Row, column string, query models.Query, frameNam
 	return result
 }
 
-func BuildFrameNameFromQuery(row models.Row, column string, frameName []byte, resultFormat string) []byte {
+func BuildFrameNameFromQuery(rowName, column string, tags map[string]string, frameName []byte, resultFormat string) []byte {
 	if resultFormat != "table" {
-		frameName = append(frameName, row.Name...)
+		frameName = append(frameName, rowName...)
 		frameName = append(frameName, '.')
 	}
 	frameName = append(frameName, column...)
 
-	if len(row.Tags) > 0 {
+	if len(tags) > 0 {
 		frameName = append(frameName, ' ', '{', ' ')
 		first := true
-		for k, v := range row.Tags {
+		for k, v := range tags {
 			if !first {
 				frameName = append(frameName, ',')
 				frameName = append(frameName, ' ')
