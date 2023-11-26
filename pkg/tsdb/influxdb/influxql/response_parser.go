@@ -212,6 +212,12 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 					continue
 				}
 				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
+				if len(frames) == 0 {
+					newFrame.Meta = &data.FrameMeta{
+						ExecutedQueryString:    query.RawQuery,
+						PreferredVisualization: util.GetVisType(query.ResultFormat),
+					}
+				}
 				frames = append(frames, newFrame)
 			}
 		}
@@ -275,7 +281,7 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 
 	name := string(util.FormatFrameName(row.Name, column, row.Tags, query, frameName[:]))
 	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-	return newDataFrame(name, query.RawQuery, timeField, valueField, util.GetVisType(query.ResultFormat))
+	return data.NewFrame(name, timeField, valueField)
 }
 
 func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
@@ -295,14 +301,4 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 
 	field := data.NewField("Value", nil, values)
 	return data.NewFrame(row.Name, field)
-}
-
-func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field, visType data.VisType) *data.Frame {
-	frame := data.NewFrame(name, timeField, valueField)
-	frame.Meta = &data.FrameMeta{
-		ExecutedQueryString:    queryString,
-		PreferredVisualization: visType,
-	}
-
-	return frame
 }

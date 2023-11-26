@@ -102,7 +102,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			stringField,
 		)
-		stringFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		bool_true := true
 		bool_false := false
@@ -119,7 +118,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			boolField,
 		)
-		boolFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
@@ -446,6 +444,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
+		testFrameWithoutMeta := data.NewFrame("series alias",
+			data.NewField("Time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+				}),
+			newField,
+		)
 		result := ResponseParse(prepare(response), 200, generateQuery(query))
 
 		t.Run("should parse aliases", func(t *testing.T) {
@@ -472,13 +477,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 			name = "alias sum"
-			testFrame.Name = name
+			testFrameWithoutMeta.Name = name
 			newField = data.NewField("Value", labels, []*float64{
 				toPtr(333.0),
 			})
-			testFrame.Fields[1] = newField
-			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
-			if diff := cmp.Diff(testFrame, result.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
+			testFrameWithoutMeta.Fields[1] = newField
+			testFrameWithoutMeta.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
+			if diff := cmp.Diff(testFrameWithoutMeta, result.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
