@@ -3,7 +3,6 @@ package remote
 import (
 	"context"
 	"crypto/md5"
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -139,15 +138,15 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	}
 
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-	b, err := am.fstore.GetFullState(ctx)
+
+	// Get the base64-encoded state and send if necessary.
+	state, err := am.fstore.GetFullState(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting the Alertmanager's full state: %w", err)
 	}
 
-	// Encode into base64 and send if needed.
-	encoded := base64.StdEncoding.EncodeToString(b)
-	if am.shouldSendState(ctx, encoded) {
-		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, encoded); err != nil {
+	if am.shouldSendState(ctx, state) {
+		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
 			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 		}
 	}

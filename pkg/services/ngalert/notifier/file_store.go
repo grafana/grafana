@@ -65,10 +65,10 @@ func (fileStore *FileStore) FilepathFor(ctx context.Context, filename string) (s
 
 // GetFullState returns a slice of bytes representing the Alertmanager's internal state.
 // These bytes contain the Alertmanager's silences and notification log.
-func (fileStore *FileStore) GetFullState(ctx context.Context) ([]byte, error) {
+func (fileStore *FileStore) GetFullState(ctx context.Context) (string, error) {
 	keys, err := fileStore.kv.GetAll(ctx)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	silences, ok := keys[fileStore.orgID]["silences"]
 	if !ok {
@@ -82,11 +82,11 @@ func (fileStore *FileStore) GetFullState(ctx context.Context) ([]byte, error) {
 	// Decode base64-encoded values and add them as protobuf parts.
 	s, err := decode(silences)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding silences: %w", err)
+		return "", fmt.Errorf("error decoding silences: %w", err)
 	}
 	n, err := decode(notifications)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding nflog: %w", err)
+		return "", fmt.Errorf("error decoding nflog: %w", err)
 	}
 
 	fs := clusterpb.FullState{
@@ -95,8 +95,12 @@ func (fileStore *FileStore) GetFullState(ctx context.Context) ([]byte, error) {
 			{Key: "notifications", Data: n},
 		},
 	}
-	return fs.Marshal()
+	b, err := fs.Marshal()
+	if err != nil {
+		return "", fmt.Errorf("error marshaling full state: %w", err)
+	}
 
+	return encode(b), nil
 }
 
 // Persist takes care of persisting the binary representation of internal state to the database as a base64 encoded string.
