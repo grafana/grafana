@@ -9,7 +9,7 @@ import { Text } from '@grafana/ui/src/components/Text/Text';
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
-import { getTrailStore } from './TrailStore';
+import { getTrailStore } from './TrailStore/TrailStore';
 import { newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {}
@@ -52,36 +52,32 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           <div className={styles.column}>
             <Text variant="h4">Recent trails</Text>
             <div className={styles.trailList}>
-              {getTrailStore()
-                .getRecentTrails()
-                .map((trail, index) => {
-                  const resolvedTrail = trail.resolve();
-                  return (
-                    <DataTrailCard
-                      key={(resolvedTrail.state.key || '') + index}
-                      trail={resolvedTrail}
-                      onSelect={model.onSelectTrail}
-                    />
-                  );
-                })}
+              {getTrailStore().recent.map((trail, index) => {
+                const resolvedTrail = trail.resolve();
+                return (
+                  <DataTrailCard
+                    key={(resolvedTrail.state.key || '') + index}
+                    trail={resolvedTrail}
+                    onSelect={model.onSelectTrail}
+                  />
+                );
+              })}
             </div>
           </div>
           <div className={styles.column}>
             <Text variant="h4">Bookmarks</Text>
             <div className={styles.trailList}>
-              {getTrailStore()
-                .getBookmarkedTrails()
-                .map((trail, index) => {
-                  const resolvedTrail = trail.resolve();
-                  return (
-                    <DataTrailCard
-                      key={(resolvedTrail.state.key || '') + index}
-                      trail={resolvedTrail}
-                      onSelect={model.onSelectTrail}
-                      onDelete={() => getTrailStore().removeBookmark(index)}
-                    />
-                  );
-                })}
+              {getTrailStore().bookmarks.map((trail, index) => {
+                const resolvedTrail = trail.resolve();
+                return (
+                  <DataTrailCard
+                    key={(resolvedTrail.state.key || '') + index}
+                    trail={resolvedTrail}
+                    onSelect={model.onSelectTrail}
+                    onDelete={() => getTrailStore().removeBookmark(index)}
+                  />
+                );
+              })}
             </div>
           </div>
         </Stack>

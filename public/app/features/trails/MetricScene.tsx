@@ -19,7 +19,7 @@ import { AutoVizPanel } from './AutomaticMetricQueries/AutoVizPanel';
 import { buildBreakdownActionScene } from './BreakdownScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { SelectMetricAction } from './SelectMetricAction';
-import { getTrailStore } from './TrailStore';
+import { getTrailStore } from './TrailStore/TrailStore';
 import {
   ActionViewDefinition,
   getVariablesWithMetricConstant,

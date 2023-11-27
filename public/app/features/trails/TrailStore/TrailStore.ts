@@ -2,9 +2,9 @@ import { debounce } from 'lodash';
 
 import { SceneObject, SceneObjectRef, SceneObjectUrlValues, getUrlSyncManager, sceneUtils } from '@grafana/scenes';
 
-import { DataTrail } from './DataTrail';
-import { TrailStepType } from './DataTrailsHistory';
-import { BOOKMARKED_TRAILS_KEY, RECENT_TRAILS_KEY } from './shared';
+import { DataTrail } from '../DataTrail';
+import { TrailStepType } from '../DataTrailsHistory';
+import { BOOKMARKED_TRAILS_KEY, RECENT_TRAILS_KEY } from '../shared';
 
 const MAX_RECENT_TRAILS = 20;
 
@@ -22,8 +22,7 @@ export class TrailStore {
   private _save;
 
   constructor() {
-    this._recent = this._loadFromStorage(RECENT_TRAILS_KEY);
-    this._bookmarks = this._loadFromStorage(BOOKMARKED_TRAILS_KEY);
+    this.load();
 
     this._save = debounce(() => {
       const serializedRecent = this._recent
@@ -82,8 +81,13 @@ export class TrailStore {
   }
 
   // Recent Trails
-  getRecentTrails() {
+  get recent() {
     return this._recent;
+  }
+
+  load() {
+    this._recent = this._loadFromStorage(RECENT_TRAILS_KEY);
+    this._bookmarks = this._loadFromStorage(BOOKMARKED_TRAILS_KEY);
   }
 
   setRecentTrail(trail: DataTrail) {
@@ -93,7 +97,7 @@ export class TrailStore {
   }
 
   // Bookmarked Trails
-  getBookmarkedTrails() {
+  get bookmarks() {
     return this._bookmarks.map((t) => new DataTrail(sceneUtils.cloneSceneObjectState(t.resolve().state)).getRef());
   }
 
