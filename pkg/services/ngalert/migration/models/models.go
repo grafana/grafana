@@ -7,9 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// MaxIncrementDeduplicationAttempts is the maximum number of attempts to try to deduplicate a string by appending
-// an incrementing suffix.
-const MaxIncrementDeduplicationAttempts = 10
+// MaxDeduplicationAttempts is the maximum number of attempts to try to deduplicate a string using any
+// individual method, such as sequential index suffixes or uids.
+const MaxDeduplicationAttempts = 10
 
 // Deduplicator is a utility for deduplicating strings. It keeps track of the strings it has seen and appends a unique
 // suffix to strings that have already been seen. It can optionally truncate strings before appending the suffix to
@@ -51,7 +51,7 @@ func (s *Deduplicator) Deduplicate(base string) (string, error) {
 	}
 
 	// Start at 2, so we get a, a_2, a_3, etc.
-	for i := 2 + cnt; i < 2+cnt+MaxIncrementDeduplicationAttempts; i++ {
+	for i := 2 + cnt; i < 2+cnt+MaxDeduplicationAttempts; i++ {
 		dedup := s.appendSuffix(base, fmt.Sprintf(" #%d", i))
 		if _, ok := s.contains(dedup); !ok {
 			s.add(dedup, 0)
@@ -59,9 +59,9 @@ func (s *Deduplicator) Deduplicate(base string) (string, error) {
 		}
 	}
 
-	// None of the simple suffixes worked, so we generate a new uid. We try a few times, just in case but this should
+	// None of the simple suffixes worked, so we generate a new uid. We try a few times, just in case, but this should
 	// almost always create a unique string on the first try.
-	for i := 0; i < 5; i++ {
+	for i := 0; i < MaxDeduplicationAttempts; i++ {
 		dedup := s.appendSuffix(base, fmt.Sprintf("_%s", s.uidGenerator()))
 		if _, ok := s.contains(dedup); !ok {
 			s.add(dedup, 0)

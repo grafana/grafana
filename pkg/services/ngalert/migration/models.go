@@ -49,7 +49,7 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 		silences: make([]*pb.MeshSilence, 0),
 		titleDeduplicatorForFolder: func(folderUID string) *migmodels.Deduplicator {
 			if _, ok := titlededuplicatorPerFolder[folderUID]; !ok {
-				titlededuplicatorPerFolder[folderUID] = migmodels.NewDeduplicator(ms.store.GetDialect().SupportEngine(), store.AlertDefinitionMaxTitleLength)
+				titlededuplicatorPerFolder[folderUID] = migmodels.NewDeduplicator(ms.migrationStore.CaseInsensitive(), store.AlertDefinitionMaxTitleLength)
 			}
 			return titlededuplicatorPerFolder[folderUID]
 		},
