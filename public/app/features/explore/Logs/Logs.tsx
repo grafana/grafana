@@ -29,11 +29,12 @@ import {
   RawTimeRange,
   serializeStateToUrlParam,
   SplitOpen,
+  SupplementaryQueryType,
   TimeRange,
   TimeZone,
   urlUtil,
 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   Button,
@@ -554,8 +555,33 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
     const removeHidden = logsQueries?.filter((q) => !q.hide);
-    const logVolumeQueries = logsQueries?.length ? groupBy(removeHidden, (q) => q?.datasource?.uid) : 1;
-    const numberOfLogVolumes = logVolumeQueries ? Object.keys(logVolumeQueries).length : 0;
+
+    // Still getting false positives when a datasource supports logs volume but the query isn't a logs query.
+    const queriesByDatasource = logsQueries?.length ? groupBy(removeHidden, (q) => q?.datasource?.uid) : undefined;
+
+    const datasourcesSrv = getDataSourceSrv();
+
+    const queriesByLogsVolumeDatasource = queriesByDatasource
+      ? Object.keys(queriesByDatasource).filter(async (key) => {
+          const dsRef = queriesByDatasource[key][0]?.datasource;
+          if (dsRef) {
+            const datasource = await datasourcesSrv.get(dsRef);
+            if (
+              datasource &&
+              'getSupportedSupplementaryQueryTypes' in datasource &&
+              typeof datasource.getSupportedSupplementaryQueryTypes === 'function'
+            ) {
+              const supportedQueryTypes = datasource?.getSupportedSupplementaryQueryTypes();
+              if (supportedQueryTypes.includes(SupplementaryQueryType.LogsVolume)) {
+                return true;
+              }
+            }
+          }
+          return false;
+        })
+      : undefined;
+
+    const numberOfLogVolumes = queriesByLogsVolumeDatasource?.length ?? 0;
 
     return (
       <>
