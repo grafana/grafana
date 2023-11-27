@@ -175,6 +175,9 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
           placeholder: '1h',
         }
       ),
+      option('ttl', 'TTL', 'A number of seconds that the message will live, before being deleted automatically', {
+        validationRule: '^\\d+$|^$',
+      }),
       httpConfigOption,
     ],
   },
