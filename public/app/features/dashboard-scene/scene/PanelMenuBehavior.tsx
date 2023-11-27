@@ -284,7 +284,7 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
     }
   }
 
-  const result = {
+  return {
     id,
     pluginId: panel.state.pluginId,
     title: panel.state.title,
@@ -295,12 +295,10 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
     dashboard: {
       uid: dashboard.state.uid!,
       title: dashboard.state.title,
-      tags: dashboard.state.tags,
+      tags: dashboard.state.tags || [],
     },
     targets,
     scopedVars,
     data: queryRunner?.state.data,
   };
-
-  return result;
 }
