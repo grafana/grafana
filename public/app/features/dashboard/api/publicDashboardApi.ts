@@ -202,6 +202,11 @@ export const publicDashboardApi = createApi({
         'ActiveUserDashboards',
       ],
     }),
+    revokeAllAccess: builder.mutation<void, { email: string }>({
+      query: () => ({
+        url: '',
+      }),
+    }),
   }),
 });
 
@@ -216,4 +221,5 @@ export const {
   useReshareAccessToRecipientMutation,
   useGetActiveUsersQuery,
   useGetActiveUserDashboardsQuery,
+  useRevokeAllAccessMutation,
 } = publicDashboardApi;
