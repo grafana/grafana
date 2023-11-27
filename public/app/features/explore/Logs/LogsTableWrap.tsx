@@ -31,8 +31,8 @@ interface Props extends Themeable2 {
   logsSortOrder: LogsSortOrder;
   panelState: ExploreLogsPanelState | undefined;
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
-  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
 }
 
 export type fieldNameMeta = {
