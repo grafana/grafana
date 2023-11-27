@@ -96,7 +96,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   };
 
   useEffect(() => {
-    const update = shouldUpdateStats(
+    const shouldUpdate = shouldUpdateStats(
       query.expr,
       previousQueryExpr,
       timeRange,
@@ -104,9 +104,9 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       query.queryType,
       previousQueryType
     );
-    if (update) {
+    if (shouldUpdate && timeRange) {
       const makeAsyncRequest = async () => {
-        const stats = await datasource.getStats(query);
+        const stats = await datasource.getStats(query, timeRange);
         setQueryStats(stats);
       };
       makeAsyncRequest();
