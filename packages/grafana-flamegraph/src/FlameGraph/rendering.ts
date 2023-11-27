@@ -108,9 +108,9 @@ export function useFlameRender(options: RenderOptions) {
     const mutedPath2D = new Path2D();
 
     //
-    // Walk the tree and compute the dimensions for each item in the falmegraph.
+    // Walk the tree and compute the dimensions for each item in the flamegraph.
     //
-    const renderObjects = getItemsDimensions(
+    walkTree(
       root,
       direction,
       data,
@@ -118,21 +118,17 @@ export function useFlameRender(options: RenderOptions) {
       rangeMin,
       rangeMax,
       wrapperWidth,
-      collapsedMap
-    );
-
-    //
-    // Iterate over the dimensions objects and render each one onto canvas.
-    //
-    for (const obj of renderObjects) {
-      if (obj.muted) {
-        // We do a bit of optimization for muted regions, and we render them all in single fill later on as they don't
-        // have labels and are the same color.
-        mutedPath2D.rect(obj.x, obj.y, obj.width, obj.height);
-      } else {
-        renderFunc(obj);
+      collapsedMap,
+      (item, x, y, width, height, label, muted) => {
+        if (muted) {
+          // We do a bit of optimization for muted regions, and we render them all in single fill later on as they don't
+          // have labels and are the same color.
+          mutedPath2D.rect(x, y, width, height);
+        } else {
+          renderFunc(item, x, y, width, height, label, muted);
+        }
       }
-    }
+    );
 
     // Only fill the muted rects
     ctx.fillStyle = mutedColor;
@@ -152,7 +148,15 @@ export function useFlameRender(options: RenderOptions) {
   ]);
 }
 
-type RenderFunc = (renderObj: RenderObject) => void;
+type RenderFunc = (
+  item: LevelItem,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  label: string,
+  muted: boolean
+) => void;
 
 /**
  * Create a render function with some memoization to prevent excesive repainting of the canvas.
@@ -174,8 +178,7 @@ function useRenderFunc(
       return () => {};
     }
 
-    const renderFunc: RenderFunc = (renderObj: RenderObject) => {
-      const { item, x, y, height, label, muted, width } = renderObj;
+    const renderFunc: RenderFunc = (item, x, y, width, height, label, muted) => {
       ctx.beginPath();
       ctx.rect(x + BAR_BORDER_WIDTH, y, width, height);
       ctx.fillStyle = getBarColor(item, label, muted);
@@ -261,23 +264,12 @@ function renderGroupingStrip(
   ctx.fill();
 }
 
-type RenderObject = {
-  item: LevelItem;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  label: string;
-  // muted means the width is too small, and we just show gray rectangle.
-  muted: boolean;
-};
-
 /**
  * Exported for testing don't use directly
  * Walks the tree and computes coordinates, dimensions and other data needed for rendering. For each item in the tree
  * it defers the rendering to the renderFunc.
  */
-export function getItemsDimensions(
+export function walkTree(
   root: LevelItem,
   // In sandwich view we use parents direction to show all callers.
   direction: 'children' | 'parents',
@@ -286,8 +278,9 @@ export function getItemsDimensions(
   rangeMin: number,
   rangeMax: number,
   wrapperWidth: number,
-  collapsedMap: CollapsedMap
-): RenderObject[] {
+  collapsedMap: CollapsedMap,
+  renderFunc: RenderFunc
+) {
   // The levelOffset here is to keep track if items that we don't render because they are collapsed into single row.
   // That means we have to render next items with an offset of some rows up in the stack.
   const stack: Array<{ item: LevelItem; levelOffset: number }> = [];
@@ -295,8 +288,6 @@ export function getItemsDimensions(
 
   const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
   let collapsedItemRendered: LevelItem | undefined = undefined;
-
-  const renderObjects: RenderObject[] = [];
 
   while (stack.length > 0) {
     const { item, levelOffset } = stack.shift()!;
@@ -337,15 +328,7 @@ export function getItemsDimensions(
         collapsedItemRendered = item;
       }
 
-      renderObjects.push({
-        item,
-        x: barX,
-        y: barY,
-        width,
-        height,
-        label,
-        muted,
-      });
+      renderFunc(item, barX, barY, width, height, label, muted);
     }
 
     const nextList = direction === 'children' ? item.children : item.parents;
@@ -353,8 +336,6 @@ export function getItemsDimensions(
       stack.unshift(...nextList.map((c) => ({ item: c, levelOffset: levelOffset + offsetModifier })));
     }
   }
-
-  return renderObjects;
 }
 
 /**
