@@ -3,7 +3,5 @@
  *
  * @packageDocumentation
  */
-export * from './TraceToLogs/TagMappingInput';
-export * from './TraceToLogs/TraceToLogsSettings';
-export * from './TraceToMetrics/TraceToMetricsSettings';
-export * from './TraceToProfiles/TraceToProfilesSettings';
+
+export type Props = {};
