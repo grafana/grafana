@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"math/rand"
 	"testing"
 	"time"
@@ -22,9 +23,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -1193,41 +1196,6 @@ func TestNestedFolderService(t *testing.T) {
 			})
 			require.NoError(t, err)
 		})
-
-		t.Run("Should be able to get folders shared with given user", func(t *testing.T) {
-			g := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
-			t.Cleanup(func() {
-				guardian.New = g
-			})
-
-			dash := dashboards.NewDashboardFolder("Test-Folder")
-			dash.ID = rand.Int63()
-			dash.UID = "some_uid"
-
-			// dashboard store commands that should be called.
-			dashStore := &dashboards.FakeDashboardStore{}
-			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
-			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dash, nil)
-
-			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
-			dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
-
-			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
-			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_parent")}}
-
-			nestedFolderStore := NewFakeStore()
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), acimpl.ProvideAccessControl(setting.NewCfg()), sqlstore.InitTestDB(t))
-			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-				OrgID:        orgID,
-				Title:        dash.Title,
-				UID:          dash.UID,
-				SignedInUser: nestedFolderUser,
-				ParentUID:    "some_parent",
-			})
-			require.NoError(t, err)
-			require.True(t, nestedFolderStore.CreateCalled)
-		})
 	})
 }
 
@@ -1262,6 +1230,17 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		registry:             make(map[string]folder.RegistryService),
 	}
 
+	dashboardPermissions := acmock.NewMockedPermissionsService()
+	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
+		cfg, dashStore, folderStore, &dummyDashAlertExtractor{},
+		featuresFlagOn,
+		acmock.NewMockedPermissionsService(),
+		dashboardPermissions,
+		actest.FakeAccessControl{},
+		foldertest.NewFakeService(),
+	)
+	require.NoError(t, err)
+
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
 			dashboards.ActionFoldersRead: {},
@@ -1292,6 +1271,15 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		ancestorUIDsFolderWithPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withPermissions", createCmd)
 		ancestorUIDsFolderWithoutPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withoutPermissions", createCmd)
 
+		parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDsFolderWithoutPermissions[0])
+		require.NoError(t, err)
+		subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDsFolderWithoutPermissions[1])
+		require.NoError(t, err)
+		// nolint:staticcheck
+		dash1 := insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in parent", orgID, parent.ID, parent.UID, "prod")
+		// nolint:staticcheck
+		dash2 := insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, subfolder.UID, "prod")
+
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 			CanSaveValue: true,
 			CanViewValue: true,
@@ -1299,6 +1287,8 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 				ancestorUIDsFolderWithPermissions[0],
 				ancestorUIDsFolderWithPermissions[1],
 				ancestorUIDsFolderWithoutPermissions[1],
+				dash1.UID,
+				dash2.UID,
 			},
 		})
 		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = []string{
@@ -1308,6 +1298,10 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 			// Add permission to the subfolder of folder without permission
 			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorUIDsFolderWithoutPermissions[1]),
 		}
+		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = []string{
+			dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash1.UID),
+			dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash2.UID),
+		}
 
 		getSharedCmd := folder.GetChildrenQuery{
 			UID:          folder.SharedWithMeFolderUID,
@@ -1316,7 +1310,6 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		}
 
 		sharedFolders, err := serviceWithFlagOn.GetChildren(context.Background(), &getSharedCmd)
-
 		sharedFoldersUIDs := make([]string, 0)
 		for _, f := range sharedFolders {
 			sharedFoldersUIDs = append(sharedFoldersUIDs, f.UID)
@@ -1326,6 +1319,17 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		require.Len(t, sharedFolders, 1)
 		require.Contains(t, sharedFoldersUIDs, ancestorUIDsFolderWithoutPermissions[1])
 		require.NotContains(t, sharedFoldersUIDs, ancestorUIDsFolderWithPermissions[1])
+
+		sharedDashboards, err := dashboardService.GetDashboardsSharedWithUser(context.Background(), &signedInUser)
+		sharedDashboardsUIDs := make([]string, 0)
+		for _, d := range sharedDashboards {
+			sharedDashboardsUIDs = append(sharedDashboardsUIDs, d.UID)
+		}
+
+		require.NoError(t, err)
+		require.Len(t, sharedDashboards, 1)
+		require.Contains(t, sharedDashboardsUIDs, dash1.UID)
+		require.NotContains(t, sharedDashboardsUIDs, dash2.UID)
 
 		t.Cleanup(func() {
 			guardian.New = origNewGuardian
@@ -1419,4 +1423,15 @@ func createRule(t *testing.T, store *ngstore.DBstore, folderUID, title string) *
 	require.NoError(t, err)
 
 	return &rule
+}
+
+type dummyDashAlertExtractor struct {
+}
+
+func (d *dummyDashAlertExtractor) GetAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) ([]*alertmodels.Alert, error) {
+	return nil, nil
+}
+
+func (d *dummyDashAlertExtractor) ValidateAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) error {
+	return nil
 }
