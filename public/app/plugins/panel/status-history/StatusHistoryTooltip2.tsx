@@ -10,12 +10,17 @@ import {
   GrafanaTheme2,
   TimeZone,
   LinkModel,
+  FieldType,
+  arrayUtils,
 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SeriesTableRowProps, useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { ColorIndicator, ColorPlacement, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+
+import { getDataLinks } from './utils';
 
 interface StatusHistoryTooltipProps {
   data: DataFrame[];
@@ -24,6 +29,8 @@ interface StatusHistoryTooltipProps {
   seriesIdx: number | null | undefined;
   timeZone: TimeZone;
   isPinned: boolean;
+  mode?: TooltipDisplayMode;
+  sortOrder?: SortOrder;
 }
 
 function fmt(field: Field, val: number): string {
@@ -39,7 +46,8 @@ export const StatusHistoryTooltip2 = ({
   dataIdxs,
   alignedData,
   seriesIdx,
-  timeZone,
+  mode = TooltipDisplayMode.Single,
+  sortOrder = SortOrder.None,
   isPinned,
 }: StatusHistoryTooltipProps) => {
   const styles = useStyles2(getStyles);
@@ -51,27 +59,79 @@ export const StatusHistoryTooltip2 = ({
     return null;
   }
 
+  let contentLabelValue: LabelValue[] = [];
+
   const xField = alignedData.fields[0];
-  const field = alignedData.fields[seriesIdx!];
+  let links: Array<LinkModel<Field>> = [];
 
-  const links: Array<LinkModel<Field>> = [];
-  const linkLookup = new Set<string>();
+  // Single mode
+  if (mode === TooltipDisplayMode.Single || isPinned) {
+    const field = alignedData.fields[seriesIdx!];
+    links = getDataLinks(field, datapointIdx);
 
-  if (field.getLinks) {
-    const v = field.values[datapointIdx];
-    const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
-    field.getLinks({ calculatedValue: disp, valueRowIndex: datapointIdx }).forEach((link) => {
-      const key = `${link.title}/${link.href}`;
-      if (!linkLookup.has(key)) {
-        links.push(link);
-        linkLookup.add(key);
-      }
-    });
+    const fieldFmt = field.display || getDisplayProcessor();
+    const value = field.values[datapointIdx!];
+    const display = fieldFmt(value);
+
+    contentLabelValue = [
+      {
+        label: getFieldDisplayName(field),
+        value: fmt(field, field.values[datapointIdx]),
+        color: display.color,
+        colorIndicator: ColorIndicator.value,
+        colorPlacement: ColorPlacement.trailing,
+      },
+    ];
   }
 
-  const fieldFmt = field.display || getDisplayProcessor();
-  const value = field.values[datapointIdx!];
-  const display = fieldFmt(value);
+  if (mode === TooltipDisplayMode.Multi && !isPinned) {
+    let series: SeriesTableRowProps[] = [];
+
+    const frame = alignedData;
+    const fields = frame.fields;
+    const sortIdx: unknown[] = [];
+
+    for (let i = 0; i < fields.length; i++) {
+      const field = frame.fields[i];
+      if (
+        !field ||
+        field === xField ||
+        field.type === FieldType.time ||
+        field.type !== FieldType.number ||
+        field.config.custom?.hideFrom?.tooltip ||
+        field.config.custom?.hideFrom?.viz
+      ) {
+        continue;
+      }
+
+      const fieldFmt = field.display || getDisplayProcessor();
+      const v = field.values[datapointIdx!];
+      const display = fieldFmt(v);
+
+      sortIdx.push(v);
+      contentLabelValue.push({
+        label: getFieldDisplayName(field),
+        value: fmt(field, field.values[datapointIdx]),
+        color: display.color,
+        colorIndicator: ColorIndicator.value,
+        colorPlacement: ColorPlacement.trailing,
+        isActive: seriesIdx === i,
+      });
+    }
+
+    if (sortOrder !== SortOrder.None) {
+      // create sort reference series array, as Array.sort() mutates the original array
+      const sortRef = [...series];
+      const sortFn = arrayUtils.sortValues(sortOrder);
+
+      series.sort((a, b) => {
+        // get compared values indices to retrieve raw values from sortIdx
+        const aIdx = sortRef.indexOf(a);
+        const bIdx = sortRef.indexOf(b);
+        return sortFn(sortIdx[aIdx], sortIdx[bIdx]);
+      });
+    }
+  }
 
   const getHeaderLabel = (): LabelValue => {
     return {
@@ -81,13 +141,7 @@ export const StatusHistoryTooltip2 = ({
   };
 
   const getContentLabelValue = () => {
-    return [
-      {
-        label: getFieldDisplayName(field),
-        value: fmt(field, field.values[datapointIdx]),
-        color: display.color,
-      },
-    ];
+    return contentLabelValue;
   };
 
   return (
