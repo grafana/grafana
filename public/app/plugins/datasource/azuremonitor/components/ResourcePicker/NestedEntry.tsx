@@ -3,7 +3,7 @@ import React, { useCallback, useEffect } from 'react';
 
 import { Checkbox, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { Space } from '../Space';
+import { Space } from '../shared/Space';
 
 import { EntryIcon } from './EntryIcon';
 import getStyles from './styles';

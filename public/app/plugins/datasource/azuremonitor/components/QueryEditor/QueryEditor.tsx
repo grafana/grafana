@@ -19,10 +19,10 @@ import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
-import { QueryHeader } from '../QueryHeader';
-import { Space } from '../Space';
 import TracesQueryEditor from '../TracesQueryEditor';
+import { Space } from '../shared/Space';
 
+import { QueryHeader } from './QueryHeader';
 import usePreparedQuery from './usePreparedQuery';
 
 export type AzureMonitorQueryEditorProps = QueryEditorProps<

@@ -7,11 +7,11 @@ import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureQueryEditorFieldProps, AzureMonitorResource } from '../../types';
-import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseMultipleResourceDetails, setResources } from '../ResourcePicker/utils';
+import { Field } from '../shared/Field';
 
 interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
   selectableEntryTypes: ResourceRowType[];

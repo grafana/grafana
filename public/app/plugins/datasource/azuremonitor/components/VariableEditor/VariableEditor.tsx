@@ -12,7 +12,7 @@ import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../typ
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
-import { Space } from '../Space';
+import { Space } from '../shared/Space';
 
 import GrafanaTemplateVariableFnInput from './GrafanaTemplateVariableFn';
 

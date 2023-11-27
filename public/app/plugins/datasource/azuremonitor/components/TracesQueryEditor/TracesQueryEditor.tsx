@@ -8,12 +8,12 @@ import { Input } from '@grafana/ui';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat } from '../../types';
-import { Field } from '../Field';
-import FormatAsField from '../FormatAsField';
 import AdvancedResourcePicker from '../LogsQueryEditor/AdvancedResourcePicker';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
+import { Field } from '../shared/Field';
+import FormatAsField from '../shared/FormatAsField';
 
 import Filters from './Filters';
 import TraceTypeField from './TraceTypeField';

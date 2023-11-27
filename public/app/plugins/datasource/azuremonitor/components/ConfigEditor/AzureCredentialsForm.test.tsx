@@ -7,6 +7,7 @@ const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
+    userIdentityEnabled: false,
     credentials: {
       authType: 'clientsecret',
       azureCloud: 'azuremonitor',

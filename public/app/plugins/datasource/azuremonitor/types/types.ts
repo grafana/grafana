@@ -41,7 +41,6 @@ interface AzureCredentialsBase {
   authType: AzureAuthType;
 }
 
-
 export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
   authType: 'msi';
 }

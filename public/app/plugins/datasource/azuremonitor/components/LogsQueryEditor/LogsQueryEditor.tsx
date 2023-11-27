@@ -7,10 +7,10 @@ import { Alert, LinkButton } from '@grafana/ui';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
-import FormatAsField from '../FormatAsField';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
+import FormatAsField from '../shared/FormatAsField';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
 import QueryField from './QueryField';

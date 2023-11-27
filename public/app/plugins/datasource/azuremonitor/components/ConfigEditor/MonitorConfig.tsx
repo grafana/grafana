@@ -3,8 +3,8 @@ import React, { useMemo, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getCredentials, updateCredentials } from '../credentials';
-import { AzureDataSourceSettings, AzureCredentials } from '../types';
+import { getCredentials, updateCredentials } from '../../credentials';
+import { AzureDataSourceSettings, AzureCredentials } from '../../types';
 
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';

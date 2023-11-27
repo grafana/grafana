@@ -8,7 +8,7 @@ import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMonitorResource } from '../../types';
 import messageFromError from '../../utils/messageFromError';
-import { Space } from '../Space';
+import { Space } from '../shared/Space';
 
 import AdvancedMulti from './AdvancedMulti';
 import NestedRow from './NestedRow';
