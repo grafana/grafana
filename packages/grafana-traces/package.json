@@ -37,6 +37,8 @@
     "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
+    "@grafana/eslint-config": "6.0.1",
+    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-commonjs": "25.0.2",
     "@rollup/plugin-json": "6.0.0",
@@ -60,11 +62,11 @@
   },
   "dependencies": {
     "@emotion/css": "11.11.2",
-    "@grafana/data": "workspace:*",
+    "@grafana/data": "10.3.0-pre",
     "@grafana/experimental": "1.7.4",
-    "@grafana/runtime": "workspace:*",
-    "@grafana/schema": "workspace:*",
-    "@grafana/ui": "workspace:*",
+    "@grafana/runtime": "10.3.0-pre",
+    "@grafana/schema": "10.3.0-pre",
+    "@grafana/ui": "10.3.0-pre",
     "react": "18.2.0",
     "react-use": "17.4.0",
     "rxjs": "7.8.1",

@@ -1,11 +1,18 @@
 {
   "compilerOptions": {
-    "declarationDir": "./dist/esm",
+    "baseUrl": "./",
+    "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."]
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*"]
+  "include": [
+    "src/**/*.ts*",
+    "../../public/app/types/*.d.ts",
+    "../grafana-data/typings",
+    "../grafana-runtime/**/*.d.ts",
+    "../grafana-ui/src/types/*.d.ts"
+  ]
 }

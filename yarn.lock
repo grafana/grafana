@@ -3079,6 +3079,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=%40grafana%2Ftraces%40workspace%3Apackages%2Fgrafana-traces":
+  version: 0.0.0-use.local
+  resolution: "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=%40grafana%2Ftraces%40workspace%3Apackages%2Fgrafana-traces"
+  languageName: node
+  linkType: soft
+
 "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A.":
   version: 0.0.0-use.local
   resolution: "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A."
@@ -3345,12 +3351,14 @@ __metadata:
   resolution: "@grafana/traces@workspace:packages/grafana-traces"
   dependencies:
     "@emotion/css": "npm:11.11.2"
-    "@grafana/data": "workspace:*"
+    "@grafana/data": "npm:10.3.0-pre"
+    "@grafana/eslint-config": "npm:6.0.1"
+    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": "npm:1.7.4"
-    "@grafana/runtime": "workspace:*"
-    "@grafana/schema": "workspace:*"
+    "@grafana/runtime": "npm:10.3.0-pre"
+    "@grafana/schema": "npm:10.3.0-pre"
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
-    "@grafana/ui": "workspace:*"
+    "@grafana/ui": "npm:10.3.0-pre"
     "@rollup/plugin-commonjs": "npm:25.0.2"
     "@rollup/plugin-json": "npm:6.0.0"
     "@rollup/plugin-node-resolve": "npm:15.2.3"

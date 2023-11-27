@@ -1,4 +1,9 @@
 {
-  "exclude": ["dist/**/*", "**/*.test.ts*"],
+  "compilerOptions": {
+    "paths": {
+      "@emotion/core": ["./src/types/emotion-core-stub.d.ts"]
+    }
+  },
+  "exclude": ["**/*.test.ts*"],
   "extends": "./tsconfig.json"
 }

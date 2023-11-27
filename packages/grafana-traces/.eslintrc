@@ -1,6 +1,6 @@
 {
   "rules": {
-    "no-restricted-imports": ["error", { "patterns": ["app/*", "packages/*"] }]
+    "no-restricted-imports": ["error", { "patterns": ["app/*", "packages/*", "@grafana.*"] }]
   },
   "overrides": [
     {
