@@ -17,6 +17,7 @@ export interface SharePublicDashboardTabState extends SceneShareTabState {
 }
 
 export class SharePublicDashboardTab extends SceneObjectBase<SharePublicDashboardTabState> {
+  public tabId = 'Public dashboard';
   static Component = SharePublicDashboardTabRenderer;
 
   public getTabLabel() {

@@ -26,14 +26,7 @@ describe('LokiVariableQueryEditor', () => {
       onChange: () => {},
     };
 
-    jest.spyOn(props.datasource, 'labelNamesQuery').mockResolvedValue([
-      {
-        text: 'moon',
-      },
-      {
-        text: 'luna',
-      },
-    ]);
+    jest.spyOn(props.datasource.languageProvider, 'fetchLabels').mockResolvedValue(['luna', 'moon']);
   });
 
   test('Allows to create a Label names variable', async () => {
