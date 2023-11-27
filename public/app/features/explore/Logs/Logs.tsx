@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { capitalize } from 'lodash';
+import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
 
@@ -553,9 +553,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-    const numberOfLogVolumes = logsVolumeData?.data?.length ?? 1;
-    console.log('numberOfLogVolumes', numberOfLogVolumes);
-    console.log('logsVolumeData', logsVolumeData);
+    const removeHidden = logsQueries?.filter((q) => !q.hide);
+    const logVolumeQueries = logsQueries?.length ? groupBy(removeHidden, (q) => q?.datasource?.uid) : 1;
+    const numberOfLogVolumes = logVolumeQueries ? Object.keys(logVolumeQueries).length : 0;
 
     return (
       <>
