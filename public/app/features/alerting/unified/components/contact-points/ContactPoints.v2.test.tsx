@@ -64,6 +64,8 @@ describe('contact points', () => {
       expect(screen.getAllByTestId('contact-point')).toHaveLength(4);
 
       // check for available actions – our mock 4 contact points, 1 of them is provisioned
+      expect(screen.getByRole('link', { name: 'add contact point' })).toBeInTheDocument();
+
       const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
       expect(viewProvisioned).toBeInTheDocument();
       expect(viewProvisioned).not.toBeDisabled();

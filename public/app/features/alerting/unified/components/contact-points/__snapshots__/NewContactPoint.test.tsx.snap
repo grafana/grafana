@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should be able to test a receiver 1`] = `
+[
+  {
+    "alert": {
+      "annotations": {
+        "description": "Test contact point",
+      },
+      "labels": {
+        "foo": "bar",
+      },
+    },
+    "receivers": [
+      {
+        "grafana_managed_receiver_configs": [
+          {
+            "disableResolveMessage": false,
+            "name": "test",
+            "secureSettings": {},
+            "settings": {
+              "addresses": "nteews treerc@egirvaefrana.com",
+              "singleEmail": false,
+            },
+            "type": "email",
+          },
+        ],
+        "name": "test",
+      },
+    ],
+  },
+]
+`;
