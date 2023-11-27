@@ -259,69 +259,23 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 					if err != nil {
 						return nil, err
 					}
-					// check whether a value field created. if not create a new one
-					if len(valueFields) == colIdx {
-						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
-						stringField.Name = "Value"
-						valueFields = append(valueFields, stringField)
-					}
-
-					// check if the value field type is matching
-					// For nil values we might have added NullableFloat64 value field
-					// if they are not matching fix it
-					if valueFields[colIdx].Type() != data.FieldTypeNullableString {
-						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
-						stringField.Name = "Value"
-						var i int
-						for i < valueFields[colIdx].Len() {
-							stringField.Append(nil)
-							i++
-						}
-						valueFields[colIdx] = stringField
-					}
-
+					valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableString, colIdx)
+					maybeFixValueFieldType(valueFields, data.FieldTypeNullableString, colIdx)
 					valueFields[colIdx].Append(&s)
 				case jsoniter.NumberValue:
 					n, err := iter.ReadFloat64()
 					if err != nil {
 						return nil, err
 					}
-
-					// check whether a value field created. if not create a new one
-					if len(valueFields) == colIdx {
-						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-						numberField.Name = "Value"
-						valueFields = append(valueFields, numberField)
-					}
-
+					valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableFloat64, colIdx)
 					valueFields[colIdx].Append(&n)
 				case jsoniter.BoolValue:
 					b, err := iter.ReadAny()
 					if err != nil {
 						rspErr(err)
 					}
-
-					// check whether a value field created. if not create a new one
-					if len(valueFields) == colIdx {
-						boolField := data.NewFieldFromFieldType(data.FieldTypeNullableBool, 0)
-						boolField.Name = "Value"
-						valueFields = append(valueFields, boolField)
-					}
-
-					// check if the value field type is matching
-					// For nil values we might have added NullableFloat64 value field
-					// if they are not matching fix it
-					if valueFields[colIdx].Type() != data.FieldTypeNullableBool {
-						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableBool, 0)
-						stringField.Name = "Value"
-						var i int
-						for i < valueFields[colIdx].Len() {
-							stringField.Append(nil)
-							i++
-						}
-						valueFields[colIdx] = stringField
-					}
-
+					valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableBool, colIdx)
+					maybeFixValueFieldType(valueFields, data.FieldTypeNullableBool, colIdx)
 					bv := b.ToBool()
 					valueFields[colIdx].Append(&bv)
 				case jsoniter.NilValue:
@@ -345,4 +299,31 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 	}
 
 	return
+}
+
+// maybeCreateValueField checks whether a value field created. if not creates a new one
+func maybeCreateValueField(valueFields data.Fields, expectedType data.FieldType, colIdx int) data.Fields {
+	if len(valueFields) == colIdx {
+		newField := data.NewFieldFromFieldType(expectedType, 0)
+		newField.Name = "Value"
+		valueFields = append(valueFields, newField)
+	}
+
+	return valueFields
+}
+
+// maybeFixValueFieldType checks if the value field type is matching
+// For nil values we might have added NullableFloat64 value field
+// if they are not matching fix it
+func maybeFixValueFieldType(valueFields data.Fields, expectedType data.FieldType, colIdx int) {
+	if valueFields[colIdx].Type() != expectedType {
+		stringField := data.NewFieldFromFieldType(expectedType, 0)
+		stringField.Name = "Value"
+		var i int
+		for i < valueFields[colIdx].Len() {
+			stringField.Append(nil)
+			i++
+		}
+		valueFields[colIdx] = stringField
+	}
 }
