@@ -23,9 +23,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const panel = menu.parent as VizPanel;
+    const plugin = panel.getPlugin();
+
     const location = locationService.getLocation();
     const items: PanelMenuItem[] = [];
     const moreSubMenu: PanelMenuItem[] = [];
+    const inspectSubMenu: PanelMenuItem[] = [];
     const panelId = getPanelIdForVizPanel(panel);
     const dashboard = panel.getRoot();
 
@@ -65,8 +68,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         shortcut: 'p s',
       });
 
-      if (panel instanceof LibraryVizPanel) {
-        // TODO: Implement unlinking library panel
+      if (panel.parent instanceof LibraryVizPanel) {
+        // TODO: Implement lib panel unlinking
       } else {
         moreSubMenu.push({
           text: t('panel.header-menu.create-library-panel', `Create library panel`),
@@ -100,12 +103,52 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
+    if (plugin && !plugin.meta.skipDataQuery) {
+      inspectSubMenu.push({
+        text: t('panel.header-menu.inspect-data', `Data`),
+        href: getInspectUrl(panel, InspectTab.Data),
+        onClick: (e) => {
+          e.preventDefault();
+          locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
+          reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data });
+        },
+      });
+
+      if (dashboard instanceof DashboardScene && dashboard.state.meta.canEdit) {
+        inspectSubMenu.push({
+          text: t('panel.header-menu.query', `Query`),
+          href: getInspectUrl(panel, InspectTab.Query),
+          onClick: (e) => {
+            e.preventDefault();
+            locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Query });
+            reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Query });
+          },
+        });
+      }
+    }
+
+    inspectSubMenu.push({
+      text: t('panel.header-menu.inspect-json', `Panel JSON`),
+      href: getInspectUrl(panel, InspectTab.JSON),
+      onClick: (e) => {
+        e.preventDefault();
+        locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.JSON });
+        reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.JSON });
+      },
+    });
+
     items.push({
       text: t('panel.header-menu.inspect', `Inspect`),
       iconClassName: 'info-circle',
       shortcut: 'i',
-      onClick: () => reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data }),
       href: getInspectUrl(panel),
+      onClick: (e) => {
+        if (!e.isDefaultPrevented()) {
+          locationService.partial({ inspect: panel.state.key, inspectTab: InspectTab.Data });
+          reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data });
+        }
+      },
+      subMenu: inspectSubMenu,
     });
 
     if (moreSubMenu.length) {
