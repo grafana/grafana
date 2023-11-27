@@ -43,6 +43,9 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
+
+  // Indicates which step in the data trail this is
+  stepIndex: number;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -60,6 +63,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       ],
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
+      stepIndex: state.stepIndex ?? 0,
       ...state,
     });
 

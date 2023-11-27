@@ -120,17 +120,12 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       popoverMenuCoordinates: { x: e.clientX - parentBounds.left, y: e.clientY - parentBounds.top },
       selectedRow: row,
     });
+    document.addEventListener('click', this.handleDeselection);
+    document.addEventListener('contextmenu', this.handleDeselection);
     return true;
   };
 
   handleDeselection = (e: Event) => {
-    if (
-      targetIsElement(e.target) &&
-      (e.target?.getAttribute('role') === 'menuitem' || e.target?.parentElement?.getAttribute('role') === 'menuitem')
-    ) {
-      // Delegate closing the menu to the popover component.
-      return;
-    }
     if (targetIsElement(e.target) && !this.logRowsRef.current?.contains(e.target)) {
       // The mouseup event comes from outside the log rows, close the menu.
       this.closePopoverMenu();
@@ -143,6 +138,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   closePopoverMenu = () => {
+    document.removeEventListener('click', this.handleDeselection);
+    document.removeEventListener('contextmenu', this.handleDeselection);
     this.setState({
       selection: '',
       popoverMenuCoordinates: { x: 0, y: 0 },
@@ -161,11 +158,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     } else {
       this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
-    document.addEventListener('mouseup', this.handleDeselection);
   }
 
   componentWillUnmount() {
-    document.removeEventListener('mouseup', this.handleDeselection);
+    document.removeEventListener('click', this.handleDeselection);
+    document.removeEventListener('contextmenu', this.handleDeselection);
     if (this.renderAllTimer) {
       clearTimeout(this.renderAllTimer);
     }

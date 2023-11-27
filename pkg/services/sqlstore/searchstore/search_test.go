@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
@@ -299,7 +300,7 @@ func TestBuilder_RBAC(t *testing.T) {
 				user.Permissions = map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.userPermissions)}
 			}
 
-			level := dashboards.PERMISSION_EDIT
+			level := dashboardaccess.PERMISSION_EDIT
 
 			builder := &searchstore.Builder{
 				Filters: []any{
