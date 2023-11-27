@@ -441,7 +441,7 @@ func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID strin
 	return f.Result != nil, nil
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.IAM) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 

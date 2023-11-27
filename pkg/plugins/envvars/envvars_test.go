@@ -529,8 +529,8 @@ func TestInitializer_authEnvVars(t *testing.T) {
 	t.Run("backend datasource with auth registration", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
-				ID:                          "test",
-				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{},
+				ID:  "test",
+				IAM: &plugindef.IAM{},
 			},
 			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",

@@ -650,7 +650,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 	pluginReg := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
 			ID: "grafana-test-app",
-			ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
+			IAM: &plugindef.IAM{
 				Permissions: []plugindef.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}, {Action: ac.ActionUsersCreate}},
 			},
 		},

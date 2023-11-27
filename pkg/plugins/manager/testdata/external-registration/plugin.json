@@ -17,7 +17,7 @@
     "updated": "2023-08-03",
     "version": "1.0.0"
   },
-  "externalServiceRegistration": {
+  "iam": {
     "permissions" :  [
       {
         "action": "read",

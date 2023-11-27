@@ -531,13 +531,13 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 	}
 
 	// No registration => Early return
-	if plugin.JSONData.ExternalServiceRegistration == nil || len(plugin.JSONData.ExternalServiceRegistration.Permissions) == 0 {
+	if plugin.JSONData.IAM == nil || len(plugin.JSONData.IAM.Permissions) == 0 {
 		hs.log.Debug("plugin did not request permissions on Grafana", "pluginID", pluginID)
 		return
 	}
 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
-	evaluator := evalAllPermissions(plugin.JSONData.ExternalServiceRegistration.Permissions)
+	evaluator := evalAllPermissions(plugin.JSONData.IAM.Permissions)
 	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 	if hs.Cfg.RBACSingleOrganization {
 		// In a single organization setup, no need for a global check
