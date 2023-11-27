@@ -86,7 +86,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	cm := cloudmonitoring.ProvideService(hcp, tracer)
 	es := elasticsearch.ProvideService(hcp, tracer)
 	grap := graphite.ProvideService(hcp, tracer)
-	idb := influxdb.ProvideService(hcp)
+	idb := influxdb.ProvideService(hcp, features)
 	lk := loki.ProvideService(hcp, features, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
 	pr := prometheus.ProvideService(hcp, cfg, features)

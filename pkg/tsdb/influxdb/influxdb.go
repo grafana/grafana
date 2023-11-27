@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
 
@@ -27,7 +26,7 @@ type Service struct {
 	features featuremgmt.FeatureToggles
 }
 
-func ProvideService(httpClient httpclient.Provider, _ *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(httpClient httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
 	return &Service{
 		im:       datasource.NewInstanceManager(newInstanceSettings(httpClient)),
 		features: features,

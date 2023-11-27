@@ -21,9 +21,6 @@ func rspErr(e error) backend.DataResponse {
 func ReadInfluxQLStyleResult(jIter *jsoniter.Iterator, query *models.Query) backend.DataResponse {
 	iter := jsonitere.NewIterator(jIter)
 	var rsp backend.DataResponse
-	// status := "unknown"
-	// influxErrString := ""
-	// warnings := []data.Notice{}
 
 	// frameName is pre-allocated. So we can reuse it, saving memory.
 	// It's sized for a reasonably-large name, but will grow if needed.
@@ -129,7 +126,7 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 				if err != nil {
 					return rspErr(err)
 				}
-				fmt.Println(fmt.Sprintf("[data] TODO, support key: %s / %v\n", l1Field, v))
+				fmt.Printf("unsupported key: %s / %v\n", l1Field, v)
 			}
 		}
 
@@ -263,10 +260,8 @@ func readColumns(iter *jsonitere.Iterator) (columns []string, err error) {
 
 func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.Fields, err error) {
 	valueFields = make(data.Fields, 0)
-	nullValuesForFields := make([][]bool, 0)
 	if hasTimeColumn {
 		valueFields = append(valueFields, data.NewField("Time", nil, make([]time.Time, 0)))
-		nullValuesForFields = append(nullValuesForFields, nil)
 	}
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
@@ -314,7 +309,7 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 				case jsoniter.BoolValue:
 					b, err := iter.ReadAny()
 					if err != nil {
-						rspErr(err)
+						return nil, err
 					}
 					valueFields = maybeCreateValueField(valueFields, data.FieldTypeNullableBool, colIdx)
 					maybeFixValueFieldType(valueFields, data.FieldTypeNullableBool, colIdx)
@@ -331,8 +326,9 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 						numberField.Name = "Value"
 						valueFields = append(valueFields, numberField)
 					}
-
 					valueFields[colIdx].Append(nil)
+				default:
+					return nil, fmt.Errorf("unknown value type")
 				}
 			}
 
@@ -340,7 +336,7 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 		}
 	}
 
-	return
+	return valueFields, nil
 }
 
 // maybeCreateValueField checks whether a value field created. if not creates a new one
