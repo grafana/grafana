@@ -3,8 +3,10 @@ package registry
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oasimpl"
@@ -14,6 +16,16 @@ import (
 
 var _ extsvcauth.ExternalServiceRegistry = &Registry{}
 
+var lockTimeConfig = serverlock.LockTimeConfig{
+	MaxInterval: 2 * time.Minute,
+	MinWait:     1 * time.Second,
+	MaxWait:     5 * time.Second,
+}
+
+type serverLocker interface {
+	LockExecuteAndReleaseWithRetries(context.Context, string, serverlock.LockTimeConfig, func(ctx context.Context), ...serverlock.RetryOpt) error
+}
+
 type Registry struct {
 	features featuremgmt.FeatureToggles
 	logger   log.Logger
@@ -22,9 +34,10 @@ type Registry struct {
 
 	extSvcProviders map[string]extsvcauth.AuthProvider
 	lock            sync.Mutex
+	serverLock      serverLocker
 }
 
-func ProvideExtSvcRegistry(oauthServer *oasimpl.OAuth2ServiceImpl, saSvc *extsvcaccounts.ExtSvcAccountsService, features featuremgmt.FeatureToggles) *Registry {
+func ProvideExtSvcRegistry(oauthServer *oasimpl.OAuth2ServiceImpl, saSvc *extsvcaccounts.ExtSvcAccountsService, serverLock *serverlock.ServerLockService, features featuremgmt.FeatureToggles) *Registry {
 	return &Registry{
 		extSvcProviders: map[string]extsvcauth.AuthProvider{},
 		features:        features,
@@ -32,33 +45,45 @@ func ProvideExtSvcRegistry(oauthServer *oasimpl.OAuth2ServiceImpl, saSvc *extsvc
 		logger:          log.New("extsvcauth.registry"),
 		oauthReg:        oauthServer,
 		saReg:           saSvc,
+		serverLock:      serverLock,
 	}
 }
 
 // CleanUpOrphanedExternalServices remove external services present in store that have not been registered on startup.
 func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
-	extsvcs, err := r.retrieveExtSvcProviders(ctx)
-	if err != nil {
-		r.logger.Error("Could not retrieve external services from store", "error", err.Error())
-		return err
-	}
-	for name, provider := range extsvcs {
-		// The service did not register this time. Removed.
-		if _, ok := r.extSvcProviders[slugify.Slugify(name)]; !ok {
-			r.logger.Info("Detected removed External Service", "service", name, "provider", provider)
-			switch provider {
-			case extsvcauth.ServiceAccounts:
-				if err := r.saReg.RemoveExternalService(ctx, name); err != nil {
-					return err
-				}
-			case extsvcauth.OAuth2Server:
-				if err := r.oauthReg.RemoveExternalService(ctx, name); err != nil {
-					return err
+	var errCleanUp error
+
+	errLock := r.serverLock.LockExecuteAndReleaseWithRetries(ctx, "ext-svc-clean-up", lockTimeConfig, func(ctx context.Context) {
+		extsvcs, err := r.retrieveExtSvcProviders(ctx)
+		if err != nil {
+			r.logger.Error("Could not retrieve external services from store", "error", err.Error())
+			errCleanUp = err
+			return
+		}
+		for name, provider := range extsvcs {
+			// The service did not register this time. Removed.
+			if _, ok := r.extSvcProviders[slugify.Slugify(name)]; !ok {
+				r.logger.Info("Detected removed External Service", "service", name, "provider", provider)
+				switch provider {
+				case extsvcauth.ServiceAccounts:
+					if err := r.saReg.RemoveExternalService(ctx, name); err != nil {
+						errCleanUp = err
+						return
+					}
+				case extsvcauth.OAuth2Server:
+					if err := r.oauthReg.RemoveExternalService(ctx, name); err != nil {
+						errCleanUp = err
+						return
+					}
 				}
 			}
 		}
+	})
+	if errLock != nil {
+		return errLock
 	}
-	return nil
+
+	return errCleanUp
 }
 
 // HasExternalService returns whether an external service has been saved with that name.
@@ -104,7 +129,7 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 		r.logger.Debug("Routing External Service removal to the OAuth2Server", "service", name)
 		return r.oauthReg.RemoveExternalService(ctx, name)
 	default:
-		return extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", provider)
+		return extsvcauth.ErrUnknownProvider.Errorf("unknown provider '%v'", provider)
 	}
 }
 
@@ -112,29 +137,42 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 // it generates client_id, secrets and any additional provider specificities (ex: rsa keys). It also ensures that the
 // associated service account has the correct permissions.
 func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
-	// Record provider in case of removal
-	r.lock.Lock()
-	r.extSvcProviders[slugify.Slugify(cmd.Name)] = cmd.AuthProvider
-	r.lock.Unlock()
+	var (
+		errSave  error
+		extSvc   *extsvcauth.ExternalService
+		lockName = "ext-svc-save-" + cmd.Name
+	)
 
-	switch cmd.AuthProvider {
-	case extsvcauth.ServiceAccounts:
-		if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
-			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
-			return nil, nil
+	err := r.serverLock.LockExecuteAndReleaseWithRetries(ctx, lockName, lockTimeConfig, func(ctx context.Context) {
+		// Record provider in case of removal
+		r.lock.Lock()
+		r.extSvcProviders[slugify.Slugify(cmd.Name)] = cmd.AuthProvider
+		r.lock.Unlock()
+
+		switch cmd.AuthProvider {
+		case extsvcauth.ServiceAccounts:
+			if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+				r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
+				return
+			}
+			r.logger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
+			extSvc, errSave = r.saReg.SaveExternalService(ctx, cmd)
+		case extsvcauth.OAuth2Server:
+			if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) {
+				r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAuth)
+				return
+			}
+			r.logger.Debug("Routing the External Service registration to the OAuth2Server", "service", cmd.Name)
+			extSvc, errSave = r.oauthReg.SaveExternalService(ctx, cmd)
+		default:
+			errSave = extsvcauth.ErrUnknownProvider.Errorf("unknown provider '%v'", cmd.AuthProvider)
 		}
-		r.logger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
-		return r.saReg.SaveExternalService(ctx, cmd)
-	case extsvcauth.OAuth2Server:
-		if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) {
-			r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAuth)
-			return nil, nil
-		}
-		r.logger.Debug("Routing the External Service registration to the OAuth2Server", "service", cmd.Name)
-		return r.oauthReg.SaveExternalService(ctx, cmd)
-	default:
-		return nil, extsvcauth.ErrUnknownProvider.Errorf("unknow provider '%v'", cmd.AuthProvider)
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	return extSvc, errSave
 }
 
 // retrieveExtSvcProviders fetches external services from store and map their associated provider

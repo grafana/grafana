@@ -3,6 +3,7 @@ import { Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  AdHocVariableFilter,
   CoreApp,
   DataQuery,
   DataQueryRequest,
@@ -27,8 +28,6 @@ import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
 
-import { config } from '../config';
-
 import { getNextRefIdChar } from './query';
 
 export const DEFAULT_UI_STATE = {
@@ -49,6 +48,7 @@ export interface GetExploreUrlArguments {
   dsRef: DataSourceRef | null | undefined;
   timeRange: TimeRange;
   scopedVars: ScopedVars | undefined;
+  adhocFilters?: AdHocVariableFilter[];
 }
 
 export function generateExploreId() {
@@ -59,7 +59,7 @@ export function generateExploreId() {
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
-  const { queries, dsRef, timeRange, scopedVars } = args;
+  const { queries, dsRef, timeRange, scopedVars, adhocFilters } = args;
   const interpolatedQueries = (
     await Promise.allSettled(
       queries
@@ -72,7 +72,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
 
           return {
             // interpolate the query using its datasource `interpolateVariablesInQueries` method if defined, othewise return the query as-is.
-            ...(queryDs.interpolateVariablesInQueries?.([q], scopedVars ?? {})[0] || q),
+            ...(queryDs.interpolateVariablesInQueries?.([q], scopedVars ?? {}, adhocFilters)[0] || q),
             // But always set the datasource as it's  required in Explore.
             // NOTE: if for some reason the query has the "mixed" datasource, we omit the property;
             // Upon initialization, Explore use its own logic to determine the datasource.
@@ -326,15 +326,6 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalY
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
   RefreshPicker.isLive(refreshInterval) ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
-
-export const convertToWebSocketUrl = (url: string) => {
-  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
-  if (backend.endsWith('/')) {
-    backend = backend.slice(0, -1);
-  }
-  return `${backend}${url}`;
-};
 
 export const stopQueryState = (querySubscription: Unsubscribable | undefined) => {
   if (querySubscription) {

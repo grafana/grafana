@@ -1977,7 +1977,7 @@
         },
         "type": "object"
       },
-      "AddCommand": {
+      "AddAPIKeyCommand": {
         "properties": {
           "name": {
             "type": "string"
@@ -15818,7 +15818,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddCommand"
+                "$ref": "#/components/schemas/AddAPIKeyCommand"
               }
             }
           },
