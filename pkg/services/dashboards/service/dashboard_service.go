@@ -615,6 +615,9 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 		if err != nil {
 			return nil, err
 		}
+		if len(userDashboardUIDs) == 0 {
+			return []dashboards.DashboardSearchProjection{}, nil
+		}
 		query.DashboardUIDs = userDashboardUIDs
 		query.FolderUIDs = []string{}
 	}
