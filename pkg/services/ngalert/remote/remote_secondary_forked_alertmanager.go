@@ -2,26 +2,43 @@ package remote
 
 import (
 	"context"
+	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 type RemoteSecondaryForkedAlertmanager struct {
+	log log.Logger
+
+	lastSync     time.Time
+	syncInterval time.Duration
+
 	internal notifier.Alertmanager
 	remote   notifier.Alertmanager
 }
 
-func NewRemoteSecondaryForkedAlertmanager(internal, remote notifier.Alertmanager) *RemoteSecondaryForkedAlertmanager {
+func NewRemoteSecondaryForkedAlertmanager(l log.Logger, syncInterval time.Duration, internal, remote notifier.Alertmanager) *RemoteSecondaryForkedAlertmanager {
 	return &RemoteSecondaryForkedAlertmanager{
-		internal: internal,
-		remote:   remote,
+		log:          l,
+		syncInterval: syncInterval,
+		internal:     internal,
+		remote:       remote,
 	}
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	return nil
+	if time.Since(fam.lastSync) >= fam.syncInterval {
+		fam.log.Debug("Applying config to the remote Alertmanager", "lastSync", fam.lastSync, "syncInterval", fam.syncInterval)
+		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+			fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
+		} else {
+			fam.lastSync = time.Now()
+		}
+	}
+	return fam.internal.ApplyConfig(ctx, config)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
