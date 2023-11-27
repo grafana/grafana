@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -95,6 +96,8 @@ func (b *DSAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&v0alpha1.DataSourceConfigList{},
 		&v0alpha1.DataSourceInstance{},
 		&v0alpha1.DataSourceInstanceList{},
+		// Added for subresource hack
+		&metav1.Status{},
 	)
 	metav1.AddToGroupVersion(scheme, b.groupVersion)
 	return scheme.SetVersionPriority(b.groupVersion)
@@ -118,6 +121,11 @@ func (b *DSAPIBuilder) GetAPIGroupInfo(
 			Resource: "instance",
 		},
 	}
+	storage["instance/query"] = &subQueryREST{builder: b}
+	storage["instance/health"] = &subHealthREST{builder: b}
+	storage["instance/resource"] = &subResourceREST{builder: b}
+	storage["instance/proxy"] = &subProxyREST{builder: b}
+
 	// config is for execution access
 	storage["config"] = &configStorage{
 		builder:    b,
@@ -138,71 +146,47 @@ func (b *DSAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 // Register additional routes with the server
 func (b *DSAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil
-	// return &grafanaapiserver.APIRoutes{
-	// 	Resource: map[string][]grafanaapiserver.APIRouteHandler{
-	// 		"instance": {
-	// 			{Path: "/query",
-	// 				Spec: &spec3.PathProps{
-	// 					Summary:     "an example at the root level",
-	// 					Description: "longer description here?",
-	// 					Get: &spec3.Operation{
-	// 						OperationProps: spec3.OperationProps{
-	// 							Parameters: []*spec3.Parameter{
-	// 								{ParameterProps: spec3.ParameterProps{
-	// 									Name: "a",
-	// 								}},
-	// 							},
-	// 						},
-	// 					},
-	// 					Post: &spec3.Operation{
-	// 						OperationProps: spec3.OperationProps{
-	// 							Parameters: []*spec3.Parameter{
-	// 								{ParameterProps: spec3.ParameterProps{
-	// 									Name: "a",
-	// 								}},
-	// 							},
-	// 						},
-	// 					},
-	// 				},
-	// 				Handler: b.doSubresource,
-	// 			},
-	// 			{Path: "/health",
-	// 				Spec: &spec3.PathProps{
-	// 					Summary:     "an example at the root level",
-	// 					Description: "longer description here?",
-	// 					Get: &spec3.Operation{
-	// 						OperationProps: spec3.OperationProps{
-	// 							Parameters: []*spec3.Parameter{
-	// 								{ParameterProps: spec3.ParameterProps{
-	// 									Name: "a",
-	// 								}},
-	// 							},
-	// 						},
-	// 					},
-	// 				},
-	// 				Handler: b.doSubresource,
-	// 			},
-	// 			{Path: "/resource",
-	// 				Spec: &spec3.PathProps{
-	// 					Summary:     "generic resource call...",
-	// 					Description: "TODO... check that this is actually implemented",
-	// 					Get:         &spec3.Operation{},
-	// 					Post:        &spec3.Operation{},
-	// 				},
-	// 				Handler: b.doSubresource,
-	// 			},
-	// 			{Path: "/resource/{.*}",
-	// 				Spec: &spec3.PathProps{
-	// 					Summary:     "generic resource call...",
-	// 					Description: "TODO... check that this is actually implemented",
-	// 					Get:         &spec3.Operation{},
-	// 					Post:        &spec3.Operation{},
-	// 				},
-	// 				Handler: b.doSubresource,
-	// 			},
-	// 		},
-	// 	},
-	// }
+}
+
+func (b *DSAPIBuilder) getDataSourcePluginContext(ctx context.Context, name string) (*backend.PluginContext, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ds, err := b.dataSourceCache.GetDatasourceByUID(ctx, name, user, false)
+	if err != nil {
+		return nil, err
+	}
+
+	settings := backend.DataSourceInstanceSettings{}
+	settings.ID = ds.ID
+	settings.UID = ds.UID
+	settings.Name = ds.Name
+	settings.URL = ds.URL
+	settings.Updated = ds.Updated
+	settings.User = ds.User
+	settings.JSONData, err = ds.JsonData.ToDB()
+	if err != nil {
+		return nil, err
+	}
+
+	settings.DecryptedSecureJSONData, err = b.dsService.DecryptedValues(ctx, ds)
+	if err != nil {
+		return nil, err
+	}
+	return &backend.PluginContext{
+		OrgID:                      info.OrgID,
+		PluginID:                   b.plugin.ID,
+		PluginVersion:              b.plugin.Info.Version,
+		User:                       &backend.User{},
+		AppInstanceSettings:        &backend.AppInstanceSettings{},
+		DataSourceInstanceSettings: &settings,
+	}, nil
 }
 
 func (b *DSAPIBuilder) getDataSource(ctx context.Context, name string) (*datasources.DataSource, error) {

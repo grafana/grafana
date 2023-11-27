@@ -2,15 +2,18 @@ package datasource
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 var (
@@ -50,34 +53,44 @@ func (s *configStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *configStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	info, err := grafanarequest.NamespaceInfoFrom(ctx, true)
+	ds, err := s.builder.getDataSource(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-
-	return &v0alpha1.DataSourceConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "DataSourceConfig",
-			APIVersion: s.apiVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: s.builder.namespacer(info.OrgID),
-		},
-		Spec: map[string]any{
-			"hello": "world",
-		},
-	}, nil
+	return s.asConfig(ds), nil
 }
 
 func (s *configStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return &v0alpha1.DataSourceConfigList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "DataSourceConfigList",
-			APIVersion: s.apiVersion,
+	result := &v0alpha1.DataSourceConfigList{
+		Items: []v0alpha1.DataSourceConfig{},
+	}
+	vals, err := s.builder.getDataSources(ctx)
+	if err == nil {
+		for _, ds := range vals {
+			result.Items = append(result.Items, *s.asConfig(ds))
+		}
+	}
+	return result, err
+}
+
+func (s *configStorage) asConfig(ds *datasources.DataSource) *v0alpha1.DataSourceConfig {
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf("%d/%s", ds.Created.UnixMilli(), ds.UID)))
+	uid := fmt.Sprintf("%x", h.Sum(nil))
+
+	return &v0alpha1.DataSourceConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              ds.UID,
+			Namespace:         s.builder.namespacer(ds.OrgID),
+			CreationTimestamp: metav1.NewTime(ds.Created),
+			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
+			UID:               types.UID(uid), // make it different so we don't confuse it with "name"
 		},
-		Items: []v0alpha1.DataSourceConfig{
-			// TODO....
+		Spec: map[string]any{
+			"XXX": ds.JsonData,
 		},
-	}, nil
+		SecureJSON: map[string]string{
+			"TODO": "only when we know security is good enough",
+		},
+	}
 }
