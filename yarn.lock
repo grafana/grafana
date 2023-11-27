@@ -3224,12 +3224,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.10":
-  version: 0.0.10
-  resolution: "@grafana/lezer-traceql@npm:0.0.10"
+"@grafana/lezer-traceql@npm:0.0.11":
+  version: 0.0.11
+  resolution: "@grafana/lezer-traceql@npm:0.0.11"
   peerDependencies:
     "@lezer/lr": ^1.3.0
-  checksum: 9335458543a5155a4ece6a0d526dd78d8dba087f197b19ca80546529a39a107d62d4d0faa3fabc3f4d5caefc173cb1a6b93650a471101d34a0ee1c8f7c348de0
+  checksum: cb312cf8f0cf70af6eb307aa0b6478cd8bde9233f281d6f4bb385f3c846a1e9fe0caf8addef5cbc0ccadb57b968fbd10e26ad5df6f898fb2b174536dca924926
   languageName: node
   linkType: hard
 
@@ -3302,9 +3302,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@portal:/home/torkel/dev/scenes/packages/scenes::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@grafana/scenes@portal:/home/torkel/dev/scenes/packages/scenes::locator=grafana%40workspace%3A."
+"@grafana/scenes@npm:1.24.1":
+  version: 1.24.1
+  resolution: "@grafana/scenes@npm:1.24.1"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.0.2"
     react-grid-layout: "npm:1.3.4"
@@ -3316,8 +3316,9 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
+  checksum: 38967dd3977a9b9feb4c295da58bb378d2f9c810c43b34c67c65858782b9593421dfb58d29bc3fa0e86fc63f9af37f7a381ac958ef43bf38d6443a0a7e4de059
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@grafana/schema@npm:10.3.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
@@ -12137,6 +12138,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cheminfo-types@npm:^1.7.2":
+  version: 1.7.2
+  resolution: "cheminfo-types@npm:1.7.2"
+  checksum: 26c4db9600c786aff28276c8dbc48779f6c20705c3673558344282340d3b9d14554f306994e627396678475b50728a96134d99a794271b86301f6945fab355de
+  languageName: node
+  linkType: hard
+
 "chokidar@npm:3.5.3, chokidar@npm:>=3.0.0 <4.0.0, chokidar@npm:^3.3.1, chokidar@npm:^3.4.2, chokidar@npm:^3.5.3":
   version: 3.5.3
   resolution: "chokidar@npm:3.5.3"
@@ -17303,10 +17311,10 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.1"
     "@grafana/lezer-logql": "npm:0.2.1"
-    "@grafana/lezer-traceql": "npm:0.0.10"
+    "@grafana/lezer-traceql": "npm:0.0.11"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "portal:/home/torkel/dev/scenes/packages/scenes"
+    "@grafana/scenes": "npm:1.24.1"
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "workspace:*"
@@ -17507,6 +17515,8 @@ __metadata:
     marked-mangle: "npm:1.1.0"
     memoize-one: "npm:6.0.0"
     mini-css-extract-plugin: "npm:2.7.6"
+    ml-regression-polynomial: "npm:^3.0.0"
+    ml-regression-simple-linear: "npm:^3.0.0"
     moment: "npm:2.29.4"
     moment-timezone: "npm:0.5.43"
     monaco-editor: "npm:0.34.0"
@@ -18713,6 +18723,13 @@ __metadata:
     is-alphabetical: "npm:^1.0.0"
     is-decimal: "npm:^1.0.0"
   checksum: e2e491acc16fcf5b363f7c726f666a9538dba0a043665740feb45bba1652457a73441e7c5179c6768a638ed396db3437e9905f403644ec7c468fb41f4813d03f
+  languageName: node
+  linkType: hard
+
+"is-any-array@npm:^2.0.0, is-any-array@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "is-any-array@npm:2.0.1"
+  checksum: a2caaec75abb10ccb7e926aed322df5d2f206ae8645313771282702cf47d626832d9dc3318580e0fddbd04772d899263bebccb12c692e97988017ac549654cd4
   languageName: node
   linkType: hard
 
@@ -22219,6 +22236,76 @@ __metadata:
   version: 0.4.0
   resolution: "mktemp@npm:0.4.0"
   checksum: 0d7d4f20befa690bf7ba2f702f81f98b23b4124f19183048752a6ad33a07b5a16e69346245b8e683c70778e8135161ef14e5720b17fdf0b4b4ebd242a6bf2798
+  languageName: node
+  linkType: hard
+
+"ml-array-max@npm:^1.2.4":
+  version: 1.2.4
+  resolution: "ml-array-max@npm:1.2.4"
+  dependencies:
+    is-any-array: "npm:^2.0.0"
+  checksum: d62689d349c825a36dae212ee109a7f81f2a3c1136cb79f50a90e6c48ae5acc78dacb1334864bfd9abf6f09b78ce6a68e2455b1259b775b3b05556362fbf8470
+  languageName: node
+  linkType: hard
+
+"ml-array-min@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "ml-array-min@npm:1.2.3"
+  dependencies:
+    is-any-array: "npm:^2.0.0"
+  checksum: bc6e0c69f20eb2b35c2c8d3a59f8c6289462683084e8fa50344ae4db3214b8b30854f96a8eaf22df510752c3065d3337cd996f98a80a95b47a88b38369beeb5b
+  languageName: node
+  linkType: hard
+
+"ml-array-rescale@npm:^1.3.7":
+  version: 1.3.7
+  resolution: "ml-array-rescale@npm:1.3.7"
+  dependencies:
+    is-any-array: "npm:^2.0.0"
+    ml-array-max: "npm:^1.2.4"
+    ml-array-min: "npm:^1.2.3"
+  checksum: 2f9883388ebb6c921c648a1cdcf1d853a35dff5f30e7204e142511abcafe05f40c1c1543232503aeff4ecdb3f57e958e7de8d070b973af3be7bfd27381b30528
+  languageName: node
+  linkType: hard
+
+"ml-matrix@npm:^6.10.5":
+  version: 6.10.8
+  resolution: "ml-matrix@npm:6.10.8"
+  dependencies:
+    is-any-array: "npm:^2.0.1"
+    ml-array-rescale: "npm:^1.3.7"
+  checksum: a13909330f119dffb5538b08036a635895f87e12b25e3a23b0662e7333cfbb50425cea8fca55b03cd3eb8eeaa2509a2c84e0c26a0ca89c718f97f4234e2008b4
+  languageName: node
+  linkType: hard
+
+"ml-regression-base@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "ml-regression-base@npm:3.0.0"
+  dependencies:
+    cheminfo-types: "npm:^1.7.2"
+    is-any-array: "npm:^2.0.1"
+  checksum: b737d4f70d6058efee607ab36a56cc92199111f6ea021e6290158792ee3f410c12b77d5dabfe6ccd55d02f5b6b072b83066a6e5cba909d4c91b85050ac15b491
+  languageName: node
+  linkType: hard
+
+"ml-regression-polynomial@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "ml-regression-polynomial@npm:3.0.0"
+  dependencies:
+    cheminfo-types: "npm:^1.7.2"
+    ml-matrix: "npm:^6.10.5"
+    ml-regression-base: "npm:^3.0.0"
+  checksum: e5d3ee187d6f35e4e3b2191f52d7dc63a61f0b975cf2012ed20403420d6a65ae2ad7d51f80896daf778b39bdbd56d7fa9d4c17aac96a1669acea3fbd2a0a31d7
+  languageName: node
+  linkType: hard
+
+"ml-regression-simple-linear@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "ml-regression-simple-linear@npm:3.0.0"
+  dependencies:
+    cheminfo-types: "npm:^1.7.2"
+    ml-regression-base: "npm:^3.0.0"
+  checksum: 2e4650026bb793455788f31de79bd25f5325e97580f20af848c4c8af4d1f1e1d3b04fbdb0f1677071727da3ffe4a34c5d0e4a0533ad81050441b5e0d745bdc57
   languageName: node
   linkType: hard
 

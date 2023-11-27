@@ -1,6 +1,6 @@
+import { LokiVariableSupport } from './LokiVariableSupport';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { LokiVariableQueryType } from './types';
-import { LokiVariableSupport } from './variables';
 
 describe('LokiVariableSupport', () => {
   let lokiVariableSupport: LokiVariableSupport;

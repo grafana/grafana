@@ -8,7 +8,8 @@ import {
   VizPanel,
   sceneUtils,
   SceneVariables,
-  SceneGridRow
+  SceneGridRow,
+  sceneGraph,
 } from '@grafana/scenes';
 
 interface ViewPanelSceneState extends SceneObjectState {
@@ -27,9 +28,8 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
     const panel = this.state.panelRef.resolve();
     const panelState = sceneUtils.cloneSceneObjectState(panel.state, {
       key: panel.state.key + '-view',
-      $variables: this.getScopedVariables(panel)
+      $variables: this.getScopedVariables(panel),
     });
-
 
     const body = new VizPanel(panelState);
 
@@ -45,19 +45,16 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
 
   // In case the panel is inside a repeated row
   private getScopedVariables(panel: VizPanel): SceneVariables | undefined {
-    const row = panel.parent?.parent;
-    let rowVariables: SceneVariables | undefined;
-
-    if (row instanceof SceneGridRow && row.state.$variables) {
-      rowVariables = row.state.$variables;
-    }
+    const row = tryGetParentRow(panel);
 
     // Because we are rendering the panel outside it's potential row context we need to copy the row (scoped) varables
-    if (rowVariables) {
+    if (row && row.state.$variables) {
+      const rowVariables = row.state.$variables;
+
       // If we have local scoped panel variables we need to add the row variables to it
       if (panel.state.$variables) {
         return panel.state.$variables.clone({
-          variables: panel.state.$variables.state.variables.concat(rowVariables.state.variables)
+          variables: panel.state.$variables.state.variables.concat(rowVariables.state.variables),
         });
       } else {
         return rowVariables.clone();
@@ -86,3 +83,10 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
   };
 }
 
+function tryGetParentRow(panel: VizPanel): SceneGridRow | undefined {
+  try {
+    return sceneGraph.getAncestor(panel, SceneGridRow);
+  } catch {
+    return undefined;
+  }
+}
