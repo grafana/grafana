@@ -281,12 +281,12 @@ func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQu
 
 func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
 	permissions := user.GetPermissions()
-	folderPermissions := permissions["folders:read"]
-	folderPermissions = append(folderPermissions, permissions["dashboards:read"]...)
+	folderPermissions := permissions[dashboards.ActionFoldersRead]
+	folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsRead]...)
 	nonRootFolders := make([]*folder.Folder, 0)
 	folderUids := make([]string, 0)
 	for _, p := range folderPermissions {
-		if folderUid, found := strings.CutPrefix(p, "folders:uid:"); found {
+		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
 			if !slices.Contains(folderUids, folderUid) {
 				folderUids = append(folderUids, folderUid)
 			}

@@ -539,17 +539,17 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetUserSharedDashboards(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
-	return dr.getUserSharedDashboards(ctx, user)
+func (dr *DashboardServiceImpl) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
+	return dr.getDashboardsSharedWithUser(ctx, user)
 }
 
-func (dr *DashboardServiceImpl) getUserSharedDashboards(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
+func (dr *DashboardServiceImpl) getDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*dashboards.Dashboard, error) {
 	permissions := user.GetPermissions()
-	dashboardPermissions := permissions["dashboards:read"]
+	dashboardPermissions := permissions[dashboards.ActionDashboardsRead]
 	sharedDashboards := make([]*dashboards.Dashboard, 0)
 	dashboardUids := make([]string, 0)
 	for _, p := range dashboardPermissions {
-		if dashboardUid, found := strings.CutPrefix(p, "dashboards:uid:"); found {
+		if dashboardUid, found := strings.CutPrefix(p, dashboards.ScopeDashboardsPrefix); found {
 			if !slices.Contains(dashboardUids, dashboardUid) {
 				dashboardUids = append(dashboardUids, dashboardUid)
 			}
@@ -581,12 +581,14 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 		}
 		g, err := guardian.NewByUID(ctx, dashboard.FolderUID, user.GetOrgID(), user)
 		if err != nil {
-			return nil, err
+			dr.log.Error("failed to check folder permissions", "folder uid", dashboard.FolderUID, "error", err)
+			continue
 		}
 
 		canView, err := g.CanView()
 		if err != nil {
-			return nil, err
+			dr.log.Error("failed to fetch dashboard", "uid", dashboard.UID, "error", err)
+			continue
 		}
 		if !canView {
 			filteredDashboards = append(filteredDashboards, dashboard)
@@ -596,7 +598,7 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 }
 
 func (dr *DashboardServiceImpl) getUserSharedDashboardUIDs(ctx context.Context, user identity.Requester) ([]string, error) {
-	userDashboards, err := dr.getUserSharedDashboards(ctx, user)
+	userDashboards, err := dr.getDashboardsSharedWithUser(ctx, user)
 	if err != nil {
 		return nil, err
 	}

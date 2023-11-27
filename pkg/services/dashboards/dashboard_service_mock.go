@@ -286,7 +286,7 @@ func (_m *FakeDashboardService) SearchDashboards(ctx context.Context, query *Fin
 	return r0, r1
 }
 
-func (_m *FakeDashboardService) GetUserSharedDashboards(ctx context.Context, user identity.Requester) ([]*Dashboard, error) {
+func (_m *FakeDashboardService) GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error) {
 	ret := _m.Called(ctx, user)
 
 	var r0 []*Dashboard
