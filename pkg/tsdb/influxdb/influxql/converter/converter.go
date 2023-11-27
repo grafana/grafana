@@ -144,20 +144,51 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 				rsp.Frames = append(rsp.Frames, newFrame)
 			}
 
-			// If there is time field and already appended remove timeField
-			if hasTimeColumn && len(rsp.Frames[0].Fields) > 0 {
-				valueFields = valueFields[1:]
+			if len(rsp.Frames[0].Fields) == 0 {
+				rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, valueFields[0])
+			} else {
+				var i int
+				for i < valueFields[0].Len() {
+					rsp.Frames[0].Fields[0].Append(valueFields[0].At(i))
+					i++
+				}
 			}
 
-			for i, v := range valueFields {
-				formattedFrameName := util.FormatFrameName(measurement, columns[i], tags, *query, frameName)
-				if columns[i] != "time" {
-					v.Name = string(formattedFrameName)
-					v.Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
+			ti := 1 // We have the first field, so we should add tagField if there is any tag
+			for k, v := range tags {
+				if len(rsp.Frames[0].Fields) == ti {
+					tagField := data.NewField(k, nil, []*string{})
+					tagField.Config = &data.FieldConfig{DisplayNameFromDS: k}
+					rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, tagField)
 				}
-				rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, v)
+				var i int
+				for i < valueFields[0].Len() {
+					rsp.Frames[0].Fields[ti].Append(&v)
+					i++
+				}
+				ti++
+			}
+
+			si := len(tags) + 1 // number of fields we currently have in the first frame
+			for i, v := range valueFields {
+				if columns[i] == "time" {
+					continue
+				}
+				v.Name = columns[i]
+				v.Config = &data.FieldConfig{DisplayNameFromDS: columns[i]}
+				if len(rsp.Frames[0].Fields) == si {
+					rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, v)
+				} else {
+					vi := 0
+					for vi < v.Len() {
+						rsp.Frames[0].Fields[si].Append(v.At(vi))
+						vi++
+					}
+				}
+				si++
 			}
 		} else {
+			// time_series response format
 			if hasTimeColumn {
 				// Frame with time column
 				for i, v := range columns {
