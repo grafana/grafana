@@ -51,6 +51,7 @@ const seriesLabels = { place: ['series', 'labels'], source: [], other: [] };
 const parserAndLabelKeys = {
   extractedLabelKeys: ['extracted', 'label', 'keys'],
   unwrapLabelKeys: ['unwrap', 'labels'],
+  structuredMetadataKeys: ['structured', 'metadata'],
   hasJSON: true,
   hasLogfmt: false,
   hasPack: false,

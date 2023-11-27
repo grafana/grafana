@@ -409,10 +409,8 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
   // When VizPanel is present, we are snapshoting a single panel. The rest of the panels is removed from the dashboard,
   // and the panel is resized to 24x20 grid and placed at the top of the dashboard.
   if (panel) {
-    // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
     const singlePanel = dash.panels?.find((p) => p.id === getPanelIdForVizPanel(panel));
     if (singlePanel) {
-      // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
       singlePanel.gridPos = { w: 24, x: 0, y: 0, h: 20 };
       result = {
         ...result,
