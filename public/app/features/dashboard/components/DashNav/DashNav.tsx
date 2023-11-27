@@ -174,10 +174,27 @@ export const DashNav = React.memo<Props>((props) => {
 
   const renderLeftActions = () => {
     const { dashboard, kioskMode } = props;
+    const { canStar, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
     if (kioskMode || isPlaylistRunning()) {
       return [];
+    }
+
+    if (canStar) {
+      let desc = isStarred
+        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
+        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
+      buttons.push(
+        <DashNavButton
+          tooltip={desc}
+          icon={isStarred ? 'favorite' : 'star'}
+          iconType={isStarred ? 'mono' : 'default'}
+          iconSize="lg"
+          onClick={onStarDashboard}
+          key="button-star"
+        />
+      );
     }
 
     if (dashboard.meta.publicDashboardEnabled) {
@@ -247,7 +264,7 @@ export const DashNav = React.memo<Props>((props) => {
 
   const renderRightActions = () => {
     const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
-    const { canSave, canEdit, showSettings, canShare, canStar, isStarred } = dashboard.meta;
+    const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
@@ -267,22 +284,6 @@ export const DashNav = React.memo<Props>((props) => {
           onClick={onOpenSnapshotOriginal}
           icon="link"
           key="button-snapshot"
-        />
-      );
-    }
-
-    if (canStar) {
-      let desc = isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
-      buttons.push(
-        <DashNavButton
-          tooltip={desc}
-          icon={isStarred ? 'favorite' : 'star'}
-          iconType={isStarred ? 'mono' : 'default'}
-          iconSize="lg"
-          onClick={onStarDashboard}
-          key="button-star"
         />
       );
     }
@@ -342,6 +343,8 @@ export const DashNav = React.memo<Props>((props) => {
     if (canShare) {
       buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
     }
+
+    buttons.push(<NavToolbarSeparator key="toolbar-separator" />);
 
     buttons.push(renderTimeControls());
 
