@@ -27,7 +27,7 @@ interface ShortLinkMenuItemData {
 
 const defaultMode: ShortLinkMenuItemData = {
   key: 'copy-link',
-  label: t('explore.toolbar.copy-shortened-link', 'Copy shortened link'),
+  label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
   icon: 'share-alt',
   getUrl: () => undefined,
   shorten: true,
@@ -54,19 +54,19 @@ export function ShortLinkButtonMenu() {
   const menuOptions: ShortLinkGroupData[] = [
     {
       key: 'normal',
-      label: 'Normal Links (Share with normal or shortened URLs)',
+      label: t('explore.toolbar.copy-links-normal-category', 'Normal URL links'),
       items: [
         {
           key: 'copy-shortened-link',
           icon: 'link',
-          label: t('explore.toolbar.copy-shortened-link', 'Copy shortened link'),
+          label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
           getUrl: () => undefined,
           shorten: true,
         },
         {
           key: 'copy-link',
           icon: 'link',
-          label: t('explore.toolbar.copy-link', 'Copy link'),
+          label: t('explore.toolbar.copy-link', 'Copy URL'),
           getUrl: () => undefined,
           shorten: false,
         },
@@ -74,7 +74,7 @@ export function ShortLinkButtonMenu() {
     },
     {
       key: 'timesync',
-      label: 'Time-Sync (Share with time range intact)',
+      label: t('explore.toolbar.copy-links-absolute-category', 'Time-sync URL links (share with time range intact)'),
       items: [
         {
           key: 'copy-short-link-abs-time',
@@ -136,7 +136,7 @@ export function ShortLinkButtonMenu() {
             const url = lastSelected.getUrl();
             onCopyLink(lastSelected.shorten, url);
           }}
-          aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
+          aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
         />
         <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
           <ToolbarButton

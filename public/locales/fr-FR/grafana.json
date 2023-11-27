@@ -534,6 +534,8 @@
       "aria-label": "Explorer la barre d'outils",
       "copy-link": "",
       "copy-link-abs-time": "",
+      "copy-links-absolute-category": "",
+      "copy-links-normal-category": "",
       "copy-shortened-link": "Copier le lien raccourci",
       "copy-shortened-link-abs-time": "",
       "copy-shortened-link-menu": "",
