@@ -8,7 +8,7 @@ import {
   ValueMapping,
 } from '../../types';
 
-export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
+export const identityOverrideProcessor = <T>(value: T) => {
   return value;
 };
 

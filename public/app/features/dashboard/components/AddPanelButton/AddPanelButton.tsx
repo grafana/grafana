@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Dropdown, Button, Icon } from '@grafana/ui';
@@ -9,10 +9,17 @@ import AddPanelMenu from './AddPanelMenu';
 
 export interface Props {
   dashboard: DashboardModel;
+  onToolbarAddMenuOpen?: () => void;
 }
 
-const AddPanelButton = ({ dashboard }: Props) => {
+const AddPanelButton = ({ dashboard, onToolbarAddMenuOpen }: Props) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMenuOpen && onToolbarAddMenuOpen) {
+      onToolbarAddMenuOpen();
+    }
+  }, [isMenuOpen, onToolbarAddMenuOpen]);
 
   return (
     <Dropdown

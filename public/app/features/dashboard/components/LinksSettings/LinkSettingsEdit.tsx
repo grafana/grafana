@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { DashboardLink } from '@grafana/schema';
 import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button, IconName } from '@grafana/ui';
 
-import { DashboardLink, DashboardModel } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state/DashboardModel';
 
 export const newLink: DashboardLink = {
   icon: 'external link',

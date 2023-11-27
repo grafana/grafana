@@ -7,6 +7,8 @@ import { DashboardModel } from 'app/features/dashboard/state';
 
 import { ShareModal } from '../ShareModal';
 
+import { trackToolbarShareClick } from './analytics';
+
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   const [queryParams] = useQueryParams();
   const { showModal, hideModal } = useContext(ModalsContext);
@@ -30,6 +32,7 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
       variant="primary"
       size="sm"
       onClick={() => {
+        trackToolbarShareClick();
         showModal(ShareModal, {
           dashboard,
           onDismiss: hideModal,

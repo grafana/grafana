@@ -61,7 +61,7 @@ type DataPipeline []Node
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 
-	groupByDSFlag := s.features.IsEnabled(featuremgmt.FlagSseGroupByDatasource)
+	groupByDSFlag := s.features.IsEnabled(c, featuremgmt.FlagSseGroupByDatasource)
 	// Execute datasource nodes first, and grouped by datasource.
 	if groupByDSFlag {
 		dsNodes := []*DSNode{}
@@ -227,7 +227,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case TypeCMDNode:
 			node, err = buildCMDNode(rn, s.features)
 		case TypeMLNode:
-			if s.features.IsEnabled(featuremgmt.FlagMlExpressions) {
+			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)
 				if err != nil {
 					err = fmt.Errorf("fail to parse expression with refID %v: %w", rn.RefID, err)

@@ -63,10 +63,6 @@ const (
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
 
-	// FlagNewDBLibrary
-	// Use jmoiron/sqlx rather than xorm for a few backend services
-	FlagNewDBLibrary = "newDBLibrary"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -371,6 +367,10 @@ const (
 	// Enables linking between traces and profiles
 	FlagTraceToProfiles = "traceToProfiles"
 
+	// FlagTracesEmbeddedFlameGraph
+	// Enables embedding a flame graph in traces
+	FlagTracesEmbeddedFlameGraph = "tracesEmbeddedFlameGraph"
+
 	// FlagPermissionsFilterRemoveSubquery
 	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
 	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
@@ -402,10 +402,6 @@ const (
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
-
-	// FlagNewBrowseDashboards
-	// New browse/manage dashboards UI
-	FlagNewBrowseDashboards = "newBrowseDashboards"
 
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions
@@ -483,13 +479,13 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagNavAdminSubsections
-	// Splits the administration section of the nav tree into subsections
-	FlagNavAdminSubsections = "navAdminSubsections"
-
 	// FlagRecoveryThreshold
 	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
 	FlagRecoveryThreshold = "recoveryThreshold"
+
+	// FlagLokiStructuredMetadata
+	// Enables the loki data source to request structured metadata from the Loki server
+	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
 	// FlagTeamHttpHeaders
 	// Enables datasources to apply team headers to the client requests
@@ -579,7 +575,23 @@ const (
 	// Enables the preview of the new alert details view
 	FlagAlertingDetailsViewV2 = "alertingDetailsViewV2"
 
+	// FlagDatatrails
+	// Enables the new core app datatrails
+	FlagDatatrails = "datatrails"
+
 	// FlagAlertingSimplifiedRouting
 	// Enables the simplified routing for alerting
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
+
+	// FlagLogRowsPopoverMenu
+	// Enable filtering menu displayed when text of a log line is selected
+	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
+
+	// FlagPluginsSkipHostEnvVars
+	// Disables passing host environment variable to plugin processes
+	FlagPluginsSkipHostEnvVars = "pluginsSkipHostEnvVars"
+
+	// FlagRegressionTransformation
+	// Enables regression analysis transformation
+	FlagRegressionTransformation = "regressionTransformation"
 )

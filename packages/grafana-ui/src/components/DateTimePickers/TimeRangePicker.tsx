@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { memo, createRef, useState } from 'react';
+import React, { memo, createRef, useState, useEffect } from 'react';
 
 import {
-  isDateTime,
   rangeUtil,
   GrafanaTheme2,
   dateTimeFormat,
@@ -16,7 +15,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { getModalStyles } from '../Modal/getModalStyles';
@@ -44,6 +43,7 @@ export interface TimeRangePickerProps {
   hideQuickRanges?: boolean;
   widthOverride?: number;
   isOnCanvas?: boolean;
+  onToolbarTimePickerClick?: () => void;
 }
 
 export interface State {
@@ -68,12 +68,19 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     hideQuickRanges,
     widthOverride,
     isOnCanvas,
+    onToolbarTimePickerClick,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
     props.onChange(timeRange);
     setOpen(false);
   };
+
+  useEffect(() => {
+    if (isOpen && onToolbarTimePickerClick) {
+      onToolbarTimePickerClick();
+    }
+  }, [isOpen, onToolbarTimePickerClick]);
 
   const onToolbarButtonSwitch = () => {
     setOpen((prevState) => !prevState);
@@ -98,10 +105,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   );
   const { dialogProps } = useDialog({}, overlayRef);
 
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { modalBackdrop } = getModalStyles(theme);
-  const hasAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
+  const { modalBackdrop } = useStyles2(getModalStyles);
+  const hasAbsolute = !rangeUtil.isRelativeTime(value.raw.from) || !rangeUtil.isRelativeTime(value.raw.to);
+
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
   const currentTimeRange = formattedRange(value, timeZone);
