@@ -14,7 +14,7 @@ import {
   arrayUtils,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { SeriesTableRowProps, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
@@ -85,8 +85,6 @@ export const StatusHistoryTooltip2 = ({
   }
 
   if (mode === TooltipDisplayMode.Multi && !isPinned) {
-    let series: SeriesTableRowProps[] = [];
-
     const frame = alignedData;
     const fields = frame.fields;
     const sortIdx: unknown[] = [];
@@ -121,10 +119,10 @@ export const StatusHistoryTooltip2 = ({
 
     if (sortOrder !== SortOrder.None) {
       // create sort reference series array, as Array.sort() mutates the original array
-      const sortRef = [...series];
+      const sortRef = [...contentLabelValue];
       const sortFn = arrayUtils.sortValues(sortOrder);
 
-      series.sort((a, b) => {
+      contentLabelValue.sort((a, b) => {
         // get compared values indices to retrieve raw values from sortIdx
         const aIdx = sortRef.indexOf(a);
         const bIdx = sortRef.indexOf(b);
