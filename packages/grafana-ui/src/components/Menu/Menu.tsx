@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
 import React, { useImperativeHandle, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -15,13 +16,14 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   header?: React.ReactNode;
   children: React.ReactNode;
   ariaLabel?: string;
+  autoFocusMenu?: boolean;
   onOpen?: (focusOnItem: (itemId: number) => void) => void;
   onClose?: () => void;
   onKeyDown?: React.KeyboardEventHandler;
 }
 
 const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
-  ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, ...otherProps }, forwardedRef) => {
+  ({ header, children, ariaLabel, onOpen, onClose, onKeyDown, autoFocusMenu = true, ...otherProps }, forwardedRef) => {
     const styles = useStyles2(getStyles);
 
     const localRef = useRef<HTMLDivElement>(null);
@@ -30,27 +32,29 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
     const [handleKeys] = useMenuFocus({ localRef, onOpen, onClose, onKeyDown });
 
     return (
-      <div
-        {...otherProps}
-        tabIndex={-1}
-        ref={localRef}
-        className={styles.wrapper}
-        role="menu"
-        aria-label={ariaLabel}
-        onKeyDown={handleKeys}
-      >
-        {header && (
-          <div
-            className={cx(
-              styles.header,
-              Boolean(children) && React.Children.toArray(children).length > 0 && styles.headerBorder
-            )}
-          >
-            {header}
-          </div>
-        )}
-        {children}
-      </div>
+      <FocusScope autoFocus={autoFocusMenu}>
+        <div
+          {...otherProps}
+          tabIndex={-1}
+          ref={localRef}
+          className={styles.wrapper}
+          role="menu"
+          aria-label={ariaLabel}
+          onKeyDown={handleKeys}
+        >
+          {header && (
+            <div
+              className={cx(
+                styles.header,
+                Boolean(children) && React.Children.toArray(children).length > 0 && styles.headerBorder
+              )}
+            >
+              {header}
+            </div>
+          )}
+          {children}
+        </div>
+      </FocusScope>
     );
   }
 );
