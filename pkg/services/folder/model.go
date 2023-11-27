@@ -53,7 +53,7 @@ var SharedWithMeFolder = Folder{
 	Title:       "Shared with me",
 	Description: "Dashboards and folders shared with me",
 	UID:         SharedWithMeFolderUID,
-	ParentUID:   GeneralFolderUID,
+	ParentUID:   "",
 	ID:          -1,
 }
 
