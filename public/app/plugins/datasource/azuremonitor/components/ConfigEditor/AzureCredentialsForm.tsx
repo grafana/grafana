@@ -1,11 +1,13 @@
-import React, { ChangeEvent, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
-import { Button, Select, Field, Input } from '@grafana/ui';
+import { Select, Field } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 import { AzureAuthType, AzureCredentials } from '../../types';
+
+import { AppRegistrationCredentials } from './AppRegistrationCredentials';
 
 export interface Props {
   managedIdentityEnabled: boolean;
@@ -76,56 +78,6 @@ export const AzureCredentialsForm = (props: Props) => {
     onCredentialsChange(updated);
   };
 
-  const onAzureCloudChange = (selected: SelectableValue<string>) => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        azureCloud: selected.value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
-
-  const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        tenantId: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
-
-  const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        clientId: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
-
-  const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        clientSecret: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
-
-  const onClientSecretReset = () => {
-    if (credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') {
-      const updated: AzureCredentials = {
-        ...credentials,
-        clientSecret: '',
-      };
-      onCredentialsChange(updated);
-    }
-  };
-
   return (
     <ConfigSection title="Authentication">
       {authTypeOptions.length > 1 && (
@@ -145,94 +97,12 @@ export const AzureCredentialsForm = (props: Props) => {
         </Field>
       )}
       {(credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') && (
-        <>
-          {azureCloudOptions && (
-            <Field
-              label="Azure Cloud"
-              data-testid={selectors.components.configEditor.azureCloud.input}
-              htmlFor="azure-cloud-type"
-              disabled={disabled}
-            >
-              <Select
-                inputId="azure-cloud-type"
-                aria-label="Azure Cloud"
-                className="width-15"
-                value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
-                options={azureCloudOptions}
-                onChange={onAzureCloudChange}
-              />
-            </Field>
-          )}
-          <Field
-            label="Directory (tenant) ID"
-            required
-            data-testid={selectors.components.configEditor.tenantID.input}
-            htmlFor="tenant-id"
-            invalid={!credentials.tenantId}
-            error={'Tenant ID is required'}
-          >
-            <Input
-              aria-label="Tenant ID"
-              className="width-30"
-              placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-              value={credentials.tenantId || ''}
-              onChange={onTenantIdChange}
-              disabled={disabled}
-            />
-          </Field>
-          <Field
-            label="Application (client) ID"
-            required
-            data-testid={selectors.components.configEditor.clientID.input}
-            htmlFor="client-id"
-            invalid={!credentials.clientId}
-            error={'Client ID is required'}
-          >
-            <Input
-              className="width-30"
-              aria-label="Client ID"
-              placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-              value={credentials.clientId || ''}
-              onChange={onClientIdChange}
-              disabled={disabled}
-            />
-          </Field>
-          {!disabled &&
-            (typeof credentials.clientSecret === 'symbol' ? (
-              <Field label="Client Secret" htmlFor="client-secret" required>
-                <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
-                  <Input
-                    aria-label="Client Secret"
-                    placeholder="configured"
-                    disabled={true}
-                    data-testid={'client-secret'}
-                  />
-                  <Button variant="secondary" type="button" onClick={onClientSecretReset} disabled={disabled}>
-                    Reset
-                  </Button>
-                </div>
-              </Field>
-            ) : (
-              <Field
-                label="Client Secret"
-                data-testid={selectors.components.configEditor.clientSecret.input}
-                required
-                htmlFor="client-secret"
-                invalid={!credentials.clientSecret}
-                error={'Client secret is required'}
-              >
-                <Input
-                  className="width-30"
-                  aria-label="Client Secret"
-                  placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                  value={credentials.clientSecret || ''}
-                  onChange={onClientSecretChange}
-                  id="client-secret"
-                  disabled={disabled}
-                />
-              </Field>
-            ))}
-        </>
+        <AppRegistrationCredentials
+          credentials={credentials}
+          azureCloudOptions={azureCloudOptions}
+          onCredentialsChange={onCredentialsChange}
+          disabled={disabled}
+        />
       )}
       {props.children}
     </ConfigSection>
