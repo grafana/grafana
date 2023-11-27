@@ -29,17 +29,15 @@ import { TableData } from '../types';
 type Props = {
   data: FlameGraphDataContainer;
   onSymbolClick: (symbol: string) => void;
-  height?: number;
   search?: string;
   sandwichItem?: string;
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
-  vertical?: boolean;
 };
 
 const FlameGraphTopTableContainer = React.memo(
-  ({ data, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich, onTableSort, vertical }: Props) => {
+  ({ data, onSymbolClick, search, onSearch, sandwichItem, onSandwich, onTableSort }: Props) => {
     const table = useMemo(() => {
       // Group the data by label, we show only one row per label and sum the values
       // TODO: should be by filename + funcName + linenumber?
@@ -57,21 +55,14 @@ const FlameGraphTopTableContainer = React.memo(
       return table;
     }, [data]);
 
-    const rowHeight = 35;
-    // When we use normal layout we size the table to have the same height as the flamegraph to look good side by side.
-    // In vertical layout we don't need that so this is a bit arbitrary. We want some max limit
-    // so we don't show potentially thousands of rows at once which can hinder performance (the table is virtualized
-    // so with some max height it handles it fine)
-    const tableHeight = vertical ? Math.min(Object.keys(table).length * rowHeight, 800) : 0;
-
-    const styles = useStyles2(getStyles, tableHeight);
+    const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
-        <AutoSizer style={{ width: '100%', height }}>
+        <AutoSizer style={{ width: '100%' }}>
           {({ width, height }) => {
             if (width < 3 || height < 3) {
               return null;
@@ -319,21 +310,14 @@ function ActionCell(props: ActionCellProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, height: number) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    topTableContainer: css`
-      label: topTableContainer;
-      flex-grow: 1;
-      flex-basis: 50%;
-      overflow: hidden;
-      padding: ${theme.spacing(1)};
-      background-color: ${theme.colors.background.secondary};
-      ${height
-        ? css`
-            min-height: ${height}px;
-          `
-        : ''}
-    `,
+    topTableContainer: css({
+      label: 'topTableContainer',
+      padding: theme.spacing(1),
+      backgroundColor: theme.colors.background.secondary,
+      height: '100%',
+    }),
   };
 };
 

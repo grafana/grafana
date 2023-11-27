@@ -178,7 +178,6 @@ const getStyles = () => ({
   graph: css`
     label: graph;
     overflow: auto;
-    height: 100%;
     flex-grow: 1;
     flex-basis: 50%;
   `,
