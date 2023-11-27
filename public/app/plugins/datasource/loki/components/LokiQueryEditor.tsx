@@ -107,6 +107,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     );
     if (shouldUpdate && timeRange) {
       const makeAsyncRequest = async () => {
+        // overwriting the refId that is later used to cancel inflight queries with the same ID.
         const stats = await datasource.getStats({ ...query, refId: `${id}_${query.refId}` }, timeRange);
         setQueryStats(stats);
       };
