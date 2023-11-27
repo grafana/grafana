@@ -396,17 +396,17 @@ func (esa *ExtSvcAccountsService) DeleteExtSvcCredentials(ctx context.Context, o
 }
 
 func (esa *ExtSvcAccountsService) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
-	esa.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+	esa.logger.Debug("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	errEnable := esa.EnableExtSvcAccount(ctx, &sa.EnableExtSvcAccountCmd{
 		ExtSvcSlug: event.PluginId,
 		Enabled:    event.Enabled,
-		OrgID:      extsvcauth.TmpOrgID,
+		OrgID:      event.OrgId,
 	})
 
 	// Ignore service account not found error
 	if errors.Is(errEnable, sa.ErrServiceAccountNotFound) {
-		esa.logger.Debug("No ext svc account with this plugin", "pluginId", event.PluginId)
+		esa.logger.Debug("No ext svc account with this plugin", "pluginId", event.PluginId, "orgId", event.OrgId)
 		return nil
 	}
 	return errEnable
