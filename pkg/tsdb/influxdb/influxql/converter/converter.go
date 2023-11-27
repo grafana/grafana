@@ -163,7 +163,8 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 				}
 				var i int
 				for i < valueFields[0].Len() {
-					rsp.Frames[0].Fields[ti].Append(&v)
+					val := v[0:]
+					rsp.Frames[0].Fields[ti].Append(&val)
 					i++
 				}
 				ti++
