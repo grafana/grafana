@@ -202,11 +202,59 @@ var (
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
-				Scope:  ScopeSettingsAuth,
+				Scope:  ScopeSettingsSAML,
 			},
 			{
 				Action: ActionSettingsWrite,
-				Scope:  ScopeSettingsAuth,
+				Scope:  ScopeSettingsSAML,
+			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsOAuth("azuread"),
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsOAuth("azuread"),
+			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsOAuth("okta"),
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsOAuth("okta"),
+			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsOAuth("github"),
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsOAuth("github"),
+			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsOAuth("gitlab"),
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsOAuth("gitlab"),
+			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsOAuth("google"),
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsOAuth("google"),
+			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsOAuth("generic_oauth"),
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsOAuth("generic_oauth"),
 			},
 		},
 	}
