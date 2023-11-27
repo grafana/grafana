@@ -7,6 +7,8 @@ import {
   SceneObjectState,
   VizPanel,
   sceneUtils,
+  SceneGridItem,
+  SceneGridRow,
 } from '@grafana/scenes';
 
 interface ViewPanelSceneState extends SceneObjectState {
@@ -34,6 +36,23 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
         panel.setState({ $data: body.state.$data.clone() });
       }
     };
+  }
+
+  // In case the panel is inside a repeated row
+  private getRowVariable(panel: VizPanel) {
+    const gridItem = panel.parent;
+
+    if (gridItem instanceof SceneGridItem) {
+      const row = gridItem.parent;
+      if (row instanceof SceneGridRow) {
+        const rowVariables = row.state.$variables;
+
+        if (rowVariables) {
+        }
+      }
+    }
+
+    return this;
   }
 
   public getUrlKey() {
