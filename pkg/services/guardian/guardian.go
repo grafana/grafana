@@ -2,6 +2,7 @@ package guardian
 
 import (
 	"context"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -59,6 +60,7 @@ type FakeDashboardGuardian struct {
 	CanEditValue  bool
 	CanViewValue  bool
 	CanAdminValue bool
+	CanViewUIDs   []string
 }
 
 func (g *FakeDashboardGuardian) CanSave() (bool, error) {
@@ -70,6 +72,9 @@ func (g *FakeDashboardGuardian) CanEdit() (bool, error) {
 }
 
 func (g *FakeDashboardGuardian) CanView() (bool, error) {
+	if g.CanViewUIDs != nil {
+		return slices.Contains(g.CanViewUIDs, g.DashUID), nil
+	}
 	return g.CanViewValue, nil
 }
 
