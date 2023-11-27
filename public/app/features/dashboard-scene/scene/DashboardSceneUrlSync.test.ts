@@ -22,7 +22,7 @@ describe('DashboardSceneUrlSync', () => {
     it('Should set viewPanelKey when url has viewPanel', () => {
       const scene = buildTestScene();
       scene.urlSync?.updateFromUrl({ viewPanel: '2' });
-      expect(scene.state.viewPanelKey).toBe('2');
+      expect(scene.state.viewPanelScene!.getUrlKey()).toBe('panel-2');
     });
   });
 
@@ -34,7 +34,7 @@ describe('DashboardSceneUrlSync', () => {
 
     scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1-clone-1' });
 
-    expect(scene.state.viewPanelKey).toBeUndefined();
+    expect(scene.state.viewPanelScene).toBeUndefined();
     // Verify no error notice was shown
     expect(errorNotice).toBe(0);
 
@@ -56,7 +56,7 @@ describe('DashboardSceneUrlSync', () => {
 
     // Verify it subscribes to DashboardRepeatsProcessedEvent
     scene.publishEvent(new DashboardRepeatsProcessedEvent({ source: scene }));
-    expect(scene.state.viewPanelKey).toBe('panel-1-clone-1');
+    expect(scene.state.viewPanelScene?.getUrlKey()).toBe('panel-1-clone-1');
   });
 });
 

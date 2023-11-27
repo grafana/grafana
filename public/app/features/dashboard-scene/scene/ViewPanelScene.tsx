@@ -10,6 +10,8 @@ import {
   SceneVariables,
   SceneGridRow,
   sceneGraph,
+  SceneVariableSet,
+  SceneVariable,
 } from '@grafana/scenes';
 
 interface ViewPanelSceneState extends SceneObjectState {
@@ -46,23 +48,24 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
   // In case the panel is inside a repeated row
   private getScopedVariables(panel: VizPanel): SceneVariables | undefined {
     const row = tryGetParentRow(panel);
+    const variables: SceneVariable[] = [];
 
     // Because we are rendering the panel outside it's potential row context we need to copy the row (scoped) varables
     if (row && row.state.$variables) {
-      const rowVariables = row.state.$variables;
-
-      // If we have local scoped panel variables we need to add the row variables to it
-      if (panel.state.$variables) {
-        return panel.state.$variables.clone({
-          variables: panel.state.$variables.state.variables.concat(rowVariables.state.variables),
-        });
-      } else {
-        return rowVariables.clone();
+      for (const variable of row.state.$variables.state.variables) {
+        variables.push(variable.clone());
       }
     }
 
+    // If we have local scoped panel variables we need to add the row variables to it
     if (panel.state.$variables) {
-      return panel.state.$variables.clone();
+      for (const variable of panel.state.$variables.state.variables) {
+        variables.push(variable.clone());
+      }
+    }
+
+    if (variables.length > 0) {
+      return new SceneVariableSet({ variables });
     }
 
     return undefined;
