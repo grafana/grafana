@@ -7,8 +7,7 @@ import {
   SceneObjectState,
   VizPanel,
   sceneUtils,
-  SceneGridItem,
-  SceneGridRow,
+  SceneVariables,
 } from '@grafana/scenes';
 
 interface ViewPanelSceneState extends SceneObjectState {
@@ -25,7 +24,12 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
 
   public _activationHandler() {
     const panel = this.state.panelRef.resolve();
-    const panelState = sceneUtils.cloneSceneObjectState(panel.state, { key: panel.state.key + '-view' });
+    const panelState = sceneUtils.cloneSceneObjectState(panel.state, {
+      key: panel.state.key + '-view',
+      $variables: this.getScopedVariables(panel)
+    });
+
+
     const body = new VizPanel(panelState);
 
     this.setState({ body });
@@ -39,20 +43,31 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
   }
 
   // In case the panel is inside a repeated row
-  private getRowVariable(panel: VizPanel) {
-    const gridItem = panel.parent;
+  private getScopedVariables(panel: VizPanel): SceneVariables | undefined {
+    const row = panel.parent?.parent;
+    let rowVariables: SceneVariables | undefined;
 
-    if (gridItem instanceof SceneGridItem) {
-      const row = gridItem.parent;
-      if (row instanceof SceneGridRow) {
-        const rowVariables = row.state.$variables;
+    if (row instanceof SceneGridRow && row.state.$variables) {
+      rowVariables = row.state.$variables;
+    }
 
-        if (rowVariables) {
-        }
+    // Because we are rendering the panel outside it's potential row context we need to copy the row (scoped) varables
+    if (rowVariables) {
+      // If we have local scoped panel variables we need to add the row variables to it
+      if (panel.state.$variables) {
+        return panel.state.$variables.clone({
+          variables: panel.state.$variables.state.variables.concat(rowVariables.state.variables)
+        });
+      } else {
+        return rowVariables.clone();
       }
     }
 
-    return this;
+    if (panel.state.$variables) {
+      return panel.state.$variables.clone();
+    }
+
+    return undefined;
   }
 
   public getUrlKey() {
@@ -69,3 +84,4 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
     return <body.Component model={body} />;
   };
 }
+
