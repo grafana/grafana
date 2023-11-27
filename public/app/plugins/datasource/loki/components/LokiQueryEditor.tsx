@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { CoreApp, LoadingState } from '@grafana/data';
@@ -29,7 +29,8 @@ export const testIds = {
 };
 
 export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, range: timeRange, exploreId } = props;
+  const id = useId();
+  const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, range: timeRange } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
@@ -106,12 +107,12 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     );
     if (shouldUpdate && timeRange) {
       const makeAsyncRequest = async () => {
-        const stats = await datasource.getStats({ ...query, refId: `${exploreId}_${query.refId}` }, timeRange);
+        const stats = await datasource.getStats({ ...query, refId: `${id}_${query.refId}` }, timeRange);
         setQueryStats(stats);
       };
       makeAsyncRequest();
     }
-  }, [datasource, timeRange, previousTimeRange, query, previousQueryExpr, previousQueryType, setQueryStats, exploreId]);
+  }, [datasource, timeRange, previousTimeRange, query, previousQueryExpr, previousQueryType, setQueryStats, id]);
 
   return (
     <>
