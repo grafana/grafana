@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
-import { useStyles2, HorizontalGroup, VerticalGroup } from '@grafana/ui';
+import { useStyles2, Stack } from '@grafana/ui';
 
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
@@ -51,31 +51,27 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 
   if (pageId === PluginTabIds.IAM) {
     return (
-      <div className={styles.container}>
-        <VerticalGroup>
-          <HorizontalGroup>
-            The {plugin.name} plugin requires the following permissions on your instance:
-          </HorizontalGroup>
-          <HorizontalGroup>
-            <table className="filter-table">
-              <thead>
-                <tr>
-                  <th className="admin-settings-section">Action</th>
-                  <th className="admin-settings-section">Scope</th>
+      <Stack direction="column">
+        <Stack direction="row">The {plugin.name} plugin requires the following permissions on your instance:</Stack>
+        <Stack direction="row">
+          <table className="filter-table">
+            <thead>
+              <tr>
+                <th className="admin-settings-section">Action</th>
+                <th className="admin-settings-section">Scope</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plugin.externalServiceRegistration?.permissions.map((permission: Permission, i: number) => (
+                <tr key={`property-${i}`}>
+                  <td>{permission.action}</td>
+                  <td>{permission.scope}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {plugin.externalServiceRegistration?.permissions.map((permission: Permission, i: number) => (
-                  <tr key={`property-${i}`}>
-                    <td>{permission.action}</td>
-                    <td>{permission.scope}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </HorizontalGroup>
-        </VerticalGroup>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </Stack>
+      </Stack>
     );
   }
 
