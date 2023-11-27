@@ -935,7 +935,7 @@
     },
     "megamenu": {
       "close": "Cerrar menú",
-      "dock": "Fijar el menú",
+      "dock": "Anclar el menú",
       "undock": ""
     },
     "toolbar": {
