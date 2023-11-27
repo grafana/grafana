@@ -21,23 +21,6 @@ const (
 	googleProviderName      = "google"
 )
 
-var (
-	GoogleDefaultSettings = map[string]string{
-		"name":               "Google",
-		"icon":               "google",
-		"enabled":            "false",
-		"allow_sign_up":      "true",
-		"auto_login":         "false",
-		"scopes":             "openid email profile",
-		"auth_url":           "https://accounts.google.com/o/oauth2/v2/auth",
-		"token_url":          "https://oauth2.googleapis.com/token",
-		"api_url":            "https://openidconnect.googleapis.com/v1/userinfo",
-		"skip_org_role_sync": "true",
-		"use_pkce":           "true",
-		"use_refresh_token":  "false",
-	}
-)
-
 type SocialGoogle struct {
 	*SocialBase
 	hostedDomain    string

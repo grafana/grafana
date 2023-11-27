@@ -22,22 +22,6 @@ const (
 	gitlabProviderName = "gitlab"
 )
 
-var (
-	GitlabDefaultSettings = map[string]string{
-		"name":              "GitLab",
-		"icon":              "gitlab",
-		"enabled":           "false",
-		"allow_sign_up":     "true",
-		"auto_login":        "false",
-		"scopes":            "openid email profile",
-		"auth_url":          "https://gitlab.com/oauth/authorize",
-		"token_url":         "https://gitlab.com/oauth/token",
-		"api_url":           "https://gitlab.com/api/v4",
-		"use_pkce":          "true",
-		"use_refresh_token": "true",
-	}
-)
-
 type SocialGitlab struct {
 	*SocialBase
 	apiUrl          string

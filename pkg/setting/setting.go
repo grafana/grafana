@@ -147,9 +147,10 @@ var (
 
 // TODO move all global vars to this struct
 type Cfg struct {
-	Target []string
-	Raw    *ini.File
-	Logger log.Logger
+	Target   []string
+	Raw      *ini.File
+	Defaults *ini.File
+	Logger   log.Logger
 
 	// HTTP Server Settings
 	CertFile         string
@@ -892,6 +893,8 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 
 	parsedFile.BlockMode = false
 
+	*cfg.Defaults = *parsedFile
+
 	// command line props
 	commandLineProps := cfg.getCommandLineProperties(args.Args)
 	// load default overrides
@@ -978,10 +981,11 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Target: []string{"all"},
-		Logger: log.New("settings"),
-		Raw:    ini.Empty(),
-		Azure:  &azsettings.AzureSettings{},
+		Target:   []string{"all"},
+		Logger:   log.New("settings"),
+		Raw:      ini.Empty(),
+		Defaults: ini.Empty(),
+		Azure:    &azsettings.AzureSettings{},
 
 		// Avoid nil pointer
 		IsFeatureToggleEnabled: func(_ string) bool {

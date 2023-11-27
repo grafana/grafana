@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/ini.v1"
 )
 
 type OAuthStrategy struct {
@@ -31,9 +32,10 @@ func (s *OAuthStrategy) IsMatch(provider string) bool {
 }
 
 func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string) (map[string]any, error) {
-	section := s.cfg.SectionWithEnvOverrides("auth." + provider)
+	sectionName := "auth." + provider
+	section := s.cfg.SectionWithEnvOverrides(sectionName)
 
-	defaultSettings := getDefaultOAuthInfoForProvider(provider)
+	defaultSettings := s.cfg.Defaults.Section(sectionName)
 
 	result := map[string]interface{}{
 		"client_id":                  parseDataFromKey("client_id", section, defaultSettings),
@@ -74,37 +76,11 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 		result[key] = parseDataFromKey(key, section, defaultSettings)
 	}
 
-	// // when empty_scopes parameter exists and is true, overwrite scope with empty value
-	// if section.Key("empty_scopes").MustBool(false) {
-	// 	result["scopes"] = ""
-	// }
-
 	return result, nil
 }
 
-func parseDataFromKey(key string, section *setting.DynamicSection, defaultSettings map[string]string) string {
-	return util.StringsFallback2(section.Key(key).Value(), defaultSettings[key])
-}
-
-func getDefaultOAuthInfoForProvider(provider string) map[string]string {
-	switch provider {
-	case "azuread":
-		return social.AzureADDefaultSettings
-	case "generic_oauth":
-		return social.GenericOAuthDefaultSettings
-	case "github":
-		return social.GitHubDefaultSettings
-	case "gitlab":
-		return social.GitlabDefaultSettings
-	case "google":
-		return social.GoogleDefaultSettings
-	case "grafana_com":
-		return social.GrafanaComDefaultSettings
-	case "okta":
-		return social.OktaDefaultSettings
-	default:
-		return map[string]string{}
-	}
+func parseDataFromKey(key string, section *setting.DynamicSection, defaultSettings *ini.Section) string {
+	return util.StringsFallback2(section.Key(key).Value(), defaultSettings.Key(key).Value())
 }
 
 func getExtraKeysForProvider(provider string) []string {

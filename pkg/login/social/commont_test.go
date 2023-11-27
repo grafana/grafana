@@ -82,13 +82,13 @@ hosted_domain = test_hosted_domain
 		AuthStyle:               "",
 		AllowAssignGrafanaAdmin: true,
 		UseRefreshToken:         true,
+		SkipOrgRoleSync:         true,
 		HostedDomain:            "test_hosted_domain",
 		Extra: map[string]string{
 			"allowed_organizations":   "org1, org2",
 			"id_token_attribute_name": "id_token",
 			"login_attribute_path":    "login",
 			"name_attribute_path":     "name",
-			"skip_org_role_sync":      "true",
 			"team_ids":                "first, second",
 		},
 	}

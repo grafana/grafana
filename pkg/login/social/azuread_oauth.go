@@ -24,20 +24,7 @@ import (
 
 const azureADProviderName = "azuread"
 
-var (
-	AzureADDefaultSettings = map[string]string{
-		"name":              "Microsoft",
-		"icon":              "microsoft",
-		"enabled":           "false",
-		"allow_sign_up":     "true",
-		"auto_login":        "false",
-		"scopes":            "openid email profile",
-		"use_pkce":          "true",
-		"use_refresh_token": "true",
-	}
-
-	ExtraAzureADSettingKeys = []string{"force_use_graph_api", "allowed_organizations"}
-)
+var ExtraAzureADSettingKeys = []string{"force_use_graph_api", "allowed_organizations"}
 
 var _ SocialConnector = (*SocialAzureAD)(nil)
 

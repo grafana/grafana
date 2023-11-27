@@ -170,7 +170,46 @@ func TestParseConfigFromSystem_IniFileOnly(t *testing.T) {
 	require.Equal(t, expectedOAuthInfo, oauthInfoResult)
 }
 
-func TestParseConfigFromSystem_EnvVarsWithIniFile(t *testing.T) {
+func TestParseConfigFromSystem_FallbackToDefaults(t *testing.T) {
+	iniFile, err := ini.Load([]byte(`[auth.generic_oauth]
+	auth_url = auth_url`))
+	require.NoError(t, err)
+
+	defaultsIniFile, err := ini.Load([]byte(`[auth.generic_oauth]
+	auth_url = default_auth_url
+	token_url = default_token_url`))
+	require.NoError(t, err)
+
+	cfg := setting.NewCfg()
+	cfg.Raw = iniFile
+	cfg.Defaults = defaultsIniFile
+
+	strategy := NewOAuthStrategy(cfg)
+
+	result, err := strategy.ParseConfigFromSystem(context.Background(), "generic_oauth")
+	require.NoError(t, err)
+
+	require.Equal(t, "auth_url", result["auth_url"])
+	require.Equal(t, "default_token_url", result["token_url"])
+
+	oauthInfoResult, err := social.CreateOAuthInfoFromKeyValues(result)
+	require.NoError(t, err)
+
+	withDefaultsOAuthInfo := social.NewOAuthInfo()
+	withDefaultsOAuthInfo.AuthUrl = "auth_url"
+	withDefaultsOAuthInfo.TokenUrl = "default_token_url"
+	withDefaultsOAuthInfo.Extra = map[string]string{
+		"allowed_organizations":   "",
+		"id_token_attribute_name": "",
+		"login_attribute_path":    "",
+		"name_attribute_path":     "",
+		"team_ids":                "",
+	}
+
+	require.Equal(t, withDefaultsOAuthInfo, oauthInfoResult)
+}
+
+func TestParseConfigFromSystem_EnvVarsOverridIniFileSettings(t *testing.T) {
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_ENABLED", "false")
 	t.Setenv("GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC", "false")
 

@@ -78,6 +78,15 @@ type OAuthInfo struct {
 	Extra                   map[string]string `mapstructure:",remain"`
 }
 
+func NewOAuthInfo() *OAuthInfo {
+	return &OAuthInfo{
+		Scopes:         []string{},
+		AllowedDomains: []string{},
+		AllowedGroups:  []string{},
+		Extra:          map[string]string{},
+	}
+}
+
 func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service,

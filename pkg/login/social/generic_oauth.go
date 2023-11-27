@@ -19,21 +19,7 @@ import (
 
 const genericOAuthProviderName = "generic_oauth"
 
-var (
-	ExtraGenericOAuthSettingKeys = []string{"name_attribute_path", "login_attribute_path", "id_token_attribute_name", "team_ids", "allowed_organizations"}
-
-	GenericOAuthDefaultSettings = map[string]string{
-		"name":                 "OAuth",
-		"icon":                 "signin",
-		"enabled":              "false",
-		"allow_sign_up":        "true",
-		"auto_login":           "false",
-		"scopes":               "user:email",
-		"email_attribute_name": "email:primary",
-		"use_pkce":             "false",
-		"use_refresh_token":    "false",
-	}
-)
+var ExtraGenericOAuthSettingKeys = []string{"name_attribute_path", "login_attribute_path", "id_token_attribute_name", "team_ids", "allowed_organizations"}
 
 type SocialGenericOAuth struct {
 	*SocialBase
