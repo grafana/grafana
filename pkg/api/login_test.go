@@ -30,8 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -659,7 +659,7 @@ func TestLogoutSaml(t *testing.T) {
 		License:          license,
 		SocialService:    &mockSocialService{},
 		Features:         featuremgmt.WithFeatures(),
-		authInfoService: &logintest.AuthInfoServiceFake{
+		authInfoService: &authinfotest.FakeService{
 			ExpectedUserAuth: &loginservice.UserAuth{AuthModule: loginservice.SAMLAuthModule},
 		},
 	}
