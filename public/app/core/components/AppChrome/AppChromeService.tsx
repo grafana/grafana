@@ -64,7 +64,6 @@ export class AppChromeService {
 
   public update(update: Partial<AppChromeState>) {
     const current = this.state.getValue();
-    console.log(current);
     const newState: AppChromeState = {
       ...current,
     };
