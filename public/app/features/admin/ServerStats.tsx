@@ -81,10 +81,10 @@ export const ServerStats = () => {
               { name: 'Organisations', value: stats.orgs },
               { name: 'Users total', value: stats.users },
               { name: 'Active users in last 30 days', value: stats.activeUsers },
-              ...(!!stats.activeDevices && !!stats.activeAnonymousUsers && config.featureToggles.anonymousAccess
+              ...(!!stats.activeDevices && config.featureToggles.anonymousAccess
                 ? [
                     { name: 'Active devices in last 30 days', value: stats.activeDevices },
-                    { name: 'Active anonymous users in last 30 days', value: Math.floor(stats.activeAnonymousUsers) },
+                    { name: 'Active anonymous users in last 30 days', value: Math.floor(stats.activeDevices / 3) },
                   ]
                 : []),
               { name: 'Active sessions', value: stats.activeSessions },

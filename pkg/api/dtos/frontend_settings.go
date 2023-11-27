@@ -86,7 +86,6 @@ type FrontendSettingsLicensingDTO struct {
 	ActiveAdminsAndEditors *int64  `json:"activeAdminsAndEditors,omitempty"`
 	ActiveViewers          *int64  `json:"activeViewers,omitempty"`
 	ActiveUsers            *int64  `json:"ActiveUsers,omitempty"`
-	ActiveAnonymousUsers   *int64  `json:"activeAnonymousUsers,omitempty"`
 }
 
 // Enterprise-only

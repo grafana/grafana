@@ -9,11 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	thirtyDays = 30 * 24 * time.Hour
 )
 
 type AnonDeviceServiceAPI struct {
@@ -62,12 +65,12 @@ func (api *AnonDeviceServiceAPI) RegisterAPIEndpoints() {
 //	404: notFoundError
 //	500: internalServerError
 func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) response.Response {
-	fromTime := time.Now().Add(-anonymous.ThirtyDays)
+	fromTime := time.Now().Add(-thirtyDays)
 	toTime := time.Now().Add(time.Minute)
 
 	devices, err := api.store.ListDevices(c.Req.Context(), &fromTime, &toTime)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to list devices", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to list devices", err)
 	}
 	type resDevice struct {
 		anonstore.Device
@@ -106,12 +109,12 @@ func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) respons
 //	404: notFoundError
 //	500: internalServerError
 func (api *AnonDeviceServiceAPI) CountDevices(c *contextmodel.ReqContext) response.Response {
-	fromTime := time.Now().Add(-anonymous.ThirtyDays)
+	fromTime := time.Now().Add(-thirtyDays)
 	toTime := time.Now().Add(time.Minute)
 
 	devices, err := api.store.CountDevices(c.Req.Context(), fromTime, toTime)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to list devices", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to list devices", err)
 	}
 	return response.JSON(http.StatusOK, devices)
 }

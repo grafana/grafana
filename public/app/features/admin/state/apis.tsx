@@ -1,8 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 
 interface AnonServerStat {
-  activeDevices?: number;
-  activeAnonymousUsers?: number;
+  activeDevices: number;
 }
 
 export interface ServerStat extends AnonServerStat {
@@ -26,27 +25,20 @@ export interface ServerStat extends AnonServerStat {
 }
 
 export const getServerStats = async (): Promise<ServerStat | null> => {
-  let resp = await getBackendSrv()
-    .get('/api/anonymous/stats')
-    .then((res) => {
-      return res;
-    })
-    .catch((err) => {
-      console.error(err);
-      // FIXME:
-      // return null;
-    });
-  return getBackendSrv()
-    .get('api/admin/stats')
-    .then((res) => {
-      if (resp) {
-        res.activeDevices = resp;
-        res.activeAnonymousUsers = resp / 3;
-      }
-      return res;
-    })
-    .catch((err) => {
-      console.error(err);
-      return null;
-    });
+  try {
+    // Issue both requests simultaneously
+    const [adminStats, anonymousStats]: [ServerStat, number] = await Promise.all([
+      getBackendSrv().get('/api/admin/stats'),
+      getBackendSrv().get('/api/anonymous/stats'),
+    ]);
+
+    if (adminStats && anonymousStats) {
+      adminStats.activeDevices = anonymousStats;
+    }
+
+    return adminStats;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
 };
