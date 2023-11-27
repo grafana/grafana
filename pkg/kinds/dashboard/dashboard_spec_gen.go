@@ -767,20 +767,9 @@ type Spec struct {
 		To   string `json:"to"`
 	} `json:"time,omitempty"`
 
-	// Configuration of the time picker shown at the top of a dashboard.
-	Timepicker *struct {
-		// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
-		Collapse bool `json:"collapse"`
-
-		// Whether timepicker is visible or not.
-		Hidden bool `json:"hidden"`
-
-		// Interval options available in the refresh picker dropdown.
-		RefreshIntervals []string `json:"refresh_intervals"`
-
-		// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-		TimeOptions []string `json:"time_options"`
-	} `json:"timepicker,omitempty"`
+	// Time picker configuration
+	// It defines the default config for the time picker and the refresh picker for the specific dashboard.
+	Timepicker *TimePickerConfig `json:"timepicker,omitempty"`
 
 	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 	Timezone *string `json:"timezone,omitempty"`
@@ -849,6 +838,22 @@ type ThresholdsConfig struct {
 
 // Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
 type ThresholdsMode string
+
+// Time picker configuration
+// It defines the default config for the time picker and the refresh picker for the specific dashboard.
+type TimePickerConfig struct {
+	// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
+	Collapse bool `json:"collapse"`
+
+	// Whether timepicker is visible or not.
+	Hidden bool `json:"hidden"`
+
+	// Interval options available in the refresh picker dropdown.
+	RefreshIntervals []string `json:"refresh_intervals"`
+
+	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+	TimeOptions []string `json:"time_options"`
+}
 
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.

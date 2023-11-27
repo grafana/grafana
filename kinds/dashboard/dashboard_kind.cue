@@ -56,16 +56,7 @@ lineage: schemas: [{
 			}
 
 			// Configuration of the time picker shown at the top of a dashboard.
-			timepicker?: {
-				// Whether timepicker is visible or not.
-				hidden: bool | *false
-				// Interval options available in the refresh picker dropdown.
-				refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-				// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
-				collapse: bool | *false
-				// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-				time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
-			}
+			timepicker?: #TimePickerConfig
 
 			// The month that the fiscal year starts on.  0 = January, 11 = December
 			fiscalYearStartMonth?: uint8 & <12 | *0
@@ -451,6 +442,19 @@ lineage: schemas: [{
 			// Valid options depend on the transformer id
 			options: _
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		// Time picker configuration
+		// It defines the default config for the time picker and the refresh picker for the specific dashboard.
+		#TimePickerConfig: {
+			// Whether timepicker is visible or not.
+			hidden: bool | *false
+			// Interval options available in the refresh picker dropdown.
+			refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+			// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
+			collapse: bool | *false
+			// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+			time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+		}
 
 		// 0 for no shared crosshair or tooltip (default).
 		// 1 for shared crosshair.
