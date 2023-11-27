@@ -74,15 +74,15 @@ export const getCardContainerStyles = (
 ) => {
   const isSelectable = isSelected !== undefined;
 
-    return {
-      container: css({
-        display: 'grid',
-        position: 'relative',
-        gridTemplateColumns: 'auto 1fr auto',
-        gridTemplateRows: 'auto auto 1fr auto',
-        gridAutoColumns: '1fr',
-        gridAutoFlow: 'row',
-        gridTemplateAreas: `
+  return {
+    container: css({
+      display: 'grid',
+      position: 'relative',
+      gridTemplateColumns: 'auto 1fr auto',
+      gridTemplateRows: 'auto auto 1fr auto',
+      gridAutoColumns: '1fr',
+      gridAutoFlow: 'row',
+      gridTemplateAreas: `
         "Figure Heading Tags"
         "Figure Meta Tags"
         "Figure Description Tags"
