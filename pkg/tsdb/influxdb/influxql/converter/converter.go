@@ -149,7 +149,12 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 				valueFields = valueFields[1:]
 			}
 
-			for _, v := range valueFields {
+			for i, v := range valueFields {
+				formattedFrameName := util.FormatFrameName(measurement, columns[i], tags, *query, frameName)
+				if columns[i] != "time" {
+					v.Name = string(formattedFrameName)
+					v.Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
+				}
 				rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, v)
 			}
 		} else {
