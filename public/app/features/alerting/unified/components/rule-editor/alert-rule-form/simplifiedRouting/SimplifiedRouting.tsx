@@ -1,81 +1,17 @@
 import { css } from '@emotion/css';
-import { createAction, createReducer } from '@reduxjs/toolkit';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CollapsableSection, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import {
-  AlertManagerDataSource,
-  getAlertManagerDataSourcesByPermission,
-} from 'app/features/alerting/unified/utils/datasource';
+import { getAlertManagerDataSourcesByPermission } from 'app/features/alerting/unified/utils/datasource';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
 import { ContactPointSelector } from './ContactPointSelector';
 import { MuteTimingFields } from './MuteTimingFields';
 import { RoutingSettings } from './RouteSettings';
-
-export interface AMContactPoint {
-  alertManager: AlertManagerDataSource;
-  selectedContactPoint: string;
-  muteTimeIntervals: string[];
-  overrideGrouping: boolean;
-  groupBy: string[];
-  overrideTimings: boolean;
-  groupWaitValue: string;
-  groupIntervalValue: string;
-  repeatIntervalValue: string;
-}
-
-export const selectContactPoint = createAction<{ receiver: string | undefined; alertManager: AlertManagerDataSource }>(
-  'simplifiedRouting/selectContactPoint'
-);
-export const updateMuteTimings = createAction<{ muteTimings: string[]; alertManagerName: string }>(
-  'simplifiedRouting/updateMuteTimings'
-);
-
-export const updateOverrideGrouping = createAction<{ overrideGrouping: boolean; alertManagerName: string }>(
-  'simplifiedRouting/overrideGrouping'
-);
-export const updateOverrideTimimgs = createAction<{ overrideTimimgs: boolean; alertManagerName: string }>(
-  'simplifiedRouting/overrideTimimgs'
-);
-export const updateGrouping = createAction<{ groupBy: string[]; alertManagerName: string }>(
-  'simplifiedRouting/groupBy'
-);
-
-export const receiversReducer = createReducer<AMContactPoint[]>([], (builder) => {
-  builder.addCase(selectContactPoint, (state, action) => {
-    const { receiver, alertManager } = action.payload;
-    const newContactPoint: AMContactPoint = {
-      selectedContactPoint: receiver ?? '',
-      alertManager,
-      overrideGrouping: false,
-      muteTimeIntervals: [],
-      overrideTimings: false,
-      groupBy: [],
-      groupWaitValue: '',
-      groupIntervalValue: '',
-      repeatIntervalValue: '',
-    };
-    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManager.name);
-
-    if (existingContactPoint) {
-      existingContactPoint.selectedContactPoint = receiver ?? '';
-    } else {
-      state.push(newContactPoint);
-    }
-  });
-  builder.addCase(updateMuteTimings, (state, action) => {
-    const { muteTimings, alertManagerName } = action.payload;
-    const existingContactPoint = state.find((cp) => cp.alertManager.name === alertManagerName);
-    if (existingContactPoint) {
-      existingContactPoint.muteTimeIntervals = muteTimings;
-    }
-  });
-});
 
 export interface SimplifiedRoutingProps {
   toggleOpenRoutingSettings: (nextValue: boolean) => void;
@@ -99,35 +35,24 @@ export function SimplifiedRouting({ toggleOpenRoutingSettings, isOpenRoutingSett
   const alertManagersDataSourcesWithConfigAPI = alertManagersDataSources.filter((am) => am.hasConfigurationAPI);
 
   // we merge the selected contact points data for each alert manager, with the alert manager meta data
-  const alertManagersWithSelectedContactPoints = alertManagersDataSourcesWithConfigAPI.map((am) => {
-    const selectedContactPoint = contactPointsInAlert?.find((cp) => cp.alertManager === am.name);
-    return {
-      alertManager: am,
-      selectedContactPoint: selectedContactPoint?.selectedContactPoint ?? '',
-      muteTimeIntervals: selectedContactPoint?.muteTimeIntervals ?? [],
-      overrideGrouping: selectedContactPoint?.overrideGrouping ?? false,
-      groupBy: [],
-      overrideTimings: false,
-      groupWaitValue: '',
-      groupIntervalValue: '',
-      repeatIntervalValue: '',
-    };
-  });
-
-  // use reducer to keep this alertManagersWithSelectedContactPoints in the state
-  // const [alertManagersWithCPState, dispatch] = useReducer(receiversReducer, alertManagersWithSelectedContactPoints);
-
-  // function getContactPointsForForm(alertManagersWithCP: AMContactPoint[]) {
-  //   return alertManagersWithCP.map((am) => {
-  //     return { ...am, alertManager: am.alertManager.name };
-  //   });
-  // }
-
-  // whenever we update the receiversState we have to update the form too
-  // useEffect(() => {
-  //   const contactPointsForForm = getContactPointsForForm(alertManagersWithCPState);
-  //   setValue('contactPoints', contactPointsForForm, { shouldValidate: false });
-  // }, [alertManagersWithCPState, setValue]);
+  const alertManagersWithSelectedContactPoints = useMemo(
+    () =>
+      alertManagersDataSourcesWithConfigAPI.map((am) => {
+        const selectedContactPoint = contactPointsInAlert?.find((cp) => cp.alertManager === am.name);
+        return {
+          alertManager: am,
+          selectedContactPoint: selectedContactPoint?.selectedContactPoint ?? '',
+          muteTimeIntervals: selectedContactPoint?.muteTimeIntervals ?? [],
+          overrideGrouping: selectedContactPoint?.overrideGrouping ?? false,
+          groupBy: [],
+          overrideTimings: false,
+          groupWaitValue: '',
+          groupIntervalValue: '',
+          repeatIntervalValue: '',
+        };
+      }),
+    [alertManagersDataSourcesWithConfigAPI, contactPointsInAlert]
+  );
 
   const shouldShowAM = true;
 

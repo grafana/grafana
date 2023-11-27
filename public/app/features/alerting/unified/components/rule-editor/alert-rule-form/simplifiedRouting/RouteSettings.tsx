@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Field, FieldValidationMessage, InputControl, MultiSelect, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { Field, FieldValidationMessage, InputControl, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
+import { useAlertmanagerConfig } from 'app/features/alerting/unified/hooks/useAlertmanagerConfig';
+import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,
@@ -14,6 +16,7 @@ import {
 
 import { PromDurationInput } from '../../../notification-policies/PromDurationInput';
 import { getFormStyles } from '../../../notification-policies/formStyles';
+import { TIMING_OPTIONS_DEFAULTS } from '../../../notification-policies/timingOptions';
 
 export interface RoutingSettingsProps {
   contactPointIndex: number;
@@ -28,12 +31,20 @@ export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => 
     getValues,
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
+  const { groupBy, groupIntervalValue, groupWaitValue, repeatIntervalValue } = useGetDefaultsForRoutingSettings();
 
   return (
     <Stack direction="column">
-      <Field label="Override grouping">
-        <Switch id="override-grouping-toggle" {...register(`contactPoints.${contactPointIndex}.overrideGrouping`)} />
-      </Field>
+      <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+        <Field label="Override grouping">
+          <Switch id="override-grouping-toggle" {...register(`contactPoints.${contactPointIndex}.overrideGrouping`)} />
+        </Field>
+        {!watch(`contactPoints.${contactPointIndex}.overrideGrouping`) && (
+          <Text variant="body" color="secondary">
+            Grouping: <strong>{groupBy.join(', ')}</strong>
+          </Text>
+        )}
+      </Stack>
       {watch(`contactPoints.${contactPointIndex}.overrideGrouping`) && (
         <Field
           label="Group by"
@@ -64,16 +75,6 @@ export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => 
                   }}
                   onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
                   options={[...commonGroupByOptions, ...groupByOptions]}
-
-                  // value={stringsToSelectableValues(groupBy)}
-                  // allowCustomValue
-                  // className={formStyles.input}
-                  // onCreateOption={(opt: string) => {
-                  //   setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
-                  //   onChangeGrouping([...(groupBy ?? []), opt]);
-                  // }}
-                  // onChange={(value) => onChangeGrouping(mapMultiSelectValueToStrings(value))}
-                  // options={[...commonGroupByOptions, ...groupByOptions]}
                 />
                 {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
               </>
@@ -83,9 +84,18 @@ export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => 
           />
         </Field>
       )}
-      <Field label="Override timings">
-        <Switch id="override-timings-toggle" {...register(`contactPoints.${contactPointIndex}.overrideTimings`)} />
-      </Field>
+      <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+        <Field label="Override timings">
+          <Switch id="override-timings-toggle" {...register(`contactPoints.${contactPointIndex}.overrideTimings`)} />
+        </Field>
+        {!watch(`contactPoints.${contactPointIndex}.overrideTimings`) && (
+          <Text variant="body" color="secondary">
+            Group wait: <strong>{groupWaitValue}, </strong>
+            Group interval: <strong>{groupIntervalValue}, </strong>
+            Repeat interval: <strong>{repeatIntervalValue}</strong>
+          </Text>
+        )}
+      </Stack>
       {watch(`contactPoints.${contactPointIndex}.overrideTimings`) && (
         <>
           <Field
@@ -136,3 +146,17 @@ export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => 
     </Stack>
   );
 };
+
+function useGetDefaultsForRoutingSettings() {
+  const { selectedAlertmanager } = useAlertmanager();
+  const { currentData } = useAlertmanagerConfig(selectedAlertmanager);
+  const config = currentData?.alertmanager_config;
+  return React.useMemo(() => {
+    return {
+      groupWaitValue: TIMING_OPTIONS_DEFAULTS.group_wait,
+      groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,
+      repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
+      groupBy: config?.route?.group_by ?? [],
+    };
+  }, [config]);
+}
