@@ -59,6 +59,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const dispatch = useDispatch();
   const location = useLocation();
   const { chrome } = useGrafana();
+
   const notifyApp = useAppNotification();
   const history = useHistory();
 
@@ -103,7 +104,6 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const canSilence = useCanSilence(rule);
 
   const buildShareUrl = () => createShareLink(rulesSource, rule);
-
   const returnTo = location.pathname + location.search;
   // explore does not support grafana rule queries atm
   // neither do "federated rules"
@@ -145,7 +145,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
           variant="primary"
           icon="apps"
           onClick={() => {
-            chrome.setReturnToPrevious({ show: true, href: location.pathname, title: 'Test' });
+            chrome.setReturnToPrevious({ show: true, href: location.pathname, title: rule.name });
             history.push(`/d/${encodeURIComponent(dashboardUID)}`);
           }}
         >
