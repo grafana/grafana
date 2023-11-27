@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/prometheus/alertmanager/cluster/clusterpb"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -60,6 +61,46 @@ func (fileStore *FileStore) FilepathFor(ctx context.Context, filename string) (s
 	}
 
 	return fileStore.pathFor(filename), err
+}
+
+// GetFullState returns a base64-encoded string containing the Alertmanager's silences and nflog.
+func (fileStore *FileStore) GetFullState(ctx context.Context) (string, error) {
+	all, err := fileStore.kv.GetAll(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	silences, ok := all[fileStore.orgID]["silences"]
+	if !ok {
+		fileStore.logger.Warn("No silences found in kvstore", "org", fileStore.orgID)
+	}
+	notifications, ok := all[fileStore.orgID]["notifications"]
+	if !ok {
+		fileStore.logger.Warn("No nflog found in kvstore", "org", fileStore.orgID)
+	}
+
+	// Decode base64-encoded values and add them as protobuf parts.
+	s, err := decode(silences)
+	if err != nil {
+		return "", fmt.Errorf("error decoding silences: %w", err)
+	}
+	n, err := decode(notifications)
+	if err != nil {
+		return "", fmt.Errorf("error decoding nflog: %w", err)
+	}
+
+	fs := clusterpb.FullState{
+		Parts: []clusterpb.Part{
+			{Key: "silences", Data: s},
+			{Key: "notifications", Data: n},
+		},
+	}
+	b, err := fs.Marshal()
+	if err != nil {
+		return "", fmt.Errorf("error marshaling full state: %w", err)
+	}
+
+	return encode(b), nil
 }
 
 // Persist takes care of persisting the binary representation of internal state to the database as a base64 encoded string.

@@ -26,6 +26,10 @@ import (
 
 const readyPath = "/-/ready"
 
+type stateStore interface {
+	GetFullState(ctx context.Context) (string, error)
+}
+
 type Alertmanager struct {
 	log      log.Logger
 	orgID    int64
@@ -37,6 +41,7 @@ type Alertmanager struct {
 	httpClient  *http.Client
 	ready       bool
 	sender      *sender.ExternalAlertmanager
+	stateStore  stateStore
 }
 
 type AlertmanagerConfig struct {
@@ -45,7 +50,7 @@ type AlertmanagerConfig struct {
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, stateStore stateStore) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &mimirClient.MimirAuthRoundTripper{
 			TenantID: cfg.TenantID,
@@ -100,6 +105,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64) (*Alertmanager, error)
 		amClient:    amclient.New(transport, nil),
 		httpClient:  &client,
 		sender:      s,
+		stateStore:  stateStore,
 		orgID:       orgID,
 		tenantID:    cfg.TenantID,
 		url:         cfg.URL,
