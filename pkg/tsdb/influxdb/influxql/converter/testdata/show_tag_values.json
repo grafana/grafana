@@ -1,0 +1,126 @@
+{
+  "results": [
+    {
+      "statement_id": 0,
+      "series": [
+        {
+          "name": "cpu",
+          "columns": [
+            "key",
+            "value"
+          ],
+          "values": [
+            [
+              "host",
+              "41c9dcf3b960"
+            ]
+          ]
+        },
+        {
+          "name": "disk",
+          "columns": [
+            "key",
+            "value"
+          ],
+          "values": [
+            [
+              "host",
+              "41c9dcf3b960"
+            ]
+          ]
+        },
+        {
+          "name": "diskio",
+          "columns": [
+            "key",
+            "value"
+          ],
+          "values": [
+            [
+              "host",
+              "41c9dcf3b960"
+            ]
+          ]
+        },
+        {
+          "name": "kernel",
+          "columns": [
+            "key",
+            "value"
+          ],
+          "values": [
+            [
+              "host",
+              "41c9dcf3b960"
+            ]
+          ]
+        },
+        {
+          "name": "logs",
+          "columns": [
+            "key",
+            "value"
+          ],
+          "values": [
+            [
+              "host",
+              "41c9dcf3b960"
+            ]
+          ]
+        },
+        {
+          "name": "mem",
+          "columns": [
+            "key",
+            "value"
+          ],
+          "values": [
+            [
+              "host",
+              "41c9dcf3b960"
+            ]
+          ]
+        },
+        {
+          "name": "processes",
+          "columns": [
+            "key",
+            "value"
+          ],
+          "values": [
+            [
+              "host",
+              "41c9dcf3b960"
+            ]
+          ]
+        },
+        {
+          "name": "swap",
+          "columns": [
+            "key",
+            "value"
+          ],
+          "values": [
+            [
+              "host",
+              "41c9dcf3b960"
+            ]
+          ]
+        },
+        {
+          "name": "system",
+          "columns": [
+            "key",
+            "value"
+          ],
+          "values": [
+            [
+              "host",
+              "41c9dcf3b960"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

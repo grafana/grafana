@@ -2,6 +2,7 @@ package converter
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -90,6 +91,7 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 	var tags map[string]string
 	var columns []string
 	var valueFields data.Fields
+	var hasTimeColumn bool
 	rsp := backend.DataResponse{Frames: make(data.Frames, 0)}
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -114,8 +116,11 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 				if err != nil {
 					return rspErr(err)
 				}
+				if columns[0] == "time" {
+					hasTimeColumn = true
+				}
 			case "values":
-				valueFields, err = readValues(iter)
+				valueFields, err = readValues(iter, hasTimeColumn)
 				if err != nil {
 					return rspErr(err)
 				}
@@ -131,22 +136,32 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 		if util.GetVisType(query.ResultFormat) == util.TableVisType {
 			// add the rsp.Frames[0]
 		} else {
-			timeColExist := false
-			for i, v := range columns {
-				if v == "time" {
-					timeColExist = true
-					continue
-				}
-				formattedFrameName := util.FormatFrameName(measurement, v, tags, *query, frameName)
-				valueFields[i].Labels = tags
-				valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
+			if hasTimeColumn {
+				// Frame with time column
+				for i, v := range columns {
+					if v == "time" {
+						continue
+					}
+					formattedFrameName := util.FormatFrameName(measurement, v, tags, *query, frameName)
+					valueFields[i].Labels = tags
+					valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
 
-				var frame *data.Frame
-				if timeColExist {
-					frame = data.NewFrame(string(formattedFrameName), valueFields[0], valueFields[i])
-				} else {
-					frame = data.NewFrame(string(formattedFrameName), valueFields[i])
+					frame := data.NewFrame(string(formattedFrameName), valueFields[0], valueFields[i])
+					rsp.Frames = append(rsp.Frames, frame)
 				}
+			} else {
+				// Frame without time column
+				var frame *data.Frame
+				if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
+					if len(columns) >= 2 {
+						frame = data.NewFrame(measurement, valueFields[1])
+					}
+				} else {
+					if len(columns) >= 1 {
+						frame = data.NewFrame(measurement, valueFields[0])
+					}
+				}
+
 				rsp.Frames = append(rsp.Frames, frame)
 			}
 		}
@@ -187,18 +202,19 @@ func readColumns(iter *jsonitere.Iterator) (columns []string, err error) {
 	return
 }
 
-func readValues(iter *jsonitere.Iterator) (valueFields data.Fields, err error) {
+func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.Fields, err error) {
 	valueFields = make(data.Fields, 0)
-	timeField := data.NewField("Time", nil, make([]time.Time, 0))
-	valueFields = append(valueFields, timeField)
 	nullValuesForFields := make([][]bool, 0)
+	if hasTimeColumn {
+		valueFields = append(valueFields, data.NewField("Time", nil, make([]time.Time, 0)))
+		nullValuesForFields = append(nullValuesForFields, nil)
+	}
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return nil, err
 		}
 
-		var tt time.Time
 		colIdx := 0
 
 		for more2, err := iter.ReadArray(); more2; more2, err = iter.ReadArray() {
@@ -206,14 +222,13 @@ func readValues(iter *jsonitere.Iterator) (valueFields data.Fields, err error) {
 				return nil, err
 			}
 
-			if colIdx == 0 {
+			if hasTimeColumn && colIdx == 0 {
 				// Read time
 				var t float64
 				if t, err = iter.ReadFloat64(); err != nil {
 					return nil, err
 				}
-				tt = timeFromFloat(t)
-				timeField.Append(tt)
+				valueFields[0].Append(timeFromFloat(t))
 			} else {
 				// Read column values
 				next, err := iter.WhatIsNext()
@@ -267,10 +282,10 @@ func readValues(iter *jsonitere.Iterator) (valueFields data.Fields, err error) {
 						// we cannot create a value field
 						// instead we add nil values to an array to be added
 						// when we learn the type of this field
-						if len(nullValuesForFields) < colIdx {
+						if len(nullValuesForFields) <= colIdx {
 							nullValuesForFields = append(nullValuesForFields, make([]bool, 0))
 						}
-						nullValuesForFields[colIdx-1] = append(nullValuesForFields[colIdx-1], true)
+						nullValuesForFields[colIdx] = append(nullValuesForFields[colIdx], true)
 					} else {
 						valueFields[colIdx].Append(nil)
 					}
@@ -285,16 +300,15 @@ func readValues(iter *jsonitere.Iterator) (valueFields data.Fields, err error) {
 }
 
 func appendNilsToField(fields data.Fields, nullValuesForFields [][]bool, idx int) {
-	if len(nullValuesForFields) < idx {
+	if len(nullValuesForFields) <= idx {
 		return
 	}
 	// Append nil values if there is any.
-	// we check the value at idx-1 because there is no null value for time column
-	for range nullValuesForFields[idx-1] {
+	for range nullValuesForFields[idx] {
 		fields[idx].Append(nil)
 	}
 	// clean the nil value array
-	nullValuesForFields[idx-1] = nil
+	nullValuesForFields[idx] = nil
 }
 
 func timeFromFloat(fv float64) time.Time {

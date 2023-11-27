@@ -53,6 +53,14 @@ var files = []testFile{
 		fileName: "response_with_nulls",
 		rawQuery: "response with nulls",
 	},
+	{
+		fileName: "retention_policy",
+		rawQuery: "show retention policies",
+	},
+	{
+		fileName: "show_measurements",
+		rawQuery: "show measurements",
+	},
 }
 
 func TestReadPromFrames(t *testing.T) {
