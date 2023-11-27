@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -55,7 +56,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 
 var _ ssosettings.Service = (*SSOSettingsService)(nil)
 
-func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string) (*models.SSOSetting, error) {
+func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error) {
 	dto, err := s.store.Get(ctx, provider)
 
 	if errors.Is(err, ssosettings.ErrNotFound) {
@@ -71,13 +72,18 @@ func (s *SSOSettingsService) GetForProvider(ctx context.Context, provider string
 		return nil, err
 	}
 
-	dto.Source = models.DB
+	ssoSettings, err := dto.ToSSOSettings()
+	if err != nil {
+		return nil, err
+	}
 
-	return dto, nil
+	ssoSettings.Source = models.DB
+
+	return ssoSettings, nil
 }
 
-func (s *SSOSettingsService) List(ctx context.Context, requester identity.Requester) ([]*models.SSOSetting, error) {
-	result := make([]*models.SSOSetting, 0, len(ssosettings.AllOAuthProviders))
+func (s *SSOSettingsService) List(ctx context.Context, requester identity.Requester) ([]*models.SSOSettings, error) {
+	result := make([]*models.SSOSettings, 0, len(ssosettings.AllOAuthProviders))
 	storedSettings, err := s.store.List(ctx)
 
 	if err != nil {
@@ -111,7 +117,7 @@ func (s *SSOSettingsService) List(ctx context.Context, requester identity.Reques
 	return result, nil
 }
 
-func (s *SSOSettingsService) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
+func (s *SSOSettingsService) Upsert(ctx context.Context, provider string, data interface{}) error {
 	// TODO: validation (configurable provider? Contains the required fields? etc)
 	err := s.store.Upsert(ctx, provider, data)
 	if err != nil {
@@ -140,29 +146,34 @@ func (s *SSOSettingsService) RegisterFallbackStrategy(providerRegex string, stra
 	s.fbStrategies = append(s.fbStrategies, strategy)
 }
 
-func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSetting, error) {
-	loadStrategy, ok := s.getFallBackstrategyFor(provider)
-	if !ok {
-		return nil, errors.New("no fallback strategy found for provider: " + provider)
-	}
+func (s *SSOSettingsService) loadSettingsUsingFallbackStrategy(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	// TODO: refactor config system parsing
+	//loadStrategy, ok := s.getFallBackstrategyFor(provider)
+	//if !ok {
+	//	return nil, errors.New("no fallback strategy found for provider: " + provider)
+	//}
 
-	settingsFromSystem, err := loadStrategy.ParseConfigFromSystem(ctx)
-	if err != nil {
-		return nil, err
-	}
+	//settingsFromSystem, err := loadStrategy.ParseConfigFromSystem(ctx)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	return &models.SSOSetting{
-		Provider: provider,
-		Source:   models.System,
-		Settings: settingsFromSystem,
+	return &models.SSOSettings{
+		Provider:      provider,
+		Source:        models.System,
+		OAuthSettings: social.OAuthInfo{},
 	}, nil
 }
 
-func getSettingsByProvider(provider string, settings []*models.SSOSetting) []*models.SSOSetting {
-	result := make([]*models.SSOSetting, 0)
-	for _, setting := range settings {
-		if setting.Provider == provider {
-			result = append(result, setting)
+func getSettingsByProvider(provider string, settingsDb []*models.SSOSettingsDb) []*models.SSOSettings {
+	result := make([]*models.SSOSettings, 0)
+	for _, s := range settingsDb {
+		if s.Provider == provider {
+			settings, err := s.ToSSOSettings()
+			if err != nil {
+				// TODO handle error
+			}
+			result = append(result, settings)
 		}
 	}
 	return result

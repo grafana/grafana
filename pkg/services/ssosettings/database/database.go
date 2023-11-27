@@ -31,8 +31,8 @@ func ProvideStore(sqlStore db.DB) *SSOSettingsStore {
 
 var _ ssosettings.Store = (*SSOSettingsStore)(nil)
 
-func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SSOSetting, error) {
-	result := models.SSOSetting{Provider: provider}
+func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SSOSettingsDb, error) {
+	result := models.SSOSettingsDb{Provider: provider}
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		sess.Table("sso_setting")
@@ -56,8 +56,8 @@ func (s *SSOSettingsStore) Get(ctx context.Context, provider string) (*models.SS
 	return &result, nil
 }
 
-func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSetting, error) {
-	result := make([]*models.SSOSetting, 0)
+func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSettingsDb, error) {
+	result := make([]*models.SSOSettingsDb, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("sso_setting")
 		err := sess.Where("is_deleted = ?", s.sqlStore.GetDialect().BooleanStr(false)).Find(&result)
@@ -76,9 +76,9 @@ func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSetting, erro
 	return result, nil
 }
 
-func (s *SSOSettingsStore) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
+func (s *SSOSettingsStore) Upsert(ctx context.Context, provider string, data interface{}) error {
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		existing := &models.SSOSetting{
+		existing := &models.SSOSettingsDb{
 			Provider:  provider,
 			IsDeleted: false,
 		}
@@ -90,14 +90,14 @@ func (s *SSOSettingsStore) Upsert(ctx context.Context, provider string, data map
 		now := timeNow().UTC()
 
 		if found {
-			updated := &models.SSOSetting{
+			updated := &models.SSOSettingsDb{
 				Settings:  data,
 				Updated:   now,
 				IsDeleted: false,
 			}
 			_, err = sess.UseBool("is_deleted").Update(updated, existing)
 		} else {
-			_, err = sess.Insert(&models.SSOSetting{
+			_, err = sess.Insert(&models.SSOSettingsDb{
 				ID:       uuid.New().String(),
 				Provider: provider,
 				Settings: data,
@@ -116,7 +116,7 @@ func (s *SSOSettingsStore) Patch(ctx context.Context, provider string, data map[
 
 func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		existing := &models.SSOSetting{
+		existing := &models.SSOSettingsDb{
 			Provider:  provider,
 			IsDeleted: false,
 		}

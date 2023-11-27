@@ -84,12 +84,14 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "Missing key", nil)
 	}
 
-	var newSettings models.SSOSetting
+	var newSettings models.SSOSettings
 	if err := web.Bind(c.Req, &newSettings); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to parse request body", err)
 	}
 
-	err := api.SSOSettingsService.Upsert(c.Req.Context(), key, newSettings.Settings)
+	dbSettings := newSettings.ToSSOSettingsDb()
+
+	err := api.SSOSettingsService.Upsert(c.Req.Context(), key, dbSettings.Settings)
 	// TODO: first check whether the error is referring to validation errors
 
 	// other error
