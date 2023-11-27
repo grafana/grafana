@@ -108,7 +108,7 @@ export const REF_ID_STARTER_ANNOTATION = 'annotation-';
 export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
-export const REF_ID_STARTER_STATS = 'log-sample-';
+export const REF_ID_STARTER_STATS = 'log-stats-';
 
 const NS_IN_MS = 1000000;
 

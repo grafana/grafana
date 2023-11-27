@@ -1408,7 +1408,7 @@ describe('LokiDatasource', () => {
           end: 1000000,
           query: '{foo="bar"}',
         },
-        { requestId: 'log-sample-A', showErrorAlert: false }
+        { requestId: 'log-stats-A', showErrorAlert: false }
       );
     });
   });
