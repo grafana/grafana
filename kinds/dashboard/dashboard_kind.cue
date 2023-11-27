@@ -454,7 +454,7 @@ lineage: schemas: [{
 			collapse: bool | *false
 			// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
 			time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
-		}
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		// 0 for no shared crosshair or tooltip (default).
 		// 1 for shared crosshair.

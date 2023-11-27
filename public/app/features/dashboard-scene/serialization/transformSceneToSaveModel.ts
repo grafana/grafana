@@ -49,7 +49,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const data = state.$data;
   const variablesSet = state.$variables;
   const body = state.body;
-  let refresh_intervals = defaultIntervals;
+  let refresh_intervals = defaultTimePickerConfig.refresh_intervals;
   let panels: Panel[] = [];
 
   let variables: VariableModel[] = [];
@@ -116,7 +116,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     },
     timepicker: {
       ...defaultTimePickerConfig,
-      refresh_intervals: refresh_intervals,
+      refresh_intervals,
     },
     panels,
     annotations: {

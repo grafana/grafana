@@ -65,6 +65,7 @@ export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
 } as VariableModel;
+export const defaultTimePickerConfig = raw.defaultTimePickerConfig as raw.TimePickerConfig;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultRowPanel: Partial<Panel> = raw.defaultRowPanel;
 export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;

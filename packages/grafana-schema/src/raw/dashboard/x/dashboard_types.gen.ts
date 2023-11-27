@@ -626,6 +626,36 @@ export interface DataTransformerConfig {
 }
 
 /**
+ * Time picker configuration
+ * It defines the default config for the time picker and the refresh picker for the specific dashboard.
+ */
+export interface TimePickerConfig {
+  /**
+   * Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
+   */
+  collapse: boolean;
+  /**
+   * Whether timepicker is visible or not.
+   */
+  hidden: boolean;
+  /**
+   * Interval options available in the refresh picker dropdown.
+   */
+  refresh_intervals: Array<string>;
+  /**
+   * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
+   */
+  time_options: Array<string>;
+}
+
+export const defaultTimePickerConfig: Partial<TimePickerConfig> = {
+  collapse: false,
+  hidden: false,
+  refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+  time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
+};
+
+/**
  * 0 for no shared crosshair or tooltip (default).
  * 1 for shared crosshair.
  * 2 for shared crosshair AND shared tooltip.
@@ -1096,24 +1126,7 @@ export interface Dashboard {
   /**
    * Configuration of the time picker shown at the top of a dashboard.
    */
-  timepicker?: {
-    /**
-     * Whether timepicker is visible or not.
-     */
-    hidden: boolean;
-    /**
-     * Interval options available in the refresh picker dropdown.
-     */
-    refresh_intervals: Array<string>;
-    /**
-     * Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
-     */
-    collapse: boolean;
-    /**
-     * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-     */
-    time_options: Array<string>;
-  };
+  timepicker?: TimePickerConfig;
   /**
    * Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
    */

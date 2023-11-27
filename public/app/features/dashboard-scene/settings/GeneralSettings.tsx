@@ -27,6 +27,8 @@ import { t, Trans } from 'app/core/internationalization';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
 
+import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -45,6 +47,17 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
+function getRefreshPickerControl(scene: DashboardScene): SceneRefreshPicker | undefined {
+  if (scene.state.controls?.[0] instanceof DashboardControls) {
+    for (const control of scene.state.controls[0].state.timeControls) {
+      if (control instanceof SceneRefreshPicker) {
+        return control;
+      }
+    }
+  }
+  return;
+}
+
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
@@ -58,8 +71,7 @@ export class GeneralSettingsEditView
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     const { title, description, tags, meta, editable, graphTooltip, overlay } = dashboard.useState();
     const timeRange = sceneGraph.getTimeRange(dashboard);
-    const pickerControl = dashboard.state.controls?.find((c) => c instanceof SceneRefreshPicker);
-    const refreshPicker = pickerControl instanceof SceneRefreshPicker ? pickerControl : undefined;
+    const refreshPicker = getRefreshPickerControl(dashboard);
 
     const onTitleChange = (value: string) => {
       dashboard.setState({ title: value });
@@ -101,13 +113,10 @@ export class GeneralSettingsEditView
     };
 
     const onRefreshIntervalChange = (value: string[]) => {
-      const refreshPicker = dashboard.state.controls?.find((c) => c instanceof SceneRefreshPicker);
-
-      if (refreshPicker instanceof SceneRefreshPicker) {
-        refreshPicker?.setState({
-          intervals: value,
-        });
-      }
+      const control = getRefreshPickerControl(dashboard);
+      control?.setState({
+        intervals: value,
+      });
     };
 
     const onNowDelayChange = (value: string) => {
@@ -115,13 +124,15 @@ export class GeneralSettingsEditView
     };
 
     const onHideTimePickerChange = (value: boolean) => {
-      const timePicker = dashboard.state.controls?.find((c) => c instanceof SceneTimePicker);
-
-      if (timePicker instanceof SceneTimePicker) {
-        timePicker?.setState({
-          // TODO: Control visibility from DashboardControls
-          // hidden: value,
-        });
+      if (dashboard.state.controls instanceof DashboardControls) {
+        for (const control of dashboard.state.controls.state.timeControls) {
+          if (control instanceof SceneTimePicker) {
+            control.setState({
+              // TODO: Control visibility from DashboardControls
+              // hidden: value,
+            });
+          }
+        }
       }
     };
 
