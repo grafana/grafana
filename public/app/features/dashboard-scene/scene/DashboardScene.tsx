@@ -12,6 +12,7 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneObjectStateChangedEvent,
+  SceneRefreshPicker,
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
@@ -227,6 +228,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTrackerSub = this.subscribeToEvent(
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
+        if (event.payload.changedObject instanceof SceneRefreshPicker) {
+          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'intervals')) {
+            this.setIsDirty();
+          }
+        }
         if (
           event.payload.changedObject instanceof SceneGridItem ||
           event.payload.changedObject instanceof DashboardScene
