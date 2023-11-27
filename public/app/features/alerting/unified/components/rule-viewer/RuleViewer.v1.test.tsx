@@ -4,7 +4,8 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byText } from 'testing-library-selector';
 
-import { locationService, setBackendSrv } from '@grafana/runtime';
+import { PluginExtensionTypes } from '@grafana/data';
+import { getPluginLinkExtensions, locationService, setBackendSrv } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -48,10 +49,15 @@ const mockRoute = (id?: string): GrafanaRouteComponentProps<{ id?: string; sourc
   staticContext: {},
 });
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(),
+}));
 jest.mock('../../hooks/useIsRuleEditable');
 jest.mock('../../api/buildInfo');
 
 const mocks = {
+  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
   useIsRuleEditable: jest.mocked(useIsRuleEditable),
 };
 
@@ -87,7 +93,15 @@ const rulerRuleIdentifier = ruleId.fromRulerRule('prometheus', 'ns-default', 'gr
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
+  const promDsSettings = mockDataSource({
+    name: dsName,
+    uid: dsName,
+  });
 
+  setupDataSources(promDsSettings);
+});
+
+beforeEach(() => {
   // some action buttons need to check what Alertmanager setup we have for Grafana managed rules
   mockAlertmanagerChoiceResponse(server, {
     alertmanagersChoice: AlertmanagerChoice.Internal,
@@ -95,13 +109,6 @@ beforeAll(() => {
   });
   // we need to mock this one for the "declare incident" button
   mockPluginSettings(server, SupportedPlugin.Incident);
-
-  const promDsSettings = mockDataSource({
-    name: dsName,
-    uid: dsName,
-  });
-
-  setupDataSources(promDsSettings);
 
   mockAlertRuleApi(server).rulerRules('grafana', {
     [mockGrafanaRule.namespace.name]: [
@@ -142,6 +149,19 @@ beforeAll(() => {
       ],
     },
     status: 'success',
+  });
+  mocks.getPluginLinkExtensionsMock.mockReturnValue({
+    extensions: [
+      {
+        pluginId: 'grafana-ml-app',
+        id: '1',
+        type: PluginExtensionTypes.link,
+        title: 'Run investigation',
+        category: 'Sift',
+        description: 'Run a Sift investigation for this alert',
+        onClick: jest.fn(),
+      },
+    ],
   });
 });
 

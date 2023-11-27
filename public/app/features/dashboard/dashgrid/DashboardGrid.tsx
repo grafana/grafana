@@ -71,11 +71,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
           if (e.payload.variable?.id === PANEL_FILTER_VARIABLE) {
             if ('current' in e.payload.variable) {
               let variable = e.payload.variable.current;
-              if ('value' in variable) {
-                let value = variable.value;
-                if (typeof value === 'string') {
-                  this.setPanelFilter(value as string);
-                }
+              if ('value' in variable && typeof variable.value === 'string') {
+                this.setPanelFilter(variable.value);
               }
             }
           }

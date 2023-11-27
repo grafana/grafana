@@ -547,6 +547,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;
+  skipQueryCache?: boolean;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
@@ -579,11 +580,22 @@ export interface QueryFix {
   action?: QueryFixAction;
 }
 
+export type QueryFixType = 'ADD_FILTER' | 'ADD_FILTER_OUT' | 'ADD_STRING_FILTER' | 'ADD_STRING_FILTER_OUT';
 export interface QueryFixAction {
-  type: string;
   query?: string;
   preventSubmit?: boolean;
+  /**
+   * The type of action to perform. Will be passed to the data source to handle.
+   */
+  type: QueryFixType | string;
+  /**
+   * A key value map of options that will be passed. Usually used to pass e.g. the label and value.
+   */
   options?: KeyValue<string>;
+  /**
+   * An optional single row data frame containing the row that triggered the the QueryFixAction.
+   */
+  frame?: DataFrame;
 }
 
 export interface QueryHint {
@@ -674,8 +686,6 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
-
-  angularDetected?: boolean;
 }
 
 /**

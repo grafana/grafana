@@ -9,8 +9,11 @@ import {
   SelectableValue,
   Field,
   FieldType,
+  isTimeSeriesField,
 } from '@grafana/data';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
+
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import {
   timeSeriesTableTransformer,
@@ -68,7 +71,7 @@ export function TimeSeriesTableTransformEditor({
     for (const frame of input) {
       if (frame.refId === refId) {
         for (const field of frame.fields) {
-          if (field.type === 'time') {
+          if (isTimeSeriesField(field)) {
             timeFields[field.name] = field;
           }
         }
@@ -117,5 +120,5 @@ export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeS
   name: timeSeriesTableTransformer.name,
   description: timeSeriesTableTransformer.description,
   state: PluginState.beta,
-  help: ``,
+  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
 };

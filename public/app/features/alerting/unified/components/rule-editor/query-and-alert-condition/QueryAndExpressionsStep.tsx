@@ -5,9 +5,20 @@ import { useFormContext } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  Field,
+  Icon,
+  InputControl,
+  Menu,
+  MenuItem,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
@@ -446,7 +457,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 dispatch(addNewDataQuery());
               }}
               variant="secondary"
-              aria-label={selectors.components.QueryTab.addQuery}
+              data-testid={selectors.components.QueryTab.addQuery}
               disabled={noCompatibleDataSources}
               className={styles.addQueryButton}
             >

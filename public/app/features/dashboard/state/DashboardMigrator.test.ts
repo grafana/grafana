@@ -71,8 +71,8 @@ describe('DashboardModel', () => {
         panels: [
           {
             type: 'graph',
-            legend: { show: true },
             // @ts-expect-error
+            legend: { show: true },
             aliasYAxis: { test: 2 },
             y_formats: ['kbyte', 'ms'],
             grid: {
@@ -1079,12 +1079,14 @@ describe('DashboardModel', () => {
               type: 'query',
               name: 'variable_with_unknown_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
+              // @ts-expect-error
               refresh: 2001,
             },
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_without_options',
               options: [],
+              // @ts-expect-error
               refresh: 2001,
             },
             {

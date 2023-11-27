@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -94,7 +93,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	// If public dashboards is enabled and we have a public dashboard, update meta
 	// values
-	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.SignedInUser.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
@@ -145,7 +144,11 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	annotationPermissions := &dtos.AnnotationPermission{}
-	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
+	} else {
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+	}
 	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 	meta := dtos.DashboardMeta{
@@ -164,7 +167,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		Version:                dash.Version,
 		HasACL:                 dash.HasACL,
 		IsFolder:               dash.IsFolder,
-		FolderId:               dash.FolderID,
+		FolderId:               dash.FolderID, // nolint:staticcheck
 		Url:                    dash.GetURL(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
@@ -172,7 +175,9 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	// lookup folder title
+	// nolint:staticcheck
 	if dash.FolderID > 0 {
+		// nolint:staticcheck
 		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()}
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err != nil {
@@ -386,25 +391,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
-	// nolint:staticcheck
-	if cmd.FolderUID != "" || cmd.FolderID != 0 {
-		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID: c.SignedInUser.GetOrgID(),
-			UID:   &cmd.FolderUID,
-			// nolint:staticcheck
-			ID:           &cmd.FolderID,
-			SignedInUser: c.SignedInUser,
-		})
-		if err != nil {
-			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return response.Error(http.StatusBadRequest, "Folder not found", err)
-			}
-			return response.Error(http.StatusInternalServerError, "Error while checking folder ID", err)
-		}
-		// nolint:staticcheck
-		cmd.FolderID = folder.ID
-		cmd.FolderUID = folder.UID
-	}
 
 	dash := cmd.GetDashboardModel()
 	newDashboard := dash.ID == 0

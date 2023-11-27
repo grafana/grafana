@@ -56,14 +56,16 @@ type configs struct {
 	AllowUIUpdates        values.BoolValue   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
-func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *config, folderID int64) (*dashboards.SaveDashboardDTO, error) {
+func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *config, folderID int64, folderUID string) (*dashboards.SaveDashboardDTO, error) {
 	dash := &dashboards.SaveDashboardDTO{}
 	dash.Dashboard = dashboards.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified
 	dash.Overwrite = true
 	dash.OrgID = cfg.OrgID
 	dash.Dashboard.OrgID = cfg.OrgID
+	// nolint:staticcheck
 	dash.Dashboard.FolderID = folderID
+	dash.Dashboard.FolderUID = folderUID
 
 	if dash.Dashboard.Title == "" {
 		return nil, dashboards.ErrDashboardTitleEmpty

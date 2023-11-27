@@ -20,13 +20,10 @@ import {
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
-
-import { TableWrapper } from './TableWrapper';
 
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
@@ -34,16 +31,8 @@ const disabledRoleMessage = `This user's role is not editable because it is sync
 Refer to the Grafana authentication docs for details.`;
 
 const getBasicRoleDisabled = (user: OrgUser) => {
-  let basicRoleDisabled = !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
-  let authLabel = Array.isArray(user.authLabels) && user.authLabels.length > 0 ? user.authLabels[0] : '';
-  // A GCom specific feature toggle for role locking has been introduced, as the previous implementation had a bug with locking down external users synced through GCom (https://github.com/grafana/grafana/pull/72044)
-  // Remove this conditional once FlagGcomOnlyExternalOrgRoleSync feature toggle has been removed
-  if (authLabel !== 'grafana.com' || config.featureToggles.gcomOnlyExternalOrgRoleSync) {
-    const isUserSynced = user?.isExternallySynced;
-    basicRoleDisabled = isUserSynced || basicRoleDisabled;
-  }
-
-  return basicRoleDisabled;
+  const isUserSynced = user?.isExternallySynced;
+  return !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user) || isUserSynced;
 };
 
 const selectors = e2eSelectors.pages.UserListPage.UsersListPage;
@@ -219,18 +208,11 @@ export const OrgUsersTable = ({
   );
 
   return (
-    <Stack gap={2} data-testid={selectors.container}>
-      <TableWrapper>
-        <InteractiveTable
-          columns={columns}
-          data={users}
-          getRowId={(user) => String(user.userId)}
-          fetchData={fetchData}
-        />
-        <Stack justifyContent="flex-end">
-          <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
-        </Stack>
-      </TableWrapper>
+    <Stack direction={'column'} gap={2} data-testid={selectors.container}>
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} fetchData={fetchData} />
+      <Stack justifyContent="flex-end">
+        <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
+      </Stack>
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}

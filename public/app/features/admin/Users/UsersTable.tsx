@@ -143,7 +143,7 @@ export const UsersTable = ({
     [showLicensedRole]
   );
   return (
-    <Stack gap={2}>
+    <Stack direction={'column'} gap={2}>
       <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
       {showPaging && (
         <Stack justifyContent={'flex-end'}>

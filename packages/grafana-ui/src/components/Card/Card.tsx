@@ -3,7 +3,7 @@ import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'r
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 
 import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
@@ -66,8 +66,7 @@ export const Card: CardInterface = ({
 
   const disableHover = disabled || (!onClick && !href);
   const onCardClick = onClick && !disabled ? onClick : undefined;
-  const theme = useTheme2();
-  const styles = getCardContainerStyles(theme, disabled, disableHover, isSelected);
+  const styles = useStyles2(getCardContainerStyles, disabled, disableHover, isSelected);
 
   return (
     <CardContainer
@@ -301,22 +300,22 @@ const BaseActions = ({ children, disabled, variant, className }: ActionsProps) =
 
 const getActionStyles = (theme: GrafanaTheme2) => ({
   actions: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
     gridArea: 'Actions',
     marginTop: theme.spacing(2),
-    '& > *': {
-      marginRight: theme.spacing(1),
-    },
   }),
   secondaryActions: css({
-    display: 'flex',
-    gridArea: 'Secondary',
     alignSelf: 'center',
     color: theme.colors.text.secondary,
-    marginTtop: theme.spacing(2),
-
-    '& > *': {
-      marginRight: `${theme.spacing(1)} !important`,
-    },
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    gridArea: 'Secondary',
+    marginTop: theme.spacing(2),
   }),
 });
 

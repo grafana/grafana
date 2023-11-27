@@ -30,12 +30,17 @@ export const MegaMenu = React.memo(
     // Remove profile + help from tree
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
-      .map((item) => enrichWithInteractionTracking(item, true));
+      .map((item) => enrichWithInteractionTracking(item, state.megaMenu));
 
     const activeItem = getActiveItem(navItems, location.pathname);
 
     const handleDockedMenu = () => {
-      chrome.setMegaMenu(state.megaMenu === 'docked' ? 'closed' : 'docked');
+      chrome.setMegaMenu(state.megaMenu === 'docked' ? 'open' : 'docked');
+
+      // refocus on dock/undock button when changing state
+      setTimeout(() => {
+        document.getElementById('dock-menu-button')?.focus();
+      });
     };
 
     return (
@@ -54,21 +59,26 @@ export const MegaMenu = React.memo(
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link, index) => (
-                <Stack key={link.text} direction="row" alignItems="center">
-                  <MegaMenuItem
-                    link={link}
-                    onClick={state.megaMenu === 'open' ? onClose : undefined}
-                    activeItem={activeItem}
-                  />
-                  {index === 0 && Boolean(state.megaMenu === 'open') && (
+                <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="center">
+                  {index === 0 && (
                     <IconButton
+                      id="dock-menu-button"
                       className={styles.dockMenuButton}
-                      tooltip={t('navigation.megamenu.dock', 'Dock menu')}
+                      tooltip={
+                        state.megaMenu === 'docked'
+                          ? t('navigation.megamenu.undock', 'Undock menu')
+                          : t('navigation.megamenu.dock', 'Dock menu')
+                      }
                       name="web-section-alt"
                       onClick={handleDockedMenu}
                       variant="secondary"
                     />
                   )}
+                  <MegaMenuItem
+                    link={link}
+                    onClick={state.megaMenu === 'open' ? onClose : undefined}
+                    activeItem={activeItem}
+                  />
                 </Stack>
               ))}
             </ul>

@@ -1,10 +1,12 @@
 import React from 'react';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+
+import { panelMenuBehavior } from './PanelMenuBehavior';
 
 interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
@@ -39,6 +41,9 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         pluginVersion: libPanelModel.pluginVersion,
         displayMode: libPanelModel.transparent ? 'transparent' : undefined,
         $data: createPanelDataProvider(libPanelModel),
+        menu: new VizPanelMenu({
+          $behaviors: [panelMenuBehavior],
+        }),
       });
     } catch (err) {
       vizPanel.setState({
