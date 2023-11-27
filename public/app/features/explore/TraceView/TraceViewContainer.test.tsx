@@ -3,8 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
-
 import { configureStore } from '../../../store/configureStore';
 
 import { frameOld } from './TraceView.test';
@@ -19,15 +17,10 @@ jest.mock('@grafana/runtime', () => {
 
 function renderTraceViewContainer(frames = [frameOld]) {
   const store = configureStore();
-  const mockPanelData = {
-    state: LoadingState.Done,
-    series: [],
-    timeRange: getDefaultTimeRange(),
-  };
 
   const { container, baseElement } = render(
     <Provider store={store}>
-      <TraceViewContainer exploreId="left" dataFrames={frames} splitOpenFn={() => {}} queryResponse={mockPanelData} />
+      <TraceViewContainer exploreId="left" dataFrames={frames} splitOpenFn={() => {}} />
     </Provider>
   );
   return {
