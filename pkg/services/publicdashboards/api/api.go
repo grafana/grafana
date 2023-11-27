@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,6 +26,7 @@ type Api struct {
 	AccessControl          accesscontrol.AccessControl
 	Features               *featuremgmt.FeatureManager
 	Log                    log.Logger
+	Middleware             publicdashboards.Middleware
 }
 
 func ProvideApi(
@@ -31,6 +34,7 @@ func ProvideApi(
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
+	md publicdashboards.Middleware,
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
@@ -38,10 +42,11 @@ func ProvideApi(
 		AccessControl:          ac,
 		Features:               features,
 		Log:                    log.New("publicdashboards.api"),
+		Middleware:             md,
 	}
 
 	// attach api if PublicDashboards feature flag is enabled
-	if features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) {
 		api.RegisterAPIEndpoints()
 	}
 
@@ -54,11 +59,11 @@ func (api *Api) RegisterAPIEndpoints() {
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
 	// circular dependency
-
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.ViewPublicDashboard))
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetPublicAnnotations))
-
-	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
+	api.RouteRegister.Group("/api/public/dashboards/:accessToken", func(apiRoute routing.RouteRegister) {
+		apiRoute.Get("/", routing.Wrap(api.ViewPublicDashboard))
+		apiRoute.Get("/annotations", routing.Wrap(api.GetPublicAnnotations))
+		apiRoute.Post("/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
+	}, api.Middleware.HandleApi)
 
 	// Auth endpoints
 	auth := accesscontrol.Middleware(api.AccessControl)
@@ -66,7 +71,6 @@ func (api *Api) RegisterAPIEndpoints() {
 
 	// List public dashboards for org
 	api.RouteRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
-
 	// Get public dashboard
 	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
@@ -284,9 +288,9 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 }
 
 // Copied from pkg/api/metrics.go
-func toJsonStreamingResponse(features *featuremgmt.FeatureManager, qdr *backend.QueryDataResponse) response.Response {
+func toJsonStreamingResponse(ctx context.Context, features *featuremgmt.FeatureManager, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
-	if features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+	if features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
 	}
 

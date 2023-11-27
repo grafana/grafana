@@ -548,6 +548,8 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
+	// RBAC single organization. This configuration option is subject to change.
+	RBACSingleOrganization bool
 
 	// GRPC Server.
 	GRPCServerNetwork   string
@@ -1050,7 +1052,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	Target := valueAsString(iniFile.Section(""), "target", "all")
 	if Target != "" {
-		cfg.Target = strings.Split(Target, " ")
+		cfg.Target = util.SplitString(Target)
 	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
@@ -1409,6 +1411,18 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	return key
 }
 
+func (s *DynamicSection) KeysHash() map[string]string {
+	hash := s.section.KeysHash()
+	for k := range hash {
+		envKey := EnvKey(s.section.Name(), k)
+		envValue := os.Getenv(envKey)
+		if len(envValue) > 0 {
+			hash[k] = envValue
+		}
+	}
+	return hash
+}
+
 // SectionWithEnvOverrides dynamically overrides keys with environment variables.
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
@@ -1459,7 +1473,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
 
-	disableFrontendSandboxForPlugins := security.Key("frontend_sandbox_disable_for_plugins").MustString("")
+	disableFrontendSandboxForPlugins := security.Key("disable_frontend_sandbox_for_plugins").MustString("")
 	for _, plug := range strings.Split(disableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.DisableFrontendSandboxForPlugins = append(cfg.DisableFrontendSandboxForPlugins, plug)
@@ -1682,6 +1696,7 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
+	cfg.RBACSingleOrganization = rbac.Key("single_organization").MustBool(false)
 }
 
 func readOAuth2ServerSettings(cfg *Cfg) {

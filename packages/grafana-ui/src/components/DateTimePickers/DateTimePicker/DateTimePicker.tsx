@@ -72,7 +72,7 @@ export const DateTimePicker = ({
   const { dialogProps } = useDialog({}, ref);
 
   const theme = useTheme2();
-  const { modalBackdrop } = getModalStyles(theme);
+  const { modalBackdrop } = useStyles2(getModalStyles);
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
   const styles = useStyles2(getStyles);
 

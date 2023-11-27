@@ -36,7 +36,6 @@ type DatasourceInfo struct {
 	Database                   string
 	ConfiguredFields           ConfiguredFields
 	Interval                   string
-	TimeInterval               string
 	MaxConcurrentShardRequests int64
 	IncludeFrozen              bool
 	XPack                      bool
