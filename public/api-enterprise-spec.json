@@ -1891,7 +1891,7 @@
         }
       }
     },
-    "AddCommand": {
+    "AddAPIKeyCommand": {
       "type": "object",
       "properties": {
         "name": {
@@ -3528,6 +3528,7 @@
           "format": "int64"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4340,6 +4341,7 @@
           "type": "boolean"
         },
         "id": {
+          "description": "Deprecated: use Uid instead",
           "type": "integer",
           "format": "int64"
         },

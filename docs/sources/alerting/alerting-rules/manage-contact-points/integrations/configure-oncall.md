@@ -6,6 +6,8 @@ keywords:
   - alerting
   - oncall
   - integration
+aliases:
+  - ../configure-oncall/ # /docs/grafana/latest/alerting/alerting-rules/manage-contact-points/configure-oncall/
 labels:
   products:
     - cloud
