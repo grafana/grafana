@@ -121,6 +121,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       selectedRow: row,
     });
     document.addEventListener('click', this.handleDeselection);
+    document.addEventListener('contextmenu', this.handleDeselection);
     return true;
   };
 
@@ -138,6 +139,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   closePopoverMenu = () => {
     document.removeEventListener('click', this.handleDeselection);
+    document.removeEventListener('contextmenu', this.handleDeselection);
     this.setState({
       selection: '',
       popoverMenuCoordinates: { x: 0, y: 0 },
@@ -160,6 +162,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     document.removeEventListener('click', this.handleDeselection);
+    document.removeEventListener('contextmenu', this.handleDeselection);
     if (this.renderAllTimer) {
       clearTimeout(this.renderAllTimer);
     }
