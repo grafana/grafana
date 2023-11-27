@@ -28,7 +28,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization `administrator` role can add data sources and edit existing data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Prometheus data source, you can [configure it][configure-prometheus-data-source] so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards], use [Explore][explore], and [annotate visualizations](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/).
+Once you've added the Prometheus data source, you can [configure it][configure-prometheus-data-source] so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards], use [Explore][explore], and [annotate visualizations][annotate visualizations].
 
 The following guides will help you get started with the Prometheus data source:
 
@@ -196,4 +196,8 @@ The Prometheus data source can be configured to disable recording rules under th
 
 [set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
 [set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+
+[annotate visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations" 
+[annotate visualizations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations"
+
 {{% /docs/reference %}}
