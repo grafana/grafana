@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { debounceTime, Subscription } from 'rxjs';
+import React, { useCallback } from 'react';
 
 import {
   DashboardCursorSync,
@@ -17,11 +16,7 @@ import {
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import {
-  calculateAroundPointThreshold,
-  hasTimeField,
-  isPointTimeValAroundTableTimeVal,
-} from '@grafana/ui/src/components/Table/utils';
+import { hasTimeField } from '@grafana/ui/src/components/Table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
@@ -30,7 +25,6 @@ interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id, timeRange } = props;
-  const [rowHighlightIndex, setRowHighlightIndex] = React.useState<number | undefined>(undefined);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -43,106 +37,6 @@ export function TablePanel(props: Props) {
   const main = frames[currentIndex];
 
   let tableHeight = height;
-
-  const threshold = useMemo(() => {
-    const timeField = main.fields.find((f) => f.type === FieldType.time);
-
-    if (!timeField) {
-      return 0;
-    }
-
-    return calculateAroundPointThreshold(timeField);
-  }, [main]);
-
-  const onDataHoverEvent = useCallback(
-    (evt: DataHoverEvent) => {
-      if (evt.payload.point?.time && evt.payload.rowIndex !== undefined) {
-        const timeField = main.fields.find((f) => f.type === FieldType.time);
-        const time = timeField!.values[evt.payload.rowIndex];
-
-        // If the time value of the hovered point is around the time value of the
-        // row with same index, highlight the row
-        if (isPointTimeValAroundTableTimeVal(evt.payload.point.time, time, threshold)) {
-          setRowHighlightIndex(evt.payload.rowIndex);
-          return;
-        }
-
-        // If the time value of the hovered point is not around the time value of the
-        // row with same index, try to find a row with same time value
-        const matchedRowIndex = timeField!.values.findIndex((t) =>
-          isPointTimeValAroundTableTimeVal(evt.payload.point.time, t, threshold)
-        );
-
-        if (matchedRowIndex !== -1) {
-          setRowHighlightIndex(matchedRowIndex);
-          return;
-        }
-
-        setRowHighlightIndex(undefined);
-      }
-    },
-    [main.fields, threshold]
-  );
-
-  useEffect(() => {
-    if (!config.featureToggles.tableSharedCrosshair) {
-      return;
-    }
-
-    if (
-      !panelContext.sync ||
-      panelContext.sync() === DashboardCursorSync.Off ||
-      !hasTimeField(main) ||
-      options.footer?.enablePagination
-    ) {
-      return;
-    }
-
-    const subs = new Subscription();
-
-    subs.add(
-      panelContext.eventBus
-        .getStream(DataHoverEvent)
-        .pipe(debounceTime(200))
-        .subscribe({
-          next: (evt) => {
-            if (panelContext.eventBus === evt.origin) {
-              return;
-            }
-
-            onDataHoverEvent(evt);
-          },
-        })
-    );
-
-    subs.add(
-      panelContext.eventBus
-        .getStream(DataHoverClearEvent)
-        .pipe(debounceTime(200))
-        .subscribe({
-          next: (evt) => {
-            if (panelContext.eventBus === evt.origin) {
-              return;
-            }
-
-            setRowHighlightIndex(undefined);
-          },
-        })
-    );
-
-    return () => {
-      subs.unsubscribe();
-    };
-  }, [
-    panelContext,
-    frames,
-    options.footer?.enablePagination,
-    main,
-    timeRange.to,
-    timeRange.from,
-    threshold,
-    onDataHoverEvent,
-  ]);
 
   const onRowHover = useCallback(
     (idx: number, frame: DataFrame) => {
@@ -182,6 +76,8 @@ export function TablePanel(props: Props) {
     tableHeight = height - inputHeight - padding;
   }
 
+  const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
+
   const tableElement = (
     <Table
       height={tableHeight}
@@ -200,7 +96,8 @@ export function TablePanel(props: Props) {
       timeRange={timeRange}
       onRowHover={config.featureToggles.tableSharedCrosshair ? onRowHover : undefined}
       onRowLeave={config.featureToggles.tableSharedCrosshair ? onRowLeave : undefined}
-      rowHighlightIndex={rowHighlightIndex}
+      enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
+      eventBus={panelContext.eventBus}
     />
   );
 

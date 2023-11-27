@@ -23,6 +23,7 @@ import { Pagination } from '../Pagination/Pagination';
 import { getExpandedRowHeight, ExpandedRow } from './ExpandedRow';
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
+import { RowsList } from './RowsList';
 import { TableCell } from './TableCell';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
@@ -53,6 +54,8 @@ export const Table = memo((props: Props) => {
     onRowHover,
     onRowLeave,
     rowHighlightIndex,
+    eventBus,
+    enableSharedCrosshair = false,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -231,15 +234,6 @@ export const Table = memo((props: Props) => {
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
-  let scrollTop = undefined;
-  if (rowHighlightIndex !== undefined) {
-    const firstMatchedRowIndex = rows.findIndex((row) => row.index === rowHighlightIndex);
-
-    if (firstMatchedRowIndex !== -1) {
-      scrollTop = headerHeight + (firstMatchedRowIndex - 1) * tableStyles.rowHeight;
-    }
-  }
-
   useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
@@ -251,7 +245,7 @@ export const Table = memo((props: Props) => {
   );
 
   const RenderRow = useCallback(
-    ({ index, style }: { index: number; style: CSSProperties }) => {
+    ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
       const indexForPagination = rowIndexForPagination(index);
       const row = rows[indexForPagination];
 
@@ -300,7 +294,6 @@ export const Table = memo((props: Props) => {
       rows,
       prepareRow,
       state.expanded,
-      rowHighlightIndex,
       tableStyles,
       nestedDataField,
       width,
@@ -381,20 +374,23 @@ export const Table = memo((props: Props) => {
           )}
           {itemCount > 0 ? (
             <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
-              <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
-                <VariableSizeList
-                  // This component needs an unmount/remount when row height or page changes
-                  key={tableStyles.rowHeight + state.pageIndex}
-                  height={listHeight}
-                  itemCount={itemCount}
-                  itemSize={getItemSize}
-                  width={'100%'}
-                  ref={listRef}
-                  style={{ overflow: undefined }}
-                >
-                  {RenderRow}
-                </VariableSizeList>
-              </CustomScrollbar>
+              <RowsList
+                data={data}
+                rows={rows}
+                headerHeight={headerHeight}
+                rowHeight={tableStyles.rowHeight}
+                overrideRowHighlightIndex={rowHighlightIndex}
+                itemCount={itemCount}
+                pageIndex={state.pageIndex}
+                listHeight={listHeight}
+                listRef={listRef}
+                getItemSize={getItemSize}
+                renderRow={RenderRow}
+                handleScroll={handleScroll}
+                footerPaginationEnabled={Boolean(options.footer?.enablePagination)}
+                enableSharedCrosshair={enableSharedCrosshair}
+                eventBus={eventBus}
+              />
             </div>
           ) : (
             <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>

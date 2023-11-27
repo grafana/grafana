@@ -2,7 +2,7 @@ import { Property } from 'csstype';
 import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
-import { DataFrame, Field, KeyValue, SelectableValue, TimeRange } from '@grafana/data';
+import { DataFrame, EventBus, Field, KeyValue, SelectableValue, TimeRange } from '@grafana/data';
 import * as schema from '@grafana/schema';
 
 import { TableStyles } from './styles';
@@ -96,8 +96,10 @@ export interface Props {
   timeRange?: TimeRange;
   onRowHover?: (idx: number, frame: DataFrame) => void;
   onRowLeave?: () => void;
-  /** Used to highlight rows with the given time value. Used with DataHoverEvent */
+  /** Used to highlight a row at a given index */
   rowHighlightIndex?: number;
+  enableSharedCrosshair?: boolean;
+  eventBus?: EventBus;
 }
 
 /**
