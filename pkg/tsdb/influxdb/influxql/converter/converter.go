@@ -146,6 +146,10 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 
 			if len(rsp.Frames[0].Fields) == 0 {
 				rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, valueFields[0])
+				if !hasTimeColumn {
+					rsp.Frames[0].Fields[0].Name = columns[0]
+					rsp.Frames[0].Fields[0].Config = &data.FieldConfig{DisplayNameFromDS: columns[0]}
+				}
 			} else {
 				var i int
 				for i < valueFields[0].Len() {
@@ -172,7 +176,8 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 
 			si := len(tags) + 1 // number of fields we currently have in the first frame
 			for i, v := range valueFields {
-				if columns[i] == "time" {
+				// first value field is always handled first, before tags
+				if i == 0 {
 					continue
 				}
 				v.Name = columns[i]
