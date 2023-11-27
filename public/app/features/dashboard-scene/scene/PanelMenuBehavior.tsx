@@ -148,7 +148,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: InspectTab.Data });
         }
       },
-      subMenu: inspectSubMenu,
+      subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
     });
 
     if (moreSubMenu.length) {
