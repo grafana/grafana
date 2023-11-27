@@ -10,6 +10,12 @@ import { BackupInventory } from './BackupInventory';
 jest.mock('./BackupInventory.service');
 jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
 jest.mock('../../hooks/recurringCall.hook');
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useLocation: () => ({
+    pathname: '/',
+  }),
+}));
 
 describe('BackupInventory', () => {
   it('should send correct data to Table', async () => {

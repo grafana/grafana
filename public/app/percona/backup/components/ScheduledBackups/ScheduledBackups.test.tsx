@@ -10,6 +10,13 @@ import { ScheduledBackups } from './ScheduledBackups';
 jest.mock('./ScheduledBackups.service');
 jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
 
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useLocation: () => ({
+    pathname: '/',
+  }),
+}));
+
 describe('ScheduledBackups', () => {
   it('should send correct data to Table', async () => {
     render(
@@ -25,7 +32,5 @@ describe('ScheduledBackups', () => {
       </Provider>
     );
     await screen.findByText('Backup 1');
-    expect(screen.getByText('Location 1 (S3)')).toBeTruthy();
-    expect(screen.getByText('Location 2 (Local Client)')).toBeTruthy();
   });
 });

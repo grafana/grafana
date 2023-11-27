@@ -11,6 +11,12 @@ import { stubLocations } from './__mocks__/StorageLocations.service';
 
 jest.mock('./StorageLocations.service');
 jest.mock('app/core/app_events');
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useLocation: () => ({
+    pathname: '/',
+  }),
+}));
 
 describe('StorageLocations', () => {
   it('should show delete modal when icon is clicked', async () => {

@@ -34,15 +34,15 @@ export const formatDataModel = (model: DataModel): string => {
   return map[model] ?? '';
 };
 
-export const formatBackupMode = (mode: BackupMode): string => {
-  const map: Record<BackupMode, string> = {
-    [BackupMode.SNAPSHOT]: backupModeMsg.full,
-    [BackupMode.INCREMENTAL]: backupModeMsg.incremental,
-    [BackupMode.PITR]: backupModeMsg.pitr,
-    [BackupMode.INVALID]: backupModeMsg.invalid,
-  };
+export const BackupModeMap: Record<BackupMode, string> = {
+  [BackupMode.SNAPSHOT]: backupModeMsg.full,
+  [BackupMode.INCREMENTAL]: backupModeMsg.incremental,
+  [BackupMode.PITR]: backupModeMsg.pitr,
+  [BackupMode.INVALID]: backupModeMsg.invalid,
+};
 
-  return map[mode] || map[BackupMode.INVALID];
+export const formatBackupMode = (mode: BackupMode): string => {
+  return BackupModeMap[mode] || BackupModeMap[BackupMode.INVALID];
 };
 
 export const formatLocationsToMap = (locations: StorageLocation[]) =>

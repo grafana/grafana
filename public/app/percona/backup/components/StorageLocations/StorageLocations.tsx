@@ -1,13 +1,13 @@
 /* eslint-disable react/display-name, @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { Column, Row } from 'react-table';
+import { Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OldPage } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { Table } from 'app/percona/shared/components/Elements/Table';
+import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { logger } from 'app/percona/shared/helpers/logger';
@@ -19,7 +19,7 @@ import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
 import { StorageLocationDetails } from './StorageLocationDetails';
 import { StorageLocationsService } from './StorageLocations.service';
 import { getStyles } from './StorageLocations.styles';
-import { StorageLocation } from './StorageLocations.types';
+import { LocationType, StorageLocation } from './StorageLocations.types';
 import { formatLocationList, formatToRawLocation } from './StorageLocations.utils';
 import { StorageLocationsActions } from './StorageLocationsActions';
 
@@ -34,24 +34,38 @@ export const StorageLocations: FC = () => {
   const navModel = usePerconaNavModel('storage-locations');
   const styles = useStyles(getStyles);
   const columns = React.useMemo(
-    (): Array<Column<StorageLocation>> => [
+    (): Array<ExtendedColumn<StorageLocation>> => [
       {
         Header: Messages.storageLocations.table.columns.name,
         accessor: 'name',
         id: 'name',
         width: '315px',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.storageLocations.table.columns.type,
         accessor: 'type',
         width: '150px',
+        type: FilterFieldTypes.DROPDOWN,
+        options: [
+          {
+            value: LocationType.S3,
+            label: LocationType.S3,
+          },
+          {
+            value: LocationType.CLIENT,
+            label: LocationType.CLIENT,
+          },
+        ],
       },
       {
         Header: Messages.storageLocations.table.columns.path,
         accessor: 'path',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.storageLocations.table.columns.actions,
+        type: FilterFieldTypes.TEXT,
         accessor: 'locationID',
         Cell: ({ row }) => (
           <StorageLocationsActions row={row} onUpdate={handleUpdate} onDelete={onDeleteCLick} location={row.original} />
@@ -168,6 +182,7 @@ export const StorageLocations: FC = () => {
             pendingRequest={pending}
             renderExpandedRow={renderSelectedSubRow}
             getRowId={useCallback((row: StorageLocation) => row.locationID, [])}
+            showFilter
           ></Table>
           <AddStorageLocationModal
             location={selectedLocation}

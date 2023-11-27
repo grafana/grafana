@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import cronstrue from 'cronstrue';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Cell, Column, Row } from 'react-table';
+import { Cell, Row } from 'react-table';
 
 import { AppEvents, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -10,7 +10,7 @@ import { appEvents } from 'app/core/app_events';
 import { OldPage } from 'app/core/components/Page/Page';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { Table } from 'app/percona/shared/components/Elements/Table';
+import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
@@ -46,7 +46,6 @@ export const ScheduledBackups: FC = () => {
   const styles = useStyles(getStyles);
   const { result: locations = [] } = useSelector(getBackupLocations);
   const locationsByLocationId = useMemo(() => formatLocationsToMap(locations), [locations]);
-
   const retentionValue = useCallback((n: number) => {
     if (n < 0) {
       return '';
@@ -133,31 +132,40 @@ export const ScheduledBackups: FC = () => {
   );
 
   const columns = useMemo(
-    (): Array<Column<ScheduledBackup>> => [
+    (): Array<ExtendedColumn<ScheduledBackup>> => [
       {
         Header: Messages.scheduledBackups.table.columns.name,
         accessor: 'name',
         id: 'name',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.scheduledBackups.table.columns.vendor,
         accessor: 'vendor',
         Cell: ({ value }) => DATABASE_LABELS[value],
+        type: FilterFieldTypes.DROPDOWN,
+        options: Object.values(DATABASE_LABELS).map((item: string) => ({
+          label: item,
+          value: item,
+        })),
       },
       {
         Header: Messages.scheduledBackups.table.columns.frequency,
         accessor: 'cronExpression',
         Cell: ({ value }) => cronstrue.toString(value, { use24HourTimeFormat: true }),
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.scheduledBackups.table.columns.retention,
         accessor: 'retention',
         Cell: ({ value }) => retentionValue(value),
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.scheduledBackups.table.columns.type,
         accessor: 'mode',
         Cell: ({ value }) => formatBackupMode(value),
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.scheduledBackups.table.columns.location,
@@ -167,17 +175,24 @@ export const ScheduledBackups: FC = () => {
             {value} ({locationsByLocationId[row.original.locationId]?.type})
           </span>
         ),
+        type: FilterFieldTypes.DROPDOWN,
+        options: locations.map((item) => ({
+          label: item.name,
+          value: item.name,
+        })),
       },
       {
         Header: Messages.scheduledBackups.table.columns.lastBackup,
         accessor: 'lastBackup',
         Cell: ({ value }) => (value ? <DetailedDate date={value} /> : ''),
         width: '200px',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.scheduledBackups.table.columns.actions,
         accessor: 'id',
         width: '150px',
+        type: FilterFieldTypes.TEXT,
         Cell: ({ row }) => (
           <ScheduledBackupsActions
             row={row}
@@ -191,7 +206,7 @@ export const ScheduledBackups: FC = () => {
         ),
       },
     ],
-    [actionPending, handleCopy, handleToggle, locationsByLocationId, retentionValue]
+    [actionPending, handleCopy, handleToggle, locationsByLocationId, retentionValue, locations]
   );
 
   const renderSelectedSubRow = React.useCallback(
@@ -272,6 +287,7 @@ export const ScheduledBackups: FC = () => {
             renderExpandedRow={renderSelectedSubRow}
             getCellProps={getCellProps}
             getRowId={useCallback((row: ScheduledBackup) => row.id, [])}
+            showFilter
           />
           <DeleteModal
             title={Messages.scheduledBackups.deleteModalTitle}

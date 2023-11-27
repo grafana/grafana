@@ -1,11 +1,12 @@
 /* eslint-disable react/display-name */
 import { CancelToken } from 'axios';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Column, Row } from 'react-table';
+import { Row } from 'react-table';
 
 import { OldPage } from 'app/core/components/Page/Page';
+import { BackupStatus } from 'app/percona/backup/Backup.types';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { Table } from 'app/percona/shared/components/Elements/Table';
+import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
@@ -43,10 +44,49 @@ export const RestoreHistory: FC = () => {
   const locationsByLocationId = useMemo(() => formatLocationsToMap(locations), [locations]);
 
   const columns = useMemo(
-    (): Array<Column<Restore>> => [
+    (): Array<ExtendedColumn<Restore>> => [
       {
-        Header: Messages.backupInventory.table.columns.status,
+        Header: Messages.backupInventory.table.columns.status.name,
         accessor: 'status',
+        options: [
+          {
+            label: Messages.backupInventory.table.columns.status.options.success,
+            value: BackupStatus.BACKUP_STATUS_SUCCESS,
+          },
+          {
+            label: Messages.backupInventory.table.columns.status.options.error,
+            value: BackupStatus.BACKUP_STATUS_ERROR,
+          },
+          {
+            label: Messages.backupInventory.table.columns.status.options.pending,
+            value: BackupStatus.BACKUP_STATUS_PENDING,
+          },
+          {
+            label: Messages.backupInventory.table.columns.status.options.paused,
+            value: BackupStatus.BACKUP_STATUS_PAUSED,
+          },
+          {
+            label: Messages.backupInventory.table.columns.status.options.invalid,
+            value: BackupStatus.BACKUP_STATUS_INVALID,
+          },
+          {
+            label: Messages.backupInventory.table.columns.status.options.inProgress,
+            value: BackupStatus.BACKUP_STATUS_IN_PROGRESS,
+          },
+          {
+            label: Messages.backupInventory.table.columns.status.options.failedToDelete,
+            value: BackupStatus.BACKUP_STATUS_FAILED_TO_DELETE,
+          },
+          {
+            label: Messages.backupInventory.table.columns.status.options.failedNotSupportedByAgent,
+            value: BackupStatus.BACKUP_STATUS_FAILED_NOT_SUPPORTED_BY_AGENT,
+          },
+          {
+            label: Messages.backupInventory.table.columns.status.options.deleting,
+            value: BackupStatus.BACKUP_STATUS_DELETING,
+          },
+        ],
+        type: FilterFieldTypes.DROPDOWN,
         Cell: ({ value, row }) => (
           <Status
             showLogsAction={row.original.vendor === Databases.mongodb}
@@ -60,31 +100,67 @@ export const RestoreHistory: FC = () => {
         Header: Messages.backupInventory.table.columns.name,
         accessor: 'name',
         id: 'name',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.backupInventory.table.columns.vendor,
         accessor: ({ vendor }: Restore) => DATABASE_LABELS[vendor],
         width: '150px',
+        type: FilterFieldTypes.DROPDOWN,
+        options: [
+          {
+            label: 'MongoDB',
+            value: DATABASE_LABELS.mongodb,
+          },
+          {
+            label: 'HaProxy',
+            value: DATABASE_LABELS.haproxy,
+          },
+          {
+            label: 'MariaDB',
+            value: DATABASE_LABELS.mariadb,
+          },
+          {
+            label: 'MySQL',
+            value: DATABASE_LABELS.mysql,
+          },
+          {
+            label: 'PostgresSQL',
+            value: DATABASE_LABELS.postgresql,
+          },
+          {
+            label: 'ProxySQL',
+            value: DATABASE_LABELS.proxysql,
+          },
+        ],
       },
       {
         Header: Messages.restoreHistory.table.columns.started,
         accessor: 'started',
         Cell: ({ value }) => <DetailedDate dataTestId="restore-started" date={value} />,
         width: '200px',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.restoreHistory.table.columns.finished,
         accessor: 'finished',
         Cell: ({ value }) => (value ? <DetailedDate dataTestId="restore-finished" date={value} /> : null),
         width: '200px',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.restoreHistory.table.columns.targetService,
         accessor: 'serviceName',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.backupInventory.table.columns.location,
         accessor: 'locationName',
+        type: FilterFieldTypes.DROPDOWN,
+        options: locations.map((item) => ({
+          label: item.name,
+          value: item.name,
+        })),
         Cell: ({ row, value }) => (
           <span>
             {value} ({locationsByLocationId[row.original.locationId]?.type})
@@ -95,11 +171,12 @@ export const RestoreHistory: FC = () => {
         Header: Messages.restoreHistory.table.columns.actions,
         accessor: 'id',
         width: '100px',
+        type: FilterFieldTypes.TEXT,
         Cell: ({ row }) => <RestoreHistoryActions row={row} />,
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locationsByLocationId]
+    [locationsByLocationId, locations]
   );
 
   const renderSelectedSubRow = React.useCallback(
@@ -166,6 +243,7 @@ export const RestoreHistory: FC = () => {
             autoResetExpanded={false}
             renderExpandedRow={renderSelectedSubRow}
             getRowId={useCallback((row: Restore) => row.id, [])}
+            showFilter
           />
           {logsModalVisible && (
             <RestoreLogsModal
