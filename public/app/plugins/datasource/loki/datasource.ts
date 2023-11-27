@@ -58,7 +58,7 @@ import { LokiVariableSupport } from './LokiVariableSupport';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
+import { escapeLabelValueInSelector, isRegexSelector, getLabelTypeFromFrame } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -795,6 +795,7 @@ export class LokiDatasource
    */
   toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
+    const labelType = getLabelTypeFromFrame(filter.options.key, filter.frame, 0);
     switch (filter.type) {
       case 'FILTER_FOR': {
         if (filter.options?.key && filter.options?.value) {
@@ -803,7 +804,7 @@ export class LokiDatasource
           // This gives the user the ability to toggle a filter on and off.
           expression = queryHasFilter(expression, filter.options.key, '=', value)
             ? removeLabelFromQuery(expression, filter.options.key, '=', value)
-            : addLabelToQuery(expression, filter.options.key, '=', value);
+            : addLabelToQuery(expression, filter.options.key, '=', value, labelType);
         }
         break;
       }
@@ -820,7 +821,7 @@ export class LokiDatasource
             expression = removeLabelFromQuery(expression, filter.options.key, '=', value);
           }
 
-          expression = addLabelToQuery(expression, filter.options.key, '!=', value);
+          expression = addLabelToQuery(expression, filter.options.key, '!=', value, labelType);
         }
         break;
       }
@@ -849,31 +850,20 @@ export class LokiDatasource
     // NB: Usually the labelKeys should be fetched and cached in the datasource,
     // but there might be some edge cases where this wouldn't be the case.
     // However the changed would make this method `async`.
-    const allLabels = this.languageProvider.getLabelKeys();
     switch (action.type) {
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
+          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(
-            expression,
-            action.options.key,
-            '=',
-            value,
-            allLabels.includes(action.options.key) === false
-          );
+          expression = addLabelToQuery(expression, action.options.key, '=', value, labelType);
         }
         break;
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
+          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(
-            expression,
-            action.options.key,
-            '!=',
-            value,
-            allLabels.includes(action.options.key) === false
-          );
+          expression = addLabelToQuery(expression, action.options.key, '!=', value, labelType);
         }
         break;
       }
