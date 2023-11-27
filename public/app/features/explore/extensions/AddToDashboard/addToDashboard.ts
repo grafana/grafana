@@ -67,23 +67,11 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
   return transformations;
 }
 
-/**
- * Filters the query for logs table, if the user has a query selected in explore, only return that one
- * The logs table uses organize fields transformation, which only supports a single dataframe
- * Also, the UI only displays one dataframe/query at a time, so this should result in the expected behavior.
- * @param options
- */
-function getExploreToPanelQueries(options: AddPanelToDashboardOptions) {
-  return options?.panelState?.logs?.refId
-    ? [options.queries.find((q) => q.refId === options?.panelState?.logs?.refId)]
-    : options.queries;
-}
-
 export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
   const panelType = getPanelType(options.queries, options.queryResponse, options?.panelState);
 
   const panel = {
-    targets: getExploreToPanelQueries(options),
+    targets: options.queries,
     type: panelType,
     title: 'New Panel',
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
