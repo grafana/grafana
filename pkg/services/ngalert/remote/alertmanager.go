@@ -12,7 +12,6 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -24,7 +23,6 @@ import (
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
 )
 
 const readyPath = "/-/ready"
@@ -37,7 +35,7 @@ type Alertmanager struct {
 
 	amClient    *amclient.AlertmanagerAPI
 	httpClient  *http.Client
-	kvstore     kvstore.KVStore
+	fstore      *notifier.FileStore
 	mimirClient mimirClient.MimirClient
 	ready       bool
 	sender      *sender.ExternalAlertmanager
@@ -49,7 +47,7 @@ type AlertmanagerConfig struct {
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, kvstore kvstore.KVStore) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, fstore *notifier.FileStore) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &mimirClient.MimirAuthRoundTripper{
 			TenantID: cfg.TenantID,
@@ -103,7 +101,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, kvstore kvstore.KVStor
 		mimirClient: mc,
 		amClient:    amclient.New(transport, nil),
 		httpClient:  &client,
-		kvstore:     kvstore,
+		fstore:      fstore,
 		sender:      s,
 		orgID:       orgID,
 		tenantID:    cfg.TenantID,
@@ -141,7 +139,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	}
 
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-	b, err := am.getFullState(ctx)
+	b, err := am.fstore.GetFullState(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting the Alertmanager's full state: %w", err)
 	}
@@ -386,39 +384,4 @@ func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool 
 	}
 
 	return rs.State != state
-}
-
-// getFullState returns a slice of bytes representing the Alertmanager's internal state.
-// These bytes contain the Alertmanager's silences and notification log.
-func (am *Alertmanager) getFullState(ctx context.Context) ([]byte, error) {
-	keys, err := am.kvstore.GetAll(ctx, am.orgID, "alertmanager")
-	if err != nil {
-		return nil, err
-	}
-	silences, ok := keys[am.orgID]["silences"]
-	if !ok {
-		am.log.Warn("No silences found in kvstore", "org", am.orgID)
-	}
-	notifications, ok := keys[am.orgID]["notifications"]
-	if !ok {
-		am.log.Warn("No nflog found in kvstore", "org", am.orgID)
-	}
-
-	// Decode base64-encoded values and add them as protobuf parts.
-	s, err := base64.StdEncoding.DecodeString(silences)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding silences: %w", err)
-	}
-	n, err := base64.StdEncoding.DecodeString(notifications)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding nflog: %w", err)
-	}
-
-	fs := clusterpb.FullState{
-		Parts: []clusterpb.Part{
-			{Key: "silences", Data: s},
-			{Key: "notifications", Data: n},
-		},
-	}
-	return fs.Marshal()
 }
