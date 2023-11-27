@@ -4,6 +4,7 @@ import { FormState, UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Form, Spinner, useStyles2 } from '@grafana/ui/src';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -11,8 +12,6 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
-import { trackDashboardSharingActionPerType } from '../../analytics';
-import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
@@ -47,7 +46,7 @@ export const CreatePublicDashboardBase = ({
   const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
   const onCreate = () => {
     createPublicDashboard({ dashboard, payload: { isEnabled: true } });
-    trackDashboardSharingActionPerType('generate_public_url', shareDashboardType.publicDashboard);
+    reportInteraction('dashboards_sharing_public_generate_url_clicked', {});
   };
 
   const disableInputs = !hasWritePermissions || isLoading || isError || hasError;
