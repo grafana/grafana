@@ -32,7 +32,7 @@ type Mimir struct {
 }
 
 type Config struct {
-	Address  string
+	URL      *url.URL
 	TenantID string
 	Password string
 
@@ -61,11 +61,6 @@ func (e *errorResponse) Error() string {
 }
 
 func New(cfg *Config) (*Mimir, error) {
-	endpoint, err := url.Parse(cfg.Address)
-	if err != nil {
-		return nil, err
-	}
-
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
@@ -77,7 +72,7 @@ func New(cfg *Config) (*Mimir, error) {
 	}
 
 	return &Mimir{
-		endpoint: endpoint,
+		endpoint: cfg.URL,
 		client:   c,
 		logger:   cfg.Logger,
 	}, nil

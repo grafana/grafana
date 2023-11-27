@@ -20,14 +20,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -36,7 +39,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -635,5 +640,99 @@ func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *p
 		JSONData: jd,
 		Class:    class,
 		FS:       files,
+	}
+}
+
+func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
+	newStr := func(s string) *string {
+		return &s
+	}
+	pluginReg := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "grafana-test-app",
+			ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
+				Permissions: []plugindef.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}, {Action: ac.ActionUsersCreate}},
+			},
+		},
+	}
+
+	tests := []struct {
+		name        string
+		plugin      pluginstore.Plugin
+		orgID       int64
+		singleOrg   bool
+		permissions map[int64]map[string][]string
+		warnCount   int
+	}{
+		{
+			name: "no warn if plugin has no registration",
+			plugin: pluginstore.Plugin{
+				JSONData: plugins.JSONData{
+					ID: "grafana-test-app",
+				},
+			},
+			warnCount: 0,
+		},
+		{
+			name:   "warn if user does not have plugin permissions globally",
+			plugin: pluginReg,
+			orgID:  1,
+			permissions: map[int64]map[string][]string{
+				1: {ac.ActionUsersRead: {ac.ScopeUsersAll}, ac.ActionUsersCreate: {}},
+			},
+			warnCount: 1,
+		},
+		{
+			name:   "no warn if user has plugin permissions globally",
+			plugin: pluginReg,
+			orgID:  0,
+			permissions: map[int64]map[string][]string{
+				0: {ac.ActionUsersRead: {ac.ScopeUsersAll}, ac.ActionUsersCreate: {}},
+			},
+			warnCount: 0,
+		},
+		{
+			name:      "no warn if user has plugin permissions in single organization",
+			plugin:    pluginReg,
+			singleOrg: true,
+			orgID:     1,
+			permissions: map[int64]map[string][]string{
+				1: {ac.ActionUsersRead: {ac.ScopeUsersAll}, ac.ActionUsersCreate: {}},
+			},
+			warnCount: 0,
+		},
+		{
+			name:        "warn if user does not have all plugin permissions",
+			plugin:      pluginReg,
+			singleOrg:   true,
+			orgID:       1,
+			permissions: map[int64]map[string][]string{1: {ac.ActionUsersCreate: {}}},
+			warnCount:   1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := &logtest.Fake{}
+			hs := &HTTPServer{}
+			httpReq, err := http.NewRequest(http.MethodGet, "", nil)
+			require.NoError(t, err)
+
+			hs.Cfg = setting.NewCfg()
+			hs.Cfg.RBACSingleOrganization = tt.singleOrg
+			hs.pluginStore = &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{tt.plugin},
+			}
+			hs.log = logger
+			hs.accesscontrolService = actest.FakeService{}
+			hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
+
+			c := &contextmodel.ReqContext{
+				Context:      &web.Context{Req: httpReq},
+				SignedInUser: &user.SignedInUser{OrgID: tt.orgID, Permissions: tt.permissions},
+			}
+			hs.hasPluginRequestedPermissions(c, "grafana-test-app")
+
+			assert.Equal(t, tt.warnCount, logger.WarnLogs.Calls)
+		})
 	}
 }

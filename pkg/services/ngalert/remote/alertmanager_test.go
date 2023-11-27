@@ -40,7 +40,15 @@ func TestNewAlertmanager(t *testing.T) {
 			tenantID: "1234",
 			password: "test",
 			orgID:    1,
-			expErr:   "empty URL for tenant 1234",
+			expErr:   "empty remote Alertmanager URL for tenant '1234'",
+		},
+		{
+			name:     "invalid URL",
+			url:      "asdasd%sasdsd",
+			tenantID: "1234",
+			password: "test",
+			orgID:    1,
+			expErr:   "unable to parse remote Alertmanager URL: parse \"asdasd%sasdsd\": invalid URL escape \"%sa\"",
 		},
 		{
 			name:     "valid parameters",

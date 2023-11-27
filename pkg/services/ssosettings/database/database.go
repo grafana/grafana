@@ -17,6 +17,11 @@ type SSOSettingsStore struct {
 	log      log.Logger
 }
 
+var (
+	// timeNow makes it possible to test usage of time
+	timeNow = time.Now
+)
+
 func ProvideStore(sqlStore db.DB) *SSOSettingsStore {
 	return &SSOSettingsStore{
 		sqlStore: sqlStore,
@@ -72,33 +77,37 @@ func (s *SSOSettingsStore) List(ctx context.Context) ([]*models.SSOSetting, erro
 }
 
 func (s *SSOSettingsStore) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		found, err := sess.Where("provider = ? AND is_deleted = ?", provider, s.sqlStore.GetDialect().BooleanStr(false)).Exist(&models.SSOSetting{})
-
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		existing := &models.SSOSetting{
+			Provider:  provider,
+			IsDeleted: false,
+		}
+		found, err := sess.UseBool("is_deleted").Exist(existing)
 		if err != nil {
 			return err
 		}
 
+		now := timeNow().UTC()
+
 		if found {
-			_, err = sess.Where("provider = ? AND is_deleted = ?", provider, s.sqlStore.GetDialect().BooleanStr(false)).Update(&models.SSOSetting{
-				Settings: data,
-				Updated:  time.Now().UTC(),
-			})
+			updated := &models.SSOSetting{
+				Settings:  data,
+				Updated:   now,
+				IsDeleted: false,
+			}
+			_, err = sess.UseBool("is_deleted").Update(updated, existing)
 		} else {
 			_, err = sess.Insert(&models.SSOSetting{
 				ID:       uuid.New().String(),
 				Provider: provider,
 				Settings: data,
-				Created:  time.Now().UTC(),
-				Updated:  time.Now().UTC(),
+				Created:  now,
+				Updated:  now,
 			})
 		}
 
 		return err
 	})
-
-	return err
 }
 
 func (s *SSOSettingsStore) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
@@ -121,7 +130,7 @@ func (s *SSOSettingsStore) Delete(ctx context.Context, provider string) error {
 			return ssosettings.ErrNotFound
 		}
 
-		existing.Updated = time.Now().UTC()
+		existing.Updated = timeNow().UTC()
 		existing.IsDeleted = true
 
 		_, err = sess.ID(existing.ID).MustCols("updated", "is_deleted").Update(existing)

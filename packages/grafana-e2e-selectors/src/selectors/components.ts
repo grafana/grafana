@@ -10,6 +10,9 @@
  * @alpha
  */
 export const Components = {
+  RadioButton: {
+    container: 'data-testid radio-button',
+  },
   Breadcrumbs: {
     breadcrumb: (title: string) => `data-testid ${title} breadcrumb`,
   },

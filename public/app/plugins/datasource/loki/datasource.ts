@@ -37,6 +37,9 @@ import {
   LegacyMetricFindQueryOptions,
   AdHocVariableFilter,
   urlUtil,
+  MetricFindValue,
+  DataSourceGetTagValuesOptions,
+  DataSourceGetTagKeysOptions,
   DataSourceWithQueryModificationSupport,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
@@ -51,10 +54,11 @@ import { replaceVariables, returnVariables } from '../prometheus/querybuilder/sh
 import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { LogContextProvider } from './LogContextProvider';
+import { LokiVariableSupport } from './LokiVariableSupport';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
+import { escapeLabelValueInSelector, isRegexSelector, getLabelTypeFromFrame } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
@@ -94,7 +98,6 @@ import {
   QueryStats,
   SupportingQueryType,
 } from './types';
-import { LokiVariableSupport } from './variables';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -533,7 +536,7 @@ export class LokiDatasource
    * Used in `getStats`. Retrieves statistics for a Loki query and processes them into a QueryStats object.
    * @returns A Promise that resolves to a QueryStats object containing the query statistics or undefined if the query is invalid.
    */
-  async getQueryStats(query: LokiQuery): Promise<QueryStats | undefined> {
+  async getQueryStats(query: LokiQuery, timeRange: TimeRange): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
     if (isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return undefined;
@@ -543,7 +546,7 @@ export class LokiDatasource
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
     for (const idx in labelMatchers) {
-      const { start, end } = this.getStatsTimeRange(query, Number(idx));
+      const { start, end } = this.getStatsTimeRange(query, Number(idx), timeRange);
 
       if (start === undefined || end === undefined) {
         return { streams: 0, chunks: 0, bytes: 0, entries: 0, message: 'Query size estimate not available.' };
@@ -580,7 +583,11 @@ export class LokiDatasource
    * @returns An object containing the start and end time in nanoseconds (NS_IN_MS) or undefined if the time range cannot be estimated.
    */
 
-  getStatsTimeRange(query: LokiQuery, idx: number): { start: number | undefined; end: number | undefined } {
+  getStatsTimeRange(
+    query: LokiQuery,
+    idx: number,
+    timeRange: TimeRange
+  ): { start: number | undefined; end: number | undefined } {
     let start: number, end: number;
     const NS_IN_MS = 1000000;
     const durationNodes = getNodesFromQuery(query.expr, [Duration]);
@@ -592,7 +599,7 @@ export class LokiDatasource
         return { start: undefined, end: undefined };
       }
       // logs query with range type
-      return this.getTimeRangeParams();
+      return this.getTimeRangeParams(timeRange);
     }
 
     if (query.queryType === LokiQueryType.Instant) {
@@ -600,7 +607,7 @@ export class LokiDatasource
 
       if (!!durations[idx]) {
         // if query has a duration e.g. [1m]
-        end = this.getTimeRangeParams().end;
+        end = this.getTimeRangeParams(timeRange).end;
         start = end - rangeUtil.intervalToMs(durations[idx]) * NS_IN_MS;
         return { start, end };
       } else {
@@ -608,7 +615,7 @@ export class LokiDatasource
 
         if (/(\$__auto|\$__range)/.test(query.expr)) {
           // if $__auto or $__range is used, we can estimate the time range using the selected range
-          return this.getTimeRangeParams();
+          return this.getTimeRangeParams(timeRange);
         }
 
         // otherwise we cant estimate the time range
@@ -617,19 +624,19 @@ export class LokiDatasource
     }
 
     // metric query with range type
-    return this.getTimeRangeParams();
+    return this.getTimeRangeParams(timeRange);
   }
 
   /**
    * Retrieves statistics for a Loki query and returns the QueryStats object.
    * @returns A Promise that resolves to a QueryStats object or null if the query is invalid or has no statistics.
    */
-  async getStats(query: LokiQuery): Promise<QueryStats | null> {
-    if (!query) {
+  async getStats(query: LokiQuery, timeRange: TimeRange): Promise<QueryStats | null> {
+    if (!query.expr) {
       return null;
     }
 
-    const response = await this.getQueryStats(query);
+    const response = await this.getQueryStats(query, timeRange);
 
     if (!response) {
       return null;
@@ -642,23 +649,31 @@ export class LokiDatasource
    * Implemented as part of DataSourceAPI and used for template variable queries.
    * @returns A Promise that resolves to an array of results from the metric find query.
    */
-  async metricFindQuery(query: LokiVariableQuery | string, options?: LegacyMetricFindQueryOptions) {
+  async metricFindQuery(
+    query: LokiVariableQuery | string,
+    options?: LegacyMetricFindQueryOptions
+  ): Promise<MetricFindValue[]> {
     if (!query) {
       return Promise.resolve([]);
     }
 
+    let interpolatedVariableQuery: LokiVariableQuery | undefined;
+
     if (typeof query === 'string') {
-      const interpolated = this.interpolateString(query, options?.scopedVars);
-      return await this.legacyProcessMetricFindQuery(interpolated);
+      interpolatedVariableQuery = this.parseStringToVariableQuery(this.interpolateString(query, options?.scopedVars));
+    } else {
+      interpolatedVariableQuery = {
+        ...query,
+        label: this.interpolateString(query.label || '', options?.scopedVars),
+        stream: this.interpolateString(query.stream || '', options?.scopedVars),
+      };
     }
 
-    const interpolatedQuery = {
-      ...query,
-      label: this.interpolateString(query.label || '', options?.scopedVars),
-      stream: this.interpolateString(query.stream || '', options?.scopedVars),
-    };
+    if (interpolatedVariableQuery) {
+      return await this.processMetricFindQuery(interpolatedVariableQuery, options?.range);
+    }
 
-    return await this.processMetricFindQuery(interpolatedQuery);
+    return Promise.resolve([]);
   }
 
   /**
@@ -666,9 +681,10 @@ export class LokiDatasource
    * @returns A Promise that resolves to an array of variable results based on the query type and parameters.
    */
 
-  private async processMetricFindQuery(query: LokiVariableQuery) {
+  private async processMetricFindQuery(query: LokiVariableQuery, timeRange?: TimeRange): Promise<MetricFindValue[]> {
     if (query.type === LokiVariableQueryType.LabelNames) {
-      return this.labelNamesQuery();
+      const result = await this.languageProvider.fetchLabels({ timeRange });
+      return result.map((value: string) => ({ text: value }));
     }
 
     if (!query.label) {
@@ -677,81 +693,38 @@ export class LokiDatasource
 
     // If we have stream selector, use /series endpoint
     if (query.stream) {
-      return this.labelValuesSeriesQuery(query.stream, query.label);
+      const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
+      return result[query.label].map((value: string) => ({ text: value }));
     }
 
-    return this.labelValuesQuery(query.label);
+    const result = await this.languageProvider.fetchLabelValues(query.label, { timeRange });
+    return result.map((value: string) => ({ text: value }));
   }
 
   /**
-   * Used in `metricFindQuery` to process legacy query strings (label_name() and label_values()) and return variable results.
-   * @returns A Promise that resolves to an array of variables based on the legacy query string.
-   * @todo It can be refactored in the future to return a LokiVariableQuery and be used in `processMetricFindQuery`
-   * to not duplicate querying logic.
+   * Used in `metricFindQuery` to process legacy query strings (label_name() and label_values()) to variable query objects.
+   * @returns LokiVariableQuery object based on the provided query string, or undefined if string can't be parsed.
    */
-  async legacyProcessMetricFindQuery(query: string) {
+  private parseStringToVariableQuery(query: string): LokiVariableQuery | undefined {
+    const refId = 'LokiVariableQueryEditor-VariableQuery';
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
-      return await this.labelNamesQuery();
+      return {
+        type: LokiVariableQueryType.LabelNames,
+        refId,
+      };
     }
 
     const labelValues = query.match(labelValuesRegex);
     if (labelValues) {
-      // If we have stream selector, use /series endpoint
-      if (labelValues[1]) {
-        return await this.labelValuesSeriesQuery(labelValues[1], labelValues[2]);
-      }
-      return await this.labelValuesQuery(labelValues[2]);
+      return {
+        type: LokiVariableQueryType.LabelValues,
+        label: labelValues[2],
+        stream: labelValues[1],
+        refId,
+      };
     }
-
-    return Promise.resolve([]);
-  }
-
-  /**
-   * Private method used in `processMetricFindQuery`, `legacyProcessMetricFindQuery` and `getTagKeys` to fetch label names.
-   * @returns A Promise that resolves to an array of label names as text values.
-   * @todo Future exploration may involve using the `languageProvider.fetchLabels()` to avoid duplicating logic.
-   */
-  async labelNamesQuery() {
-    const url = 'labels';
-    const params = this.getTimeRangeParams();
-    const result = await this.metadataRequest(url, params);
-    return result.map((value: string) => ({ text: value }));
-  }
-
-  /**
-   * Private method used in `processMetricFindQuery`, `legacyProcessMetricFindQuery` `getTagValues` to fetch label values.
-   * @returns A Promise that resolves to an array of label values as text values.
-   * @todo Future exploration may involve using the `languageProvider.fetchLabelValues()` method to avoid duplicating logic.
-   */
-  private async labelValuesQuery(label: string) {
-    const params = this.getTimeRangeParams();
-    const url = `label/${label}/values`;
-    const result = await this.metadataRequest(url, params);
-    return result.map((value: string) => ({ text: value }));
-  }
-
-  /**
-   * Private method used in `processMetricFindQuery` and `legacyProcessMetricFindQuery` to fetch label values for specified stream.
-   * @returns A Promise that resolves to an array of label values as text values.
-   * @todo Future exploration may involve using the `languageProvider.fetchLabelValues()` or `languageProvider.fetchSeriesLabels()` method to avoid duplicating logic.
-   */
-  private async labelValuesSeriesQuery(expr: string, label: string) {
-    const timeParams = this.getTimeRangeParams();
-    const params = {
-      ...timeParams,
-      'match[]': expr,
-    };
-    const url = 'series';
-    const streams = new Set();
-    const result = await this.metadataRequest(url, params);
-    result.forEach((stream: { [key: string]: string }) => {
-      if (stream[label]) {
-        streams.add({ text: stream[label] });
-      }
-    });
-
-    return Array.from(streams);
+    return undefined;
   }
 
   /**
@@ -780,18 +753,20 @@ export class LokiDatasource
 
   /**
    * Implemented as part of the DataSourceAPI. Retrieves tag keys that can be used for ad-hoc filtering.
-   * @returns A Promise that resolves to an array of label names.
+   * @returns A Promise that resolves to an array of label names represented as MetricFindValue objects.
    */
-  async getTagKeys() {
-    return await this.labelNamesQuery();
+  async getTagKeys(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+    const result = await this.languageProvider.fetchLabels({ timeRange: options?.timeRange });
+    return result.map((value: string) => ({ text: value }));
   }
 
   /**
    * Implemented as part of the DataSourceAPI. Retrieves tag values that can be used for ad-hoc filtering.
-   * @returns A Promise that resolves to an array of label values.
+   * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
    */
-  async getTagValues(options: any = {}) {
-    return await this.labelValuesQuery(options.key);
+  async getTagValues(options: DataSourceGetTagValuesOptions): Promise<MetricFindValue[]> {
+    const result = await this.languageProvider.fetchLabelValues(options.key, { timeRange: options.timeRange });
+    return result.map((value: string) => ({ text: value }));
   }
 
   /**
@@ -820,6 +795,7 @@ export class LokiDatasource
    */
   toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
+    const labelType = getLabelTypeFromFrame(filter.options.key, filter.frame, 0);
     switch (filter.type) {
       case 'FILTER_FOR': {
         if (filter.options?.key && filter.options?.value) {
@@ -828,7 +804,7 @@ export class LokiDatasource
           // This gives the user the ability to toggle a filter on and off.
           expression = queryHasFilter(expression, filter.options.key, '=', value)
             ? removeLabelFromQuery(expression, filter.options.key, '=', value)
-            : addLabelToQuery(expression, filter.options.key, '=', value);
+            : addLabelToQuery(expression, filter.options.key, '=', value, labelType);
         }
         break;
       }
@@ -845,7 +821,7 @@ export class LokiDatasource
             expression = removeLabelFromQuery(expression, filter.options.key, '=', value);
           }
 
-          expression = addLabelToQuery(expression, filter.options.key, '!=', value);
+          expression = addLabelToQuery(expression, filter.options.key, '!=', value, labelType);
         }
         break;
       }
@@ -874,31 +850,20 @@ export class LokiDatasource
     // NB: Usually the labelKeys should be fetched and cached in the datasource,
     // but there might be some edge cases where this wouldn't be the case.
     // However the changed would make this method `async`.
-    const allLabels = this.languageProvider.getLabelKeys();
     switch (action.type) {
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
+          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(
-            expression,
-            action.options.key,
-            '=',
-            value,
-            allLabels.includes(action.options.key) === false
-          );
+          expression = addLabelToQuery(expression, action.options.key, '=', value, labelType);
         }
         break;
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
+          const labelType = getLabelTypeFromFrame(action.options.key, action.frame, 0);
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(
-            expression,
-            action.options.key,
-            '!=',
-            value,
-            allLabels.includes(action.options.key) === false
-          );
+          expression = addLabelToQuery(expression, action.options.key, '!=', value, labelType);
         }
         break;
       }
