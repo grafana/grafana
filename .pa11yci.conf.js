@@ -61,7 +61,7 @@ var config = {
         "wait for element input[name='user'] to be added",
         "set field input[name='user'] to admin",
         "set field input[name='password'] to admin",
-        "click element button[aria-label='Login button']",
+        "click element button[data-testid='data-testid Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
       wait: 500,
