@@ -691,9 +691,9 @@ func (_c *AlertmanagerMock_SaveAndApplyDefaultConfig_Call) RunAndReturn(run func
 	return _c
 }
 
-// StopAndWait provides a mock function with given fields:
-func (_m *AlertmanagerMock) StopAndWait() {
-	_m.Called()
+// StopAndWait provides a mock function with given fields: _a0
+func (_m *AlertmanagerMock) StopAndWait(_a0 context.Context) {
+	_m.Called(_a0)
 }
 
 // AlertmanagerMock_StopAndWait_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StopAndWait'
@@ -702,13 +702,14 @@ type AlertmanagerMock_StopAndWait_Call struct {
 }
 
 // StopAndWait is a helper method to define mock.On call
-func (_e *AlertmanagerMock_Expecter) StopAndWait() *AlertmanagerMock_StopAndWait_Call {
-	return &AlertmanagerMock_StopAndWait_Call{Call: _e.mock.On("StopAndWait")}
+//   - _a0 context.Context
+func (_e *AlertmanagerMock_Expecter) StopAndWait(_a0 interface{}) *AlertmanagerMock_StopAndWait_Call {
+	return &AlertmanagerMock_StopAndWait_Call{Call: _e.mock.On("StopAndWait", _a0)}
 }
 
-func (_c *AlertmanagerMock_StopAndWait_Call) Run(run func()) *AlertmanagerMock_StopAndWait_Call {
+func (_c *AlertmanagerMock_StopAndWait_Call) Run(run func(_a0 context.Context)) *AlertmanagerMock_StopAndWait_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -718,7 +719,7 @@ func (_c *AlertmanagerMock_StopAndWait_Call) Return() *AlertmanagerMock_StopAndW
 	return _c
 }
 
-func (_c *AlertmanagerMock_StopAndWait_Call) RunAndReturn(run func()) *AlertmanagerMock_StopAndWait_Call {
+func (_c *AlertmanagerMock_StopAndWait_Call) RunAndReturn(run func(context.Context)) *AlertmanagerMock_StopAndWait_Call {
 	_c.Call.Return(run)
 	return _c
 }

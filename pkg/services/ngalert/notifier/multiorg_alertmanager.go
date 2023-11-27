@@ -56,7 +56,7 @@ type Alertmanager interface {
 
 	// State
 	CleanUp()
-	StopAndWait()
+	StopAndWait(context.Context)
 	Ready() bool
 }
 
@@ -202,7 +202,7 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			moa.StopAndWait()
+			moa.StopAndWait(ctx)
 			return nil
 		case <-time.After(moa.settings.UnifiedAlerting.AlertmanagerConfigPollInterval):
 			if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
@@ -311,7 +311,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	// Now, we can stop the Alertmanagers without having to hold a lock.
 	for orgID, am := range amsToStop {
 		moa.logger.Info("Stopping Alertmanager", "org", orgID)
-		am.StopAndWait()
+		am.StopAndWait(ctx)
 		moa.logger.Info("Stopped Alertmanager", "org", orgID)
 		// Clean up all the remaining resources from this alertmanager.
 		am.CleanUp()
@@ -376,12 +376,12 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 	}
 }
 
-func (moa *MultiOrgAlertmanager) StopAndWait() {
+func (moa *MultiOrgAlertmanager) StopAndWait(ctx context.Context) {
 	moa.alertmanagersMtx.Lock()
 	defer moa.alertmanagersMtx.Unlock()
 
 	for _, am := range moa.alertmanagers {
-		am.StopAndWait()
+		am.StopAndWait(ctx)
 	}
 
 	p, ok := moa.peer.(*cluster.Peer)

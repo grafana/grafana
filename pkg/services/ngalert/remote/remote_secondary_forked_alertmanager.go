@@ -2,26 +2,51 @@ package remote
 
 import (
 	"context"
+	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
+type configStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+}
+
 type RemoteSecondaryForkedAlertmanager struct {
+	log   log.Logger
+	orgID int64
+	store configStore
+
+	lastSync     time.Time
+	syncInterval time.Duration
+
 	internal notifier.Alertmanager
 	remote   notifier.Alertmanager
 }
 
-func NewRemoteSecondaryForkedAlertmanager(internal, remote notifier.Alertmanager) *RemoteSecondaryForkedAlertmanager {
+func NewRemoteSecondaryForkedAlertmanager(l log.Logger, orgID int64, syncInterval time.Duration, store configStore, internal, remote notifier.Alertmanager) *RemoteSecondaryForkedAlertmanager {
 	return &RemoteSecondaryForkedAlertmanager{
-		internal: internal,
-		remote:   remote,
+		log:          l,
+		orgID:        orgID,
+		store:        store,
+		syncInterval: syncInterval,
+		internal:     internal,
+		remote:       remote,
 	}
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	return nil
+	if time.Since(fam.lastSync) >= fam.syncInterval {
+		fam.log.Debug("Applying config to the remote Alertmanager", "lastSync", fam.lastSync, "syncInterval", fam.syncInterval)
+		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+			fam.log.Error("Error applying config to the remote Alertmanager", "err", err)
+		} else {
+			fam.lastSync = time.Now()
+		}
+	}
+	return fam.internal.ApplyConfig(ctx, config)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
@@ -81,9 +106,23 @@ func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
 	fam.internal.CleanUp()
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
-	fam.internal.StopAndWait()
-	fam.remote.StopAndWait()
+func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait(ctx context.Context) {
+	// Stop the internal Alertmanager.
+	fam.internal.StopAndWait(ctx)
+	// Stop our alert senders.
+	fam.remote.StopAndWait(ctx)
+
+	// Send config and state to the remote Alertmanager.
+	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, &models.GetLatestAlertmanagerConfigurationQuery{
+		OrgID: fam.orgID,
+	})
+	if err != nil {
+		fam.log.Error("Error getting latest Alertmanager configuration", "err", err)
+		return
+	}
+	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+		fam.log.Error("Error sending config and state to the remote Alertmanager", "err", err)
+	}
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) Ready() bool {

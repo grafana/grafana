@@ -81,9 +81,9 @@ func (fam *RemotePrimaryForkedAlertmanager) CleanUp() {
 	fam.internal.CleanUp()
 }
 
-func (fam *RemotePrimaryForkedAlertmanager) StopAndWait() {
-	fam.internal.StopAndWait()
-	fam.remote.StopAndWait()
+func (fam *RemotePrimaryForkedAlertmanager) StopAndWait(ctx context.Context) {
+	fam.internal.StopAndWait(ctx)
+	fam.remote.StopAndWait(ctx)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) Ready() bool {
