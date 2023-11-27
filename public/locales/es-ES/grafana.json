@@ -532,7 +532,11 @@
     },
     "toolbar": {
       "aria-label": "Barra de herramientas de Explore",
+      "copy-link": "",
+      "copy-link-abs-time": "",
       "copy-shortened-link": "Copiar enlace acortado",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "Ejecutar consulta",
       "split-close": "Cerrar",
