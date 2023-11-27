@@ -197,7 +197,7 @@ The Prometheus data source can be configured to disable recording rules under th
 [set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
 [set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
 
-[annotate visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations" 
+[annotate visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations"
 [annotate visualizations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations"
 
 {{% /docs/reference %}}
