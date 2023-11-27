@@ -1,10 +1,28 @@
-import { InterpolateFunction, PanelMenuItem } from '@grafana/data';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
+import {
+  InterpolateFunction,
+  PanelMenuItem,
+  PluginExtensionPanelContext,
+  PluginExtensionPoints,
+  getTimeZone,
+} from '@grafana/data';
+import { config, getPluginLinkExtensions, locationService, reportInteraction } from '@grafana/runtime';
+import {
+  LocalValueVariable,
+  SceneDataTransformer,
+  SceneGridItem,
+  SceneGridRow,
+  SceneQueryRunner,
+  SceneVariableSet,
+  VizPanel,
+  VizPanelMenu,
+  sceneGraph,
+} from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
 
 import { ShareModal } from '../sharing/ShareModal';
@@ -14,6 +32,8 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks } from './PanelLinks';
+import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
+import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -151,6 +171,23 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       subMenu: inspectSubMenu.length > 0 ? inspectSubMenu : undefined,
     });
 
+    if (dashboard instanceof DashboardScene) {
+      const { extensions } = getPluginLinkExtensions({
+        extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
+        context: createExtensionContext(panel, dashboard),
+        limitPerPlugin: 3,
+      });
+
+      if (extensions.length > 0 && !dashboard.state.isEditing) {
+        items.push({
+          text: 'Extensions',
+          iconClassName: 'plug',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(extensions),
+        });
+      }
+    }
+
     if (moreSubMenu.length) {
       items.push({
         type: 'submenu',
@@ -195,4 +232,75 @@ export function getPanelLinksBehavior(panel: PanelModel) {
     }));
     panelLinksMenu.setState({ links });
   };
+}
+
+function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
+  const timeRange = sceneGraph.getTimeRange(panel);
+  let queryRunner = panel.state.$data;
+  let targets: DataQuery[] = [];
+  const id = getPanelIdForVizPanel(panel);
+
+  if (queryRunner instanceof SceneDataTransformer) {
+    queryRunner = queryRunner.state.$data;
+  }
+
+  if (queryRunner instanceof SceneQueryRunner) {
+    targets = queryRunner.state.queries;
+  }
+
+  if (queryRunner instanceof ShareQueryDataProvider) {
+    targets = [queryRunner.state.query];
+  }
+
+  let scopedVars = {};
+
+  // Handle panel repeats scenario
+  if (panel.state.$variables && panel.state.$variables instanceof SceneVariableSet) {
+    panel.state.$variables.state.variables.forEach((variable) => {
+      if (variable instanceof LocalValueVariable) {
+        scopedVars = {
+          ...scopedVars,
+          [variable.state.name]: { value: variable.getValue(), text: variable.getValueText() },
+        };
+      }
+    });
+  }
+
+  // Handle row repeats scenario
+  if (
+    (panel.parent instanceof SceneGridItem || panel.parent instanceof PanelRepeaterGridItem) &&
+    panel.parent?.parent instanceof SceneGridRow
+  ) {
+    const row = panel.parent.parent;
+    if (row.state.$variables && row.state.$variables instanceof SceneVariableSet) {
+      row.state.$variables.state.variables.forEach((variable) => {
+        if (variable instanceof LocalValueVariable) {
+          scopedVars = {
+            ...scopedVars,
+            [variable.state.name]: { value: variable.getValue(), text: variable.getValueText() },
+          };
+        }
+      });
+    }
+  }
+
+  const result = {
+    id,
+    pluginId: panel.state.pluginId,
+    title: panel.state.title,
+    timeRange: timeRange.state.value.raw,
+    timeZone: getTimeZone({
+      timeZone: timeRange.getTimeZone(),
+    }),
+    dashboard: {
+      uid: dashboard.state.uid!,
+      title: dashboard.state.title,
+      tags: dashboard.state.tags,
+    },
+    targets,
+    scopedVars,
+    data: queryRunner?.state.data,
+  };
+
+  return result;
 }
