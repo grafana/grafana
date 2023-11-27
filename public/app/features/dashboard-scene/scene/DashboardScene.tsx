@@ -18,7 +18,6 @@ import {
 } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardMeta } from 'app/types';
@@ -182,29 +181,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       }),
     };
 
-    const { folderTitle, folderUid } = meta;
+    const { folderUid } = meta;
 
     if (folderUid) {
-      if (newBrowseDashboardsEnabled()) {
-        const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
-        // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
-        // don't show the "page not found" breadcrumb
-        if (folderNavModel.id !== 'not-found') {
-          pageNav = {
-            ...pageNav,
-            parentItem: folderNavModel,
-          };
-        }
-      } else {
-        if (folderTitle) {
-          pageNav = {
-            ...pageNav,
-            parentItem: {
-              text: folderTitle,
-              url: `/dashboards/f/${meta.folderUid}`,
-            },
-          };
-        }
+      const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+      // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+      // don't show the "page not found" breadcrumb
+      if (folderNavModel.id !== 'not-found') {
+        pageNav = {
+          ...pageNav,
+          parentItem: folderNavModel,
+        };
       }
     }
 

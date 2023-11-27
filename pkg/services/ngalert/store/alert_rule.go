@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -433,7 +434,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 		SignedInUser: user,
 		Type:         searchstore.TypeAlertFolder,
 		Limit:        -1,
-		Permission:   dashboards.PERMISSION_VIEW,
+		Permission:   dashboardaccess.PERMISSION_VIEW,
 		Sort:         model.SortOption{},
 		Filters: []any{
 			searchstore.FolderWithAlertsFilter{},
@@ -458,7 +459,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			namespaceMap[hit.UID] = &folder.Folder{
-				ID:    hit.ID,
+				ID:    hit.ID, // nolint:staticcheck
 				UID:   hit.UID,
 				Title: hit.Title,
 			}

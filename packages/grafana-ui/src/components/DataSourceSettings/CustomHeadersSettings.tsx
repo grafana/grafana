@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 
-import { stylesFactory } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { Button } from '../Button';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
@@ -36,26 +36,25 @@ interface CustomHeaderRowProps {
   onBlur: () => void;
 }
 
-const getCustomHeaderRowStyles = stylesFactory(() => {
-  return {
-    layout: css({
-      display: 'flex',
-      alignItems: 'center',
-      marginBottom: '4px',
-      '> *': {
-        marginLeft: '4px',
-        marginBottom: 0,
-        height: '100%',
-        '&:first-child, &:last-child': {
-          marginLeft: 0,
-        },
+const getCustomHeaderRowStyles = () => ({
+  layout: css({
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '4px',
+    '> *': {
+      marginLeft: '4px',
+      marginBottom: 0,
+      height: '100%',
+      '&:first-child, &:last-child': {
+        marginLeft: 0,
       },
-    }),
-  };
+    },
+  }),
 });
 
 const CustomHeaderRow = ({ header, onBlur, onChange, onRemove, onReset }: CustomHeaderRowProps) => {
-  const styles = getCustomHeaderRowStyles();
+  const styles = useStyles2(getCustomHeaderRowStyles);
+
   return (
     <div className={styles.layout}>
       <FormField

@@ -76,9 +76,7 @@
     "manage-folder-nav": {
       "alert-rules": "警报规则",
       "dashboards": "仪表板",
-      "panels": "面板",
-      "permissions": "权限",
-      "settings": "设置"
+      "panels": "面板"
     },
     "new-folder-form": {
       "cancel-label": "取消",
@@ -172,7 +170,7 @@
     },
     "source-form": {
       "control-required": "此字段是必填字段。",
-      "description": "您在目标查询中使用了以下变量：<1></1><2></2>数据点需要为所有变量提供作为字段或转换输出的值，以使关联按钮出现在可视化中。 <4></4>注意：并非每个变量都需要在下面明确定义。<7>logfmt</7>等变换将为每个键/值对创建变量。",
+      "description": "您在目标查询中使用了以下变量：<1></1><2></2>数据点需要为所有变量提供作为字段或转换输出的值，以使关联按钮出现在可视化中。 <4></4>注意：并非每个变量都需要在下面明确定义。<7>logfmt</7> 等变换将为每个键/值对创建变量。",
       "heading": "目标查询中使用的变量",
       "results-description": "此链接将显示在此字段的值旁边",
       "results-label": "结果字段",
@@ -191,32 +189,32 @@
       "title": "设置关联的目标（第 2 步，共 3 步）"
     },
     "trans-details": {
-      "logfmt-description": "",
-      "logfmt-label": "",
-      "regex-description": "",
-      "regex-expression": "",
+      "logfmt-description": "使用 logfmt 解析提供的字段以获取变量",
+      "logfmt-label": "Logfmt",
+      "regex-description": "字段将使用正则表达式解析。请使用命名捕获组以返回多个变量，或使用单个未命名捕获组将变量添加到命名映射值。正则表达式不区分大小写。",
+      "regex-expression": "使用捕获组来提取部分字段。",
       "regex-label": "正则表达式",
-      "regex-map-values": ""
+      "regex-map-values": "定义捕获组未命名时变量的名称。"
     },
     "transform": {
-      "add-button": "",
-      "heading": "",
-      "no-transform": ""
+      "add-button": "添加转换",
+      "heading": "转换",
+      "no-transform": "未定义转换。"
     },
     "transform-row": {
-      "expression-label": "",
-      "expression-required": "",
-      "expression-tooltip": "",
-      "field-input": "",
-      "field-label": "",
-      "field-tooltip": "",
-      "map-value-label": "",
-      "map-value-tooltip": "",
+      "expression-label": "表达式",
+      "expression-required": "请定义表达式",
+      "expression-tooltip": "正则表达式所必需。这是转换将使用的表达式。Logfmt 不使用其他规范。",
+      "field-input": "字段",
+      "field-label": "字段",
+      "field-tooltip": "可选。要转换的字段。如果未指定，转换将应用于结果字段。",
+      "map-value-label": "映射值",
+      "map-value-tooltip": "可选。定义变量的名称。目前仅适用于单个未命名捕获组的正则表达式。",
       "remove-button": "删除",
-      "remove-tooltip": "",
-      "transform-required": "",
+      "remove-tooltip": "删除转换",
+      "transform-required": "请选择转换类型",
       "type-label": "类型",
-      "type-tooltip": ""
+      "type-tooltip": "将应用于源数据的转换类型。"
     }
   },
   "dashboard": {
@@ -225,20 +223,20 @@
       "paste-panel": "粘贴面板",
       "row": "行",
       "visualization": "可视化",
-      "widget": ""
+      "widget": "小部件"
     },
     "empty": {
-      "add-library-panel-body": "",
-      "add-library-panel-button": "",
-      "add-library-panel-header": "",
+      "add-library-panel-body": "添加与其他仪表板共享的可视化。",
+      "add-library-panel-button": "添加库面板",
+      "add-library-panel-header": "添加一个库面板",
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
-      "add-widget-body": "",
-      "add-widget-button": "",
-      "add-widget-header": "",
-      "import-a-dashboard-body": "",
-      "import-a-dashboard-header": "",
+      "add-widget-body": "创建列表、Markdown 和其他小部件",
+      "add-widget-button": "添加小部件",
+      "add-widget-header": "添加一个小部件",
+      "import-a-dashboard-body": "从文件或 <1>grafana.com/</1> 导入仪表板。",
+      "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板"
     },
     "inspect": {
@@ -308,205 +306,205 @@
       "unmark-favorite": "取消标记为收藏"
     },
     "validation": {
-      "invalid-dashboard-id": "",
-      "invalid-json": "",
-      "tags-expected-array": "",
-      "tags-expected-strings": ""
+      "invalid-dashboard-id": "找不到有效的 Grafana.com ID",
+      "invalid-json": "无有效的 JSON",
+      "tags-expected-array": "标签预期数组",
+      "tags-expected-strings": "标签预期字符串数组"
     }
   },
   "dashboard-import": {
     "file-dropzone": {
-      "primary-text": "",
-      "secondary-text": ""
+      "primary-text": "上传仪表板 JSON 文件",
+      "secondary-text": "拖放到此处或点击浏览"
     },
     "form-actions": {
       "cancel": "取消",
-      "load": ""
+      "load": "加载"
     },
     "gcom-field": {
-      "label": "",
-      "load-button": "",
-      "placeholder": "",
-      "validation-required": ""
+      "label": "在<1></1>查找并导入常见应用程序的仪表板",
+      "load-button": "加载",
+      "placeholder": "Grafana.com 仪表板网址或 ID",
+      "validation-required": "Grafana 仪表板网址或 ID 是必需项"
     },
     "json-field": {
-      "label": "",
-      "validation-required": ""
+      "label": "通过仪表板 JSON 模型导入",
+      "validation-required": "需要一个仪表板 JSON 模型"
     }
   },
   "dashboard-settings": {
     "annotations": {
-      "title": ""
+      "title": "注释"
     },
-    "dashboard-delete-button": "",
+    "dashboard-delete-button": "删除仪表板",
     "general": {
-      "auto-refresh-description": "",
-      "auto-refresh-label": "",
-      "description-label": "",
-      "editable-description": "",
-      "editable-label": "",
+      "auto-refresh-description": "定义自动刷新列表中可用的自动刷新间隔。",
+      "auto-refresh-label": "自动刷新",
+      "description-label": "描述",
+      "editable-description": "设置为只读以禁用所有编辑。重新加载仪表板以使更改生效",
+      "editable-label": "可编辑",
       "folder-label": "文件夹",
-      "panel-options-graph-tooltip-description": "",
-      "panel-options-graph-tooltip-label": "",
-      "panel-options-label": "",
+      "panel-options-graph-tooltip-description": "控制不同面板上的工具提示和悬停高亮行为。重新加载仪表板以使更改生效",
+      "panel-options-graph-tooltip-label": "图表工具提示",
+      "panel-options-label": "面板选项",
       "tags-label": "标签",
       "title": "概况",
-      "title-label": ""
+      "title-label": "标题"
     },
     "json-editor": {
-      "save-button": "",
-      "subtitle": "",
-      "title": ""
+      "save-button": "保存更改",
+      "subtitle": "下面的 JSON 模型是定义仪表板的数据结构。这包括仪表板设置、面板设置、布局和查询等等。",
+      "title": "JSON 模型"
     },
     "links": {
-      "title": ""
+      "title": "链接"
     },
     "permissions": {
-      "title": ""
+      "title": "权限"
     },
     "settings": {
       "title": "设置"
     },
     "time-picker": {
-      "hide-time-picker": "",
-      "now-delay-description": "",
-      "now-delay-label": "",
-      "refresh-live-dashboards-description": "",
-      "refresh-live-dashboards-label": "",
-      "time-options-label": "",
+      "hide-time-picker": "隐藏时间选择器",
+      "now-delay-description": "排除可能不完整的最近数据。",
+      "now-delay-label": "现在延迟",
+      "refresh-live-dashboards-description": "连续重新绘制在其中时间范围引用“现在”的面板。",
+      "refresh-live-dashboards-label": "刷新直播仪表板",
+      "time-options-label": "时间选项",
       "time-zone-label": "时区",
       "week-start-label": "每周开始日"
     },
     "variables": {
-      "title": ""
+      "title": "变量"
     },
     "versions": {
-      "title": ""
+      "title": "版本"
     }
   },
   "data-source-picker": {
-    "add-new-data-source": "",
+    "add-new-data-source": "配置新数据源",
     "built-in-list": {
-      "description-dashboard": "",
-      "description-grafana": "",
-      "description-mixed": ""
+      "description-dashboard": "重新使用其他可视化得到的查询结果",
+      "description-grafana": "探索使用模拟数据的可视化",
+      "description-mixed": "使用多个数据源"
     },
     "list": {
-      "no-data-source-message": ""
+      "no-data-source-message": "未找到数据源"
     },
     "modal": {
-      "configure-new-data-source": "",
-      "input-placeholder": "",
-      "title": ""
+      "configure-new-data-source": "打开新标选项卡并配置数据源",
+      "input-placeholder": "选择数据源",
+      "title": "选择数据源"
     },
-    "open-advanced-button": ""
+    "open-advanced-button": "打开高级数据源选择器"
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": ""
+      "label": "添加新数据源"
     }
   },
   "explore": {
-    "add-to-dashboard": "",
+    "add-to-dashboard": "添加到仪表板",
     "rich-history": {
-      "close-tooltip": "",
-      "datasource-a-z": "",
-      "datasource-z-a": "",
-      "newest-first": "",
-      "oldest-first": "",
-      "query-history": "",
+      "close-tooltip": "关闭查询历史记录",
+      "datasource-a-z": "数据源 A-Z",
+      "datasource-z-a": "数据源 Z-A",
+      "newest-first": "最新在前",
+      "oldest-first": "最早在前",
+      "query-history": "查询历史记录",
       "settings": "设置",
       "starred": "已加星标"
     },
     "rich-history-card": {
-      "add-comment-form": "",
-      "add-comment-tooltip": "",
+      "add-comment-form": "添加备注表单",
+      "add-comment-tooltip": "添加备注",
       "cancel": "取消",
-      "confirm-delete": "",
-      "copy-query-tooltip": "",
-      "copy-shortened-link-tooltip": "",
-      "datasource-icon-label": "",
-      "datasource-name-label": "",
-      "datasource-not-exist": "",
-      "delete-query-confirmation-title": "",
-      "delete-query-title": "",
-      "delete-query-tooltip": "",
-      "delete-starred-query-confirmation-text": "",
-      "edit-comment-tooltip": "",
-      "loading-text": "",
-      "optional-description": "",
-      "query-comment-label": "",
-      "query-text-label": "",
-      "run-query-button": "",
-      "save-comment": "",
-      "star-query-tooltip": "",
-      "switch-datasource-button": "",
-      "unstar-query-tooltip": "",
-      "update-comment-form": ""
+      "confirm-delete": "删除",
+      "copy-query-tooltip": "将查询复制到剪贴板",
+      "copy-shortened-link-tooltip": "将短链接复制到剪贴板",
+      "datasource-icon-label": "数据源图标",
+      "datasource-name-label": "数据源名称",
+      "datasource-not-exist": "数据源不再存在",
+      "delete-query-confirmation-title": "删除",
+      "delete-query-title": "删除查询",
+      "delete-query-tooltip": "删除查询",
+      "delete-starred-query-confirmation-text": "您是否确定要永久删除您的星标查询？",
+      "edit-comment-tooltip": "编辑备注",
+      "loading-text": "正在加载...",
+      "optional-description": "查询所完成操作的可选描述。",
+      "query-comment-label": "查询备注",
+      "query-text-label": "查询文本",
+      "run-query-button": "运行查询",
+      "save-comment": "保存备注",
+      "star-query-tooltip": "星标查询",
+      "switch-datasource-button": "切换数据源并运行查询",
+      "unstar-query-tooltip": "取消星标查询",
+      "update-comment-form": "更新备注表单"
     },
     "rich-history-container": {
       "loading": "加载中..."
     },
     "rich-history-notification": {
-      "query-copied": "",
-      "query-deleted": ""
+      "query-copied": "查询已复制到剪贴板",
+      "query-deleted": "查询已删除"
     },
     "rich-history-queries-tab": {
-      "displaying-partial-queries": "",
-      "displaying-queries": "",
-      "filter-aria-label": "",
-      "filter-history": "",
-      "filter-placeholder": "",
-      "history-local": "",
+      "displaying-partial-queries": "显示 {{ count }} 条查询",
+      "displaying-queries": "{{ count }} 条查询",
+      "filter-aria-label": "数据源筛选查询",
+      "filter-history": "筛选历史记录",
+      "filter-placeholder": "数据源筛选查询",
+      "history-local": "历史记录为您的浏览器本地，不与他人共享。",
       "loading": "加载中...",
-      "loading-results": "",
-      "search-placeholder": "",
-      "showing-queries": "",
-      "sort-aria-label": "",
-      "sort-placeholder": ""
+      "loading-results": "正在加载结果...",
+      "search-placeholder": "搜索查询",
+      "showing-queries": "显示 {{ shown }}/{{ total }} <0>了解更多</0>",
+      "sort-aria-label": "排序查询",
+      "sort-placeholder": "查询排序方式："
     },
     "rich-history-settings-tab": {
-      "alert-info": "",
-      "change-default-tab": "",
-      "clear-history-info": "",
-      "clear-query-history": "",
-      "clear-query-history-button": "",
-      "delete-confirm": "",
-      "delete-confirm-text": "",
-      "delete-title": "",
-      "history-time-span": "",
-      "history-time-span-description": "",
-      "only-show-active-datasource": "",
-      "query-history-deleted": "",
+      "alert-info": "Grafana 将最多保留 {{optionLabel}} 的条目。标有星标的条目不会被删除。",
+      "change-default-tab": "将默认活动选项卡从“查询历史记录”更改为“星标”",
+      "clear-history-info": "永久删除您所有的查询历史记录。",
+      "clear-query-history": "清除查询历史记录",
+      "clear-query-history-button": "清除查询历史记录",
+      "delete-confirm": "删除",
+      "delete-confirm-text": "您确定是否要永久删除您的查询历史记录？",
+      "delete-title": "删除",
+      "history-time-span": "历史记录时间范围",
+      "history-time-span-description": "选择 Grafana 将保存您查询历史记录的时间段。将存储最多 {{MAX_HISTORY_ITEMS}} 个条目。",
+      "only-show-active-datasource": "只显示当前在 Explore 中活动状态数据源的查询",
+      "query-history-deleted": "查询历史记录已删除",
       "retention-period": {
-        "1-week": "",
-        "2-days": "",
-        "2-weeks": "",
-        "5-days": ""
+        "1-week": "1 周",
+        "2-days": "2 天",
+        "2-weeks": "2 周",
+        "5-days": "5 天"
       }
     },
     "rich-history-starred-tab": {
-      "filter-queries-aria-label": "",
-      "filter-queries-placeholder": "",
+      "filter-queries-aria-label": "数据源筛选查询",
+      "filter-queries-placeholder": "数据源筛选查询",
       "loading": "加载中...",
-      "loading-results": "",
-      "local-history-message": "",
-      "search-queries-placeholder": "",
-      "showing-queries": "",
-      "sort-queries-aria-label": "",
-      "sort-queries-placeholder": ""
+      "loading-results": "正在加载结果...",
+      "local-history-message": "历史记录为您的浏览器本地，不与他人共享。",
+      "search-queries-placeholder": "搜索查询",
+      "showing-queries": "显示 {{ shown }}/{{ total }} <0>了解更多</0>",
+      "sort-queries-aria-label": "排序查询",
+      "sort-queries-placeholder": "查询排序方式："
     },
     "rich-history-utils": {
-      "a-week-ago": "",
-      "days-ago": "",
-      "default-from": "",
-      "default-to": "",
-      "today": "",
-      "two-weeks-ago": "",
-      "yesterday": ""
+      "a-week-ago": "一周前",
+      "days-ago": "{{num}} 天前",
+      "default-from": "现在-1 小时",
+      "default-to": "现在",
+      "today": "今天",
+      "two-weeks-ago": "两周前",
+      "yesterday": "昨天"
     },
     "rich-history-utils-notification": {
-      "saving-failed": "",
+      "saving-failed": "保存 Rich History 失败",
       "update-failed": "Rich History 更新失败"
     },
     "secondary-actions": {
@@ -523,7 +521,7 @@
       "title-with-name": "表格 - {{name}}"
     },
     "toolbar": {
-      "aria-label": "浏览工具栏",
+      "aria-label": "Explore 工具栏",
       "copy-shortened-link": "复制短链接",
       "refresh-picker-cancel": "取消",
       "refresh-picker-run": "运行查询",
@@ -557,7 +555,7 @@
       "content": "在单个面板中呈现太多系列可能会影响性能并使数据更难读取。请考虑完善您的查询。",
       "show-all-series": "显示全部 {{length}}",
       "show-only-series": "仅显示 {{MAX_NUMBER_OF_TIME_SERIES}} 序列",
-      "title": "图形"
+      "title": "图表"
     }
   },
   "help-modal": {
@@ -575,7 +573,7 @@
       "exit-edit/setting-views": "退出编辑/设置视图",
       "expand-all-rows": "展开所有行",
       "go-to-dashboards": "转到仪表板",
-      "go-to-explore": "转到浏览",
+      "go-to-explore": "转到 Explore",
       "go-to-home-dashboard": "转到主仪表板",
       "go-to-profile": "转到个人资料",
       "make-time-range-permanent": "使时间范围成为绝对/永久",
@@ -931,7 +929,8 @@
     },
     "megamenu": {
       "close": "关闭菜单",
-      "dock": "停靠菜单"
+      "dock": "停靠菜单",
+      "undock": ""
     },
     "toolbar": {
       "close-menu": "关闭菜单",
@@ -1079,15 +1078,6 @@
       "new-dashboard": "新建仪表板",
       "new-folder": "新建文件夹"
     },
-    "folder-view": {
-      "go-to-folder": "前往文件夹",
-      "select-folder": "选择文件夹"
-    },
-    "result-kind": {
-      "dashboard": "仪表板",
-      "folder": "文件夹",
-      "panel": "面板"
-    },
     "results-table": {
       "datasource-header": "数据源",
       "location-header": "位置",
@@ -1100,12 +1090,6 @@
     "search-input": {
       "include-panels-placeholder": "搜索仪表板和面板",
       "placeholder": "搜索仪表板"
-    }
-  },
-  "search-view": {
-    "no-results": {
-      "clear": "清除搜索和筛选条件",
-      "text": "您的查询未找到结果。"
     }
   },
   "share-modal": {
@@ -1243,6 +1227,7 @@
     "calendar": {
       "apply-button": "应用时间范围",
       "cancel-button": "取消",
+      "close": "",
       "select-time": "选择时间范围"
     },
     "content": {
@@ -1262,6 +1247,7 @@
       "default-error": "请输入一个过去的日期或\"现在\"",
       "fiscal-year": "财政年度",
       "from-input": "发件人",
+      "open-input-calendar": "",
       "range-error": "“发件人”不能在“收件人”之后",
       "to-input": "结束"
     },

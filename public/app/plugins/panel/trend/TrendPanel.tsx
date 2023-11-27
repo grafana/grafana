@@ -51,7 +51,7 @@ export const TrendPanel = ({
     let frames = data.series;
     let xFieldIdx: number | undefined;
     if (options.xField) {
-      xFieldIdx = findFieldIndex(frames[0], options.xField);
+      xFieldIdx = findFieldIndex(options.xField, frames[0]);
       if (xFieldIdx == null) {
         return {
           warning: 'Unable to find field: ' + options.xField,

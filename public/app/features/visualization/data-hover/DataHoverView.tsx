@@ -21,24 +21,27 @@ export interface Props {
   sortOrder?: SortOrder;
   mode?: TooltipDisplayMode | null;
   header?: string;
+  padding?: number;
 }
 
-interface DisplayValue {
+export interface DisplayValue {
   name: string;
   value: unknown;
   valueString: string;
   highlight: boolean;
 }
 
-export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
-  const styles = useStyles2(getStyles);
-
-  if (!data || rowIndex == null) {
-    return null;
-  }
+export function getDisplayValuesAndLinks(
+  data: DataFrame,
+  rowIndex: number,
+  columnIndex?: number | null,
+  sortOrder?: SortOrder,
+  mode?: TooltipDisplayMode | null
+) {
   const fields = data.fields.map((f, idx) => {
     return { ...f, hovered: idx === columnIndex };
   });
+
   const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
   const orderedVisibleFields = [];
@@ -89,6 +92,24 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
   }
 
+  return { displayValues, links };
+}
+
+export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header, padding = 0 }: Props) => {
+  const styles = useStyles2(getStyles, padding);
+
+  if (!data || rowIndex == null) {
+    return null;
+  }
+
+  const dispValuesAndLinks = getDisplayValuesAndLinks(data, rowIndex, columnIndex, sortOrder, mode);
+
+  if (dispValuesAndLinks == null) {
+    return null;
+  }
+
+  const { displayValues, links } = dispValuesAndLinks;
+
   return (
     <div className={styles.wrapper}>
       {header && (
@@ -119,9 +140,10 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     </div>
   );
 };
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, padding = 0) => {
   return {
     wrapper: css`
+      padding: ${padding}px;
       background: ${theme.components.tooltip.background};
       border-radius: ${theme.shape.borderRadius(2)};
     `,
