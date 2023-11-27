@@ -1227,6 +1227,7 @@
     "calendar": {
       "apply-button": "应用时间范围",
       "cancel-button": "取消",
+      "close": "",
       "select-time": "选择时间范围"
     },
     "content": {
@@ -1246,6 +1247,7 @@
       "default-error": "请输入一个过去的日期或\"现在\"",
       "fiscal-year": "财政年度",
       "from-input": "发件人",
+      "open-input-calendar": "",
       "range-error": "“发件人”不能在“收件人”之后",
       "to-input": "结束"
     },
