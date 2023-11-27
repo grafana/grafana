@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
@@ -24,7 +24,6 @@ import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteT
 import { TopSearchBarSection } from './TopSearchBarSection';
 
 export const TopSearchBar = React.memo(function TopSearchBar() {
-  const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
   const { chrome } = useGrafana();
@@ -38,10 +37,14 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
     homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
   }
-  const showReturnToPrevious = state?.returnToPrevious?.show;
+  const showReturnToPrevious =
+    state?.returnToPrevious?.show &&
+    state?.returnToPrevious?.href !== '' &&
+    location.pathname !== state?.returnToPrevious?.href;
+  const styles = useStyles2(getStyles, showReturnToPrevious);
 
   return (
-    <div className={cx(styles.layout, showReturnToPrevious && styles.showReturnButton)}>
+    <div className={styles.layout}>
       <TopSearchBarSection>
         <a className={styles.logo} href={homeUrl} title="Go to home">
           <Branding.MenuLogo className={styles.img} />
@@ -83,7 +86,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   );
 });
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, showReturnToPrevious: boolean) => ({
   layout: css({
     height: TOP_BAR_LEVEL_HEIGHT,
     display: 'flex',
@@ -94,15 +97,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
+      gridTemplateColumns: showReturnToPrevious
+        ? '1.5fr 0.25fr minmax(240px, 1fr) 1.5fr'
+        : '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
       display: 'grid',
 
       justifyContent: 'flex-start',
-    },
-  }),
-  showReturnButton: css({
-    [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1.5fr 0.25fr minmax(240px, 1fr) 1.5fr',
     },
   }),
   img: css({
