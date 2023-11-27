@@ -123,6 +123,8 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.Fe
 				return true
 			}
 		}
+	default:
+		return false
 	}
 
 	return false

@@ -59,7 +59,6 @@ func TestBuildLokiConfig(t *testing.T) {
 	})
 
 	t.Run("true if any backend is Loki", func(t *testing.T) {
-
 		t.Run("single", func(t *testing.T) {
 			cfg := setting.UnifiedAlertingStateHistorySettings{
 				Enabled: true,
