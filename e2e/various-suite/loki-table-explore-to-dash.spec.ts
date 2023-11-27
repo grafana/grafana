@@ -144,7 +144,7 @@ describe('Loki Query Editor', () => {
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     cy.contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
-    cy.contains('Code').click();
+    cy.contains('Code').click({ force: true });
 
     // Wait for lazy loading
     const monacoLoadingText = 'Loading...';
