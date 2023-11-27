@@ -56,9 +56,9 @@ export class GeneralSettingsEditView
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const dashboard = getDashboardSceneFor(model);
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-    const { title, description, tags, meta, editable, graphTooltip } = dashboard.useState();
+    const { title, description, tags, meta, editable, graphTooltip, overlay } = dashboard.useState();
     const timeRange = sceneGraph.getTimeRange(dashboard);
-    let pickerControl = dashboard.state.controls?.find((c) => c instanceof SceneRefreshPicker);
+    const pickerControl = dashboard.state.controls?.find((c) => c instanceof SceneRefreshPicker);
     const refreshPicker = pickerControl instanceof SceneRefreshPicker ? pickerControl : undefined;
 
     const onTitleChange = (value: string) => {
@@ -241,6 +241,7 @@ export class GeneralSettingsEditView
 
           <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton />}</Box>
         </div>
+        {overlay && <overlay.Component model={overlay} />}
       </Page>
     );
   };

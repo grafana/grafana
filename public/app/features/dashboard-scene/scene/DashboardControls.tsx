@@ -37,15 +37,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         <linkControls.Component model={linkControls} />
       </Stack>
       <Stack justifyContent={'flex-end'}>
-        {isEditing ||
-          (true && (
-            <ToolbarButton
-              variant="canvas"
-              icon="cog"
-              tooltip="Dashboard settings"
-              onClick={dashboard.onOpenSettings}
-            />
-          ))}
+        {isEditing && (
+          <ToolbarButton variant="canvas" icon="cog" tooltip="Dashboard settings" onClick={dashboard.onOpenSettings} />
+        )}
         {timeControls.map((c) => (
           <c.Component model={c} key={c.state.key} />
         ))}
