@@ -4,4 +4,7 @@
  * @packageDocumentation
  */
 
-export type Props = {};
+// dummy type
+export type Props = {
+  value?: string;
+};
