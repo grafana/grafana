@@ -66,7 +66,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 			},
 		},
 		{
-			name: "allow switching role from local to global and back",
+			name: "allow switching role assignment from local to global and back",
 			runs: []run{
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
@@ -167,8 +167,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 					storedRole, err := getRoleByUID(ctx, sess, accesscontrol.PrefixedRoleUID(extServiceRoleName(tt.runs[i].cmd.ExternalServiceID)))
 					require.NoError(t, err)
 					require.NotNil(t, storedRole)
-					require.Equal(t, tt.runs[i].cmd.Global, storedRole.Global(), "Incorrect global state of the role")
-					require.Equal(t, tt.runs[i].cmd.OrgID, storedRole.OrgID, "Incorrect OrgID of the role")
+					require.True(t, storedRole.Global(), "Incorrect global state of the role")
 
 					storedPerm, err := getRolePermissions(ctx, sess, storedRole.ID)
 					require.NoError(t, err)

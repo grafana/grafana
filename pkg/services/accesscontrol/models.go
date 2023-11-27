@@ -275,7 +275,7 @@ type SetResourcePermissionCommand struct {
 
 type SaveExternalServiceRoleCommand struct {
 	OrgID             int64
-	Global            bool
+	Global            bool // global assignment of the role
 	ExternalServiceID string
 	ServiceAccountID  int64
 	Permissions       []Permission
