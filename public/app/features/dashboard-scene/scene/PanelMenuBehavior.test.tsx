@@ -29,7 +29,7 @@ describe('panelMenuBehavior', () => {
   it('Given standard panel', async () => {
     const { menu, panel } = await buildTestScene({});
 
-    Object.assign(panel, 'getPlugin', () => getPanelPlugin({}));
+    panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
     mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
     mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
@@ -56,6 +56,9 @@ describe('panelMenuBehavior', () => {
 
     // verify inspect url keeps url params and adds inspect=<panel-key>
     expect(menu.state.items?.[4].href).toBe('/scenes/dashboard/dash-1?from=now-5m&to=now&inspect=panel-12');
+    expect(menu.state.items?.[4].subMenu).toBeDefined();
+
+    expect(menu.state.items?.[4].subMenu?.length).toBe(3);
   });
 });
 
