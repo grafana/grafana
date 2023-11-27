@@ -2,7 +2,7 @@ import { cx, css, keyframes } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, styleMixins } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { Branding } from '../Branding/Branding';
 import { BrandingSettings } from '../Branding/types';
@@ -108,9 +108,9 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     loginLogo: css({
       width: '100%',
       maxWidth: 60,
-      marginBottom: 15,
+      marginBottom: theme.spacing(2),
 
-      [`@media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)}`]: {
+      [theme.breakpoints.up('sm')]: {
         maxWidth: 100,
       },
     }),
@@ -127,7 +127,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     mainTitle: css({
       fontSize: 22,
 
-      [`@media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)}`]: {
+      [theme.breakpoints.up('sm')]: {
         fontSize: 32,
       },
     }),
@@ -150,8 +150,8 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       opacity: 0,
       transition: 'opacity 0.5s ease-in-out',
 
-      [`@media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)}`]: {
-        minHeight: 320,
+      [theme.breakpoints.up('sm')]: {
+        minHeight: theme.spacing(40),
         justifyContent: 'center',
       },
     }),

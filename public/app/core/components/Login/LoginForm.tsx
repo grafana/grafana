@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import React, { ReactElement, useId } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Form, Input, Field } from '@grafana/ui';
+import { Button, Form, Input, Field, useStyles2 } from '@grafana/ui';
 
 import { PasswordField } from '../PasswordField/PasswordField';
 
@@ -16,22 +17,13 @@ interface Props {
   loginHint: string;
 }
 
-const wrapperStyles = css({
-  width: '100%',
-  paddingBottom: 16,
-});
-
-export const submitButton = css({
-  justifyContent: 'center',
-  width: '100%',
-});
-
 export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, loginHint }: Props) => {
+  const styles = useStyles2(getStyles);
   const usernameId = useId();
   const passwordId = useId();
 
   return (
-    <div className={wrapperStyles}>
+    <div className={styles.wrapper}>
       <Form onSubmit={onSubmit} validateOn="onChange">
         {({ register, errors }) => (
           <>
@@ -56,7 +48,7 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
             <Button
               type="submit"
               data-testid={selectors.pages.Login.submit}
-              className={submitButton}
+              className={styles.submitButton}
               disabled={isLoggingIn}
             >
               {isLoggingIn ? 'Logging in...' : 'Log in'}
@@ -67,4 +59,18 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
       </Form>
     </div>
   );
+};
+
+export const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      width: '100%',
+      paddingBottom: theme.spacing(2),
+    }),
+
+    submitButton: css({
+      justifyContent: 'center',
+      width: '100%',
+    }),
+  };
 };
