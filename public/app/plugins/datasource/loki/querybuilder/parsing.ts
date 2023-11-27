@@ -287,10 +287,8 @@ function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
 
   const params = [filterExpr];
   let orFilter = node.getChild(OrFilter);
-  while(orFilter) {
-    params.push(
-      handleQuotes(getString(expr, orFilter.getChild(String)))
-    );
+  while (orFilter) {
+    params.push(handleQuotes(getString(expr, orFilter.getChild(String))));
     orFilter = orFilter.getChild(OrFilter);
   }
 

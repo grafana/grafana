@@ -262,7 +262,7 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|='),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that contain string \`${op.params?.join('\`, or \`')}\`.`,
+      explainHandler: (op) => `Return log lines that contain string \`${op.params?.join('`, or `')}\`.`,
     },
     {
       id: LokiOperationId.LineContainsNot,
@@ -285,7 +285,7 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!='),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that does not contain string \`${op.params?.join('\`, or \`')}\`.`,
+      explainHandler: (op) => `Return log lines that does not contain string \`${op.params?.join('`, or `')}\`.`,
     },
     {
       id: LokiOperationId.LineContainsCaseInsensitive,
@@ -308,7 +308,7 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|~', true),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that match regex \`(?i)${op.params?.join('\`, or \`(?i)')}\`.`,
+      explainHandler: (op) => `Return log lines that match regex \`(?i)${op.params?.join('`, or `(?i)')}\`.`,
     },
     {
       id: LokiOperationId.LineContainsNotCaseInsensitive,
@@ -331,7 +331,7 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!~', true),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that does not match regex \`(?i)${op.params?.join('\`, or \`(?i)')}\`.`,
+      explainHandler: (op) => `Return log lines that does not match regex \`(?i)${op.params?.join('`, or `(?i)')}\`.`,
     },
     {
       id: LokiOperationId.LineMatchesRegex,
@@ -354,7 +354,7 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|~'),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that match a \`RE2\` regex pattern. \`${op.params?.join('\`, or \`')}\`.`,
+      explainHandler: (op) => `Return log lines that match a \`RE2\` regex pattern. \`${op.params?.join('`, or `')}\`.`,
     },
     {
       id: LokiOperationId.LineMatchesRegexNot,
@@ -377,7 +377,8 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!~'),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that doesn't match a \`RE2\` regex pattern. \`${op.params?.join('\`, or \`')}\`.`,
+      explainHandler: (op) =>
+        `Return log lines that doesn't match a \`RE2\` regex pattern. \`${op.params?.join('`, or `')}\`.`,
     },
     {
       id: LokiOperationId.LineFilterIpMatches,
