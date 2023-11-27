@@ -1025,6 +1025,13 @@ type searchData struct {
 	HasSplitScopes bool
 }
 
+// SQLBuilder is a more-or-less reusable SQL query builder that is based on
+// text/template. SQL is not a composable language really, so having all
+// subqueries/partials/filters in one place helps to better understand the whole
+// query.
+// SQLBuilder is expected to be embedded into the data struct passed into the
+// template. In a template one can use {{.Arg .Foo}} and it will replace that
+// with a "?" placeholder appending the value of .Foo to the Params slice.
 type SQLBuilder struct {
 	Params []any
 }
@@ -1060,7 +1067,7 @@ SELECT DISTINCT
 	{{- template "text-search-legacy" . -}}
 ) AS entity
 LEFT JOIN folder f1 ON (entity.parent_uid = f1.uid AND entity.org_id = f1.org_id)
-{{ if ne .UserID 0 }}
+{{ if ne .UserID 0 }}   {{- /* If a user is not admin: need to filter by permissions */ -}}
 LEFT JOIN folder f2 ON (f1.parent_uid     = f2.uid AND f1.org_id     = f2.org_id)
 LEFT JOIN folder f3 ON (f2.parent_uid     = f3.uid AND f2.org_id     = f3.org_id)
 LEFT JOIN folder f4 ON (f3.parent_uid     = f4.uid AND f3.org_id     = f4.org_id)
@@ -1069,9 +1076,9 @@ p.role_id IN (
 	SELECT ur.role_id FROM user_role AS ur    WHERE ur.user_id = {{ .Arg .UserID }} AND (ur.org_id = {{ .Arg .OrgID }} OR ur.org_id = 0)
 	UNION
 	SELECT tr.role_id FROM team_role AS tr    WHERE tr.team_id IN (
-		{{- range $i, $_ := .TeamIDs -}}
+		{{- range $i, $el := .TeamIDs -}}
 		{{- if $i -}},{{- end -}}
-		{{- $.Arg . -}}
+		{{- $.Arg $el -}}
 		{{- end -}}
 	) AND tr.org_id = {{ .Arg .OrgID }}
 	UNION
@@ -1124,6 +1131,9 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 			userID, _ = identity.IntIdentifier(namespaceID, identifier)
 		}
 		teamIDs = query.SignedInUser.GetTeams()
+
+		// TODO: check wildcard dashboard and folder scopes?
+		// TODO: self-contained permissions?
 	}
 
 	// Handle limits and pagination

@@ -1086,7 +1086,6 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store,
 // SearchDashboards, which is a wrapper around FindDashboards.
 func testSearchDashboards(d dashboards.Store, query *dashboards.FindPersistedDashboardsQuery) (model.HitList, error) {
 	res, err := d.FindDashboards(context.Background(), query)
-	fmt.Println("res", res, err)
 	if err != nil {
 		return nil, err
 	}
