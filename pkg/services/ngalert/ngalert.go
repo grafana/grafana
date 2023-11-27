@@ -177,8 +177,7 @@ func (ng *AlertNG) init() error {
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 			externalAMCfg := remote.AlertmanagerConfig{}
-			fstore := notifier.NewFileStore(orgID, ng.KVStore, "")
-			return remote.NewAlertmanager(externalAMCfg, orgID, fstore)
+			return remote.NewAlertmanager(externalAMCfg, orgID, ng.KVStore)
 		})
 
 		overrides = append(overrides, override)

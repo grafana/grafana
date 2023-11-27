@@ -11,6 +11,7 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -50,7 +51,7 @@ type AlertmanagerConfig struct {
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, stateStore stateStore) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, kvstore kvstore.KVStore) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &mimirClient.MimirAuthRoundTripper{
 			TenantID: cfg.TenantID,
@@ -99,6 +100,8 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, stateStore stateStore)
 		return nil, err
 	}
 
+	// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+	stateStore := notifier.NewFileStore(orgID, kvstore, "")
 	return &Alertmanager{
 		log:         logger,
 		mimirClient: mc,
