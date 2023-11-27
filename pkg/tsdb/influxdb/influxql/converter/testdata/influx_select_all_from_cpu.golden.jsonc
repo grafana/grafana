@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_all from cpu"
+//      "executedQueryString": "raw query"
 //  }
 //  Name: cpu.mean_usage_guest
 //  Dimensions: 2 Fields by 4 Rows
@@ -67,7 +67,7 @@
             0
           ],
           "preferredVisualisationType": "graph",
-          "executedQueryString": "select_all from cpu"
+          "executedQueryString": "raw query"
         },
         "fields": [
           {

@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu grouped by a tag"
+//      "executedQueryString": "raw query"
 //  }
 //  Name: cpu.usage_iowait { cpu: cpu-total }
 //  Dimensions: 2 Fields by 5 Rows
@@ -223,7 +223,7 @@
             0
           ],
           "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu grouped by a tag"
+          "executedQueryString": "raw query"
         },
         "fields": [
           {

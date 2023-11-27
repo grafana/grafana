@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "graph",
-//      "executedQueryString": "show measurements"
+//      "executedQueryString": "raw query"
 //  }
 //  Name: measurements
 //  Dimensions: 1 Fields by 4 Rows
@@ -35,7 +35,7 @@
               0
             ],
             "preferredVisualisationType": "graph",
-            "executedQueryString": "show measurements"
+            "executedQueryString": "raw query"
           },
         "fields": [
           {

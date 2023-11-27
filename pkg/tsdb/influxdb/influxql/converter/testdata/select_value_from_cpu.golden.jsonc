@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_value from cpu"
+//      "executedQueryString": "raw query"
 //  }
 //  Name: cpu.value
 //  Dimensions: 2 Fields by 5 Rows
@@ -36,7 +36,7 @@
             0
           ],
           "preferredVisualisationType": "graph",
-          "executedQueryString": "select_value from cpu"
+          "executedQueryString": "raw query"
         },
         "fields": [
           {

@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_multiple values from cpu"
+//      "executedQueryString": "raw query"
 //  }
 //  Name: cpu.usage_iowait
 //  Dimensions: 2 Fields by 174 Rows
@@ -63,7 +63,7 @@
             0
           ],
           "preferredVisualisationType": "graph",
-          "executedQueryString": "select_multiple values from cpu"
+          "executedQueryString": "raw query"
         },
         "fields": [
           {

@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_value from measurement grouped by multiple tag"
+//      "executedQueryString": "raw query"
 //  }
 //  Name: disk.total { fstype: ext4, host: 41c9dcf3b960 }
 //  Dimensions: 2 Fields by 87 Rows
@@ -63,7 +63,7 @@
             0
           ],
           "preferredVisualisationType": "graph",
-          "executedQueryString": "select_value from measurement grouped by multiple tag"
+          "executedQueryString": "raw query"
         },
         "fields": [
           {

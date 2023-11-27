@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "graph",
-//      "executedQueryString": "select_value from measurement grouped by tag"
+//      "executedQueryString": "raw query"
 //  }
 //  Name: diskio.io_time { name: loop0 }
 //  Dimensions: 2 Fields by 30 Rows
@@ -85,7 +85,7 @@
             0
           ],
           "preferredVisualisationType": "graph",
-          "executedQueryString": "select_value from measurement grouped by tag"
+          "executedQueryString": "raw query"
         },
         "fields": [
           {

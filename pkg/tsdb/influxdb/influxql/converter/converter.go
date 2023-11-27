@@ -134,7 +134,24 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 		}
 
 		if util.GetVisType(query.ResultFormat) == util.TableVisType {
-			// add the rsp.Frames[0]
+			// Add the first and only frame for table format
+			if len(rsp.Frames) == 0 {
+				newFrame := data.NewFrame(measurement)
+				newFrame.Meta = &data.FrameMeta{
+					ExecutedQueryString:    query.RawQuery,
+					PreferredVisualization: util.GetVisType(query.ResultFormat),
+				}
+				rsp.Frames = append(rsp.Frames, newFrame)
+			}
+
+			// If there is time field and already appended remove timeField
+			if hasTimeColumn && len(rsp.Frames[0].Fields) > 0 {
+				valueFields = valueFields[1:]
+			}
+
+			for _, v := range valueFields {
+				rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, v)
+			}
 		} else {
 			if hasTimeColumn {
 				// Frame with time column
@@ -228,7 +245,7 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 				if t, err = iter.ReadFloat64(); err != nil {
 					return nil, err
 				}
-				valueFields[0].Append(timeFromFloat(t))
+				valueFields[0].Append(time.UnixMilli(int64(t)).UTC())
 			} else {
 				// Read column values
 				next, err := iter.WhatIsNext()
@@ -242,36 +259,69 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 					if err != nil {
 						return nil, err
 					}
+					// check whether a value field created. if not create a new one
 					if len(valueFields) == colIdx {
 						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 						stringField.Name = "Value"
 						valueFields = append(valueFields, stringField)
-						appendNilsToField(valueFields, nullValuesForFields, colIdx)
 					}
+
+					// check if the value field type is matching
+					// For nil values we might have added NullableFloat64 value field
+					// if they are not matching fix it
+					if valueFields[colIdx].Type() != data.FieldTypeNullableString {
+						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
+						stringField.Name = "Value"
+						var i int
+						for i < valueFields[colIdx].Len() {
+							stringField.Append(nil)
+							i++
+						}
+						valueFields[colIdx] = stringField
+					}
+
 					valueFields[colIdx].Append(&s)
 				case jsoniter.NumberValue:
 					n, err := iter.ReadFloat64()
 					if err != nil {
 						return nil, err
 					}
+
+					// check whether a value field created. if not create a new one
 					if len(valueFields) == colIdx {
 						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
 						numberField.Name = "Value"
 						valueFields = append(valueFields, numberField)
-						appendNilsToField(valueFields, nullValuesForFields, colIdx)
 					}
+
 					valueFields[colIdx].Append(&n)
 				case jsoniter.BoolValue:
 					b, err := iter.ReadAny()
 					if err != nil {
 						rspErr(err)
 					}
+
+					// check whether a value field created. if not create a new one
 					if len(valueFields) == colIdx {
 						boolField := data.NewFieldFromFieldType(data.FieldTypeNullableBool, 0)
 						boolField.Name = "Value"
 						valueFields = append(valueFields, boolField)
-						appendNilsToField(valueFields, nullValuesForFields, colIdx)
 					}
+
+					// check if the value field type is matching
+					// For nil values we might have added NullableFloat64 value field
+					// if they are not matching fix it
+					if valueFields[colIdx].Type() != data.FieldTypeNullableBool {
+						stringField := data.NewFieldFromFieldType(data.FieldTypeNullableBool, 0)
+						stringField.Name = "Value"
+						var i int
+						for i < valueFields[colIdx].Len() {
+							stringField.Append(nil)
+							i++
+						}
+						valueFields[colIdx] = stringField
+					}
+
 					bv := b.ToBool()
 					valueFields[colIdx].Append(&bv)
 				case jsoniter.NilValue:
@@ -279,16 +329,14 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 					if len(valueFields) <= colIdx {
 						// no value field created before
 						// we don't know the type of the values for this field, yet
-						// we cannot create a value field
-						// instead we add nil values to an array to be added
-						// when we learn the type of this field
-						if len(nullValuesForFields) <= colIdx {
-							nullValuesForFields = append(nullValuesForFields, make([]bool, 0))
-						}
-						nullValuesForFields[colIdx] = append(nullValuesForFields[colIdx], true)
-					} else {
-						valueFields[colIdx].Append(nil)
+						// but we assume it is a NullableFloat64
+						// if that is something else it will be replaced later
+						numberField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
+						numberField.Name = "Value"
+						valueFields = append(valueFields, numberField)
 					}
+
+					valueFields[colIdx].Append(nil)
 				}
 			}
 
@@ -297,20 +345,4 @@ func readValues(iter *jsonitere.Iterator, hasTimeColumn bool) (valueFields data.
 	}
 
 	return
-}
-
-func appendNilsToField(fields data.Fields, nullValuesForFields [][]bool, idx int) {
-	if len(nullValuesForFields) <= idx {
-		return
-	}
-	// Append nil values if there is any.
-	for range nullValuesForFields[idx] {
-		fields[idx].Append(nil)
-	}
-	// clean the nil value array
-	nullValuesForFields[idx] = nil
-}
-
-func timeFromFloat(fv float64) time.Time {
-	return time.UnixMilli(int64(fv)).UTC()
 }

@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "graph",
-//      "executedQueryString": "response with nulls"
+//      "executedQueryString": "raw query"
 //  }
 //  Name: cpu.mean { datacenter: America }
 //  Dimensions: 2 Fields by 3 Rows
@@ -64,7 +64,7 @@
             0
           ],
           "preferredVisualisationType": "graph",
-          "executedQueryString": "response with nulls"
+          "executedQueryString": "raw query"
         },
         "fields": [
           {
