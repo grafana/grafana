@@ -311,6 +311,7 @@
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-e2e/ @grafana/grafana-frontend-platform
+/packages/grafana-traces/ @grafana/observability-traces-and-profiling
 /packages/grafana-ui/.storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
