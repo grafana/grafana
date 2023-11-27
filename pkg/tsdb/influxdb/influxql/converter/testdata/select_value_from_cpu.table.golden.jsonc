@@ -1,0 +1,82 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "preferredVisualisationType": "table",
+//      "executedQueryString": "raw query"
+//  }
+//  Name: cpu
+//  Dimensions: 2 Fields by 5 Rows
+//  +-----------------------------------+--------------------+
+//  | Name: Time                        | Name: value        |
+//  | Labels:                           | Labels:            |
+//  | Type: []time.Time                 | Type: []*float64   |
+//  +-----------------------------------+--------------------+
+//  | 2023-10-29 18:34:34.117 +0000 UTC | 1.961718619395464  |
+//  | 2023-10-29 18:34:34.117 +0000 UTC | 2.612399117907657  |
+//  | 2023-10-29 18:34:34.117 +0000 UTC | 2.3952436836306004 |
+//  | 2023-10-29 18:34:44.129 +0000 UTC | 2.297262408062543  |
+//  | 2023-10-29 18:34:44.13 +0000 UTC  | 1.3956702646824355 |
+//  +-----------------------------------+--------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "cpu",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "preferredVisualisationType": "table",
+          "executedQueryString": "raw query"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "displayNameFromDS": "value"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1698604474117,
+            1698604474117,
+            1698604474117,
+            1698604484129,
+            1698604484130
+          ],
+          [
+            1.961718619395464,
+            2.612399117907657,
+            2.3952436836306004,
+            2.297262408062543,
+            1.3956702646824355
+          ]
+        ]
+      }
+    }
+  ]
+}

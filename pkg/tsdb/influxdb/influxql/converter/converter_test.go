@@ -32,14 +32,38 @@ var files = []string{
 	"diverse_data_types",
 }
 
-func TestReadPromFrames(t *testing.T) {
+var query = &models.Query{
+	Measurement:  "",
+	Policy:       "",
+	Tags:         nil,
+	GroupBy:      nil,
+	Selects:      nil,
+	RawQuery:     "raw query",
+	UseRawQuery:  true,
+	Alias:        "",
+	Interval:     0,
+	Tz:           "",
+	Limit:        "",
+	Slimit:       "",
+	OrderByTime:  "",
+	RefID:        "",
+	ResultFormat: "time_series",
+}
+
+func TestReadInfluxAsTimeSeries(t *testing.T) {
 	for _, f := range files {
-		t.Run(f, runScenario(f))
+		t.Run(f, runScenario(f, "time_series"))
+	}
+}
+
+func TestReadInfluxAsTable(t *testing.T) {
+	for _, f := range files {
+		t.Run(f, runScenario(f, "table"))
 	}
 }
 
 //lint:ignore U1000 Ignore used function for now
-func runScenario(tf string) func(t *testing.T) {
+func runScenario(tf string, resultFormat string) func(t *testing.T) {
 	return func(t *testing.T) {
 		// Safe to disable, this is a test.
 		// nolint:gosec
@@ -48,27 +72,9 @@ func runScenario(tf string) func(t *testing.T) {
 
 		var rsp backend.DataResponse
 
-		query := &models.Query{
-			Measurement:  "",
-			Policy:       "",
-			Tags:         nil,
-			GroupBy:      nil,
-			Selects:      nil,
-			RawQuery:     "raw query",
-			UseRawQuery:  true,
-			Alias:        "",
-			Interval:     0,
-			Tz:           "",
-			Limit:        "",
-			Slimit:       "",
-			OrderByTime:  "",
-			RefID:        "",
-			ResultFormat: "time_series",
-		}
+		query.ResultFormat = resultFormat
 
-		fname := tf + ".golden"
 		if streamParser {
-			// fname = tf.fileName + ".stream"
 			rsp = influxql.StreamParse(f, 200, query)
 		} else {
 			rsp = *influxql.ResponseParse(io.NopCloser(f), 200, query)
@@ -80,6 +86,7 @@ func runScenario(tf string) func(t *testing.T) {
 		}
 		require.NoError(t, rsp.Error)
 
+		fname := tf + "." + resultFormat + ".golden"
 		experimental.CheckGoldenJSONResponse(t, "testdata", fname, &rsp, shouldUpdate)
 	}
 }
