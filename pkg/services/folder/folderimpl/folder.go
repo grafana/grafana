@@ -390,6 +390,10 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		dashFolder.FolderUID = cmd.ParentUID
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID == folder.SharedWithMeFolderUID {
+		return nil, folder.ErrBadRequest.Errorf("cannot create folder with UID %s", folder.SharedWithMeFolderUID)
+	}
+
 	trimmedUID := strings.TrimSpace(cmd.UID)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
 		return nil, dashboards.ErrFolderInvalidUID
