@@ -8,6 +8,7 @@ import {
   VizPanel,
   sceneUtils,
   SceneVariables,
+  SceneGridRow
 } from '@grafana/scenes';
 
 interface ViewPanelSceneState extends SceneObjectState {
