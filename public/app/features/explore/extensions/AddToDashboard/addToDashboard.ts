@@ -68,18 +68,6 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
 }
 
 /**
- * Returns the transformations to apply to the panel based on the panel type
- * @param panelType
- * @param options
- */
-function getExploreToPanelTransformations(panelType: string, options: AddPanelToDashboardOptions) {
-  let transformations: DataTransformerConfig[] = [];
-  transformations.push(...getLogsTableTransformations(panelType, options));
-
-  return transformations;
-}
-
-/**
  * Filters the query for logs table, if the user has a query selected in explore, only return that one
  * The logs table uses organize fields transformation, which only supports a single dataframe
  * Also, the UI only displays one dataframe/query at a time, so this should result in the expected behavior.
@@ -100,7 +88,7 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
     title: 'New Panel',
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
     datasource: options.datasource,
-    transformations: getExploreToPanelTransformations(panelType, options),
+    transformations: getLogsTableTransformations(panelType, options),
   };
 
   let dto: DashboardDTO;
