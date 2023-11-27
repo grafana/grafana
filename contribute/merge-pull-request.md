@@ -121,19 +121,12 @@ Backporting is the process of copying the pull request into the version branch o
 This should only be done for _critical bug fixes_ and involves the intervention of a Grafana Labs employee.
 To make this decision explicit, there is a **Backport Check** that is re-evaluated automatically by adding/removing labels on the pull request.
 
-#### No backport
-
-If you don't want to backport you need to add a label named **no-backport** to the pull request.
-
-This should be the default!
-
 #### Backport
 
 If your pull request fixes a critical bug and needs to go into one or several existing release branches it should be backported.
 
 For a pull request to be backported, please add it to "Critical Bug Release" form so that the delivery team is aware that a release for a previous version needs to be made.
 Once approved, the backporting process will continue from there.
-In the meantime, set the `no-backport` label.
 
 #### Required labels
 
