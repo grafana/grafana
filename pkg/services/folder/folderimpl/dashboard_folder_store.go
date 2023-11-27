@@ -91,28 +91,30 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 
 func (d *DashboardFolderStoreImpl) GetFolders(ctx context.Context, orgID int64, uids []string) (map[string]*folder.Folder, error) {
 	m := make(map[string]*folder.Folder, len(uids))
+	if len(uids) == 0 {
+		return m, nil
+	}
+
 	var folders []*folder.Folder
 	if err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		b := strings.Builder{}
 		args := make([]any, 0, len(uids)+1)
 
-		b.WriteString("SELECT * FROM dashboard WHERE org_id=? ")
+		b.WriteString("SELECT * FROM dashboard WHERE org_id=?")
 		args = append(args, orgID)
-		for i, uid := range uids {
-			if i == 0 {
-				b.WriteString("  AND (")
-			}
 
-			if i > 0 {
-				b.WriteString(" OR ")
-			}
-			b.WriteString(" uid=? ")
-			args = append(args, uid)
-
-			if i == len(uids)-1 {
-				b.WriteString(")")
-			}
+		if len(uids) == 1 {
+			b.WriteString(" AND uid=?")
 		}
+
+		if len(uids) > 1 {
+			b.WriteString(" AND uid IN (" + strings.Repeat("?, ", len(uids)-1) + "?)")
+		}
+
+		for _, uid := range uids {
+			args = append(args, uid)
+		}
+
 		return sess.SQL(b.String(), args...).Find(&folders)
 	}); err != nil {
 		return nil, err
