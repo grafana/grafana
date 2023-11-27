@@ -11,9 +11,12 @@ import {
   Badge,
   Tooltip,
 } from '@grafana/ui';
-import { UserAnonymousDTO } from 'app/types';
+import { UserAnonymousDeviceDTO } from 'app/types';
 
-type Cell<T extends keyof UserAnonymousDTO = keyof UserAnonymousDTO> = CellProps<UserAnonymousDTO, UserAnonymousDTO[T]>;
+type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
+  UserAnonymousDeviceDTO,
+  UserAnonymousDeviceDTO[T]
+>;
 
 // A helper function to parse the user agent string and extract parts
 const parseUserAgent = (userAgent: string) => {
@@ -48,15 +51,21 @@ const UserAgentCell = ({ value }: UserAgentCellProps) => {
 };
 
 interface AnonUsersTableProps {
-  users: UserAnonymousDTO[];
+  devices: UserAnonymousDeviceDTO[];
   showPaging?: boolean;
   totalPages: number;
   currentPage: number;
-  fetchData?: FetchDataFunc<UserAnonymousDTO>;
+  fetchData?: FetchDataFunc<UserAnonymousDeviceDTO>;
 }
 
-export const AnonUsersTable = ({ users, showPaging, totalPages, currentPage, fetchData }: AnonUsersTableProps) => {
-  const columns: Array<Column<UserAnonymousDTO>> = useMemo(
+export const AnonUsersDevicesTable = ({
+  devices,
+  showPaging,
+  totalPages,
+  currentPage,
+  fetchData,
+}: AnonUsersTableProps) => {
+  const columns: Array<Column<UserAnonymousDeviceDTO>> = useMemo(
     () => [
       {
         id: 'avatarUrl',
@@ -92,7 +101,7 @@ export const AnonUsersTable = ({ users, showPaging, totalPages, currentPage, fet
   showPaging = false;
   return (
     <Stack direction={'column'} gap={2}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => user.device_id} />
+      <InteractiveTable columns={columns} data={devices} getRowId={(user) => user.device_id} />
       {showPaging && (
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={() => {}} />

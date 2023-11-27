@@ -132,7 +132,7 @@ export interface UserListAdminState {
   sort?: string;
 }
 
-export interface UserAnonymousDTO {
+export interface UserAnonymousDeviceDTO {
   login?: string;
   client_ip: string;
   device_id: string;
@@ -142,8 +142,8 @@ export interface UserAnonymousDTO {
   avatarUrl?: string;
 }
 
-export interface UserListAnonymousState {
-  devices: UserAnonymousDTO[];
+export interface UserListAnonymousDevicesState {
+  devices: UserAnonymousDeviceDTO[];
   query: string;
   perPage: number;
   page: number;

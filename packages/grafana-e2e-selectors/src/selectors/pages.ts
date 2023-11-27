@@ -310,7 +310,7 @@ export const Pages = {
     tabs: {
       allUsers: 'data-testid all-users-tab',
       orgUsers: 'data-testid org-users-tab',
-      anonUsers: 'data-testid anon-users-tab',
+      anonUserDevices: 'data-testid anon-user-devices-tab',
       publicDashboardsUsers: 'data-testid public-dashboards-users-tab',
       users: 'data-testid users-tab',
     },

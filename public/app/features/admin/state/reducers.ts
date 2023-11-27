@@ -13,8 +13,8 @@ import {
   UserSession,
   UserListAdminState,
   UserFilter,
-  UserListAnonymousState,
-  UserAnonymousDTO,
+  UserListAnonymousDevicesState,
+  UserAnonymousDeviceDTO,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
@@ -205,7 +205,7 @@ export const userListAdminReducer = userListAdminSlice.reducer;
 
 // UserListAnonymousPage
 
-const initialUserListAnonymousState: UserListAnonymousState = {
+const initialUserListAnonymousDevicesState: UserListAnonymousDevicesState = {
   devices: [],
   query: '',
   page: 0,
@@ -216,18 +216,18 @@ const initialUserListAnonymousState: UserListAnonymousState = {
   isLoading: true,
 };
 
-interface UsersAnonymousFetched {
-  devices: UserAnonymousDTO[];
+interface UsersAnonymousDevicesFetched {
+  devices: UserAnonymousDeviceDTO[];
   currentPage: number;
   perPage: number;
   totalCount: number;
 }
 
-export const userListAnonymousSlice = createSlice({
-  name: 'userListAnonymous',
-  initialState: initialUserListAnonymousState,
+export const userListAnonymousDevicesSlice = createSlice({
+  name: 'userListAnonymousDevices',
+  initialState: initialUserListAnonymousDevicesState,
   reducers: {
-    usersAnonymousFetched: (state, action: PayloadAction<UsersAnonymousFetched>) => {
+    usersAnonymousDevicesFetched: (state, action: PayloadAction<UsersAnonymousDevicesFetched>) => {
       const { devices } = action.payload;
       const totalPages = 1;
       const perPage = 10;
@@ -240,23 +240,15 @@ export const userListAnonymousSlice = createSlice({
         isLoading: false,
       };
     },
-
-    usersAnonymousFetchBegin: (state) => {
-      return { ...state, isLoading: true };
-    },
-    usersAnonymousFetchEnd: (state) => {
-      return { ...state, isLoading: false };
-    },
   },
 });
 
-export const { usersAnonymousFetched, usersAnonymousFetchBegin, usersAnonymousFetchEnd } =
-  userListAnonymousSlice.actions;
-export const userListAnonymousReducer = userListAnonymousSlice.reducer;
+export const { usersAnonymousDevicesFetched } = userListAnonymousDevicesSlice.actions;
+export const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
 
 export default {
   ldap: ldapReducer,
   userAdmin: userAdminReducer,
   userListAdmin: userListAdminReducer,
-  userListAnonymous: userListAnonymousReducer,
+  userListAnonymousDevices: userListAnonymousDevicesReducer,
 };

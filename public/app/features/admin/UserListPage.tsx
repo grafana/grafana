@@ -12,7 +12,7 @@ import { AccessControlAction } from '../../types';
 import { UsersListPageContent } from '../users/UsersListPage';
 
 import { UserListAdminPageContent } from './UserListAdminPage';
-import { UserListAnonymousPageContent } from './UserListAnonymousPage';
+import { UserListAnonymousDevicesPageContent } from './UserListAnonymousPage';
 import { UserListPublicDashboardPage } from './UserListPublicDashboardPage/UserListPublicDashboardPage';
 
 enum TabView {
@@ -37,7 +37,7 @@ const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
   [TabView.ADMIN]: <UserListAdminPageContent />,
   [TabView.ORG]: <UsersListPageContent />,
   [TabView.PUBLIC_DASHBOARDS]: <UserListPublicDashboardPage />,
-  [TabView.ANON]: <UserListAnonymousPageContent />,
+  [TabView.ANON]: <UserListAnonymousDevicesPageContent />,
 };
 
 export default function UserListPage() {
@@ -79,10 +79,10 @@ export default function UserListPage() {
           />
           {config.featureToggles.anonymousAccess && (
             <Tab
-              label="Anonymous users"
+              label="Anonymous devices"
               active={view === TabView.ANON}
               onChangeTab={() => setView(TabView.ANON)}
-              data-testid={selectors.tabs.anonUsers}
+              data-testid={selectors.tabs.anonUserDevices}
             />
           )}
           {hasEmailSharingEnabled && <PublicDashboardsTab view={view} setView={setView} />}

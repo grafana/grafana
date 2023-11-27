@@ -19,6 +19,12 @@ const (
 	thirtyDays = 30 * 24 * time.Hour
 )
 
+type deviceDTO struct {
+	anonstore.Device
+	LastSeenAt string `json:"lastSeenAt"`
+	AvatarUrl  string `json:"avatarUrl"`
+}
+
 type AnonDeviceServiceAPI struct {
 	cfg            *setting.Cfg
 	store          anonstore.AnonStore
@@ -72,15 +78,11 @@ func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) respons
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to list devices", err)
 	}
-	type resDevice struct {
-		anonstore.Device
-		LastSeenAt string `json:"lastSeenAt"`
-		AvatarUrl  string `json:"avatarUrl"`
-	}
+
 	// convert to response format
-	resDevices := make([]*resDevice, 0, len(devices))
+	resDevices := make([]*deviceDTO, 0, len(devices))
 	for _, device := range devices {
-		resDevices = append(resDevices, &resDevice{
+		resDevices = append(resDevices, &deviceDTO{
 			Device:     *device,
 			LastSeenAt: util.GetAgeString(device.UpdatedAt),
 			AvatarUrl:  dtos.GetGravatarUrl(device.DeviceID),
@@ -116,5 +118,21 @@ func (api *AnonDeviceServiceAPI) CountDevices(c *contextmodel.ReqContext) respon
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to list devices", err)
 	}
-	return response.JSON(http.StatusOK, devices)
+	return response.JSON(http.StatusOK, struct {
+		ActiveDevices int64 `json:"activeDevices"`
+	}{ActiveDevices: devices})
+}
+
+// swagger:response DevicesResponse
+type DevicesResponse struct {
+	// in:body
+	Body []deviceDTO `json:"body"`
+}
+
+// swagger:response CountDevicesResponse
+type CountDevicesResponse struct {
+	// in:body
+	Body struct {
+		ActiveDevices int64 `json:"count"`
+	}
 }

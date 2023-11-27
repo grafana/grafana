@@ -9,8 +9,8 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { StoreState, UserFilter } from '../../types';
 
-import { AnonUsersTable } from './Users/AnonUsersTable';
-import { fetchUsersAnonymous } from './state/actions';
+import { AnonUsersDevicesTable } from './Users/AnonUsersTable';
+import { fetchUsersAnonymousDevices } from './state/actions';
 
 export interface FilterProps {
   filters: UserFilter[];
@@ -25,15 +25,15 @@ export const addExtraFilters = (filter: ComponentType<FilterProps>) => {
 const selectors = e2eSelectors.pages.UserListPage.UserListAdminPage;
 
 const mapDispatchToProps = {
-  fetchUsersAnonymous,
+  fetchUsersAnonymousDevices,
 };
 
 const mapStateToProps = (state: StoreState) => ({
-  devices: state.userListAnonymous.devices,
-  showPaging: state.userListAnonymous.showPaging,
-  totalPages: state.userListAnonymous.totalPages,
-  page: state.userListAnonymous.page,
-  filters: state.userListAnonymous.filters,
+  devices: state.userListAnonymousDevices.devices,
+  showPaging: state.userListAnonymousDevices.showPaging,
+  totalPages: state.userListAnonymousDevices.totalPages,
+  page: state.userListAnonymousDevices.page,
+  filters: state.userListAnonymousDevices.filters,
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -42,12 +42,18 @@ interface OwnProps {}
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-const UserListAnonymousPageUnConnected = ({ devices, showPaging, totalPages, page, fetchUsersAnonymous }: Props) => {
+const UserListAnonymousDevicesPageUnConnected = ({
+  devices,
+  showPaging,
+  totalPages,
+  page,
+  fetchUsersAnonymousDevices,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    fetchUsersAnonymous();
-  }, [fetchUsersAnonymous]);
+    fetchUsersAnonymousDevices();
+  }, [fetchUsersAnonymousDevices]);
 
   return (
     <Page.Contents>
@@ -67,17 +73,17 @@ const UserListAnonymousPageUnConnected = ({ devices, showPaging, totalPages, pag
           ))}
         </div> */}
       </div>
-      <AnonUsersTable users={devices} showPaging={showPaging} totalPages={totalPages} currentPage={page} />
+      <AnonUsersDevicesTable devices={devices} showPaging={showPaging} totalPages={totalPages} currentPage={page} />
     </Page.Contents>
   );
 };
 
-export const UserListAnonymousPageContent = connector(UserListAnonymousPageUnConnected);
+export const UserListAnonymousDevicesPageContent = connector(UserListAnonymousDevicesPageUnConnected);
 
-export function UserListAnonymousPage() {
+export function UserListAnonymousDevicesPage() {
   return (
     <Page navId="anonymous-users">
-      <UserListAnonymousPageContent />
+      <UserListAnonymousDevicesPageContent />
     </Page>
   );
 }
@@ -115,4 +121,4 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export default UserListAnonymousPage;
+export default UserListAnonymousDevicesPage;
