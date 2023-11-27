@@ -73,7 +73,7 @@ var config = {
         "set field input[name='user'] to admin",
         "set field input[name='password'] to admin",
         "click element button[data-testid='data-testid Login button']",
-        "wait for element [aria-label='Skip change password button'] to be visible",
+        "wait for element button[data-testid='data-testid Skip change password button'] to be visible",
       ],
       threshold: 15,
       rootElement: '.main-view',
