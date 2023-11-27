@@ -183,7 +183,7 @@ To set up Pushover, you must provide a user key and an API token. Refer to [What
 | OK priority    | The priority OK notifications are sent; if not set, then OK notifications are sent with the priority set for alerting notifications |
 | Retry          | How often (in seconds) the Pushover servers send the same notification to the user. (minimum 30 seconds)                            |
 | Expire         | How many seconds your notification will continue to be retried for (maximum 86400 seconds)                                          |
-| TTL            | A number of seconds that the message will live, before being deleted automatically                                                  |
+| TTL            | A number of seconds that the message will live, before being deleted automatically. Examples: 10s, 5m30s, 8h.                       |
 | Alerting sound | The sound for alerting notifications                                                                                                |
 | OK sound       | The sound for OK notifications                                                                                                      |
 

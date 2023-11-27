@@ -355,7 +355,7 @@ settings:
   retry: '30'
   # <string>
   expire: '120'
-  # <string> the number of seconds before a message expires and is deleted automatically
+  # <string> the number of seconds before a message expires and is deleted automatically. Examples: 10s, 5m30s, 8h.
   ttl:
   # <string>
   sound: siren
