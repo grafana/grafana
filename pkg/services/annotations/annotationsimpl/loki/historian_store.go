@@ -23,6 +23,7 @@ type lokiQueryClient interface {
 	RangeQuery(ctx context.Context, query string, start, end, limit int64) (historian.QueryRes, error)
 }
 
+// LokiHistorianStore is a read store that queries Loki for alert state history.
 type LokiHistorianStore struct {
 	client lokiQueryClient
 	db     db.DB
@@ -30,7 +31,7 @@ type LokiHistorianStore struct {
 }
 
 func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, log log.Logger) *LokiHistorianStore {
-	if !useStore(cfg, ft) && false { // TODO: no-op until this is implemented
+	if !useStore(cfg, ft) {
 		return nil
 	}
 	lokiCfg, err := historian.NewLokiConfig(cfg)
@@ -46,36 +47,12 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	}
 }
 
-func (r *LokiHistorianStore) Add(ctx context.Context, items *annotations.Item) error {
-	return annotations.ErrStoreMethodNotImplemented
-}
-
-func (r *LokiHistorianStore) AddMany(ctx context.Context, items []annotations.Item) error {
-	return annotations.ErrStoreMethodNotImplemented
-}
-
-func (r *LokiHistorianStore) Update(ctx context.Context, item *annotations.Item) error {
-	return annotations.ErrStoreMethodNotImplemented
-}
-
 func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
-	return nil, annotations.ErrStoreMethodNotImplemented
-}
-
-func (r *LokiHistorianStore) Delete(ctx context.Context, params *annotations.DeleteParams) error {
-	return annotations.ErrStoreMethodNotImplemented
+	return []*annotations.ItemDTO{}, nil
 }
 
 func (r *LokiHistorianStore) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return annotations.FindTagsResult{}, annotations.ErrStoreMethodNotImplemented
-}
-
-func (r *LokiHistorianStore) CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error) {
-	return 0, annotations.ErrStoreMethodNotImplemented
-}
-
-func (r *LokiHistorianStore) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
-	return 0, annotations.ErrStoreMethodNotImplemented
+	return annotations.FindTagsResult{}, nil
 }
 
 func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles) bool {

@@ -4,95 +4,98 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"sort"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
+// CompositeStore is a read store that combines two or more read stores, and queries all stores in parallel.
 type CompositeStore struct {
-	primary   store
-	historian store
+	readers []readStore
 }
 
-func NewCompositeStore(primary store, historian store) *CompositeStore {
+func NewCompositeStore(readers []readStore) *CompositeStore {
 	return &CompositeStore{
-		primary:   primary,
-		historian: historian,
+		readers: readers,
 	}
-}
-
-func (c *CompositeStore) Add(ctx context.Context, item *annotations.Item) error {
-	return c.primary.Add(ctx, item)
-}
-
-func (c *CompositeStore) AddMany(ctx context.Context, items []annotations.Item) error {
-	return c.primary.AddMany(ctx, items)
-}
-
-func (c *CompositeStore) Update(ctx context.Context, item *annotations.Item) error {
-	return c.primary.Update(ctx, item)
 }
 
 func (c *CompositeStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
-	stores := []store{c.primary, c.historian}
-	type res struct {
-		items []*annotations.ItemDTO
-		err   error
-	}
-
+	ch := make(chan jobRes[[]*annotations.ItemDTO], len(c.readers))
 	wg := sync.WaitGroup{}
-	wg.Add(len(stores))
+	wg.Add(len(c.readers))
 
-	ch := make(chan res, len(stores))
-	for _, s := range stores {
-		go func(s store) {
+	for _, r := range c.readers {
+		go func(r readStore) {
 			defer wg.Done()
-			items, err := s.Get(ctx, query, accessResources)
-			ch <- res{items, err}
-		}(s)
+			ch <- collectRes(r.Get(ctx, query, accessResources))
+		}(r)
 	}
 
 	wg.Wait()
 	close(ch)
 
-	var items []*annotations.ItemDTO
-	var errs []error
+	res := make([]*annotations.ItemDTO, 0)
+	var err error
 	for r := range ch {
 		if r.err != nil {
-			errs = append(errs, r.err)
+			err = errors.Join(err, r.err)
+		} else {
+			res = append(res, r.res...)
 		}
-		items = append(items, r.items...)
-	}
-
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
 	}
 
 	// sort merged items in descending order, by TimeEnd and then by Time
-	slices.SortFunc(items, func(a, b *annotations.ItemDTO) int {
+	slices.SortFunc(res, func(a, b *annotations.ItemDTO) int {
 		if a.TimeEnd != b.TimeEnd {
 			return -1 * (int(a.TimeEnd) - int(b.TimeEnd))
 		}
 		return -1 * (int(a.Time) - int(b.Time))
 	})
 
-	return items, nil
-}
-
-func (c *CompositeStore) Delete(ctx context.Context, params *annotations.DeleteParams) error {
-	return c.primary.Delete(ctx, params)
+	return res, err
 }
 
 func (c *CompositeStore) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return c.primary.GetTags(ctx, query)
+	ch := make(chan jobRes[annotations.FindTagsResult], len(c.readers))
+	wg := sync.WaitGroup{}
+	wg.Add(len(c.readers))
+
+	for _, r := range c.readers {
+		go func(r readStore) {
+			defer wg.Done()
+			ch <- collectRes(r.GetTags(ctx, query))
+		}(r)
+	}
+
+	wg.Wait()
+	close(ch)
+
+	res := make([]*annotations.TagsDTO, 0)
+	var err error
+	for r := range ch {
+		if r.err != nil {
+			err = errors.Join(err, r.err)
+		} else {
+			res = append(res, r.res.Tags...)
+		}
+	}
+
+	// sort merged tags in ascending order
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].Tag < res[j].Tag
+	})
+
+	return annotations.FindTagsResult{Tags: res}, err
 }
 
-func (c *CompositeStore) CleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) (int64, error) {
-	return c.primary.CleanAnnotations(ctx, cfg, annotationType)
+type jobRes[T any] struct {
+	res T
+	err error
 }
 
-func (c *CompositeStore) CleanOrphanedAnnotationTags(ctx context.Context) (int64, error) {
-	return c.primary.CleanOrphanedAnnotationTags(ctx)
+func collectRes[T any](res T, err error) jobRes[T] {
+	return jobRes[T]{res, err}
 }

@@ -18,7 +18,8 @@ type RepositoryImpl struct {
 	db       db.DB
 	authZ    *accesscontrol.AuthService
 	features featuremgmt.FeatureToggles
-	store    store
+	reader   readStore
+	writer   writeStore
 }
 
 func ProvideService(
@@ -27,38 +28,44 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
 ) *RepositoryImpl {
-	var s store
 	l := log.New("annotations")
 
-	l.Debug("Initializing sql store")
-	s = NewXormStore(cfg, l.New("sql"), db, tagService)
+	xormStore := NewXormStore(cfg, l.New("annotations.sql"), db, tagService)
 
-	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, l.New("loki"))
+	l.Debug("Using xorm write store")
+	write := xormStore
+
+	var read readStore
+	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, l.New("annotations.loki"))
 	if historianStore != nil {
-		l.Debug("Initializing composite store")
-		s = NewCompositeStore(s, historianStore)
+		l.Debug("Using composite read store")
+		read = NewCompositeStore([]readStore{xormStore, historianStore})
+	} else {
+		l.Debug("Using xorm read store")
+		read = write
 	}
 
 	return &RepositoryImpl{
 		db:       db,
 		features: features,
 		authZ:    accesscontrol.NewAuthService(db, features),
-		store:    s,
+		reader:   read,
+		writer:   write,
 	}
 }
 
 func (r *RepositoryImpl) Save(ctx context.Context, item *annotations.Item) error {
-	return r.store.Add(ctx, item)
+	return r.writer.Add(ctx, item)
 }
 
 // SaveMany inserts multiple annotations at once.
 // It does not return IDs associated with created annotations. If you need this functionality, use the single-item Save instead.
 func (r *RepositoryImpl) SaveMany(ctx context.Context, items []annotations.Item) error {
-	return r.store.AddMany(ctx, items)
+	return r.writer.AddMany(ctx, items)
 }
 
 func (r *RepositoryImpl) Update(ctx context.Context, item *annotations.Item) error {
-	return r.store.Update(ctx, item)
+	return r.writer.Update(ctx, item)
 }
 
 func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
@@ -67,13 +74,13 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 		return make([]*annotations.ItemDTO, 0), err
 	}
 
-	return r.store.Get(ctx, query, resources)
+	return r.reader.Get(ctx, query, resources)
 }
 
 func (r *RepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
-	return r.store.Delete(ctx, params)
+	return r.writer.Delete(ctx, params)
 }
 
 func (r *RepositoryImpl) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return r.store.GetTags(ctx, query)
+	return r.reader.GetTags(ctx, query)
 }
