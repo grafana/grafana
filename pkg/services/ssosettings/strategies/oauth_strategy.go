@@ -39,6 +39,7 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 		"client_id":                  parseDataFromKey("client_id", section, defaultSettings),
 		"client_secret":              parseDataFromKey("client_secret", section, defaultSettings),
 		"scopes":                     parseDataFromKey("scopes", section, defaultSettings),
+		"auth_style":                 parseDataFromKey("auth_style", section, defaultSettings),
 		"auth_url":                   parseDataFromKey("auth_url", section, defaultSettings),
 		"token_url":                  parseDataFromKey("token_url", section, defaultSettings),
 		"api_url":                    parseDataFromKey("api_url", section, defaultSettings),
@@ -64,7 +65,8 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 		"allow_assign_grafana_admin": parseDataFromKey("allow_assign_grafana_admin", section, defaultSettings),
 		"auto_login":                 parseDataFromKey("auto_login", section, defaultSettings),
 		"allowed_groups":             parseDataFromKey("allowed_groups", section, defaultSettings),
-		// "skip_org_role_sync":         parseDataFromKey("skip_org_role_sync", section, defaultSettings),
+		"skip_org_role_sync":         parseDataFromKey("skip_org_role_sync", section, defaultSettings),
+		"empty_scopes":               parseDataFromKey("empty_scopes", section, defaultSettings),
 	}
 
 	extraFields := getExtraKeysForProvider(provider)
@@ -72,10 +74,10 @@ func (s *OAuthStrategy) ParseConfigFromSystem(_ context.Context, provider string
 		result[key] = parseDataFromKey(key, section, defaultSettings)
 	}
 
-	// when empty_scopes parameter exists and is true, overwrite scope with empty value
-	if section.Key("empty_scopes").MustBool(false) {
-		result["scopes"] = ""
-	}
+	// // when empty_scopes parameter exists and is true, overwrite scope with empty value
+	// if section.Key("empty_scopes").MustBool(false) {
+	// 	result["scopes"] = ""
+	// }
 
 	return result, nil
 }

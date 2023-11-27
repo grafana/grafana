@@ -4,7 +4,7 @@ import context "context"
 
 type FakeFallbackStrategy struct {
 	ExpectedIsMatch bool
-	ExpectedConfig  map[string]interface{}
+	ExpectedConfig  map[string]any
 
 	ExpectedError error
 }

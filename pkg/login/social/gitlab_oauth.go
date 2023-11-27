@@ -66,7 +66,7 @@ type userData struct {
 }
 
 func NewGitLabProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGitlab, error) {
-	info, err := createOAuthInfoFromKeyValues(settings)
+	info, err := CreateOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err
 	}

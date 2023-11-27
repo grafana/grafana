@@ -94,7 +94,7 @@ hosted_domain = test_hosted_domain
 	}
 
 	settingsKVs := convertIniSectionToMap(iniFile.Section("test"))
-	oauthInfo, err := createOAuthInfoFromKeyValues(settingsKVs)
+	oauthInfo, err := CreateOAuthInfoFromKeyValues(settingsKVs)
 	require.NoError(t, err)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)

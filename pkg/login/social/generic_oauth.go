@@ -53,7 +53,7 @@ type SocialGenericOAuth struct {
 }
 
 func NewGenericOAuthProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGenericOAuth, error) {
-	info, err := createOAuthInfoFromKeyValues(settings)
+	info, err := CreateOAuthInfoFromKeyValues(settings)
 	if err != nil {
 		return nil, err
 	}
