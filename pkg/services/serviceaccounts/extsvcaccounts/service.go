@@ -297,8 +297,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 	// update the service account's permissions
 	esa.logger.Debug("Update role permissions", "service", cmd.ExtSvcSlug, "saID", cmd.SaID)
 	if err := esa.acSvc.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
-		OrgID:             ac.GlobalOrgID,
-		Global:            true,
+		OrgID:             cmd.OrgID,
 		ExternalServiceID: cmd.ExtSvcSlug,
 		ServiceAccountID:  cmd.SaID,
 		Permissions:       cmd.Permissions,
