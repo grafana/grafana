@@ -182,7 +182,7 @@ export function addLabelToQuery(
     if (parserPositions.length === 0 || everyStreamSelectorHasMatcher === false) {
       return addFilterToStreamSelector(query, streamSelectorPositions, filter);
     } else {
-      // in case we are not adding the label to stream selectors we need to find the last position to add in each expression.
+      // If `labelType` is not set, it indicates a potential metric query (`labelType` is present only in log queries that came from a Loki instance supporting the `categorize-labels` API). In case we are not adding the label to stream selectors we need to find the last position to add in each expression.
       // E.g. in `sum(rate({foo="bar"} | logfmt [$__auto])) / sum(rate({foo="baz"} | logfmt [$__auto]))` we need to add the label at two places.
       const subExpressions = findLeaves(getNodePositionsFromQuery(query, [Expr]));
       const parserFilterPositions = [...parserPositions, ...labelFilterPositions];
