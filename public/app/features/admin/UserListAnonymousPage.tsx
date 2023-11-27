@@ -46,7 +46,6 @@ const UserListAnonymousPageUnConnected = ({ devices, showPaging, totalPages, pag
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    // TODO: fetch devices here instead
     fetchUsersAnonymous();
   }, [fetchUsersAnonymous]);
 

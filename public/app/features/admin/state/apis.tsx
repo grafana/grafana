@@ -27,16 +27,17 @@ export interface ServerStat extends AnonServerStat {
 export const getServerStats = async (): Promise<ServerStat | null> => {
   try {
     // Issue both requests simultaneously
-    const [adminStats, anonymousStats]: [ServerStat, number] = await Promise.all([
-      getBackendSrv().get('/api/admin/stats'),
-      getBackendSrv().get('/api/anonymous/stats'),
-    ]);
-
-    if (adminStats && anonymousStats) {
-      adminStats.activeDevices = anonymousStats;
+    const [adminResponse, anonymousStats]: [PromiseSettledResult<ServerStat>, PromiseSettledResult<number>] =
+      await Promise.allSettled([getBackendSrv().get('/api/admin/stats'), getBackendSrv().get('/api/anonymous/stats')]);
+    if (adminResponse.status === 'rejected') {
+      throw adminResponse.reason;
     }
 
-    return adminStats;
+    if (adminResponse && anonymousStats.status === 'fulfilled') {
+      adminResponse.value.activeDevices = anonymousStats.value;
+    }
+
+    return adminResponse.value;
   } catch (err) {
     console.error(err);
     return null;
