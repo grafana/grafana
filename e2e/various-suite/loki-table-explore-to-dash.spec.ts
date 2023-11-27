@@ -164,7 +164,7 @@ describe('Loki Query Editor', () => {
     cy.get('[data-testid="explore-no-data"]').should('not.exist');
 
     // Click on the table toggle
-    cy.contains('Table').click();
+    cy.contains('Table').click({ force: true });
 
     // One row with two cells
     cy.get('[role="cell"]').should('have.length', 2);
