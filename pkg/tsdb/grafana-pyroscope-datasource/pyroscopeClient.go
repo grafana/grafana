@@ -95,7 +95,7 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, err
 	}
 }
 
-func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64, aggregation *string) (*SeriesResponse, error) {
+func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64, aggregation *typesv1.TimeSeriesAggregationType) (*SeriesResponse, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetSeries", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
 	defer span.End()
 	req := connect.NewRequest(&querierv1.SelectSeriesRequest{

@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -328,7 +329,7 @@ func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSel
 	}, nil
 }
 
-func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64, aggregation *string) (*SeriesResponse, error) {
+func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64, aggregation *typesv1.TimeSeriesAggregationType) (*SeriesResponse, error) {
 	f.Args = []any{profileTypeID, labelSelector, start, end, groupBy, step, aggregation}
 	return &SeriesResponse{
 		Series: []*Series{

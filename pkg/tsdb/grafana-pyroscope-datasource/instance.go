@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -29,7 +30,7 @@ type ProfilingClient interface {
 	ProfileTypes(context.Context) ([]*ProfileType, error)
 	LabelNames(ctx context.Context) ([]string, error)
 	LabelValues(ctx context.Context, label string) ([]string, error)
-	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64, aggregation *string) (*SeriesResponse, error)
+	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64, aggregation *typesv1.TimeSeriesAggregationType) (*SeriesResponse, error)
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 }

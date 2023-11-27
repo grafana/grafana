@@ -43,10 +43,17 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
         value: l,
       }))
     : [];
-  const aggregationOptions = ['sum', 'avg'].map((l) => ({
-    label: l,
-    value: l,
-  }))
+
+  const aggregationOptions = [
+      {
+        value: 'sum',
+        label: 'Sum',
+      },
+      {
+        value: 'avg',
+        label: 'Average',
+      },
+    ];
 
   let collapsedInfo = [`Type: ${query.queryType}`];
   if (query.groupBy?.length) {
@@ -88,21 +95,6 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               }}
             />
           </EditorField>
-          {config.featureToggles.traceToProfiles && (
-            <EditorField label={'Span ID'} tooltip={<>Sets the span ID from which to search for profiles.</>}>
-              <Input
-                value={query.spanSelector || ['']}
-                type="string"
-                placeholder="64f170a95f537095"
-                onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
-                  onQueryChange({
-                    ...query,
-                    spanSelector: event.currentTarget.value !== '' ? [event.currentTarget.value] : [],
-                  });
-                }}
-              />
-            </EditorField>
-          )}
           <EditorField
             label={'Aggregation'}
             tooltip={
@@ -118,6 +110,21 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               }}
             />
           </EditorField>
+          {config.featureToggles.traceToProfiles && (
+            <EditorField label={'Span ID'} tooltip={<>Sets the span ID from which to search for profiles.</>}>
+              <Input
+                value={query.spanSelector || ['']}
+                type="string"
+                placeholder="64f170a95f537095"
+                onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                  onQueryChange({
+                    ...query,
+                    spanSelector: event.currentTarget.value !== '' ? [event.currentTarget.value] : [],
+                  });
+                }}
+              />
+            </EditorField>
+          )}
           <EditorField label={'Max Nodes'} tooltip={<>Sets the maximum number of nodes to return in the flamegraph.</>}>
             <Input
               value={query.maxNodes || ''}

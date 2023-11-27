@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -72,6 +73,17 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 				}
 			}
+			var aggregation typesv1.TimeSeriesAggregationType
+			if qm.Aggregation != nil {
+				switch *qm.Aggregation {
+				case "sum":
+					aggregation = typesv1.TimeSeriesAggregationType_TIME_SERIES_AGGREGATION_TYPE_SUM
+				case "avg":
+					aggregation = typesv1.TimeSeriesAggregationType_TIME_SERIES_AGGREGATION_TYPE_AVERAGE
+				case "first":
+					aggregation = typesv1.TimeSeriesAggregationType_TIME_SERIES_AGGREGATION_TYPE_FIRST_VALUE
+				}
+			}
 			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm, "function", logEntrypoint())
 			seriesResp, err := d.client.GetSeries(
 				gCtx,
@@ -81,7 +93,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				query.TimeRange.To.UnixMilli(),
 				qm.GroupBy,
 				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
-				qm.Aggregation,
+				&aggregation,
 			)
 			if err != nil {
 				span.RecordError(err)
