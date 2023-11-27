@@ -10,8 +10,8 @@ import { ClusterItemProps } from './Clusters.type';
 import { removeClusterFilters, shouldClusterBeExpanded } from './Clusters.utils';
 import ServicesTable from './ServicesTable';
 
-const ClusterItem: FC<ClusterItemProps> = ({ cluster, onDelete, onSelectionChange }) => {
-  const [isOpen, setIsOpen] = useState(shouldClusterBeExpanded(cluster.name));
+const ClusterItem: FC<ClusterItemProps> = ({ cluster, onDelete, onSelectionChange, openByDefault }) => {
+  const [isOpen, setIsOpen] = useState(shouldClusterBeExpanded(cluster.name) || openByDefault);
   const icon: IconName = cluster.type ? (DATABASE_ICONS[cluster.type] as IconName) : 'database';
 
   const handleSelectionChange = useCallback(
@@ -26,6 +26,12 @@ const ClusterItem: FC<ClusterItemProps> = ({ cluster, onDelete, onSelectionChang
       removeClusterFilters(cluster.name);
     }
   }, [isOpen, cluster.name]);
+
+  useEffect(() => {
+    if (openByDefault !== undefined) {
+      setIsOpen(openByDefault || shouldClusterBeExpanded(cluster.name));
+    }
+  }, [openByDefault, cluster.name]);
 
   return (
     <Collapse

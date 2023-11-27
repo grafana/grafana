@@ -2,10 +2,14 @@
 
 import { ExtendedColumn } from '../Table.types';
 
-export interface FilterProps {
+export interface FilterProps<T> {
   columns: Array<ExtendedColumn<any>>;
-  rawData: Object[];
-  setFilteredData: (data: Object[]) => void;
-  hasBackendFiltering: boolean;
+  rawData: T[];
+  setFilteredData: (data: T[]) => void;
+  hasBackendFiltering?: boolean;
   tableKey?: string;
+  onFilterStateChange?: (isActive: boolean) => void;
 }
+
+// prevent additional usage of "any"
+export type FilterFormValues = Record<string, any>;

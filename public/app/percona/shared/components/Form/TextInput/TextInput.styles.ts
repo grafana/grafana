@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ v1 }: GrafanaTheme2) => {
+export const getStyles = ({ v1, ...theme }: GrafanaTheme2) => {
   const { border, colors, isDark, palette, spacing, typography } = v1;
 
   const focusBoxShadow = isDark
@@ -56,6 +56,22 @@ export const getStyles = ({ v1 }: GrafanaTheme2) => {
       padding: ${spacing.formLabelPadding};
       color: ${colors.formLabel};
     `,
+    inputContainer: css`
+      position: relative;
+    `,
+    iconContainer: css`
+      position: absolute;
+      left: ${theme.spacing(1)};
+      top: 0;
+      bottom: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `,
+    icon: css`
+      color: ${theme.colors.text.secondary};
+    `,
     input: css`
       background-color: ${colors.formInputBg};
       line-height: ${typography.lineHeight.md};
@@ -98,5 +114,22 @@ export const getStyles = ({ v1 }: GrafanaTheme2) => {
         transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1) 0s;
       }
     `,
+    inputWithIcon: css`
+      /* padding + icon */
+      padding-left: calc(23px + ${theme.spacing(1)});
+    `,
+    inputClearable: css`
+      padding-right: 70px;
+    `,
+    clearContainer: css`
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `,
+    clearBtn: css``,
   };
 };
