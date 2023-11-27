@@ -30,8 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
-	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -590,7 +590,8 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
-			UserID: 10,
+			UserID:          10,
+			AuthenticatedBy: loginservice.AuthProxyAuthModule,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -629,7 +630,8 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
-			UserID: 10,
+			UserID:          10,
+			AuthenticatedBy: loginservice.AuthProxyAuthModule,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -658,7 +660,7 @@ func TestLogoutSaml(t *testing.T) {
 		SocialService:    &mockSocialService{},
 		Features:         featuremgmt.WithFeatures(),
 		authInfoService: &logintest.AuthInfoServiceFake{
-			ExpectedUserAuth: &login.UserAuth{AuthModule: login.SAMLAuthModule},
+			ExpectedUserAuth: &loginservice.UserAuth{AuthModule: loginservice.SAMLAuthModule},
 		},
 	}
 
