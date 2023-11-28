@@ -125,7 +125,7 @@ export function useFlameRender(options: RenderOptions) {
           // have labels and are the same color.
           mutedPath2D.rect(x, y, width, height);
         } else {
-          renderFunc(item, x, y, width, height, label, muted);
+          renderFunc(item, x, y, width, height, label);
         }
       }
     );
@@ -148,7 +148,9 @@ export function useFlameRender(options: RenderOptions) {
   ]);
 }
 
-type RenderFunc = (
+type RenderFunc = (item: LevelItem, x: number, y: number, width: number, height: number, label: string) => void;
+
+type RenderFuncWrap = (
   item: LevelItem,
   x: number,
   y: number,
@@ -178,10 +180,10 @@ function useRenderFunc(
       return () => {};
     }
 
-    const renderFunc: RenderFunc = (item, x, y, width, height, label, muted) => {
+    const renderFunc: RenderFunc = (item, x, y, width, height, label) => {
       ctx.beginPath();
       ctx.rect(x + BAR_BORDER_WIDTH, y, width, height);
-      ctx.fillStyle = getBarColor(item, label, muted);
+      ctx.fillStyle = getBarColor(item, label, false);
       ctx.stroke();
       ctx.fill();
 
@@ -277,7 +279,7 @@ export function walkTree(
   rangeMax: number,
   wrapperWidth: number,
   collapsedMap: CollapsedMap,
-  renderFunc: RenderFunc
+  renderFunc: RenderFuncWrap
 ) {
   // The levelOffset here is to keep track if items that we don't render because they are collapsed into single row.
   // That means we have to render next items with an offset of some rows up in the stack.
