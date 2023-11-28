@@ -99,7 +99,7 @@ func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user ident
 			groupName = rules[0].RuleGroup
 			folderUID = rules[0].NamespaceUID
 		}
-		return fmt.Sprintf("access rule group %s in folder %s", groupName, folderUID)
+		return fmt.Sprintf("access rule group '%s' in folder '%s'", groupName, folderUID)
 	})
 }
 
