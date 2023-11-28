@@ -57,7 +57,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
   } = props;
 
   return (
-    <Drawer onClose={() => setState({ showPicker: false })} title="Add another transformation">
+    <Drawer size="md" onClose={() => setState({ showPicker: false })} title="Add another transformation">
       <div className={styles.searchWrapper}>
         <Input
           data-testid={selectors.components.Transforms.searchInput}
@@ -184,33 +184,29 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
             key={transform.id}
           >
             <Card.Heading className={styles.heading}>
-              <>
-                <span>{transform.name}</span>
-                <span className={styles.pluginStateInfoWrapper}>
-                  <PluginStateInfo state={transform.state} />
-                </span>
-              </>
+              <span>{transform.name}</span>
+              <span className={styles.pluginStateInfoWrapper}>
+                <PluginStateInfo state={transform.state} />
+              </span>
             </Card.Heading>
             <Card.Description className={styles.description}>
-              <>
-                <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
-                {showIllustrations && (
-                  <span>
-                    <img
-                      className={styles.image}
-                      src={getImagePath(transform.id, !isApplicable)}
-                      alt={transform.name}
-                    />
-                  </span>
-                )}
-                {!isApplicable && applicabilityDescription !== null && (
-                  <IconButton
-                    className={styles.cardApplicableInfo}
-                    name="info-circle"
-                    tooltip={applicabilityDescription}
+              <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
+              {showIllustrations && (
+                <span>
+                  <img
+                    className={styles.image}
+                    src={getImagePath(transform.id, !isApplicable)}
+                    alt={transform.name}
                   />
-                )}
-              </>
+                </span>
+              )}
+              {!isApplicable && applicabilityDescription !== null && (
+                <IconButton
+                  className={styles.cardApplicableInfo}
+                  name="info-circle"
+                  tooltip={applicabilityDescription}
+                />
+              )}
             </Card.Description>
           </Card>
         );
