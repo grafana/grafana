@@ -80,7 +80,11 @@ func (r *RuleService) getRulesQueryEvaluator(rules ...*models.AlertRule) accessc
 func (r *RuleService) AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
 	ds := r.getRulesQueryEvaluator(rule)
 	return r.HasAccessOrError(ctx, user, ds, func() string {
-		return fmt.Sprintf("access rule UID %s", rule.UID)
+		suffix := ""
+		if rule.UID != "" {
+			suffix = fmt.Sprintf(" of the rule UID '%s'", rule.UID)
+		}
+		return fmt.Sprintf("access one or many data sources%s", suffix)
 	})
 }
 
