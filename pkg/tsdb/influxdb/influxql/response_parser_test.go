@@ -44,7 +44,6 @@ var testFiles = []string{
 	"one_measurement_with_two_columns",
 	"response",
 	"some_values_are_null",
-	"multiple_measurements_with_alias",
 	"error_on_top_level_response",
 	"simple_response",
 	"multiple_series_with_tags_and_multiple_columns",

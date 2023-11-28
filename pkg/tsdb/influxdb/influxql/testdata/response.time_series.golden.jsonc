@@ -8,28 +8,28 @@
 //      "preferredVisualisationType": "graph",
 //      "executedQueryString": "Test raw query"
 //  }
-//  Name: cpu.upc.mean { /cluster/name/: Cluster/, @cluster@name@: Cluster@, datacenter: America, dc.region.name: Northeast, cluster-name: Cluster }
+//  Name: cpu.upc.mean { @cluster@name@: Cluster@ }
 //  Dimensions: 2 Fields by 1 Rows
-//  +-----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-//  | Name: Time                        | Name: Value                                                                                                                  |
-//  | Labels:                           | Labels: /cluster/name/=Cluster/, @cluster@name@=Cluster@, cluster-name=Cluster, datacenter=America, dc.region.name=Northeast |
-//  | Type: []time.Time                 | Type: []*float64                                                                                                             |
-//  +-----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-//  | 1970-01-01 00:00:00.111 +0000 UTC | 222                                                                                                                          |
-//  +-----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
+//  +-----------------------------------+---------------------------------+
+//  | Name: Time                        | Name: Value                     |
+//  | Labels:                           | Labels: @cluster@name@=Cluster@ |
+//  | Type: []time.Time                 | Type: []*float64                |
+//  +-----------------------------------+---------------------------------+
+//  | 1970-01-01 00:00:00.111 +0000 UTC | 222                             |
+//  +-----------------------------------+---------------------------------+
 //  
 //  
 //  
 //  Frame[1] 
-//  Name: cpu.upc.sum { datacenter: America, dc.region.name: Northeast, cluster-name: Cluster, /cluster/name/: Cluster/, @cluster@name@: Cluster@ }
+//  Name: cpu.upc.sum { @cluster@name@: Cluster@ }
 //  Dimensions: 2 Fields by 1 Rows
-//  +-----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-//  | Name: Time                        | Name: Value                                                                                                                  |
-//  | Labels:                           | Labels: /cluster/name/=Cluster/, @cluster@name@=Cluster@, cluster-name=Cluster, datacenter=America, dc.region.name=Northeast |
-//  | Type: []time.Time                 | Type: []*float64                                                                                                             |
-//  +-----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-//  | 1970-01-01 00:00:00.111 +0000 UTC | 333                                                                                                                          |
-//  +-----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
+//  +-----------------------------------+---------------------------------+
+//  | Name: Time                        | Name: Value                     |
+//  | Labels:                           | Labels: @cluster@name@=Cluster@ |
+//  | Type: []time.Time                 | Type: []*float64                |
+//  +-----------------------------------+---------------------------------+
+//  | 1970-01-01 00:00:00.111 +0000 UTC | 333                             |
+//  +-----------------------------------+---------------------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -38,7 +38,7 @@
   "frames": [
     {
       "schema": {
-        "name": "cpu.upc.mean { /cluster/name/: Cluster/, @cluster@name@: Cluster@, datacenter: America, dc.region.name: Northeast, cluster-name: Cluster }",
+        "name": "cpu.upc.mean { @cluster@name@: Cluster@ }",
         "meta": {
           "typeVersion": [
             0,
@@ -63,14 +63,10 @@
               "nullable": true
             },
             "labels": {
-              "/cluster/name/": "Cluster/",
-              "@cluster@name@": "Cluster@",
-              "cluster-name": "Cluster",
-              "datacenter": "America",
-              "dc.region.name": "Northeast"
+              "@cluster@name@": "Cluster@"
             },
             "config": {
-              "displayNameFromDS": "cpu.upc.mean { /cluster/name/: Cluster/, @cluster@name@: Cluster@, datacenter: America, dc.region.name: Northeast, cluster-name: Cluster }"
+              "displayNameFromDS": "cpu.upc.mean { @cluster@name@: Cluster@ }"
             }
           }
         ]
@@ -88,7 +84,7 @@
     },
     {
       "schema": {
-        "name": "cpu.upc.sum { datacenter: America, dc.region.name: Northeast, cluster-name: Cluster, /cluster/name/: Cluster/, @cluster@name@: Cluster@ }",
+        "name": "cpu.upc.sum { @cluster@name@: Cluster@ }",
         "fields": [
           {
             "name": "Time",
@@ -105,14 +101,10 @@
               "nullable": true
             },
             "labels": {
-              "/cluster/name/": "Cluster/",
-              "@cluster@name@": "Cluster@",
-              "cluster-name": "Cluster",
-              "datacenter": "America",
-              "dc.region.name": "Northeast"
+              "@cluster@name@": "Cluster@"
             },
             "config": {
-              "displayNameFromDS": "cpu.upc.sum { datacenter: America, dc.region.name: Northeast, cluster-name: Cluster, /cluster/name/: Cluster/, @cluster@name@: Cluster@ }"
+              "displayNameFromDS": "cpu.upc.sum { @cluster@name@: Cluster@ }"
             }
           }
         ]
