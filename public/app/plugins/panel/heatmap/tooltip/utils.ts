@@ -72,15 +72,12 @@ export const getFieldFromData = (data: DataFrame, fieldType: string, isSparse: b
   return field;
 };
 
-export const getSparseCellMinMax = (
-  data: HeatmapData,
-  index: number
-): BucketsMinMax => {
+export const getSparseCellMinMax = (data: HeatmapData, index: number): BucketsMinMax => {
   let fields = data.heatmap!.fields;
 
-  let xMax = fields.find(f => f.name === 'xMax')!;
-  let yMin = fields.find(f => f.name === 'yMin')!;
-  let yMax = fields.find(f => f.name === 'yMax')!;
+  let xMax = fields.find((f) => f.name === 'xMax')!;
+  let yMin = fields.find((f) => f.name === 'yMin')!;
+  let yMax = fields.find((f) => f.name === 'yMax')!;
 
   let interval = xMax.config.interval!;
 
