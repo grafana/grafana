@@ -217,7 +217,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Infrastructure",
 				Id:         navtree.NavIDInfrastructure,
-				SubTitle:   "Observability and infrastructure apps",
+				SubTitle:   "Understand your infrastructure's health",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightInfrastructure,
 				Children:   []*navtree.NavLink{appLink},
@@ -227,7 +227,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Frontend",
 				Id:         navtree.NavIDFrontend,
-				SubTitle:   "Observability and infrastructure apps",
+				SubTitle:   "Gain real user monitoring insights",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightFrontend,
 				Children:   []*navtree.NavLink{appLink},
