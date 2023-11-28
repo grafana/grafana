@@ -10,7 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
-import { getTrailStore } from './TrailStore';
+import { getTrailStore } from './TrailStore/TrailStore';
 import { getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {

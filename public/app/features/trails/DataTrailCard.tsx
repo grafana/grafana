@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
-import { useStyles2, Stack, Icon, Tooltip } from '@grafana/ui';
+import { useStyles2, Stack, Icon, Tooltip, Button } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
 import { LOGS_METRIC, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
@@ -47,9 +47,14 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
       </button>
       {onDelete && (
         <Tooltip content={'Remove bookmark'}>
-          <button className={styles.delete} onClick={onDelete}>
-            <Icon className={styles.deleteIcon} name={'times-circle'} size={'md'} />
-          </button>
+          <Button
+            size="sm"
+            icon="trash-alt"
+            variant="destructive"
+            fill="text"
+            className={styles.delete}
+            onClick={onDelete}
+          />
         </Tooltip>
       )}
     </div>
@@ -109,25 +114,13 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0),
     }),
     delete: css({
-      border: 'none',
-      background: 'transparent',
-      padding: 0,
-      margin: 0,
-      cursor: 'pointer',
       position: 'absolute',
-      top: '-12px',
-      right: '-7px',
-      color: theme.colors.error.main,
-      '&:hover': {
-        color: theme.colors.error.shade,
-      },
+      top: '2px',
+      right: '2px',
     }),
     wrapper: css({
       position: 'relative',
       display: 'flex',
-    }),
-    deleteIcon: css({
-      background: theme.colors.background.primary,
     }),
   };
 }
