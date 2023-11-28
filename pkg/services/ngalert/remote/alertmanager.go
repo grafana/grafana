@@ -28,7 +28,7 @@ import (
 const readyPath = "/-/ready"
 
 type stateStore interface {
-	GetFullState(ctx context.Context) (string, error)
+	GetFullState(ctx context.Context, keys ...string) (string, error)
 }
 
 type Alertmanager struct {

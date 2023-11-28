@@ -78,27 +78,26 @@ func TestFileStore_FilepathFor(t *testing.T) {
 
 func TestFileStore_GetFullState(t *testing.T) {
 	ctx := context.Background()
-	store := fakes.NewFakeKVStore(t)
 
-	t.Run("empty values", func(tt *testing.T) {
-		state := clusterpb.FullState{
-			Parts: []clusterpb.Part{
-				{Key: "silences", Data: nil},
-				{Key: "notifications", Data: nil},
-			},
-		}
-		b, err := state.Marshal()
-		require.NoError(t, err)
-
-		encodedFullState := base64.StdEncoding.EncodeToString(b)
-
+	t.Run("empty store", func(tt *testing.T) {
+		store := fakes.NewFakeKVStore(t)
 		fs := NewFileStore(1, store, workingDir)
-		got, err := fs.GetFullState(ctx)
-		require.NoError(t, err)
-		require.Equal(t, encodedFullState, got)
+		_, err := fs.GetFullState(ctx, "silences", "notifications")
+		require.NotNil(tt, err)
+		require.Equal(tt, "no values for org 1", err.Error())
+	})
+
+	t.Run("no values for key", func(tt *testing.T) {
+		store := fakes.NewFakeKVStore(t)
+		require.NoError(t, store.Set(ctx, 1, "alertmanager", "test-key", "test-value"))
+		fs := NewFileStore(1, store, workingDir)
+		_, err := fs.GetFullState(ctx, "silences")
+		require.NotNil(tt, err)
+		require.Equal(tt, "no value found for key \"silences\"", err.Error())
 	})
 
 	t.Run("non-empty values", func(tt *testing.T) {
+		store := fakes.NewFakeKVStore(t)
 		silences := []byte("test-silences")
 		nflog := []byte("test-notifications")
 		require.NoError(t, store.Set(ctx, 1, "alertmanager", "silences", base64.StdEncoding.EncodeToString(silences)))
@@ -117,7 +116,7 @@ func TestFileStore_GetFullState(t *testing.T) {
 
 		fs := NewFileStore(1, store, workingDir)
 
-		got, err := fs.GetFullState(ctx)
+		got, err := fs.GetFullState(ctx, "silences", "notifications")
 		require.NoError(t, err)
 		require.Equal(t, encodedFullState, got)
 	})
