@@ -1,7 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { rest } from 'msw';
-import { SetupServer } from 'msw/lib/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
@@ -13,7 +11,10 @@ import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import NewContactPoint from './NewContactPoint';
-import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
+import setupGrafanaManagedServer, {
+  setupSaveEndpointMock,
+  setupTestEndpointMock,
+} from './__mocks__/grafanaManagedServer';
 
 import 'core-js/stable/structured-clone';
 
@@ -25,8 +26,9 @@ beforeEach(() => {
   setupGrafanaManagedServer(server);
 });
 
-it('should be able to test a receiver', async () => {
+it('should be able to test and save a receiver', async () => {
   const testMock = setupTestEndpointMock(server);
+  const saveMock = setupSaveEndpointMock(server);
 
   render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName="grafana">
@@ -71,22 +73,13 @@ it('should be able to test a receiver', async () => {
     expect(testMock).toHaveBeenCalled();
     expect(testMock.mock.lastCall).toMatchSnapshot();
   });
-});
 
-const setupTestEndpointMock = (server: SetupServer) => {
-  const mock = jest.fn();
-
-  const testHandler = rest.post('/api/alertmanager/grafana/config/api/v1/receivers/test', async (req, res, ctx) => {
-    const requestBody = await req.json();
-    mock(requestBody);
-
-    return res.once(ctx.status(200));
+  await user.click(ui.saveContactButton.get());
+  await waitFor(() => {
+    expect(saveMock).toHaveBeenCalled();
+    expect(saveMock.mock.lastCall).toMatchSnapshot();
   });
-
-  server.use(testHandler);
-
-  return mock;
-};
+});
 
 const ui = {
   saveContactButton: byRole('button', { name: /save contact point/i }),

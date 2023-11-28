@@ -5,6 +5,7 @@ import React, { PropsWithChildren } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
@@ -16,6 +17,9 @@ import { DataSourceType } from '../../utils/datasource';
 import ContactPoints, { ContactPoint } from './ContactPoints.v2';
 import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
 import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimirFlavoredServer';
+import setupVanillaAlertmanagerFlavoredServer, {
+  VANILLA_ALERTMANAGER_DATASOURCE_UID,
+} from './__mocks__/vanillaAlertmanagerServer';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -65,6 +69,11 @@ describe('contact points', () => {
 
       // check for available actions – our mock 4 contact points, 1 of them is provisioned
       expect(screen.getByRole('link', { name: 'add contact point' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'export all' })).toBeInTheDocument();
+
+      // 2 of them are unused by routes in the mock response
+      const unusedBadge = screen.getAllByLabelText('unused');
+      expect(unusedBadge).toHaveLength(2);
 
       const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
       expect(viewProvisioned).toBeInTheDocument();
@@ -229,7 +238,7 @@ describe('contact points', () => {
       );
     });
 
-    it('should show / hide loading states', async () => {
+    it('should show / hide loading states, have the right actions enabled', async () => {
       render(
         <TestProvider>
           <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={MIMIR_DATASOURCE_UID}>
@@ -247,6 +256,76 @@ describe('contact points', () => {
       expect(screen.getByText('mixed')).toBeInTheDocument();
       expect(screen.getByText('some webhook')).toBeInTheDocument();
       expect(screen.getAllByTestId('contact-point')).toHaveLength(2);
+
+      // check for available actions – export should be disabled
+      expect(screen.getByRole('link', { name: 'add contact point' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'export all' })).not.toBeInTheDocument();
+
+      // 1 of them is used by a route in the mock response
+      const unusedBadge = screen.getAllByLabelText('unused');
+      expect(unusedBadge).toHaveLength(1);
+
+      const editButtons = screen.getAllByRole('link', { name: 'edit-action' });
+      expect(editButtons).toHaveLength(2);
+      editButtons.forEach((button) => {
+        expect(button).not.toBeDisabled();
+      });
+
+      const moreActionsButtons = screen.getAllByRole('button', { name: 'more-actions' });
+      expect(moreActionsButtons).toHaveLength(2);
+      moreActionsButtons.forEach((button) => {
+        expect(button).not.toBeDisabled();
+      });
+    });
+  });
+
+  describe('Vanilla Alertmanager ', () => {
+    beforeEach(() => {
+      setupVanillaAlertmanagerFlavoredServer(server);
+    });
+
+    beforeAll(() => {
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ]);
+
+      const alertManager = mockDataSource<AlertManagerDataSourceJsonData>({
+        name: VANILLA_ALERTMANAGER_DATASOURCE_UID,
+        uid: VANILLA_ALERTMANAGER_DATASOURCE_UID,
+        type: DataSourceType.Alertmanager,
+        jsonData: {
+          implementation: AlertManagerImplementation.prometheus,
+          handleGrafanaManagedAlerts: true,
+        },
+      });
+
+      setupDataSources(alertManager);
+    });
+
+    it("should not allow any editing because it's not supported", async () => {
+      render(
+        <TestProvider>
+          <AlertmanagerProvider
+            accessType={'notification'}
+            alertmanagerSourceName={VANILLA_ALERTMANAGER_DATASOURCE_UID}
+          >
+            <ContactPoints />
+          </AlertmanagerProvider>
+        </TestProvider>
+      );
+
+      await waitFor(async () => {
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
+        await waitForElementToBeRemoved(screen.getByText('Loading...'));
+        expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('link', { name: 'add contact point' })).not.toBeInTheDocument();
+
+      const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
+      expect(viewProvisioned).toBeInTheDocument();
+      expect(viewProvisioned).not.toBeDisabled();
     });
   });
 });

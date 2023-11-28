@@ -21,13 +21,9 @@
       "group_wait": "30s",
       "matchers": [],
       "mute_time_intervals": [],
-      "receiver": "email",
+      "receiver": "some webhook",
       "repeat_interval": "5h",
-      "routes": [
-        {
-          "receiver": "mixed"
-        }
-      ]
+      "routes": []
     },
     "templates": []
   }

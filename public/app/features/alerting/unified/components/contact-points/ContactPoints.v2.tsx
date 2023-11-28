@@ -45,14 +45,14 @@ import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 import { GrafanaReceiverExporter } from '../export/GrafanaReceiverExporter';
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
-import { GlobalConfigAlert } from '../receivers/ReceiversAndTemplatesView';
-import { UnusedContactPointBadge } from '../receivers/ReceiversTable';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
-import { ContactPointsFilter } from './ContactPointsFilter';
-import { useDeleteContactPointModal } from './Modals';
 import { NotificationTemplates } from './NotificationTemplates';
+import { ContactPointsFilter } from './components/ContactPointsFilter';
+import { GlobalConfigAlert } from './components/GlobalConfigAlert';
+import { useDeleteContactPointModal } from './components/Modals';
+import { UnusedContactPointBadge } from './components/UnusedBadge';
 import {
   RECEIVER_META_KEY,
   RECEIVER_PLUGIN_META_KEY,
@@ -147,6 +147,7 @@ const ContactPoints = () => {
                             <Button
                               icon="download-alt"
                               variant="secondary"
+                              aria-label="export all"
                               disabled={!exportContactPointsAllowed}
                               onClick={() => showExportDrawer(ALL_CONTACT_POINTS)}
                             >

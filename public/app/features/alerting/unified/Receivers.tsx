@@ -7,7 +7,7 @@ const EditContactPoint = SafeDynamicImport(() => import('./components/contact-po
 const NewContactPoint = SafeDynamicImport(() => import('./components/contact-points/NewContactPoint'));
 const EditMessageTemplate = SafeDynamicImport(() => import('./components/contact-points/EditMessageTemplate'));
 const NewMessageTemplate = SafeDynamicImport(() => import('./components/contact-points/NewMessageTemplate'));
-const GlobalConfig = SafeDynamicImport(() => import('./components/contact-points/GlobalConfig'));
+const GlobalConfig = SafeDynamicImport(() => import('./components/contact-points/components/GlobalConfig'));
 const DuplicateMessageTemplate = SafeDynamicImport(
   () => import('./components/contact-points/DuplicateMessageTemplate')
 );

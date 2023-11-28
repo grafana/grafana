@@ -1,5 +1,5 @@
 import { rest } from 'msw';
-import { SetupServer } from 'msw/lib/node';
+import { SetupServer } from 'msw/node';
 
 import { AlertmanagerChoice, AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversStateDTO } from 'app/types';
@@ -35,4 +35,34 @@ export default (server: SetupServer) => {
   mockApi(server).grafanaNotifiers(grafanaNotifiersMock);
 
   return server;
+};
+
+export const setupTestEndpointMock = (server: SetupServer) => {
+  const mock = jest.fn();
+
+  server.use(
+    rest.post('/api/alertmanager/grafana/config/api/v1/receivers/test', async (req, res, ctx) => {
+      const requestBody = await req.json();
+      mock(requestBody);
+
+      return res.once(ctx.status(200));
+    })
+  );
+
+  return mock;
+};
+
+export const setupSaveEndpointMock = (server: SetupServer) => {
+  const mock = jest.fn();
+
+  server.use(
+    rest.post('/api/alertmanager/grafana/config/api/v1/alerts', async (req, res, ctx) => {
+      const requestBody = await req.json();
+      mock(requestBody);
+
+      return res.once(ctx.status(200));
+    })
+  );
+
+  return mock;
 };
