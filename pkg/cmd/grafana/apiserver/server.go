@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -58,25 +57,19 @@ func newExampleServerOptions(out, errOut io.Writer) *ExampleServerOptions {
 	}
 }
 
-func (o *ExampleServerOptions) LoadAPIGroupBuilders(args []string) error {
-	o.builders = []grafanaAPIServer.APIGroupBuilder{}
+func (o *ExampleServerOptions) LoadAPIGroupBuilders(args []string, builders []grafanaAPIServer.APIGroupBuilder) error {
 	for _, g := range args {
 		switch g {
 		// No dependencies for testing
 		case "example.grafana.app":
 			o.builders = append(o.builders, &example.TestingAPIBuilder{})
-		case "snapshosts.grafana.app":
-
-			//	snapshots.RegisterAPIService()
-
-			return fmt.Errorf("todo... manual wire")
+		case "playlist.grafana.app":
+			fallthrough
+		case "snapshots.grafana.app":
+			o.builders = builders
 		default:
 			return fmt.Errorf("unknown group: %s", g)
 		}
-	}
-
-	if len(o.builders) < 1 {
-		return fmt.Errorf("expected group name(s) in the command line arguments")
 	}
 
 	// Install schemas

@@ -35,15 +35,21 @@ type PlaylistAPIBuilder struct {
 	gv         schema.GroupVersion
 }
 
-func RegisterAPIService(p playlistsvc.Service,
-	apiregistration grafanaapiserver.APIRegistrar,
+func NewAPIService(p playlistsvc.Service,
 	cfg *setting.Cfg,
 ) *PlaylistAPIBuilder {
-	builder := &PlaylistAPIBuilder{
+	return &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         schema.GroupVersion{Group: GroupName, Version: VersionID},
 	}
+}
+
+func RegisterAPIService(p playlistsvc.Service,
+	apiregistration grafanaapiserver.APIRegistrar,
+	cfg *setting.Cfg,
+) *PlaylistAPIBuilder {
+	builder := NewAPIService(p, cfg)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }

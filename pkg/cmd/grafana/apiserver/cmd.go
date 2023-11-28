@@ -1,16 +1,20 @@
 package apiserver
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana/pkg/registry/apis/snapshots"
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/spf13/cobra"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/component-base/cli"
 )
 
-func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan struct{}) *cobra.Command {
+func newCommandStartExampleAPIServer(o *ExampleServerOptions, snapshotsBuilder *snapshots.SnapshotsAPIBuilder, stopCh <-chan struct{}) *cobra.Command {
 	// While this exists as an experimental feature, we require adding the scarry looking command line
 	devAcknowledgementFlag := "grafana-enable-experimental-apiserver"
 	devAcknowledgementNotice := "The apiserver command is in heavy development.  The entire setup is subject to change without notice"
@@ -31,7 +35,7 @@ func newCommandStartExampleAPIServer(o *ExampleServerOptions, stopCh <-chan stru
 		},
 		RunE: func(c *cobra.Command, args []string) error {
 			// Load each group from the args
-			if err := o.LoadAPIGroupBuilders(args[1:]); err != nil {
+			if err := o.LoadAPIGroupBuilders(args[1:], []grafanaAPIServer.APIGroupBuilder{snapshotsBuilder}); err != nil {
 				return err
 			}
 
@@ -69,7 +73,14 @@ func RunCLI() int {
 	stopCh := genericapiserver.SetupSignalHandler()
 
 	options := newExampleServerOptions(os.Stdout, os.Stderr)
-	cmd := newCommandStartExampleAPIServer(options, stopCh)
+
+	cfg, _ := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		Config:   "conf/custom.ini",
+		HomePath: "./",
+	})
+	sb, _ := initializeSnapshotsAPIBuilder(context.TODO(), cfg)
+
+	cmd := newCommandStartExampleAPIServer(options, sb, stopCh)
 
 	return cli.Run(cmd)
 }
