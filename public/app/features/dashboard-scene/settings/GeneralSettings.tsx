@@ -7,7 +7,6 @@ import {
   SceneObjectState,
   SceneObjectRef,
   SceneTimePicker,
-  sceneGraph,
 } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import {
@@ -53,91 +52,122 @@ export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
 {
+  private get _dashboard(): DashboardScene {
+    return this.state.dashboardRef.resolve();
+  }
+
   public getUrlKey(): string {
     return 'settings';
   }
 
-  static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
-    const dashboard = model.state.dashboardRef?.resolve();
-    const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-    const { title, description, tags, meta, editable, graphTooltip, overlay } = dashboard.useState();
-    const timeRange = sceneGraph.getTimeRange(dashboard);
-    const refreshPicker = dashboardSceneGraph.getRefreshPicker(dashboard);
+  public getDashboard(): DashboardScene {
+    return this._dashboard;
+  }
 
-    const onTitleChange = (value: string) => {
-      dashboard.setState({ title: value });
+  public getTimeZone() {
+    return this._dashboard.state.$timeRange?.getTimeZone();
+  }
+
+  public getWeekStart() {
+    return this._dashboard.state.$timeRange?.state.weekStart;
+  }
+
+  public getRefreshIntervals() {
+    return dashboardSceneGraph.getRefreshPicker(this._dashboard)?.state.intervals;
+  }
+
+  public onTitleChange = (value: string) => {
+    this._dashboard.setState({ title: value });
+  };
+
+  public onDescriptionChange = (value: string) => {
+    this._dashboard.setState({ description: value });
+  };
+
+  public onTagsChange = (value: string[]) => {
+    this._dashboard.setState({ tags: value });
+  };
+
+  public onFolderChange = (newUID: string, newTitle: string) => {
+    const newMeta = {
+      ...this._dashboard.state.meta,
+      folderUid: newUID || this._dashboard.state.meta.folderUid,
+      folderTitle: newTitle || this._dashboard.state.meta.folderTitle,
+      hasUnsavedFolderChange: true,
     };
 
-    const onDescriptionChange = (value: string) => {
-      dashboard.setState({ description: value });
-    };
+    this._dashboard.setState({ meta: newMeta });
+  };
 
-    const onTagsChange = (value: string[]) => {
-      dashboard.setState({ tags: value });
-    };
+  public onEditableChange = (value: boolean) => {
+    this._dashboard.setState({ editable: value });
+  };
 
-    const onFolderChange = (newUID: string, newTitle: string) => {
-      const newMeta = {
-        ...meta,
-        folderUid: newUID || meta.folderUid,
-        folderTitle: newTitle || meta.folderTitle,
-        hasUnsavedFolderChange: true,
-      };
+  public onTimeZoneChange = (value: TimeZone) => {
+    this._dashboard.state.$timeRange?.setState({
+      timeZone: value,
+    });
+  };
 
-      dashboard.setState({ meta: newMeta });
-    };
+  public onWeekStartChange = (value: string) => {
+    this._dashboard.state.$timeRange?.setState({
+      weekStart: value,
+    });
+  };
 
-    const onEditableChange = (value: boolean) => {
-      dashboard.setState({ editable: value });
-    };
+  public onRefreshIntervalChange = (value: string[]) => {
+    const control = dashboardSceneGraph.getRefreshPicker(this._dashboard);
+    control?.setState({
+      intervals: value,
+    });
+  };
 
-    const onTimeZoneChange = (value: TimeZone) => {
-      dashboard.state.$timeRange?.setState({
-        timeZone: value,
-      });
-    };
+  public onNowDelayChange = (value: string) => {
+    // TODO: Figure out how to store nowDelay in Dashboard Scene
+  };
 
-    const onWeekStartChange = (value: string) => {
-      dashboard.state.$timeRange?.setState({
-        weekStart: value,
-      });
-    };
-
-    const onRefreshIntervalChange = (value: string[]) => {
-      const control = dashboardSceneGraph.getRefreshPicker(dashboard);
-      control?.setState({
-        intervals: value,
-      });
-    };
-
-    const onNowDelayChange = (value: string) => {
-      // TODO: Figure out how to store nowDelay in Dashboard Scene
-    };
-
-    const onHideTimePickerChange = (value: boolean) => {
-      if (dashboard.state.controls instanceof DashboardControls) {
-        for (const control of dashboard.state.controls.state.timeControls) {
-          if (control instanceof SceneTimePicker) {
-            control.setState({
-              // TODO: Control visibility from DashboardControls
-              // hidden: value,
-            });
-          }
+  public onHideTimePickerChange = (value: boolean) => {
+    if (this._dashboard.state.controls instanceof DashboardControls) {
+      for (const control of this._dashboard.state.controls.state.timeControls) {
+        if (control instanceof SceneTimePicker) {
+          control.setState({
+            // TODO: Control visibility from DashboardControls
+            // hidden: value,
+          });
         }
       }
-    };
+    }
+  };
 
-    const onLiveNowChange = (value: boolean) => {
-      // TODO: Figure out how to store liveNow in Dashboard Scene
-    };
+  public onLiveNowChange = (value: boolean) => {
+    // TODO: Figure out how to store liveNow in Dashboard Scene
+  };
 
-    const onTooltipChange = (value: number) => {
-      dashboard.setState({ graphTooltip: value });
-    };
+  public onTooltipChange = (value: number) => {
+    this._dashboard.setState({ graphTooltip: value });
+  };
+
+  static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
+    const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
+    const { title, description, tags, meta, editable, graphTooltip, overlay } = model.getDashboard().useState();
+    const {
+      onTitleChange,
+      onDescriptionChange,
+      onTagsChange,
+      onFolderChange,
+      onEditableChange,
+      onTimeZoneChange,
+      onWeekStartChange,
+      onRefreshIntervalChange,
+      onNowDelayChange,
+      onHideTimePickerChange,
+      onLiveNowChange,
+      onTooltipChange,
+    } = model;
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-        <NavToolbarActions dashboard={dashboard} />
+        <NavToolbarActions dashboard={model.getDashboard()} />
         <div style={{ maxWidth: '600px' }}>
           <Box marginBottom={5}>
             <Field
@@ -213,7 +243,7 @@ export class GeneralSettingsEditView
             onNowDelayChange={onNowDelayChange}
             onHideTimePickerChange={onHideTimePickerChange}
             onLiveNowChange={onLiveNowChange}
-            refreshIntervals={refreshPicker?.state?.intervals}
+            refreshIntervals={model.getRefreshIntervals()}
             // TODO: Control visibility of time picker
             // timePickerHidden={timepicker?.state?.hidden}
             // TODO: Implement this in dashboard scene
@@ -221,8 +251,8 @@ export class GeneralSettingsEditView
             // TODO: Implement this in dashboard scene
             // liveNow={liveNow}
             liveNow={false}
-            timezone={timeRange.state.timeZone || ''}
-            weekStart={timeRange.state.weekStart || ''}
+            timezone={model.getTimeZone() || ''}
+            weekStart={model.getWeekStart() || ''}
           />
 
           {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
