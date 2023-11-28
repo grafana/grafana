@@ -1227,6 +1227,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		db:                   db,
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
+		metrics:              newFoldersMetrics(nil),
 	}
 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
