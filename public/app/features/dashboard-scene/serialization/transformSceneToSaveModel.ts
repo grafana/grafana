@@ -110,6 +110,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     description: state.description || undefined,
     uid: state.uid,
     id: state.id,
+    editable: state.editable,
     time: {
       from: timeRange.from,
       to: timeRange.to,
