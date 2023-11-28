@@ -92,6 +92,9 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
 
+    console.log('authenticated by', this.user.authenticatedBy);
+    console.log('user', this.user);
+
     this.scheduleTokenRotationJob();
   }
 
