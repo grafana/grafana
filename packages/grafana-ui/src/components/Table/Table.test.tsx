@@ -658,8 +658,8 @@ describe('Table', () => {
     });
   });
 
-  describe('when data hover events are emitted', () => {
-    it('should highlight the row', () => {
+  describe('when highlight row index prop is set', () => {
+    it('should highlight the first row', () => {
       const frame = toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000] },
@@ -678,7 +678,7 @@ describe('Table', () => {
       expect(rows[3].style.backgroundColor).toBeFalsy();
       expect(rows[4].style.backgroundColor).toBeFalsy();
     });
-    it('should highlight the first row that matches the time value', () => {
+    it('should highlight the third row', () => {
       const frame = toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000, 10000, 10000] },
@@ -686,20 +686,19 @@ describe('Table', () => {
         ],
       });
 
-      getTestContext({ data: frame, rowHighlightIndex: 0 });
+      getTestContext({ data: frame, rowHighlightIndex: 2 });
 
       let rows = within(getTable()).getAllByRole('row');
 
       // if not set, returns an empty string
-      expect(rows[1].style.backgroundColor).toBeTruthy();
-
+      expect(rows[1].style.backgroundColor).toBeFalsy();
       expect(rows[2].style.backgroundColor).toBeFalsy();
-      expect(rows[3].style.backgroundColor).toBeFalsy();
+      expect(rows[3].style.backgroundColor).toBeTruthy();
       expect(rows[4].style.backgroundColor).toBeFalsy();
       expect(rows[5].style.backgroundColor).toBeFalsy();
       expect(rows[6].style.backgroundColor).toBeFalsy();
     });
-    it('should not highlight the row if wrong index', () => {
+    it('should not highlight any row if wrong index', () => {
       const frame = toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [10000, 20000, 30000, 40000] },

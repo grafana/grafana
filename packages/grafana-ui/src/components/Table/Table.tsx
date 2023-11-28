@@ -1,7 +1,5 @@
-import { css, cx } from '@emotion/css';
-import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Cell,
   useAbsoluteLayout,
   useExpanded,
   useFilters,
@@ -20,11 +18,9 @@ import { useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
-import { getExpandedRowHeight, ExpandedRow } from './ExpandedRow';
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
 import { RowsList } from './RowsList';
-import { TableCell } from './TableCell';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
@@ -237,76 +233,6 @@ export const Table = memo((props: Props) => {
   useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
-  const rowIndexForPagination = useCallback(
-    (index: number) => {
-      return state.pageIndex * state.pageSize + index;
-    },
-    [state.pageIndex, state.pageSize]
-  );
-
-  const RenderRow = useCallback(
-    ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
-      const indexForPagination = rowIndexForPagination(index);
-      const row = rows[indexForPagination];
-
-      prepareRow(row);
-
-      const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
-
-      if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
-        style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
-      }
-
-      return (
-        <div
-          {...row.getRowProps({ style })}
-          className={cx(tableStyles.row, expandedRowStyle)}
-          onMouseEnter={() => (onRowHover ? onRowHover(index, data) : null)}
-          onMouseLeave={() => (onRowLeave ? onRowLeave() : null)}
-        >
-          {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {nestedDataField && state.expanded[row.index] && (
-            <ExpandedRow
-              nestedData={nestedDataField}
-              tableStyles={tableStyles}
-              rowIndex={index}
-              width={width}
-              cellHeight={cellHeight}
-            />
-          )}
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-              timeRange={timeRange}
-              frame={data}
-            />
-          ))}
-        </div>
-      );
-    },
-    [
-      rowIndexForPagination,
-      rows,
-      prepareRow,
-      state.expanded,
-      tableStyles,
-      nestedDataField,
-      width,
-      cellHeight,
-      theme.components.table.rowHoverBackground,
-      onRowHover,
-      data,
-      onRowLeave,
-      onCellFilterAdded,
-      timeRange,
-    ]
-  );
-
   const onNavigate = useCallback(
     (toPage: number) => {
       gotoPage(toPage - 1);
@@ -340,24 +266,6 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  const getItemSize = (index: number): number => {
-    const indexForPagination = rowIndexForPagination(index);
-    const row = rows[indexForPagination];
-    if (state.expanded[row.index] && nestedDataField) {
-      return getExpandedRowHeight(nestedDataField, index, tableStyles);
-    }
-
-    return tableStyles.rowHeight;
-  };
-
-  const handleScroll: UIEventHandler = (event) => {
-    const { scrollTop } = event.currentTarget;
-
-    if (listRef.current !== null) {
-      listRef.current.scrollTo(scrollTop);
-    }
-  };
-
   return (
     <div
       {...getTableProps()}
@@ -377,6 +285,8 @@ export const Table = memo((props: Props) => {
               <RowsList
                 data={data}
                 rows={rows}
+                width={width}
+                cellHeight={cellHeight}
                 headerHeight={headerHeight}
                 rowHeight={tableStyles.rowHeight}
                 overrideRowHighlightIndex={rowHighlightIndex}
@@ -384,10 +294,15 @@ export const Table = memo((props: Props) => {
                 pageIndex={state.pageIndex}
                 listHeight={listHeight}
                 listRef={listRef}
-                getItemSize={getItemSize}
-                renderRow={RenderRow}
-                handleScroll={handleScroll}
-                footerPaginationEnabled={Boolean(options.footer?.enablePagination)}
+                tableState={state}
+                prepareRow={prepareRow}
+                onRowHover={onRowHover}
+                onRowLeave={onRowLeave}
+                timeRange={timeRange}
+                onCellFilterAdded={onCellFilterAdded}
+                nestedDataField={nestedDataField}
+                tableStyles={tableStyles}
+                footerPaginationEnabled={Boolean(enablePagination)}
                 enableSharedCrosshair={enableSharedCrosshair}
                 eventBus={eventBus}
               />

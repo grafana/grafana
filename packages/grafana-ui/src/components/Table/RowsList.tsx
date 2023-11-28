@@ -1,12 +1,19 @@
-import React, { UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
-import { Row } from 'react-table';
+import { css, cx } from '@emotion/css';
+import React, { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { Cell, Row, TableState } from 'react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
-import { DataFrame, DataHoverClearEvent, DataHoverEvent, EventBus, FieldType } from '@grafana/data';
+import { DataFrame, DataHoverClearEvent, DataHoverEvent, EventBus, Field, FieldType, TimeRange } from '@grafana/data';
+import { TableCellHeight } from '@grafana/schema';
 
+import { useTheme2 } from '../../themes';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
+import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
+import { TableCell } from './TableCell';
+import { TableStyles } from './styles';
+import { TableFilterActionCallback } from './types';
 import { calculateAroundPointThreshold, hasTimeField, isPointTimeValAroundTableTimeVal } from './utils';
 
 interface RowsListProps {
@@ -18,10 +25,17 @@ interface RowsListProps {
   itemCount: number;
   pageIndex: number;
   listHeight: number;
+  width: number;
+  cellHeight?: TableCellHeight;
   listRef: React.RefObject<VariableSizeList>;
-  getItemSize: (index: number) => number;
-  renderRow: (obj: { index: number; style: React.CSSProperties; rowHighlightIndex?: number }) => JSX.Element;
-  handleScroll: UIEventHandler;
+  tableState: TableState;
+  tableStyles: TableStyles;
+  nestedDataField?: Field;
+  prepareRow: (row: Row) => void;
+  onRowHover?: (idx: number, frame: DataFrame) => void;
+  onRowLeave?: () => void;
+  onCellFilterAdded?: TableFilterActionCallback;
+  timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
   overrideRowHighlightIndex?: number;
   eventBus?: EventBus;
@@ -38,15 +52,24 @@ export const RowsList = (props: RowsListProps) => {
     rowHeight,
     itemCount,
     pageIndex,
+    tableState,
+    prepareRow,
+    onRowHover,
+    onRowLeave,
+    onCellFilterAdded,
+    width,
+    cellHeight = TableCellHeight.Sm,
+    timeRange,
+    tableStyles,
+    nestedDataField,
     listHeight,
-    getItemSize,
-    renderRow,
     listRef,
-    handleScroll,
     enableSharedCrosshair = false,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(undefined);
+
+  const theme = useTheme2();
 
   const threshold = useMemo(() => {
     const timeField = data.fields.find((f) => f.type === FieldType.time);
@@ -144,6 +167,94 @@ export const RowsList = (props: RowsListProps) => {
     }
   }
 
+  const rowIndexForPagination = useCallback(
+    (index: number) => {
+      return tableState.pageIndex * tableState.pageSize + index;
+    },
+    [tableState.pageIndex, tableState.pageSize]
+  );
+
+  const RenderRow = useCallback(
+    ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
+      const indexForPagination = rowIndexForPagination(index);
+      const row = rows[indexForPagination];
+
+      prepareRow(row);
+
+      const expandedRowStyle = tableState.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
+
+      if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
+        style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
+      }
+
+      return (
+        <div
+          {...row.getRowProps({ style })}
+          className={cx(tableStyles.row, expandedRowStyle)}
+          onMouseEnter={() => (onRowHover ? onRowHover(index, data) : null)}
+          onMouseLeave={() => (onRowLeave ? onRowLeave() : null)}
+        >
+          {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
+          {nestedDataField && tableState.expanded[row.index] && (
+            <ExpandedRow
+              nestedData={nestedDataField}
+              tableStyles={tableStyles}
+              rowIndex={index}
+              width={width}
+              cellHeight={cellHeight}
+            />
+          )}
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellFilterAdded={onCellFilterAdded}
+              columnIndex={index}
+              columnCount={row.cells.length}
+              timeRange={timeRange}
+              frame={data}
+            />
+          ))}
+        </div>
+      );
+    },
+    [
+      cellHeight,
+      data,
+      nestedDataField,
+      onCellFilterAdded,
+      onRowHover,
+      onRowLeave,
+      prepareRow,
+      rowIndexForPagination,
+      rows,
+      tableState.expanded,
+      tableStyles,
+      theme.components.table.rowHoverBackground,
+      timeRange,
+      width,
+    ]
+  );
+
+  const getItemSize = (index: number): number => {
+    const indexForPagination = rowIndexForPagination(index);
+    const row = rows[indexForPagination];
+    if (tableState.expanded[row.index] && nestedDataField) {
+      return getExpandedRowHeight(nestedDataField, index, tableStyles);
+    }
+
+    return tableStyles.rowHeight;
+  };
+
+  const handleScroll: UIEventHandler = (event) => {
+    const { scrollTop } = event.currentTarget;
+
+    if (listRef.current !== null) {
+      listRef.current.scrollTo(scrollTop);
+    }
+  };
+
   return (
     <>
       <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
@@ -157,7 +268,7 @@ export const RowsList = (props: RowsListProps) => {
           ref={listRef}
           style={{ overflow: undefined }}
         >
-          {({ index, style }) => renderRow({ index, style, rowHighlightIndex })}
+          {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
         </VariableSizeList>
       </CustomScrollbar>
     </>
