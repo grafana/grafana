@@ -104,7 +104,7 @@ To enable the `Refresh Token` head over the Okta application settings and:
 
 At the configuration file, extend the `scopes` in `[auth.okta]` section with `offline_access`.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ### Configure role mapping
 
