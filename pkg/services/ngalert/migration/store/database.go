@@ -222,7 +222,8 @@ var revertPermissions = []accesscontrol.Permission{
 }
 
 // RevertAllOrgs reverts the migration, deleting all unified alerting resources such as alert rules, alertmanager configurations, and silence files.
-// In addition, it will delete all folders and permissions originally created by this migration, these are stored in the kvstore.
+// In addition, it will delete all folders and permissions originally created by this migration, as well as the various migration statuses stored
+// in kvstore, both org-specific and anyOrg.
 func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
 		return ms.store.WithDbSession(ctx, func(sess *db.Session) error {

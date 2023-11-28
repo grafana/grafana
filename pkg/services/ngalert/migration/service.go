@@ -83,6 +83,7 @@ func (ms *migrationService) Run(ctx context.Context) error {
 
 				// Revert migration
 				ms.log.Info("Reverting legacy migration")
+				// Note that this will also set the anyOrg migration status to false.
 				err := ms.migrationStore.RevertAllOrgs(ctx)
 				if err != nil {
 					return fmt.Errorf("reverting migration: %w", err)
