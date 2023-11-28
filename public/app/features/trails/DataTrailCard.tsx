@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
-import { useStyles2, Stack, Icon, Tooltip, Button } from '@grafana/ui';
+import { useStyles2, Stack, Tooltip, Button } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
 import { LOGS_METRIC, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
