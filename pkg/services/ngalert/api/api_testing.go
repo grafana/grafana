@@ -10,7 +10,6 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/alerting/models"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -166,7 +165,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 		cond.Condition = cmd.Data[0].RefID
 	}
 
-	optimizations, err := store.OptimizeAlertQueries(cond.Data)
+	_, err := store.OptimizeAlertQueries(cond.Data)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "Failed to optimize query")
 	}
@@ -188,22 +187,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 		return ErrResp(http.StatusInternalServerError, err, "Failed to evaluate queries and expressions")
 	}
 
-	addOptimizedQueryWarnings(evalResults, optimizations)
 	return response.JSONStreaming(http.StatusOK, evalResults)
-}
-
-// addOptimizedQueryWarnings adds warnings to the query results for any queries that were optimized.
-func addOptimizedQueryWarnings(evalResults *backend.QueryDataResponse, optimizations []store.Optimization) {
-	for _, opt := range optimizations {
-		if res, ok := evalResults.Responses[opt.RefID]; ok {
-			if len(res.Frames) > 0 && res.Frames[0].Meta != nil {
-				res.Frames[0].Meta.Notices = append(res.Frames[0].Meta.Notices, data.Notice{
-					Severity: data.NoticeSeverityWarning,
-					Text:     "Query optimized from Range to Instant type", // Currently this is the only optimization we do.
-				})
-			}
-		}
-	}
 }
 
 func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimodels.BacktestConfig) response.Response {
