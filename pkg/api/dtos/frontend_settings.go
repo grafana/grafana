@@ -225,6 +225,7 @@ type FrontendSettingsDTO struct {
 	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`
 
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
+	PublicDashboardsEnabled    bool   `json:"publicDashboardsEnabled"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

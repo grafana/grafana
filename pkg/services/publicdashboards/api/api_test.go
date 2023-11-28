@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -27,7 +26,7 @@ var userAdmin = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, 
 var userViewer = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
 var anonymousUser = &user.SignedInUser{IsAnonymous: true}
 
-func TestAPIFeatureFlag(t *testing.T) {
+func TestAPIFeatureDisabled(t *testing.T) {
 	testCases := []struct {
 		Name   string
 		Method string
@@ -73,9 +72,9 @@ func TestAPIFeatureFlag(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			cfg := setting.NewCfg()
+			cfg.PublicDashboardsEnabled = false
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			features := featuremgmt.WithFeatures()
-			testServer := setupTestServer(t, cfg, features, service, nil, userAdmin)
+			testServer := setupTestServer(t, cfg, service, nil, userAdmin)
 			response := callAPI(testServer, test.Method, test.Path, nil, t)
 			assert.Equal(t, http.StatusNotFound, response.Code)
 		})
@@ -131,8 +130,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 				Return(test.Response, test.ResponseErr).Maybe()
 
 			cfg := setting.NewCfg()
-			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
+			testServer := setupTestServer(t, cfg, service, nil, test.User)
 
 			response := callAPI(testServer, http.MethodGet, "/api/dashboards/public-dashboards", nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
@@ -260,9 +258,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			}
 
 			cfg := setting.NewCfg()
-
-			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
+			testServer := setupTestServer(t, cfg, service, nil, test.User)
 
 			response := callAPI(testServer, http.MethodDelete, fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid), nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
@@ -349,14 +345,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 
 			cfg := setting.NewCfg()
 
-			testServer := setupTestServer(
-				t,
-				cfg,
-				featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
-				service,
-				nil,
-				test.User,
-			)
+			testServer := setupTestServer(t, cfg, service, nil, test.User)
 
 			response := callAPI(
 				testServer,
@@ -476,14 +465,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 
 			cfg := setting.NewCfg()
 
-			testServer := setupTestServer(
-				t,
-				cfg,
-				featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
-				service,
-				nil,
-				test.User,
-			)
+			testServer := setupTestServer(t, cfg, service, nil, test.User)
 
 			response := callAPI(
 				testServer,
@@ -610,8 +592,6 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 
 	for _, test := range testCases {
 		cfg := setting.NewCfg()
-		features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
@@ -620,7 +600,7 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 					Return(test.ExpectedResponse, test.ExpectedError)
 			}
 
-			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
+			testServer := setupTestServer(t, cfg, service, nil, test.User)
 			url := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid)
 			body := strings.NewReader(test.Body)
 

@@ -23,10 +23,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagPublicDashboards
-	// Enables public access to dashboards
-	FlagPublicDashboards = "publicDashboards"
-
 	// FlagPublicDashboardsEmailSharing
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"

@@ -10,7 +10,6 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
 import { Dashboard, DashboardCursorSync, FieldConfigSource, ThresholdsMode, Panel } from '@grafana/schema/src';
-import config from 'app/core/config';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import * as appTypes from 'app/types';
@@ -133,8 +132,6 @@ const dashboardBase = {
 
 describe('PublicDashboardPage', () => {
   beforeEach(() => {
-    config.featureToggles.publicDashboards = true;
-
     jest.clearAllMocks();
   });
 

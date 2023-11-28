@@ -41,14 +41,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "publicDashboards",
-			Description:    "Enables public access to dashboards",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaSharingSquad,
-			Expression:     "true", // enabled by default
-			AllowSelfServe: truePtr,
-		},
-		{
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,

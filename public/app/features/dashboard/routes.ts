@@ -4,8 +4,11 @@ import { RouteDescriptor } from '../../core/navigation/types';
 import { DashboardRoutes } from '../../types';
 
 export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
-  if (config.featureToggles.publicDashboards) {
-    return [
+  if (!config.publicDashboardsEnabled) {
+    return  [];
+  }
+
+   return [
       {
         path: '/dashboard/public',
         pageClass: 'page-dashboard',
@@ -29,7 +32,5 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
             )
         ),
       },
-    ];
-  }
-  return [];
+   ];
 };

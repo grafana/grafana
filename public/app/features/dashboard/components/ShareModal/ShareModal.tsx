@@ -56,7 +56,7 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
     tabs.push(...customDashboardTabs);
   }
 
-  if (Boolean(config.featureToggles['publicDashboards'])) {
+  if (config.publicDashboardsEnabled) {
     tabs.push({
       label: 'Public dashboard',
       value: shareDashboardType.publicDashboard,

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -25,7 +26,6 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -40,7 +40,6 @@ import (
 func setupTestServer(
 	t *testing.T,
 	cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
 	service publicdashboards.Service,
 	db db.DB,
 	user *user.SignedInUser,
@@ -56,9 +55,8 @@ func setupTestServer(
 	// set initial context
 	m.Use(contextProvider(&testContext{user}))
 
-	// build api, this will mount the routes at the same time if
-	// featuremgmt.FlagPublicDashboard is enabled
-	ProvideApi(service, rr, ac, features, &Middleware{})
+	// build api, this will mount the routes at the same time if the feature is enabled
+	ProvideApi(service, rr, ac, featuremgmt.WithFeatures(), &Middleware{}, cfg)
 
 	// connect routes to mux
 	rr.Register(m.Router)

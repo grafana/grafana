@@ -67,8 +67,6 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  config.featureToggles.publicDashboards = true;
-
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 });
@@ -136,7 +134,7 @@ describe('SharePublic', () => {
     server.use(getExistentPublicDashboardResponse());
   });
   it('does not render share panel when public dashboards feature is disabled', async () => {
-    config.featureToggles.publicDashboards = false;
+    config.publicDashboardsEnabled = false;
     await renderSharePublicDashboard(undefined, false);
 
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');

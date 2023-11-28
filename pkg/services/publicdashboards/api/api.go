@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/setting"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -22,11 +23,13 @@ import (
 
 type Api struct {
 	PublicDashboardService publicdashboards.Service
-	RouteRegister          routing.RouteRegister
-	AccessControl          accesscontrol.AccessControl
-	Features               *featuremgmt.FeatureManager
-	Log                    log.Logger
 	Middleware             publicdashboards.Middleware
+
+	accessControl accesscontrol.AccessControl
+	cfg           *setting.Cfg
+	features      *featuremgmt.FeatureManager
+	log           log.Logger
+	routeRegister routing.RouteRegister
 }
 
 func ProvideApi(
@@ -35,18 +38,20 @@ func ProvideApi(
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
 	md publicdashboards.Middleware,
+	cfg *setting.Cfg,
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
-		RouteRegister:          rr,
-		AccessControl:          ac,
-		Features:               features,
-		Log:                    log.New("publicdashboards.api"),
 		Middleware:             md,
+		accessControl:          ac,
+		cfg:                    cfg,
+		features:               features,
+		log:                    log.New("publicdashboards.api"),
+		routeRegister:          rr,
 	}
 
 	// attach api if PublicDashboards feature flag is enabled
-	if features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) {
+	if cfg.PublicDashboardsEnabled {
 		api.RegisterAPIEndpoints()
 	}
 
@@ -59,35 +64,35 @@ func (api *Api) RegisterAPIEndpoints() {
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
 	// circular dependency
-	api.RouteRegister.Group("/api/public/dashboards/:accessToken", func(apiRoute routing.RouteRegister) {
+	api.routeRegister.Group("/api/public/dashboards/:accessToken", func(apiRoute routing.RouteRegister) {
 		apiRoute.Get("/", routing.Wrap(api.ViewPublicDashboard))
 		apiRoute.Get("/annotations", routing.Wrap(api.GetPublicAnnotations))
 		apiRoute.Post("/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
 	}, api.Middleware.HandleApi)
 
 	// Auth endpoints
-	auth := accesscontrol.Middleware(api.AccessControl)
+	auth := accesscontrol.Middleware(api.accessControl)
 	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":dashboardUid"))
 
 	// List public dashboards for org
-	api.RouteRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
+	api.routeRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
 	// Get public dashboard
-	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
+	api.routeRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
 		routing.Wrap(api.GetPublicDashboard))
 
 	// Create Public Dashboard
-	api.RouteRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
+	api.routeRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.CreatePublicDashboard))
 
 	// Update Public Dashboard
-	api.RouteRegister.Patch("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
+	api.routeRegister.Patch("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.UpdatePublicDashboard))
 
 	// Delete Public dashboard
-	api.RouteRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
+	api.routeRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.DeletePublicDashboard))
 }

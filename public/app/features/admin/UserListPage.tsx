@@ -43,7 +43,7 @@ export default function UserListPage() {
   const hasAccessToAdminUsers = contextSrv.hasPermission(AccessControlAction.UsersRead);
   const hasAccessToOrgUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const hasEmailSharingEnabled =
-    Boolean(config.featureToggles.publicDashboards) &&
+    config.publicDashboardsEnabled &&
     Boolean(config.featureToggles.publicDashboardsEmailSharing) &&
     featureEnabled('publicDashboardsEmailSharing');
 
