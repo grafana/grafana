@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { config } from '@grafana/runtime';
-import { Grid } from '@grafana/ui/src/unstable';
+import { Grid } from '@grafana/ui';
 
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
@@ -19,7 +19,7 @@ export const PluginList = ({ plugins, displayMode }: Props) => {
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
 
   return (
-    <Grid gap={3} columns={isList ? 1 : undefined} minColumnWidth={isList ? undefined : 34} data-testid="plugin-list">
+    <Grid gap={3} {...(isList ? { columns: 1 } : { minColumnWidth: 34 })} data-testid="plugin-list">
       {plugins.map((plugin) => (
         <PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} displayMode={displayMode} />
       ))}

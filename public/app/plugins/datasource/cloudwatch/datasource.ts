@@ -66,10 +66,19 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLogsLanguageProvider(this);
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
-    this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
+    this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv, super.query.bind(this));
     this.logsCompletionItemProvider = new LogsCompletionItemProvider(this.resources, this.templateSrv);
-    this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, timeSrv);
-    this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
+    this.logsQueryRunner = new CloudWatchLogsQueryRunner(
+      instanceSettings,
+      templateSrv,
+      timeSrv,
+      super.query.bind(this)
+    );
+    this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(
+      instanceSettings,
+      templateSrv,
+      super.query.bind(this)
+    );
     this.variables = new CloudWatchVariableSupport(this.resources);
     this.annotations = CloudWatchAnnotationSupport;
     this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;
@@ -154,10 +163,6 @@ export class CloudWatchDatasource
       target.logGroupNames?.some((logGroup: string) => this.templateSrv.containsTemplate(logGroup)) ||
       find(target.dimensions, (v, k) => this.templateSrv.containsTemplate(k) || this.templateSrv.containsTemplate(v))
     );
-  }
-
-  showContextToggle() {
-    return true;
   }
 
   getQueryDisplayText(query: CloudWatchQuery) {

@@ -1,16 +1,17 @@
 import {
   getTimeZone,
   PanelMenuItem,
-  PluginExtensionLink,
   PluginExtensionPoints,
+  urlUtil,
   type PluginExtensionPanelContext,
 } from '@grafana/data';
-import { AngularComponent, locationService, reportInteraction, getPluginLinkExtensions } from '@grafana/runtime';
+import { AngularComponent, getPluginLinkExtensions, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -24,10 +25,11 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { truncateTitle } from 'app/features/plugins/extensions/utils';
+import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { store } from 'app/store/store';
 
+import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
 import { getTimeSrv } from '../services/TimeSrv';
 
@@ -202,8 +204,27 @@ export function getPanelMenu(
     subMenu: inspectMenu,
   });
 
+  const createAlert = async () => {
+    const formValues = await panelToRuleFormValues(panel, dashboard);
+
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(formValues),
+      returnTo: location.pathname + location.search,
+    });
+
+    locationService.push(ruleFormUrl);
+  };
+
+  const onCreateAlert = (event: React.MouseEvent) => {
+    event.preventDefault();
+    createAlert();
+    reportInteraction('dashboards_panelheader_menu', { item: 'create-alert' });
+  };
+
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
+  const isCreateAlertMenuOptionAvailable = getCreateAlertInMenuAvailability();
+
   if (!(panel.isViewing || panel.isEditing)) {
     if (canEdit) {
       subMenu.push({
@@ -235,6 +256,13 @@ export function getPanelMenu(
         onClick: onCopyPanel,
       });
     }
+  }
+
+  if (isCreateAlertMenuOptionAvailable) {
+    subMenu.push({
+      text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+      onClick: onCreateAlert,
+    });
   }
 
   // add old angular panel options
@@ -273,6 +301,12 @@ export function getPanelMenu(
   // When editing hide most actions
   if (panel.isEditing) {
     subMenu.length = 0;
+    if (isCreateAlertMenuOptionAvailable) {
+      subMenu.push({
+        text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+        onClick: onCreateAlert,
+      });
+    }
   }
 
   if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
@@ -339,54 +373,4 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     scopedVars: panel.scopedVars,
     data: panel.getQueryRunner().getLastResult(),
   };
-}
-
-function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
-  const categorized: Record<string, PanelMenuItem[]> = {};
-  const uncategorized: PanelMenuItem[] = [];
-
-  for (const extension of extensions) {
-    const category = extension.category;
-
-    if (!category) {
-      uncategorized.push({
-        text: truncateTitle(extension.title, 25),
-        href: extension.path,
-        onClick: extension.onClick,
-      });
-      continue;
-    }
-
-    if (!Array.isArray(categorized[category])) {
-      categorized[category] = [];
-    }
-
-    categorized[category].push({
-      text: truncateTitle(extension.title, 25),
-      href: extension.path,
-      onClick: extension.onClick,
-    });
-  }
-
-  const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
-    subMenu.push({
-      text: truncateTitle(category, 25),
-      type: 'group',
-      subMenu: categorized[category],
-    });
-    return subMenu;
-  }, []);
-
-  if (uncategorized.length > 0) {
-    if (subMenu.length > 0) {
-      subMenu.push({
-        text: 'divider',
-        type: 'divider',
-      });
-    }
-
-    Array.prototype.push.apply(subMenu, uncategorized);
-  }
-
-  return subMenu;
 }

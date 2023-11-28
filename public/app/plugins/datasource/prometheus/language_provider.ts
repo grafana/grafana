@@ -1,45 +1,32 @@
-import { chain, difference, once } from 'lodash';
+import { once } from 'lodash';
 import Prism from 'prismjs';
-import { Value } from 'slate';
 
 import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
   AbstractQuery,
-  dateTime,
-  HistoryItem,
+  getDefaultTimeRange,
   LanguageProvider,
+  TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
-import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
-  addLimitInfo,
   extractLabelMatchers,
   fixSummariesMetadata,
-  parseSelector,
   processHistogramMetrics,
   processLabels,
   toPromLikeQuery,
 } from './language_utils';
-import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
+import PromqlSyntax from './promql';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
-const HISTORY_ITEM_COUNT = 5;
-const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
 export const SUGGESTIONS_LIMIT = 10000;
-
-const wrapLabel = (label: string): CompletionItem => ({ label });
-
-const setFunctionKind = (suggestion: CompletionItem): CompletionItem => {
-  suggestion.kind = 'function';
-  return suggestion;
-};
 
 const buildCacheHeaders = (durationInSeconds: number) => {
   return {
@@ -48,32 +35,6 @@ const buildCacheHeaders = (durationInSeconds: number) => {
     },
   };
 };
-
-export function addHistoryMetadata(item: CompletionItem, history: any[]): CompletionItem {
-  const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter((h) => h.ts > cutoffTs && h.query === item.label);
-  const count = historyForItem.length;
-  const recent = historyForItem[0];
-  let hint = `Queried ${count} times in the last 24h.`;
-
-  if (recent) {
-    const lastQueried = dateTime(recent.ts).fromNow();
-    hint = `${hint} Last queried ${lastQueried}.`;
-  }
-
-  return {
-    ...item,
-    documentation: hint,
-  };
-}
-
-function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
-  const item: CompletionItem = { label: metric };
-  if (metadata && metadata[metric]) {
-    item.documentation = getMetadataString(metric, metadata);
-  }
-  return item;
-}
 
 export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
   if (!metadata[metric]) {
@@ -100,14 +61,10 @@ export function getMetadataType(metric: string, metadata: PromMetricsMetadata): 
 const PREFIX_DELIMITER_REGEX =
   /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
 
-interface AutocompleteContext {
-  history?: Array<HistoryItem<PromQuery>>;
-}
-
 const secondsInDay = 86400;
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
-  timeRange?: { start: number; end: number };
+  timeRange: TimeRange;
   metrics: string[];
   metricsMetadata?: PromMetricsMetadata;
   declare startTask: Promise<any>;
@@ -120,7 +77,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     this.datasource = datasource;
     this.histogramMetrics = [];
-    this.timeRange = { start: 0, end: 0 };
+    this.timeRange = getDefaultTimeRange();
     this.metrics = [];
 
     Object.assign(this, initialValues);
@@ -155,7 +112,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return defaultValue;
   };
 
-  start = async (): Promise<any[]> => {
+  start = async (timeRange?: TimeRange): Promise<any[]> => {
+    this.timeRange = timeRange ?? getDefaultTimeRange();
+
     if (this.datasource.lookupsDisabled) {
       return [];
     }
@@ -183,279 +142,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   getLabelKeys(): string[] {
     return this.labelKeys;
   }
-
-  provideCompletionItems = async (
-    { prefix, text, value, labelKey, wrapperClasses }: TypeaheadInput,
-    context: AutocompleteContext = {}
-  ): Promise<TypeaheadOutput> => {
-    const emptyResult: TypeaheadOutput = { suggestions: [] };
-
-    if (!value) {
-      return emptyResult;
-    }
-
-    // Local text properties
-    const empty = value.document.text.length === 0;
-    const selectedLines = value.document.getTextsAtRange(value.selection);
-    const currentLine = selectedLines.size === 1 ? selectedLines.first().getText() : null;
-
-    const nextCharacter = currentLine ? currentLine[value.selection.anchor.offset] : null;
-
-    // Syntax spans have 3 classes by default. More indicate a recognized token
-    const tokenRecognized = wrapperClasses.length > 3;
-    // Non-empty prefix, but not inside known token
-    const prefixUnrecognized = prefix && !tokenRecognized;
-
-    // Prevent suggestions in `function(|suffix)`
-    const noSuffix = !nextCharacter || nextCharacter === ')';
-
-    // Prefix is safe if it does not immediately follow a complete expression and has no text after it
-    const safePrefix = prefix && !text.match(/^[\]})\s]+$/) && noSuffix;
-
-    // About to type next operand if preceded by binary operator
-    const operatorsPattern = /[+\-*/^%]/;
-    const isNextOperand = text.match(operatorsPattern);
-
-    // Determine candidates by CSS context
-    if (wrapperClasses.includes('context-range')) {
-      // Suggestions for metric[|]
-      return this.getRangeCompletionItems();
-    } else if (wrapperClasses.includes('context-labels')) {
-      // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
-      return this.getLabelCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
-    } else if (wrapperClasses.includes('context-aggregation')) {
-      // Suggestions for sum(metric) by (|)
-      return this.getAggregationCompletionItems(value);
-    } else if (empty) {
-      // Suggestions for empty query field
-      return this.getEmptyCompletionItems(context);
-    } else if (prefixUnrecognized && noSuffix && !isNextOperand) {
-      // Show term suggestions in a couple of scenarios
-      return this.getBeginningCompletionItems(context);
-    } else if (prefixUnrecognized && safePrefix) {
-      // Show term suggestions in a couple of scenarios
-      return this.getTermCompletionItems();
-    }
-
-    return emptyResult;
-  };
-
-  getBeginningCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
-    return {
-      suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
-    };
-  };
-
-  getEmptyCompletionItems = (context: AutocompleteContext): TypeaheadOutput => {
-    const { history } = context;
-    const suggestions: CompletionItemGroup[] = [];
-
-    if (history && history.length) {
-      const historyItems = chain(history)
-        .map((h) => h.query.expr)
-        .filter()
-        .uniq()
-        .take(HISTORY_ITEM_COUNT)
-        .map(wrapLabel)
-        .map((item) => addHistoryMetadata(item, history))
-        .value();
-
-      suggestions.push({
-        searchFunctionType: SearchFunctionType.Prefix,
-        skipSort: true,
-        label: 'History',
-        items: historyItems,
-      });
-    }
-
-    return { suggestions };
-  };
-
-  getTermCompletionItems = (): TypeaheadOutput => {
-    const { metrics, metricsMetadata } = this;
-    const suggestions: CompletionItemGroup[] = [];
-
-    suggestions.push({
-      searchFunctionType: SearchFunctionType.Prefix,
-      label: 'Functions',
-      items: FUNCTIONS.map(setFunctionKind),
-    });
-
-    if (metrics && metrics.length) {
-      suggestions.push({
-        label: 'Metrics',
-        items: metrics.map((m) => addMetricsMetadata(m, metricsMetadata)),
-        searchFunctionType: SearchFunctionType.Fuzzy,
-      });
-    }
-
-    return { suggestions };
-  };
-
-  getRangeCompletionItems(): TypeaheadOutput {
-    return {
-      context: 'context-range',
-      suggestions: [
-        {
-          label: 'Range vector',
-          items: [...RATE_RANGES],
-        },
-      ],
-    };
-  }
-
-  getAggregationCompletionItems = async (value: Value): Promise<TypeaheadOutput> => {
-    const suggestions: CompletionItemGroup[] = [];
-
-    // Stitch all query lines together to support multi-line queries
-    let queryOffset;
-    const queryText = value.document.getBlocks().reduce((text, block) => {
-      if (text === undefined) {
-        return '';
-      }
-      if (!block) {
-        return text;
-      }
-
-      const blockText = block?.getText();
-
-      if (value.anchorBlock.key === block.key) {
-        // Newline characters are not accounted for but this is irrelevant
-        // for the purpose of extracting the selector string
-        queryOffset = value.selection.anchor.offset + text.length;
-      }
-
-      return text + blockText;
-    }, '');
-
-    // Try search for selector part on the left-hand side, such as `sum (m) by (l)`
-    const openParensAggregationIndex = queryText.lastIndexOf('(', queryOffset);
-    let openParensSelectorIndex = queryText.lastIndexOf('(', openParensAggregationIndex - 1);
-    let closeParensSelectorIndex = queryText.indexOf(')', openParensSelectorIndex);
-
-    // Try search for selector part of an alternate aggregation clause, such as `sum by (l) (m)`
-    if (openParensSelectorIndex === -1) {
-      const closeParensAggregationIndex = queryText.indexOf(')', queryOffset);
-      closeParensSelectorIndex = queryText.indexOf(')', closeParensAggregationIndex + 1);
-      openParensSelectorIndex = queryText.lastIndexOf('(', closeParensSelectorIndex);
-    }
-
-    const result = {
-      suggestions,
-      context: 'context-aggregation',
-    };
-
-    // Suggestions are useless for alternative aggregation clauses without a selector in context
-    if (openParensSelectorIndex === -1) {
-      return result;
-    }
-
-    // Range vector syntax not accounted for by subsequent parse so discard it if present
-    const selectorString = queryText
-      .slice(openParensSelectorIndex + 1, closeParensSelectorIndex)
-      .replace(/\[[^\]]+\]$/, '');
-
-    const selector = parseSelector(selectorString, selectorString.length - 2).selector;
-
-    const series = await this.getSeries(selector);
-    const labelKeys = Object.keys(series);
-    if (labelKeys.length > 0) {
-      const limitInfo = addLimitInfo(labelKeys);
-      suggestions.push({
-        label: `Labels${limitInfo}`,
-        items: labelKeys.map(wrapLabel),
-        searchFunctionType: SearchFunctionType.Fuzzy,
-      });
-    }
-    return result;
-  };
-
-  getLabelCompletionItems = async ({
-    text,
-    wrapperClasses,
-    labelKey,
-    value,
-  }: TypeaheadInput): Promise<TypeaheadOutput> => {
-    if (!value) {
-      return { suggestions: [] };
-    }
-
-    const suggestions: CompletionItemGroup[] = [];
-    const line = value.anchorBlock.getText();
-    const cursorOffset = value.selection.anchor.offset;
-    const suffix = line.substr(cursorOffset);
-    const prefix = line.substr(0, cursorOffset);
-    const isValueStart = text.match(/^(=|=~|!=|!~)/);
-    const isValueEnd = suffix.match(/^"?[,}]|$/);
-    // Detect cursor in front of value, e.g., {key=|"}
-    const isPreValue = prefix.match(/(=|=~|!=|!~)$/) && suffix.match(/^"/);
-
-    // Don't suggest anything at the beginning or inside a value
-    const isValueEmpty = isValueStart && isValueEnd;
-    const hasValuePrefix = isValueEnd && !isValueStart;
-    if ((!isValueEmpty && !hasValuePrefix) || isPreValue) {
-      return { suggestions };
-    }
-
-    // Get normalized selector
-    let selector;
-    let parsedSelector;
-    try {
-      parsedSelector = parseSelector(line, cursorOffset);
-      selector = parsedSelector.selector;
-    } catch {
-      selector = EMPTY_SELECTOR;
-    }
-
-    const containsMetric = selector.includes('__name__=');
-    const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
-
-    let series: Record<string, string[]> = {};
-    // Query labels for selector
-    if (selector) {
-      series = await this.getSeries(selector, !containsMetric);
-    }
-
-    if (Object.keys(series).length === 0) {
-      console.warn(`Server did not return any values for selector = ${selector}`);
-      return { suggestions };
-    }
-
-    let context: string | undefined;
-
-    if ((text && isValueStart) || wrapperClasses.includes('attr-value')) {
-      // Label values
-      if (labelKey && series[labelKey]) {
-        context = 'context-label-values';
-        const limitInfo = addLimitInfo(series[labelKey]);
-        suggestions.push({
-          label: `Label values for "${labelKey}"${limitInfo}`,
-          items: series[labelKey].map(wrapLabel),
-          searchFunctionType: SearchFunctionType.Fuzzy,
-        });
-      }
-    } else {
-      // Label keys
-      const labelKeys = series ? Object.keys(series) : containsMetric ? null : DEFAULT_KEYS;
-
-      if (labelKeys) {
-        const possibleKeys = difference(labelKeys, existingKeys);
-        if (possibleKeys.length) {
-          context = 'context-labels';
-          const newItems = possibleKeys.map((key) => ({ label: key }));
-          const limitInfo = addLimitInfo(newItems);
-          const newSuggestion: CompletionItemGroup = {
-            label: `Labels${limitInfo}`,
-            items: newItems,
-            searchFunctionType: SearchFunctionType.Fuzzy,
-          };
-          suggestions.push(newSuggestion);
-        }
-      }
-    }
-
-    return { context, suggestions };
-  };
 
   importFromAbstractQuery(labelBasedQuery: AbstractQuery): PromQuery {
     return toPromLikeQuery(labelBasedQuery);
@@ -504,7 +190,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param key
    */
   fetchLabelValues = async (key: string): Promise<string[]> => {
-    const params = this.datasource.getAdjustedInterval();
+    const params = this.datasource.getAdjustedInterval(this.timeRange);
     const interpolatedName = this.datasource.interpolateString(key);
     const url = `/api/v1/label/${interpolatedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
@@ -518,9 +204,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Fetches all label keys
    */
-  async fetchLabels(): Promise<string[]> {
+  async fetchLabels(timeRange?: TimeRange): Promise<string[]> {
+    if (timeRange) {
+      this.timeRange = timeRange;
+    }
     const url = '/api/v1/labels';
-    const params = this.datasource.getAdjustedInterval();
+    const params = this.datasource.getAdjustedInterval(this.timeRange);
     this.labelFetchTs = Date.now().valueOf();
 
     const res = await this.request(url, [], params, this.getDefaultCacheHeaders());
@@ -554,7 +243,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
-    const range = this.datasource.getAdjustedInterval();
+    const range = this.datasource.getAdjustedInterval(this.timeRange);
     const urlParams = {
       ...range,
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
@@ -603,7 +292,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getAdjustedInterval();
+    const range = this.datasource.getAdjustedInterval(this.timeRange);
     const urlParams = {
       ...range,
       'match[]': interpolatedName,
@@ -623,7 +312,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getAdjustedInterval();
+    const range = this.datasource.getAdjustedInterval(this.timeRange);
     const urlParams = {
       ...range,
       'match[]': interpolatedName,
@@ -641,7 +330,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
     const url = '/api/v1/series';
-    const range = this.datasource.getTimeRangeParams();
+    const range = this.datasource.getTimeRangeParams(this.timeRange);
     const params = { ...range, 'match[]': match };
     return await this.request(url, {}, params, this.getDefaultCacheHeaders());
   };
@@ -659,9 +348,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
 function getNameLabelValue(promQuery: string, tokens: any): string {
   let nameLabelValue = '';
-  for (let prop in tokens) {
-    if (typeof tokens[prop] === 'string') {
-      nameLabelValue = tokens[prop] as string;
+
+  for (const token of tokens) {
+    if (typeof token === 'string') {
+      nameLabelValue = token;
       break;
     }
   }

@@ -2,23 +2,24 @@ package grafanaapiserver
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
-	"net"
 	"net/http"
+	"net/http/httptest"
 	"path"
+	goruntime "runtime"
+	"runtime/debug"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
+	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/authentication/authenticator"
-	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
@@ -29,21 +30,27 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
+type StorageType string
+
 const (
-	DefaultAPIServerHost = "https://" + certgenerator.DefaultAPIServerIp + ":6443"
+	StorageTypeFile   StorageType = "file"
+	StorageTypeEtcd   StorageType = "etcd"
+	StorageTypeLegacy StorageType = "legacy"
 )
 
 var (
@@ -51,9 +58,7 @@ var (
 	_ RestConfigProvider         = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
 	_ registry.CanBeDisabled     = (*service)(nil)
-)
 
-var (
 	Scheme = runtime.NewScheme()
 	Codecs = serializer.NewCodecFactory(Scheme)
 
@@ -88,39 +93,45 @@ type RestConfigProvider interface {
 	GetRestConfig() *clientrest.Config
 }
 
+type DirectRestConfigProvider interface {
+	// GetDirectRestConfig returns a k8s client configuration that will use the same
+	// logged logged in user as the current request context.  This is useful when
+	// creating clients that map legacy API handlers to k8s backed services
+	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
+}
+
 type service struct {
 	*services.BasicService
 
-	restConfig  *clientrest.Config
-	etcdServers []string
+	config     *config
+	restConfig *clientrest.Config
 
-	enabled   bool
-	logLevel  int
-	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 
 	rr       routing.RouteRegister
-	handler  web.Handler
+	handler  http.Handler
 	builders []APIGroupBuilder
+
+	tracing *tracing.TracingService
 
 	authorizer authorizer.Authorizer
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
 	authz authorizer.Authorizer,
+	tracing *tracing.TracingService,
 ) (*service, error) {
 	s := &service{
-		logLevel:    cfg.SectionWithEnvOverrides("grafana-apiserver").Key("log_level").MustInt(10),
-		etcdServers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
-		enabled:     cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
-		rr:          rr,
-		dataPath:    path.Join(cfg.DataPath, "k8s"),
-		stopCh:      make(chan struct{}),
-		builders:    []APIGroupBuilder{},
-		authorizer:  authz,
+		config:     newConfig(cfg, features),
+		rr:         rr,
+		stopCh:     make(chan struct{}),
+		builders:   []APIGroupBuilder{},
+		authorizer: authz,
+		tracing:    tracing,
 	}
 
 	// This will be used when running as a dskit service
@@ -137,16 +148,31 @@ func ProvideService(
 				return
 			}
 
-			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
-				handle(c)
-				return
+			req := c.Req
+			if req.URL.Path == "" {
+				req.URL.Path = "/"
 			}
+
+			//TODO: add support for the existing MetricsEndpointBasicAuth config option
+			if req.URL.Path == "/apiserver-metrics" {
+				req.URL.Path = "/metrics"
+			}
+
+			ctx := req.Context()
+			signedInUser := appcontext.MustUser(ctx)
+
+			req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
+			req.Header.Set("X-Remote-Group", "grafana")
+
+			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
+			s.handler.ServeHTTP(resp, req)
 		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
 
 	s.rr.Group("/apis", proxyHandler)
+	s.rr.Group("/apiserver-metrics", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
 
 	return s, nil
@@ -157,7 +183,7 @@ func (s *service) GetRestConfig() *clientrest.Config {
 }
 
 func (s *service) IsDisabled() bool {
-	return !s.enabled
+	return !s.config.enabled
 }
 
 // Run is an adapter for the BackgroundService interface.
@@ -173,73 +199,75 @@ func (s *service) RegisterAPI(builder APIGroupBuilder) {
 }
 
 func (s *service) start(ctx context.Context) error {
-	logger := logr.New(newLogAdapter(s.logLevel))
+	logger := logr.New(newLogAdapter(s.config.logLevel))
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
-
-	o := options.NewRecommendedOptions("", unstructured.UnstructuredJSONScheme)
-	o.SecureServing.BindPort = 6443
-	o.Authentication.RemoteKubeConfigFileOptional = true
-	o.Authorization.RemoteKubeConfigFileOptional = true
-	o.Etcd.StorageConfig.Transport.ServerList = s.etcdServers
-
-	o.Admission = nil
-	o.CoreAPI = nil
-	if len(o.Etcd.StorageConfig.Transport.ServerList) == 0 {
-		o.Etcd = nil
+	if _, err := logs.GlogSetter(strconv.Itoa(s.config.logLevel)); err != nil {
+		logger.Error(err, "failed to set log level")
 	}
-
-	// Get the util to get the paths to pre-generated certs
-	certUtil := certgenerator.CertUtil{
-		K8sDataPath: s.dataPath,
-	}
-
-	if err := certUtil.InitializeCACertPKI(); err != nil {
-		return err
-	}
-
-	if err := certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp); err != nil {
-		return err
-	}
-
-	o.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
-	o.SecureServing.ServerCert.CertKey = options.CertKey{
-		CertFile: certUtil.APIServerCertFile(),
-		KeyFile:  certUtil.APIServerKeyFile(),
-	}
-
-	if err := o.Validate(); len(err) > 0 {
-		return err[0]
-	}
-
-	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
-	err := o.ApplyTo(serverConfig)
-	if err != nil {
-		return err
-	}
-
-	rootCert, err := certUtil.GetK8sCACert()
-	if err != nil {
-		return err
-	}
-
-	authenticator, err := newAuthenticator(rootCert)
-	if err != nil {
-		return err
-	}
-
-	serverConfig.Authorization.Authorizer = s.authorizer
-	serverConfig.Authentication.Authenticator = authenticator
 
 	// Get the list of groups the server will support
 	builders := s.builders
 
+	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 	// Install schemas
 	for _, b := range builders {
-		err = b.InstallSchema(Scheme) // previously was in init
-		if err != nil {
+		groupVersions = append(groupVersions, b.GetGroupVersion())
+		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
 	}
+
+	o := options.NewRecommendedOptions("/registry/grafana.app", Codecs.LegacyCodec(groupVersions...))
+	o.SecureServing.BindAddress = s.config.ip
+	o.SecureServing.BindPort = s.config.port
+	o.Authentication.RemoteKubeConfigFileOptional = true
+	o.Authorization.RemoteKubeConfigFileOptional = true
+
+	o.Admission = nil
+	o.CoreAPI = nil
+
+	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
+	serverConfig.ExternalAddress = s.config.host
+
+	if s.config.devMode {
+		// SecureServingOptions is used when the apiserver needs it's own listener.
+		// this is not needed in production, but it's useful for development kubectl access.
+		if err := o.SecureServing.ApplyTo(&serverConfig.SecureServing, &serverConfig.LoopbackClientConfig); err != nil {
+			return err
+		}
+		// AuthenticationOptions is needed to authenticate requests from kubectl in dev mode.
+		if err := o.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
+			return err
+		}
+	} else {
+		// In production mode, override ExternalAddress and LoopbackClientConfig.
+		// In dev mode we want to use the loopback client config
+		// and address provided by SecureServingOptions.
+		serverConfig.ExternalAddress = s.config.host
+		serverConfig.LoopbackClientConfig = &clientrest.Config{
+			Host: s.config.apiURL,
+			TLSClientConfig: clientrest.TLSClientConfig{
+				Insecure: true,
+			},
+		}
+	}
+
+	if s.config.storageType == StorageTypeEtcd {
+		o.Etcd.StorageConfig.Transport.ServerList = s.config.etcdServers
+		if err := o.Etcd.Validate(); len(err) > 0 {
+			return err[0]
+		}
+		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
+			return err
+		}
+	}
+
+	if s.config.storageType == StorageTypeFile {
+		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(s.config.dataPath, o.Etcd.StorageConfig)
+	}
+
+	serverConfig.Authorization.Authorizer = s.authorizer
+	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// Add OpenAPI specs for each group+version
 	defsGetter := getOpenAPIDefinitions(builders)
@@ -253,6 +281,10 @@ func (s *service) start(ctx context.Context) error {
 
 	// Add the custom routes to service discovery
 	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+
+	// Set the swagger build versions
+	serverConfig.OpenAPIConfig.Info.Version = setting.BuildVersion
+	serverConfig.OpenAPIV3Config.Info.Version = setting.BuildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
@@ -269,6 +301,23 @@ func (s *service) start(ctx context.Context) error {
 		return genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 	}
 
+	k8sVersion, err := getK8sApiserverVersion()
+	if err != nil {
+		return err
+	}
+	before, after, _ := strings.Cut(setting.BuildVersion, ".")
+	serverConfig.Version = &version.Info{
+		Major:        before,
+		Minor:        after,
+		GoVersion:    goruntime.Version(),
+		Platform:     fmt.Sprintf("%s/%s", goruntime.GOOS, goruntime.GOARCH),
+		Compiler:     goruntime.Compiler,
+		GitTreeState: setting.BuildBranch,
+		GitCommit:    setting.BuildCommit,
+		BuildDate:    time.Unix(setting.BuildStamp, 0).UTC().Format(time.DateTime),
+		GitVersion:   k8sVersion,
+	}
+
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
 	if err != nil {
@@ -281,44 +330,56 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		if g == nil || len(g.PrioritizedVersions) < 1 {
+			continue
+		}
 		err = server.InstallAPIGroup(g)
 		if err != nil {
 			return err
 		}
 	}
 
+	// Used by the proxy wrapper registered in ProvideService
+	s.handler = server.Handler
 	s.restConfig = server.LoopbackClientConfig
-	err = s.writeKubeConfiguration(s.restConfig)
-	if err != nil {
+
+	// When running in production, do not start a standalone https server
+	if !s.config.devMode {
+		return nil
+	}
+
+	// only write kubeconfig in dev mode
+	if err := s.ensureKubeConfig(); err != nil {
 		return err
 	}
 
 	prepared := server.PrepareRun()
-
-	// TODO: this is a hack. see note in ProvideService
-	s.handler = func(c *contextmodel.ReqContext) {
-		req := c.Req
-		if req.URL.Path == "" {
-			req.URL.Path = "/"
-		}
-		ctx := req.Context()
-		signedInUser := appcontext.MustUser(ctx)
-
-		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
-		req.Header.Set("X-Remote-Group", "grafana")
-
-		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
-	}
-
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)
 	}()
-
 	return nil
 }
 
+func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
+	return &clientrest.Config{
+		Transport: &roundTripperFunc{
+			fn: func(req *http.Request) (*http.Response, error) {
+				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+				w := httptest.NewRecorder()
+				s.handler.ServeHTTP(w, req.WithContext(ctx))
+				return w.Result(), nil
+			},
+		},
+	}
+}
+
 func (s *service) running(ctx context.Context) error {
+	// skip waiting for the server in prod mode
+	if !s.config.devMode {
+		<-ctx.Done()
+		return nil
+	}
+
 	select {
 	case err := <-s.stoppedCh:
 		if err != nil {
@@ -330,10 +391,10 @@ func (s *service) running(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) writeKubeConfiguration(restConfig *clientrest.Config) error {
+func (s *service) ensureKubeConfig() error {
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters["default-cluster"] = &clientcmdapi.Cluster{
-		Server:                restConfig.Host,
+		Server:                s.restConfig.Host,
 		InsecureSkipTLSVerify: true,
 	}
 
@@ -346,7 +407,7 @@ func (s *service) writeKubeConfiguration(restConfig *clientrest.Config) error {
 
 	authinfos := make(map[string]*clientcmdapi.AuthInfo)
 	authinfos["default"] = &clientcmdapi.AuthInfo{
-		Token: restConfig.BearerToken,
+		Token: s.restConfig.BearerToken,
 	}
 
 	clientConfig := clientcmdapi.Config{
@@ -357,24 +418,44 @@ func (s *service) writeKubeConfiguration(restConfig *clientrest.Config) error {
 		CurrentContext: "default-context",
 		AuthInfos:      authinfos,
 	}
-	return clientcmd.WriteToFile(clientConfig, path.Join(s.dataPath, "grafana.kubeconfig"))
+
+	return clientcmd.WriteToFile(clientConfig, path.Join(s.config.dataPath, "grafana.kubeconfig"))
 }
 
-func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {
-	reqHeaderOptions := options.RequestHeaderAuthenticationOptions{
-		UsernameHeaders:     []string{"X-Remote-User"},
-		GroupHeaders:        []string{"X-Remote-Group"},
-		ExtraHeaderPrefixes: []string{"X-Remote-Extra-"},
+type roundTripperFunc struct {
+	fn func(req *http.Request) (*http.Response, error)
+}
+
+func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f.fn(req)
+}
+
+// find the k8s version according to build info
+func getK8sApiserverVersion() (string, error) {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
 	}
 
-	requestHeaderAuthenticator, err := headerrequest.New(
-		reqHeaderOptions.UsernameHeaders,
-		reqHeaderOptions.GroupHeaders,
-		reqHeaderOptions.ExtraHeaderPrefixes,
-	)
-	if err != nil {
-		return nil, err
+	if len(bi.Deps) == 0 {
+		return "v?.?", nil // this is normal while debugging
 	}
 
-	return requestHeaderAuthenticator, nil
+	for _, dep := range bi.Deps {
+		if dep.Path == "k8s.io/apiserver" {
+			if !semver.IsValid(dep.Version) {
+				return "", fmt.Errorf("invalid semantic version for k8s.io/apiserver")
+			}
+			// v0 => v1
+			majorVersion := strings.TrimPrefix(semver.Major(dep.Version), "v")
+			majorInt, err := strconv.Atoi(majorVersion)
+			if err != nil {
+				return "", fmt.Errorf("could not convert majorVersion to int. majorVersion: %s", majorVersion)
+			}
+			newMajor := fmt.Sprintf("v%d", majorInt+1)
+			return strings.Replace(dep.Version, semver.Major(dep.Version), newMajor, 1), nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find k8s.io/apiserver in build info")
 }

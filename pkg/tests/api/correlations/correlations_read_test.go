@@ -106,8 +106,10 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	// Given all tests in this file work on the assumption that only a single correlation exists,
 	// this covers the case where bad data exists in the database.
 	nonExistingDsUID := "THIS-DOES-NOT_EXIST"
+	var created int64 = 0
 	err := ctx.env.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		created, err := sess.InsertMulti(&[]correlations.Correlation{
+		var innerError error
+		created, innerError = sess.InsertMulti(&[]correlations.Correlation{
 			{
 				UID:       "uid-1",
 				SourceUID: dsWithoutCorrelations.UID,
@@ -119,11 +121,10 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 				TargetUID: &dsWithoutCorrelations.UID,
 			},
 		})
-		require.NoError(t, err)
-		require.Equal(t, int64(2), created)
-		return err
+		return innerError
 	})
 	require.NoError(t, err)
+	require.Equal(t, int64(2), created)
 
 	t.Run("Get all correlations", func(t *testing.T) {
 		t.Run("Unauthenticated users shouldn't be able to read correlations", func(t *testing.T) {

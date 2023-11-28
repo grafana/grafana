@@ -1,0 +1,3 @@
+resources:
+  - namespace.yaml
+  - apiservice.yaml

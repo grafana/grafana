@@ -1,14 +1,14 @@
 import React, { PropsWithChildren, ReactElement, useMemo } from 'react';
 
+import { TypedVariableModel, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';
 import { VARIABLE_PREFIX } from '../constants';
-import { VariableHide, VariableModel } from '../types';
 
 interface Props {
-  variable: VariableModel;
+  variable: TypedVariableModel;
   readOnly?: boolean;
 }
 

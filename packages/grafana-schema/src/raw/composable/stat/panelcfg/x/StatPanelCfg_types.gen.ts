@@ -11,13 +11,14 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.2.0-pre";
+export const pluginVersion = "10.3.0-pre";
 
 export interface Options extends common.SingleStatBaseOptions {
   colorMode: common.BigValueColorMode;
   graphMode: common.BigValueGraphMode;
   justifyMode: common.BigValueJustifyMode;
   textMode: common.BigValueTextMode;
+  wideLayout: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
@@ -25,4 +26,5 @@ export const defaultOptions: Partial<Options> = {
   graphMode: common.BigValueGraphMode.Area,
   justifyMode: common.BigValueJustifyMode.Auto,
   textMode: common.BigValueTextMode.Auto,
+  wideLayout: true,
 };

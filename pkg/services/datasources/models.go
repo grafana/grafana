@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -22,7 +23,7 @@ const (
 	DS_TEMPO          = "tempo"
 	DS_ZIPKIN         = "zipkin"
 	DS_MYSQL          = "mysql"
-	DS_POSTGRES       = "postgres"
+	DS_POSTGRES       = "grafana-postgresql-datasource"
 	DS_MSSQL          = "mssql"
 	DS_ACCESS_DIRECT  = "direct"
 	DS_ACCESS_PROXY   = "proxy"
@@ -77,10 +78,16 @@ type TeamHTTPHeader struct {
 	Value  string `json:"value"`
 }
 
+const DefaultTeamHTTPHeader = "default"
+
 func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
-	teamHTTPHeadersJSON := TeamHTTPHeadersJSONData{}
-	if ds.JsonData != nil {
-		jsonData, err := ds.JsonData.MarshalJSON()
+	return GetTeamHTTPHeaders(ds.JsonData)
+}
+
+func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
+	teamHTTPHeadersJSON := TeamHTTPHeaders{}
+	if jsonData != nil && jsonData.Get("teamHttpHeaders") != nil {
+		jsonData, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
@@ -88,9 +95,23 @@ func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
 		if err != nil {
 			return nil, err
 		}
+		for teamID, headers := range teamHTTPHeadersJSON {
+			if teamID == "" {
+				return nil, errors.New("teamID is missing or empty in teamHttpHeaders")
+			}
+
+			for _, header := range headers {
+				if header.Header == "" {
+					return nil, errors.New("header name is missing or empty")
+				}
+				if header.Value == "" {
+					return nil, errors.New("header value is missing or empty")
+				}
+			}
+		}
 	}
 
-	return teamHTTPHeadersJSON.TeamHTTPHeaders, nil
+	return teamHTTPHeadersJSON, nil
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of
@@ -119,7 +140,7 @@ func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	Name            string            `json:"name" binding:"Required"`
+	Name            string            `json:"name"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`
