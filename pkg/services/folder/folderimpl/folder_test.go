@@ -86,6 +86,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 			db:                   db,
 			accessControl:        acimpl.ProvideAccessControl(cfg),
+			metrics:              newFoldersMetrics(nil),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -380,6 +381,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		db:                   db,
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
+		metrics:              newFoldersMetrics(nil),
 	}
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -489,6 +491,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				bus:                  b,
 				db:                   db,
 				registry:             make(map[string]folder.RegistryService),
+				metrics:              newFoldersMetrics(nil),
 			}
 
 			origNewGuardian := guardian.New
@@ -564,6 +567,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			bus:                  b,
 			db:                   db,
 			registry:             make(map[string]folder.RegistryService),
+			metrics:              newFoldersMetrics(nil),
 		}
 
 		testCases := []struct {
@@ -737,6 +741,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		log:                  log.New("test-folder-service"),
 		accessControl:        acimpl.ProvideAccessControl(cfg),
+		metrics:              newFoldersMetrics(nil),
 	}
 	t.Run("create folder", func(t *testing.T) {
 		nestedFolderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
@@ -1401,6 +1406,7 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 		features:             features,
 		accessControl:        ac,
 		db:                   db,
+		metrics:              newFoldersMetrics(nil),
 	}
 }
 
