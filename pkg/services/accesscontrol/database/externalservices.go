@@ -99,9 +99,6 @@ func genExternalServiceAssignment(cmd accesscontrol.SaveExternalServiceRoleComma
 		UserID:  cmd.ServiceAccountID,
 		Created: time.Now(),
 	}
-	if cmd.Global {
-		assignment.OrgID = accesscontrol.GlobalOrgID
-	}
 	return assignment
 }
 
