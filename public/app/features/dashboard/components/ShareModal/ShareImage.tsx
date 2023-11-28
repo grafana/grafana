@@ -1,19 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import {
-  Alert,
-  Button,
-  Field,
-  FieldSet,
-  InlineField,
-  InlineFieldRow,
-  InlineSwitch,
-  Input,
-  LoadingPlaceholder,
-  RadioButtonGroup,
-  Switch,
-} from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Input, RadioButtonGroup, Spinner, Switch } from '@grafana/ui';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -32,7 +20,10 @@ export interface State {
   height: number;
   isDownloading: boolean;
   usePanelSize: boolean;
+  error: string | null;
 }
+
+const ERROR_MSG = "Couldn't render image";
 
 export class ShareImage extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -46,6 +37,7 @@ export class ShareImage extends PureComponent<Props, State> {
       height: 500,
       isDownloading: false,
       usePanelSize: false,
+      error: null,
     };
   }
 
@@ -70,10 +62,17 @@ export class ShareImage extends PureComponent<Props, State> {
     const { panel, dashboard, panelSize } = this.props;
     const { useCurrentTimeRange, selectedTheme, width, height } = this.state;
 
-    const usedWidth = this.state.usePanelSize ? panelSize?.width : width;
-    const usedHeight = this.state.usePanelSize ? panelSize?.height : height;
+    const usedWidth = this.state.usePanelSize ? panelSize?.width ?? width : width;
+    const usedHeight = this.state.usePanelSize ? panelSize?.height ?? height : height;
 
-    const imageUrl = buildImageUrl(useCurrentTimeRange, dashboard.uid, selectedTheme, panel, usedWidth, usedHeight);
+    const imageUrl = buildImageUrl(
+      useCurrentTimeRange,
+      dashboard.uid,
+      selectedTheme,
+      panel,
+      Math.floor(usedWidth),
+      Math.floor(usedHeight)
+    );
 
     this.setState({ imageUrl });
   };
@@ -103,36 +102,45 @@ export class ShareImage extends PureComponent<Props, State> {
   };
 
   onDownload = () => {
-    const request = new XMLHttpRequest();
-    request.responseType = 'blob';
-    request.open('GET', this.state.imageUrl);
-    request.addEventListener('error', () => {
-      this.setState({ isDownloading: false });
-    });
-    request.addEventListener('load', () => {
-      const a = document.createElement('a');
-      const url = URL.createObjectURL(request.response);
-      a.href = url;
-      a.download = this.props.panel?.title + '.' + this.state.selectedFormat;
-      a.click();
+    this.setState({ isDownloading: true, error: null });
+    fetch(this.state.imageUrl)
+      .then((response) => {
+        if (!response.ok) {
+          this.setState({ isDownloading: false, error: ERROR_MSG });
+          throw new Error(ERROR_MSG);
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = this.props.panel?.title + '.' + this.state.selectedFormat;
+        link.click();
 
-      this.setState({ isDownloading: false });
-    });
-    request.send();
-    this.setState({ isDownloading: true });
+        this.setState({ isDownloading: false, error: null });
+      })
+      .catch((error) => {
+        this.setState({ isDownloading: false, error: error.message });
+      });
   };
 
   render() {
     const { panel, dashboard } = this.props;
     const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
-    const { useCurrentTimeRange, selectedTheme, selectedFormat, width, height, isDownloading, usePanelSize } =
+    const { useCurrentTimeRange, selectedTheme, selectedFormat, width, height, isDownloading, usePanelSize, error } =
       this.state;
     const isDashboardSaved = Boolean(dashboard.id);
 
     const timeRangeLabelTranslation = t('share-modal.link.time-range-label', `Lock time range`);
-    const widthTranslation = t('share-modal.image.width', `Width`);
-    const heightTranslation = t('share-modal.image.height', `Height`);
+    const widthTranslation = t('share-modal.image.width', `Image width`);
+    const heightTranslation = t('share-modal.image.height', `Image height`);
     const usePanelSizeTranslation = t('share-modal.image.use-panel-size', 'Use panel size');
+
+    const panelSizeTranslation = t(
+      'share-modal.image.use-panel-size-description',
+      `Use the same width and height as the panel`
+    );
 
     const timeRangeDescriptionTranslation = t(
       'share-modal.link.time-range-description',
@@ -173,36 +181,52 @@ export class ShareImage extends PureComponent<Props, State> {
                 />
               </Field>
               <ThemePicker selectedTheme={selectedTheme} onChange={this.onThemeChange} />
-              <InlineFieldRow>
-                <InlineField label={widthTranslation}>
-                  <Input id="image-width-input" type="number" width={15} value={width} onChange={this.onWidthChange} />
-                </InlineField>
-                <InlineField label={heightTranslation}>
-                  <Input id="image-height-input" width={15} value={height} onChange={this.onHeightChange} />
-                </InlineField>
-                <InlineField label={usePanelSizeTranslation}>
-                  <InlineSwitch value={usePanelSize} onChange={this.onPanelSizeFlagChange} />
-                </InlineField>
-              </InlineFieldRow>
-
               <Field label={t('share-modal.image.format', `Image format`)}>
                 <RadioButtonGroup options={imageFormats} value={selectedFormat} onChange={this.onFormatChange} />
               </Field>
+              <FieldSet>
+                <Field label={usePanelSizeTranslation} description={panelSizeTranslation}>
+                  <Switch id="image-panel-size" value={usePanelSize} onChange={this.onPanelSizeFlagChange} />
+                </Field>
+                {!usePanelSize && (
+                  <>
+                    <Field label={widthTranslation}>
+                      <Input
+                        id="image-width-input"
+                        type="number"
+                        width={15}
+                        value={width}
+                        onChange={this.onWidthChange}
+                      />
+                    </Field>
+                    <Field label={heightTranslation}>
+                      <Input id="image-height-input" width={15} value={height} onChange={this.onHeightChange} />
+                    </Field>
+                  </>
+                )}
+              </FieldSet>
 
-              {isDashboardSaved && !isDownloading && (
-                <Button aria-label="Download image" variant="primary" onClick={this.onDownload} type="button">
-                  {t('share-modal.image.download-button-label', `Download image`)}
-                </Button>
-                // <div className="gf-form">
-                //   <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
-                //     <Icon name="camera" />
-                //     &nbsp;
-                //     <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>
-                //   </a>
-                // </div>
+              {isDashboardSaved && (
+                <div style={{ marginBottom: '10px' }}>
+                  <Button
+                    fullWidth={true}
+                    aria-label="Download image"
+                    variant="primary"
+                    onClick={this.onDownload}
+                    type="button"
+                    disabled={isDownloading}
+                  >
+                    {t('share-modal.image.download-button-label', `Download image`)}
+                    {isDownloading && <Spinner inline={true} style={{ marginLeft: '10px' }} />}
+                  </Button>
+                </div>
               )}
 
-              {isDashboardSaved && isDownloading && <LoadingPlaceholder text="Loading..." />}
+              {error && (
+                <Alert severity="error" title={t('share-modal.image.error', 'Error')} bottomSpacing={0}>
+                  {error}
+                </Alert>
+              )}
 
               {!isDashboardSaved && (
                 <Alert
