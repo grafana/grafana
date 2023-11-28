@@ -67,13 +67,54 @@ func (query *Query) renderTags() []string {
 			}
 		}
 
+		isOperatorTypeHandler := func(tag *Tag) (string, string) {
+			// Attempt to identify the type of the supplied value
+			var lowerValue = strings.ToLower(tag.Value)
+			var r = regexp.MustCompile(`^(-?)[0-9\.]+$`)
+			var textValue string
+			var operator string
+
+			// Perform operator replacements
+			switch tag.Operator {
+			case "Is":
+				operator = "="
+			case "Is Not":
+				operator = "!="
+			default:
+				// This should never happen
+				operator = "="
+			}
+
+			// Always quote tag values
+			if strings.HasSuffix(tag.Key, "::tag") {
+				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
+				return textValue, operator
+			}
+
+			// Try and discern the type of fields
+			if lowerValue == "true" || lowerValue == "false" {
+				// boolean, don't quote, but make lowercase
+				textValue = lowerValue
+			} else if r.MatchString(tag.Value) {
+				// Integer or float, don't quote
+				textValue = tag.Value
+			} else {
+				// String (or unknown) - quote
+				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
+			}
+
+			return textValue, operator
+		}
+
 		// quote value unless regex or number
 		var textValue string
 		switch tag.Operator {
 		case "=~", "!~":
 			textValue = tag.Value
-		case "<", ">":
+		case "<", ">", ">=", "<=":
 			textValue = tag.Value
+		case "Is", "Is Not":
+			textValue, tag.Operator = isOperatorTypeHandler(tag)
 		default:
 			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 		}

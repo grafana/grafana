@@ -120,6 +120,7 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
     })
   );
 });
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
@@ -135,7 +136,12 @@ jest.mock('@grafana/runtime', () => ({
     return runRequestMock(ds, request);
   },
   config: {
-    panels: [],
+    panels: {
+      text: { skipDataQuery: true },
+    },
+    featureToggles: {
+      dataTrails: false,
+    },
     theme2: {
       visualization: {
         getColorByName: jest.fn().mockReturnValue('red'),
@@ -143,6 +149,15 @@ jest.mock('@grafana/runtime', () => ({
     },
   },
 }));
+
+jest.mock('@grafana/scenes', () => ({
+  ...jest.requireActual('@grafana/scenes'),
+  sceneUtils: {
+    ...jest.requireActual('@grafana/scenes').sceneUtils,
+    registerVariableMacro: jest.fn(),
+  },
+}));
+
 describe('transformSceneToSaveModel', () => {
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
@@ -502,7 +517,6 @@ describe('transformSceneToSaveModel', () => {
       expect(snapshot.panels?.length).toBe(3);
 
       // Regular panel with SceneQueryRunner
-      // @ts-expect-error
       expect(snapshot.panels?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
       // @ts-expect-error
       expect(snapshot.panels?.[0].targets?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
@@ -515,7 +529,6 @@ describe('transformSceneToSaveModel', () => {
       });
 
       // Panel with transformations
-      // @ts-expect-error
       expect(snapshot.panels?.[1].datasource).toEqual(GRAFANA_DATASOURCE_REF);
       // @ts-expect-error
       expect(snapshot.panels?.[1].targets?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
@@ -535,7 +548,6 @@ describe('transformSceneToSaveModel', () => {
       ]);
 
       // Panel with a shared query (dahsboard query)
-      // @ts-expect-error
       expect(snapshot.panels?.[2].datasource).toEqual(GRAFANA_DATASOURCE_REF);
       // @ts-expect-error
       expect(snapshot.panels?.[2].targets?.[0].datasource).toEqual(GRAFANA_DATASOURCE_REF);
@@ -768,7 +780,6 @@ describe('transformSceneToSaveModel', () => {
 
         expect(snapshot.panels?.length).toBe(3);
         expect(result.panels?.length).toBe(1);
-        // @ts-expect-error
         expect(result.panels?.[0].gridPos).toEqual({ w: 24, x: 0, y: 0, h: 20 });
       });
 

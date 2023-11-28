@@ -6,6 +6,7 @@ import {
   QueryVariableModel,
   IntervalVariableModel,
   TypedVariableModel,
+  TextBoxVariableModel,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
@@ -30,6 +31,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDataDTO } from 'app/types';
 
+import { DashboardControls } from '../scene/DashboardControls';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
@@ -100,8 +102,11 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.controls).toBeDefined();
-      expect(scene.state.controls![1]).toBeInstanceOf(AdHocFilterSet);
-      expect((scene.state.controls![1] as AdHocFilterSet).state.name).toBe('CoolFilters');
+      expect(scene.state.controls![0]).toBeInstanceOf(DashboardControls);
+      expect((scene.state.controls![0] as DashboardControls).state.variableControls[1]).toBeInstanceOf(AdHocFilterSet);
+      expect(
+        ((scene.state.controls![0] as DashboardControls).state.variableControls[1] as AdHocFilterSet).state.name
+      ).toBe('CoolFilters');
     });
 
     it('should apply cursor sync behavior', () => {
@@ -113,9 +118,9 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(1);
-      expect(scene.state.$behaviors![0]).toBeInstanceOf(behaviors.CursorSync);
-      expect((scene.state.$behaviors![0] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+      expect(scene.state.$behaviors).toHaveLength(2);
+      expect(scene.state.$behaviors![1]).toBeInstanceOf(behaviors.CursorSync);
+      expect((scene.state.$behaviors![1] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
   });
 
@@ -675,6 +680,7 @@ describe('transformSaveModelToScene', () => {
         error: null,
         description: null,
       };
+
       const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
       expect(rest).toEqual({
@@ -692,13 +698,83 @@ describe('transformSaveModelToScene', () => {
         value: '1m',
       });
     });
-    it.each(['textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
+
+    it('should migrate textbox variable', () => {
+      const variable: TextBoxVariableModel = {
+        id: 'query0',
+        global: false,
+        index: 0,
+        state: LoadingState.Done,
+        error: null,
+        name: 'textboxVar',
+        label: 'Textbox Label',
+        description: 'Textbox Description',
+        type: 'textbox',
+        rootStateKey: 'N4XLmH5Vz',
+        current: {},
+        hide: 0,
+        options: [],
+        query: 'defaultValue',
+        originalQuery: 'defaultValue',
+        skipUrlSync: false,
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+      expect(rest).toEqual({
+        description: 'Textbox Description',
+        hide: 0,
+        label: 'Textbox Label',
+        name: 'textboxVar',
+        skipUrlSync: false,
+        type: 'textbox',
+        value: 'defaultValue',
+      });
+    });
+
+    it.each(['system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
         type: type as VariableType,
       };
 
       expect(() => createSceneVariableFromVariableModel(variable as TypedVariableModel)).toThrow();
+    });
+
+    it('should handle variable without current', () => {
+      // @ts-expect-error
+      const variable: TypedVariableModel = {
+        id: 'query1',
+        name: 'query1',
+        type: 'datasource',
+        global: false,
+        regex: '/^gdev/',
+        options: [],
+        query: 'prometheus',
+        multi: true,
+        includeAll: true,
+        refresh: 1,
+        allValue: 'Custom all',
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(migrated).toBeInstanceOf(DataSourceVariable);
+      expect(rest).toEqual({
+        allValue: 'Custom all',
+        defaultToAll: true,
+        includeAll: true,
+        label: undefined,
+        name: 'query1',
+        options: [],
+        pluginId: 'prometheus',
+        regex: '/^gdev/',
+        text: '',
+        type: 'datasource',
+        value: '',
+        isMulti: true,
+      });
     });
   });
 
@@ -723,7 +799,9 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+        SceneDataLayerControls
+      );
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(4);
@@ -751,7 +829,9 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+        SceneDataLayerControls
+      );
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(5);
@@ -765,7 +845,9 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect(scene.state.controls![2]).toBeInstanceOf(SceneDataLayerControls);
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+        SceneDataLayerControls
+      );
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(5);

@@ -357,7 +357,7 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
   return isString ? ref : ref?.uid;
 }
 
-export function variableInterpolation(value: any[]) {
+export function variableInterpolation<T>(value: T | T[]) {
   if (Array.isArray(value)) {
     if (value.length > 1) {
       appEvents.publish(new PanelDataSourceIsMultiVar());

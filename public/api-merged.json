@@ -3420,7 +3420,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AddCommand"
+              "$ref": "#/definitions/AddAPIKeyCommand"
             }
           }
         ],
@@ -5243,216 +5243,6 @@
           },
           "500": {
             "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/disable-permissions": {
-      "post": {
-        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Disable permissions for a data source.",
-        "operationId": "disablePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/enable-permissions": {
-      "post": {
-        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Enable permissions for a data source.",
-        "operationId": "enablePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/createOrUpdateDatasourceResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/permissions": {
-      "get": {
-        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use GET /api/access-control/datasources/:uid",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Get permissions for a data source.",
-        "operationId": "getAllPermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getAllPermissionseResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Add permissions for a data source.",
-        "operationId": "addPermission",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "userId",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "builtinRole",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "permission",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/addPermissionResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/{datasourceId}/permissions/{permissionId}": {
-      "delete": {
-        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
-        "tags": [
-          "datasource_permissions",
-          "enterprise"
-        ],
-        "summary": "Remove permission for a data source.",
-        "operationId": "deletePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "datasourceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "permissionId",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
           }
         }
       }
@@ -8704,6 +8494,21 @@
             "type": "string",
             "name": "layout",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "title",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "scaleFactor",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "includeTables",
+            "in": "query"
           }
         ],
         "responses": {
@@ -11056,6 +10861,41 @@
           }
         }
       }
+    },
+    "/v1/sso-settings/{key}": {
+      "delete": {
+        "description": "# Remove an SSO Settings entry by Key\n\nYou need to have a permission with action `settings:write` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "tags": [
+          "sso_settings"
+        ],
+        "summary": "Remove SSO Settings",
+        "operationId": "removeProviderSettings",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "key",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -11098,7 +10938,7 @@
         }
       }
     },
-    "AddCommand": {
+    "AddAPIKeyCommand": {
       "type": "object",
       "properties": {
         "name": {
@@ -11204,25 +11044,6 @@
             "Editor",
             "Admin"
           ]
-        }
-      }
-    },
-    "AddPermissionDTO": {
-      "type": "object",
-      "properties": {
-        "builtinRole": {
-          "type": "string"
-        },
-        "permission": {
-          "$ref": "#/definitions/DsPermissionType"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -13325,6 +13146,7 @@
           "format": "int64"
         },
         "folderId": {
+          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -13806,83 +13628,6 @@
         },
         "user": {
           "type": "string"
-        }
-      }
-    },
-    "DataSourcePermissionRuleDTO": {
-      "type": "object",
-      "properties": {
-        "builtInRole": {
-          "type": "string"
-        },
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "datasourceId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isManaged": {
-          "type": "boolean"
-        },
-        "permission": {
-          "$ref": "#/definitions/DsPermissionType"
-        },
-        "permissionName": {
-          "type": "string"
-        },
-        "team": {
-          "type": "string"
-        },
-        "teamAvatarUrl": {
-          "type": "string"
-        },
-        "teamEmail": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "userAvatarUrl": {
-          "type": "string"
-        },
-        "userEmail": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userLogin": {
-          "type": "string"
-        }
-      }
-    },
-    "DataSourcePermissionsDTO": {
-      "type": "object",
-      "properties": {
-        "datasourceId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "permissions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DataSourcePermissionRuleDTO"
-          }
         }
       }
     },
@@ -14489,6 +14234,7 @@
           "type": "boolean"
         },
         "id": {
+          "description": "Deprecated: use Uid instead",
           "type": "integer",
           "format": "int64"
         },
@@ -21265,21 +21011,6 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
-    "addPermissionResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "permissionId": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      }
-    },
     "adminCreateUserResponse": {
       "description": "(empty)",
       "schema": {
@@ -21700,12 +21431,6 @@
         "items": {
           "$ref": "#/definitions/AlertListItemDTO"
         }
-      }
-    },
-    "getAllPermissionseResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/DataSourcePermissionsDTO"
       }
     },
     "getAllRolesResponse": {
@@ -22232,7 +21957,10 @@
     "listTokensResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/TokenDTO"
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/TokenDTO"
+        }
       }
     },
     "notFoundError": {
@@ -22582,17 +22310,6 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
-      }
-    },
-    "validateDashboardResponse": {
-      "description": "(empty)",
-      "headers": {
-        "isValid": {
-          "type": "boolean"
-        },
-        "message": {
-          "type": "string"
-        }
       }
     },
     "viewPublicDashboardResponse": {

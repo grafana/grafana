@@ -12,7 +12,7 @@ labels:
     - enterprise
     - oss
 title: Visualizations
-weight: 75
+weight: 10
 ---
 
 # Visualizations

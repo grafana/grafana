@@ -69,7 +69,7 @@ export interface Props {
   isDraggable?: boolean;
   width: number;
   height: number;
-  onInstanceStateChange: (value: any) => void;
+  onInstanceStateChange: (value: unknown) => void;
   timezone?: string;
   hideMenu?: boolean;
 }
@@ -133,7 +133,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   // Due to a mutable panel model we get the sync settings via function that proactively reads from the model
   getSync = () => (this.props.isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip);
 
-  onInstanceStateChange = (value: any) => {
+  onInstanceStateChange = (value: unknown) => {
     this.props.onInstanceStateChange(value);
 
     this.setState({

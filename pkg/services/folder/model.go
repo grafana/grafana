@@ -26,6 +26,7 @@ const (
 var ErrFolderNotFound = errutil.NotFound("folder.notFound")
 
 type Folder struct {
+	// Deprecated: use UID instead
 	ID          int64  `xorm:"pk autoincr 'id'"`
 	OrgID       int64  `xorm:"org_id"`
 	UID         string `xorm:"uid"`
@@ -48,6 +49,7 @@ type Folder struct {
 var GeneralFolder = Folder{ID: 0, Title: "General"}
 
 func (f *Folder) IsGeneral() bool {
+	// nolint:staticcheck
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
@@ -128,7 +130,8 @@ type DeleteFolderCommand struct {
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
 type GetFolderQuery struct {
-	UID   *string
+	UID *string
+	// Deprecated: use FolderUID instead
 	ID    *int64
 	Title *string
 	OrgID int64
