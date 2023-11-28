@@ -9,7 +9,6 @@ import { config, getPluginLinkExtensions, locationService, reportInteraction } f
 import {
   LocalValueVariable,
   SceneDataTransformer,
-  SceneGridItem,
   SceneGridRow,
   SceneQueryRunner,
   VizPanel,
@@ -31,7 +30,6 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks } from './PanelLinks';
-import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 
 /**
@@ -266,10 +264,7 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
   }
 
   // Handle row repeats scenario
-  if (
-    (panel.parent instanceof SceneGridItem || panel.parent instanceof PanelRepeaterGridItem) &&
-    panel.parent?.parent instanceof SceneGridRow
-  ) {
+  if (panel.parent?.parent instanceof SceneGridRow) {
     const row = panel.parent.parent;
     if (row.state.$variables) {
       row.state.$variables.state.variables.forEach((variable) => {
