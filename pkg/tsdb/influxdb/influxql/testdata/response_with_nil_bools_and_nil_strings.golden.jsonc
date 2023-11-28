@@ -22,14 +22,7 @@
 //  
 //  
 //  
-//  Frame[1] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "Test raw query"
-//  }
+//  Frame[1] 
 //  Name: cpu.path { datacenter: America }
 //  Dimensions: 2 Fields by 3 Rows
 //  +-----------------------------------+----------------------------+
@@ -44,14 +37,7 @@
 //  
 //  
 //  
-//  Frame[2] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "Test raw query"
-//  }
+//  Frame[2] 
 //  Name: cpu.isActive { datacenter: America }
 //  Dimensions: 2 Fields by 3 Rows
 //  +-----------------------------------+----------------------------+
@@ -122,14 +108,6 @@
     {
       "schema": {
         "name": "cpu.path { datacenter: America }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "Test raw query"
-        },
         "fields": [
           {
             "name": "Time",
@@ -172,14 +150,6 @@
     {
       "schema": {
         "name": "cpu.isActive { datacenter: America }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "Test raw query"
-        },
         "fields": [
           {
             "name": "Time",
