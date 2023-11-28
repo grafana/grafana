@@ -63,7 +63,9 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, errAPIKeyRevoked.Errorf("Api key is revoked")
 	}
 
-	if r.OrgID != 0 && apiKey.OrgID != r.OrgID {
+	if r.OrgID == 0 {
+		r.OrgID = apiKey.OrgID
+	} else if r.OrgID != apiKey.OrgID {
 		return nil, errAPIKeyInvalidOrg.Errorf("API does not belong in Organization %v", r.OrgID)
 	}
 
