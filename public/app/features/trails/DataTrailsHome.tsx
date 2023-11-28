@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
@@ -35,7 +35,13 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {
+    const [_, setLastDelete] = useState(Date.now());
     const styles = useStyles2(getStyles);
+
+    const onDelete = (index: number) => {
+      getTrailStore().removeBookmark(index);
+      setLastDelete(Date.now()); // trigger re-render
+    };
 
     return (
       <div className={styles.container}>
@@ -74,7 +80,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
                     key={(resolvedTrail.state.key || '') + index}
                     trail={resolvedTrail}
                     onSelect={model.onSelectTrail}
-                    onDelete={() => getTrailStore().removeBookmark(index)}
+                    onDelete={() => onDelete(index)}
                   />
                 );
               })}

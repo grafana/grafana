@@ -29,7 +29,6 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
     <div className={styles.wrapper}>
       <button className={styles.container} onClick={() => onSelect(trail)}>
         <div className={styles.heading}>{getMetricName(trail.state.metric)}</div>
-        <trail.state.history.Component model={trail.state.history} />
         <Stack gap={1.5}>
           {dsValue && (
             <Stack direction="column" gap={0.5}>

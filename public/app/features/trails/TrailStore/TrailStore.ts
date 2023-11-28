@@ -98,7 +98,7 @@ export class TrailStore {
 
   // Bookmarked Trails
   get bookmarks() {
-    return this._bookmarks.map((t) => new DataTrail(sceneUtils.cloneSceneObjectState(t.resolve().state)).getRef());
+    return this._bookmarks;
   }
 
   addBookmark(trail: DataTrail) {
