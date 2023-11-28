@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { SelectableValue, TimeRange, getDefaultTimeRange, toOption } from '@grafana/data';
+import { SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { getOperationParamId } from '../../../prometheus/querybuilder/shared/operationUtils';
