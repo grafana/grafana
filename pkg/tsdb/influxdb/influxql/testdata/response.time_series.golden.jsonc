@@ -8,7 +8,7 @@
 //      "preferredVisualisationType": "graph",
 //      "executedQueryString": "Test raw query"
 //  }
-//  Name: series alias
+//  Name: cpu.upc.mean { /cluster/name/: Cluster/, @cluster@name@: Cluster@, datacenter: America, dc.region.name: Northeast, cluster-name: Cluster }
 //  Dimensions: 2 Fields by 1 Rows
 //  +-----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
 //  | Name: Time                        | Name: Value                                                                                                                  |
@@ -21,7 +21,7 @@
 //  
 //  
 //  Frame[1] 
-//  Name: series alias
+//  Name: cpu.upc.sum { datacenter: America, dc.region.name: Northeast, cluster-name: Cluster, /cluster/name/: Cluster/, @cluster@name@: Cluster@ }
 //  Dimensions: 2 Fields by 1 Rows
 //  +-----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
 //  | Name: Time                        | Name: Value                                                                                                                  |
@@ -38,7 +38,7 @@
   "frames": [
     {
       "schema": {
-        "name": "series alias",
+        "name": "cpu.upc.mean { /cluster/name/: Cluster/, @cluster@name@: Cluster@, datacenter: America, dc.region.name: Northeast, cluster-name: Cluster }",
         "meta": {
           "typeVersion": [
             0,
@@ -70,7 +70,7 @@
               "dc.region.name": "Northeast"
             },
             "config": {
-              "displayNameFromDS": "series alias"
+              "displayNameFromDS": "cpu.upc.mean { /cluster/name/: Cluster/, @cluster@name@: Cluster@, datacenter: America, dc.region.name: Northeast, cluster-name: Cluster }"
             }
           }
         ]
@@ -88,7 +88,7 @@
     },
     {
       "schema": {
-        "name": "series alias",
+        "name": "cpu.upc.sum { datacenter: America, dc.region.name: Northeast, cluster-name: Cluster, /cluster/name/: Cluster/, @cluster@name@: Cluster@ }",
         "fields": [
           {
             "name": "Time",
@@ -112,7 +112,7 @@
               "dc.region.name": "Northeast"
             },
             "config": {
-              "displayNameFromDS": "series alias"
+              "displayNameFromDS": "cpu.upc.sum { datacenter: America, dc.region.name: Northeast, cluster-name: Cluster, /cluster/name/: Cluster/, @cluster@name@: Cluster@ }"
             }
           }
         ]

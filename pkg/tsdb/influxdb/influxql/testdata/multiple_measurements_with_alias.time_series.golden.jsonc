@@ -8,7 +8,7 @@
 //      "preferredVisualisationType": "graph",
 //      "executedQueryString": "Test raw query"
 //  }
-//  Name: alias cpu.upc
+//  Name: cpu.upc.mean { datacenter: America, dc.region.name: Northeast, cluster-name: Cluster }
 //  Dimensions: 2 Fields by 1 Rows
 //  +-----------------------------------+----------------------------------------------------------------------------+
 //  | Name: Time                        | Name: Value                                                                |
@@ -21,7 +21,7 @@
 //  
 //  
 //  Frame[1] 
-//  Name: alias logins.count
+//  Name: logins.count.mean { dc.region.name: Northeast, cluster-name: Cluster, datacenter: America }
 //  Dimensions: 2 Fields by 1 Rows
 //  +-----------------------------------+----------------------------------------------------------------------------+
 //  | Name: Time                        | Name: Value                                                                |
@@ -38,7 +38,7 @@
   "frames": [
     {
       "schema": {
-        "name": "alias cpu.upc",
+        "name": "cpu.upc.mean { datacenter: America, dc.region.name: Northeast, cluster-name: Cluster }",
         "meta": {
           "typeVersion": [
             0,
@@ -68,7 +68,7 @@
               "dc.region.name": "Northeast"
             },
             "config": {
-              "displayNameFromDS": "alias cpu.upc"
+              "displayNameFromDS": "cpu.upc.mean { datacenter: America, dc.region.name: Northeast, cluster-name: Cluster }"
             }
           }
         ]
@@ -86,7 +86,7 @@
     },
     {
       "schema": {
-        "name": "alias logins.count",
+        "name": "logins.count.mean { dc.region.name: Northeast, cluster-name: Cluster, datacenter: America }",
         "fields": [
           {
             "name": "Time",
@@ -108,7 +108,7 @@
               "dc.region.name": "Northeast"
             },
             "config": {
-              "displayNameFromDS": "alias logins.count"
+              "displayNameFromDS": "logins.count.mean { dc.region.name: Northeast, cluster-name: Cluster, datacenter: America }"
             }
           }
         ]

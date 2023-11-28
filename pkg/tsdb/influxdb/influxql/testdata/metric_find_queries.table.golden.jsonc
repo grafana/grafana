@@ -9,7 +9,7 @@
 //      "executedQueryString": "Test raw query"
 //  }
 //  Name: measurements
-//  Dimensions: 1 Fields by 4 Rows
+//  Dimensions: 1 Fields by 10 Rows
 //  +-----------------+
 //  | Name: name      |
 //  | Labels:         |
@@ -19,6 +19,12 @@
 //  | disk            |
 //  | diskio          |
 //  | kernel          |
+//  | logs            |
+//  | mem             |
+//  | myMeasurement   |
+//  | processes       |
+//  | swap            |
+//  | system          |
 //  +-----------------+
 //  
 //  
@@ -57,7 +63,13 @@
             "cpu",
             "disk",
             "diskio",
-            "kernel"
+            "kernel",
+            "logs",
+            "mem",
+            "myMeasurement",
+            "processes",
+            "swap",
+            "system"
           ]
         ]
       }

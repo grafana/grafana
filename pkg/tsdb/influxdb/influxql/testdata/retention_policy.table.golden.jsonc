@@ -6,7 +6,7 @@
 //          0
 //      ],
 //      "preferredVisualisationType": "table",
-//      "executedQueryString": "a nice query"
+//      "executedQueryString": "Test raw query"
 //  }
 //  Name: 
 //  Dimensions: 5 Fields by 5 Rows
@@ -35,7 +35,7 @@
             0
           ],
           "preferredVisualisationType": "table",
-          "executedQueryString": "a nice query"
+          "executedQueryString": "Test raw query"
         },
         "fields": [
           {

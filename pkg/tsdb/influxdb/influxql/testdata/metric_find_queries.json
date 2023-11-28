@@ -1,10 +1,13 @@
 {
   "results": [
     {
+      "statement_id": 0,
       "series": [
         {
-          "refId": "metricFindQuery",
-          "name": "cpu",
+          "name": "measurements",
+          "columns": [
+            "name"
+          ],
           "values": [
             [
               "cpu"
@@ -13,7 +16,28 @@
               "disk"
             ],
             [
+              "diskio"
+            ],
+            [
+              "kernel"
+            ],
+            [
               "logs"
+            ],
+            [
+              "mem"
+            ],
+            [
+              "myMeasurement"
+            ],
+            [
+              "processes"
+            ],
+            [
+              "swap"
+            ],
+            [
+              "system"
             ]
           ]
         }

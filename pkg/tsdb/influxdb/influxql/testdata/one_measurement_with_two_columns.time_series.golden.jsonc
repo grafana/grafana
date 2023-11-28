@@ -5,13 +5,13 @@
 //          0,
 //          0
 //      ],
-//      "preferredVisualisationType": "table",
+//      "preferredVisualisationType": "graph",
 //      "executedQueryString": "Test raw query"
 //  }
-//  Name: cpu
+//  Name: cpu.mean
 //  Dimensions: 2 Fields by 4 Rows
 //  +-------------------------------+-------------------+
-//  | Name: Time                    | Name: mean        |
+//  | Name: Time                    | Name: Value       |
 //  | Labels:                       | Labels:           |
 //  | Type: []time.Time             | Type: []*float64  |
 //  +-------------------------------+-------------------+
@@ -28,13 +28,13 @@
   "frames": [
     {
       "schema": {
-        "name": "cpu",
+        "name": "cpu.mean",
         "meta": {
           "typeVersion": [
             0,
             0
           ],
-          "preferredVisualisationType": "table",
+          "preferredVisualisationType": "graph",
           "executedQueryString": "Test raw query"
         },
         "fields": [
@@ -46,14 +46,14 @@
             }
           },
           {
-            "name": "mean",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64",
               "nullable": true
             },
             "config": {
-              "displayNameFromDS": "mean"
+              "displayNameFromDS": "cpu.mean"
             }
           }
         ]

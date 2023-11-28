@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 //go:embed testdata/many_columns.json
@@ -16,7 +14,7 @@ var testResponse string
 // go test -benchmem -run=^$ -memprofile memprofile.out -count=10 -bench ^BenchmarkParseJson$ github.com/grafana/grafana/pkg/tsdb/influxdb/influxql
 // go tool pprof -http=localhost:9999 memprofile.out
 func BenchmarkParseJson(b *testing.B) {
-	query := generateQuery(models.Query{})
+	query := generateQuery("time_series", "")
 
 	b.ResetTimer()
 
