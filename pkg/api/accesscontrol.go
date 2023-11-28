@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	"fmt"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -314,6 +316,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleViewer)},
 	}
 
+	// TODO this role can be removed once we have rolled out FlagAnnotationPermissionUpdate to all users
+	// keeping it in for now for backwards compatibility
 	dashboardAnnotationsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:annotations.dashboard:writer",
@@ -342,6 +346,38 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},
+	}
+
+	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
+		annotationsReaderRole = ac.RoleRegistration{
+			Role: ac.RoleDTO{
+				Name:        "fixed:annotations:reader",
+				DisplayName: "Organization annotation reader",
+				Description: "Read organization annotations and annotation tags",
+				Group:       "Annotations",
+				Permissions: []ac.Permission{
+					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeOrganization},
+				},
+			},
+			Grants: []string{string(org.RoleViewer)},
+		}
+
+		// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
+		annotationsWriterRole = ac.RoleRegistration{
+			Role: ac.RoleDTO{
+				Name:        "fixed:annotations:writer",
+				DisplayName: "Organization annotation writer",
+				Description: "Update organization annotations.",
+				Group:       "Annotations",
+				Permissions: []ac.Permission{
+					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeOrganization},
+				},
+			},
+			Grants: []string{string(org.RoleEditor)},
+		}
 	}
 
 	dashboardsCreatorRole := ac.RoleRegistration{
@@ -554,6 +590,42 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole}
+
+	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		allAnnotationsReaderRole := ac.RoleRegistration{
+			Role: ac.RoleDTO{
+				Name:        "fixed:annotations.all:reader",
+				DisplayName: "Annotation reader",
+				Description: "Read all annotations and tags",
+				Group:       "Annotations",
+				Permissions: []ac.Permission{
+					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsRead, Scope: dashboards.ScopeDashboardsAll},
+				},
+			},
+			Grants: []string{string(org.RoleAdmin)},
+		}
+
+		allAnnotationsWriterRole := ac.RoleRegistration{
+			Role: ac.RoleDTO{
+				Name:        "fixed:annotations.all:writer",
+				DisplayName: "Annotation writer",
+				Description: "Update all annotations.",
+				Group:       "Annotations",
+				Permissions: []ac.Permission{
+					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsCreate, Scope: dashboards.ScopeDashboardsAll},
+					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsDelete, Scope: dashboards.ScopeDashboardsAll},
+					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeOrganization},
+					{Action: ac.ActionAnnotationsWrite, Scope: dashboards.ScopeDashboardsAll},
+				},
+			},
+			Grants: []string{string(org.RoleAdmin)},
+		}
+
+		roles = append(roles, allAnnotationsReaderRole, allAnnotationsWriterRole)
+	}
 
 	return hs.accesscontrolService.DeclareFixedRoles(roles...)
 }
