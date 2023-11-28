@@ -14,6 +14,7 @@ func newFoldersMetrics(r prometheus.Registerer) *foldersMetrics {
 		sharedWithMeFetchFoldersSuccessRequestsDuration: prometheus.NewHistogram(
 			prometheus.HistogramOpts{
 				Name:      "sharedwithme_fetch_folders_successes_duration_seconds",
+				Help:      "Histogram of fetching folders with permissions directly assigned to user",
 				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
@@ -21,6 +22,7 @@ func newFoldersMetrics(r prometheus.Registerer) *foldersMetrics {
 		sharedWithMeFetchFoldersFailureRequestsDuration: prometheus.NewHistogram(
 			prometheus.HistogramOpts{
 				Name:      "sharedwithme_fetch_folders_failures_duration_seconds",
+				Help:      "Histogram of failed requests for fetching folders with permissions directly assigned to user",
 				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,

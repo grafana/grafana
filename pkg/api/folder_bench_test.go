@@ -479,7 +479,7 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
-		folderServiceWithFlagOn,
+		folderServiceWithFlagOn, nil,
 	)
 	require.NoError(b, err)
 

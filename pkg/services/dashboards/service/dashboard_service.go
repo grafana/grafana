@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"golang.org/x/exp/slices"
 
@@ -51,6 +54,7 @@ type DashboardServiceImpl struct {
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	ac                   accesscontrol.AccessControl
+	metrics              *dashboardsMetrics
 }
 
 // This is the uber service that implements a three smaller services
@@ -58,7 +62,7 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
-	folderSvc folder.Service,
+	folderSvc folder.Service, r prometheus.Registerer,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -71,6 +75,7 @@ func ProvideDashboardServiceImpl(
 		ac:                   ac,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
+		metrics:              newDashboardsMetrics(r),
 	}
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
@@ -611,6 +616,10 @@ func (dr *DashboardServiceImpl) getUserSharedDashboardUIDs(ctx context.Context, 
 
 func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	if dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && len(query.FolderUIDs) > 0 && slices.Contains(query.FolderUIDs, "sharedwithme") {
+		defer func(t time.Time) {
+			dr.metrics.sharedWithMeFetchDashboardsSuccessRequestsDuration.Observe(time.Since(t).Seconds())
+		}(time.Now())
+
 		userDashboardUIDs, err := dr.getUserSharedDashboardUIDs(ctx, query.SignedInUser)
 		if err != nil {
 			return nil, err
