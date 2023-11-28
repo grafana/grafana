@@ -1,5 +1,5 @@
 import deepEqual from 'fast-deep-equal';
-import React, { useCallback, useEffect } from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
@@ -119,21 +119,50 @@ function useLabels(
     from: Math.floor((range?.from.valueOf() || 0) / 5000) * 5000,
   };
 
+  const createSelector = useCallback(
+    (query: Query, labelToRemove: string): string => {
+    let labels: string[] = [
+      `__profile_type__=\"${query.profileTypeId}\"`,
+    ]
+    const regex = /(\w+)\s*=\s*("[^,"]+")/g;
+    let match;
+    while ((match = regex.exec(query.labelSelector)) !== null) {
+      if (match[1] && match[2]) {
+        if (match[1] === labelToRemove) {
+          continue;
+        }
+        labels.push(`${match[1]}=${match[2]}`);
+      }
+    }
+    return `{${labels.join(',')}}`
+  }, []);
+
+  const labelSelector = useMemo(() => createSelector(query, ''), [query, createSelector]);
+
   const labelsResult = useAsync(() => {
-    return datasource.getLabelNames(query.profileTypeId + query.labelSelector, unpreciseRange.from, unpreciseRange.to);
-  }, [datasource, query.profileTypeId, query.labelSelector, unpreciseRange.to, unpreciseRange.from]);
+    console.log(labelSelector)
+    const labelNames = datasource.getLabelNames(
+      labelSelector, unpreciseRange.from, unpreciseRange.to);
+    console.log(labelNames)
+    return labelNames
+  }, [datasource, query.profileTypeId, labelSelector, unpreciseRange.to, unpreciseRange.from]);
+
 
   // Create a function with range and query already baked in so we don't have to send those everywhere
   const getLabelValues = useCallback(
     (label: string) => {
-      return datasource.getLabelValues(
-        query.profileTypeId + query.labelSelector,
+      let labelSelector = createSelector(query, label);
+      console.log(labelSelector)
+      const labelValues = datasource.getLabelValues(
+        labelSelector,
         label,
         unpreciseRange.from,
         unpreciseRange.to
       );
+      console.log(labelValues)
+      return labelValues;
     },
-    [query, datasource, unpreciseRange.to, unpreciseRange.from]
+    [datasource, query, createSelector, unpreciseRange.to, unpreciseRange.from]
   );
 
   const onLabelSelectorChange = useCallback(

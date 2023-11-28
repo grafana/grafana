@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -27,8 +28,8 @@ var (
 
 type ProfilingClient interface {
 	ProfileTypes(context.Context) ([]*ProfileType, error)
-	LabelNames(ctx context.Context) ([]string, error)
-	LabelValues(ctx context.Context, label string) ([]string, error)
+	LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error)
+	LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
@@ -105,7 +106,18 @@ func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.Cal
 
 func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	ctxLogger := logger.FromContext(ctx)
-	res, err := d.client.LabelNames(ctx)
+
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		ctxLogger.Error("Failed to parse URL", "error", err, "function", logEntrypoint())
+		return err
+	}
+	query := u.Query()
+
+	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
+	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
+
+	res, err := d.client.LabelNames(ctx, query.Get("query"), start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelNames: %v", err)
@@ -139,7 +151,11 @@ func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.Call
 	}
 	query := u.Query()
 
-	res, err := d.client.LabelValues(ctx, query["label"][0])
+	start, _ := strconv.ParseInt(query.Get("start"), 10, 64)
+	end, _ := strconv.ParseInt(query.Get("end"), 10, 64)
+	label := query.Get("label")
+
+	res, err := d.client.LabelValues(ctx, label, query.Get("query"), start, end)
 	if err != nil {
 		ctxLogger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		return fmt.Errorf("error calling LabelValues: %v", err)
