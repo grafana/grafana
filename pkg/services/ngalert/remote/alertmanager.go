@@ -33,16 +33,15 @@ type stateStore interface {
 type Alertmanager struct {
 	log      log.Logger
 	orgID    int64
+	ready    bool
+	sender   *sender.ExternalAlertmanager
+	state    stateStore
 	tenantID string
 	url      string
 
 	amClient    *amclient.AlertmanagerAPI
 	httpClient  *http.Client
-	store       stateStore
 	mimirClient mimirClient.MimirClient
-	ready       bool
-	sender      *sender.ExternalAlertmanager
-	stateStore  stateStore
 }
 
 type AlertmanagerConfig struct {
@@ -51,7 +50,7 @@ type AlertmanagerConfig struct {
 	BasicAuthPassword string
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, stateStore stateStore) (*Alertmanager, error) {
 	client := http.Client{
 		Transport: &mimirClient.MimirAuthRoundTripper{
 			TenantID: cfg.TenantID,
@@ -105,9 +104,8 @@ func NewAlertmanager(cfg AlertmanagerConfig, orgID int64, store stateStore) (*Al
 		mimirClient: mc,
 		amClient:    amclient.New(transport, nil),
 		httpClient:  &client,
-		store:       store,
+		state:       stateStore,
 		sender:      s,
-		stateStore:  store,
 		orgID:       orgID,
 		tenantID:    cfg.TenantID,
 		url:         cfg.URL,
@@ -133,6 +131,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	}
 	am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
 
+	// Send configuration if necessary.
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
 	if am.shouldSendConfig(ctx, config) {
 		err := am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, config.AlertmanagerConfiguration, config.ConfigurationHash, config.ID, config.CreatedAt, config.Default)
@@ -143,10 +142,9 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 		}
 	}
 
+	// Send base64-encoded state if necessary.
 	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-
-	// Get the base64-encoded state and send if necessary.
-	state, err := am.store.GetFullState(ctx)
+	state, err := am.state.GetFullState(ctx, notifier.SilencesFilename, notifier.NotificationLogFilename)
 	if err != nil {
 		return fmt.Errorf("error getting the Alertmanager's full state: %w", err)
 	}
@@ -154,9 +152,10 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	if am.shouldSendState(ctx, state) {
 		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
 			am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
+		} else {
+			am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 		}
 	}
-	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 	return nil
 }
 
