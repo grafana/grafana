@@ -20,7 +20,7 @@ import (
 	mssql "github.com/microsoft/go-mssqldb"
 	_ "github.com/microsoft/go-mssqldb/azuread"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var logger = log.New("tsdb.mssql")
+var logger = backend.NewLoggerWith("logger", "tsdb.mssql")
 
 type Service struct {
 	im instancemgmt.InstanceManager

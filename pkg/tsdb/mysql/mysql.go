@@ -21,8 +21,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
@@ -34,7 +34,7 @@ const (
 	dateTimeFormat2 = "2006-01-02T15:04:05Z"
 )
 
-var logger = log.New("tsdb.mysql")
+var logger = backend.NewLoggerWith("logger", "tsdb.mysql")
 
 type Service struct {
 	Cfg *setting.Cfg
