@@ -44,12 +44,10 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   if (sortKey != null) {
-    let itemVals = new Map<VizLegendItem, string | number>();
+    let itemVals = new Map<VizLegendItem, number>();
 
     items.forEach((item) => {
-      if (sortKey === nameSortKey) {
-        itemVals.set(item, item.label);
-      } else if (item.getDisplayValues) {
+      if (sortKey !== nameSortKey && item.getDisplayValues) {
         const stat = item.getDisplayValues().find((stat) => stat.title === sortKey);
         const val = stat == null || Number.isNaN(stat.numeric) ? -Infinity : stat.numeric;
         itemVals.set(item, val);
@@ -61,16 +59,13 @@ export const VizLegendTable = <T extends unknown>({
     if (sortKey === nameSortKey) {
       // string sort
       items.sort((a, b) => {
-        let aVal = itemVals.get(a) as string;
-        let bVal = itemVals.get(b) as string;
-
-        return sortMult * naturalCompare(aVal, bVal);
+        return sortMult * naturalCompare(a.label, b.label);
       });
     } else {
       // numeric sort
       items.sort((a, b) => {
-        let aVal = itemVals.get(a) as number;
-        let bVal = itemVals.get(b) as number;
+        const aVal = itemVals.get(a) ?? 0;
+        const bVal = itemVals.get(b) ?? 0;
 
         return sortMult * (aVal - bVal);
       });
