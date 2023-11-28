@@ -56,7 +56,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
 		db := sqlstore.InitTestDB(t)
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{})
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{}, nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})

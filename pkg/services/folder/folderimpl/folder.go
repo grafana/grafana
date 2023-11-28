@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -41,6 +43,7 @@ type Service struct {
 
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
+	metrics  *foldersMetrics
 }
 
 func ProvideService(
@@ -51,6 +54,7 @@ func ProvideService(
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
+	r prometheus.Registerer,
 ) folder.Service {
 	store := ProvideStore(db, cfg, features)
 	srv := &Service{
@@ -64,6 +68,7 @@ func ProvideService(
 		bus:                  bus,
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
+		metrics:              newFoldersMetrics(r),
 	}
 	srv.DBMigration(db)
 
@@ -267,15 +272,19 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 
 // GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
 func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	start := time.Now()
 	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
 	if err != nil {
+		s.metrics.sharedWithMeFetchFoldersFailureRequestsDuration.Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders to which the user has explicit access: %w", err)
 	}
 	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: cmd.OrgID, SignedInUser: cmd.SignedInUser})
 	if err != nil {
+		s.metrics.sharedWithMeFetchFoldersFailureRequestsDuration.Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
 	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
+	s.metrics.sharedWithMeFetchFoldersSuccessRequestsDuration.Observe(time.Since(start).Seconds())
 	return availableNonRootFolders, nil
 }
 
