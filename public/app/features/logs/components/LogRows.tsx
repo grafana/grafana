@@ -15,12 +15,12 @@ import {
 import { config } from '@grafana/runtime';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
+import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows, targetIsElement } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
-import { PopoverMenu } from './PopoverMenu';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export const PREVIEW_LIMIT = 100;

@@ -5,7 +5,7 @@ import { GrafanaTheme2, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, useStyles2 } from '@grafana/ui';
 
-import { copyText } from '../utils';
+import { copyText } from '../../logs/utils';
 
 interface PopoverMenuProps {
   selection: string;
