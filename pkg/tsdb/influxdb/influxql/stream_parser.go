@@ -20,9 +20,6 @@ func StreamParse(buf io.ReadCloser, statusCode int, query *models.Query) *backen
 		}
 	}()
 
-	// ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.influxdb.influxql.parseResponse")
-	// defer endSpan()
-
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, buf, 1024)
 	r := converter.ReadInfluxQLStyleResult(iter, query)
 
