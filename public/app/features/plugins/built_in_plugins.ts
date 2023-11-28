@@ -142,8 +142,8 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/histogram': histogramPanel,
   'core:plugin/alertGroups': alertGroupsPanel,
   // @PERCONA
-  'app/plugins/panel/pmm-check/module': pmmCheckPanel,
-  'app/plugins/panel/pmm-update/module': pmmUpdatePanel,
+  'core:plugin/pmm-check': pmmCheckPanel,
+  'core:plugin/pmm-update': pmmUpdatePanel,
 };
 
 export default builtInPlugins;
