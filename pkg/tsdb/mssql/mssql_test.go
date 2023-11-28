@@ -38,6 +38,7 @@ func TestMSSQL(t *testing.T) {
 	if !(db.IsTestDBMSSQL() || runMssqlTests) {
 		t.Skip()
 	}
+	t.Fatal("testing whether mssql-db-test runs in the CI")
 
 	x := initMSSQLTestDB(t)
 	origXormEngine := sqleng.NewXormEngine
