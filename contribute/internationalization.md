@@ -196,12 +196,12 @@ Once extracted with `yarn i18n:extract` you will need to manually edit the [Engl
 To give feedback about what has been already translated, enter into Crowdin and follow the next steps.
 
 1. Enter on the Grafana OSS project.
-2. On the left menu, click on 'Dashboard' menu item.
+2. On the left-hand menu, click on 'Dashboard' menu item.
 3. A list of available languages appears under the 'Translations' section. Click on the one you want to make a comment on.
 4. There is a table with the files estructure on it:
    `grafana/main > public > locales > 'language denomination' > grafana.json`
    Click on the `grafana.json` file.
-5. On the left hand, click on the 'Search in file' input and search for the string that you want to comment on. You can search in English, as it is the default language, or in the language the string is translated to.
+5. On the left-hand section, click on the 'Search in file' input and search for the string that you want to comment on. You can search in English, as it is the default language, or in the language the string is translated to.
 6. Once you found the string, on the right hand there is a 'Comments' section where you can send the feedback about the translation. Tag @Translated to be sure the Crowding team and linguists gets notified.
 
 ## Documentation
