@@ -3,7 +3,6 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
-	"sort"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -57,32 +56,13 @@ func New(
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service,
 ) (*Service, error) {
-	permissions := make([]string, 0, len(options.PermissionsToActions))
-	actionSet := make(map[string]struct{})
-	for permission, actions := range options.PermissionsToActions {
-		permissions = append(permissions, permission)
-		for _, a := range actions {
-			actionSet[a] = struct{}{}
-		}
-	}
-
-	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
-	sort.Slice(permissions, func(i, j int) bool {
-		return len(options.PermissionsToActions[permissions[i]]) > len(options.PermissionsToActions[permissions[j]])
-	})
-
-	actions := make([]string, 0, len(actionSet))
-	for action := range actionSet {
-		actions = append(actions, action)
-	}
-
 	s := &Service{
 		ac:          ac,
 		store:       NewStore(sqlStore, features),
 		options:     options,
 		license:     license,
-		permissions: permissions,
-		actions:     actions,
+		permissions: options.Permissions(),
+		actions:     options.Actions(),
 		sqlStore:    sqlStore,
 		service:     service,
 		teamService: teamService,

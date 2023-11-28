@@ -190,10 +190,6 @@ func ProvideDashboardPermissions(
 	return &DashboardPermissionsService{srv}, nil
 }
 
-type FolderPermissionsService struct {
-	*resourcepermissions.Service
-}
-
 var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead}
 var FolderEditActions = append(FolderViewActions, []string{
 	dashboards.ActionFoldersWrite,
@@ -208,50 +204,40 @@ var FolderEditActions = append(FolderViewActions, []string{
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
-func ProvideFolderPermissions(
-	features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
-	teamService team.Service, userService user.Service,
-) (*FolderPermissionsService, error) {
-	options := resourcepermissions.Options{
-		Resource:          "folders",
-		ResourceAttribute: "uid",
-		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
-			query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-			queryResult, err := dashboardStore.GetDashboard(ctx, query)
-			if err != nil {
-				return err
-			}
+func ProvideFolderPermissions() *FolderPermissionsService {
+	return &FolderPermissionsService{}
+}
 
-			if !queryResult.IsFolder {
-				return errors.New("not found")
-			}
+var _ accesscontrol.FolderPermissionsService = new(FolderPermissionsService)
 
-			return nil
-		},
-		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
-		},
-		Assignments: resourcepermissions.Assignments{
-			Users:           true,
-			Teams:           true,
-			BuiltInRoles:    true,
-			ServiceAccounts: true,
-		},
-		PermissionsToActions: map[string][]string{
-			"View":  append(DashboardViewActions, FolderViewActions...),
-			"Edit":  append(DashboardEditActions, FolderEditActions...),
-			"Admin": append(DashboardAdminActions, FolderAdminActions...),
-		},
-		ReaderRoleName: "Folder permission reader",
-		WriterRoleName: "Folder permission writer",
-		RoleGroup:      "Folders",
-	}
-	srv, err := resourcepermissions.New(options, features, router, license, accesscontrol, service, sql, teamService, userService)
-	if err != nil {
-		return nil, err
-	}
-	return &FolderPermissionsService{srv}, nil
+type FolderPermissionsService struct{}
+
+func (e FolderPermissionsService) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e FolderPermissionsService) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e FolderPermissionsService) SetTeamPermission(ctx context.Context, orgID, teamID int64, resourceID, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e FolderPermissionsService) SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string, customActions []string) (*accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e FolderPermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
+	return nil, nil
+}
+
+func (e FolderPermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error {
+	return nil
+}
+
+func (e FolderPermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
+	return ""
 }
 
 func ProvideDatasourcePermissionsService() *DatasourcePermissionsService {

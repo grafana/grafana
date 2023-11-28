@@ -2,6 +2,7 @@ package resourcepermissions
 
 import (
 	"context"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -44,4 +45,34 @@ type Options struct {
 	InheritedScopesSolver InheritedScopesSolver
 	// LicenseMV if configured is applied to endpoints that can modify permissions
 	LicenseMW web.Handler
+}
+
+// Permissions returns a slice of permission strings sorted from least permissive to most permissive
+func (o Options) Permissions() []string {
+	permissions := make([]string, 0, len(o.PermissionsToActions))
+	for permission := range o.PermissionsToActions {
+		permissions = append(permissions, permission)
+	}
+
+	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
+	sort.Slice(permissions, func(i, j int) bool {
+		return len(o.PermissionsToActions[permissions[i]]) > len(o.PermissionsToActions[permissions[j]])
+	})
+
+	return permissions
+}
+
+// Actions creates a slice of unique actions
+func (o Options) Actions() []string {
+	actionSet := make(map[string]struct{})
+	for _, actions := range o.PermissionsToActions {
+		for _, a := range actions {
+			actionSet[a] = struct{}{}
+		}
+	}
+	actions := make([]string, 0, len(actionSet))
+	for action := range actionSet {
+		actions = append(actions, action)
+	}
+	return actions
 }
