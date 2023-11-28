@@ -30,13 +30,13 @@ func ProvideService(
 ) *RepositoryImpl {
 	l := log.New("annotations")
 
-	xormStore := NewXormStore(cfg, l.New("annotations.sql"), db, tagService)
+	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService)
 
 	l.Debug("Using xorm write store")
 	write := xormStore
 
 	var read readStore
-	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, l.New("annotations.loki"))
+	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, log.New("annotations.loki"))
 	if historianStore != nil {
 		l.Debug("Using composite read store")
 		read = NewCompositeStore(xormStore, historianStore)

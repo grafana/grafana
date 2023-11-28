@@ -48,7 +48,7 @@ func NewXormStore(cfg *setting.Cfg, l log.Logger, db db.DB, tagService tag.Servi
 	return &xormRepositoryImpl{
 		cfg:        cfg,
 		db:         db,
-		log:        l.New("store", "xorm"),
+		log:        l,
 		tagService: tagService,
 	}
 }
