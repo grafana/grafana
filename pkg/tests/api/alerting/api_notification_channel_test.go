@@ -240,6 +240,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 	})
 
 	t.Run("assert working receiver with existing secure settings returns OK", func(t *testing.T) {
+		t.Skip("disabled due to flakiness, please see: https://drone.grafana.net/grafana/grafana/148451/3/8")
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			DisableLegacyAlerting: true,
