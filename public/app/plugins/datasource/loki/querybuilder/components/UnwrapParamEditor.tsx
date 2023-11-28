@@ -55,7 +55,7 @@ export function UnwrapParamEditor({
 async function loadUnwrapOptions(
   query: LokiVisualQuery,
   datasource: LokiDatasource,
-  timeRange?: TimeRange
+  timeRange = getDefaultTimeRange()
 ): Promise<Array<SelectableValue<string>>> {
   const queryExpr = lokiQueryModeller.renderQuery(query);
   const logExpr = getLogQueryFromMetricsQuery(queryExpr);
@@ -63,8 +63,7 @@ async function loadUnwrapOptions(
     return [];
   }
 
-  const range = timeRange || getDefaultTimeRange();
-  const samples = await datasource.getDataSamples({ expr: logExpr, refId: 'unwrap_samples' }, range);
+  const samples = await datasource.getDataSamples({ expr: logExpr, refId: 'unwrap_samples' }, timeRange);
   const unwrapLabels = extractUnwrapLabelKeysFromDataFrame(samples[0]);
 
   const labelOptions = unwrapLabels.map((label) => ({
