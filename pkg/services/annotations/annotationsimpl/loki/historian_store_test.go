@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuildLokiConfig(t *testing.T) {
+func TestUseStore(t *testing.T) {
 	t.Run("false if state history disabled", func(t *testing.T) {
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: false,
