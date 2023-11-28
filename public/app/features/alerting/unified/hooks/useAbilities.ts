@@ -260,7 +260,7 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
  * 1. the user has no permissions to create silences
  * 2. the admin has configured to only send instances to external AMs
  */
-export function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
+function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
 
   const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
