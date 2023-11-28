@@ -165,7 +165,7 @@ Experimental features might be changed or removed without prior notice.
 | `logRowsPopoverMenu`                        | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                                                                               |
 | `pluginsSkipHostEnvVars`                    | Disables passing host environment variable to plugin processes                                                                                                                                                                                                                    |
 | `regressionTransformation`                  | Enables regression analysis transformation                                                                                                                                                                                                                                        |
-| `anonymousAccess`                           | Enables anonymous access UI for Grafana                                                                                                                                                                                                                                           |
+| `displayAnonymousStats`                     | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 

@@ -207,20 +207,10 @@ export const userListAdminReducer = userListAdminSlice.reducer;
 
 const initialUserListAnonymousDevicesState: UserListAnonymousDevicesState = {
   devices: [],
-  query: '',
-  page: 0,
-  perPage: 50,
-  totalPages: 1,
-  showPaging: false,
-  filters: [{ name: 'activeLast30Days', value: false }],
-  isLoading: true,
 };
 
 interface UsersAnonymousDevicesFetched {
   devices: UserAnonymousDeviceDTO[];
-  currentPage: number;
-  perPage: number;
-  totalCount: number;
 }
 
 export const userListAnonymousDevicesSlice = createSlice({
@@ -229,14 +219,9 @@ export const userListAnonymousDevicesSlice = createSlice({
   reducers: {
     usersAnonymousDevicesFetched: (state, action: PayloadAction<UsersAnonymousDevicesFetched>) => {
       const { devices } = action.payload;
-      const totalPages = 1;
-      const perPage = 10;
       return {
         ...state,
-        totalPages,
-        perPage,
         devices,
-        showPaging: totalPages > 1,
         isLoading: false,
       };
     },

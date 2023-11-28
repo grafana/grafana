@@ -21,11 +21,11 @@ type AnonDBStore struct {
 
 type Device struct {
 	ID        int64     `json:"-" xorm:"id" db:"id"`
-	DeviceID  string    `json:"device_id" xorm:"device_id" db:"device_id"`
-	ClientIP  string    `json:"client_ip" xorm:"client_ip" db:"client_ip"`
-	UserAgent string    `json:"user_agent" xorm:"user_agent" db:"user_agent"`
-	CreatedAt time.Time `json:"created_at" xorm:"created_at" db:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" xorm:"updated_at" db:"updated_at"`
+	DeviceID  string    `json:"deviceId" xorm:"device_id" db:"device_id"`
+	ClientIP  string    `json:"clientIp" xorm:"client_ip" db:"client_ip"`
+	UserAgent string    `json:"userAgent" xorm:"user_agent" db:"user_agent"`
+	CreatedAt time.Time `json:"createdAt" xorm:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at" db:"updated_at"`
 }
 
 func (a *Device) CacheKey() string {

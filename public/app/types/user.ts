@@ -134,22 +134,14 @@ export interface UserListAdminState {
 
 export interface UserAnonymousDeviceDTO {
   login?: string;
-  client_ip: string;
-  device_id: string;
-  user_agent: string;
-  updated_at: string;
+  clientIp: string;
+  deviceId: string;
+  userAgent: string;
+  updatedAt: string;
   lastSeenAt: string;
   avatarUrl?: string;
 }
 
 export interface UserListAnonymousDevicesState {
   devices: UserAnonymousDeviceDTO[];
-  query: string;
-  perPage: number;
-  page: number;
-  totalPages: number;
-  showPaging: boolean;
-  filters: UserFilter[];
-  isLoading: boolean;
-  sort?: string;
 }

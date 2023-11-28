@@ -16,7 +16,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -94,10 +93,6 @@ export class BackendSrv implements BackendService {
   }
 
   private async initGrafanaDeviceID() {
-    if (config.buildInfo?.edition === GrafanaEdition.OpenSource) {
-      return;
-    }
-
     try {
       const fp = await FingerprintJS.load();
       const result = await fp.get();
@@ -161,7 +156,7 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    if (this.deviceID) {
+    if (!!this.deviceID) {
       options.headers = options.headers ?? {};
       options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }

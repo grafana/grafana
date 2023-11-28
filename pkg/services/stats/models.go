@@ -77,6 +77,9 @@ type NotifierUsageStats struct {
 
 type GetAlertNotifierUsageStatsQuery struct{}
 
+type AnonymousStats struct {
+	ActiveDevices int64 `json:"activeDevices"`
+}
 type AdminStats struct {
 	Orgs                int64 `json:"orgs"`
 	Dashboards          int64 `json:"dashboards"`
@@ -101,6 +104,7 @@ type AdminStats struct {
 	DailyActiveViewers  int64 `json:"dailyActiveViewers"`
 	DailyActiveSessions int64 `json:"dailyActiveSessions"`
 	MonthlyActiveUsers  int64 `json:"monthlyActiveUsers"`
+	AnonymousStats
 }
 
 type GetAdminStatsQuery struct{}

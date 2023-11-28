@@ -51,7 +51,6 @@ func NewAnonDeviceServiceAPI(
 func (api *AnonDeviceServiceAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/anonymous", func(anonRoutes routing.RouteRegister) {
-		anonRoutes.Get("/stats", auth(accesscontrol.EvalPermission(accesscontrol.ActionServerStatsRead)), routing.Wrap(api.CountDevices))
 		anonRoutes.Get("/devices", auth(accesscontrol.EvalPermission(accesscontrol.ActionUsersRead)), routing.Wrap(api.ListDevices))
 	})
 }
@@ -72,7 +71,7 @@ func (api *AnonDeviceServiceAPI) RegisterAPIEndpoints() {
 //	500: internalServerError
 func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) response.Response {
 	fromTime := time.Now().Add(-thirtyDays)
-	toTime := time.Now().Add(time.Minute)
+	toTime := time.Now()
 
 	devices, err := api.store.ListDevices(c.Req.Context(), &fromTime, &toTime)
 	if err != nil {
@@ -92,47 +91,8 @@ func (api *AnonDeviceServiceAPI) ListDevices(c *contextmodel.ReqContext) respons
 	return response.JSON(http.StatusOK, resDevices)
 }
 
-// swagger:route GET /devices countDevices
-//
-// # Counts the number of anonymous devices within the last 30 days
-//
-// This operation counts all anonymous devices that have been active within the last 30 days.
-//
-// Produces:
-// - application/json
-//
-// Schemes: https
-//
-// Responses:
-//
-//	200: countDevicesResponse
-//	401: unauthorisedError
-//	403: forbiddenError
-//	404: notFoundError
-//	500: internalServerError
-func (api *AnonDeviceServiceAPI) CountDevices(c *contextmodel.ReqContext) response.Response {
-	fromTime := time.Now().Add(-thirtyDays)
-	toTime := time.Now().Add(time.Minute)
-
-	devices, err := api.store.CountDevices(c.Req.Context(), fromTime, toTime)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to list devices", err)
-	}
-	return response.JSON(http.StatusOK, struct {
-		ActiveDevices int64 `json:"activeDevices"`
-	}{ActiveDevices: devices})
-}
-
-// swagger:response DevicesResponse
+// swagger:response devicesResponse
 type DevicesResponse struct {
 	// in:body
 	Body []deviceDTO `json:"body"`
-}
-
-// swagger:response CountDevicesResponse
-type CountDevicesResponse struct {
-	// in:body
-	Body struct {
-		ActiveDevices int64 `json:"count"`
-	}
 }

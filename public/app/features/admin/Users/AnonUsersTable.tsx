@@ -1,16 +1,6 @@
 import React, { useMemo } from 'react';
 
-import {
-  Avatar,
-  CellProps,
-  Column,
-  FetchDataFunc,
-  InteractiveTable,
-  Pagination,
-  Stack,
-  Badge,
-  Tooltip,
-} from '@grafana/ui';
+import { Avatar, CellProps, Column, InteractiveTable, Stack, Badge, Tooltip } from '@grafana/ui';
 import { UserAnonymousDeviceDTO } from 'app/types';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
@@ -52,19 +42,9 @@ const UserAgentCell = ({ value }: UserAgentCellProps) => {
 
 interface AnonUsersTableProps {
   devices: UserAnonymousDeviceDTO[];
-  showPaging?: boolean;
-  totalPages: number;
-  currentPage: number;
-  fetchData?: FetchDataFunc<UserAnonymousDeviceDTO>;
 }
 
-export const AnonUsersDevicesTable = ({
-  devices,
-  showPaging,
-  totalPages,
-  currentPage,
-  fetchData,
-}: AnonUsersTableProps) => {
+export const AnonUsersDevicesTable = ({ devices }: AnonUsersTableProps) => {
   const columns: Array<Column<UserAnonymousDeviceDTO>> = useMemo(
     () => [
       {
@@ -78,35 +58,28 @@ export const AnonUsersDevicesTable = ({
         cell: ({ cell: { value } }: Cell<'login'>) => 'Anonymous',
       },
       {
-        id: 'user_agent',
+        id: 'userAgent',
         header: 'User Agent',
-        cell: ({ cell: { value } }: Cell<'user_agent'>) => <UserAgentCell value={value} />,
+        cell: ({ cell: { value } }: Cell<'userAgent'>) => <UserAgentCell value={value} />,
         sortType: 'string',
       },
       {
         id: 'lastSeenAt',
         header: 'Last active',
         cell: ({ cell: { value } }: Cell<'lastSeenAt'>) => value,
-        sortType: (a, b) => new Date(a.original.updated_at).getTime() - new Date(b.original.updated_at).getTime(),
+        sortType: (a, b) => new Date(a.original.updatedAt).getTime() - new Date(b.original.updatedAt).getTime(),
       },
       {
-        id: 'client_ip',
+        id: 'clientIp',
         header: 'Origin IP (address)',
-        cell: ({ cell: { value } }: Cell<'client_ip'>) => value && <Badge text={value} color="orange" />,
+        cell: ({ cell: { value } }: Cell<'clientIp'>) => value && <Badge text={value} color="orange" />,
       },
     ],
     []
   );
-  // FIXME: pagining is implemented
-  showPaging = false;
   return (
     <Stack direction={'column'} gap={2}>
-      <InteractiveTable columns={columns} data={devices} getRowId={(user) => user.device_id} />
-      {showPaging && (
-        <Stack justifyContent={'flex-end'}>
-          <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={() => {}} />
-        </Stack>
-      )}
+      <InteractiveTable columns={columns} data={devices} getRowId={(user) => user.deviceId} />
     </Stack>
   );
 };

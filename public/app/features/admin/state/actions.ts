@@ -341,11 +341,9 @@ export function changeSort({ sortBy }: FetchDataArgs<UserDTO>): ThunkResult<void
 export function fetchUsersAnonymousDevices(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      // FIXME: make this paginated
-      // const { perPage, page, query, filters, sort } = getState().userListAnonymous;
       let url = `/api/anonymous/devices`;
       const result = await getBackendSrv().get(url);
-      dispatch(usersAnonymousDevicesFetched({ devices: result, currentPage: 0, perPage: 50, totalCount: 0 }));
+      dispatch(usersAnonymousDevicesFetched({ devices: result }));
     } catch (error) {
       usersFetchEnd();
       console.error(error);

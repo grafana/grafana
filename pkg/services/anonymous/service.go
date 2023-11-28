@@ -3,6 +3,7 @@ package anonymous
 import (
 	"context"
 	"net/http"
+	"time"
 )
 
 type DeviceKind string
@@ -13,4 +14,5 @@ const (
 
 type Service interface {
 	TagDevice(context.Context, *http.Request, DeviceKind) error
+	CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error)
 }
