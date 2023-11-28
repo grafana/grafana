@@ -121,6 +121,10 @@ describe('getHighlighterExpressionsFromQuery', () => {
   `('should correctly identify the type of quote used in the term', ({ input, expected }) => {
     expect(getHighlighterExpressionsFromQuery(`{foo="bar"} |= ${input}`)).toEqual([expected]);
   });
+
+  it.each(['|=', '|~'])('returns multiple expressions when using or statements', (op: string) => {
+    expect(getHighlighterExpressionsFromQuery(`{app="frontend"} ${op} "line" or "text"`)).toEqual(['line', 'text']);
+  });
 });
 
 describe('getNormalizedLokiQuery', () => {
