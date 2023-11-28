@@ -12,7 +12,6 @@ import {
   SceneGridItem,
   SceneGridRow,
   SceneQueryRunner,
-  SceneVariableSet,
   VizPanel,
   VizPanelMenu,
   sceneGraph,
@@ -255,7 +254,7 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
   let scopedVars = {};
 
   // Handle panel repeats scenario
-  if (panel.state.$variables && panel.state.$variables instanceof SceneVariableSet) {
+  if (panel.state.$variables) {
     panel.state.$variables.state.variables.forEach((variable) => {
       if (variable instanceof LocalValueVariable) {
         scopedVars = {
@@ -272,7 +271,7 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
     panel.parent?.parent instanceof SceneGridRow
   ) {
     const row = panel.parent.parent;
-    if (row.state.$variables && row.state.$variables instanceof SceneVariableSet) {
+    if (row.state.$variables) {
       row.state.$variables.state.variables.forEach((variable) => {
         if (variable instanceof LocalValueVariable) {
           scopedVars = {
