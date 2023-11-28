@@ -42,11 +42,11 @@ lineage: schemas: [{
 			timezone?: string | *"browser"
 
 			// Whether a dashboard is editable or not.
-			editable: bool | *true
+			editable?: bool | *true
 
 			// Configuration of dashboard cursor sync behavior.
 			// Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
-			graphTooltip: #DashboardCursorSync
+			graphTooltip?: #DashboardCursorSync
 
 			// Time range for dashboard.
 			// Accepted values are relative time strings like {from: 'now-6h', to: 'now'} or absolute time strings like {from: '2020-07-10T08:00:00.000Z', to: '2020-07-10T14:00:00.000Z'}.
@@ -89,7 +89,7 @@ lineage: schemas: [{
 			version?: uint32
 
 			// List of dashboard panels
-			panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)]
+			panels?: [...(#Panel | #RowPanel)]
 
 			// Configured template variables
 			templating?: {
@@ -176,6 +176,9 @@ lineage: schemas: [{
 			// TODO -- this should not exist here, it is based on the --grafana-- datasource
 			type?: string @grafanamaturity(NeedsExpertReview)
 
+			// Set to 1 for the standard annotation query all dashboards have by default.
+			builtIn?: number | *0
+
 			// unless datasources have migrated to the target+mapping,
 			// they just spread their query into the base object :(
 			...
@@ -183,8 +186,6 @@ lineage: schemas: [{
 
 		// A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 		#VariableModel: {
-			// Unique numeric identifier for the variable.
-			id: string | *"00000000-0000-0000-0000-000000000000"
 			// Type of variable
 			type: #VariableType
 			// Name of variable
@@ -192,17 +193,15 @@ lineage: schemas: [{
 			// Optional display name
 			label?: string
 			// Visibility configuration for the variable
-			hide: #VariableHide
+			hide?: #VariableHide
 			// Whether the variable value should be managed by URL query params or not
-			skipUrlSync: bool | *false
+			skipUrlSync?: bool | *false
 			// Description of variable. It can be defined but `null`.
 			description?: string
 			// Query used to fetch values for a variable
 			query?: string | {...}
 			// Data source used to fetch values for a variable. It can be defined but `null`.
 			datasource?: #DataSourceRef
-			// Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
-			allFormat?: string
 			// Shows current selected variable text/value on the dashboard
 			current?: #VariableOption
 			// Whether multiple values can be selected or not from variable value list
@@ -210,6 +209,8 @@ lineage: schemas: [{
 			// Options that can be selected for a variable.
 			options?: [...#VariableOption]
 			refresh?: #VariableRefresh
+			// Options sort order
+			sort?: #VariableSort
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
@@ -242,11 +243,9 @@ lineage: schemas: [{
 		// `4`: Numerical DESC
 		// `5`: Alphabetical Case Insensitive ASC
 		// `6`: Alphabetical Case Insensitive DESC
-		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc")
-
-		// Loading status
-		// Accepted values are `NotStarted` (the request is not started), `Loading` (waiting for response), `Streaming` (pulling continuous data), `Done` (response received successfully) or `Error` (failed request).
-		#LoadingState: "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum")
+		// `7`: Natural ASC
+		// `8`: Natural DESC
+		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc|naturalAsc|naturalDesc")
 
 		// Ref to a DataSource instance
 		#DataSourceRef: {
@@ -268,7 +267,7 @@ lineage: schemas: [{
 			// Tooltip to display when the user hovers their mouse over it
 			tooltip: string
 			// Link URL. Only required/valid if the type is link
-			url: string
+			url?: string
 			// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
@@ -521,7 +520,7 @@ lineage: schemas: [{
 			description?: string
 
 			// Whether to display the panel without a background.
-			transparent: bool | *false
+			transparent?: bool | *false
 
 			// The datasource used in all targets.
 			datasource?: #DataSourceRef
@@ -549,7 +548,7 @@ lineage: schemas: [{
 			// List of transformations that are applied to the panel data before rendering.
 			// When there are multiple transformations, Grafana applies them in the order they are listed.
 			// Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
-			transformations: [...#DataTransformerConfig]
+			transformations?: [...#DataTransformerConfig]
 
 			// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
 			// This value must be formatted as a number followed by a valid time
@@ -580,10 +579,10 @@ lineage: schemas: [{
 			libraryPanel?: #LibraryPanelRef
 
 			// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
-			options: {...} @grafanamaturity(NeedsExpertReview)
+			options?: {...} @grafanamaturity(NeedsExpertReview)
 
 			// Field options allow you to change how the data is displayed in your visualizations.
-			fieldConfig: #FieldConfigSource
+			fieldConfig?: #FieldConfigSource
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
@@ -714,31 +713,11 @@ lineage: schemas: [{
 			id: uint32
 
 			// List of panels in the row
-			panels: [...(#Panel | #GraphPanel | #HeatmapPanel)]
+			panels: [...#Panel]
 
 			// Name of template variable to repeat for.
 			repeat?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
-
-		// Support for legacy graph panel.
-		// @deprecated this a deprecated panel type
-		#GraphPanel: {
-			type: "graph"
-			// @deprecated this is part of deprecated graph panel
-			legend?: {
-				show:      bool | *true
-				sort?:     string
-				sortDesc?: bool
-			}
-			...
-		} @cuetsy(kind="interface")
-
-		// Support for legacy heatmap panel.
-		// @deprecated this a deprecated panel type
-		#HeatmapPanel: {
-			type: "heatmap"
-			...
-		} @cuetsy(kind="interface")
 	}
 },
 ]

@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 )
 
 type Plugin struct {
@@ -29,10 +30,9 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
-	AngularDetected bool
+	Angular plugins.AngularMeta
 
-	// This will be moved to plugin.json when we have general support in gcom
-	Alias string `json:"alias,omitempty"`
+	ExternalService *auth.ExternalService
 }
 
 func (p Plugin) SupportsStreaming() bool {
@@ -72,7 +72,8 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		SignatureError:    p.SignatureError,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
-		AngularDetected:   p.AngularDetected,
-		Alias:             p.Alias,
+		ExternalService:   p.ExternalService,
+
+		Angular: p.Angular,
 	}
 }

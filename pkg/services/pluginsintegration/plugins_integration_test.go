@@ -27,7 +27,9 @@ import (
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
+	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -36,10 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
-	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 func TestIntegrationPluginManager(t *testing.T) {
@@ -67,27 +67,29 @@ func TestIntegrationPluginManager(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	features := featuremgmt.WithFeatures()
 	cfg := &setting.Cfg{
-		Raw:                    raw,
-		StaticRootPath:         staticRootPath,
-		BundledPluginsPath:     bundledPluginsPath,
-		Azure:                  &azsettings.AzureSettings{},
-		IsFeatureToggleEnabled: func(_ string) bool { return false },
+		Raw:                raw,
+		StaticRootPath:     staticRootPath,
+		BundledPluginsPath: bundledPluginsPath,
+		Azure:              &azsettings.AzureSettings{},
+
+		// nolint:staticcheck
+		IsFeatureToggleEnabled: features.IsEnabledGlobally,
 	}
 
 	tracer := tracing.InitializeTracerForTest()
-	features := featuremgmt.WithFeatures()
 
 	hcp := httpclient.NewProvider()
-	am := azuremonitor.ProvideService(cfg, hcp, features, tracer)
+	am := azuremonitor.ProvideService(cfg, hcp, features)
 	cw := cloudwatch.ProvideService(cfg, hcp, features)
 	cm := cloudmonitoring.ProvideService(hcp, tracer)
-	es := elasticsearch.ProvideService(hcp)
+	es := elasticsearch.ProvideService(hcp, tracer)
 	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, features, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp, cfg, features, tracer)
+	pr := prometheus.ProvideService(hcp, cfg, features)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService(cfg)
@@ -95,9 +97,9 @@ func TestIntegrationPluginManager(t *testing.T) {
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
-	phlare := pyroscope.ProvideService(hcp, acimpl.ProvideAccessControl(cfg))
+	pyroscope := pyroscope.ProvideService(hcp, acimpl.ProvideAccessControl(cfg))
 	parca := parca.ProvideService(hcp)
-	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, phlare, parca)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca)
 
 	testCtx := CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -113,7 +115,7 @@ func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
 	now := time.Unix(1661420870, 0)
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			PluginID: "testdata",
+			PluginID: "grafana-testdata-datasource",
 		},
 		Queries: []backend.DataQuery{
 			{
@@ -184,8 +186,8 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"opentsdb":                         {},
 		"prometheus":                       {},
 		"tempo":                            {},
-		"testdata":                         {},
-		"postgres":                         {},
+		"grafana-testdata-datasource":      {},
+		"grafana-postgresql-datasource":    {},
 		"mysql":                            {},
 		"mssql":                            {},
 		"grafana":                          {},

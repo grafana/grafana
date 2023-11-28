@@ -16,12 +16,42 @@ import {
   ExplorePanelsState,
   SupplementaryQueryType,
   UrlQueryMap,
+  ExploreCorrelationHelperData,
+  DataLinkTransformationConfig,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
 export type ExploreQueryParams = UrlQueryMap;
+
+export enum CORRELATION_EDITOR_POST_CONFIRM_ACTION {
+  CLOSE_PANE,
+  CHANGE_DATASOURCE,
+  CLOSE_EDITOR,
+}
+
+export interface CorrelationEditorDetails {
+  editorMode: boolean;
+  correlationDirty: boolean;
+  queryEditorDirty: boolean;
+  isExiting: boolean;
+  postConfirmAction?: {
+    // perform an action after a confirmation modal instead of exiting editor mode
+    exploreId: string;
+    action: CORRELATION_EDITOR_POST_CONFIRM_ACTION;
+    changeDatasourceUid?: string;
+    isActionLeft: boolean;
+  };
+  canSave?: boolean;
+  label?: string;
+  description?: string;
+  transformations?: DataLinkTransformationConfig[];
+}
+
+// updates can have any properties
+export interface CorrelationEditorDetailsUpdate extends Partial<CorrelationEditorDetails> {}
+
 /**
  * Global Explore state
  */
@@ -48,6 +78,11 @@ export interface ExploreState {
    * True if a warning message of hitting the exceeded number of items has been shown already.
    */
   richHistoryLimitExceededWarningShown: boolean;
+
+  /**
+   * Details on a correlation being created from explore
+   */
+  correlationEditorDetails?: CorrelationEditorDetails;
 
   /**
    * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
@@ -191,6 +226,8 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
+
+  correlationEditorHelperData?: ExploreCorrelationHelperData;
 
   correlations?: CorrelationData[];
 }

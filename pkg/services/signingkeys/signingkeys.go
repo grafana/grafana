@@ -8,9 +8,15 @@
 package signingkeys
 
 import (
+	"context"
 	"crypto"
+	"time"
 
 	"github.com/go-jose/go-jose/v3"
+)
+
+const (
+	ServerPrivateKeyID = "default"
 )
 
 // Service provides functionality for managing signing keys used to sign and verify JWT tokens.
@@ -18,17 +24,14 @@ import (
 // The service is under active development and is not yet ready for production use.
 type Service interface {
 	// GetJWKS returns the JSON Web Key Set (JWKS) with all the keys that can be used to verify tokens (public keys)
-	GetJWKS() jose.JSONWebKeySet
-	// GetJWK returns the JSON Web Key (JWK) with the specified key ID which can be used to verify tokens (public key)
-	GetJWK(keyID string) (jose.JSONWebKey, error)
-	// GetPublicKey returns the public key with the specified key ID
-	GetPublicKey(keyID string) (crypto.PublicKey, error)
-	// GetPrivateKey returns the private key with the specified key ID
-	GetPrivateKey(keyID string) (crypto.PrivateKey, error)
-	// GetServerPrivateKey returns the private key used to sign tokens
-	GetServerPrivateKey() crypto.PrivateKey
-	// GetServerPublicKey returns the public key used to verify tokens
-	GetServerPublicKey() crypto.PublicKey
-	// AddPrivateKey adds a private key to the service
-	AddPrivateKey(keyID string, privateKey crypto.PrivateKey) error
+	GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error)
+	GetOrCreatePrivateKey(ctx context.Context, keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error)
+}
+
+type SigningKey struct {
+	KeyID      string                  `xorm:"key_id"`
+	PrivateKey []byte                  `xorm:"private_key"`
+	AddedAt    time.Time               `xorm:"added_at"`
+	ExpiresAt  *time.Time              `xorm:"expires_at"`
+	Alg        jose.SignatureAlgorithm `xorm:"alg"`
 }

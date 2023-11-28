@@ -30,6 +30,9 @@ Multiple alert instances can be created as a result of one alert rule (also know
 
 Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
 
+If you delete an alerting resource created in the UI, you can no longer retrieve it.
+To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
+
 Watch this video to learn more about creating alert rules: {{< vimeo 720001934 >}}
 
 In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
@@ -196,12 +199,22 @@ An alert instance is considered stale if its dimension or series has disappeared
 
 Stale alert instances that are in the **Alerting**/**NoData**/**Error** states are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.
 
+### Create alerts from panels
+
+Create alerts from any panel type. This means you can reuse the queries in the panel and create alerts based on them.
+
+1. Navigate to a dashboard in the **Dashboards** section.
+2. In the top right corner of the panel, click on the three dots (ellipses).
+3. From the dropdown menu, select **More...** and then choose **New alert rule**.
+
+This will open the alert rule form, allowing you to configure and create your alert based on the current panel's query.
+
 {{% docs/reference %}}
 [add-a-query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
 [add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
 
-[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1")
-[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1")
+[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
+[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
 
 [annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
 [annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"

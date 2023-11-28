@@ -14,7 +14,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -24,9 +23,6 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	}
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return response.Error(http.StatusNotFound, "Data source not found", err)
-	}
-	if errors.Is(err, plugincontext.ErrPluginNotFound) {
-		return response.Error(http.StatusNotFound, "Plugin not found", err)
 	}
 
 	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
@@ -67,7 +63,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 
 func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
-	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+	if hs.Features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
 	}
 

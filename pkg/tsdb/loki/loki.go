@@ -10,12 +10,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -87,8 +89,8 @@ func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		opts, err := settings.HTTPClientOptions()
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -133,11 +135,12 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
-	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource")
-	span.SetAttributes("url", lokiURL, attribute.Key("url").String(lokiURL))
+	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource", trace.WithAttributes(
+		attribute.String("url", lokiURL),
+	))
 	defer span.End()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, false)
 
 	rawLokiResponse, err := api.RawQuery(ctx, lokiURL)
 	if err != nil {
@@ -170,17 +173,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	responseOpts := ResponseOpts{
-		metricDataplane: s.features.IsEnabled(featuremgmt.FlagLokiMetricDataplane),
-		logsDataplane:   s.features.IsEnabled(featuremgmt.FlagLokiLogsDataplane),
+		metricDataplane: s.features.IsEnabled(ctx, featuremgmt.FlagLokiMetricDataplane),
+		logsDataplane:   s.features.IsEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
 	}
 
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger)
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
 }
 
-func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, requestStructuredMetadata)
 
 	start := time.Now()
 	queries, err := parseQuery(req)
@@ -188,41 +191,72 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		plog.Error("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
 		return result, err
 	}
-	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
 
-	for _, query := range queries {
-		ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQuery")
-		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
-		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
-		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
 
-		if req.GetHTTPHeader("X-Query-Group-Id") != "" {
-			span.SetAttributes("query_group_id", req.GetHTTPHeader("X-Query-Group-Id"), attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
-		}
-
-		frames, err := runQuery(ctx, api, query, responseOpts)
-
-		queryRes := backend.DataResponse{}
-
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			queryRes.Error = err
-		} else {
-			queryRes.Frames = frames
-		}
-
-		result.Responses[query.RefID] = queryRes
-		span.End()
+	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries", trace.WithAttributes(
+		attribute.Bool("runInParallel", runInParallel),
+		attribute.Int("queriesLength", len(queries)),
+	))
+	if req.GetHTTPHeader("X-Query-Group-Id") != "" {
+		span.SetAttributes(attribute.String("query_group_id", req.GetHTTPHeader("X-Query-Group-Id")))
 	}
-	return result, nil
+	defer span.End()
+	start = time.Now()
+
+	// We are testing running of queries in parallel behind feature flag
+	if runInParallel {
+		resultLock := sync.Mutex{}
+		err = concurrency.ForEachJob(ctx, len(queries), 10, func(ctx context.Context, idx int) error {
+			query := queries[idx]
+			queryRes := executeQuery(ctx, query, req, runInParallel, api, responseOpts, tracer, plog)
+
+			resultLock.Lock()
+			defer resultLock.Unlock()
+			result.Responses[query.RefID] = queryRes
+			return nil // errors are saved per-query,always return nil
+		})
+	} else {
+		for _, query := range queries {
+			queryRes := executeQuery(ctx, query, req, runInParallel, api, responseOpts, tracer, plog)
+			result.Responses[query.RefID] = queryRes
+		}
+	}
+	plog.Debug("Executed queries", "duration", time.Since(start), "queriesLength", len(queries), "runInParallel", runInParallel)
+	return result, err
+}
+
+func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger) backend.DataResponse {
+	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries.runQuery", trace.WithAttributes(
+		attribute.Bool("runInParallel", runInParallel),
+		attribute.String("expr", query.Expr),
+		attribute.Int64("start_unixnano", query.Start.UnixNano()),
+		attribute.Int64("stop_unixnano", query.End.UnixNano()),
+	))
+	if req.GetHTTPHeader("X-Query-Group-Id") != "" {
+		span.SetAttributes(attribute.String("query_group_id", req.GetHTTPHeader("X-Query-Group-Id")))
+	}
+
+	defer span.End()
+
+	frames, err := runQuery(ctx, api, query, responseOpts, plog)
+	queryRes := backend.DataResponse{}
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		queryRes.Error = err
+	} else {
+		queryRes.Frames = frames
+	}
+
+	return queryRes
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
-func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
+func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts, plog log.Logger) (data.Frames, error) {
 	frames, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
-		logger.Error("Error querying loki", "error", err)
+		plog.Error("Error querying loki", "error", err)
 		return data.Frames{}, err
 	}
 
@@ -230,7 +264,7 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
-			logger.Error("Error adjusting frame", "error", err)
+			plog.Error("Error adjusting frame", "error", err)
 			return data.Frames{}, err
 		}
 	}

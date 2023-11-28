@@ -1,11 +1,13 @@
 import { createAction } from '@reduxjs/toolkit';
+import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions, TimeRange } from '@grafana/data';
+import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
-import { ExploreItemState, ExploreState } from 'app/types/explore';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
@@ -76,15 +78,23 @@ export const splitOpen = createAsyncThunk(
       }
     });
 
+    const splitRange = options?.range || originState?.range.raw || DEFAULT_RANGE;
+
     await dispatch(
       createNewSplitOpenPane({
         exploreId: requestId,
         datasource: options?.datasourceUid || originState?.datasourceInstance?.getRef(),
         queries: withUniqueRefIds(queries),
-        range: options?.range || originState?.range.raw || DEFAULT_RANGE,
+        range: splitRange,
         panelsState: options?.panelsState || originState?.panelsState,
+        correlationHelperData: options?.correlationHelperData,
+        eventBridge: new EventBusSrv(),
       })
     );
+
+    if (originState?.range) {
+      await dispatch(syncTimesAction({ syncedTimes: isEqual(originState.range.raw, splitRange) })); // if time ranges are equal, mark times as synced
+    }
   },
   {
     idGenerator: generateExploreId,
@@ -102,6 +112,13 @@ const createNewSplitOpenPane = createAsyncThunk(
   async (options: InitializeExploreOptions, { dispatch }) => {
     await dispatch(initializeExplore(options));
   }
+);
+
+/**
+ * Moves explore into and out of correlations editor mode
+ */
+export const changeCorrelationEditorDetails = createAction<CorrelationEditorDetailsUpdate>(
+  'explore/changeCorrelationEditorDetails'
 );
 
 export interface NavigateToExploreDependencies {
@@ -122,6 +139,7 @@ export const navigateToExplore = (
       dsRef: panel.datasource,
       scopedVars: panel.scopedVars,
       timeRange,
+      adhocFilters: getTemplateSrv().getAdhocFilters(panel.datasource?.uid ?? '', true),
     });
 
     if (openInNewWindow && path) {
@@ -140,6 +158,7 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
+  correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   largerExploreId: undefined,
@@ -249,6 +268,34 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       panes: {},
+    };
+  }
+
+  if (changeCorrelationEditorDetails.match(action)) {
+    const {
+      editorMode,
+      label,
+      description,
+      canSave,
+      correlationDirty,
+      queryEditorDirty,
+      isExiting,
+      postConfirmAction,
+      transformations,
+    } = action.payload;
+    return {
+      ...state,
+      correlationEditorDetails: {
+        editorMode: Boolean(editorMode ?? state.correlationEditorDetails?.editorMode),
+        canSave: Boolean(canSave ?? state.correlationEditorDetails?.canSave),
+        label: label ?? state.correlationEditorDetails?.label,
+        description: description ?? state.correlationEditorDetails?.description,
+        transformations: transformations ?? state.correlationEditorDetails?.transformations,
+        correlationDirty: Boolean(correlationDirty ?? state.correlationEditorDetails?.correlationDirty),
+        queryEditorDirty: Boolean(queryEditorDirty ?? state.correlationEditorDetails?.queryEditorDirty),
+        isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
+        postConfirmAction,
+      },
     };
   }
 

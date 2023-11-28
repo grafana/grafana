@@ -1,14 +1,11 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { FormField } from './FormField';
 
 const meta: Meta<typeof FormField> = {
   title: 'Forms/Legacy/FormField',
   component: FormField,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['inputEl'],

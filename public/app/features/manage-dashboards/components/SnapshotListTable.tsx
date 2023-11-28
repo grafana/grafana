@@ -1,28 +1,24 @@
 import React, { useState, useCallback } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { ConfirmModal, Button, LinkButton } from '@grafana/ui';
-
-import { Snapshot } from '../types';
+import { Trans } from 'app/core/internationalization';
+import { getDashboardSnapshotSrv, Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
 export function getSnapshots() {
-  return getBackendSrv()
-    .get('/api/dashboard/snapshots')
+  return getDashboardSnapshotSrv()
+    .getSnapshots()
     .then((result: Snapshot[]) => {
       return result.map((snapshot) => ({
         ...snapshot,
-        url: `/dashboard/snapshot/${snapshot.key}`,
+        url: `${config.appUrl}dashboard/snapshot/${snapshot.key}`,
       }));
     });
 }
 export const SnapshotListTable = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
-  const currentPath = locationService.getLocation().pathname;
-  const fullUrl = window.location.href;
-  const baseUrl = fullUrl.substring(0, fullUrl.indexOf(currentPath));
-
   useAsync(async () => {
     const response = await getSnapshots();
     setSnapshots(response);
@@ -32,8 +28,8 @@ export const SnapshotListTable = () => {
     async (snapshot: Snapshot) => {
       const filteredSnapshots = snapshots.filter((ss) => ss.key !== snapshot.key);
       setSnapshots(filteredSnapshots);
-      await getBackendSrv()
-        .delete(`/api/snapshots/${snapshot.key}`)
+      await getDashboardSnapshotSrv()
+        .deleteSnapshot(snapshot.key)
         .catch(() => {
           setSnapshots(snapshots);
         });
@@ -47,10 +43,14 @@ export const SnapshotListTable = () => {
         <thead>
           <tr>
             <th>
-              <strong>Name</strong>
+              <strong>
+                <Trans i18nKey="snapshot.name-column-header">Name</Trans>
+              </strong>
             </th>
             <th>
-              <strong>Snapshot url</strong>
+              <strong>
+                <Trans i18nKey="snapshot.url-column-header">Snapshot url</Trans>
+              </strong>
             </th>
             <th style={{ width: '70px' }}></th>
             <th style={{ width: '30px' }}></th>
@@ -60,19 +60,24 @@ export const SnapshotListTable = () => {
         <tbody>
           {snapshots.map((snapshot) => {
             const url = snapshot.externalUrl || snapshot.url;
-            const fullUrl = snapshot.externalUrl || `${baseUrl}${snapshot.url}`;
             return (
               <tr key={snapshot.key}>
                 <td>
                   <a href={url}>{snapshot.name}</a>
                 </td>
                 <td>
-                  <a href={url}>{fullUrl}</a>
+                  <a href={url}>{url}</a>
                 </td>
-                <td>{snapshot.external && <span className="query-keyword">External</span>}</td>
+                <td>
+                  {snapshot.external && (
+                    <span className="query-keyword">
+                      <Trans i18nKey="snapshot.external-badge">External</Trans>
+                    </span>
+                  )}
+                </td>
                 <td className="text-center">
                   <LinkButton href={url} variant="secondary" size="sm" icon="eye">
-                    View
+                    <Trans i18nKey="snapshot.view-button">View</Trans>
                   </LinkButton>
                 </td>
                 <td className="text-right">

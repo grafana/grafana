@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -599,6 +600,92 @@ func TestProcessRawDataResponse(t *testing.T) {
 			// we need to test that the only changed setting is `filterable`
 			require.Equal(t, filterableConfig, *field.Config)
 		}
+	})
+
+	t.Run("gets correct time field from fields", func(t *testing.T) {
+		query := []byte(`
+			[
+				{
+				  "refId": "A",
+				  "metrics": [{ "type": "raw_data", "id": "1" }]
+				}
+			]
+		`)
+
+		response := []byte(`
+			{
+				"responses": [
+				  {
+					"aggregations": {},
+					"hits": {
+					  "hits": [
+						{
+						  "_id": "fdsfs",
+						  "_type": "_doc",
+						  "_index": "mock-index",
+						  "_source": {
+							"testtime": "06/24/2019",
+							"host": "djisaodjsoad",
+							"number": 1,
+							"line": "hello, i am a message",
+							"level": "debug",
+							"fields": { "lvl": "debug" }
+						  },
+						  "highlight": {
+								"message": [
+							  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+								]
+						  },
+							"fields": {
+								"testtime": [ "2019-06-24T09:51:19.765Z" ]
+							}
+						},
+						{
+						  "_id": "kdospaidopa",
+						  "_type": "_doc",
+						  "_index": "mock-index",
+						  "_source": {
+							"testtime": "06/24/2019",
+							"host": "dsalkdakdop",
+							"number": 2,
+							"line": "hello, i am also message",
+							"level": "error",
+							"fields": { "lvl": "info" }
+						  },
+						  "highlight": {
+								"message": [
+							  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+								]
+						  },
+							"fields": {
+								"testtime": [ "2019-06-24T09:52:19.765Z" ]
+							}
+						}
+					  ]
+					}
+				  }
+				]
+			}
+			`)
+		result, err := queryDataTest(query, response)
+		require.NoError(t, err)
+
+		require.Len(t, result.response.Responses, 1)
+		frames := result.response.Responses["A"].Frames
+		require.Len(t, frames, 1)
+
+		logsFrame := frames[0]
+
+		logsFieldMap := make(map[string]*data.Field)
+		for _, field := range logsFrame.Fields {
+			logsFieldMap[field.Name] = field
+		}
+		t0 := time.Date(2019, time.June, 24, 9, 51, 19, 765000000, time.UTC)
+		t1 := time.Date(2019, time.June, 24, 9, 52, 19, 765000000, time.UTC)
+		require.Contains(t, logsFieldMap, "testtime")
+		require.Equal(t, data.FieldTypeNullableTime, logsFieldMap["testtime"].Type())
+		require.Equal(t, &t0, logsFieldMap["testtime"].At(0))
+		require.Equal(t, &t1, logsFieldMap["testtime"].At(1))
 	})
 }
 
@@ -3533,7 +3620,7 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*bac
 		return nil, err
 	}
 
-	return parseResponse(context.Background(), response.Responses, queries, configuredFields, log.New("test.logger"))
+	return parseResponse(context.Background(), response.Responses, queries, configuredFields, log.New("test.logger"), tracing.InitializeTracerForTest())
 }
 
 func requireTimeValue(t *testing.T, expected int64, frame *data.Frame, index int) {
@@ -3583,7 +3670,7 @@ func requireStringAt(t *testing.T, expected string, field *data.Field, index int
 
 func requireFloatAt(t *testing.T, expected float64, field *data.Field, index int) {
 	v := field.At(index).(*float64)
-	require.Equal(t, expected, *v, fmt.Sprintf("wrong flaot at index %v", index))
+	require.Equal(t, expected, *v, fmt.Sprintf("wrong float at index %v", index))
 }
 
 func requireTimeSeriesName(t *testing.T, expected string, frame *data.Frame) {

@@ -157,11 +157,11 @@ const applicationInsightsName = 'az-mon-test-ai-a';
 
 describe('Azure monitor datasource', () => {
   before(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
     // Add datasource
     // This variable will be set in CI
-    const CI = e2e.env('CI');
+    const CI = Cypress.env('CI');
     if (CI) {
       cy.readFile('outputs.json').then((outputs) => {
         provisionAzureMonitorDatasources([
@@ -190,11 +190,11 @@ describe('Azure monitor datasource', () => {
   });
 
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   after(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
     e2e.flows.revertAllChanges();
   });
 

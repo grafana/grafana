@@ -18,7 +18,7 @@ export const deleteDashboard = ({ quick = false, title, uid }: DeleteDashboardCo
 
   cy.logToConsole('Deleted dashboard with uid:', uid);
 
-  e2e.getScenarioContext().then(({ addedDashboards }: any) => {
+  e2e.getScenarioContext().then(({ addedDashboards }) => {
     e2e.setScenarioContext({
       addedDashboards: addedDashboards.filter((dashboard: DeleteDashboardConfig) => {
         return dashboard.title !== title && dashboard.uid !== uid;

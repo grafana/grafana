@@ -5,9 +5,20 @@ import { useFormContext } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  Field,
+  Icon,
+  InputControl,
+  Menu,
+  MenuItem,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
@@ -82,8 +93,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(() => {
+    if (isCloudAlertRuleType) {
+      // we will skip preview for cloud rules, these do not have any time series preview
+      // Grafana Managed rules and recording rules do
+      return;
+    }
+
     runQueries(getValues('queries'));
-  }, [runQueries, getValues]);
+  }, [isCloudAlertRuleType, runQueries, getValues]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -104,18 +121,27 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const emptyQueries = queries.length === 0;
 
+  // apply some validations and asserts to the results of the evaluation when creating or editing
+  // Grafana-managed alert rules
   useEffect(() => {
-    const currentCondition = getValues('condition');
-
-    if (!currentCondition || !queryPreviewData[currentCondition]) {
+    if (!isGrafanaManagedType) {
       return;
     }
 
-    const error =
-      errorFromPreviewData(queryPreviewData[currentCondition]) ??
-      errorFromCurrentCondition(queryPreviewData[currentCondition]);
+    const currentCondition = getValues('condition');
+    if (!currentCondition) {
+      return;
+    }
+
+    const previewData = queryPreviewData[currentCondition];
+    if (!previewData) {
+      return;
+    }
+
+    const error = errorFromPreviewData(previewData) ?? errorFromCurrentCondition(previewData);
+
     onDataChange(error?.message || '');
-  }, [queryPreviewData, getValues, onDataChange]);
+  }, [queryPreviewData, getValues, onDataChange, isGrafanaManagedType]);
 
   const handleSetCondition = useCallback(
     (refId: string | null) => {
@@ -431,7 +457,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 dispatch(addNewDataQuery());
               }}
               variant="secondary"
-              aria-label={selectors.components.QueryTab.addQuery}
+              data-testid={selectors.components.QueryTab.addQuery}
               disabled={noCompatibleDataSources}
               className={styles.addQueryButton}
             >
@@ -473,7 +499,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             {config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
 
             {isPreviewLoading && (
-              <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={cancelQueries}>
+              <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
                 Cancel
               </Button>
             )}

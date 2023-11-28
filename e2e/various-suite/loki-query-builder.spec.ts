@@ -17,16 +17,17 @@ const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=
 
 describe('Loki query builder', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
-    cy.request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false }).then(
-      (response) => {
-        if (response.isOkStatusCode) {
-          return;
-        }
-        addDataSource();
+    cy.request({
+      url: `${Cypress.env('BASE_URL')}/api/datasources/name/${dataSourceName}`,
+      failOnStatusCode: false,
+    }).then((response) => {
+      if (response.isOkStatusCode) {
+        return;
       }
-    );
+      addDataSource();
+    });
   });
 
   it('should be able to use all modes', () => {
@@ -68,18 +69,17 @@ describe('Loki query builder', () => {
     e2e.components.QueryBuilder.labelSelect().should('be.visible').click();
     // wait until labels are loaded and set on the component before starting to type
     cy.wait('@labelsRequest');
-    cy.wait(100);
     e2e.components.QueryBuilder.labelSelect().type('instance{enter}');
     e2e.components.QueryBuilder.matchOperatorSelect().should('be.visible').click().type('=~{enter}');
     e2e.components.QueryBuilder.valueSelect().should('be.visible').click();
     cy.wait('@valuesRequest');
-    cy.wait(100);
     e2e.components.QueryBuilder.valueSelect().type('instance1{enter}').type('instance2{enter}');
     cy.contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     cy.contains(finalQuery).should('be.visible');
 
     // Change to code editor
-    cy.contains('label', 'Code').click();
+    e2e.components.RadioButton.container().filter(':contains("Code")').click();
+
     // We need to test this manually because the final query is split into separate DOM elements using cy.contains(finalQuery).should('be.visible'); does not detect the query.
     cy.contains('rate').should('be.visible');
     cy.contains('instance1|instance2').should('be.visible');

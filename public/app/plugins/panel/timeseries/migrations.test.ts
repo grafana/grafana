@@ -623,6 +623,51 @@ describe('Graph Migrations', () => {
       expect(panel.fieldConfig.defaults.custom.spanNulls).toBeTruthy();
     });
   });
+
+  describe('seriesOverride lines: true', () => {
+    test('Should set displayMode', () => {
+      const old = {
+        angular: {
+          bars: true,
+          lines: false,
+          seriesOverrides: [
+            {
+              alias: 'A-series',
+              lines: true,
+            },
+          ],
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.overrides[0]).toEqual({
+        matcher: { id: 'byName', options: 'A-series' },
+        properties: [{ id: 'custom.drawStyle', value: 'line' }],
+      });
+    });
+  });
+
+  describe('seriesOverride lines: false', () => {
+    test('Should set lineWidth 0', () => {
+      const old = {
+        angular: {
+          lines: true,
+          seriesOverrides: [
+            {
+              alias: 'A-series',
+              lines: false,
+            },
+          ],
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.overrides[0]).toEqual({
+        matcher: { id: 'byName', options: 'A-series' },
+        properties: [{ id: 'custom.lineWidth', value: 0 }],
+      });
+    });
+  });
 });
 
 const customColor = {

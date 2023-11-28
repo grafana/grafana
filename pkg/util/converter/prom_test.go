@@ -32,6 +32,7 @@ var files = []string{
 	"prom-error",
 	"prom-exemplars-a",
 	"prom-exemplars-b",
+	"prom-exemplars-diff-labels",
 	"loki-streams-a",
 	"loki-streams-b",
 	"loki-streams-c",
@@ -66,9 +67,6 @@ func TestReadLimited(t *testing.T) {
 	}
 }
 
-// FIXME:
-//
-//lint:ignore U1000 Ignore used function for now
 func runScenario(name string, opts Options) func(t *testing.T) {
 	return func(t *testing.T) {
 		// Safe to disable, this is a test.

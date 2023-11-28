@@ -29,7 +29,7 @@ describe('panelMenuBehavior', () => {
   it('Given standard panel', async () => {
     const { menu, panel } = await buildTestScene({});
 
-    Object.assign(panel, 'getPlugin', () => getPanelPlugin({}));
+    panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
     mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
     mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
@@ -38,13 +38,15 @@ describe('panelMenuBehavior', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    expect(menu.state.items?.length).toBe(4);
+    expect(menu.state.items?.length).toBe(6);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
     expect(menu.state.items?.[0].href).toBe('/scenes/dashboard/dash-1?from=now-5m&to=now&viewPanel=panel-12');
     // verify edit url keeps url time range
     expect(menu.state.items?.[1].href).toBe('/scenes/dashboard/dash-1/panel-edit/12?from=now-5m&to=now');
+    // verify share
+    expect(menu.state.items?.[2].text).toBe('Share');
     // verify explore url
-    expect(menu.state.items?.[2].href).toBe('/explore');
+    expect(menu.state.items?.[3].href).toBe('/explore');
 
     // Verify explore url is called with correct arguments
     const getExploreArgs: GetExploreUrlArguments = mocks.getExploreUrl.mock.calls[0][0];
@@ -53,7 +55,10 @@ describe('panelMenuBehavior', () => {
     expect(getExploreArgs.scopedVars?.__sceneObject?.value).toBe(panel);
 
     // verify inspect url keeps url params and adds inspect=<panel-key>
-    expect(menu.state.items?.[3].href).toBe('/scenes/dashboard/dash-1?from=now-5m&to=now&inspect=panel-12');
+    expect(menu.state.items?.[4].href).toBe('/scenes/dashboard/dash-1?from=now-5m&to=now&inspect=panel-12');
+    expect(menu.state.items?.[4].subMenu).toBeDefined();
+
+    expect(menu.state.items?.[4].subMenu?.length).toBe(3);
   });
 });
 
@@ -78,6 +83,9 @@ async function buildTestScene(options: SceneOptions) {
   const scene = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
+    meta: {
+      canEdit: true,
+    },
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({

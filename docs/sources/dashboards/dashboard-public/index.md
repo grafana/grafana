@@ -13,12 +13,6 @@ weight: 8
 
 # Public dashboards
 
-{{% admonition type="note" %}}
-
-This feature is in [public preview](/docs/release-life-cycle/).
-
-{{% /admonition %}}
-
 > **Warning:** Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
 > This can be mitigated by utilizing the enterprise [caching][] and/or rate limiting features.
 
@@ -32,27 +26,6 @@ You can see a list of all your public dashboards in one place by navigating to *
 - Public dashboards are read-only.
 - Arbitrary queries **cannot** be run against your data sources through public dashboards. Public dashboards can only execute the
   queries stored on the original dashboard.
-
-## Enable the feature
-
-Add the `publicDashboards` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboards = true
-```
-
-If you are using Docker, use an environment variable to enable public dashboards:
-
-```
---env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
-```
-
-{{% admonition type="note" %}}
-
-For Grafana Cloud, contact support to have the feature enabled.
-
-{{% /admonition %}}
 
 ## Make a dashboard public
 
@@ -164,10 +137,8 @@ guaranteed because plugin developers can override this functionality. The follow
   <tr>
     <td>
       <ul>
-        <li>Altinity plugin for ClickHouse</li>
         <li>ClickHouse</li>
         <li>Elasticsearch</li>
-        <li>Graphite</li>
         <li>Infinity</li>
         <li>InfluxDB</li>
         <li>Loki</li>
@@ -178,7 +149,6 @@ guaranteed because plugin developers can override this functionality. The follow
       <ul>
         <li>MongoDB</li>
         <li>MySQL</li>
-        <li>OpenTSDB</li>
         <li>Oracle Database</li>
         <li>PostgreSQL</li>
         <li>Prometheus</li>
@@ -189,18 +159,26 @@ guaranteed because plugin developers can override this functionality. The follow
   </tr>
 </table>
 
-### Unconfirmed:
-
-{{% admonition type="note" %}}
-
-If you've confirmed one of these data sources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
-
-{{% /admonition %}}
+### Unsupported:
 
 <table>
   <tr>
     <td>
       <ul>
+        <li>CloudWatch</li>
+        <li>Graphite</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+### Unconfirmed:
+
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li>Altinity plugin for ClickHouse</li>
         <li>Amazon Athena</li>
         <li>Amazon Redshift</li>
         <li>Amazon Timestream</li>
@@ -209,7 +187,6 @@ If you've confirmed one of these data sources work with public dashboards, let u
         <li>Azure Data Explorer Datasource</li>
         <li>Azure Monitor</li>
         <li>CSV</li>
-        <li>CloudWatch</li>
         <li>DB2 Datasource</li>
         <li>Databricks</li>
         <li>Datadog</li>
@@ -231,12 +208,13 @@ If you've confirmed one of these data sources work with public dashboards, let u
         <li>OPC UA (Unified Architecture)</li>
         <li>Open Distro for Elasticsearch</li>
         <li>OpenSearch</li>
-        <li>Orbit</li>
-        <li>SAP HANA®</li>
+        <li>OpenTSDB</li>
       </ul>
     </td>
     <td>
       <ul>
+        <li>Orbit</li>
+        <li>SAP HANA®</li>
         <li>Salesforce</li>
         <li>Sentry</li>
         <li>ServiceNow</li>
@@ -258,15 +236,13 @@ If you've confirmed one of these data sources work with public dashboards, let u
 ## Limitations
 
 - Panels that use frontend data sources will fail to fetch data.
-- Template variables are not currently supported, but support is planned in the future.
+- Template variables are not supported.
 - Exemplars will be omitted from the panel.
 - Only annotations that query the `-- Grafana --` data source are supported.
 - Organization annotations are not supported.
 - Grafana Live and real-time event streams are not supported.
-- Library panels are currently not supported, but support is planned in the future.
+- Library panels are not supported.
 - Data sources using Reverse Proxy functionality are not supported.
-
-We're excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
 
 ## Custom branding
 

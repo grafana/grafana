@@ -52,7 +52,15 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
         // NOTE: this feels like overkill/expensive just to assert if we have an ordinal y
         // can probably simplify without doing full dataprep
         const palette = quantizeScheme(opts.color, config.theme2);
-        const v = prepareHeatmapData(context.data, undefined, opts, palette, config.theme2);
+        const v = prepareHeatmapData(
+          context.data,
+          undefined,
+          opts,
+          palette,
+          config.theme2,
+          undefined,
+          context.replaceVariables
+        );
         isOrdinalY = readHeatmapRowsCustomMeta(v.heatmap).yOrdinalDisplay != null;
       } catch {}
     }

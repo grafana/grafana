@@ -176,50 +176,49 @@ func TestTracingConfig(t *testing.T) {
 			tracer, err := ProvideService(cfg)
 			assert.NoError(t, err)
 			// make sure tracker is properly configured
-			otel := tracer.(*Opentelemetry)
-			assert.Equal(t, test.ExpectedExporter, otel.enabled)
-			assert.Equal(t, test.ExpectedAddress, otel.Address)
-			assert.Equal(t, test.ExpectedPropagator, otel.Propagation)
-			assert.Equal(t, test.ExpectedAttrs, otel.customAttribs)
+			assert.Equal(t, test.ExpectedExporter, tracer.enabled)
+			assert.Equal(t, test.ExpectedAddress, tracer.Address)
+			assert.Equal(t, test.ExpectedPropagator, tracer.Propagation)
+			assert.Equal(t, test.ExpectedAttrs, tracer.customAttribs)
 
 			if test.ExpectedSampler != "" {
-				assert.Equal(t, test.ExpectedSampler, otel.sampler)
-				assert.Equal(t, test.ExpectedSamplerParam, otel.samplerParam)
-				assert.Equal(t, test.ExpectedSamplingServerURL, otel.samplerRemoteURL)
+				assert.Equal(t, test.ExpectedSampler, tracer.Sampler)
+				assert.Equal(t, test.ExpectedSamplerParam, tracer.SamplerParam)
+				assert.Equal(t, test.ExpectedSamplingServerURL, tracer.SamplerRemoteURL)
 			}
 		})
 	}
 }
 
 func TestInitSampler(t *testing.T) {
-	otel := &Opentelemetry{}
+	otel := &TracingService{}
 	sampler, err := otel.initSampler()
 	require.NoError(t, err)
 	assert.Equal(t, "AlwaysOffSampler", sampler.Description())
 
-	otel.sampler = "bogus"
+	otel.Sampler = "bogus"
 	_, err = otel.initSampler()
 	require.Error(t, err)
 
-	otel.sampler = "const"
-	otel.samplerParam = 0.5
+	otel.Sampler = "const"
+	otel.SamplerParam = 0.5
 	_, err = otel.initSampler()
 	require.Error(t, err)
 
-	otel.sampler = "const"
-	otel.samplerParam = 1.0
+	otel.Sampler = "const"
+	otel.SamplerParam = 1.0
 	sampler, err = otel.initSampler()
 	require.NoError(t, err)
 	assert.Equal(t, "AlwaysOnSampler", sampler.Description())
 
-	otel.sampler = "probabilistic"
-	otel.samplerParam = 0.5
+	otel.Sampler = "probabilistic"
+	otel.SamplerParam = 0.5
 	sampler, err = otel.initSampler()
 	require.NoError(t, err)
 	assert.Equal(t, "TraceIDRatioBased{0.5}", sampler.Description())
 
-	otel.sampler = "rateLimiting"
-	otel.samplerParam = 100.25
+	otel.Sampler = "rateLimiting"
+	otel.SamplerParam = 100.25
 	sampler, err = otel.initSampler()
 	require.NoError(t, err)
 	assert.Equal(t, "RateLimitingSampler{100.25}", sampler.Description())

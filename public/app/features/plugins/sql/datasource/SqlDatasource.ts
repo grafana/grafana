@@ -2,6 +2,7 @@ import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
+  getDefaultTimeRange,
   DataFrame,
   DataFrameView,
   DataQuery,
@@ -15,6 +16,7 @@ import {
   getSearchFilterScopedVar,
   LegacyMetricFindQueryOptions,
   VariableWithMultiSupport,
+  TimeRange,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
 import {
@@ -27,7 +29,6 @@ import {
   TemplateSrv,
   reportInteraction,
 } from '@grafana/runtime';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
@@ -56,7 +57,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
-    /* 
+    /*
       The `settingsData.database` will be defined if a default database has been defined in either
       1) the ConfigurationEditor.tsx, OR 2) the provisioning config file, either under `jsondata.database`, or simply `database`.
     */
@@ -140,6 +141,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     }
 
     request.targets.forEach((target) => {
+      if (request.app === CoreApp.Dashboard || request.app === CoreApp.PanelViewer) {
+        return;
+      }
+
       reportInteraction('grafana_sql_query_executed', {
         datasource: target.datasource?.type,
         editorMode: target.editorMode,
@@ -162,7 +167,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     // No need to check for database change/update issues if the datasource is being used in Explore.
     if (request.app !== CoreApp.Explore) {
       /*
-        If a preconfigured datasource database has been added/updated - and the user has built ANY number of queries using a 
+        If a preconfigured datasource database has been added/updated - and the user has built ANY number of queries using a
         database OTHER than the preconfigured one, return a database issue - since those databases are no longer available.
         The user will need to update their queries to use the preconfigured database.
       */
@@ -182,6 +187,12 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   async metricFindQuery(query: string, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]> {
+    const range = options?.range;
+    if (range == null) {
+      // i cannot create a scenario where this happens, we handle it just to be sure.
+      return [];
+    }
+
     let refId = 'tempvar';
     if (options && options.variable && options.variable.name) {
       refId = options.variable.name;
@@ -201,17 +212,18 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       format: QueryFormat.Table,
     };
 
-    const response = await this.runMetaQuery(interpolatedQuery, options);
+    const response = await this.runMetaQuery(interpolatedQuery, range);
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
-  async runSql<T>(query: string, options?: RunSQLOptions) {
-    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, options);
+  // NOTE: this always runs with the `@grafana/data/getDefaultTimeRange` time range
+  async runSql<T extends object>(query: string, options?: RunSQLOptions) {
+    const range = getDefaultTimeRange();
+    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, range);
     return new DataFrameView<T>(frame);
   }
 
-  private runMetaQuery(request: Partial<SQLQuery>, options?: LegacyMetricFindQueryOptions): Promise<DataFrame> {
-    const range = getTimeSrv().timeRange();
+  private runMetaQuery(request: Partial<SQLQuery>, range: TimeRange): Promise<DataFrame> {
     const refId = request.refId || 'meta';
     const queries: DataQuery[] = [{ ...request, datasource: request.datasource || this.getRef(), refId }];
 
@@ -222,8 +234,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           method: 'POST',
           headers: this.getRequestHeaders(),
           data: {
-            from: options?.range?.from.valueOf().toString() || range.from.valueOf().toString(),
-            to: options?.range?.to.valueOf().toString() || range.to.valueOf().toString(),
+            from: range.from.valueOf().toString(),
+            to: range.to.valueOf().toString(),
             queries,
           },
           requestId: refId,

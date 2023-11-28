@@ -1,50 +1,74 @@
 import React, { useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { Tab, TabContent, TabsBar } from '@grafana/ui';
+import { SceneApp, SceneAppPage } from '@grafana/scenes';
+import { usePageNav } from 'app/core/components/Page/usePageNav';
+import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
 
-import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { isLocalDevEnv, isOpenSourceEdition } from '../utils/misc';
 
-import GettingStarted, { WelcomeHeader } from './GettingStarted';
-import Insights from './Insights';
+import { getOverviewScene, WelcomeHeader } from './GettingStarted';
+import { getInsightsScenes } from './Insights';
 
-type HomeTabs = 'insights' | 'gettingStarted';
+let homeApp: SceneApp | undefined;
+
+export function getHomeApp(insightsEnabled: boolean) {
+  if (homeApp) {
+    return homeApp;
+  }
+
+  if (insightsEnabled) {
+    homeApp = new SceneApp({
+      pages: [
+        new SceneAppPage({
+          title: 'Alerting',
+          subTitle: <WelcomeHeader />,
+          url: '/alerting',
+          hideFromBreadcrumbs: true,
+          tabs: [
+            new SceneAppPage({
+              title: 'Insights',
+              url: '/alerting/home/insights',
+              getScene: getInsightsScenes,
+            }),
+            new SceneAppPage({
+              title: 'Get started',
+              url: '/alerting/home/overview',
+              getScene: getOverviewScene,
+            }),
+          ],
+        }),
+      ],
+    });
+  } else {
+    homeApp = new SceneApp({
+      pages: [
+        new SceneAppPage({
+          title: 'Alerting',
+          subTitle: <WelcomeHeader />,
+          url: '/alerting',
+          hideFromBreadcrumbs: true,
+          getScene: getOverviewScene,
+        }),
+      ],
+    });
+  }
+
+  return homeApp;
+}
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<HomeTabs>('insights');
+  const insightsEnabled =
+    (!isOpenSourceEdition() || isLocalDevEnv()) && Boolean(config.featureToggles.alertingInsights);
 
-  const alertingInsightsEnabled = config.featureToggles.alertingInsights;
+  const appScene = getHomeApp(insightsEnabled);
+
+  const sectionNav = usePageNav('alerting')!;
+  const [pluginContext] = useState<PluginPageContextType>({ sectionNav });
+
   return (
-    <AlertingPageWrapper pageId={'alerting'}>
-      {alertingInsightsEnabled && (
-        <>
-          <WelcomeHeader />
-          <TabsBar>
-            <Tab
-              key={'insights'}
-              label={'Insights'}
-              active={activeTab === 'insights'}
-              onChangeTab={() => {
-                setActiveTab('insights');
-              }}
-            />
-            <Tab
-              key={'gettingStarted'}
-              label={'Overview'}
-              active={activeTab === 'gettingStarted'}
-              onChangeTab={() => {
-                setActiveTab('gettingStarted');
-              }}
-            />
-          </TabsBar>
-          <TabContent>
-            {activeTab === 'insights' && <Insights />}
-            {activeTab === 'gettingStarted' && <GettingStarted />}
-          </TabContent>
-        </>
-      )}
-
-      {!alertingInsightsEnabled && <GettingStarted showWelcomeHeader={true} />}
-    </AlertingPageWrapper>
+    <PluginPageContext.Provider value={pluginContext}>
+      <appScene.Component model={appScene} />
+    </PluginPageContext.Provider>
   );
 }

@@ -8,7 +8,6 @@ import { LoadingState } from '@grafana/data';
 import { Button, Icon, PanelChrome, PanelChromeProps, RadioButtonGroup } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
 
@@ -20,7 +19,6 @@ const PANEL_HEIGHT = 150;
 const meta: Meta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
   component: PanelChrome,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['children'],
@@ -53,7 +51,7 @@ function renderPanel(name: string, overrides?: Partial<PanelChromeProps>) {
 
   return (
     <PanelChrome {...props}>
-      {(innerWidth, innerHeight) => {
+      {(innerWidth: number, innerHeight: number) => {
         return <div style={{ width: innerWidth, height: innerHeight, ...contentStyle }}>{name}</div>;
       }}
     </PanelChrome>
@@ -77,7 +75,7 @@ function renderCollapsiblePanel(name: string, overrides?: Partial<PanelChromePro
 
     return (
       <PanelChrome {...props} collapsed={collapsed} onToggleCollapse={toggleCollapsed}>
-        {(innerWidth, innerHeight) => {
+        {(innerWidth: number, innerHeight: number) => {
           return <div style={{ width: innerWidth, height: innerHeight, ...contentStyle }}>{name}</div>;
         }}
       </PanelChrome>
@@ -187,16 +185,6 @@ export const Examples = () => {
             title: 'Default title',
             menu,
             loadingState: LoadingState.Loading,
-          })}
-          {renderPanel('Deprecated error indicator', {
-            title: 'Default title',
-            leftItems: [
-              <PanelChrome.ErrorIndicator
-                key="errorIndicator"
-                error="Error text"
-                onClick={action('ErrorIndicator: onClick fired')}
-              />,
-            ],
           })}
           {renderPanel('No padding, deprecated loading indicator', {
             padding: 'none',
@@ -361,15 +349,8 @@ const Default: ReactNode = [];
 const LoadingIcon = [
   <PanelChrome.LoadingIndicator key="loadingIndicator" loading onCancel={action('LoadingIndicator: onCancel fired')} />,
 ];
-const ErrorIcon = [
-  <PanelChrome.ErrorIndicator
-    key="errorIndicator"
-    error="Error text"
-    onClick={action('ErrorIndicator: onClick fired')}
-  />,
-];
 
-const leftItems = { LoadingIcon, ErrorIcon, Default };
+const leftItems = { LoadingIcon, Default };
 
 const description =
   'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.';
@@ -383,7 +364,6 @@ Basic.argTypes = {
       type: 'select',
       labels: {
         LoadingIcon: 'With loading icon',
-        ErrorIcon: 'With error icon',
         Default: 'Default (no elements)',
       },
     },

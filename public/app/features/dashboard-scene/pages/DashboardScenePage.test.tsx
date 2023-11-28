@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -12,6 +12,16 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import { setupLoadDashboardMock } from '../utils/test-utils';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      get: jest.fn().mockResolvedValue({}),
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
+}));
 
 function setup() {
   const context = getGrafanaContextMock();
@@ -112,12 +122,8 @@ describe('DashboardScenePage', () => {
     // Somethig with Dropdown that is not working inside react-testing
     await userEvent.click(screen.getByLabelText('Menu for panel with title Panel B'));
 
-    const inspectLink = (await screen.findByRole('link', { name: /Inspect/ })).getAttribute('href')!;
-    act(() => locationService.push(inspectLink));
-
-    // I get not implemented exception here (from navigation / js-dom).
-    // Mocking window.location.assign did not help
-    //await userEvent.click(await screen.findByRole('link', { name: /Inspect/ }));
+    const inspectMenuItem = await screen.findAllByText('Inspect');
+    act(() => fireEvent.click(inspectMenuItem[0]));
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
 

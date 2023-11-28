@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -1427,10 +1428,12 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 
 		t.Run("With invalid query should return error", (func(t *testing.T) {
 			c := newFakeClient()
-			_, err := executeElasticsearchDataQuery(c, `{
+			res, err := executeElasticsearchDataQuery(c, `{
 				"query": "foo",
 			}`, from, to)
-			require.Error(t, err)
+			require.NoError(t, err)
+			require.Equal(t, res.Responses["A"].ErrorSource, backend.ErrorSourcePlugin)
+			require.Equal(t, res.Responses["A"].Error.Error(), "invalid character '}' looking for beginning of object key string")
 		}))
 	})
 }
@@ -1458,7 +1461,7 @@ func TestSettingsCasting(t *testing.T) {
 								"gamma": "3",
 								"period": "4"
 							}
-						} 
+						}
 					}
 				],
 				"bucketAggs": [{"type": "date_histogram", "field": "@timestamp", "id": "1"}]
@@ -1668,6 +1671,31 @@ func TestSettingsCasting(t *testing.T) {
 
 				assert.NotZero(t, dateHistogramAgg.FixedInterval)
 			})
+
+			t.Run("Uses calendar_interval", func(t *testing.T) {
+				c := newFakeClient()
+				_, err := executeElasticsearchDataQuery(c, `{
+					"bucketAggs": [
+						{
+							"type": "date_histogram",
+							"field": "@timestamp",
+							"id": "2",
+							"settings": {
+								"interval": "1M"
+							}
+						}
+					],
+					"metrics": [
+						{ "id": "1", "type": "average", "field": "@value" }
+					]
+				}`, from, to)
+				assert.Nil(t, err)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+				assert.NotZero(t, dateHistogramAgg.CalendarInterval)
+			})
 		})
 	})
 
@@ -1754,6 +1782,21 @@ func TestSettingsCasting(t *testing.T) {
 			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
 			assert.Equal(t, dateHistogramAgg.FixedInterval, "1d")
 		})
+
+		t.Run("Should use calendar_interval", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"metrics": [{ "type": "count", "id": "1" }],
+				"bucketAggs": [
+					{ "type": "date_histogram", "id": "2", "field": "@time", "settings": { "min_doc_count": "1", "interval": "1w" } }
+				]
+			}`, from, to)
+
+			assert.Nil(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+			assert.Equal(t, dateHistogramAgg.CalendarInterval, "1w")
+		})
 	})
 }
 
@@ -1815,9 +1858,10 @@ func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time)
 			{
 				JSON:      json.RawMessage(body),
 				TimeRange: timeRange,
+				RefID:     "A",
 			},
 		},
 	}
-	query := newElasticsearchDataQuery(context.Background(), c, dataRequest.Queries, log.New("test.logger"))
+	query := newElasticsearchDataQuery(context.Background(), c, dataRequest.Queries, log.New("test.logger"), tracing.InitializeTracerForTest())
 	return query.execute()
 }

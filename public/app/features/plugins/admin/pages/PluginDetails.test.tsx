@@ -52,9 +52,8 @@ jest.mock('../helpers.ts', () => ({
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
-    hasAccess: (action: string, fallBack: boolean) => true,
     hasPermission: (action: string) => true,
-    hasAccessInMetadata: (action: string, object: WithAccessControlMetadata, fallBack: boolean) => true,
+    hasPermissionInMetadata: (action: string, object: WithAccessControlMetadata) => true,
   },
 }));
 
@@ -745,27 +744,59 @@ describe('Plugin details page', () => {
     });
 
     it('should display a deprecation warning if the plugin is deprecated', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { findByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: true,
       });
 
-      await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and removed from the catalog/i)).toBeInTheDocument()
-      );
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
     });
 
     it('should not display a deprecation warning in the plugin is not deprecated', async () => {
-      const { queryByText } = renderPluginDetails({
+      const { queryByRole } = renderPluginDetails({
         id,
         isInstalled: true,
         isDeprecated: false,
       });
 
-      await waitFor(() =>
-        expect(queryByText(/plugin is deprecated and removed from the catalog/i)).not.toBeInTheDocument()
-      );
+      await waitFor(() => expect(queryByRole('link', { name: 'deprecated' })).not.toBeInTheDocument());
+    });
+
+    it('should display a custom deprecation message if the plugin has it set', async () => {
+      const statusContext = 'A detailed explanation of why this plugin is deprecated.';
+      const { findByText, findByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
+      expect(await findByText(statusContext)).toBeInTheDocument();
+    });
+
+    it('should be possible to render markdown inside a custom deprecation message', async () => {
+      const statusContext =
+        '**This is a custom deprecation message.** [Link 1](https://grafana.com) <a href="https://grafana.com" target="_blank">Link 2</a>';
+      const { findByText, findByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+        details: {
+          statusContext,
+          links: [],
+        },
+      });
+
+      expect(await findByRole('link', { name: 'deprecated' })).toBeInTheDocument();
+      expect(await findByText('This is a custom deprecation message.')).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 1' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toBeInTheDocument();
+      expect(await findByRole('link', { name: 'Link 2' })).toHaveAttribute('href', 'https://grafana.com');
     });
   });
 

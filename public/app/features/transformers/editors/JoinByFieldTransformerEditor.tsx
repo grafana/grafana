@@ -9,8 +9,10 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 const modes = [
@@ -31,6 +33,11 @@ const modes = [
 
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
+  const variables = getTemplateSrv()
+    .getVariables()
+    .map((v) => {
+      return { value: '$' + v.name, label: '$' + v.name };
+    });
 
   const onSelectField = useCallback(
     (value: SelectableValue<string>) => {
@@ -62,7 +69,7 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
       <InlineFieldRow>
         <InlineField label="Field" labelWidth={8} grow>
           <Select
-            options={fieldNames}
+            options={[...fieldNames, ...variables]}
             value={options.byField}
             onChange={onSelectField}
             placeholder="time"
@@ -82,4 +89,5 @@ export const joinByFieldTransformerRegistryItem: TransformerRegistryItem<JoinByF
   name: standardTransformers.joinByFieldTransformer.name,
   description: standardTransformers.joinByFieldTransformer.description,
   categories: new Set([TransformerCategory.Combine]),
+  help: getTransformationContent(DataTransformerID.joinByField).helperDocs,
 };

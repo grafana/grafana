@@ -95,9 +95,22 @@ To change _recent_ to something other than the past 10 minutes, edit the [config
 
 ```ini
 [analytics.views]
-# Set age for recent active users
+
+# Set age for recent active users to 10 minutes
 recent_users_age = 10m
 ```
+
+To disable the presence indicator, edit the [configuration][] file as follows:
+
+```ini
+[analytics.views]
+
+
+# Disables the presence indicator
+recent_users_age = 0
+```
+
+The dashboard won't show any avatars and thus no recent user activity.
 
 ## Sort dashboards by using insights data
 

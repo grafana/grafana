@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -29,9 +30,10 @@ func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, asset
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
 func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
 	return []DecorateFunc{
-		AliasDecorateFunc,
 		AppDefaultNavURLDecorateFunc,
+		TemplateDecorateFunc,
 		AppChildDecorateFunc(cfg),
+		SkipHostEnvVarsDecorateFunc(cfg),
 	}
 }
 
@@ -79,22 +81,27 @@ func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSo
 	return res, nil
 }
 
-// AliasDecorateFunc is a DecorateFunc that sets the alias for the plugin.
-func AliasDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	switch p.ID {
-	case "grafana-pyroscope-datasource": // rebranding
-		p.Alias = "phlare"
-	case "debug": // panel plugin used for testing
-		p.Alias = "debugX"
-	}
-	return p, nil
-}
-
 // AppDefaultNavURLDecorateFunc is a DecorateFunc that sets the default nav URL for app plugins.
 func AppDefaultNavURLDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.IsApp() {
 		setDefaultNavURL(p)
 	}
+	return p, nil
+}
+
+// TemplateDecorateFunc is a DecorateFunc that removes the placeholder for the version and last_update fields.
+func TemplateDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	// %VERSION% and %TODAY% are valid values, according to the plugin schema
+	// but it's meant to be replaced by the build system with the actual version and date.
+	// If not, it's the same than not having a version or a date.
+	if p.Info.Version == "%VERSION%" {
+		p.Info.Version = ""
+	}
+
+	if p.Info.Updated == "%TODAY%" {
+		p.Info.Updated = ""
+	}
+
 	return p, nil
 }
 
@@ -146,5 +153,16 @@ func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plu
 		child.Module = path.Join("core:plugin", parent.ID, appSubPath)
 	} else {
 		child.Module = path.Join("/", cfg.GrafanaAppSubURL, "/public/plugins", parent.ID, appSubPath, "module.js")
+	}
+}
+
+// SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
+// It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin does not have
+// forward_host_env_vars = true in its plugin settings.
+func SkipHostEnvVarsDecorateFunc(cfg *config.Cfg) DecorateFunc {
+	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		p.SkipHostEnvVars = cfg.Features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars) &&
+			cfg.PluginSettings[p.ID]["forward_host_env_vars"] != "true"
+		return p, nil
 	}
 }

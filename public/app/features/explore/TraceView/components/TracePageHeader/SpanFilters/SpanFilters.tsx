@@ -37,6 +37,8 @@ export type SpanFilterProps = {
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  showCriticalPathSpansOnly: boolean;
+  setShowCriticalPathSpansOnly: (showCriticalPathSpansOnly: boolean) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
 };
@@ -50,6 +52,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setShowSpanFilters,
     showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
+    showCriticalPathSpansOnly,
+    setShowCriticalPathSpansOnly,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -69,7 +73,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setTagKeys(undefined);
     setTagValues({});
     setSearch(defaultFilters);
-  }, [setSearch]);
+    setShowSpanFilterMatchesOnly(false);
+  }, [setSearch, setShowSpanFilterMatchesOnly]);
 
   useEffect(() => {
     clear();
@@ -455,6 +460,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           spanFilterMatches={spanFilterMatches}
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
           setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
+          showCriticalPathSpansOnly={showCriticalPathSpansOnly}
+          setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           focusedSpanIndexForSearch={focusedSpanIndexForSearch}
           setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}

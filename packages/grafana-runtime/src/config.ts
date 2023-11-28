@@ -16,11 +16,13 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
   getThemeById,
+  AngularMeta,
 } from '@grafana/data';
 
 export interface AzureSettings {
   cloud?: string;
   managedIdentityEnabled: boolean;
+  workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
 }
 
@@ -29,7 +31,7 @@ export type AppPluginConfig = {
   path: string;
   version: string;
   preload: boolean;
-  angularDetected?: boolean;
+  angular: AngularMeta;
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -42,6 +44,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';
+  namespace = 'default';
   windowTitlePrefix = '';
   buildInfo: BuildInfo;
   newPanelTitle = '';
@@ -93,13 +96,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   anonymousEnabled = false;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
-  dashboardPreviews: {
-    systemRequirements: {
-      met: boolean;
-      requiredImageRendererPluginVersion: string;
-    };
-    thumbnailsExist: boolean;
-  } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   secretsManagerPluginEnabled = false;
   supportBundlesEnabled = false;
@@ -124,6 +120,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
     managedIdentityEnabled: false,
+    workloadIdentityEnabled: false,
     userIdentityEnabled: false,
   };
   caching = {
@@ -148,6 +145,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   reporting = {
     enabled: true,
   };
+  analytics = {
+    enabled: true,
+  };
   googleAnalyticsId: undefined;
   googleAnalytics4Id: undefined;
   googleAnalytics4SendManualPageViews = false;
@@ -155,6 +155,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
+  rudderstackIntegrationsUrl: undefined;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,

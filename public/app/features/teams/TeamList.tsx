@@ -1,34 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination, InlineField } from '@grafana/ui';
+import {
+  Avatar,
+  CellProps,
+  Column,
+  DeleteButton,
+  FilterInput,
+  Icon,
+  InlineField,
+  InteractiveTable,
+  LinkButton,
+  Pagination,
+  Stack,
+  Tooltip,
+} from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { config } from 'app/core/config';
-import { contextSrv, User } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
-import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
+import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 
-import { TeamListRow } from './TeamListRow';
-import { deleteTeam, loadTeams, changePage, changeQuery } from './state/actions';
-import { initialTeamsState } from './state/reducers';
-import { isPermissionTeamAdmin } from './state/selectors';
+import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
-export interface Props {
-  teams: Team[];
-  page: number;
-  query: string;
-  noTeams: boolean;
-  totalPages: number;
-  hasFetched: boolean;
-  loadTeams: typeof loadTeams;
-  deleteTeam: typeof deleteTeam;
-  changePage: typeof changePage;
-  changeQuery: typeof changeQuery;
-  editorsCanAdmin: boolean;
-  signedInUser: User;
-}
+type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
+export interface OwnProps {}
 
 export interface State {
   roleOptions: Role[];
@@ -36,17 +34,17 @@ export interface State {
 
 export const TeamList = ({
   teams,
-  page,
   query,
   noTeams,
-  totalPages,
   hasFetched,
   loadTeams,
   deleteTeam,
   changeQuery,
+  totalPages,
+  page,
+  rolesLoading,
   changePage,
-  signedInUser,
-  editorsCanAdmin,
+  changeSort,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
@@ -62,6 +60,90 @@ export const TeamList = ({
 
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
   const displayRolePicker = shouldDisplayRolePicker();
+
+  const columns: Array<Column<Team>> = useMemo(
+    () => [
+      {
+        id: 'avatarUrl',
+        header: '',
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => value && <Avatar src={value} alt="User avatar" />,
+      },
+      {
+        id: 'name',
+        header: 'Name',
+        cell: ({ cell: { value } }: Cell<'name'>) => value,
+        sortType: 'string',
+      },
+      {
+        id: 'email',
+        header: 'Email',
+        cell: ({ cell: { value } }: Cell<'email'>) => value,
+        sortType: 'string',
+      },
+      {
+        id: 'memberCount',
+        header: 'Members',
+        cell: ({ cell: { value } }: Cell<'memberCount'>) => value,
+        sortType: 'number',
+      },
+      ...(displayRolePicker
+        ? [
+            {
+              id: 'role',
+              header: 'Role',
+              cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
+                const canSeeTeamRoles = contextSrv.hasPermissionInMetadata(
+                  AccessControlAction.ActionTeamsRolesList,
+                  original
+                );
+                return (
+                  canSeeTeamRoles && (
+                    <TeamRolePicker
+                      teamId={original.id}
+                      roles={original.roles || []}
+                      isLoading={rolesLoading}
+                      roleOptions={roleOptions}
+                      width={40}
+                    />
+                  )
+                );
+              },
+            },
+          ]
+        : []),
+      {
+        id: 'edit',
+        header: '',
+        cell: ({ row: { original } }: Cell) => {
+          const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
+          return canReadTeam ? (
+            <a href={`org/teams/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
+              <Tooltip content={'Edit team'}>
+                <Icon name={'pen'} />
+              </Tooltip>
+            </a>
+          ) : null;
+        },
+      },
+      {
+        id: 'delete',
+        header: '',
+        cell: ({ row: { original } }: Cell) => {
+          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
+
+          return (
+            <DeleteButton
+              aria-label={`Delete team ${original.name}`}
+              size="sm"
+              disabled={!canDelete}
+              onConfirm={() => deleteTeam(original.id)}
+            />
+          );
+        },
+      },
+    ],
+    [displayRolePicker, rolesLoading, roleOptions, deleteTeam]
+  );
 
   return (
     <Page navId="teams">
@@ -89,47 +171,17 @@ export const TeamList = ({
                 New Team
               </LinkButton>
             </div>
-
-            <div className="admin-list-table">
-              <VerticalGroup spacing="md">
-                <table className="filter-table filter-table--hover form-inline">
-                  <thead>
-                    <tr>
-                      <th />
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Members</th>
-                      {displayRolePicker && <th>Roles</th>}
-                      <th style={{ width: '1%' }} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {teams.map((team) => (
-                      <TeamListRow
-                        key={team.id}
-                        team={team}
-                        roleOptions={roleOptions}
-                        displayRolePicker={displayRolePicker}
-                        isTeamAdmin={isPermissionTeamAdmin({
-                          permission: team.permission,
-                          editorsCanAdmin,
-                          signedInUser,
-                        })}
-                        onDelete={deleteTeam}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-                <HorizontalGroup justify="flex-end">
-                  <Pagination
-                    hideWhenSinglePage
-                    currentPage={page}
-                    numberOfPages={totalPages}
-                    onNavigate={changePage}
-                  />
-                </HorizontalGroup>
-              </VerticalGroup>
-            </div>
+            <Stack direction={'column'} gap={2}>
+              <InteractiveTable
+                columns={columns}
+                data={teams}
+                getRowId={(team) => String(team.id)}
+                fetchData={changeSort}
+              />
+              <Stack justifyContent="flex-end">
+                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+              </Stack>
+            </Stack>
           </>
         )}
       </Page.Contents>
@@ -148,14 +200,13 @@ function shouldDisplayRolePicker(): boolean {
 function mapStateToProps(state: StoreState) {
   return {
     teams: state.teams.teams,
-    page: state.teams.page,
     query: state.teams.query,
     perPage: state.teams.perPage,
+    page: state.teams.page,
     noTeams: state.teams.noTeams,
     totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
-    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
+    rolesLoading: state.teams.rolesLoading,
   };
 }
 
@@ -164,10 +215,9 @@ const mapDispatchToProps = {
   deleteTeam,
   changePage,
   changeQuery,
+  changeSort,
 };
 
-export default connectWithCleanUp(
-  mapStateToProps,
-  mapDispatchToProps,
-  (state) => (state.teams = initialTeamsState)
-)(TeamList);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+export default connector(TeamList);

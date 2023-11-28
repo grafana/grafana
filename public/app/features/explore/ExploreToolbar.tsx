@@ -1,14 +1,24 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import React, { RefObject, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
-import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
+import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction, config } from '@grafana/runtime';
+import {
+  defaultIntervals,
+  PageToolbar,
+  RefreshPicker,
+  SetInterval,
+  ToolbarButton,
+  ButtonGroup,
+  useStyles2,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { t, Trans } from 'app/core/internationalization';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { contextSrv } from '../../core/core';
@@ -20,28 +30,45 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
-import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
+import { changeCorrelationHelperData } from './state/explorePane';
+import {
+  splitClose,
+  splitOpen,
+  maximizePaneAction,
+  evenPaneResizeAction,
+  changeCorrelationEditorDetails,
+} from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
-import { isSplit, selectPanesEntries } from './state/selectors';
+import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
-const rotateIcon = css({
-  '> div > svg': {
-    transform: 'rotate(180deg)',
-  },
+const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
+  rotateIcon: css({
+    '> div > svg': {
+      transform: 'rotate(180deg)',
+    },
+  }),
+  toolbarButton: css({
+    display: 'flex',
+    justifyContent: 'center',
+    marginRight: theme.spacing(0.5),
+    width: splitted && theme.spacing(6),
+  }),
 });
 
 interface Props {
   exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
-  topOfViewRef: RefObject<HTMLDivElement>;
+  onContentOutlineToogle: () => void;
+  isContentOutlineOpen: boolean;
 }
 
-export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props) {
+export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
   const dispatch = useDispatch();
-
   const splitted = useSelector(isSplit);
+  const styles = useStyles2(getStyles, splitted);
+
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
   const { refreshInterval, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
@@ -59,11 +86,18 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   );
 
   const panes = useSelector(selectPanesEntries);
+  const correlationDetails = useSelector(selectCorrelationDetails);
+  const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
+  const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
 
   const shouldRotateSplitIcon = useMemo(
-    () => (exploreId === panes[0][0] && isLargerPane) || (exploreId === panes[1]?.[0] && !isLargerPane),
-    [isLargerPane, exploreId, panes]
+    () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
+    [isLeftPane, isLargerPane]
   );
+
+  const refreshPickerLabel = loading
+    ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
+    : t('explore.toolbar.refresh-picker-run', 'Run query');
 
   const onCopyShortLink = () => {
     createAndCopyShortLink(global.location.href);
@@ -71,7 +105,38 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+    if (!isCorrelationsEditorMode) {
+      dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+    } else {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
+        // prompt will handle datasource change if needed
+        dispatch(
+          changeCorrelationEditorDetails({
+            isExiting: true,
+            postConfirmAction: {
+              exploreId: exploreId,
+              action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
+              changeDatasourceUid: dsSettings.uid,
+              isActionLeft: isLeftPane,
+            },
+          })
+        );
+      } else {
+        // if the left pane is changing, clear helper data for right pane
+        if (isLeftPane) {
+          panes.forEach((pane) => {
+            dispatch(
+              changeCorrelationHelperData({
+                exploreId: pane[0],
+                correlationEditorHelperData: undefined,
+              })
+            );
+          });
+        }
+
+        dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+      }
+    }
   };
 
   const onRunQuery = (loading = false) => {
@@ -90,8 +155,36 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   const onCloseSplitView = () => {
-    dispatch(splitClose(exploreId));
-    reportInteraction('grafana_explore_split_view_closed');
+    if (isCorrelationsEditorMode) {
+      if (correlationDetails?.correlationDirty || correlationDetails?.queryEditorDirty) {
+        // if dirty, prompt
+        dispatch(
+          changeCorrelationEditorDetails({
+            isExiting: true,
+            postConfirmAction: {
+              exploreId: exploreId,
+              action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
+              isActionLeft: isLeftPane,
+            },
+          })
+        );
+      } else {
+        // otherwise, clear helper data and close
+        panes.forEach((pane) => {
+          dispatch(
+            changeCorrelationHelperData({
+              exploreId: pane[0],
+              correlationEditorHelperData: undefined,
+            })
+          );
+        });
+        dispatch(splitClose(exploreId));
+        reportInteraction('grafana_explore_split_view_closed');
+      }
+    } else {
+      dispatch(splitClose(exploreId));
+      reportInteraction('grafana_explore_split_view_closed');
+    }
   };
 
   const onClickResize = () => {
@@ -113,35 +206,50 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
+  const navBarActions = [
+    <DashNavButton
+      key="share"
+      tooltip={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
+      icon="share-alt"
+      onClick={onCopyShortLink}
+      aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
+    />,
+    <div style={{ flex: 1 }} key="spacer0" />,
+  ];
+
   return (
-    <div ref={topOfViewRef}>
+    <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      <div ref={topOfViewRef}>
-        <AppChromeUpdate
-          actions={[
-            <DashNavButton
-              key="share"
-              tooltip="Copy shortened link"
-              icon="share-alt"
-              onClick={onCopyShortLink}
-              aria-label="Copy shortened link"
-            />,
-            <div style={{ flex: 1 }} key="spacer" />,
-          ]}
-        />
+      <div>
+        <AppChromeUpdate actions={navBarActions} />
       </div>
       <PageToolbar
-        aria-label="Explore toolbar"
+        aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
+          config.featureToggles.exploreContentOutline && (
+            <ToolbarButton
+              key="content-outline"
+              variant="canvas"
+              tooltip="Content outline"
+              icon="list-ui-alt"
+              iconOnly={splitted}
+              onClick={onContentOutlineToogle}
+              aria-expanded={isContentOutlineOpen}
+              aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+              className={styles.toolbarButton}
+            >
+              Outline
+            </ToolbarButton>
+          ),
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
-            mixed
+            mixed={!isCorrelationsEditorMode}
             onChange={onChangeDatasource}
             current={datasourceInstance?.getRef()}
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
-        ]}
+        ].filter(Boolean)}
         forceShowLeftItems
       >
         {[
@@ -149,25 +257,34 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             <ToolbarButton
               variant="canvas"
               key="split"
-              tooltip="Split the pane"
+              tooltip={t('explore.toolbar.split-tooltip', 'Split the pane')}
               onClick={onOpenSplitView}
               icon="columns"
               disabled={isLive}
             >
-              Split
+              <Trans i18nKey="explore.toolbar.split-title">Split</Trans>
             </ToolbarButton>
           ) : (
             <ButtonGroup key="split-controls">
               <ToolbarButton
                 variant="canvas"
-                tooltip={`${isLargerPane ? 'Narrow' : 'Widen'} pane`}
+                tooltip={
+                  isLargerPane
+                    ? t('explore.toolbar.split-narrow', 'Narrow pane')
+                    : t('explore.toolbar.split-widen', 'Widen pane')
+                }
                 onClick={onClickResize}
                 icon={isLargerPane ? 'gf-movepane-left' : 'gf-movepane-right'}
                 iconOnly={true}
-                className={cx(shouldRotateSplitIcon && rotateIcon)}
+                className={cx(shouldRotateSplitIcon && styles.rotateIcon)}
               />
-              <ToolbarButton tooltip="Close split pane" onClick={onCloseSplitView} icon="times" variant="canvas">
-                Close
+              <ToolbarButton
+                tooltip={t('explore.toolbar.split-close-tooltip', 'Close split pane')}
+                onClick={onCloseSplitView}
+                icon="times"
+                variant="canvas"
+              >
+                <Trans i18nKey="explore.toolbar.split-close"> Close </Trans>
               </ToolbarButton>
             </ButtonGroup>
           ),
@@ -198,8 +315,8 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             onIntervalChanged={onChangeRefreshInterval}
             value={refreshInterval}
             isLoading={loading}
-            text={showSmallTimePicker ? undefined : loading ? 'Cancel' : 'Run query'}
-            tooltip={showSmallTimePicker ? (loading ? 'Cancel' : 'Run query') : undefined}
+            text={showSmallTimePicker ? undefined : refreshPickerLabel}
+            tooltip={showSmallTimePicker ? refreshPickerLabel : undefined}
             intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}

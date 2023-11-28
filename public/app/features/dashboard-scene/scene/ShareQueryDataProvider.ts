@@ -1,7 +1,9 @@
-import { Unsubscribable } from 'rxjs';
+import { Observable, ReplaySubject, Unsubscribable } from 'rxjs';
 
+import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import {
   SceneDataProvider,
+  SceneDataProviderResult,
   SceneDataState,
   SceneDataTransformer,
   SceneDeactivationHandler,
@@ -19,6 +21,9 @@ export interface ShareQueryDataProviderState extends SceneDataState {
 export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProviderState> implements SceneDataProvider {
   private _querySub: Unsubscribable | undefined;
   private _sourceDataDeactivationHandler?: SceneDeactivationHandler;
+  private _results = new ReplaySubject<SceneDataProviderResult>();
+  private _sourceProvider?: SceneDataProvider;
+  private _passContainerWidth = false;
 
   constructor(state: ShareQueryDataProviderState) {
     super(state);
@@ -40,6 +45,10 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
     });
   }
 
+  public getResultsStream(): Observable<SceneDataProviderResult> {
+    return this._results;
+  }
+
   private _subscribeToSource() {
     const { query } = this.state;
 
@@ -59,29 +68,57 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
       return;
     }
 
-    let sourceData = source.state.$data;
-    if (!sourceData) {
+    this._sourceProvider = source.state.$data;
+    if (!this._sourceProvider) {
       console.log('No source data found for shared dashboard query');
       return;
     }
 
-    // This will activate if sourceData is part of hidden panel
-    // Also make sure the sourceData is not deactivated if hidden later
-    this._sourceDataDeactivationHandler = sourceData.activate();
-
-    if (sourceData instanceof SceneDataTransformer) {
-      if (!query.withTransforms) {
-        if (!sourceData.state.$data) {
-          throw new Error('No source inner query runner found in data transformer');
-        }
-        sourceData = sourceData.state.$data;
-      }
+    // If the source is not active we need to pass the container width
+    if (!this._sourceProvider.isActive) {
+      this._passContainerWidth = true;
     }
 
-    this._querySub = sourceData.subscribeToState((state) => this.setState({ data: state.data }));
+    // This will activate if sourceData is part of hidden panel
+    // Also make sure the sourceData is not deactivated if hidden later
+    this._sourceDataDeactivationHandler = this._sourceProvider.activate();
+
+    // If source is a data transformer we might need to get the inner query runner instead depending on withTransforms option
+    if (this._sourceProvider instanceof SceneDataTransformer && !query.withTransforms) {
+      if (!this._sourceProvider.state.$data) {
+        throw new Error('No source inner query runner found in data transformer');
+      }
+      this._sourceProvider = this._sourceProvider.state.$data;
+    }
+
+    this._querySub = this._sourceProvider.subscribeToState((state) => {
+      this._results.next({
+        origin: this,
+        data: state.data || {
+          state: LoadingState.Done,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+        },
+      });
+
+      this.setState({ data: state.data });
+    });
 
     // Copy the initial state
-    this.setState({ data: sourceData.state.data });
+    this.setState({ data: this._sourceProvider.state.data });
+  }
+
+  public setContainerWidth(width: number) {
+    if (this._passContainerWidth && this._sourceProvider) {
+      this._sourceProvider.setContainerWidth?.(width);
+    }
+  }
+
+  public isDataReadyToDisplay() {
+    if (this._sourceProvider && this._sourceProvider.isDataReadyToDisplay) {
+      return this._sourceProvider.isDataReadyToDisplay();
+    }
+    return false;
   }
 }
 

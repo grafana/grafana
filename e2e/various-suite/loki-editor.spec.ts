@@ -14,7 +14,7 @@ const addDataSource = () => {
 
 describe('Loki Query Editor', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   afterEach(() => {
@@ -37,7 +37,7 @@ describe('Loki Query Editor', () => {
     e2e.components.DataSourcePicker.container().should('be.visible').click();
     cy.contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
-    cy.contains('Code').click();
+    e2e.components.RadioButton.container().filter(':contains("Code")').click();
 
     // Wait for lazy loading
     const monacoLoadingText = 'Loading...';

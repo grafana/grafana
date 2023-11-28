@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useId, useState } from 'react';
 
 import {
   DateTime,
@@ -14,12 +14,13 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Icon, Tooltip } from '../..';
-import { useStyles2 } from '../../..';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
+import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
+import { Tooltip } from '../../Tooltip/Tooltip';
 import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
@@ -53,6 +54,9 @@ export const TimeRangeContent = (props: Props) => {
   const [from, setFrom] = useState<InputState>(fromValue);
   const [to, setTo] = useState<InputState>(toValue);
   const [isOpen, setOpen] = useState(false);
+
+  const fromFieldId = useId();
+  const toFieldId = useId();
 
   // Synchronize internal state with external value
   useEffect(() => {
@@ -112,7 +116,8 @@ export const TimeRangeContent = (props: Props) => {
 
   const icon = (
     <Button
-      aria-label={selectors.components.TimePicker.calendar.openButton}
+      aria-label={t('time-picker.range-content.open-input-calendar', 'Open calendar')}
+      data-testid={selectors.components.TimePicker.calendar.openButton}
       icon="calendar-alt"
       variant="secondary"
       type="button"
@@ -129,11 +134,12 @@ export const TimeRangeContent = (props: Props) => {
           error={from.errorMessage}
         >
           <Input
+            id={fromFieldId}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(event.currentTarget.value, to.value)}
             addonAfter={icon}
             onKeyDown={submitOnEnter}
-            aria-label={selectors.components.TimePicker.fromField}
+            data-testid={selectors.components.TimePicker.fromField}
             value={from.value}
           />
         </Field>
@@ -142,11 +148,12 @@ export const TimeRangeContent = (props: Props) => {
       <div className={style.fieldContainer}>
         <Field label={t('time-picker.range-content.to-input', 'To')} invalid={to.invalid} error={to.errorMessage}>
           <Input
+            id={toFieldId}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(from.value, event.currentTarget.value)}
             addonAfter={icon}
             onKeyDown={submitOnEnter}
-            aria-label={selectors.components.TimePicker.toField}
+            data-testid={selectors.components.TimePicker.toField}
             value={to.value}
           />
         </Field>

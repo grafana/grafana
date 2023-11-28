@@ -8,6 +8,11 @@ export enum RuleFormType {
   cloudRecording = 'cloud-recording',
 }
 
+export interface ContactPoints {
+  alertManager: string;
+  selectedContactPoint?: string;
+}
+
 export interface RuleFormValues {
   // common
   name: string;
@@ -27,10 +32,14 @@ export interface RuleFormValues {
   evaluateEvery: string;
   evaluateFor: string;
   isPaused?: boolean;
+  contactPoints?: ContactPoints[];
+  manualRouting: boolean;
 
   // cortex / loki rules
   namespace: string;
   forTime: number;
   forTimeUnit: string;
+  keepFiringForTime?: number;
+  keepFiringForTimeUnit?: string;
   expression: string;
 }

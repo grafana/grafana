@@ -4,7 +4,6 @@ import React from 'react';
 
 import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
 import { BasePropsWithTooltip, IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
@@ -20,7 +19,6 @@ const additionalExcludes = ['size', 'name', 'variant', 'iconType'];
 const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton',
   component: IconButton,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -34,8 +32,6 @@ const meta: Meta<typeof IconButton> = {
     tooltip: 'sample tooltip message',
     tooltipPlacement: 'top',
     variant: 'secondary',
-    ariaLabel: 'this property is deprecated',
-    ['aria-label']: 'sample aria-label content',
   },
   argTypes: {
     tooltip: {

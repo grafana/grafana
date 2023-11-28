@@ -1,6 +1,8 @@
 package datasources
 
 import (
+	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,14 +23,14 @@ const (
 	DS_TEMPO          = "tempo"
 	DS_ZIPKIN         = "zipkin"
 	DS_MYSQL          = "mysql"
-	DS_POSTGRES       = "postgres"
+	DS_POSTGRES       = "grafana-postgresql-datasource"
 	DS_MSSQL          = "mssql"
 	DS_ACCESS_DIRECT  = "direct"
 	DS_ACCESS_PROXY   = "proxy"
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
 	DS_AZURE_MONITOR  = "grafana-azure-monitor-datasource"
-	DS_TESTDATA       = "testdata"
+	DS_TESTDATA       = "grafana-testdata-datasource"
 	// CustomHeaderName is the prefix that is used to store the name of a custom header.
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.
@@ -65,6 +67,53 @@ type DataSource struct {
 	Updated time.Time `json:"updated,omitempty"`
 }
 
+type TeamHTTPHeadersJSONData struct {
+	TeamHTTPHeaders TeamHTTPHeaders `json:"teamHttpHeaders"`
+}
+
+type TeamHTTPHeaders map[string][]TeamHTTPHeader
+
+type TeamHTTPHeader struct {
+	Header string `json:"header"`
+	Value  string `json:"value"`
+}
+
+const DefaultTeamHTTPHeader = "default"
+
+func (ds DataSource) TeamHTTPHeaders() (TeamHTTPHeaders, error) {
+	return GetTeamHTTPHeaders(ds.JsonData)
+}
+
+func GetTeamHTTPHeaders(jsonData *simplejson.Json) (TeamHTTPHeaders, error) {
+	teamHTTPHeadersJSON := TeamHTTPHeaders{}
+	if jsonData != nil && jsonData.Get("teamHttpHeaders") != nil {
+		jsonData, err := jsonData.Get("teamHttpHeaders").MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(jsonData, &teamHTTPHeadersJSON)
+		if err != nil {
+			return nil, err
+		}
+		for teamID, headers := range teamHTTPHeadersJSON {
+			if teamID == "" {
+				return nil, errors.New("teamID is missing or empty in teamHttpHeaders")
+			}
+
+			for _, header := range headers {
+				if header.Header == "" {
+					return nil, errors.New("header name is missing or empty")
+				}
+				if header.Value == "" {
+					return nil, errors.New("header value is missing or empty")
+				}
+			}
+		}
+	}
+
+	return teamHTTPHeadersJSON, nil
+}
+
 // AllowedCookies parses the jsondata.keepCookies and returns a list of
 // allowed cookies, otherwise an empty list.
 func (ds DataSource) AllowedCookies() []string {
@@ -91,7 +140,7 @@ func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	Name            string            `json:"name" binding:"Required"`
+	Name            string            `json:"name"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`
@@ -172,8 +221,9 @@ type GetDataSourcesQuery struct {
 type GetAllDataSourcesQuery struct{}
 
 type GetDataSourcesByTypeQuery struct {
-	OrgID int64 // optional: filter by org_id
-	Type  string
+	OrgID    int64 // optional: filter by org_id
+	Type     string
+	AliasIDs []string
 }
 
 type GetDefaultDataSourceQuery struct {

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -6,22 +6,31 @@ import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneDebugger } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, viewPanelKey: viewPanelId, drawer } = model.useState();
+  const { controls, viewPanelKey, overlay, editview } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
-  const pageNav = model.getPageNav(location);
-  const bodyToRender = model.getBodyToRender(viewPanelId);
+  const navIndex = useSelector((state) => state.navIndex);
+  const pageNav = model.getPageNav(location, navIndex);
+  const bodyToRender = model.getBodyToRender(viewPanelKey);
+  const navModel = getNavModel(navIndex, 'dashboards/browse');
+
+  if (editview) {
+    return <editview.Component model={editview} />;
+  }
 
   return (
-    <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className={styles.canvasContent}>
           <NavToolbarActions dashboard={model} />
+
           {controls && (
             <div className={styles.controls}>
               {controls.map((control) => (
@@ -30,12 +39,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               <SceneDebugger scene={model} key={'scene-debugger'} />
             </div>
           )}
-          <div className={styles.body}>
+          <div className={cx(styles.body)}>
             <bodyToRender.Component model={bodyToRender} />
           </div>
         </div>
       </CustomScrollbar>
-      {drawer && <drawer.Component model={drawer} />}
+      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }
@@ -57,6 +66,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: '8px',
       marginBottom: theme.spacing(2),
     }),
+
     controls: css({
       display: 'flex',
       flexWrap: 'wrap',
@@ -65,7 +75,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       background: theme.colors.background.canvas,
-      zIndex: 1,
+      zIndex: theme.zIndex.navbarFixed,
       padding: theme.spacing(2, 0),
     }),
   };

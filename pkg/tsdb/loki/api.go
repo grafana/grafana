@@ -17,17 +17,20 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
 type LokiAPI struct {
-	client *http.Client
-	url    string
-	log    log.Logger
-	tracer tracing.Tracer
+	client                    *http.Client
+	url                       string
+	log                       log.Logger
+	tracer                    tracing.Tracer
+	requestStructuredMetadata bool
 }
 
 type RawLokiResponse struct {
@@ -36,11 +39,11 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log, tracer: tracer}
+func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer, requestStructuredMetadata bool) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log, tracer: tracer, requestStructuredMetadata: requestStructuredMetadata}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, categorizeLabels bool) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -100,6 +103,10 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		}
 	}
 
+	if categorizeLabels {
+		req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
+	}
+
 	return req, nil
 }
 
@@ -154,7 +161,7 @@ func readLokiError(body io.ReadCloser) error {
 }
 
 func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
-	req, err := makeDataRequest(ctx, api.url, query)
+	req, err := makeDataRequest(ctx, api.url, query, api.requestStructuredMetadata)
 	if err != nil {
 		return nil, err
 	}
@@ -177,23 +184,28 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		return nil, err
 	}
 
-	api.log.Info("Response received from loki", "duration", time.Since(start), "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "stage", stageDatabaseRequest, "status", "ok", "query", query.Expr)
-
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			api.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
+	lp := []any{"duration", time.Since(start), "stage", stageDatabaseRequest, "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length")}
+	lp = append(lp, queryAttrs...)
 	if resp.StatusCode/100 != 2 {
 		err := readLokiError(resp.Body)
-		api.log.Error("Error received from loki", "error", err, "status", resp.StatusCode)
+		lp = append(lp, "status", "error", "error", err)
+		api.log.Error("Error received from Loki", lp...)
 		return nil, err
+	} else {
+		lp = append(lp, "status", "ok")
+		api.log.Info("Response received from loki", lp...)
 	}
 
 	start = time.Now()
-	_, span := api.tracer.Start(ctx, "datasource.loki.parseResponse")
-	span.SetAttributes("metricDataplane", responseOpts.metricDataplane, attribute.Key("metricDataplane").Bool(responseOpts.metricDataplane))
+	_, span := api.tracer.Start(ctx, "datasource.loki.parseResponse", trace.WithAttributes(
+		attribute.Bool("metricDataplane", responseOpts.metricDataplane),
+	))
 	defer span.End()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
@@ -202,10 +214,11 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	if res.Error != nil {
 		span.RecordError(res.Error)
 		span.SetStatus(codes.Error, err.Error())
+		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
 		api.log.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
 		return nil, res.Error
 	}
-
+	instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
 	api.log.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "stage", stageParseResponse)
 
 	return res.Frames, nil

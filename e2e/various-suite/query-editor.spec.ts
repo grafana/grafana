@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 describe('Query editor', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Undo should work in query editor for prometheus -- test CI.', () => {
@@ -12,7 +12,7 @@ describe('Query editor', () => {
     cy.contains('gdev-prometheus').scrollIntoView().should('be.visible').click();
     const queryText = `rate(http_requests_total{job="grafana"}[5m])`;
 
-    cy.contains('label', 'Code').click();
+    e2e.components.RadioButton.container().filter(':contains("Code")').click();
 
     // we need to wait for the query-field being lazy-loaded, in two steps:
     // it is a two-step process:

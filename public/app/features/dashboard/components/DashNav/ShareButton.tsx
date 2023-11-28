@@ -8,6 +8,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from '../ShareModal';
 
 import { DashNavButton } from './DashNavButton';
+import { trackToolbarShareClick } from './analytics';
 
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   const [queryParams] = useQueryParams();
@@ -28,10 +29,11 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
 
   return (
     <DashNavButton
-      tooltip={t('dashboard.toolbar.share', 'Share dashboard or panel')}
+      tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
       icon="share-alt"
       iconSize="lg"
       onClick={() => {
+        trackToolbarShareClick();
         showModal(ShareModal, {
           dashboard,
           onDismiss: hideModal,

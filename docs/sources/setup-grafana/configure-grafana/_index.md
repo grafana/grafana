@@ -518,8 +518,7 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 
 ### enabled
 
-This option is also known as _usage analytics_. When `false`, this option disables the writers that read/write from and to the Grafana databases. The default
-value is `true`.
+This option is also known as _usage analytics_. When `false`, this option disables the writers that write to the Grafana database and the associated features, such as dashboard and data source insights, presence indicators, and advanced dashboard search. The default value is `true`.
 
 ### reporting_enabled
 
@@ -574,6 +573,12 @@ URL to load the Rudderstack SDK.
 
 Optional. If tracking with Rudderstack is enabled, you can provide a custom
 URL to load the Rudderstack config.
+
+### rudderstack_integrations_url
+
+Optional. If tracking with Rudderstack is enabled, you can provide a custom
+URL to load the SDK for destinations running in device mode. This setting is only valid for
+Rudderstack version 1.1 and higher.
 
 ### application_insights_connection_string
 
@@ -812,9 +817,9 @@ that this organization already exists. Default is 1.
 
 ### auto_assign_org_role
 
-The role new users will be assigned for the main organization (if the
-`auto_assign_org` setting is set to true). Defaults to `Viewer`, other valid
-options are `Admin` and `Editor`. e.g.:
+The `auto_assign_org_role` setting determines the default role assigned to new users
+in the main organization (if `auto_assign_org` setting is set to true).
+The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For example:
 
 `auto_assign_org_role = Viewer`
 
@@ -1158,6 +1163,32 @@ The client ID to use for user-assigned managed identity.
 
 Should be set for user-assigned identity and should be empty for system-assigned identity.
 
+### workload_identity_enabled
+
+Specifies whether Azure AD Workload Identity authentication should be enabled in datasources that support it.
+
+For more documentation on Azure AD Workload Identity, review [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
+
+Disabled by default, needs to be explicitly enabled.
+
+### workload_identity_tenant_id
+
+Tenant ID of the Azure AD Workload Identity.
+
+Allows to override default tenant ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_client_id
+
+Client ID of the Azure AD Workload Identity.
+
+Allows to override default client ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_token_file
+
+Custom path to token file for the Azure AD Workload Identity.
+
+Allows to set a custom path to the projected service account token file.
+
 ### user_identity_enabled
 
 Specifies whether user identity authentication (on behalf of currently signed-in user) should be enabled in datasources that support it (requires AAD authentication).
@@ -1478,6 +1509,34 @@ Specify the frequency of polling for Alertmanager config changes. The default va
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
+### ha_redis_address
+
+The Redis server address that should be connected to.
+
+### ha_redis_username
+
+The username that should be used to authenticate with the Redis server.
+
+### ha_redis_password
+
+The password that should be used to authenticate with the Redis server.
+
+### ha_redis_db
+
+The Redis database. The default value is `0`.
+
+### ha_redis_prefix
+
+A prefix that is used for every key or channel that is created on the Redis server as part of HA for alerting.
+
+### ha_redis_peer_name
+
+The name of the cluster peer that will be used as an identifier. If none is provided, a random one will be generated.
+
+### ha_redis_max_conns
+
+The maximum number of simultaneous Redis connections.
+
 ### ha_listen_address
 
 Listen IP address and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
@@ -1497,6 +1556,10 @@ be assigned a position (e.g. 0, 1). We then multiply this position with the time
 each instance wait before sending the notification to take into account replication lag. The default value is `15s`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_label
+
+The label is an optional string to include on each packet and stream. It uniquely identifies the cluster and prevents cross-communication issues when sending gossip messages in an environment with multiple clusters.
 
 ### ha_gossip_interval
 
@@ -1518,7 +1581,7 @@ Enable or disable alerting rule execution. The default value is `true`. The aler
 
 ### evaluation_timeout
 
-Sets the alert evaluation timeout when fetching data from the datasource. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
+Sets the alert evaluation timeout when fetching data from the data source. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
 
 The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
@@ -1983,7 +2046,7 @@ Basic auth password.
 
 ### public_url
 
-Optional URL to send to users in notifications. If the string contains the sequence `${file}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+Optional URL to send to users in notifications. If the string contains the sequence `{{file}}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
 
 <hr>
 
@@ -2195,6 +2258,12 @@ Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as w
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
+## as_external
+
+Load an external version of a core plugin if it has been installed.
+
+Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
@@ -2232,6 +2301,14 @@ For the verbose information to be included in the Grafana server log you have to
 Instruct headless browser instance whether to output its debug and error messages into running process of remote rendering service. Default is `false`.
 
 It can be useful to set this to `true` when troubleshooting.
+
+### rendering_timing_metrics
+
+> **Note:** Available from grafana-image-renderer v3.9.0+
+
+Instruct a headless browser instance on whether to record metrics for the duration of every rendering step. Default is `false`.
+
+Setting this to `true` when optimizing the rendering mode settings to improve the plugin performance or when troubleshooting can be useful.
 
 ### rendering_args
 
@@ -2319,7 +2396,7 @@ Please see [Configure feature toggles]({{< relref "./feature-toggles" >}}) for m
 
 Lets you switch the feature toggle state in the feature management page. The default is `false`.
 
-### update_controller_url
+### update_webhook
 
 Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
 
@@ -2418,9 +2495,9 @@ Refer to [Role-based access control]({{< relref "../../administration/roles-and-
 
 ## [navigation.app_sections]
 
-Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: `<pluginId> = <sectionId> <sortWeight>`
 
 ## [navigation.app_standalone_pages]
 
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
-Format: <pageUrl> = <sectionId> <sortWeight>
+Format: `<pageUrl> = <sectionId> <sortWeight>`

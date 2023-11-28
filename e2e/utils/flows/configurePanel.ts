@@ -21,9 +21,7 @@ interface ConfigurePanelDefault {
     route: string | RegExp;
   };
   dashboardUid: string;
-  matchScreenshot: boolean;
   saveDashboard: boolean;
-  screenshotName: string;
   visitDashboardAtStart: boolean; // @todo remove when possible
 }
 
@@ -52,18 +50,15 @@ export type AddPanelConfig = ConfigurePanelConfig & AddPanelOverrides;
 export type PartialEditPanelConfig = PartialConfigurePanelConfig & EditPanelOverrides;
 export type EditPanelConfig = ConfigurePanelConfig & EditPanelOverrides;
 
-// @todo this actually returns type `Cypress.Chainable<AddPanelConfig | EditPanelConfig | ConfigurePanelConfig>`
 export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelConfig | PartialConfigurePanelConfig) =>
-  getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
+  getScenarioContext().then(({ lastAddedDashboardUid }) => {
     const fullConfig: AddPanelConfig | EditPanelConfig | ConfigurePanelConfig = {
       chartData: {
         method: 'POST',
         route: '/api/ds/query',
       },
       dashboardUid: lastAddedDashboardUid,
-      matchScreenshot: false,
       saveDashboard: true,
-      screenshotName: 'panel-visualization',
       visitDashboardAtStart: true,
       ...config,
     };
@@ -73,10 +68,8 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       dashboardUid,
       dataSourceName,
       isEdit,
-      matchScreenshot,
       panelTitle,
       queriesForm,
-      screenshotName,
       timeRange,
       visitDashboardAtStart,
       visualizationName,
@@ -156,22 +149,12 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e.components.RefreshPicker.runButtonV2().first().click({ force: true });
 
     // Wait for RxJS
-    cy.wait(timeout ?? e2e.config().defaultCommandTimeout);
-
-    if (matchScreenshot) {
-      let visualization;
-
-      visualization = e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content');
-
-      visualization.scrollIntoView().screenshot(screenshotName);
-      cy.compareScreenshots(screenshotName);
-    }
+    cy.wait(timeout ?? Cypress.config().defaultCommandTimeout);
 
     // @todo remove `wrap` when possible
     return cy.wrap({ config: fullConfig }, { log: false });
   });
 
-// @todo this actually returns type `Cypress.Chainable`
 const closeOptions = () => e2e.components.PanelEditor.toggleVizOptions().click();
 
 export const VISUALIZATION_ALERT_LIST = 'Alert list';

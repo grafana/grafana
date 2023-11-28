@@ -17,11 +17,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/utils/strings/slices"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -36,7 +37,7 @@ type AzureLogAnalyticsDatasource struct {
 // from the UI
 type AzureLogAnalyticsQuery struct {
 	RefID                   string
-	ResultFormat            string
+	ResultFormat            dataquery.ResultFormat
 	URL                     string
 	TraceExploreQuery       string
 	TraceParentExploreQuery string
@@ -45,9 +46,10 @@ type AzureLogAnalyticsQuery struct {
 	TimeRange               backend.TimeRange
 	Query                   string
 	Resources               []string
-	QueryType               string
+	QueryType               dataquery.AzureQueryType
 	AppInsightsQuery        bool
-	IntersectTime           bool
+	DashboardTime           bool
+	TimeColumn              string
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
@@ -58,15 +60,15 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-	queries, err := e.buildQueries(ctx, originalQueries, dsInfo, tracer)
+	queries, err := e.buildQueries(ctx, originalQueries, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, query := range queries {
-		res, err := e.executeQuery(ctx, query, dsInfo, client, url, tracer)
+		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
 		if err != nil {
 			result.Responses[query.RefID] = backend.DataResponse{Error: err}
 			continue
@@ -91,7 +93,7 @@ func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool) string {
 	}
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo, tracer tracing.Tracer) ([]*AzureLogAnalyticsQuery, error) {
+func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
 	if err != nil {
@@ -107,7 +109,8 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 		traceExploreQuery := ""
 		traceParentExploreQuery := ""
 		traceLogsExploreQuery := ""
-		intersectTime := false
+		dashboardTime := false
+		timeColumn := ""
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 			queryJSONModel := types.LogJSONQuery{}
 			err := json.Unmarshal(query.JSON, &queryJSONModel)
@@ -143,8 +146,16 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				queryString = *azureLogAnalyticsTarget.Query
 			}
 
-			if azureLogAnalyticsTarget.IntersectTime != nil {
-				intersectTime = *azureLogAnalyticsTarget.IntersectTime
+			if azureLogAnalyticsTarget.DashboardTime != nil {
+				dashboardTime = *azureLogAnalyticsTarget.DashboardTime
+				if dashboardTime {
+					if azureLogAnalyticsTarget.TimeColumn != nil {
+						timeColumn = *azureLogAnalyticsTarget.TimeColumn
+					} else {
+						// Final fallback to TimeGenerated if no column is provided
+						timeColumn = "TimeGenerated"
+					}
+				}
 			}
 		}
 
@@ -181,7 +192,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			operationId := ""
 			if queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
 				operationId = *queryJSONModel.AzureTraces.OperationId
-				resourcesMap, err = getCorrelationWorkspaces(ctx, resourceOrWorkspace, resourcesMap, dsInfo, operationId, tracer)
+				resourcesMap, err = getCorrelationWorkspaces(ctx, resourceOrWorkspace, resourcesMap, dsInfo, operationId)
 				if err != nil {
 					return nil, fmt.Errorf("failed to retrieve correlation resources for operation ID - %s: %s", operationId, err)
 				}
@@ -218,7 +229,8 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				return nil, fmt.Errorf("failed to create traces logs explore query: %s", err)
 			}
 
-			intersectTime = true
+			dashboardTime = true
+			timeColumn = "timestamp"
 		}
 
 		apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
@@ -230,25 +242,26 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 
 		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
 			RefID:                   query.RefID,
-			ResultFormat:            string(resultFormat),
+			ResultFormat:            resultFormat,
 			URL:                     apiURL,
 			JSON:                    query.JSON,
 			TimeRange:               query.TimeRange,
 			Query:                   rawQuery,
 			Resources:               resources,
-			QueryType:               query.QueryType,
+			QueryType:               dataquery.AzureQueryType(query.QueryType),
 			TraceExploreQuery:       traceExploreQuery,
 			TraceParentExploreQuery: traceParentExploreQuery,
 			TraceLogsExploreQuery:   traceLogsExploreQuery,
 			AppInsightsQuery:        appInsightsQuery,
-			IntersectTime:           intersectTime,
+			DashboardTime:           dashboardTime,
+			TimeColumn:              timeColumn,
 		})
 	}
 
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.DataResponse, error) {
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
 		return nil, fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials")
@@ -260,8 +273,8 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
-		if dataquery.ResultFormat(query.ResultFormat) == (dataquery.ResultFormatTrace) && query.Query == "" {
+	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
+		if query.ResultFormat == dataquery.ResultFormatTrace && query.Query == "" {
 			return nil, fmt.Errorf("cannot visualise trace events using the trace visualiser")
 		}
 	}
@@ -271,16 +284,14 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	ctx, span := tracer.Start(ctx, "azure log analytics query")
-	span.SetAttributes("target", query.Query, attribute.Key("target").String(query.Query))
-	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
-
+	_, span := tracing.DefaultTracer().Start(ctx, "azure log analytics query", trace.WithAttributes(
+		attribute.String("target", query.Query),
+		attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("datasource_id", dsInfo.DatasourceID),
+		attribute.Int64("org_id", dsInfo.OrgID),
+	))
 	defer span.End()
-
-	tracer.Inject(ctx, req.Header, span)
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -303,7 +314,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, dataquery.AzureQueryType(query.QueryType), dataquery.ResultFormat(query.ResultFormat))
+	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, query.QueryType, query.ResultFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -318,12 +329,25 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && query.ResultFormat == string(dataquery.ResultFormatTrace) {
-		frame.Meta.PreferredVisualization = "trace"
+	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl, query.TimeRange)
+	if err != nil {
+		return nil, err
 	}
 
-	if query.ResultFormat == string(dataquery.ResultFormatTable) {
-		frame.Meta.PreferredVisualization = "table"
+	if query.QueryType == dataquery.AzureQueryTypeAzureTraces && query.ResultFormat == dataquery.ResultFormatTrace {
+		frame.Meta.PreferredVisualization = data.VisTypeTrace
+	}
+
+	if query.ResultFormat == dataquery.ResultFormatTable {
+		frame.Meta.PreferredVisualization = data.VisTypeTable
+	}
+
+	if query.ResultFormat == dataquery.ResultFormatLogs {
+		frame.Meta.PreferredVisualization = data.VisTypeLogs
+		frame.Meta.Custom = &LogAnalyticsMeta{
+			ColumnTypes:     frame.Meta.Custom.(*LogAnalyticsMeta).ColumnTypes,
+			AzurePortalLink: queryUrl,
+		}
 	}
 
 	if query.ResultFormat == types.TimeSeries {
@@ -338,82 +362,103 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		}
 	}
 
-	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl, query.TimeRange)
+	// Use the parent span query for the parent span data link
+	err = addDataLinksToFields(query, azurePortalBaseUrl, frame, dsInfo, queryUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
-		tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
+	dataResponse := backend.DataResponse{Frames: data.Frames{frame}}
+	return &dataResponse, nil
+}
+
+func addDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl string, frame *data.Frame, dsInfo types.DatasourceInfo, queryUrl string) error {
+	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
+		err := addTraceDataLinksToFields(query, azurePortalBaseUrl, frame, dsInfo)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		queryJSONModel := dataquery.AzureMonitorQuery{}
-		err = json.Unmarshal(query.JSON, &queryJSONModel)
-		if err != nil {
-			return nil, err
-		}
-		traceIdVariable := "${__data.fields.traceID}"
-		resultFormat := dataquery.ResultFormatTrace
-		queryJSONModel.AzureTraces.ResultFormat = &resultFormat
-		queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
-		if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
-			queryJSONModel.AzureTraces.OperationId = &traceIdVariable
-		}
+		return nil
+	}
 
-		logsQueryType := string(dataquery.AzureQueryTypeAzureLogAnalytics)
-		logsJSONModel := dataquery.AzureMonitorQuery{
-			DataQuery: dataquery.DataQuery{
-				QueryType: &logsQueryType,
-			},
-			AzureLogAnalytics: &dataquery.AzureLogsQuery{
-				Query:     &query.TraceLogsExploreQuery,
-				Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
-			},
-		}
+	if query.ResultFormat == dataquery.ResultFormatLogs {
+		return nil
+	}
 
-		if query.ResultFormat == string(dataquery.ResultFormatTable) {
-			AddCustomDataLink(*frame, data.DataLink{
-				Title: "Explore Trace: ${__data.fields.traceID}",
-				URL:   "",
-				Internal: &data.InternalDataLink{
-					DatasourceUID:  dsInfo.DatasourceUID,
-					DatasourceName: dsInfo.DatasourceName,
-					Query:          queryJSONModel,
-				},
-			})
+	AddConfigLinks(*frame, queryUrl, nil)
 
-			// Use the parent span query for the parent span data link
-			queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
-			AddCustomDataLink(*frame, data.DataLink{
-				Title: "Explore Parent Span: ${__data.fields.parentSpanID}",
-				URL:   "",
-				Internal: &data.InternalDataLink{
-					DatasourceUID:  dsInfo.DatasourceUID,
-					DatasourceName: dsInfo.DatasourceName,
-					Query:          queryJSONModel,
-				},
-			})
+	return nil
+}
 
-			linkTitle := "Explore Trace in Azure Portal"
-			AddConfigLinks(*frame, tracesUrl, &linkTitle)
-		}
+func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl string, frame *data.Frame, dsInfo types.DatasourceInfo) error {
+	tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
+	if err != nil {
+		return err
+	}
 
+	queryJSONModel := dataquery.AzureMonitorQuery{}
+	err = json.Unmarshal(query.JSON, &queryJSONModel)
+	if err != nil {
+		return err
+	}
+
+	traceIdVariable := "${__data.fields.traceID}"
+	resultFormat := dataquery.ResultFormatTrace
+	queryJSONModel.AzureTraces.ResultFormat = &resultFormat
+	queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
+	if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
+		queryJSONModel.AzureTraces.OperationId = &traceIdVariable
+	}
+
+	logsQueryType := string(dataquery.AzureQueryTypeAzureLogAnalytics)
+	logsJSONModel := dataquery.AzureMonitorQuery{
+		DataQuery: dataquery.DataQuery{
+			QueryType: &logsQueryType,
+		},
+		AzureLogAnalytics: &dataquery.AzureLogsQuery{
+			Query:     &query.TraceLogsExploreQuery,
+			Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
+		},
+	}
+
+	if query.ResultFormat == dataquery.ResultFormatTable {
 		AddCustomDataLink(*frame, data.DataLink{
-			Title: "Explore Trace Logs",
+			Title: "Explore Trace: ${__data.fields.traceID}",
 			URL:   "",
 			Internal: &data.InternalDataLink{
 				DatasourceUID:  dsInfo.DatasourceUID,
 				DatasourceName: dsInfo.DatasourceName,
-				Query:          logsJSONModel,
+				Query:          queryJSONModel,
 			},
 		})
-	} else {
-		AddConfigLinks(*frame, queryUrl, nil)
+
+		queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
+		AddCustomDataLink(*frame, data.DataLink{
+			Title: "Explore Parent Span: ${__data.fields.parentSpanID}",
+			URL:   "",
+			Internal: &data.InternalDataLink{
+				DatasourceUID:  dsInfo.DatasourceUID,
+				DatasourceName: dsInfo.DatasourceName,
+				Query:          queryJSONModel,
+			},
+		})
+
+		linkTitle := "Explore Trace in Azure Portal"
+		AddConfigLinks(*frame, tracesUrl, &linkTitle)
 	}
-	dataResponse := backend.DataResponse{Frames: data.Frames{frame}}
-	return &dataResponse, nil
+
+	AddCustomDataLink(*frame, data.DataLink{
+		Title: "Explore Trace Logs",
+		URL:   "",
+		Internal: &data.InternalDataLink{
+			DatasourceUID:  dsInfo.DatasourceUID,
+			DatasourceName: dsInfo.DatasourceName,
+			Query:          logsJSONModel,
+		},
+	})
+
+	return nil
 }
 
 func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) *data.Frame {
@@ -432,14 +477,17 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 		"query": query.Query,
 	}
 
-	if query.IntersectTime {
+	if query.DashboardTime {
 		from := query.TimeRange.From.Format(time.RFC3339)
 		to := query.TimeRange.To.Format(time.RFC3339)
 		timespan := fmt.Sprintf("%s/%s", from, to)
 		body["timespan"] = timespan
+		body["query_datetimescope_from"] = from
+		body["query_datetimescope_to"] = to
+		body["query_datetimescope_column"] = query.TimeColumn
 	}
 
-	if len(query.Resources) > 1 && query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) && !query.AppInsightsQuery {
+	if len(query.Resources) > 1 && query.QueryType == dataquery.AzureQueryTypeAzureLogAnalytics && !query.AppInsightsQuery {
 		body["workspaces"] = query.Resources
 	}
 	if query.AppInsightsQuery {
@@ -528,7 +576,7 @@ func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error
 	return portalUrl, nil
 }
 
-func getCorrelationWorkspaces(ctx context.Context, baseResource string, resourcesMap map[string]bool, dsInfo types.DatasourceInfo, operationId string, tracer tracing.Tracer) (map[string]bool, error) {
+func getCorrelationWorkspaces(ctx context.Context, baseResource string, resourcesMap map[string]bool, dsInfo types.DatasourceInfo, operationId string) (map[string]bool, error) {
 	azMonService := dsInfo.Services["Azure Monitor"]
 	correlationUrl := azMonService.URL + fmt.Sprintf("%s/providers/microsoft.insights/transactions/%s", baseResource, operationId)
 
@@ -544,14 +592,12 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		req.URL.RawQuery = values.Encode()
 		req.Method = "GET"
 
-		ctx, span := tracer.Start(ctx, "azure traces correlation request")
-		span.SetAttributes("target", req.URL, attribute.Key("target").String(req.URL.String()))
-		span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-		span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
-
+		_, span := tracing.DefaultTracer().Start(ctx, "azure traces correlation request", trace.WithAttributes(
+			attribute.String("target", req.URL.String()),
+			attribute.Int64("datasource_id", dsInfo.DatasourceID),
+			attribute.Int64("org_id", dsInfo.OrgID),
+		))
 		defer span.End()
-
-		tracer.Inject(ctx, req.Header, span)
 
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {
@@ -689,7 +735,8 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 
 // LogAnalyticsMeta is a type for the a Frame's Meta's Custom property.
 type LogAnalyticsMeta struct {
-	ColumnTypes []string `json:"azureColumnTypes"`
+	ColumnTypes     []string `json:"azureColumnTypes"`
+	AzurePortalLink string   `json:"azurePortalLink,omitempty"`
 }
 
 // encodeQuery encodes the query in gzip so the frontend can build links.

@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse } from './datasource';
+import { DataQueryRequest, DataQueryResponse, QueryFixAction, QueryFixType } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -140,9 +140,9 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   getLogRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<TQuery | null>;
 
   /**
-   * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
+   * @deprecated Deprecated since 10.3. To display the context option and support the feature implement DataSourceWithLogsContextSupport interface instead.
    */
-  showContextToggle(row?: LogRowModel): boolean;
+  showContextToggle?(row?: LogRowModel): boolean;
 
   /**
    * This method can be used to display a custom UI in the context view.
@@ -153,13 +153,11 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
-  if (!datasource) {
+  if (!datasource || typeof datasource !== 'object') {
     return false;
   }
 
-  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
-
-  return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+  return 'getLogRowContext' in datasource;
 };
 
 /**
@@ -255,19 +253,18 @@ export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
 };
 
 export const hasLogsContextUiSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
-  if (!datasource) {
+  if (!datasource || typeof datasource !== 'object') {
     return false;
   }
 
-  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
-
-  return withLogsSupport.getLogRowContextUi !== undefined;
+  return 'getLogRowContextUi' in datasource;
 };
 
 export interface QueryFilterOptions extends KeyValue<string> {}
 export interface ToggleFilterAction {
   type: 'FILTER_FOR' | 'FILTER_OUT';
   options: QueryFilterOptions;
+  frame?: DataFrame;
 }
 /**
  * Data sources that support toggleable filters through `toggleQueryFilter`, and displaying the active
@@ -296,9 +293,46 @@ export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithToggleableQueryFiltersSupport<TQuery> => {
   return (
-    datasource !== null &&
+    datasource != null &&
     typeof datasource === 'object' &&
     'toggleQueryFilter' in datasource &&
     'queryHasFilter' in datasource
+  );
+};
+
+/**
+ * Data sources that support query modification actions from Log Details (ADD_FILTER, ADD_FILTER_OUT),
+ * and Popover Menu (ADD_STRING_FILTER, ADD_STRING_FILTER_OUT) in Explore.
+ * @internal
+ * @alpha
+ */
+export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery> {
+  /**
+   * Given a query, applies a query modification `action`, returning the updated query.
+   * Explore currently supports the following action types:
+   * - ADD_FILTER: adds a <key, value> filter to the query.
+   * - ADD_FILTER_OUT: adds a negative <key, value> filter to the query.
+   * - ADD_STRING_FILTER: adds a string filter to the query.
+   * - ADD_STRING_FILTER_OUT: adds a negative string filter to the query.
+   */
+  modifyQuery(query: TQuery, action: QueryFixAction): TQuery;
+
+  /**
+   * Returns a list of supported action types for `modifyQuery()`.
+   */
+  getSupportedQueryModifications(): Array<QueryFixType | string>;
+}
+
+/**
+ * @internal
+ */
+export const hasQueryModificationSupport = <TQuery extends DataQuery>(
+  datasource: unknown
+): datasource is DataSourceWithQueryModificationSupport<TQuery> => {
+  return (
+    datasource != null &&
+    typeof datasource === 'object' &&
+    'modifyQuery' in datasource &&
+    'getSupportedQueryModifications' in datasource
   );
 };

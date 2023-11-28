@@ -1,0 +1,10 @@
+dn: cn=admins,ou=groups,dc=srv2-grafana,dc=org
+cn: admins
+objectClass: groupOfUniqueNames
+objectClass: top
+uniqueMember: cn=ldap-admin-srv2,ou=users,dc=srv2-grafana,dc=org
+
+dn: cn=editors,ou=groups,dc=srv2-grafana,dc=org
+cn: editors
+objectClass: groupOfUniqueNames
+uniqueMember: cn=ldap-editor-srv2,ou=users,dc=srv2-grafana,dc=org

@@ -95,7 +95,7 @@ AxisConfig: {
 	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
 	axisCenteredZero?:  bool
-	axisShow?:          bool
+	axisBorderShow?:    bool
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -245,6 +245,12 @@ BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
 // Allows for the table cell gauge display type to set the gauge mode.
 BarGaugeValueMode: "color" | "text" | "hidden" @cuetsy(kind="enum")
+
+// Allows for the bar gauge name to be placed explicitly
+BarGaugeNamePlacement: "auto" | "top" | "left" @cuetsy(kind="enum")
+
+// Allows for the bar gauge size to be set explicitly
+BarGaugeSizing: "auto" | "manual" @cuetsy(kind="enum")
 
 // TODO docs
 VizTooltipOptions: {

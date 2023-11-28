@@ -1,10 +1,5 @@
-import {
-  ConstantVariableModel,
-  CustomVariableModel,
-  DataSourceVariableModel,
-  QueryVariableModel,
-  VariableModel,
-} from '@grafana/data';
+import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -18,26 +13,44 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  IntervalVariable,
   SceneRefreshPicker,
   SceneGridItem,
   SceneObject,
-  SceneControlsSpacer,
   VizPanelMenu,
   behaviors,
   VizPanelState,
   SceneGridItemLike,
+  SceneDataLayers,
+  SceneDataLayerProvider,
+  SceneDataLayerControls,
+  AdHocFilterSet,
+  TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
+import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardLinksControls } from '../scene/DashboardLinksControls';
+import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { getPanelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import {
+  getCurrentValueForOldIntervalModel,
+  getIntervalsFromOldIntervalModel,
+  getVizPanelKeyForPanelId,
+} from '../utils/utils';
+
+import { getAngularPanelMigrationHandler } from './angularMigration';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -48,7 +61,7 @@ export interface DashboardLoaderState {
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-    autoMigrateOldPanels: true,
+    autoMigrateOldPanels: false,
   });
 
   return createDashboardSceneFromDashboardModel(oldModel);
@@ -84,17 +97,10 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
         }
       }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
-      const gridItem = new SceneGridItem({
-        body: new LibraryVizPanel({
-          title: panel.title,
-          uid: panel.libraryPanel.uid,
-        }),
-        y: panel.gridPos.y,
-        x: panel.gridPos.x,
-        width: panel.gridPos.w,
-        height: panel.gridPos.h,
-      });
-      panels.push(gridItem);
+      const gridItem = buildGridItemForLibPanel(panel);
+      if (gridItem) {
+        panels.push(gridItem);
+      }
     } else {
       const panelObject = buildGridItemForPanel(panel);
 
@@ -118,7 +124,13 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
 function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]): SceneGridItemLike {
   if (Boolean(row.collapsed)) {
     if (row.panels) {
-      content = row.panels.map(buildGridItemForPanel);
+      content = row.panels.map((saveModel) => {
+        // Collapsed panels are not actually PanelModel instances
+        if (!(saveModel instanceof PanelModel)) {
+          saveModel = new PanelModel(saveModel);
+        }
+        return buildGridItemForPanel(saveModel);
+      });
     }
   }
 
@@ -148,11 +160,25 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
+  let layers: SceneDataLayerProvider[] = [];
+  let filtersSets: AdHocFilterSet[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
+          if (isAdhocVariable(v)) {
+            filtersSets.push(
+              new AdHocFilterSet({
+                name: v.name,
+                datasource: v.datasource,
+                filters: v.filters ?? [],
+                baseFilters: v.baseFilters ?? [],
+              })
+            );
+            return null;
+          }
+
           return createSceneVariableFromVariableModel(v);
         } catch (err) {
           console.error(err);
@@ -168,45 +194,95 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  const controls: SceneObject[] = [
-    new VariableValueSelectors({}),
-    new SceneControlsSpacer(),
-    new SceneTimePicker({}),
-    new SceneRefreshPicker({
-      refresh: oldModel.refresh,
-      intervals: oldModel.timepicker.refresh_intervals,
-    }),
-  ];
+  if (oldModel.annotations?.list?.length) {
+    layers = oldModel.annotations?.list.map((a) => {
+      // Each annotation query is an individual data layer
+      return new DashboardAnnotationsDataLayer({
+        key: `annnotations-${a.name}`,
+        query: a,
+        name: a.name,
+        isEnabled: Boolean(a.enable),
+        isHidden: Boolean(a.hide),
+      });
+    });
+  }
+
+  let shouldUseAlertStatesLayer = config.unifiedAlertingEnabled;
+  if (!shouldUseAlertStatesLayer) {
+    if (oldModel.panels.find((panel) => Boolean(panel.alert))) {
+      shouldUseAlertStatesLayer = true;
+    }
+  }
+
+  if (shouldUseAlertStatesLayer) {
+    layers.push(
+      new AlertStatesDataLayer({
+        key: 'alert-states',
+        name: 'Alert States',
+      })
+    );
+  }
 
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
+    id: oldModel.id,
     meta: oldModel.meta,
     body: new SceneGridLayout({
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
-    $timeRange: new SceneTimeRange(oldModel.time),
+    $timeRange: new SceneTimeRange({
+      from: oldModel.time.from,
+      to: oldModel.time.to,
+      fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
+      timeZone: oldModel.timezone,
+      weekStart: oldModel.weekStart,
+    }),
     $variables: variables,
     $behaviors: [
+      registerDashboardMacro,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
     ],
-    controls: controls,
+    $data:
+      layers.length > 0
+        ? new SceneDataLayers({
+            layers,
+          })
+        : undefined,
+    controls: [
+      new DashboardControls({
+        variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
+        timeControls: Boolean(oldModel.timepicker.hidden)
+          ? []
+          : [
+              new SceneTimePicker({}),
+              new SceneRefreshPicker({
+                refresh: oldModel.refresh,
+                intervals: oldModel.timepicker.refresh_intervals,
+              }),
+            ],
+        linkControls: new DashboardLinksControls({
+          links: oldModel.links,
+          dashboardUID: oldModel.uid,
+        }),
+      }),
+    ],
   });
 }
 
-export function createSceneVariableFromVariableModel(variable: VariableModel): SceneVariable {
+export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
   const commonProperties = {
     name: variable.name,
     label: variable.label,
   };
-  if (isCustomVariable(variable)) {
+  if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       query: variable.query,
       isMulti: variable.multi,
@@ -216,11 +292,11 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
-  } else if (isQueryVariable(variable)) {
+  } else if (variable.type === 'query') {
     return new QueryVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       query: variable.query,
       datasource: variable.datasource,
@@ -234,11 +310,11 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
-  } else if (isDataSourceVariable(variable)) {
+  } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
       ...commonProperties,
-      value: variable.current.value,
-      text: variable.current.text,
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
       description: variable.description,
       regex: variable.regex,
       pluginId: variable.query,
@@ -249,8 +325,31 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       isMulti: variable.multi,
       hide: variable.hide,
     });
-  } else if (isConstantVariable(variable)) {
+  } else if (variable.type === 'interval') {
+    const intervals = getIntervalsFromOldIntervalModel(variable);
+    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
+    return new IntervalVariable({
+      ...commonProperties,
+      value: currentInterval,
+      description: variable.description,
+      intervals: intervals,
+      autoEnabled: variable.auto,
+      autoStepCount: variable.auto_count,
+      autoMinInterval: variable.auto_min,
+      refresh: variable.refresh,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+  } else if (variable.type === 'constant') {
     return new ConstantVariable({
+      ...commonProperties,
+      description: variable.description,
+      value: variable.query,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+  } else if (variable.type === 'textbox') {
+    return new TextBoxVariable({
       ...commonProperties,
       description: variable.description,
       value: variable.query,
@@ -262,10 +361,39 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
   }
 }
 
+export function buildGridItemForLibPanel(panel: PanelModel) {
+  if (!panel.libraryPanel) {
+    return null;
+  }
+
+  return new SceneGridItem({
+    body: new LibraryVizPanel({
+      title: panel.title,
+      uid: panel.libraryPanel.uid,
+      name: panel.libraryPanel.name,
+      key: getVizPanelKeyForPanelId(panel.id),
+    }),
+    y: panel.gridPos.y,
+    x: panel.gridPos.x,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+  });
+}
+
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
+  const hasPanelLinks = panel.links && panel.links.length > 0;
+  let panelLinks;
+
+  if (hasPanelLinks) {
+    panelLinks = new VizPanelLinks({
+      menu: new VizPanelLinksMenu({ $behaviors: [getPanelLinksBehavior(panel)] }),
+    });
+  }
+
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title,
+    description: panel.description,
     pluginId: panel.type,
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
@@ -277,6 +405,10 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    titleItems: panelLinks,
+
+    extendPanelContext: setDashboardPanelContext,
+    _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
 
   if (panel.timeFrom || panel.timeShift) {
@@ -289,7 +421,6 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
 
   if (panel.repeat) {
     const repeatDirection = panel.repeatDirection ?? 'h';
-
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,
@@ -315,7 +446,4 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   });
 }
 
-const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type === 'custom';
-const isQueryVariable = (v: VariableModel): v is QueryVariableModel => v.type === 'query';
-const isDataSourceVariable = (v: VariableModel): v is DataSourceVariableModel => v.type === 'datasource';
-const isConstantVariable = (v: VariableModel): v is ConstantVariableModel => v.type === 'constant';
+const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';

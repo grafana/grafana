@@ -42,7 +42,7 @@ Plugins were updated to include signatures in 2021, so whilst a plugin may show 
 
 We are greatly appreciative of the developers who have contributed plugins to the Grafana ecosystem, your work has helped support millions of users to gain insights into their data. A plugin being listed below is no reflection on its quality, and is purely to help users understand the impact of the removal of Angular support in Grafana.
 
-Guidance on migrating a plugin to React can be found in our [migration guide]({{< relref "../plugins/migration-guide/angular-react/" >}}). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
+Guidance on migrating a plugin to React can be found in our [migration guide](/developers/plugin-tools/migration-guides/migrate-angularjs-to-react). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
 
 # Current AngularJS based plugins
 
@@ -136,10 +136,6 @@ Latest Version: v0.0.6 | Signature: Community | Last Updated: 2021
 
 > **Migration available - plugin superseded:** The original plugin only claims support for Grafana v4.x.x, it was replaced with a [new plugin](https://grafana.com/grafana/plugins/grafadruid-druid-datasource/) based on React.
 
-### [Cognite Data Fusion](https://grafana.com/grafana/plugins/cognitedata-datasource/)
-
-Latest Version: 3.1.0 | Signature: Commercial | Last Updated: 2023
-
 ### [Akumuli](https://grafana.com/grafana/plugins/akumuli-datasource/)
 
 Latest Version: 1.3.12 | Signature: Community | Last Updated: 2021
@@ -175,16 +171,6 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 {{% admonition type="warning" %}}
 Lack of recent activity in the [project repository](https://github.com/ayoungprogrammer/grafana-finance) in the past 6 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
-
-### [Prometheus AlertManager](https://grafana.com/grafana/plugins/camptocamp-prometheus-alertmanager-datasource/)
-
-Latest Version: 1.2.1 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/camptocamp/grafana-prometheus-alertmanager-datasource) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** Grafana includes an AlertManager data source as a Core plugin.
 
 ### [Chaos Mesh](https://grafana.com/grafana/plugins/chaosmeshorg-datasource/)
 
@@ -314,10 +300,6 @@ Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/hawkular/hawkular-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [Humio](https://grafana.com/grafana/plugins/humio-datasource/)
-
-Latest Version: 3.3.1 | Signature: Commercial | Last Updated: 2022
-
 ### [IBM APM](https://grafana.com/grafana/plugins/ibm-apm-datasource/)
 
 Latest Version: 0.9.1 | Signature: Community | Last Updated: 2021
@@ -396,14 +378,6 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
 > **Migration available - plugin superseded:** this plugin was [discontinued in favour of the InfluxDB data source](https://github.com/ntop/ntopng-grafana-datasource) - a Core plugin included in Grafana, additional guidance is available [here](https://www.ntop.org/guides/ntopng/basic_concepts/timeseries.html#influxdb-driver).
 
-### [Oracle Cloud Infrastructure Logs](https://grafana.com/grafana/plugins/oci-logs-datasource/)
-
-Latest Version: 3.0.0 | Signature: Commercial | Last Updated: 2023
-
-### [Oracle Cloud Infrastructure Metrics](https://grafana.com/grafana/plugins/oci-metrics-datasource/)
-
-Latest Version: 4.0.1 | Signature: Commercial | Last Updated: 2023
-
 ### [Warp 10](https://grafana.com/grafana/plugins/ovh-warp10-datasource/)
 
 Latest Version: 2.2.1 | Signature: Community | Last Updated: 2021
@@ -458,10 +432,6 @@ Latest Version: 1.2.3 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/netxms/grafana) in the past 2 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-### [Shoreline Data Source](https://grafana.com/grafana/plugins/shorelinesoftware-shoreline-datasource/)
-
-Latest Version: 1.1.0 | Signature: Commercial | Last Updated: 6 months ago
-
 ### [Sidewinder](https://grafana.com/grafana/plugins/sidewinder-datasource/)
 
 Latest Version: 0.2.1 | Signature: Community | Last Updated: 2021
@@ -511,7 +481,7 @@ The [migration issue](https://github.com/Altinity/clickhouse-grafana/issues/475)
 Latest Version: 0.2.2 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/skydive-project/skydive-grafana-datasource) in the past year suggests project _may_ not be actively maintained.
+Lack of recent activity in the [project repository](https://github.com/xginn8/grafana-pagerduty) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
 {{% admonition type="warning" %}}
@@ -546,7 +516,7 @@ Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/aidanmountford/aidanmountford-html-panel) in the past 4 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel included with Grafana supports rendering HTML content.
+> **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel included with Grafana supports rendering HTML content. Other plugins also exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/) and [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/).
 
 ### [Track Map](https://grafana.com/grafana/plugins/alexandra-trackmap-panel/)
 
@@ -592,14 +562,6 @@ Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="note" %}}
 Migration to React is planned - [issue](https://github.com/briangann/grafana-datatable-panel/issues/174).
-{{% /admonition %}}
-
-### [D3 Gauge](https://grafana.com/grafana/plugins/briangann-gauge-panel/)
-
-Latest Version: 0.0.9 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="note" %}}
-Migration to React is a planned [update](https://github.com/briangann/grafana-gauge-panel/issues/740).
 {{% /admonition %}}
 
 ### [GeoLoop](https://grafana.com/grafana/plugins/citilogics-geoloop-panel/)
@@ -677,6 +639,10 @@ Latest Version: 0.3.4 | Signature: Community | Last Updated: 2021
 {{% admonition type="warning" %}}
 Lack of recent activity in the [project repository](https://github.com/MarcusCalidus/marcuscalidus-svg-panel) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
+
+> **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas/" >}}) panel.
+
+> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/), [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/) and [ACE.SVG](https://grafana.com/grafana/plugins/aceiot-svg-panel/). Note that the ACE.SVG panel has compatibility issues with Grafana versions 10.0.0-10.1.0.
 
 ### [Annunciator](https://grafana.com/grafana/plugins/michaeldmoore-annunciator-panel/)
 

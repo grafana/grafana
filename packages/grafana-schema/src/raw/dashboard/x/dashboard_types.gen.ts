@@ -78,6 +78,10 @@ export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
  */
 export interface AnnotationQuery {
   /**
+   * Set to 1 for the standard annotation query all dashboards have by default.
+   */
+  builtIn?: number;
+  /**
    * Datasource where the annotations data is
    */
   datasource: DataSourceRef;
@@ -113,6 +117,7 @@ export interface AnnotationQuery {
 }
 
 export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
+  builtIn: 0,
   enable: true,
   hide: false,
 };
@@ -121,10 +126,6 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  * A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
  */
 export interface VariableModel {
-  /**
-   * Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
-   */
-  allFormat?: string;
   /**
    * Shows current selected variable text/value on the dashboard
    */
@@ -140,11 +141,7 @@ export interface VariableModel {
   /**
    * Visibility configuration for the variable
    */
-  hide: VariableHide;
-  /**
-   * Unique numeric identifier for the variable.
-   */
-  id: string;
+  hide?: VariableHide;
   /**
    * Optional display name
    */
@@ -169,7 +166,11 @@ export interface VariableModel {
   /**
    * Whether the variable value should be managed by URL query params or not
    */
-  skipUrlSync: boolean;
+  skipUrlSync?: boolean;
+  /**
+   * Options sort order
+   */
+  sort?: VariableSort;
   /**
    * Type of variable
    */
@@ -177,7 +178,6 @@ export interface VariableModel {
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
-  id: '00000000-0000-0000-0000-000000000000',
   multi: false,
   options: [],
   skipUrlSync: false,
@@ -233,6 +233,8 @@ export enum VariableHide {
  * `4`: Numerical DESC
  * `5`: Alphabetical Case Insensitive ASC
  * `6`: Alphabetical Case Insensitive DESC
+ * `7`: Natural ASC
+ * `8`: Natural DESC
  */
 export enum VariableSort {
   alphabeticalAsc = 1,
@@ -240,20 +242,10 @@ export enum VariableSort {
   alphabeticalCaseInsensitiveDesc = 6,
   alphabeticalDesc = 2,
   disabled = 0,
+  naturalAsc = 7,
+  naturalDesc = 8,
   numericalAsc = 3,
   numericalDesc = 4,
-}
-
-/**
- * Loading status
- * Accepted values are `NotStarted` (the request is not started), `Loading` (waiting for response), `Streaming` (pulling continuous data), `Done` (response received successfully) or `Error` (failed request).
- */
-export enum LoadingState {
-  Done = 'Done',
-  Error = 'Error',
-  Loading = 'Loading',
-  NotStarted = 'NotStarted',
-  Streaming = 'Streaming',
 }
 
 /**
@@ -313,7 +305,7 @@ export interface DashboardLink {
   /**
    * Link URL. Only required/valid if the type is link
    */
-  url: string;
+  url?: string;
 }
 
 export const defaultDashboardLink: Partial<DashboardLink> = {
@@ -661,7 +653,7 @@ export interface Panel {
   /**
    * Field options allow you to change how the data is displayed in your visualizations.
    */
-  fieldConfig: FieldConfigSource;
+  fieldConfig?: FieldConfigSource;
   /**
    * Grid position.
    */
@@ -701,7 +693,7 @@ export interface Panel {
   /**
    * It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
    */
-  options: Record<string, unknown>;
+  options?: Record<string, unknown>;
   /**
    * The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
    */
@@ -750,11 +742,11 @@ export interface Panel {
    * When there are multiple transformations, Grafana applies them in the order they are listed.
    * Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
    */
-  transformations: Array<DataTransformerConfig>;
+  transformations?: Array<DataTransformerConfig>;
   /**
    * Whether to display the panel without a background.
    */
-  transparent: boolean;
+  transparent?: boolean;
   /**
    * The panel plugin type id. This is used to find the plugin to display the panel.
    */
@@ -949,7 +941,7 @@ export interface RowPanel {
   /**
    * List of panels in the row
    */
-  panels: Array<(Panel | GraphPanel | HeatmapPanel)>;
+  panels: Array<Panel>;
   /**
    * Name of template variable to repeat for.
    */
@@ -969,30 +961,6 @@ export const defaultRowPanel: Partial<RowPanel> = {
   panels: [],
 };
 
-/**
- * Support for legacy graph panel.
- * @deprecated this a deprecated panel type
- */
-export interface GraphPanel {
-  /**
-   * @deprecated this is part of deprecated graph panel
-   */
-  legend?: {
-    show: boolean;
-    sort?: string;
-    sortDesc?: boolean;
-  };
-  type: 'graph';
-}
-
-/**
- * Support for legacy heatmap panel.
- * @deprecated this a deprecated panel type
- */
-export interface HeatmapPanel {
-  type: 'heatmap';
-}
-
 export interface Dashboard {
   /**
    * Contains the list of annotations that are associated with the dashboard.
@@ -1008,7 +976,7 @@ export interface Dashboard {
   /**
    * Whether a dashboard is editable or not.
    */
-  editable: boolean;
+  editable?: boolean;
   /**
    * The month that the fiscal year starts on.  0 = January, 11 = December
    */
@@ -1021,7 +989,7 @@ export interface Dashboard {
    * Configuration of dashboard cursor sync behavior.
    * Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
    */
-  graphTooltip: DashboardCursorSync;
+  graphTooltip?: DashboardCursorSync;
   /**
    * Unique numeric identifier for the dashboard.
    * `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
@@ -1040,7 +1008,7 @@ export interface Dashboard {
   /**
    * List of dashboard panels
    */
-  panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
+  panels?: Array<(Panel | RowPanel)>;
   /**
    * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
    */

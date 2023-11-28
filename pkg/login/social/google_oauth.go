@@ -5,18 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
-	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const legacyAPIURL = "https://www.googleapis.com/oauth2/v1/userinfo"
-const googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
-const googleIAMScope = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
+const (
+	legacyAPIURL            = "https://www.googleapis.com/oauth2/v1/userinfo"
+	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
+	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
+	googleProviderName      = "google"
+)
 
 type SocialGoogle struct {
 	*SocialBase
@@ -30,6 +33,30 @@ type googleUserData struct {
 	Email         string `json:"email"`
 	Name          string `json:"name"`
 	EmailVerified bool   `json:"email_verified"`
+	rawJSON       []byte `json:"-"`
+}
+
+func NewGoogleProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGoogle, error) {
+	info, err := createOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	config := createOAuthConfig(info, cfg, googleProviderName)
+	provider := &SocialGoogle{
+		SocialBase:      newSocialBase(googleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		hostedDomain:    info.HostedDomain,
+		apiUrl:          info.ApiUrl,
+		skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
+		provider.log.Warn("Using legacy Google API URL, please update your configuration")
+	}
+
+	return provider, nil
 }
 
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -59,6 +86,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		s.log.Warn("Error retrieving groups", "error", errPage)
 	}
 
+	if !s.isGroupMember(groups) {
+		return nil, errMissingGroupMembership
+	}
+
 	userInfo := &BasicUserInfo{
 		Id:             data.ID,
 		Name:           data.Name,
@@ -69,9 +100,26 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		Groups:         groups,
 	}
 
+	if !s.skipOrgRoleSync {
+		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(data.rawJSON, groups)
+		if errRole != nil {
+			return nil, errRole
+		}
+
+		if s.allowAssignGrafanaAdmin {
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		userInfo.Role = role
+	}
+
 	s.log.Debug("Resolved user info", "data", fmt.Sprintf("%+v", userInfo))
 
 	return userInfo, nil
+}
+
+func (s *SocialGoogle) GetOAuthInfo() *OAuthInfo {
+	return s.info
 }
 
 type googleAPIData struct {
@@ -98,6 +146,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 			Name:          data.Name,
 			Email:         data.Email,
 			EmailVerified: data.EmailVerified,
+			rawJSON:       response.Body,
 		}, nil
 	}
 
@@ -115,7 +164,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	if s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)
@@ -144,6 +193,8 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
+
+	data.rawJSON = rawJSON
 
 	return &data, nil
 }

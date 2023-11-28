@@ -94,6 +94,13 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/alerting/home',
+    exact: false,
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
+    ),
+  },
+  {
     path: '/alerting/list',
     roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
     component: SafeDynamicImport(
@@ -181,6 +188,18 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/alerting/notifications/receivers/:id/edit',
+    roles: evaluateAccess([
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingNotificationsExternalWrite,
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsExternalRead,
+    ]),
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
+    ),
+  },
+  {
     path: '/alerting/notifications/:type/:id/edit',
     roles: evaluateAccess([
       AccessControlAction.AlertingNotificationsWrite,
@@ -234,6 +253,17 @@ const unifiedRoutes: RouteDescriptor[] = [
     roles: evaluateAccess([AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleExternalWrite]),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
+    ),
+  },
+  {
+    path: '/alerting/:id/modify-export',
+    pageClass: 'page-alerting',
+    roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+    component: SafeDynamicImport(
+      () =>
+        import(
+          /* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/components/export/GrafanaModifyExport'
+        )
     ),
   },
   {

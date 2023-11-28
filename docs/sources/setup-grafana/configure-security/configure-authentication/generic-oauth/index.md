@@ -183,7 +183,7 @@ To configure generic OAuth2 to use a refresh token, set `use_refresh_token` conf
 1. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with additional scopes.
 1. Enable the refresh token on the provider.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ## Configure role mapping
 
@@ -205,7 +205,7 @@ This section includes examples of JMESPath expressions used for role mapping.
 
 #### Map user organization role
 
-In this example, the user has been granted the role of an `Editor`. The role assigned is based on the value of the property `role`, which must be a valid Grafana role such as `Viewer`, `Editor` or `Admin`.
+In this example, the user has been granted the role of an `Editor`. The role assigned is based on the value of the property `role`, which must be a valid Grafana role such as `Admin`, `Editor`, `Viewer` or `None`.
 
 Payload:
 

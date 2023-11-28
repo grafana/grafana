@@ -149,7 +149,7 @@ You can assign roles through the user interface or APIs, establish them through 
 
 ### What are roles?
 
-Within an organization, Grafana has established three primary [organization roles]({{< relref "../../../administration/roles-and-permissions#organization-roles" >}}) - organization administrator, editor, and viewer - which dictate the user's level of access and permissions, including the ability to edit data sources or create teams.
+Within an organization, Grafana has established three primary [organization roles]({{< relref "../../../administration/roles-and-permissions#organization-roles" >}}) - organization administrator, editor, and viewer - which dictate the user's level of access and permissions, including the ability to edit data sources or create teams. Grafana also has an empty role that you can start with and to which you can gradually add custom permissions.
 To be a member of any organization, every user must be assigned a role.
 
 In addition, Grafana provides a server administrator role that grants access to and enables interaction with resources that affect the entire instance, including organizations, users, and server-wide settings.

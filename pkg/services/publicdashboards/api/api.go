@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,6 +26,7 @@ type Api struct {
 	AccessControl          accesscontrol.AccessControl
 	Features               *featuremgmt.FeatureManager
 	Log                    log.Logger
+	Middleware             publicdashboards.Middleware
 }
 
 func ProvideApi(
@@ -31,6 +34,7 @@ func ProvideApi(
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
+	md publicdashboards.Middleware,
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
@@ -38,10 +42,11 @@ func ProvideApi(
 		AccessControl:          ac,
 		Features:               features,
 		Log:                    log.New("publicdashboards.api"),
+		Middleware:             md,
 	}
 
 	// attach api if PublicDashboards feature flag is enabled
-	if features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) {
 		api.RegisterAPIEndpoints()
 	}
 
@@ -54,10 +59,11 @@ func (api *Api) RegisterAPIEndpoints() {
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
 	// circular dependency
-
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.ViewPublicDashboard))
-	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetAnnotations))
+	api.RouteRegister.Group("/api/public/dashboards/:accessToken", func(apiRoute routing.RouteRegister) {
+		apiRoute.Get("/", routing.Wrap(api.ViewPublicDashboard))
+		apiRoute.Get("/annotations", routing.Wrap(api.GetPublicAnnotations))
+		apiRoute.Post("/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
+	}, api.Middleware.HandleApi)
 
 	// Auth endpoints
 	auth := accesscontrol.Middleware(api.AccessControl)
@@ -65,7 +71,6 @@ func (api *Api) RegisterAPIEndpoints() {
 
 	// List public dashboards for org
 	api.RouteRegister.Get("/api/dashboards/public-dashboards", middleware.ReqSignedIn, routing.Wrap(api.ListPublicDashboards))
-
 	// Get public dashboard
 	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
@@ -87,8 +92,15 @@ func (api *Api) RegisterAPIEndpoints() {
 		routing.Wrap(api.DeletePublicDashboard))
 }
 
-// ListPublicDashboards Gets list of public dashboards by orgId
-// GET /api/dashboards/public-dashboards
+// swagger:route GET /dashboards/public-dashboards dashboard_public listPublicDashboards
+//
+//	Get list of public dashboards
+//
+// Responses:
+// 200: listPublicDashboardsResponse
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
 func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
@@ -101,7 +113,7 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 	}
 
 	resp, err := api.PublicDashboardService.FindAllWithPagination(c.Req.Context(), &PublicDashboardListQuery{
-		OrgID: c.OrgID,
+		OrgID: c.SignedInUser.GetOrgID(),
 		Query: c.Query("query"),
 		Page:  page,
 		Limit: perPage,
@@ -114,8 +126,17 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, resp)
 }
 
-// GetPublicDashboard Gets public dashboard for dashboard
-// GET /api/dashboards/uid/:dashboardUid/public-dashboards
+// swagger:route GET /dashboards/uid/{dashboardUid}/public-dashboards dashboard_public getPublicDashboard
+//
+//	Get public dashboard by dashboardUid
+//
+// Responses:
+// 200: getPublicDashboardResponse
+// 400: badRequestPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 404: notFoundPublicError
+// 500: internalServerPublicError
 func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -123,7 +144,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		return response.Err(ErrPublicDashboardIdentifierNotSet.Errorf("GetPublicDashboard: no dashboard Uid for public dashboard specified"))
 	}
 
-	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dashboardUid)
+	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.SignedInUser.GetOrgID(), dashboardUid)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -135,8 +156,19 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, pd)
 }
 
-// CreatePublicDashboard Sets public dashboard for dashboard
-// POST /api/dashboards/uid/:dashboardUid/public-dashboards
+// swagger:route POST /dashboards/uid/{dashboardUid}/public-dashboards dashboard_public createPublicDashboard
+//
+//	Create public dashboard for a dashboard
+//
+// Produces:
+// - application/json
+//
+// Responses:
+// 200: createPublicDashboardResponse
+// 400: badRequestPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
 func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -164,7 +196,7 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	// Always set the orgID and userID from the session
 	dto := &SavePublicDashboardDTO{
 		UserId:          c.UserID,
-		OrgID:           c.OrgID,
+		OrgID:           c.SignedInUser.GetOrgID(),
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -178,8 +210,19 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, pd)
 }
 
-// UpdatePublicDashboard Sets public dashboard for dashboard
-// PATCH /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
+// swagger:route PATCH /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboard_public updatePublicDashboard
+//
+//	Update public dashboard for a dashboard
+//
+// Produces:
+// - application/json
+//
+// Responses:
+// 200: updatePublicDashboardResponse
+// 400: badRequestPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
 func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -201,7 +244,7 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	dto := SavePublicDashboardDTO{
 		Uid:             uid,
 		UserId:          c.UserID,
-		OrgID:           c.OrgID,
+		OrgID:           c.SignedInUser.GetOrgID(),
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -215,15 +258,28 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, pd)
 }
 
-// Delete a public dashboard
-// DELETE /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
+// swagger:route DELETE /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboard_public deletePublicDashboard
+//
+//	Delete public dashboard for a dashboard
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
 func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	if !validation.IsValidShortUID(uid) {
-		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
+		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid Uid %s", uid))
 	}
 
-	err := api.PublicDashboardService.Delete(c.Req.Context(), uid)
+	dashboardUid := web.Params(c.Req)[":dashboardUid"]
+	if !validation.IsValidShortUID(dashboardUid) {
+		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid dashboard Uid %s", dashboardUid))
+	}
+
+	err := api.PublicDashboardService.Delete(c.Req.Context(), uid, dashboardUid)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -232,9 +288,9 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 }
 
 // Copied from pkg/api/metrics.go
-func toJsonStreamingResponse(features *featuremgmt.FeatureManager, qdr *backend.QueryDataResponse) response.Response {
+func toJsonStreamingResponse(ctx context.Context, features *featuremgmt.FeatureManager, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
-	if features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+	if features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
 	}
 
@@ -246,4 +302,67 @@ func toJsonStreamingResponse(features *featuremgmt.FeatureManager, qdr *backend.
 	}
 
 	return response.JSONStreaming(statusCode, qdr)
+}
+
+// swagger:response listPublicDashboardsResponse
+type ListPublicDashboardsResponse struct {
+	// in: body
+	Body PublicDashboardListResponseWithPagination `json:"body"`
+}
+
+// swagger:parameters getPublicDashboard
+type GetPublicDashboardParams struct {
+	// in:path
+	DashboardUid string `json:"dashboardUid"`
+}
+
+// swagger:response getPublicDashboardResponse
+type GetPublicDashboardResponse struct {
+	// in: body
+	Body PublicDashboard `json:"body"`
+}
+
+// swagger:parameters createPublicDashboard
+type CreatePublicDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardUid string `json:"dashboardUid"`
+	// in:body
+	// required:true
+	Body PublicDashboardDTO
+}
+
+// swagger:response createPublicDashboardResponse
+type CreatePublicDashboardResponse struct {
+	// in: body
+	Body PublicDashboard `json:"body"`
+}
+
+// swagger:parameters updatePublicDashboard
+type UpdatePublicDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardUid string `json:"dashboardUid"`
+	// in:path
+	// required:true
+	Uid string `json:"uid"`
+	// in:body
+	// required:true
+	Body PublicDashboardDTO
+}
+
+// swagger:response updatePublicDashboardResponse
+type UpdatePublicDashboardResponse struct {
+	// in: body
+	Body PublicDashboard `json:"body"`
+}
+
+// swagger:parameters deletePublicDashboard
+type DeletePublicDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardUid string `json:"dashboardUid"`
+	// in:path
+	// required:true
+	Uid string `json:"uid"`
 }

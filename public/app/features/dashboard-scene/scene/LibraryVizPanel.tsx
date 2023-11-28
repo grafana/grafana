@@ -1,23 +1,26 @@
 import React from 'react';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
+import { panelMenuBehavior } from './PanelMenuBehavior';
+
 interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
   title: string;
   uid: string;
+  name: string;
   panel?: VizPanel;
 }
 
 export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   static Component = LibraryPanelRenderer;
 
-  constructor({ uid, title }: Pick<LibraryVizPanelState, 'uid' | 'title'>) {
-    super({ uid, title });
+  constructor({ uid, title, key, name }: Pick<LibraryVizPanelState, 'uid' | 'title' | 'key' | 'name'>) {
+    super({ uid, title, key, name });
 
     this.addActivationHandler(this._onActivate);
   }
@@ -38,10 +41,13 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         pluginVersion: libPanelModel.pluginVersion,
         displayMode: libPanelModel.transparent ? 'transparent' : undefined,
         $data: createPanelDataProvider(libPanelModel),
+        menu: new VizPanelMenu({
+          $behaviors: [panelMenuBehavior],
+        }),
       });
     } catch (err) {
       vizPanel.setState({
-        pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
+        _pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
       });
     }
 

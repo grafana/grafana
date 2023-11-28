@@ -17,6 +17,12 @@ const (
 	SearchStreamingStateStreaming SearchStreamingState = "streaming"
 )
 
+// Defines values for SearchTableType.
+const (
+	SearchTableTypeSpans  SearchTableType = "spans"
+	SearchTableTypeTraces SearchTableType = "traces"
+)
+
 // Defines values for TempoQueryType.
 const (
 	TempoQueryTypeClear         TempoQueryType = "clear"
@@ -65,6 +71,9 @@ type DataQuery struct {
 // The state of the TraceQL streaming search query
 type SearchStreamingState string
 
+// The type of the table that is used to display the search results
+type SearchTableType string
+
 // TempoDataQuery defines model for TempoDataQuery.
 type TempoDataQuery = map[string]any
 
@@ -100,7 +109,7 @@ type TempoQuery struct {
 	MinDuration *string `json:"minDuration,omitempty"`
 
 	// TraceQL query or trace ID
-	Query string `json:"query"`
+	Query *string `json:"query,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
@@ -128,6 +137,9 @@ type TempoQuery struct {
 
 	// Defines the maximum number of spans per spanset that are returned from Tempo
 	Spss *int64 `json:"spss,omitempty"`
+
+	// The type of the table that is used to display the search results
+	TableType *SearchTableType `json:"tableType,omitempty"`
 }
 
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility

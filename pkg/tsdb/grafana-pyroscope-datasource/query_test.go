@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 // This is where the tests for the datasource backend live.
 func Test_query(t *testing.T) {
 	client := &FakeClient{}
-	ds := &PhlareDatasource{
+	ds := &PyroscopeDatasource{
 		client: client,
 	}
 
@@ -288,15 +288,31 @@ func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
 	}, nil
 }
 
-func (f *FakeClient) LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelValues(ctx context.Context, label string) ([]string, error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelNames(ctx context.Context) ([]string, error) {
 	panic("implement me")
 }
 
 func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+	return &ProfileResponse{
+		Flamebearer: &Flamebearer{
+			Names: []string{"foo", "bar", "baz"},
+			Levels: []*Level{
+				{Values: []int64{0, 10, 0, 0}},
+				{Values: []int64{0, 9, 0, 1}},
+				{Values: []int64{0, 8, 8, 2}},
+			},
+			Total:   100,
+			MaxSelf: 56,
+		},
+		Units: "count",
+	}, nil
+}
+
+func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
 			Names: []string{"foo", "bar", "baz"},

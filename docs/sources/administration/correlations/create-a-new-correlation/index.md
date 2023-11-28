@@ -13,6 +13,10 @@ weight: 40
 
 Make sure you have permission to add new correlations. Only users with write permissions to data sources can define new correlations.
 
+## Create a correlation in Explore's correlations editor
+
+To learn more, refer to Explore's [documentation]({{< relref "../../../explore/correlations-editor-in-explore" >}}) about building correlations in Explore.
+
 ## Create a correlation in Administration page
 
 1. Go to the Administration section in Grafana.
@@ -80,7 +84,7 @@ Description of provisioning properties:
 : Correlation type. “query” is the only supported type at the moment
 
 **config.target**
-: [Target query model]({{< relref "#determine-target-query-model-structure" >}})
+: [Target query model](#determine-target-query-model-structure)
 
 **config.field**
 : Name of the field where link is shown

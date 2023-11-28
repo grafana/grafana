@@ -1,27 +1,29 @@
+import React from 'react';
+
 import { ThresholdsMode } from '@grafana/data';
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-const QUERY = 'sum by (alertstate) (ALERTS{alertstate="firing"})';
+import { PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
-export function getFiringCloudAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getFiringCloudAlertsScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
         instant: true,
-        expr: QUERY,
+        expr: 'sum by (alertstate) (ALERTS{alertstate="firing"})',
       },
     ],
-    $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
-    width: 'calc(25% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
+      .setDescription('The number of currently firing alert rule instances')
       .setData(query)
       .setThresholds({
         mode: ThresholdsMode.Absolute,
@@ -36,6 +38,8 @@ export function getFiringCloudAlertsScene(timeRange: SceneTimeRange, datasource:
           },
         ],
       })
+      .setNoValue('0')
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

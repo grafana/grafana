@@ -10,9 +10,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
@@ -36,7 +38,7 @@ type ExemplarEvent struct {
 // client.
 type QueryData struct {
 	intervalCalculator intervalv2.Calculator
-	tracer             tracing.Tracer
+	tracer             trace.Tracer
 	client             *client.Client
 	log                log.Logger
 	ID                 int64
@@ -49,7 +51,6 @@ type QueryData struct {
 func New(
 	httpClient *http.Client,
 	features featuremgmt.FeatureToggles,
-	tracer tracing.Tracer,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
 ) (*QueryData, error) {
@@ -64,24 +65,28 @@ func New(
 		return nil, err
 	}
 
+	if httpMethod == "" {
+		httpMethod = http.MethodPost
+	}
+
 	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
 
 	// standard deviation sampler is the default for backwards compatibility
 	exemplarSampler := exemplar.NewStandardDeviationSampler
 
-	if features.IsEnabled(featuremgmt.FlagDisablePrometheusExemplarSampling) {
+	if features.IsEnabledGlobally(featuremgmt.FlagDisablePrometheusExemplarSampling) {
 		exemplarSampler = exemplar.NewNoOpSampler
 	}
 
 	return &QueryData{
 		intervalCalculator: intervalv2.NewCalculator(),
-		tracer:             tracer,
+		tracer:             tracing.DefaultTracer(),
 		log:                plog,
 		client:             promClient,
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
-		enableDataplane:    features.IsEnabled(featuremgmt.FlagPrometheusDataplane),
+		enableDataplane:    features.IsEnabledGlobally(featuremgmt.FlagPrometheusDataplane),
 		exemplarSampler:    exemplarSampler,
 	}, nil
 }
@@ -97,6 +102,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		if err != nil {
 			return &result, err
 		}
+
 		r := s.fetch(ctx, s.client, query, req.Headers)
 		if r == nil {
 			s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
@@ -212,9 +218,9 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 }
 
 func (s *QueryData) trace(ctx context.Context, q *models.Query) (context.Context, func()) {
-	return utils.StartTrace(ctx, s.tracer, "datasource.prometheus", []utils.Attribute{
-		{Key: "expr", Value: q.Expr, Kv: attribute.Key("expr").String(q.Expr)},
-		{Key: "start_unixnano", Value: q.Start, Kv: attribute.Key("start_unixnano").Int64(q.Start.UnixNano())},
-		{Key: "stop_unixnano", Value: q.End, Kv: attribute.Key("stop_unixnano").Int64(q.End.UnixNano())},
-	})
+	return utils.StartTrace(ctx, s.tracer, "datasource.prometheus",
+		attribute.String("expr", q.Expr),
+		attribute.Int64("start_unixnano", q.Start.UnixNano()),
+		attribute.Int64("stop_unixnano", q.End.UnixNano()),
+	)
 }

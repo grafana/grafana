@@ -15,6 +15,7 @@ import (
 
 	"github.com/blugelabs/bluge"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -466,8 +467,9 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 }
 
 func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, error) {
-	spanCtx, span := i.tracer.Start(ctx, "searchV2 buildOrgIndex")
-	span.SetAttributes("org_id", orgID, attribute.Key("org_id").Int64(orgID))
+	spanCtx, span := i.tracer.Start(ctx, "searchV2 buildOrgIndex", trace.WithAttributes(
+		attribute.Int64("org_id", orgID),
+	))
 
 	started := time.Now()
 	ctx, cancel := context.WithTimeout(spanCtx, time.Minute)
@@ -489,9 +491,10 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
 
-	_, initOrgIndexSpan := i.tracer.Start(ctx, "searchV2 buildOrgIndex init org index")
-	initOrgIndexSpan.SetAttributes("org_id", orgID, attribute.Key("org_id").Int64(orgID))
-	initOrgIndexSpan.SetAttributes("dashboardCount", len(dashboards), attribute.Key("dashboardCount").Int(len(dashboards)))
+	_, initOrgIndexSpan := i.tracer.Start(ctx, "searchV2 buildOrgIndex init org index", trace.WithAttributes(
+		attribute.Int64("org_id", orgID),
+		attribute.Int("dashboardCount", len(dashboards)),
+	))
 
 	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender)
 
@@ -837,10 +840,11 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 			default:
 			}
 
-			dashboardQueryCtx, dashboardQuerySpan := l.tracer.Start(ctx, "sqlDashboardLoader dashboardQuery")
-			dashboardQuerySpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
-			dashboardQuerySpan.SetAttributes("dashboardUID", dashboardUID, attribute.Key("dashboardUID").String(dashboardUID))
-			dashboardQuerySpan.SetAttributes("lastID", lastID, attribute.Key("lastID").Int64(lastID))
+			dashboardQueryCtx, dashboardQuerySpan := l.tracer.Start(ctx, "sqlDashboardLoader dashboardQuery", trace.WithAttributes(
+				attribute.Int64("orgID", orgID),
+				attribute.String("dashboardUID", dashboardUID),
+				attribute.Int64("lastID", lastID),
+			))
 
 			rows := make([]*dashboardQueryResult, 0)
 			err := l.sql.WithDbSession(dashboardQueryCtx, func(sess *db.Session) error {
@@ -887,9 +891,9 @@ func (l sqlDashboardLoader) loadAllDashboards(ctx context.Context, limit int, or
 }
 
 func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
-	ctx, span := l.tracer.Start(ctx, "sqlDashboardLoader LoadDashboards")
-	span.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
-
+	ctx, span := l.tracer.Start(ctx, "sqlDashboardLoader LoadDashboards", trace.WithAttributes(
+		attribute.Int64("orgID", orgID),
+	))
 	defer span.End()
 
 	var dashboards []dashboard
@@ -901,8 +905,9 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		dashboards = make([]dashboard, 0, limit)
 	}
 
-	loadDatasourceCtx, loadDatasourceSpan := l.tracer.Start(ctx, "sqlDashboardLoader LoadDatasourceLookup")
-	loadDatasourceSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
+	loadDatasourceCtx, loadDatasourceSpan := l.tracer.Start(ctx, "sqlDashboardLoader LoadDatasourceLookup", trace.WithAttributes(
+		attribute.Int64("orgID", orgID),
+	))
 
 	// key will allow name or uid
 	lookup, err := kdash.LoadDatasourceLookup(loadDatasourceCtx, orgID, l.sql)
@@ -930,9 +935,10 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 
 		rows := res.dashboards
 
-		_, readDashboardSpan := l.tracer.Start(ctx, "sqlDashboardLoader readDashboard")
-		readDashboardSpan.SetAttributes("orgID", orgID, attribute.Key("orgID").Int64(orgID))
-		readDashboardSpan.SetAttributes("dashboardCount", len(rows), attribute.Key("dashboardCount").Int(len(rows)))
+		_, readDashboardSpan := l.tracer.Start(ctx, "sqlDashboardLoader readDashboard", trace.WithAttributes(
+			attribute.Int64("orgID", orgID),
+			attribute.Int("dashboardCount", len(rows)),
+		))
 
 		reader := kdash.NewStaticDashboardSummaryBuilder(lookup, false)
 

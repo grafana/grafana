@@ -1,8 +1,11 @@
 import React from 'react';
 
+import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
+import { GenAIPanelTitleButton } from '../GenAI/GenAIPanelTitleButton';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -16,6 +19,22 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     id: 'Panel options',
     isOpenDefault: true,
   });
+
+  const setPanelTitle = (title: string) => {
+    const input = document.getElementById('PanelFrameTitle');
+    if (input instanceof HTMLInputElement) {
+      input.value = title;
+      onPanelConfigChange('title', title);
+    }
+  };
+
+  const setPanelDescription = (description: string) => {
+    const input = document.getElementById('description-text-area');
+    if (input instanceof HTMLTextAreaElement) {
+      input.value = description;
+      onPanelConfigChange('description', description);
+    }
+  };
 
   return descriptor
     .addItem(
@@ -32,6 +51,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
+        addon: config.featureToggles.dashgpt && <GenAIPanelTitleButton onGenerate={setPanelTitle} panel={panel} />,
       })
     )
     .addItem(
@@ -48,6 +68,9 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
+        addon: config.featureToggles.dashgpt && (
+          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel} />
+        ),
       })
     )
     .addItem(

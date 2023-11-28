@@ -20,7 +20,7 @@ labels:
     - oss
 menuTitle: Configure data links
 title: Configure data links
-weight: 400
+weight: 80
 ---
 
 # Configure data links
@@ -37,6 +37,8 @@ To see a list of available variables, type `$` in the data link **URL** field to
 These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 {{% /admonition %}}
 
+Azure Monitor, [CloudWatch][], and [Google Cloud Monitoring][] have pre-configured data links called _deep links_.
+
 You can also use template variables in your data links URLs, refer to [Templates and variables][] for more information on template variables.
 
 ## Time range panel variables
@@ -48,7 +50,7 @@ These variables allow you to include the current time range in the data link URL
 
 ## Series variables
 
-Series specific variables are available under `__series` namespace:
+Series-specific variables are available under `__series` namespace:
 
 - `__series.name` - series name to the URL
 
@@ -68,6 +70,17 @@ Value-specific variables are available under `__value` namespace:
 - `__value.numeric` - numeric representation of a value
 - `__value.text` - text representation of a value
 - `__value.calc` - calculation name if the value is result of calculation
+
+Using value-specific variables in data links can show different results depending on the set option of Tooltip mode.
+
+## Data variables
+
+To access values and labels from other fields use:
+
+- `${__data.fields[i]}` - value of field `i` (on the same row)
+- `${__data.fields["NameOfField"]}` - value of field using name instead of index
+- `${__data.fields["NameOfField"]}` - value of field using name instead of index
+- `${__data.fields[1].labels.cluster}` - access labels of another field
 
 ## Template variables
 
@@ -131,6 +144,12 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 1. Click **Save** in the upper right to save your changes to the dashboard.
 
 {{% docs/reference %}}
+[Cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
+[Cloudwatch]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
+
+[Google Cloud Monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/google-cloud-monitoring/query-editor#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer"
+[Google Cloud Monitoring]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/google-cloud-monitoring/query-editor#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer"
+
 [Templates and variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 [Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 

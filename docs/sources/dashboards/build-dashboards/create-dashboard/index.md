@@ -34,7 +34,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-1. In the modal that opens, do one of the following:
+1. In the dialog box that opens, do one of the following:
 
    - Select one of your existing data sources.
    - Select one of the Grafana's [built-in special data sources][].
@@ -43,7 +43,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
 
    The **Edit panel** view opens with your data source selected.
-   You can change the panel data source later using the dropdown in the **Query** tab of the panel editor if needed.
+   You can change the panel data source later using the drop-down in the **Query** tab of the panel editor if needed.
 
    For more information about data sources, refer to [Data sources][] for specific guidelines.
 
@@ -61,6 +61,10 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    For more information about individual visualizations, refer to [Visualizations options][].
 
+1. Under **Panel options**, enter a title and description for your panel.
+
+   Alternatively, Grafana can generate a panel title and description for you using the OpenAI integration. Learn more in the [Set up generative AI features for dashboards documentation][].
+
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
@@ -75,11 +79,18 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
 
-1. Enter a name for your dashboard and select a folder, if applicable.
-1. Click **Save**.
-1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
+1. Enter a summary of your dashboard changes.
 
-   ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+   Alternatively, Grafana can generate a summary for you using the OpenAI integration. Learn more in the [Set up generative AI features for dashboards documentation][].
+
+1. Enter a title for your dashboard and select a folder, if applicable.
+
+   Alternatively, Grafana can generate a dashboard title for you using the OpenAI integration. Learn more in the [Set up generative AI features for dashboards documentation][].
+
+1. Click **Save**.
+1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down.
+
+   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
 
@@ -97,7 +108,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 
 1. Click **Dashboards** in the left-side menu.
 1. Navigate to the dashboard you want to work on.
-1. At the top of the dashboard, click **Add** and select **Row** in the dropdown.
+1. At the top of the dashboard, click **Add** and select **Row** in the drop-down.
 
    If the dashboard is empty, you can click the **+ Add row** button in the middle of the dashboard.
 
@@ -109,7 +120,7 @@ To provide context to dashboard users, add the variable to the row title.
 
 ### Repeating rows and the Dashboard special data source
 
-If a row includes panels using the special [Dashboard]({{< relref "../../../datasources/#special-data-sources" >}}) data source&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+If a row includes panels using the special [Dashboard][] data source&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 
 For example, in a dashboard:
 
@@ -135,6 +146,9 @@ You can size a dashboard panel to suits your needs.
 1. To adjust the size of the panel, click and drag the lower-right corner of the panel.
 
 {{% docs/reference %}}
+[Dashboard]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources#special-data-sources"
+[Dashboard]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources#special-data-sources"
+
 [Override field values]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
 [Override field values]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
 
@@ -167,4 +181,7 @@ You can size a dashboard panel to suits your needs.
 
 [Configure standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options"
 [Configure standard options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options"
+
+[Set up generative AI features for dashboards documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[Set up generative AI features for dashboards documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 {{% /docs/reference %}}

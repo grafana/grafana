@@ -5,7 +5,6 @@ import { KeyValue } from '@grafana/data';
 import { Field, Button, Input } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Input.mdx';
 import { parseAccessory } from './storyUtils';
@@ -24,7 +23,6 @@ const prefixSuffixOpts = {
 const meta: Meta = {
   title: 'Forms/Input',
   component: Input,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

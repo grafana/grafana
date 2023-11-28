@@ -83,9 +83,9 @@ You can handle these alerts the same way as regular alerts by adding a silence, 
 
 Use the State history view to get insight into how your alert instances behave over time. View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
 
-### Configure the state history view
-
-To enable the state history view, see [Configuring alert state history]({{< relref "../set-up/configure-alert-state-history/index.md" >}}).
+{{% admonition type="note" %}}
+Open source users must configure alert state history in order to be able to access the view.
+{{% /admonition %}}
 
 ### View state history
 

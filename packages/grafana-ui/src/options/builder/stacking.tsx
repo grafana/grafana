@@ -6,9 +6,13 @@ import {
   FieldType,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { StackingConfig, StackingMode } from '@grafana/schema';
+import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema';
 
-import { GraphFieldConfig, graphFieldOptions, HorizontalGroup, IconButton, Input, RadioButtonGroup } from '../..';
+import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
+import { IconButton } from '../../components/IconButton/IconButton';
+import { Input } from '../../components/Input/Input';
+import { HorizontalGroup } from '../../components/Layout/Layout';
+import { graphFieldOptions } from '../../components/uPlot/config';
 
 export const StackingEditor = ({ value, context, onChange, item }: FieldOverrideEditorProps<StackingConfig, any>) => {
   return (

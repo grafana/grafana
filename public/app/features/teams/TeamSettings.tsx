@@ -30,8 +30,12 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
 
   const canUpdateRoles =
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRemove);
+
+  const canListRoles =
+    contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRolesList, team) &&
+    contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
   return (
     <VerticalGroup spacing="lg">
@@ -57,12 +61,12 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
               <Input {...register('name', { required: true })} id="name-input" />
             </Field>
 
-            {contextSrv.licensedAccessControlEnabled() && (
+            {contextSrv.licensedAccessControlEnabled() && canListRoles && (
               <Field label="Role">
                 <TeamRolePicker
                   teamId={team.id}
                   roleOptions={roleOptions}
-                  disabled={false}
+                  disabled={!canUpdateRoles}
                   apply={true}
                   onApplyRoles={setPendingRoles}
                   pendingRoles={pendingRoles}

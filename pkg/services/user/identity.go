@@ -27,6 +27,9 @@ type SignedInUser struct {
 	Teams            []int64
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
+	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
+	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
+	IDToken string `json:"-" xorm:"-"`
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -110,7 +113,12 @@ func (u *SignedInUser) GetCacheKey() string {
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
-		id = string(u.GetOrgRole())
+		orgRole := u.GetOrgRole()
+		if orgRole == "" {
+			orgRole = roletype.RoleNone
+		}
+
+		id = string(orgRole)
 	}
 
 	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
@@ -159,9 +167,6 @@ func (u *SignedInUser) GetTeams() []int64 {
 
 // GetOrgRole returns the role of the active entity in the active organization
 func (u *SignedInUser) GetOrgRole() roletype.RoleType {
-	if u.OrgRole == "" {
-		return roletype.RoleNone
-	}
 	return u.OrgRole
 }
 
@@ -209,4 +214,8 @@ func (u *SignedInUser) GetDisplayName() string {
 // DEPRECATEAD: Returns the authentication method used
 func (u *SignedInUser) GetAuthenticatedBy() string {
 	return u.AuthenticatedBy
+}
+
+func (u *SignedInUser) GetIDToken() string {
+	return u.IDToken
 }

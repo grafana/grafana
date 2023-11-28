@@ -61,7 +61,7 @@ type DataPipeline []Node
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 
-	groupByDSFlag := s.features.IsEnabled(featuremgmt.FlagSseGroupByDatasource)
+	groupByDSFlag := s.features.IsEnabled(c, featuremgmt.FlagSseGroupByDatasource)
 	// Execute datasource nodes first, and grouped by datasource.
 	if groupByDSFlag {
 		dsNodes := []*DSNode{}
@@ -99,10 +99,10 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		}
 
 		c, span := s.tracer.Start(c, "SSE.ExecuteNode")
-		span.SetAttributes("node.refId", node.RefID(), attribute.Key("node.refId").String(node.RefID()))
+		span.SetAttributes(attribute.String("node.refId", node.RefID()))
 		if len(node.NeedsVars()) > 0 {
 			inputRefIDs := node.NeedsVars()
-			span.SetAttributes("node.inputRefIDs", inputRefIDs, attribute.Key("node.inputRefIDs").StringSlice(inputRefIDs))
+			span.SetAttributes(attribute.StringSlice("node.inputRefIDs", inputRefIDs))
 		}
 		defer span.End()
 
@@ -225,9 +225,9 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case TypeDatasourceNode:
 			node, err = s.buildDSNode(dp, rn, req)
 		case TypeCMDNode:
-			node, err = buildCMDNode(dp, rn)
+			node, err = buildCMDNode(rn, s.features)
 		case TypeMLNode:
-			if s.features.IsEnabled(featuremgmt.FlagMlExpressions) {
+			if s.features.IsEnabledGlobally(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)
 				if err != nil {
 					err = fmt.Errorf("fail to parse expression with refID %v: %w", rn.RefID, err)

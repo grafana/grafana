@@ -31,7 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -164,7 +164,7 @@ type scenarioContext struct {
 	url                     string
 	userAuthTokenService    *authtest.FakeUserAuthTokenService
 	sqlStore                db.DB
-	authInfoService         *logintest.AuthInfoServiceFake
+	authInfoService         *authinfotest.FakeService
 	dashboardVersionService dashver.Service
 	userService             user.Service
 	ctxHdlr                 *contexthandler.ContextHandler
@@ -186,9 +186,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 
 	return contexthandler.ProvideService(
 		cfg,
-		tracing.NewFakeTracer(),
+		tracing.InitializeTracerForTest(),
 		featuremgmt.WithFeatures(),
-		&authntest.FakeService{ExpectedIdentity: &authn.Identity{IsAnonymous: true, SessionToken: &usertoken.UserToken{}}},
+		&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: authn.AnonymousNamespaceID, SessionToken: &usertoken.UserToken{}}},
 	)
 }
 
@@ -214,7 +214,6 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	return sc
 }
 
-// FIXME: This user should not be anonymous
 func authedUserWithPermissions(userID, orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
 	return &user.SignedInUser{UserID: userID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
@@ -228,8 +227,8 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	if features == nil {
 		features = featuremgmt.WithFeatures()
 	}
-	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	// nolint:staticcheck
+	cfg := setting.NewCfgWithFeatures(features.IsEnabledGlobally)
 
 	return &HTTPServer{
 		Cfg:             cfg,
@@ -237,7 +236,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		License:         &licensing.OSSLicensingService{},
 		AccessControl:   acimpl.ProvideAccessControl(cfg),
 		annotationsRepo: annotationstest.NewFakeAnnotationsRepo(),
-		authInfoService: &logintest.AuthInfoServiceFake{
+		authInfoService: &authinfotest.FakeService{
 			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
 		},
 	}

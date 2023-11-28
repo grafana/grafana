@@ -83,7 +83,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "axisShow": false,
+            "axisBorderShow": false,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -182,6 +182,7 @@
             "y": 26
           },
           "id": 30,
+          "title": "Text panel in collapsed row",
           "options": {
             "code": {
               "language": "plaintext",
@@ -348,6 +349,5 @@
   "timezone": "",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }

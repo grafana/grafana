@@ -74,7 +74,7 @@ func TestAbsFunc(t *testing.T) {
 			e, err := New(tt.expr)
 			tt.newErrIs(t, err)
 			if e != nil {
-				res, err := e.Execute("", tt.vars, tracing.NewFakeTracer())
+				res, err := e.Execute("", tt.vars, tracing.InitializeTracerForTest())
 				tt.execErrIs(t, err)
 				tt.resultIs(t, tt.results, res)
 			}
@@ -133,7 +133,7 @@ func TestIsNumberFunc(t *testing.T) {
 			e, err := New(tt.expr)
 			require.NoError(t, err)
 			if e != nil {
-				res, err := e.Execute("", tt.vars, tracing.NewFakeTracer())
+				res, err := e.Execute("", tt.vars, tracing.InitializeTracerForTest())
 				require.NoError(t, err)
 				require.Equal(t, tt.results, res)
 			}

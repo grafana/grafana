@@ -358,6 +358,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
 
+      '> *': {
+        zIndex: 0,
+      },
+
+      // matches .react-grid-item styles in _dashboard_grid.scss to ensure any contained tooltips occlude adjacent panels
+      '&:hover, &:active, &:focus': {
+        zIndex: theme.zIndex.activePanel,
+      },
+
       '.show-on-hover': {
         opacity: '0',
         visibility: 'hidden',
@@ -395,7 +404,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: 0,
       width: '100%',
-      overflow: 'hidden',
     }),
     containNone: css({
       contain: 'none',
@@ -403,7 +411,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'panel-content',
       flexGrow: 1,
-      contain: 'strict',
+      contain: 'size layout',
     }),
     headerContainer: css({
       label: 'panel-header',
@@ -457,7 +465,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       left: 0,
       top: 0,
-      zIndex: theme.zIndex.tooltip,
+      zIndex: 1,
     }),
     rightActions: css({
       display: 'flex',

@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -56,7 +58,7 @@ func setupTestServer(
 
 	// build api, this will mount the routes at the same time if
 	// featuremgmt.FlagPublicDashboard is enabled
-	ProvideApi(service, rr, ac, features)
+	ProvideApi(service, rr, ac, features, &Middleware{})
 
 	// connect routes to mux
 	rr.Register(m.Router)
@@ -119,15 +121,17 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	ds := &fakeDatasources.FakeDataSourceService{}
-	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginstore.FakePluginStore{
-		PluginList: []pluginstore.Plugin{
-			{
-				JSONData: plugins.JSONData{
-					ID: "mysql",
+	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(),
+		localcache.ProvideService(), &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID: "mysql",
+					},
 				},
 			},
-		},
-	}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()))
+		}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), fakes.NewFakeLicensingService(),
+		&config.Cfg{})
 
 	return query.ProvideService(
 		setting.NewCfg(),

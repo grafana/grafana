@@ -17,9 +17,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
@@ -29,50 +31,54 @@ var eslog = log.New("tsdb.elasticsearch")
 type Service struct {
 	httpClientProvider httpclient.Provider
 	im                 instancemgmt.InstanceManager
+	tracer             tracing.Tracer
+	logger             *log.ConcreteLogger
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		httpClientProvider: httpClientProvider,
+		tracer:             tracer,
+		logger:             eslog,
 	}
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := eslog.FromContext(ctx).New("fromAlert", fromAlert)
+	logger := s.logger.FromContext(ctx).New("fromAlert", fromAlert)
 
 	if err != nil {
 		logger.Error("Failed to get data source info", "error", err)
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req.Queries, dsInfo, logger)
+	return queryData(ctx, req.Queries, dsInfo, logger, s.tracer)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	if len(queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger)
+	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger, tracer)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(ctx, client, queries, logger)
+	query := newElasticsearchDataQuery(ctx, client, queries, logger, tracer)
 	return query.execute()
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		httpCliOpts, err := settings.HTTPClientOptions()
+		httpCliOpts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
@@ -82,7 +88,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			httpCliOpts.SigV4.Service = "es"
 		}
 
-		httpCli, err := httpClientProvider.New(httpCliOpts)
+		// enable experimental http client to support errors with source
+		httpCli, err := exphttpclient.New(httpCliOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -111,11 +118,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		interval, ok := jsonData["interval"].(string)
 		if !ok {
 			interval = ""
-		}
-
-		timeInterval, ok := jsonData["timeInterval"].(string)
-		if !ok {
-			timeInterval = ""
 		}
 
 		index, ok := jsonData["index"].(string)
@@ -164,7 +166,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
-			TimeInterval:               timeInterval,
 			IncludeFrozen:              includeFrozen,
 			XPack:                      xpack,
 		}

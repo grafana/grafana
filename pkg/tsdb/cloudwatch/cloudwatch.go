@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -28,7 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/patrickmn/go-cache"
 )
+
+const tagValueCacheExpiration = time.Hour * 24
 
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
@@ -36,8 +40,9 @@ type DataQueryJson struct {
 }
 
 type DataSource struct {
-	Settings   models.CloudWatchSettings
-	HTTPClient *http.Client
+	Settings      models.CloudWatchSettings
+	HTTPClient    *http.Client
+	tagValueCache *cache.Cache
 }
 
 const (
@@ -84,13 +89,13 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 }
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		instanceSettings, err := models.LoadCloudWatchSettings(settings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		opts, err := settings.HTTPClientOptions()
+		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -101,8 +106,9 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		return DataSource{
-			Settings:   instanceSettings,
-			HTTPClient: httpClient,
+			Settings:      instanceSettings,
+			HTTPClient:    httpClient,
+			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
 		}, nil
 	}
 }
@@ -128,16 +134,24 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		r = instance.Settings.Region
 	}
 
+	ec2Client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
+	if err != nil {
+		return models.RequestContext{}, err
+	}
+
 	sess, err := e.newSession(ctx, pluginCtx, r)
 	if err != nil {
 		return models.RequestContext{}, err
 	}
+
 	return models.RequestContext{
 		OAMAPIProvider:        NewOAMAPI(sess),
 		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
 		LogsAPIProvider:       NewLogsAPI(sess),
+		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
 		Features:              e.features,
+		Logger:                logger,
 	}, nil
 }
 
@@ -156,7 +170,11 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
 	fromExpression := req.GetHTTPHeader(query.HeaderFromExpression) != ""
-	isSyncLogQuery := (fromAlert || fromExpression) && model.QueryMode == logsQueryMode
+	// Public dashboard queries execute like alert queries, i.e. they execute on the backend, therefore, we need to handle them synchronously.
+	// Since `model.Type` is set during execution on the frontend by the query runner and isn't saved with the query, we are checking here is
+	// missing the `model.Type` property and if it is a log query in order to determine if it is a public dashboard query.
+	fromPublicDashboard := (model.Type == "" && model.QueryMode == logsQueryMode)
+	isSyncLogQuery := ((fromAlert || fromExpression) && model.QueryMode == logsQueryMode) || fromPublicDashboard
 	if isSyncLogQuery {
 		return executeSyncLogQuery(ctx, e, req)
 	}
@@ -212,7 +230,7 @@ func (e *cloudWatchExecutor) checkHealthMetrics(ctx context.Context, pluginCtx b
 		return err
 	}
 	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), e.cfg)
-	_, err = metricClient.ListMetricsWithPageLimit(params)
+	_, err = metricClient.ListMetricsWithPageLimit(ctx, params)
 	return err
 }
 
@@ -222,7 +240,7 @@ func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx back
 		return err
 	}
 	logsClient := NewLogsAPI(session)
-	_, err = logsClient.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(1)})
+	_, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(1)})
 	return err
 }
 
@@ -233,6 +251,9 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 	}
 
 	if region == defaultRegion {
+		if len(instance.Settings.Region) == 0 {
+			return nil, models.ErrMissingRegion
+		}
 		region = instance.Settings.Region
 	}
 
@@ -300,7 +321,7 @@ func (e *cloudWatchExecutor) getEC2Client(ctx context.Context, pluginCtx backend
 		return nil, err
 	}
 
-	return newEC2Client(sess), nil
+	return NewEC2Client(sess), nil
 }
 
 func (e *cloudWatchExecutor) getRGTAClient(ctx context.Context, pluginCtx backend.PluginContext, region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,

@@ -100,7 +100,6 @@ func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.ClientCfg {
 	require.NoError(t, err)
 
 	settings := &sdkproxy.ClientCfg{
-		Enabled:      true,
 		ClientCert:   clientCert,
 		ClientKey:    clientKey,
 		RootCA:       rootCACert,
@@ -108,6 +107,5 @@ func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.ClientCfg {
 		ProxyAddress: proxyAddress,
 	}
 
-	sdkproxy.Cli = sdkproxy.NewWithCfg(settings)
 	return settings
 }

@@ -38,6 +38,7 @@ func (api *API) Register{{classname}}Endpoints(srv {{classname}}, m *metrics.API
 	group.{{httpMethod}}(
 		toMacaronPath("{{{path}}}"),
 		requestmeta.SetOwner(requestmeta.TeamAlerting),
+		requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 		api.authorize(http.Method{{httpMethod}}, "{{{path}}}"),
 		metrics.Instrument(
 			http.Method{{httpMethod}},

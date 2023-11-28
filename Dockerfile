@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.17
-ARG JS_IMAGE=node:18-alpine3.17
+ARG BASE_IMAGE=alpine:3.18.3
+ARG JS_IMAGE=node:20-alpine3.18
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.20.6-alpine3.17
+ARG GO_IMAGE=golang:1.21.3-alpine3.18
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -18,10 +18,11 @@ COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
+COPY public public
 
 RUN yarn install --immutable
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json ./
 COPY public public
 COPY scripts scripts
 COPY emails emails
@@ -46,6 +47,9 @@ WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
+
+# Include vendored dependencies
+COPY pkg/util/xorm/go.* pkg/util/xorm/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \

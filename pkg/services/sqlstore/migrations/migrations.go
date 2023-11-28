@@ -1,9 +1,13 @@
 package migrations
 
 import (
+	dashboardFolderMigrations "github.com/grafana/grafana/pkg/services/dashboards/database/migrations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/anonservice"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/oauthserver"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/signingkeys"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ssosettings"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -52,10 +56,9 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
 	ualert.AddTablesMigrations(mg)
-	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
 
-	ualert.RerunDashAlertMigration(mg)
+	ualert.FixEarlyMigration(mg)
 	addSecretsMigration(mg)
 	addKVStoreMigrations(mg)
 	ualert.AddDashboardUIDPanelIDMigration(mg)
@@ -74,7 +77,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addEntityEventsTableMigration(mg)
 
 	addPublicDashboardMigration(mg)
-	ualert.CreateDefaultFoldersForAlertingMigration(mg)
 	addDbFileStorageMigration(mg)
 
 	accesscontrol.AddManagedPermissionsMigration(mg, accesscontrol.ManagedPermissionsMigrationID)
@@ -87,15 +89,28 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddAdminOnlyMigration(mg)
 	accesscontrol.AddSeedAssignmentMigrations(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatFixedMigration(mg)
+	accesscontrol.AddManagedFolderLibraryPanelActionsMigration(mg)
 
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
 	addFolderMigrations(mg)
+	// nolint:staticcheck
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		// nolint:staticcheck
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagExternalServiceAuth) {
 			oauthserver.AddMigration(mg)
 		}
 	}
+
+	anonservice.AddMigration(mg)
+	signingkeys.AddMigration(mg)
+
+	ualert.MigrationServiceMigration(mg)
+	ualert.CreatedFoldersMigration(mg)
+
+	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
+
+	ssosettings.AddMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

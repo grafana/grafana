@@ -2,20 +2,20 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DisplayValue, getValueFormat, GrafanaTheme2 } from '@grafana/data';
-import { InteractiveTable, Portal, VizTooltipContainer } from '@grafana/ui';
+import { InteractiveTable, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 
-import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { CollapseConfig, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
   totalTicks: number;
   position?: { x: number; y: number };
   item?: LevelItem;
-  getTheme: () => GrafanaTheme2;
+  collapseConfig?: CollapseConfig;
 };
 
-const FlameGraphTooltip = ({ data, item, totalTicks, position, getTheme }: Props) => {
-  const styles = getStyles(getTheme());
+const FlameGraphTooltip = ({ data, item, totalTicks, position, collapseConfig }: Props) => {
+  const styles = useStyles2(getStyles);
 
   if (!(item && position)) {
     return null;
@@ -57,7 +57,17 @@ const FlameGraphTooltip = ({ data, item, totalTicks, position, getTheme }: Props
     <Portal>
       <VizTooltipContainer className={styles.tooltipContainer} position={position} offset={{ x: 15, y: 0 }}>
         <div className={styles.tooltipContent}>
-          <p className={styles.tooltipName}>{data.getLabel(item.itemIndexes[0])}</p>
+          <p className={styles.tooltipName}>
+            {data.getLabel(item.itemIndexes[0])}
+            {collapseConfig && collapseConfig.collapsed ? (
+              <span>
+                <br />
+                and {collapseConfig.items.length} similar items
+              </span>
+            ) : (
+              ''
+            )}
+          </p>
           {content}
         </div>
       </VizTooltipContainer>
@@ -183,6 +193,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   tooltipName: css`
     title: tooltipName;
+    margin-top: 0;
     word-break: break-all;
   `,
   lastParagraph: css`
@@ -196,7 +207,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   tooltipTable: css`
     title: tooltipTable;
-    max-width: 300px;
+    max-width: 400px;
   `,
 });
 

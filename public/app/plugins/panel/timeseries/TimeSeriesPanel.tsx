@@ -3,7 +3,8 @@ import React, { useMemo } from 'react';
 import { PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
+import { KeyboardPlugin, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
+import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 
 import { Options } from './panelcfg.gen';
@@ -87,7 +88,7 @@ export const TimeSeriesPanel = ({
         return (
           <>
             <KeyboardPlugin config={config} />
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} withZoomY={true} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
                 frames={frames}

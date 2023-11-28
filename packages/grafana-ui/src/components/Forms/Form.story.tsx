@@ -16,14 +16,13 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 
 import mdx from './Form.mdx';
 
 export default {
   title: 'Forms/Form',
-  decorators: [withStoryContainer, withCenteredStory],
+  decorators: [withStoryContainer],
   parameters: {
     docs: {
       page: mdx,

@@ -1,18 +1,19 @@
-import { List } from 'immutable';
-import { isString } from 'lodash';
-import React from 'react';
 import {
+  AnyObject,
   BasicConfig,
   Config,
-  JsonItem,
   JsonTree,
   Operator,
   Settings,
   SimpleField,
+  SqlFormatOperator,
   Utils,
   ValueSource,
   Widgets,
-} from 'react-awesome-query-builder';
+} from '@react-awesome-query-builder/ui';
+import { List } from 'immutable';
+import { isString } from 'lodash';
+import React from 'react';
 
 import { dateTime, toOption } from '@grafana/data';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
@@ -22,37 +23,13 @@ const buttonLabels = {
   remove: 'Remove',
 };
 
-export const emptyInitValue: JsonItem = {
-  id: Utils.uuid(),
-  type: 'group' as const,
-  children1: {
-    [Utils.uuid()]: {
-      type: 'rule',
-      properties: {
-        field: null,
-        operator: null,
-        value: [],
-        valueSrc: [],
-      },
-    },
-  },
-};
-
 export const emptyInitTree: JsonTree = {
   id: Utils.uuid(),
-  type: 'group' as const,
-  children1: {
-    [Utils.uuid()]: {
-      type: 'rule',
-      properties: {
-        field: null,
-        operator: null,
-        value: [],
-        valueSrc: [],
-      },
-    },
-  },
+  type: 'group',
 };
+
+const TIME_FILTER = 'timeFilter';
+const macros = [TIME_FILTER];
 
 export const widgets: Widgets = {
   ...BasicConfig.widgets,
@@ -84,14 +61,46 @@ export const widgets: Widgets = {
   datetime: {
     ...BasicConfig.widgets.datetime,
     factory: function DateTimeInput(props) {
+      if (props?.operator === Op.MACROS) {
+        return (
+          <Select
+            id={props.id}
+            aria-label="Macros value selector"
+            menuShouldPortal
+            options={macros.map(toOption)}
+            value={props?.value}
+            onChange={(val) => props.setValue(val.value)}
+          />
+        );
+      }
+      const dateValue = dateTime(props?.value).isValid() ? dateTime(props?.value).utc() : undefined;
       return (
         <DateTimePicker
           onChange={(e) => {
             props?.setValue(e.format(BasicConfig.widgets.datetime.valueFormat));
           }}
-          date={dateTime(props?.value).utc()}
+          date={dateValue}
         />
       );
+    },
+    sqlFormatValue: (val, field, widget, operator, operatorDefinition, rightFieldDef) => {
+      if (operator === Op.MACROS) {
+        if (macros.includes(val)) {
+          return val;
+        }
+        return undefined;
+      }
+
+      // This is just satisfying the type checker, this should never happen
+      if (
+        typeof BasicConfig.widgets.datetime.sqlFormatValue === 'string' ||
+        typeof BasicConfig.widgets.datetime.sqlFormatValue === 'object'
+      ) {
+        return undefined;
+      }
+      const func = BasicConfig.widgets.datetime.sqlFormatValue;
+      // We need to pass the ctx to this function this way so *this* is correct
+      return func?.call(BasicConfig.ctx, val, field, widget, operator, operatorDefinition, rightFieldDef) || '';
     },
   },
 };
@@ -171,9 +180,9 @@ export const settings: Settings = {
 const enum Op {
   IN = 'select_any_in',
   NOT_IN = 'select_not_any_in',
+  MACROS = 'macros',
 }
-// eslint-ignore
-const customOperators = getCustomOperators(BasicConfig) as typeof BasicConfig.operators;
+const customOperators = getCustomOperators(BasicConfig);
 const textWidget = BasicConfig.types.text.widgets.text;
 const opers = [...(textWidget.operators || []), Op.IN, Op.NOT_IN];
 const customTextWidget = {
@@ -190,23 +199,46 @@ const customTypes = {
       text: customTextWidget,
     },
   },
+  datetime: {
+    ...BasicConfig.types.datetime,
+    widgets: {
+      ...BasicConfig.types.datetime.widgets,
+      datetime: {
+        ...BasicConfig.types.datetime.widgets.datetime,
+        operators: [Op.MACROS, ...(BasicConfig.types.datetime.widgets.datetime.operators || [])],
+      },
+    },
+  },
 };
 
 export const raqbConfig: Config = {
   ...BasicConfig,
   widgets,
   settings,
-  operators: customOperators as typeof BasicConfig.operators,
+  operators: customOperators,
   types: customTypes,
 };
 
 export type { Config };
 
+const noop = () => '';
+
+const isSqlFormatOp = (func: unknown): func is SqlFormatOperator => {
+  return typeof func === 'function';
+};
+
 function getCustomOperators(config: BasicConfig) {
   const { ...supportedOperators } = config.operators;
-  const noop = () => '';
+
   // IN operator expects array, override IN formatter for multi-value variables
-  const sqlFormatInOp = supportedOperators[Op.IN].sqlFormatOp || noop;
+  const sqlFormatInOpOrNoop = () => {
+    const sqlFormatOp = supportedOperators[Op.IN].sqlFormatOp;
+    if (isSqlFormatOp(sqlFormatOp)) {
+      return sqlFormatOp;
+    }
+    return noop;
+  };
+
   const customSqlInFormatter = (
     field: string,
     op: string,
@@ -214,13 +246,29 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: object,
+    operatorOptions: AnyObject,
     fieldDef: SimpleField
   ) => {
-    return sqlFormatInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
+    return sqlFormatInOpOrNoop()(
+      field,
+      op,
+      splitIfString(value),
+      valueSrc,
+      valueType,
+      opDef,
+      operatorOptions,
+      fieldDef
+    );
   };
   // NOT IN operator expects array, override NOT IN formatter for multi-value variables
-  const sqlFormatNotInOp = supportedOperators[Op.NOT_IN].sqlFormatOp || noop;
+  const sqlFormatNotInOpOrNoop = () => {
+    const sqlFormatOp = supportedOperators[Op.NOT_IN].sqlFormatOp;
+    if (isSqlFormatOp(sqlFormatOp)) {
+      return sqlFormatOp;
+    }
+    return noop;
+  };
+
   const customSqlNotInFormatter = (
     field: string,
     op: string,
@@ -228,10 +276,19 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: object,
+    operatorOptions: AnyObject,
     fieldDef: SimpleField
   ) => {
-    return sqlFormatNotInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
+    return sqlFormatNotInOpOrNoop()(
+      field,
+      op,
+      splitIfString(value),
+      valueSrc,
+      valueType,
+      opDef,
+      operatorOptions,
+      fieldDef
+    );
   };
 
   const customOperators = {
@@ -244,13 +301,21 @@ function getCustomOperators(config: BasicConfig) {
       ...supportedOperators[Op.NOT_IN],
       sqlFormatOp: customSqlNotInFormatter,
     },
+    [Op.MACROS]: {
+      label: 'Macros',
+      sqlFormatOp: (field: string, _operator: string, value: string | List<string>) => {
+        if (value === TIME_FILTER) {
+          return `$__timeFilter(${field})`;
+        }
+        return value;
+      },
+    },
   };
 
   return customOperators;
 }
 
 // value: string | List<string> but AQB uses a different version of Immutable
-// eslint-ignore
 function splitIfString(value: any) {
   if (isString(value)) {
     return value.split(',');
