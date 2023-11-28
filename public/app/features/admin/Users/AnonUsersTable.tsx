@@ -10,11 +10,10 @@ type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO>
 
 // A helper function to parse the user agent string and extract parts
 const parseUserAgent = (userAgent: string) => {
-  const parts = {
+  return {
     browser: userAgent.split(' ')[0],
     computer: userAgent.split(' ')[1],
   };
-  return parts;
 };
 
 // A helper function to truncate each part of the user agent
@@ -29,14 +28,12 @@ interface UserAgentCellProps {
 const UserAgentCell = ({ value }: UserAgentCellProps) => {
   const parts = parseUserAgent(value);
   return (
-    <div>
-      <Tooltip theme="info-alt" content={value} placement="top-end" interactive={true}>
-        <span>
-          {truncatePart(parts.browser, 10)}
-          {truncatePart(parts.computer, 10)}
-        </span>
-      </Tooltip>
-    </div>
+  <Tooltip theme="info-alt" content={value} placement="top-end" interactive={true}>
+    <span>
+      {truncatePart(parts.browser, 10)}
+      {truncatePart(parts.computer, 10)}
+    </span>
+  </Tooltip>
   );
 };
 
