@@ -28,8 +28,8 @@ import { TimePickerSettings } from 'app/features/dashboard/components/DashboardS
 import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
 
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, useDashboardEditPageNav } from './utils';
@@ -47,17 +47,6 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-function getRefreshPickerControl(scene: DashboardScene): SceneRefreshPicker | undefined {
-  if (scene.state.controls?.[0] instanceof DashboardControls) {
-    for (const control of scene.state.controls[0].state.timeControls) {
-      if (control instanceof SceneRefreshPicker) {
-        return control;
-      }
-    }
-  }
-  return;
-}
-
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
@@ -71,7 +60,7 @@ export class GeneralSettingsEditView
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     const { title, description, tags, meta, editable, graphTooltip, overlay } = dashboard.useState();
     const timeRange = sceneGraph.getTimeRange(dashboard);
-    const refreshPicker = getRefreshPickerControl(dashboard);
+    const refreshPicker = dashboardSceneGraph.getRefreshPicker(dashboard);
 
     const onTitleChange = (value: string) => {
       dashboard.setState({ title: value });
@@ -113,7 +102,7 @@ export class GeneralSettingsEditView
     };
 
     const onRefreshIntervalChange = (value: string[]) => {
-      const control = getRefreshPickerControl(dashboard);
+      const control = dashboardSceneGraph.getRefreshPicker(dashboard);
       control?.setState({
         intervals: value,
       });

@@ -1,4 +1,4 @@
-import { SceneTimePicker } from '@grafana/scenes';
+import { SceneTimePicker, SceneRefreshPicker } from '@grafana/scenes';
 
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -17,6 +17,18 @@ function getTimePicker(scene: DashboardScene) {
   return null;
 }
 
+function getRefreshPicker(scene: DashboardScene) {
+  if (scene.state.controls?.[0] instanceof DashboardControls) {
+    for (const control of scene.state.controls[0].state.timeControls) {
+      if (control instanceof SceneRefreshPicker) {
+        return control;
+      }
+    }
+  }
+  return null;
+}
+
 export const dashboardSceneGraph = {
   getTimePicker,
+  getRefreshPicker,
 };
