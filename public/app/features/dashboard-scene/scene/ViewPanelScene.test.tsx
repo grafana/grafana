@@ -1,8 +1,3 @@
-import { of } from 'rxjs';
-
-import { DataQueryRequest, DataSourceApi, PanelData, standardTransformersRegistry } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setDataSourceSrv, setPluginImportUtils } from '@grafana/runtime';
 import {
   LocalValueVariable,
   SceneGridItem,
@@ -11,13 +6,6 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { LoadingState } from '@grafana/schema';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
-import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
-
-import repeatingRowsAndPanelsDashboardJson from '../serialization/testfiles/repeating_rows_and_panels.json';
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
 import { ViewPanelScene } from './ViewPanelScene';
