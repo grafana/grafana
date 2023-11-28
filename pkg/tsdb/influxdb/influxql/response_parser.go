@@ -149,6 +149,10 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 				case "string":
 					value, ok := valuePair[colIdx].(string)
 					if ok {
+						for range floatArray {
+							stringArray = append(stringArray, nil)
+						}
+						floatArray = nil
 						stringArray = append(stringArray, &value)
 					} else {
 						stringArray = append(stringArray, nil)
@@ -159,12 +163,31 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 				case "bool":
 					value, ok := valuePair[colIdx].(bool)
 					if ok {
+						for range floatArray {
+							stringArray = append(stringArray, nil)
+						}
+						floatArray = nil
 						boolArray = append(boolArray, &value)
 					} else {
 						boolArray = append(boolArray, nil)
 					}
 				case "null":
-					floatArray = append(floatArray, nil)
+					if valueField != nil {
+						if valueField != nil {
+							valueFieldType := valueField.Type()
+							switch valueFieldType {
+							case data.FieldTypeNullableString:
+								stringArray = append(stringArray, nil)
+							case data.FieldTypeNullableBool:
+								boolArray = append(boolArray, nil)
+							default:
+								floatArray = append(floatArray, nil)
+							}
+						}
+						valueField.Append(nil)
+					} else {
+						floatArray = append(floatArray, nil)
+					}
 				}
 			}
 
@@ -176,7 +199,9 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 			case "bool":
 				valueField = data.NewField(row.Columns[colIdx], labels, boolArray)
 			case "null":
-				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+				if valueField == nil {
+					valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+				}
 			}
 
 			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: row.Columns[colIdx]})

@@ -55,7 +55,9 @@ var testFiles = []string{
 	"simple_response_with_diverse_data_types",
 	"measurements",
 	"multiple_measurements",
-	// "many_columns", skipped for now
+	"string_column_with_null_value",
+	"string_column_with_null_value2",
+	"many_columns",
 	"response_with_nil_bools_and_nil_strings",
 	"invalid_value_format",
 }
