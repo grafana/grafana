@@ -506,6 +506,19 @@
         },
         "description": "(empty)"
       },
+      "devicesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/deviceDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "folderResponse": {
         "content": {
           "application/json": {
@@ -2185,6 +2198,10 @@
       "AdminStats": {
         "properties": {
           "activeAdmins": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "activeDevices": {
             "format": "int64",
             "type": "integer"
           },
@@ -11572,6 +11589,34 @@
         "required": [
           "status"
         ],
+        "type": "object"
+      },
+      "deviceDTO": {
+        "properties": {
+          "avatarUrl": {
+            "type": "string"
+          },
+          "clientIp": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "gettableAlert": {
@@ -22359,6 +22404,32 @@
         "summary": "Get Snapshot by Key.",
         "tags": [
           "snapshots"
+        ]
+      }
+    },
+    "/stats": {
+      "get": {
+        "operationId": "listDevices",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/devicesResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Lists all devices within the last 30 days",
+        "tags": [
+          "devices"
         ]
       }
     },
