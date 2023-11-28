@@ -28,7 +28,7 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
-import { calculateSparseBucketMinMax, formatMilliseconds, getFieldFromData, getHoverCellColor } from './tooltip/utils';
+import { getSparseCellMinMax, formatMilliseconds, getFieldFromData, getHoverCellColor } from './tooltip/utils';
 
 interface Props {
   dataIdxs: Array<number | null>;
@@ -78,9 +78,9 @@ const HeatmapHoverCell = ({
     () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
   );
 
-  const xField = getFieldFromData(data.heatmap!, 'x', isSparse);
-  const yField = getFieldFromData(data.heatmap!, 'y', isSparse);
-  const countField = getFieldFromData(data.heatmap!, 'count', isSparse);
+  const xField = getFieldFromData(data.heatmap!, 'x', isSparse)!;
+  const yField = getFieldFromData(data.heatmap!, 'y', isSparse)!;
+  const countField = getFieldFromData(data.heatmap!, 'count', isSparse)!;
 
   const xDisp = (v: number) => {
     if (xField?.display) {
@@ -94,9 +94,9 @@ const HeatmapHoverCell = ({
     return `${v}`;
   };
 
-  const xVals = xField?.values;
-  const yVals = yField?.values;
-  const countVals = countField?.values;
+  const xVals = xField.values;
+  const yVals = yField.values;
+  const countVals = countField.values;
 
   // labeled buckets
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
@@ -115,13 +115,7 @@ const HeatmapHoverCell = ({
   let nonNumericOrdinalDisplay: string | undefined = undefined;
 
   if (isSparse) {
-    if (xVals && yVals) {
-      const bucketsMinMax = calculateSparseBucketMinMax(data!, xVals, yVals, index);
-      xBucketMin = bucketsMinMax.xBucketMin;
-      xBucketMax = bucketsMinMax.xBucketMax;
-      yBucketMin = bucketsMinMax.yBucketMin;
-      yBucketMax = bucketsMinMax.yBucketMax;
-    }
+    ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, index));
   } else {
     if (meta.yOrdinalDisplay) {
       const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
@@ -160,10 +154,10 @@ const HeatmapHoverCell = ({
     }
 
     if (data.xLayout === HeatmapCellLayout.le) {
-      xBucketMax = xVals?.[index];
+      xBucketMax = xVals[index];
       xBucketMin = xBucketMax - data.xBucketSize!;
     } else {
-      xBucketMin = xVals?.[index];
+      xBucketMin = xVals[index];
       xBucketMax = xBucketMin + data.xBucketSize!;
     }
   }
@@ -222,7 +216,7 @@ const HeatmapHoverCell = ({
   const getLabelValue = (): LabelValue[] => {
     return [
       {
-        label: getFieldDisplayName(countField!, data.heatmap),
+        label: getFieldDisplayName(countField, data.heatmap),
         value: data.display!(count),
         color: cellColor ?? '#FFF',
         colorIndicator: ColorIndicator.value,

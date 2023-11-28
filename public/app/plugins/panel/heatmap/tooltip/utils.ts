@@ -1,27 +1,6 @@
-import { DataFrame, Field, FieldType, formattedValueToString, getFieldDisplayName } from '@grafana/data';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DisplayValue, getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
+import { DataFrame, Field } from '@grafana/data';
 
 import { HeatmapData } from '../fields';
-
-enum SparseDataFieldNames {
-  y = 'y',
-  yMin = 'yMin',
-  yMax = 'yMax',
-  x = 'x',
-  xMin = 'xMin',
-  xMax = 'xMax',
-  count = 'count',
-  yLayout = 'yLayout',
-  xLayout = 'xLayout',
-}
-
-type BucketSizes = {
-  xBucketCount: number;
-  yBucketCount: number;
-  xBucketSize: number;
-  yBucketSize: number;
-};
 
 type BucketsMinMax = {
   xBucketMin: number;
@@ -71,32 +50,6 @@ export const formatMilliseconds = (milliseconds: number) => {
   return `${value} ${unitString}`;
 };
 
-const parseSparseData = (data?: DataFrame, rowIndex?: number | null, columnIndex?: number | null) => {
-  if (!data || rowIndex == null) {
-    return [];
-  }
-
-  const dispValuesAndLinks = getDisplayValuesAndLinks(data, rowIndex, columnIndex);
-
-  if (dispValuesAndLinks == null) {
-    return [];
-  }
-
-  return dispValuesAndLinks.displayValues;
-};
-
-const getInterval = (fieldValues: any[]) => {
-  const firstValue = fieldValues[0];
-
-  for (let i = 1; i < fieldValues.length; i++) {
-    if (fieldValues[i] !== firstValue) {
-      return fieldValues[i] - firstValue;
-    }
-  }
-
-  return 0;
-};
-
 export const getFieldFromData = (data: DataFrame, fieldType: string, isSparse: boolean) => {
   let field: Field | undefined;
 
@@ -119,66 +72,22 @@ export const getFieldFromData = (data: DataFrame, fieldType: string, isSparse: b
   return field;
 };
 
-// logic copied from public/app/plugins/panel/heatmap/fields.ts#L309
-// renamed vars to match ^
-const inferSparseDataBucketSizes = (data: HeatmapData, xs: any[], ys: any[]): BucketSizes => {
-  const dlen = xs.length;
-
-  const yBinQty = data.yBucketCount ?? dlen - ys.lastIndexOf(ys[0]);
-  const xBinQty = data.xBucketCount ?? dlen / yBinQty;
-  const yBinIncr = data.yBucketSize ?? ys[1] - ys[0];
-  const xBinIncr = data.xBucketSize ?? getInterval(xs);
-
-  return {
-    xBucketCount: xBinQty,
-    yBucketCount: yBinQty,
-    xBucketSize: xBinIncr,
-    yBucketSize: yBinIncr,
-  };
-};
-
-export const calculateSparseBucketMinMax = (
+export const getSparseCellMinMax = (
   data: HeatmapData,
-  xVals: any[],
-  yVals: any[],
   index: number
 ): BucketsMinMax => {
-  const displayValues = parseSparseData(data.heatmap!, index);
+  let fields = data.heatmap!.fields;
 
-  const { xBucketSize, yBucketCount, yBucketSize } = inferSparseDataBucketSizes(data, xVals, yVals);
-  const yValueIndex = index % yBucketCount ?? 0;
+  let xMax = fields.find(f => f.name === 'xMax')!;
+  let yMin = fields.find(f => f.name === 'yMin')!;
+  let yMax = fields.find(f => f.name === 'yMax')!;
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  let xBucketMin: number = displayValues?.find((displayValue) => displayValue.fieldName === SparseDataFieldNames.xMin)
-    ?.value as number;
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  let xBucketMax: number = displayValues?.find((displayValue) => displayValue.fieldName === SparseDataFieldNames.xMax)
-    ?.value as number;
+  let interval = xMax.config.interval!;
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  let yBucketMin: string = displayValues?.find((displayValue) => displayValue.fieldName === SparseDataFieldNames.yMin)
-    ?.value as string;
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  let yBucketMax: string = displayValues?.find((displayValue) => displayValue.fieldName === SparseDataFieldNames.yMax)
-    ?.value as string;
-
-  const fieldNames = ['xMin', 'xMax', 'yMin', 'yMax'];
-  const missing = fieldNames.filter(
-    (fieldName) => !displayValues?.some((displayValue) => displayValue.fieldName === fieldName)
-  );
-
-  missing.map((fieldName) => {
-    if (fieldName === SparseDataFieldNames.xMin) {
-      xBucketMin = xVals?.[index];
-      xBucketMax = xBucketMin + xBucketSize;
-    } else if (fieldName === SparseDataFieldNames.xMax) {
-      xBucketMax = xVals?.[index];
-      xBucketMin = xBucketMax - xBucketSize;
-    } else if (fieldName === SparseDataFieldNames.yMin || SparseDataFieldNames.yMax) {
-      yBucketMin = yVals?.[yValueIndex];
-      yBucketMax = yBucketMin + yBucketSize;
-    }
-  });
-
-  return { xBucketMin, xBucketMax, yBucketMin, yBucketMax };
+  return {
+    xBucketMin: xMax.values[index] - interval,
+    xBucketMax: xMax.values[index],
+    yBucketMin: yMin.values[index],
+    yBucketMax: yMax.values[index],
+  };
 };

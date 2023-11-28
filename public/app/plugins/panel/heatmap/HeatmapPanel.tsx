@@ -31,7 +31,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
-import { HeatmapHoverViewOld } from './HeatmapHoverViewOld';
+import { HeatmapHoverView as HeatmapHoverViewOld } from './HeatmapHoverViewOld';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
 import { Options } from './types';
