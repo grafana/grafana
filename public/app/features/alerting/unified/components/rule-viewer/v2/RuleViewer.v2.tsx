@@ -4,14 +4,13 @@ import React from 'react';
 import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, Button, Dropdown, LinkButton, Menu, Stack, TabContent, Text } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
-import { appEvents, contextSrv } from 'app/core/core';
+import { appEvents } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../../RuleViewer';
-import { useIsRuleEditable } from '../../../hooks/useIsRuleEditable';
-import { getRulesPermissions } from '../../../utils/access-control';
+import { AlertRuleAction, useAlertRuleAbility } from '../../../hooks/useAbilities';
 import { Annotation } from '../../../utils/constants';
 import {
   createShareLink,
@@ -31,7 +30,6 @@ import { Link } from '../../ExternalLink';
 import MoreButton from '../../MoreButton';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
-import { useCanSilence } from '../../rules/RuleDetailsActionButtons';
 import { Details } from '../tabs/Details';
 import { History } from '../tabs/History';
 import { InstancesList } from '../tabs/Instances';
@@ -57,27 +55,27 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
   const { pageNav, activeTab } = usePageNav(rule);
   const [deleteModal, showDeleteModal] = useDeleteModal();
 
-  /**
-   * TODO refactor this, very confusing right now
-   */
-  const { isEditable: allowedToEdit, isRemovable: allowedToRemove } = useIsRuleEditable(
-    identifier.ruleSourceName,
-    rule?.rulerRule
-  );
-  const rulesPermissions = getRulesPermissions(identifier.ruleSourceName);
-  const hasCreateRulePermission = contextSrv.hasPermission(rulesPermissions.create);
-  const canSilence = useCanSilence(rule);
+  const [editSupported, editAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
+  const canEdit = editSupported && editAllowed;
+
+  const [deleteSupported, deleteAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
+  const canDelete = deleteSupported && deleteAllowed;
+
+  const [duplicateSupported, duplicateAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Duplicate);
+  const canDuplicate = duplicateSupported && duplicateAllowed;
+
+  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
+  const canSilence = silenceSupported && silenceAllowed;
+
+  const [exportSupported, exportAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ModifyExport);
+  const canExport = exportSupported && exportAllowed;
 
   const promRule = rule.promRule;
 
   const isAlertType = isAlertingRule(promRule);
-  const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
-
-  const isEditable = allowedToEdit && !isProvisioned && !isFederatedRule;
-  const isRemovable = allowedToRemove && !isProvisioned && !isFederatedRule;
 
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
@@ -102,7 +100,7 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
         return <Title name={title} state={isAlertType ? promRule.state : undefined} />;
       }}
       actions={[
-        isEditable && <EditButton key="edit-action" identifier={identifier} />,
+        canEdit && <EditButton key="edit-action" identifier={identifier} />,
         <Dropdown
           key="more-actions"
           overlay={
@@ -115,21 +113,20 @@ const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
                 />
               )}
               {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
-              {isGrafanaManagedRule && hasCreateRulePermission && !isFederatedRule && (
-                <Menu.Item label="Duplicate" icon="copy" />
-              )}
+              {canDuplicate && <Menu.Item label="Duplicate" icon="copy" />}
               <Menu.Divider />
               <Menu.Item label="Copy link" icon="share-alt" onClick={copyShareUrl} />
-              {/* TODO - RBAC check for these actions! */}
-              <Menu.Item
-                label="Export"
-                icon="download-alt"
-                childItems={[
-                  <Menu.Item key="no-modifications" label="Without modifications" icon="file-blank" />,
-                  <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
-                ]}
-              />
-              {isRemovable && (
+              {canExport && (
+                <Menu.Item
+                  label="Export"
+                  icon="download-alt"
+                  childItems={[
+                    <Menu.Item key="no-modifications" label="Without modifications" icon="file-blank" />,
+                    <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
+                  ]}
+                />
+              )}
+              {canDelete && (
                 <>
                   <Menu.Divider />
                   <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => showDeleteModal(rule)} />
