@@ -11,7 +11,7 @@
   ],
   "includePaths": ["package.json", "packages/**", "public/app/plugins/**"],
   "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**", "packages/grafana-e2e/**"],
-  "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
+  "labels": ["area/frontend", "dependencies", "no-changelog"],
   "postUpdateOptions": ["yarnDedupeHighest"],
   "packageRules": [
     {

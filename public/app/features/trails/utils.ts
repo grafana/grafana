@@ -1,10 +1,11 @@
 import { urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getUrlSyncManager, sceneGraph, SceneObject, SceneTimeRange } from '@grafana/scenes';
+import { getUrlSyncManager, sceneGraph, SceneObject, SceneObjectUrlValues, SceneTimeRange } from '@grafana/scenes';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
+import { TRAILS_ROUTE } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
@@ -25,7 +26,11 @@ export function newMetricsTrail(): DataTrail {
 
 export function getUrlForTrail(trail: DataTrail) {
   const params = getUrlSyncManager().getUrlState(trail);
-  return urlUtil.renderUrl('/data-trails/trail', params);
+  return getUrlForValues(params);
+}
+
+export function getUrlForValues(values: SceneObjectUrlValues) {
+  return urlUtil.renderUrl(TRAILS_ROUTE, values);
 }
 
 export function getMetricSceneFor(model: SceneObject): MetricScene {
