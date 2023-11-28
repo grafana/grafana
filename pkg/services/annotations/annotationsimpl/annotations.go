@@ -39,7 +39,7 @@ func ProvideService(
 	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, l.New("annotations.loki"))
 	if historianStore != nil {
 		l.Debug("Using composite read store")
-		read = NewCompositeStore([]readStore{xormStore, historianStore})
+		read = NewCompositeStore(xormStore, historianStore)
 	} else {
 		l.Debug("Using xorm read store")
 		read = write

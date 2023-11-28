@@ -16,7 +16,7 @@ type CompositeStore struct {
 	readers []readStore
 }
 
-func NewCompositeStore(readers []readStore) *CompositeStore {
+func NewCompositeStore(readers ...readStore) *CompositeStore {
 	return &CompositeStore{
 		readers: readers,
 	}
