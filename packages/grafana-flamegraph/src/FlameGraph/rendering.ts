@@ -192,8 +192,8 @@ function useRenderFunc(
         finalLabel = `(${numberOfCollapsedItems}) ` + label;
       }
 
-      if (collapsedItemConfig) {
-        if (width >= LABEL_THRESHOLD) {
+      if (width >= LABEL_THRESHOLD) {
+        if (collapsedItemConfig) {
           renderLabel(
             ctx,
             data,
@@ -206,9 +206,7 @@ function useRenderFunc(
           );
 
           renderGroupingStrip(ctx, x, y, height, item, collapsedItemConfig);
-        }
-      } else {
-        if (width >= LABEL_THRESHOLD) {
+        } else {
           renderLabel(ctx, data, finalLabel, item, width, x, y, textAlign);
         }
       }
