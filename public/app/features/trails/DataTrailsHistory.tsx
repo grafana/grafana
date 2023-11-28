@@ -6,10 +6,10 @@ import {
   SceneObjectState,
   SceneObjectBase,
   SceneComponentProps,
-  sceneUtils,
   SceneVariableValueChangedEvent,
   SceneObjectStateChangedEvent,
   SceneTimeRange,
+  sceneUtils,
 } from '@grafana/scenes';
 import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
