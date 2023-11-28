@@ -324,8 +324,8 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
     const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
 
-    if (!isLeftPane && isCorrelationsEditorMode && !correlationDetails?.dirty) {
-      dispatch(changeCorrelationEditorDetails({ dirty: true }));
+    if (!isLeftPane && isCorrelationsEditorMode && !correlationDetails?.queryEditorDirty) {
+      dispatch(changeCorrelationEditorDetails({ queryEditorDirty: true }));
     }
 
     for (const newQuery of queries) {
@@ -497,6 +497,8 @@ interface RunQueriesOptions {
 export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   'explore/runQueries',
   async ({ exploreId, preserveCache }, { dispatch, getState }) => {
+    dispatch(cancelQueries(exploreId));
+
     dispatch(updateTime({ exploreId }));
 
     const correlations$ = getCorrelations(exploreId);
@@ -954,10 +956,15 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     return {
       ...state,
-      queryResponse: {
-        ...state.queryResponse,
-        state: LoadingState.Done,
-      },
+      // mark existing request as done (may be incomplete)
+      ...(state.queryResponse
+        ? {
+            queryResponse: {
+              ...state.queryResponse,
+              state: LoadingState.Done,
+            },
+          }
+        : {}),
     };
   }
 

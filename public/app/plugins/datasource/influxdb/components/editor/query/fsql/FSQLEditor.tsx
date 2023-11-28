@@ -25,39 +25,43 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
     super(props);
     const { datasource: influxDatasource } = props;
 
-    this.datasource = new FlightSQLDatasource({
-      url: influxDatasource.urls[0],
-      access: influxDatasource.access,
-      id: influxDatasource.id,
-
-      jsonData: {
-        // Not applicable to flightSQL? @itsmylife
-        allowCleartextPasswords: false,
-        tlsAuth: false,
-        tlsAuthWithCACert: false,
-        tlsSkipVerify: false,
-        maxIdleConns: 1,
-        maxOpenConns: 1,
-        maxIdleConnsAuto: true,
-        connMaxLifetime: 1,
-        timezone: '',
-        user: '',
-        database: '',
+    this.datasource = new FlightSQLDatasource(
+      {
         url: influxDatasource.urls[0],
-        timeInterval: '',
+        access: influxDatasource.access,
+        id: influxDatasource.id,
+
+        jsonData: {
+          // TODO Clean this
+          allowCleartextPasswords: false,
+          tlsAuth: false,
+          tlsAuthWithCACert: false,
+          tlsSkipVerify: false,
+          maxIdleConns: 1,
+          maxOpenConns: 1,
+          maxIdleConnsAuto: true,
+          connMaxLifetime: 1,
+          timezone: '',
+          user: '',
+          database: '',
+          url: influxDatasource.urls[0],
+          timeInterval: '',
+        },
+        meta: influxDatasource.meta,
+        name: influxDatasource.name,
+        readOnly: false,
+        type: influxDatasource.type,
+        uid: influxDatasource.uid,
       },
-      meta: influxDatasource.meta,
-      name: influxDatasource.name,
-      readOnly: false,
-      type: influxDatasource.type,
-      uid: influxDatasource.uid,
-    });
+      influxDatasource.templateSrv
+    );
   }
 
   transformQuery(query: InfluxQuery & SQLQuery): SQLQuery {
     const defaultQuery = applyQueryDefaults(query);
     return {
       ...defaultQuery,
+      dataset: 'iox',
       sql: {
         ...defaultQuery.sql,
         limit: undefined,
@@ -95,6 +99,7 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
           query={this.transformQuery(query)}
           onRunQuery={onRunSQLQuery}
           onChange={onSQLChange}
+          queryHeaderProps={{ dialect: 'influx' }}
         />
         <div className={cx('gf-form-inline', styles.editorActions)}>
           <LinkButton

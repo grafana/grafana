@@ -5,6 +5,7 @@ import 'regenerator-runtime/runtime';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
+import 'vendor/bootstrap/bootstrap';
 
 import 'app/features/all';
 
@@ -325,6 +326,7 @@ function initEchoSrv() {
         user: config.bootData.user,
         sdkUrl: config.rudderstackSdkUrl,
         configUrl: config.rudderstackConfigUrl,
+        integrationsUrl: config.rudderstackIntegrationsUrl,
         buildInfo: config.buildInfo,
       })
     );

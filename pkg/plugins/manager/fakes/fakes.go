@@ -204,6 +204,7 @@ type FakePluginRepo struct {
 	GetPluginArchiveFunc      func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveByURLFunc func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveInfoFunc  func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error)
+	PluginVersionFunc         func(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error)
 }
 
 // GetPluginArchive fetches the requested plugin archive.
@@ -230,6 +231,13 @@ func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, ver
 		return r.GetPluginArchiveInfoFunc(ctx, pluginID, version, opts)
 	}
 	return &repo.PluginArchiveInfo{}, nil
+}
+
+func (r *FakePluginRepo) PluginVersion(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error) {
+	if r.PluginVersionFunc != nil {
+		return r.PluginVersionFunc(pluginID, version, compatOpts)
+	}
+	return repo.VersionData{}, nil
 }
 
 type FakePluginStorage struct {
@@ -429,8 +437,16 @@ type FakeAuthService struct {
 	Result *auth.ExternalService
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
+func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID string) (bool, error) {
+	return f.Result != nil, nil
+}
+
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
 	return f.Result, nil
+}
+
+func (f *FakeAuthService) RemoveExternalService(ctx context.Context, pluginID string) error {
+	return nil
 }
 
 type FakeDiscoverer struct {
@@ -578,6 +594,6 @@ func (f *FakeFeatureToggles) GetEnabled(_ context.Context) map[string]bool {
 	return f.features
 }
 
-func (f *FakeFeatureToggles) IsEnabled(feature string) bool {
+func (f *FakeFeatureToggles) IsEnabledGlobally(feature string) bool {
 	return f.features[feature]
 }

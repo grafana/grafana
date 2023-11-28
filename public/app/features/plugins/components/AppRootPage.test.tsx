@@ -102,6 +102,13 @@ describe('AppRootPage', () => {
     enabled: true,
   });
 
+  it("should show a not found page if the plugin settings can't load", async () => {
+    getPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
+    // Renders once for the first time
+    await renderUnderRouter();
+    expect(await screen.findByText('App not found')).toBeVisible();
+  });
+
   it('should not render the component if we are not under a plugin path', async () => {
     getPluginSettingsMock.mockResolvedValue(pluginMeta);
 

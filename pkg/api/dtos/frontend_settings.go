@@ -62,6 +62,10 @@ type FrontendSettingsReportingDTO struct {
 	Enabled bool `json:"enabled"`
 }
 
+type FrontendSettingsAnalyticsDTO struct {
+	Enabled bool `json:"enabled"`
+}
+
 type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval              string `json:"minInterval"`
 	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
@@ -156,10 +160,11 @@ type FrontendSettingsDTO struct {
 	GoogleAnalytics4Id                  string `json:"googleAnalytics4Id"`
 	GoogleAnalytics4SendManualPageViews bool   `json:"GoogleAnalytics4SendManualPageViews"`
 
-	RudderstackWriteKey     string `json:"rudderstackWriteKey"`
-	RudderstackDataPlaneUrl string `json:"rudderstackDataPlaneUrl"`
-	RudderstackSdkUrl       string `json:"rudderstackSdkUrl"`
-	RudderstackConfigUrl    string `json:"rudderstackConfigUrl"`
+	RudderstackWriteKey        string `json:"rudderstackWriteKey"`
+	RudderstackDataPlaneUrl    string `json:"rudderstackDataPlaneUrl"`
+	RudderstackSdkUrl          string `json:"rudderstackSdkUrl"`
+	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
+	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 
 	FeedbackLinksEnabled                bool     `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString string   `json:"applicationInsightsConnectionString"`
@@ -208,6 +213,7 @@ type FrontendSettingsDTO struct {
 	Caching                 FrontendSettingsCachingDTO         `json:"caching"`
 	RecordedQueries         FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`
 	Reporting               FrontendSettingsReportingDTO       `json:"reporting"`
+	Analytics               FrontendSettingsAnalyticsDTO       `json:"analytics"`
 	UnifiedAlertingEnabled  bool                               `json:"unifiedAlertingEnabled"`
 	UnifiedAlerting         FrontendSettingsUnifiedAlertingDTO `json:"unifiedAlerting"`
 	Oauth                   map[string]any                     `json:"oauth"`
@@ -223,6 +229,9 @@ type FrontendSettingsDTO struct {
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 
 	LoginError string `json:"loginError,omitempty"`
+
+	// The K8s namespace to use for this user
+	Namespace string `json:"namespace,omitempty"`
 
 	PluginsCDNBaseURL string `json:"pluginsCDNBaseURL,omitempty"`
 

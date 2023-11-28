@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+var logger = backend.NewLoggerWith("logger", "tsdb.tempo")
+
 // This function creates a new gRPC client to connect to a streaming query service.
 // It starts by parsing the URL from the data source settings and extracting the host, since that's what the gRPC connection expects.
 // If the URL does not contain a port number, it adds a default port based on the scheme (80 for HTTP and 443 for HTTPS).
@@ -24,6 +26,7 @@ import (
 func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {
+		logger.Error("Error parsing URL for gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
 		return nil, err
 	}
 
@@ -48,8 +51,10 @@ func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.
 
 	clientConn, err := grpc.Dial(onlyHost, dialOps...)
 	if err != nil {
+		logger.Error("Error dialing gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
 		return nil, err
 	}
+
 	return tempopb.NewStreamingQuerierClient(clientConn), nil
 }
 

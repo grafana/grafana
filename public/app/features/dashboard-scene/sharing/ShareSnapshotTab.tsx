@@ -2,12 +2,11 @@ import React from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { trackDashboardSharingActionPerType } from 'app/features/dashboard/components/ShareModal/analytics';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
@@ -15,33 +14,30 @@ import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serializ
 import { SceneShareTabState } from './types';
 
 const SNAPSHOTS_API_ENDPOINT = '/api/snapshots';
-const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
-  label: t('share-modal.snapshot.expire-never', `Never`),
-  value: 0,
+
+const getExpireOptions = () => {
+  const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
+    label: t('share-modal.snapshot.expire-never', `Never`),
+    value: 0,
+  };
+
+  return [
+    DEFAULT_EXPIRE_OPTION,
+    {
+      label: t('share-modal.snapshot.expire-hour', '1 Hour'),
+      value: 60 * 60,
+    },
+    {
+      label: t('share-modal.snapshot.expire-day', '1 Day'),
+      value: 60 * 60 * 24,
+    },
+    {
+      label: t('share-modal.snapshot.expire-week', '7 Days'),
+      value: 60 * 60 * 24 * 7,
+    },
+  ];
 };
 
-const EXPIRE_OPTIONS = [
-  DEFAULT_EXPIRE_OPTION,
-  {
-    label: t('share-modal.snapshot.expire-hour', `1 Hour`),
-    value: 60 * 60,
-  },
-  {
-    label: t('share-modal.snapshot.expire-day', `1 Day`),
-    value: 60 * 60 * 24,
-  },
-  {
-    label: t('share-modal.snapshot.expire-week', `7 Days`),
-    value: 60 * 60 * 24 * 7,
-  },
-];
-
-type SnapshotSharingOptions = {
-  externalEnabled: boolean;
-  externalSnapshotName: string;
-  externalSnapshotURL: string;
-  snapshotEnabled: boolean;
-};
 export interface ShareSnapshotTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -52,13 +48,14 @@ export interface ShareSnapshotTabState extends SceneShareTabState {
 }
 
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
+  public tabId = 'Snapshot';
   static Component = ShareSnapshoTabRenderer;
 
   public constructor(state: ShareSnapshotTabState) {
     super({
       ...state,
       snapshotName: state.dashboardRef.resolve().state.title,
-      selectedExpireOption: DEFAULT_EXPIRE_OPTION,
+      selectedExpireOption: getExpireOptions()[0],
     });
 
     this.addActivationHandler(() => {
@@ -67,9 +64,9 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
   }
 
   private _onActivate() {
-    getBackendSrv()
-      .get('/api/snapshot/shared-options')
-      .then((shareOptions: SnapshotSharingOptions) => {
+    getDashboardSnapshotSrv()
+      .getSharingOptions()
+      .then((shareOptions) => {
         if (this.isActive) {
           this.setState({
             snapshotSharingOptions: shareOptions,
@@ -88,7 +85,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
 
   public onExpireChange = (option: number) => {
     this.setState({
-      selectedExpireOption: EXPIRE_OPTIONS.find((o) => o.value === option),
+      selectedExpireOption: getExpireOptions().find((o) => o.value === option),
     });
   };
 
@@ -125,7 +122,15 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
       const results: { deleteUrl: string; url: string } = await getBackendSrv().post(SNAPSHOTS_API_ENDPOINT, cmdData);
       return results;
     } finally {
-      trackDashboardSharingActionPerType(external ? 'publish_snapshot' : 'local_snapshot', shareDashboardType.snapshot);
+      if (external) {
+        reportInteraction('dashboards_sharing_snapshot_publish_clicked', {
+          expires: cmdData.expires,
+        });
+      } else {
+        reportInteraction('dashboards_sharing_snapshot_local_clicked', {
+          expires: cmdData.expires,
+        });
+      }
     }
   };
 }
@@ -184,7 +189,7 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
           <Field label={t('share-modal.snapshot.expire', `Expire`)}>
             <RadioButtonGroup<number>
               id="expire-select-input"
-              options={EXPIRE_OPTIONS}
+              options={getExpireOptions()}
               value={selectedExpireOption?.value}
               onChange={model.onExpireChange}
             />

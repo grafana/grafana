@@ -62,7 +62,7 @@ exports[`transformSceneToSaveModel Annotations should transform annotations to s
 ]
 `;
 
-exports[`transformSceneToSaveModel Given a scene with rows Should transform back to peristed model 1`] = `
+exports[`transformSceneToSaveModel Given a scene with rows Should transform back to persisted model 1`] = `
 {
   "annotations": {
     "list": [
@@ -123,11 +123,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
         "mode": "markdown",
       },
-      "targets": [
-        {
-          "refId": "A",
-        },
-      ],
       "title": "",
       "transformations": [],
       "transparent": false,
@@ -180,6 +175,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
             "mode": "markdown",
           },
+          "title": "Text panel in collapsed row",
           "transformations": [],
           "transparent": false,
           "type": "text",
@@ -242,7 +238,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 }
 `;
 
-exports[`transformSceneToSaveModel Given a simple scene Should transform back to peristed model 1`] = `
+exports[`transformSceneToSaveModel Given a simple scene with variables Should transform back to persisted model 1`] = `
 {
   "annotations": {
     "list": [
@@ -433,11 +429,6 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
         "content": "content",
         "mode": "markdown",
       },
-      "targets": [
-        {
-          "refId": "A",
-        },
-      ],
       "title": "Transparent text panel",
       "transformations": [],
       "transparent": true,
@@ -448,6 +439,76 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
   "tags": [],
   "templating": {
     "list": [
+      {
+        "auto": true,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "text": "1m",
+          "value": "1m",
+        },
+        "hide": 2,
+        "name": "intervalVar",
+        "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "refresh": 2,
+        "type": "interval",
+      },
+      {
+        "current": {
+          "text": [
+            "a",
+          ],
+          "value": [
+            "a",
+          ],
+        },
+        "includeAll": true,
+        "multi": true,
+        "name": "customVar",
+        "options": [],
+        "query": "a, b, c",
+        "type": "custom",
+      },
+      {
+        "current": {
+          "text": "gdev-testdata",
+          "value": "PD8C576611E62080A",
+        },
+        "includeAll": false,
+        "name": "dsVar",
+        "options": [],
+        "query": "grafana-testdata-datasource",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource",
+      },
+      {
+        "current": {
+          "text": "A",
+          "value": "A",
+        },
+        "includeAll": false,
+        "name": "query0",
+        "options": [],
+        "query": {
+          "query": "*",
+          "refId": "StandardVariableQuery",
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query",
+      },
+      {
+        "current": {
+          "text": "test",
+          "value": "test",
+        },
+        "hide": 2,
+        "name": "constant",
+        "query": "test",
+        "skipUrlSync": true,
+        "type": "constant",
+      },
       {
         "datasource": {
           "type": "prometheus",

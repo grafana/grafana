@@ -1,14 +1,15 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Button, Icon, useStyles2, Text } from '@grafana/ui';
+import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
+import { useStyles2, Text, IconButton, Icon } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Indent } from '../../Indent/Indent';
 
 import { FeatureHighlight } from './FeatureHighlight';
-import { MegaMenuItemIcon } from './MegaMenuItemIcon';
 import { MegaMenuItemText } from './MegaMenuItemText';
 import { hasChildMatch } from './utils';
 
@@ -19,54 +20,91 @@ interface Props {
   level?: number;
 }
 
-// max level depth to render
 const MAX_DEPTH = 2;
 
 export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
-  const styles = useStyles2(getStyles);
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
+  const menuIsDocked = state.megaMenu === 'docked';
+  const location = useLocation();
   const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
-  const isActive = link === activeItem;
   const hasActiveChild = hasChildMatch(link, activeItem);
-  const [sectionExpanded, setSectionExpanded] =
-    useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
-  const showExpandButton = level < MAX_DEPTH && (linkHasChildren(link) || link.emptyMessage);
+  const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
+  const [sectionExpanded, setSectionExpanded] = useLocalStorage(
+    `grafana.navigation.expanded[${link.text}]`,
+    Boolean(hasActiveChild)
+  );
+  const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
+  const item = useRef<HTMLLIElement>(null);
+
+  const styles = useStyles2(getStyles);
+
+  // expand parent sections if child is active
+  useEffect(() => {
+    if (hasActiveChild) {
+      setSectionExpanded(true);
+    }
+  }, [hasActiveChild, location, menuIsDocked, setSectionExpanded]);
+
+  // scroll active element into center if it's offscreen
+  useEffect(() => {
+    if (menuIsDocked && isActive && item.current && isElementOffscreen(item.current)) {
+      item.current.scrollIntoView({
+        block: 'center',
+      });
+    }
+  }, [isActive, menuIsDocked]);
+
+  if (!link.url) {
+    return null;
+  }
 
   return (
-    <li className={styles.listItem}>
-      <div className={styles.collapsibleSectionWrapper}>
-        <MegaMenuItemText
-          isActive={isActive}
-          onClick={() => {
-            link.onClick?.();
-            onClick?.();
-          }}
-          target={link.target}
-          url={link.url}
-        >
-          <div
-            className={cx(styles.labelWrapper, {
-              [styles.isActive]: isActive,
-              [styles.hasActiveChild]: hasActiveChild,
-            })}
+    <li ref={item} className={styles.listItem}>
+      <div
+        className={cx(styles.menuItem, {
+          [styles.menuItemWithIcon]: Boolean(level === 0 && link.icon),
+        })}
+      >
+        {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
+        {level === MAX_DEPTH && <div className={styles.itemConnector} />}
+        <div className={styles.collapseButtonWrapper}>
+          {showExpandButton && (
+            <IconButton
+              aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+              className={styles.collapseButton}
+              onClick={() => setSectionExpanded(!sectionExpanded)}
+              name={sectionExpanded ? 'angle-down' : 'angle-right'}
+              size="md"
+              variant="secondary"
+            />
+          )}
+        </div>
+        <div className={styles.collapsibleSectionWrapper}>
+          <MegaMenuItemText
+            isActive={isActive}
+            onClick={() => {
+              link.onClick?.();
+              onClick?.();
+            }}
+            target={link.target}
+            url={link.url}
           >
-            <FeatureHighlightWrapper>
-              <div className={styles.iconWrapper}>{level === 0 && <MegaMenuItemIcon link={link} />}</div>
-            </FeatureHighlightWrapper>
-            <Indent level={Math.max(0, level - 1)} spacing={2} />
-            <Text truncate>{link.text}</Text>
-          </div>
-        </MegaMenuItemText>
-        {showExpandButton && (
-          <Button
-            aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
-            variant="secondary"
-            fill="text"
-            className={styles.collapseButton}
-            onClick={() => setSectionExpanded(!sectionExpanded)}
-          >
-            <Icon name={sectionExpanded ? 'angle-up' : 'angle-down'} size="xl" />
-          </Button>
-        )}
+            <div
+              className={cx(styles.labelWrapper, {
+                [styles.hasActiveChild]: hasActiveChild,
+                [styles.labelWrapperWithIcon]: Boolean(level === 0 && link.icon),
+              })}
+            >
+              {level === 0 && link.icon && (
+                <FeatureHighlightWrapper>
+                  <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />
+                </FeatureHighlightWrapper>
+              )}
+              <Text truncate>{link.text}</Text>
+            </div>
+          </MegaMenuItemText>
+        </div>
       </div>
       {showExpandButton && sectionExpanded && (
         <ul className={styles.children}>
@@ -92,62 +130,83 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  children: css({
+  icon: css({
+    width: theme.spacing(3),
+  }),
+  listItem: css({
+    flex: 1,
+    maxWidth: '100%',
+  }),
+  menuItem: css({
     display: 'flex',
-    listStyleType: 'none',
-    flexDirection: 'column',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    height: theme.spacing(4),
+    paddingLeft: theme.spacing(0.5),
+    position: 'relative',
+  }),
+  menuItemWithIcon: css({
+    paddingLeft: theme.spacing(0),
+  }),
+  collapseButtonWrapper: css({
+    display: 'flex',
+    justifyContent: 'center',
+    width: theme.spacing(3),
+    flexShrink: 0,
+  }),
+  itemConnector: css({
+    position: 'relative',
+    height: '100%',
+    width: theme.spacing(1.5),
+    '&::before': {
+      borderLeft: `1px solid ${theme.colors.border.medium}`,
+      content: '""',
+      height: '100%',
+      right: 0,
+      position: 'absolute',
+      transform: 'translateX(50%)',
+    },
+  }),
+  collapseButton: css({
+    margin: 0,
   }),
   collapsibleSectionWrapper: css({
     alignItems: 'center',
     display: 'flex',
+    flex: 1,
+    height: '100%',
+    minWidth: 0,
   }),
-  collapseButton: css({
-    color: theme.colors.text.disabled,
-    padding: theme.spacing(0, 0.5),
-    marginRight: theme.spacing(1),
+  labelWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    minWidth: 0,
+    paddingLeft: theme.spacing(1),
+  }),
+  labelWrapperWithIcon: css({
+    paddingLeft: theme.spacing(0.5),
+  }),
+  hasActiveChild: css({
+    color: theme.colors.text.primary,
+  }),
+  children: css({
+    display: 'flex',
+    listStyleType: 'none',
+    flexDirection: 'column',
   }),
   emptyMessage: css({
     color: theme.colors.text.secondary,
     fontStyle: 'italic',
     padding: theme.spacing(1, 1.5, 1, 7),
   }),
-  iconWrapper: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }),
-  labelWrapper: css({
-    display: 'grid',
-    fontSize: theme.typography.pxToRem(14),
-    gridAutoFlow: 'column',
-    gridTemplateColumns: `${theme.spacing(7)} auto`,
-    alignItems: 'center',
-    fontWeight: theme.typography.fontWeightMedium,
-  }),
-  listItem: css({
-    flex: 1,
-  }),
-  isActive: css({
-    color: theme.colors.text.primary,
-
-    '&::before': {
-      display: 'block',
-      content: '" "',
-      height: theme.spacing(3),
-      position: 'absolute',
-      left: theme.spacing(1),
-      top: '50%',
-      transform: 'translateY(-50%)',
-      width: theme.spacing(0.5),
-      borderRadius: theme.shape.radius.default,
-      backgroundImage: theme.colors.gradients.brandVertical,
-    },
-  }),
-  hasActiveChild: css({
-    color: theme.colors.text.primary,
-  }),
 });
 
 function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
   return Boolean(link.children && link.children.length > 0);
+}
+
+function isElementOffscreen(element: HTMLElement) {
+  const rect = element.getBoundingClientRect();
+  return rect.bottom < 0 || rect.top >= window.innerHeight;
 }

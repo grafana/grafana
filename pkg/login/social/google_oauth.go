@@ -5,18 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
-	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const legacyAPIURL = "https://www.googleapis.com/oauth2/v1/userinfo"
-const googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
-const googleIAMScope = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
+const (
+	legacyAPIURL            = "https://www.googleapis.com/oauth2/v1/userinfo"
+	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
+	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
+	googleProviderName      = "google"
+)
 
 type SocialGoogle struct {
 	*SocialBase
@@ -31,6 +34,29 @@ type googleUserData struct {
 	Name          string `json:"name"`
 	EmailVerified bool   `json:"email_verified"`
 	rawJSON       []byte `json:"-"`
+}
+
+func NewGoogleProvider(settings map[string]any, cfg *setting.Cfg, features *featuremgmt.FeatureManager) (*SocialGoogle, error) {
+	info, err := createOAuthInfoFromKeyValues(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	config := createOAuthConfig(info, cfg, googleProviderName)
+	provider := &SocialGoogle{
+		SocialBase:      newSocialBase(googleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+		hostedDomain:    info.HostedDomain,
+		apiUrl:          info.ApiUrl,
+		skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
+		// FIXME: Move skipOrgRoleSync to OAuthInfo
+		// skipOrgRoleSync: info.SkipOrgRoleSync
+	}
+
+	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
+		provider.log.Warn("Using legacy Google API URL, please update your configuration")
+	}
+
+	return provider, nil
 }
 
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -92,6 +118,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
+func (s *SocialGoogle) GetOAuthInfo() *OAuthInfo {
+	return s.info
+}
+
 type googleAPIData struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`
@@ -134,7 +164,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	if s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)

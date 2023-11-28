@@ -53,6 +53,16 @@ export type Props = {
    * If true the flamegraph will be rendered on top of the table.
    */
   vertical?: boolean;
+
+  /**
+   * If true only the flamegraph will be rendered.
+   */
+  showFlameGraphOnly?: boolean;
+
+  /**
+   * Disable behaviour where similar items in the same stack will be collapsed into single item.
+   */
+  disableCollapsing?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -65,6 +75,8 @@ const FlameGraphContainer = ({
   stickyHeader,
   extraHeaderElements,
   vertical,
+  showFlameGraphOnly,
+  disableCollapsing,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -83,9 +95,8 @@ const FlameGraphContainer = ({
     if (!data) {
       return;
     }
-    return new FlameGraphDataContainer(data, theme);
-  }, [data, theme]);
-
+    return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
+  }, [data, theme, disableCollapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme, vertical);
 
@@ -138,39 +149,41 @@ const FlameGraphContainer = ({
     // isn't already provided.
     <ThemeContext.Provider value={theme}>
       <div ref={sizeRef} className={styles.container}>
-        <FlameGraphHeader
-          search={search}
-          setSearch={setSearch}
-          selectedView={selectedView}
-          setSelectedView={(view) => {
-            setSelectedView(view);
-            onViewSelected?.(view);
-          }}
-          containerWidth={containerWidth}
-          onReset={() => {
-            resetFocus();
-            resetSandwich();
-          }}
-          textAlign={textAlign}
-          onTextAlignChange={(align) => {
-            setTextAlign(align);
-            onTextAlignSelected?.(align);
-          }}
-          showResetButton={Boolean(focusedItemData || sandwichItem)}
-          colorScheme={colorScheme}
-          onColorSchemeChange={setColorScheme}
-          stickyHeader={Boolean(stickyHeader)}
-          extraHeaderElements={extraHeaderElements}
-          vertical={vertical}
-          isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
-        />
+        {!showFlameGraphOnly && (
+          <FlameGraphHeader
+            search={search}
+            setSearch={setSearch}
+            selectedView={selectedView}
+            setSelectedView={(view) => {
+              setSelectedView(view);
+              onViewSelected?.(view);
+            }}
+            containerWidth={containerWidth}
+            onReset={() => {
+              resetFocus();
+              resetSandwich();
+            }}
+            textAlign={textAlign}
+            onTextAlignChange={(align) => {
+              setTextAlign(align);
+              onTextAlignSelected?.(align);
+            }}
+            showResetButton={Boolean(focusedItemData || sandwichItem)}
+            colorScheme={colorScheme}
+            onColorSchemeChange={setColorScheme}
+            stickyHeader={Boolean(stickyHeader)}
+            extraHeaderElements={extraHeaderElements}
+            vertical={vertical}
+            isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
+          />
+        )}
 
         <div className={styles.body}>
-          {selectedView !== SelectedView.FlameGraph && (
+          {!showFlameGraphOnly && selectedView !== SelectedView.FlameGraph && (
             <FlameGraphTopTableContainer
               data={dataContainer}
               onSymbolClick={onSymbolClick}
-              height={selectedView === SelectedView.TopTable ? 600 : undefined}
+              height={selectedView === SelectedView.TopTable || vertical ? 600 : undefined}
               search={search}
               sandwichItem={sandwichItem}
               onSandwich={setSandwichItem}
@@ -199,6 +212,8 @@ const FlameGraphContainer = ({
               onFocusPillClick={resetFocus}
               onSandwichPillClick={resetSandwich}
               colorScheme={colorScheme}
+              showFlameGraphOnly={showFlameGraphOnly}
+              collapsing={!disableCollapsing}
             />
           )}
         </div>
@@ -224,7 +239,7 @@ function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
     container: css({
       label: 'container',
       height: '100%',
-      display: 'flex',
+      display: vertical ? 'block' : 'flex',
       flex: '1 1 0',
       flexDirection: 'column',
       minHeight: 0,
@@ -235,6 +250,7 @@ function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
       display: 'flex',
       flexGrow: 1,
       minHeight: 0,
+      height: vertical ? undefined : '100vh',
       flexDirection: vertical ? 'column-reverse' : 'row',
       columnGap: theme.spacing(1),
     }),

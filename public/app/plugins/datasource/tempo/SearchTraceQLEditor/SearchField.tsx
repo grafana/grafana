@@ -88,7 +88,12 @@ const SearchField = ({
   }
 
   useEffect(() => {
-    if (Array.isArray(filter.value) && filter.value.length > 1 && filter.operator !== '=~') {
+    if (
+      Array.isArray(filter.value) &&
+      filter.value.length > 1 &&
+      filter.operator !== '=~' &&
+      filter.operator !== '!~'
+    ) {
       setPrevOperator(filter.operator);
       updateFilter({ ...filter, operator: '=~' });
     }

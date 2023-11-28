@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "10.2.0-pre",
+  "version": "10.3.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -37,10 +37,10 @@
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@grafana/data": "10.2.0-pre",
-    "@grafana/e2e-selectors": "10.2.0-pre",
+    "@grafana/data": "10.3.0-pre",
+    "@grafana/e2e-selectors": "10.3.0-pre",
     "@grafana/faro-web-sdk": "1.2.1",
-    "@grafana/ui": "10.2.0-pre",
+    "@grafana/ui": "10.3.0-pre",
     "history": "4.10.1",
     "lodash": "4.17.21",
     "rxjs": "7.8.1",
@@ -73,7 +73,7 @@
     "rollup-plugin-node-externals": "^5.0.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.8.4"
+    "typescript": "5.2.2"
   },
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",

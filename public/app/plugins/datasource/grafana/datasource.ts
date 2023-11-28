@@ -60,7 +60,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
             datasource = ref;
           }
         } else {
-          datasource = anno.datasource as DataSourceRef;
+          datasource = anno.datasource;
         }
 
         // Filter from streaming query conflicts with filter from annotations
@@ -170,7 +170,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     return of(); // nothing
   }
 
-  listFiles(path: string): Observable<DataFrameView<FileElement>> {
+  listFiles(path: string, maxDataPoints?: number): Observable<DataFrameView<FileElement>> {
     return this.query({
       targets: [
         {
@@ -179,6 +179,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
           path,
         },
       ],
+      maxDataPoints,
     } as any).pipe(
       map((v) => {
         const frame = v.data[0] ?? new MutableDataFrame();
@@ -187,7 +188,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     );
   }
 
-  metricFindQuery(options: any) {
+  metricFindQuery() {
     return Promise.resolve([]);
   }
 
@@ -231,7 +232,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       const delimiter = '__delimiter__';
       const tags = [];
       for (const t of params.tags) {
-        const renderedValues = templateSrv.replace(t, {}, (value: any) => {
+        const renderedValues = templateSrv.replace(t, {}, (value: string | string[]) => {
           if (typeof value === 'string') {
             return value;
           }

@@ -2,15 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
+import { llms } from '@grafana/experimental';
 import { logError } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { openai } from './llms';
-import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
+import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
-type Message = openai.Message;
+type Message = llms.openai.Message;
 
 export enum StreamStatus {
   IDLE = 'idle',
@@ -22,10 +22,12 @@ export const TIMEOUT = 10000;
 
 // TODO: Add tests
 export function useOpenAIStream(
-  model = OPEN_AI_MODEL,
+  model = DEFAULT_OAI_MODEL,
   temperature = 1
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  setStopGeneration: React.Dispatch<React.SetStateAction<boolean>>;
+  messages: Message[];
   reply: string;
   streamStatus: StreamStatus;
   error: Error | undefined;
@@ -42,6 +44,7 @@ export function useOpenAIStream(
 } {
   // The messages array to send to the LLM, updated when the button is clicked.
   const [messages, setMessages] = useState<Message[]>([]);
+  const [stopGeneration, setStopGeneration] = useState(false);
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
   const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
@@ -52,6 +55,7 @@ export function useOpenAIStream(
     (e: Error) => {
       setStreamStatus(StreamStatus.IDLE);
       setMessages([]);
+      setStopGeneration(false);
       setError(e);
       notifyError(
         'Failed to generate content using OpenAI',
@@ -76,7 +80,7 @@ export function useOpenAIStream(
     setStreamStatus(StreamStatus.GENERATING);
     setError(undefined);
     // Stream the completions. Each element is the next stream chunk.
-    const stream = openai
+    const stream = llms.openai
       .streamChatCompletions({
         model,
         temperature,
@@ -85,7 +89,7 @@ export function useOpenAIStream(
       .pipe(
         // Accumulate the stream content into a stream of strings, where each
         // element contains the accumulated message so far.
-        openai.accumulateContent()
+        llms.openai.accumulateContent()
         // The stream is just a regular Observable, so we can use standard rxjs
         // functionality to update state, e.g. recording when the stream
         // has completed.
@@ -104,6 +108,7 @@ export function useOpenAIStream(
             setStreamStatus(StreamStatus.IDLE);
           });
           setMessages([]);
+          setStopGeneration(false);
           setError(undefined);
         },
       }),
@@ -118,6 +123,17 @@ export function useOpenAIStream(
       }
     };
   }, [value]);
+
+  // Unsubscribe from the stream when user stops the generation.
+  useEffect(() => {
+    if (stopGeneration) {
+      value?.stream?.unsubscribe();
+      setStreamStatus(StreamStatus.IDLE);
+      setStopGeneration(false);
+      setError(undefined);
+      setMessages([]);
+    }
+  }, [stopGeneration, value?.stream]);
 
   // If the stream is generating and we haven't received a reply, it times out.
   useEffect(() => {
@@ -138,6 +154,8 @@ export function useOpenAIStream(
 
   return {
     setMessages,
+    setStopGeneration,
+    messages,
     reply,
     streamStatus,
     error,
