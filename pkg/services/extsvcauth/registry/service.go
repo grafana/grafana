@@ -22,6 +22,10 @@ var lockTimeConfig = serverlock.LockTimeConfig{
 	MaxWait:     5 * time.Second,
 }
 
+type serverLocker interface {
+	LockExecuteAndReleaseWithRetries(context.Context, string, serverlock.LockTimeConfig, func(ctx context.Context), ...serverlock.RetryOpt) error
+}
+
 type Registry struct {
 	features featuremgmt.FeatureToggles
 	logger   log.Logger
@@ -30,7 +34,7 @@ type Registry struct {
 
 	extSvcProviders map[string]extsvcauth.AuthProvider
 	lock            sync.Mutex
-	serverLock      *serverlock.ServerLockService
+	serverLock      serverLocker
 }
 
 func ProvideExtSvcRegistry(oauthServer *oasimpl.OAuth2ServiceImpl, saSvc *extsvcaccounts.ExtSvcAccountsService, serverLock *serverlock.ServerLockService, features featuremgmt.FeatureToggles) *Registry {
@@ -47,28 +51,39 @@ func ProvideExtSvcRegistry(oauthServer *oasimpl.OAuth2ServiceImpl, saSvc *extsvc
 
 // CleanUpOrphanedExternalServices remove external services present in store that have not been registered on startup.
 func (r *Registry) CleanUpOrphanedExternalServices(ctx context.Context) error {
-	extsvcs, err := r.retrieveExtSvcProviders(ctx)
-	if err != nil {
-		r.logger.Error("Could not retrieve external services from store", "error", err.Error())
-		return err
-	}
-	for name, provider := range extsvcs {
-		// The service did not register this time. Removed.
-		if _, ok := r.extSvcProviders[slugify.Slugify(name)]; !ok {
-			r.logger.Info("Detected removed External Service", "service", name, "provider", provider)
-			switch provider {
-			case extsvcauth.ServiceAccounts:
-				if err := r.saReg.RemoveExternalService(ctx, name); err != nil {
-					return err
-				}
-			case extsvcauth.OAuth2Server:
-				if err := r.oauthReg.RemoveExternalService(ctx, name); err != nil {
-					return err
+	var errCleanUp error
+
+	errLock := r.serverLock.LockExecuteAndReleaseWithRetries(ctx, "ext-svc-clean-up", lockTimeConfig, func(ctx context.Context) {
+		extsvcs, err := r.retrieveExtSvcProviders(ctx)
+		if err != nil {
+			r.logger.Error("Could not retrieve external services from store", "error", err.Error())
+			errCleanUp = err
+			return
+		}
+		for name, provider := range extsvcs {
+			// The service did not register this time. Removed.
+			if _, ok := r.extSvcProviders[slugify.Slugify(name)]; !ok {
+				r.logger.Info("Detected removed External Service", "service", name, "provider", provider)
+				switch provider {
+				case extsvcauth.ServiceAccounts:
+					if err := r.saReg.RemoveExternalService(ctx, name); err != nil {
+						errCleanUp = err
+						return
+					}
+				case extsvcauth.OAuth2Server:
+					if err := r.oauthReg.RemoveExternalService(ctx, name); err != nil {
+						errCleanUp = err
+						return
+					}
 				}
 			}
 		}
+	})
+	if errLock != nil {
+		return errLock
 	}
-	return nil
+
+	return errCleanUp
 }
 
 // HasExternalService returns whether an external service has been saved with that name.
