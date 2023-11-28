@@ -100,6 +100,8 @@ func ParseAPIGroupArgs(cfg *setting.Cfg, args []string) ([]grafanaAPIServer.APIG
 				return nil, err
 			}
 			builders = append(builders, sb)
+		default:
+			return nil, fmt.Errorf("unknown group: %s", g)
 		}
 	}
 
