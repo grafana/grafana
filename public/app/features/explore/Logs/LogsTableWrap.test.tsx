@@ -147,6 +147,27 @@ describe('LogsTableWrap', () => {
     });
   });
 
+  it('should update selected dataframe when dataFrames update', async () => {
+    const initialProps = { logsFrames: [getMockLokiFrameDataPlane(undefined, 3)] };
+    const render = setup(initialProps);
+    await waitFor(() => {
+      const rows = render.getAllByRole('row');
+      expect(rows.length).toBe(4);
+    });
+
+    render.rerender(
+      getComponent({
+        ...initialProps,
+        logsFrames: [getMockLokiFrameDataPlane(undefined, 4)],
+      })
+    );
+
+    await waitFor(() => {
+      const rows = render.getAllByRole('row');
+      expect(rows.length).toBe(5);
+    });
+  });
+
   it('search input should search matching columns (dataplane)', async () => {
     config.featureToggles.lokiLogsDataplane = true;
 

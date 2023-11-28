@@ -177,7 +177,9 @@ func (ng *AlertNG) init() error {
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 			externalAMCfg := remote.AlertmanagerConfig{}
-			return remote.NewAlertmanager(externalAMCfg, orgID)
+			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+			stateStore := notifier.NewFileStore(orgID, ng.KVStore, "")
+			return remote.NewAlertmanager(externalAMCfg, orgID, stateStore)
 		})
 
 		overrides = append(overrides, override)
@@ -329,16 +331,13 @@ func (ng *AlertNG) init() error {
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
 	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
-	bus.AddEventListener(func(ctx context.Context, e *events.FolderTitleUpdated) error {
-		// do not block the upstream execution
-		go func(evt *events.FolderTitleUpdated) {
-			logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
-			_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
-			if err != nil {
-				logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
-				return
-			}
-		}(e)
+	bus.AddEventListener(func(ctx context.Context, evt *events.FolderTitleUpdated) error {
+		logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
+		_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
+		if err != nil {
+			logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
+			return err
+		}
 		return nil
 	})
 }

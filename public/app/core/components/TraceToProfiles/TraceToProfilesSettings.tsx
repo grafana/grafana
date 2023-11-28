@@ -78,7 +78,6 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
             noDefault={true}
             width={40}
             onChange={(ds: DataSourceInstanceSettings) => {
-              console.log(options.jsonData.tracesToProfiles, ds);
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToProfiles', {
                 ...options.jsonData.tracesToProfiles,
                 datasourceUid: ds.uid,

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
@@ -60,7 +60,7 @@ import { changePanelState } from '../state/explorePane';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsTableWrap } from './LogsTableWrap';
+import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
@@ -87,8 +87,8 @@ interface Props extends Themeable2 {
   loadLogsVolumeData: () => void;
   showContextToggle?: (row: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions) => Promise<any>;
@@ -174,8 +174,17 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.cancelFlippingTimer) {
       window.clearTimeout(this.cancelFlippingTimer);
     }
+    // Delete url state on unmount
+    if (this.props?.panelState?.logs?.columns) {
+      delete this.props.panelState.logs.columns;
+    }
+    if (this.props?.panelState?.logs?.refId) {
+      delete this.props.panelState.logs.refId;
+    }
+    if (this.props?.panelState?.logs?.labelName) {
+      delete this.props.panelState.logs.labelName;
+    }
   }
-
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
     if (state?.panelsState) {
@@ -195,6 +204,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete this.props.panelState.logs.id;
+
       dispatch(
         changePanelState(this.props.exploreId, 'logs', {
           ...this.props.panelState,
@@ -545,7 +555,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       contextRow,
     } = this.state;
 
-    const styles = getStyles(theme, wrapLogMessage);
+    const tableHeight = getLogsTableHeight();
+    const styles = getStyles(theme, wrapLogMessage, tableHeight);
     const hasData = logRows && logRows.length > 0;
     const hasUnescapedContent = this.checkUnescapedContent(logRows);
 
@@ -608,13 +619,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   ]
               : null,
           ]}
-          title={
-            config.featureToggles.logsExploreTableVisualisation
-              ? this.state.visualisationType === 'logs'
-                ? 'Log lines'
-                : 'Table'
-              : 'Logs'
-          }
+          title={'Logs'}
           actions={
             <>
               {config.featureToggles.logsExploreTableVisualisation && (
@@ -623,14 +628,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     className={styles.visualisationTypeRadio}
                     options={[
                       {
+                        label: 'Logs',
+                        value: 'logs',
+                        description: 'Show results in logs visualisation',
+                      },
+                      {
                         label: 'Table',
                         value: 'table',
                         description: 'Show results in table visualisation',
-                      },
-                      {
-                        label: 'Lines',
-                        value: 'logs',
-                        description: 'Show results in logs visualisation',
                       },
                     ]}
                     size="sm"
@@ -734,7 +739,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
               clearDetectedFields={this.clearDetectedFields}
             />
           </div>
-          <div className={styles.logsSection}>
+          <div
+            className={cx(styles.logsSection, this.state.visualisationType === 'table' ? styles.logsTable : undefined)}
+          >
             {this.state.visualisationType === 'table' && hasData && (
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logs navigation and padding */}
@@ -828,7 +835,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
 export const Logs = withTheme2(UnthemedLogs);
 
-const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
+const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: number) => {
   return {
     noData: css`
       > * {
@@ -865,6 +872,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       flex-direction: row;
       justify-content: space-between;
     `,
+    logsTable: css({
+      maxHeight: `${tableHeight}px`,
+    }),
     logRows: css`
       overflow-x: ${scrollableLogsContainer ? 'scroll;' : `${wrapLogMessage ? 'unset' : 'scroll'};`}
       overflow-y: visible;
