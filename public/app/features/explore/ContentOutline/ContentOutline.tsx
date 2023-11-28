@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -33,9 +33,10 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
-  const [expanded, toggleExpanded] = useToggle(false);
-  const styles = useStyles2((theme) => getStyles(theme));
   const { outlineItems } = useContentOutlineContext();
+  const [expanded, toggleExpanded] = useToggle(false);
+  const [activeItemId, setActiveItemId] = useState<string | null>(outlineItems[0]?.id);
+  const styles = useStyles2((theme) => getStyles(theme));
 
   const scrollIntoView = (ref: HTMLElement | null, buttonTitle: string) => {
     let scrollValue = 0;
@@ -54,6 +55,11 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       item: 'select_section',
       type: buttonTitle,
     });
+  };
+
+  const handleItemClick = (itemId: string, ref: HTMLElement | null, buttonTitle: string) => {
+    scrollIntoView(ref, buttonTitle);
+    setActiveItemId(itemId);
   };
 
   const toggle = () => {
@@ -83,8 +89,9 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
               title={expanded ? item.title : undefined}
               className={styles.buttonStyles}
               icon={item.icon}
-              onClick={() => scrollIntoView(item.ref, item.title)}
+              onClick={() => handleItemClick(item.id, item.ref, item.title)}
               tooltip={!expanded ? item.title : undefined}
+              isActive={activeItemId === item.id}
             />
           ))}
         </div>
