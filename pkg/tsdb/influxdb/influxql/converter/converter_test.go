@@ -70,14 +70,14 @@ func runScenario(tf string, resultFormat string) func(t *testing.T) {
 		f, err := os.Open(path.Join("testdata", tf+".json"))
 		require.NoError(t, err)
 
-		var rsp backend.DataResponse
+		var rsp *backend.DataResponse
 
 		query.ResultFormat = resultFormat
 
 		if streamParser {
 			rsp = influxql.StreamParse(f, 200, query)
 		} else {
-			rsp = *influxql.ResponseParse(io.NopCloser(f), 200, query)
+			rsp = influxql.ResponseParse(io.NopCloser(f), 200, query)
 		}
 
 		if strings.Contains(tf, "error") {
@@ -87,6 +87,6 @@ func runScenario(tf string, resultFormat string) func(t *testing.T) {
 		require.NoError(t, rsp.Error)
 
 		fname := tf + "." + resultFormat + ".golden"
-		experimental.CheckGoldenJSONResponse(t, "testdata", fname, &rsp, shouldUpdate)
+		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, shouldUpdate)
 	}
 }

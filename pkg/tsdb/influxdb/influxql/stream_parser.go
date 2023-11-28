@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-func StreamParse(buf io.ReadCloser, statusCode int, query *models.Query) backend.DataResponse {
+func StreamParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
 	defer func() {
 		if err := buf.Close(); err != nil {
 			fmt.Println("Failed to close response body", "err", err)

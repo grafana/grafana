@@ -124,11 +124,11 @@ func execute(dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Que
 
 	logger.Info("InfluxDB InfluxQL streaming parser enabled: ", "info", isStreamingParserEnabled)
 
-	var resp backend.DataResponse
+	var resp *backend.DataResponse
 	if isStreamingParserEnabled {
 		resp = StreamParse(res.Body, res.StatusCode, query)
 	} else {
-		resp = *ResponseParse(res.Body, res.StatusCode, query)
+		resp = ResponseParse(res.Body, res.StatusCode, query)
 	}
-	return resp, nil
+	return *resp, nil
 }

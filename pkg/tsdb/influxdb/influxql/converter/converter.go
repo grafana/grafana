@@ -14,13 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/util/converter/jsonitere"
 )
 
-func rspErr(e error) backend.DataResponse {
-	return backend.DataResponse{Error: e}
+func rspErr(e error) *backend.DataResponse {
+	return &backend.DataResponse{Error: e}
 }
 
-func ReadInfluxQLStyleResult(jIter *jsoniter.Iterator, query *models.Query) backend.DataResponse {
+func ReadInfluxQLStyleResult(jIter *jsoniter.Iterator, query *models.Query) *backend.DataResponse {
 	iter := jsonitere.NewIterator(jIter)
-	var rsp backend.DataResponse
+	var rsp *backend.DataResponse
 
 	// frameName is pre-allocated. So we can reuse it, saving memory.
 	// It's sized for a reasonably-large name, but will grow if needed.
@@ -55,8 +55,8 @@ l1Fields:
 	return rsp
 }
 
-func readResults(iter *jsonitere.Iterator, frameName []byte, query *models.Query) backend.DataResponse {
-	rsp := backend.DataResponse{}
+func readResults(iter *jsonitere.Iterator, frameName []byte, query *models.Query) *backend.DataResponse {
+	var rsp *backend.DataResponse
 l1Fields:
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -83,13 +83,13 @@ l1Fields:
 	return rsp
 }
 
-func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query) backend.DataResponse {
+func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query) *backend.DataResponse {
 	var measurement string
 	var tags map[string]string
 	var columns []string
 	var valueFields data.Fields
 	var hasTimeColumn bool
-	rsp := backend.DataResponse{Frames: make(data.Frames, 0)}
+	rsp := &backend.DataResponse{Frames: make(data.Frames, 0)}
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
 			return rspErr(err)
@@ -131,94 +131,20 @@ func readSeries(iter *jsonitere.Iterator, frameName []byte, query *models.Query)
 		}
 
 		if util.GetVisType(query.ResultFormat) == util.TableVisType {
-			// Add the first and only frame for table format
-			if len(rsp.Frames) == 0 {
-				newFrame := data.NewFrame(measurement)
-				newFrame.Meta = &data.FrameMeta{
-					ExecutedQueryString:    query.RawQuery,
-					PreferredVisualization: util.GetVisType(query.ResultFormat),
-				}
-				rsp.Frames = append(rsp.Frames, newFrame)
-			}
-
-			if len(rsp.Frames[0].Fields) == 0 {
-				rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, valueFields[0])
-				if !hasTimeColumn {
-					rsp.Frames[0].Fields[0].Name = columns[0]
-					rsp.Frames[0].Fields[0].Config = &data.FieldConfig{DisplayNameFromDS: columns[0]}
-				}
-			} else {
-				var i int
-				for i < valueFields[0].Len() {
-					rsp.Frames[0].Fields[0].Append(valueFields[0].At(i))
-					i++
-				}
-			}
-
-			ti := 1 // We have the first field, so we should add tagField if there is any tag
-			for k, v := range tags {
-				if len(rsp.Frames[0].Fields) == ti {
-					tagField := data.NewField(k, nil, []*string{})
-					tagField.Config = &data.FieldConfig{DisplayNameFromDS: k}
-					rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, tagField)
-				}
-				var i int
-				for i < valueFields[0].Len() {
-					val := v[0:]
-					rsp.Frames[0].Fields[ti].Append(&val)
-					i++
-				}
-				ti++
-			}
-
-			si := len(tags) + 1 // number of fields we currently have in the first frame
-			for i, v := range valueFields {
-				// first value field is always handled first, before tags
-				if i == 0 {
-					continue
-				}
-				v.Name = columns[i]
-				v.Config = &data.FieldConfig{DisplayNameFromDS: columns[i]}
-				if len(rsp.Frames[0].Fields) == si {
-					rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, v)
-				} else {
-					vi := 0
-					for vi < v.Len() {
-						rsp.Frames[0].Fields[si].Append(v.At(vi))
-						vi++
-					}
-				}
-				si++
-			}
+			handleTableFormatFirstFrame(rsp, measurement, query)
+			handleTableFormatFirstField(rsp, valueFields, columns)
+			handleTableFormatTagFields(rsp, valueFields, tags)
+			handleTableFormatValueFields(rsp, valueFields, tags, columns)
 		} else {
 			// time_series response format
 			if hasTimeColumn {
 				// Frame with time column
-				for i, v := range columns {
-					if v == "time" {
-						continue
-					}
-					formattedFrameName := util.FormatFrameName(measurement, v, tags, *query, frameName)
-					valueFields[i].Labels = tags
-					valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
-
-					frame := data.NewFrame(string(formattedFrameName), valueFields[0], valueFields[i])
-					rsp.Frames = append(rsp.Frames, frame)
-				}
+				newFrames := handleTimeSeriesFormatWithTimeColumn(valueFields, tags, columns, measurement, frameName, query)
+				rsp.Frames = append(rsp.Frames, newFrames...)
 			} else {
 				// Frame without time column
-				var frame *data.Frame
-				if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
-					if len(columns) >= 2 {
-						frame = data.NewFrame(measurement, valueFields[1])
-					}
-				} else {
-					if len(columns) >= 1 {
-						frame = data.NewFrame(measurement, valueFields[0])
-					}
-				}
-
-				rsp.Frames = append(rsp.Frames, frame)
+				newFrame := handleTimeSeriesFormatWithoutTimeColumn(valueFields, columns, measurement, query)
+				rsp.Frames = append(rsp.Frames, newFrame)
 			}
 		}
 	}
@@ -363,5 +289,107 @@ func maybeFixValueFieldType(valueFields data.Fields, expectedType data.FieldType
 			i++
 		}
 		valueFields[colIdx] = stringField
+	}
+}
+
+func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[string]string, columns []string, measurement string, frameName []byte, query *models.Query) []*data.Frame {
+	frames := make([]*data.Frame, len(columns)-1)
+	for i, v := range columns {
+		if v == "time" {
+			continue
+		}
+		formattedFrameName := util.FormatFrameName(measurement, v, tags, *query, frameName)
+		valueFields[i].Labels = tags
+		valueFields[i].Config = &data.FieldConfig{DisplayNameFromDS: string(formattedFrameName)}
+
+		frame := data.NewFrame(string(formattedFrameName), valueFields[0], valueFields[i])
+		frames = append(frames, frame)
+	}
+	return frames
+}
+
+func handleTimeSeriesFormatWithoutTimeColumn(valueFields data.Fields, columns []string, measurement string, query *models.Query) *data.Frame {
+	// Frame without time column
+	var frame *data.Frame
+	if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
+		if len(columns) >= 2 {
+			frame = data.NewFrame(measurement, valueFields[1])
+		}
+	} else {
+		if len(columns) >= 1 {
+			frame = data.NewFrame(measurement, valueFields[0])
+		}
+	}
+	return frame
+}
+
+func handleTableFormatFirstFrame(rsp *backend.DataResponse, measurement string, query *models.Query) {
+	// Add the first and only frame for table format
+	if len(rsp.Frames) == 0 {
+		newFrame := data.NewFrame(measurement)
+		newFrame.Meta = &data.FrameMeta{
+			ExecutedQueryString:    query.RawQuery,
+			PreferredVisualization: util.GetVisType(query.ResultFormat),
+		}
+		rsp.Frames = append(rsp.Frames, newFrame)
+	}
+}
+
+func handleTableFormatFirstField(rsp *backend.DataResponse, valueFields data.Fields, columns []string) {
+	if len(rsp.Frames[0].Fields) == 0 {
+		rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, valueFields[0])
+		if columns[0] != "time" {
+			rsp.Frames[0].Fields[0].Name = columns[0]
+			rsp.Frames[0].Fields[0].Config = &data.FieldConfig{DisplayNameFromDS: columns[0]}
+		}
+	} else {
+		var i int
+		for i < valueFields[0].Len() {
+			rsp.Frames[0].Fields[0].Append(valueFields[0].At(i))
+			i++
+		}
+	}
+}
+
+func handleTableFormatTagFields(rsp *backend.DataResponse, valueFields data.Fields, tags map[string]string) {
+	ti := 1
+	// We have the first field, so we should add tagField if there is any tag
+	for k, v := range tags {
+		if len(rsp.Frames[0].Fields) == ti {
+			tagField := data.NewField(k, nil, []*string{})
+			tagField.Config = &data.FieldConfig{DisplayNameFromDS: k}
+			rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, tagField)
+		}
+		var i int
+		for i < valueFields[0].Len() {
+			val := v[0:]
+			rsp.Frames[0].Fields[ti].Append(&val)
+			i++
+		}
+		ti++
+	}
+}
+
+func handleTableFormatValueFields(rsp *backend.DataResponse, valueFields data.Fields, tags map[string]string, columns []string) {
+	// number of fields we currently have in the first frame
+	si := len(tags) + 1
+	for i, v := range valueFields {
+		// first value field is always handled first, before tags
+		// no need to create another one again here
+		if i == 0 {
+			continue
+		}
+		v.Name = columns[i]
+		v.Config = &data.FieldConfig{DisplayNameFromDS: columns[i]}
+		if len(rsp.Frames[0].Fields) == si {
+			rsp.Frames[0].Fields = append(rsp.Frames[0].Fields, v)
+		} else {
+			vi := 0
+			for vi < v.Len() {
+				rsp.Frames[0].Fields[si].Append(v.At(vi))
+				vi++
+			}
+		}
+		si++
 	}
 }
