@@ -19,9 +19,9 @@ import { getFormStyles } from '../../../notification-policies/formStyles';
 import { TIMING_OPTIONS_DEFAULTS } from '../../../notification-policies/timingOptions';
 
 export interface RoutingSettingsProps {
-  contactPointIndex: number;
+  alertManager: string;
 }
-export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => {
+export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   const formStyles = useStyles2(getFormStyles);
   const {
     control,
@@ -37,15 +37,15 @@ export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => 
     <Stack direction="column">
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
         <Field label="Override grouping">
-          <Switch id="override-grouping-toggle" {...register(`contactPoints.${contactPointIndex}.overrideGrouping`)} />
+          <Switch id="override-grouping-toggle" {...register(`contactPoints.${alertManager}.overrideGrouping`)} />
         </Field>
-        {!watch(`contactPoints.${contactPointIndex}.overrideGrouping`) && (
+        {!watch(`contactPoints.${alertManager}.overrideGrouping`) && (
           <Text variant="body" color="secondary">
             Grouping: <strong>{groupBy.join(', ')}</strong>
           </Text>
         )}
       </Stack>
-      {watch(`contactPoints.${contactPointIndex}.overrideGrouping`) && (
+      {watch(`contactPoints.${alertManager}.overrideGrouping`) && (
         <Field
           label="Group by"
           description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the default notification policy."
@@ -79,16 +79,16 @@ export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => 
                 {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
               </>
             )}
-            name={`contactPoints.${contactPointIndex}.groupBy`}
+            name={`contactPoints.${alertManager}.groupBy`}
             control={control}
           />
         </Field>
       )}
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
         <Field label="Override timings">
-          <Switch id="override-timings-toggle" {...register(`contactPoints.${contactPointIndex}.overrideTimings`)} />
+          <Switch id="override-timings-toggle" {...register(`contactPoints.${alertManager}.overrideTimings`)} />
         </Field>
-        {!watch(`contactPoints.${contactPointIndex}.overrideTimings`) && (
+        {!watch(`contactPoints.${alertManager}.overrideTimings`) && (
           <Text variant="body" color="secondary">
             Group wait: <strong>{groupWaitValue}, </strong>
             Group interval: <strong>{groupIntervalValue}, </strong>
@@ -96,16 +96,16 @@ export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => 
           </Text>
         )}
       </Stack>
-      {watch(`contactPoints.${contactPointIndex}.overrideTimings`) && (
+      {watch(`contactPoints.${alertManager}.overrideTimings`) && (
         <>
           <Field
             label="Group wait"
             description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
-            invalid={!!errors.contactPoints?.[contactPointIndex]?.groupWaitValue}
-            error={errors.contactPoints?.[contactPointIndex]?.groupWaitValue?.message}
+            invalid={!!errors.contactPoints?.[alertManager]?.groupWaitValue}
+            error={errors.contactPoints?.[alertManager]?.groupWaitValue?.message}
           >
             <PromDurationInput
-              {...register(`contactPoints.${contactPointIndex}.groupWaitValue`, { validate: promDurationValidator })}
+              {...register(`contactPoints.${alertManager}.groupWaitValue`, { validate: promDurationValidator })}
               aria-label="Group wait value"
               className={formStyles.promDurationInput}
             />
@@ -113,11 +113,11 @@ export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => 
           <Field
             label="Group interval"
             description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
-            invalid={!!errors.contactPoints?.[contactPointIndex]?.groupIntervalValue}
-            error={errors.contactPoints?.[contactPointIndex]?.groupIntervalValue?.message}
+            invalid={!!errors.contactPoints?.[alertManager]?.groupIntervalValue}
+            error={errors.contactPoints?.[alertManager]?.groupIntervalValue?.message}
           >
             <PromDurationInput
-              {...register(`contactPoints.${contactPointIndex}.groupIntervalValue`, {
+              {...register(`contactPoints.${alertManager}.groupIntervalValue`, {
                 validate: promDurationValidator,
               })}
               aria-label="Group interval value"
@@ -127,13 +127,13 @@ export const RoutingSettings = ({ contactPointIndex }: RoutingSettingsProps) => 
           <Field
             label="Repeat interval"
             description="The waiting time to resend an alert after they have successfully been sent."
-            invalid={!!errors.contactPoints?.[contactPointIndex]?.repeatIntervalValue}
-            error={errors.contactPoints?.[contactPointIndex]?.repeatIntervalValue?.message}
+            invalid={!!errors.contactPoints?.[alertManager]?.repeatIntervalValue}
+            error={errors.contactPoints?.[alertManager]?.repeatIntervalValue?.message}
           >
             <PromDurationInput
-              {...register(`contactPoints.${contactPointIndex}.repeatIntervalValue`, {
+              {...register(`contactPoints.${alertManager}.repeatIntervalValue`, {
                 validate: (value: string) => {
-                  const groupInterval = getValues(`contactPoints.${contactPointIndex}.repeatIntervalValue`);
+                  const groupInterval = getValues(`contactPoints.${alertManager}.repeatIntervalValue`);
                   return repeatIntervalValidator(value, groupInterval);
                 },
               })}

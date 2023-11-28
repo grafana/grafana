@@ -9,10 +9,10 @@ import { mapMultiSelectValueToStrings } from 'app/features/alerting/unified/util
 import { getFormStyles } from '../../../notification-policies/formStyles';
 
 export interface MuteTimingFieldsProps {
-  contactPointIndex: number;
+  alertManager: string;
 }
 
-export function MuteTimingFields({ contactPointIndex }: MuteTimingFieldsProps) {
+export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
   const styles = useStyles2(getFormStyles);
   const {
     control,
@@ -25,7 +25,7 @@ export function MuteTimingFields({ contactPointIndex }: MuteTimingFieldsProps) {
       label="Mute timings"
       data-testid="am-mute-timing-select"
       description="Add mute timing to policy"
-      invalid={!!errors.contactPoints?.[contactPointIndex]?.muteTimeIntervals}
+      invalid={!!errors.contactPoints?.[alertManager]?.muteTimeIntervals}
     >
       <InputControl
         render={({ field: { onChange, ref, ...field } }) => (
@@ -38,7 +38,7 @@ export function MuteTimingFields({ contactPointIndex }: MuteTimingFieldsProps) {
           />
         )}
         control={control}
-        name={`contactPoints.${contactPointIndex}.muteTimeIntervals`}
+        name={`contactPoints.${alertManager}.muteTimeIntervals`}
       />
     </Field>
   );

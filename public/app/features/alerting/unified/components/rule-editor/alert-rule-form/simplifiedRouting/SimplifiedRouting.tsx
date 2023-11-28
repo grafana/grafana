@@ -38,17 +38,17 @@ export function SimplifiedRouting({ toggleOpenRoutingSettings, isOpenRoutingSett
   const alertManagersWithSelectedContactPoints = useMemo(
     () =>
       alertManagersDataSourcesWithConfigAPI.map((am) => {
-        const selectedContactPoint = contactPointsInAlert?.find((cp) => cp.alertManager === am.name);
+        const selectedContactPoint = contactPointsInAlert ? contactPointsInAlert[am.name] : undefined;
         return {
           alertManager: am,
           selectedContactPoint: selectedContactPoint?.selectedContactPoint ?? '',
           muteTimeIntervals: selectedContactPoint?.muteTimeIntervals ?? [],
           overrideGrouping: selectedContactPoint?.overrideGrouping ?? false,
-          groupBy: [],
-          overrideTimings: false,
-          groupWaitValue: '',
-          groupIntervalValue: '',
-          repeatIntervalValue: '',
+          groupBy: selectedContactPoint?.groupBy ?? [],
+          overrideTimings: selectedContactPoint?.overrideTimings ?? false,
+          groupWaitValue: selectedContactPoint?.groupWaitValue ?? '',
+          groupIntervalValue: selectedContactPoint?.groupIntervalValue ?? '',
+          repeatIntervalValue: selectedContactPoint?.repeatIntervalValue ?? '',
         };
       }),
     [alertManagersDataSourcesWithConfigAPI, contactPointsInAlert]
@@ -79,7 +79,7 @@ export function SimplifiedRouting({ toggleOpenRoutingSettings, isOpenRoutingSett
           )}
           <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerName}>
             <Stack direction="row" gap={1} alignItems="center">
-              <ContactPointSelector contactPointIndex={index} />
+              <ContactPointSelector alertManager={alertManagerName} />
               <LinkToContactPoints />
             </Stack>
             <CollapsableSection
@@ -89,8 +89,8 @@ export function SimplifiedRouting({ toggleOpenRoutingSettings, isOpenRoutingSett
               onToggle={toggleOpenRoutingSettings}
             >
               <Stack direction="column" gap={1}>
-                <MuteTimingFields contactPointIndex={index} />
-                <RoutingSettings contactPointIndex={index} />
+                <MuteTimingFields alertManager={alertManagerName} />
+                <RoutingSettings alertManager={alertManagerName} />
               </Stack>
             </CollapsableSection>
           </AlertmanagerProvider>

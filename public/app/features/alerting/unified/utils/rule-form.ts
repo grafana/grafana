@@ -68,7 +68,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     evaluateFor: '5m',
     evaluateEvery: MINUTE,
     manualRouting: false, // let's decide this later
-    contactPoints: [],
+    contactPoints: {},
     overrideGrouping: false,
     overrideTimings: false,
     muteTimeIntervals: [],

@@ -9,7 +9,6 @@ export enum RuleFormType {
 }
 
 export interface ContactPoint {
-  alertManager: string;
   selectedContactPoint: string;
   overrideGrouping: boolean;
   groupBy: string[];
@@ -18,6 +17,11 @@ export interface ContactPoint {
   groupIntervalValue: string;
   repeatIntervalValue: string;
   muteTimeIntervals: string[];
+}
+
+// key: name of alert manager, value ContactPoint
+export interface AlertManagerManualRouting {
+  [key: string]: ContactPoint;
 }
 
 export interface RuleFormValues {
@@ -39,8 +43,8 @@ export interface RuleFormValues {
   evaluateEvery: string;
   evaluateFor: string;
   isPaused?: boolean;
-  manualRouting: boolean; // if true contactPoints are used
-  contactPoints?: ContactPoint[];
+  manualRouting: boolean; // if true contactPoints are used. This field will not be used for saving the rule
+  contactPoints?: AlertManagerManualRouting;
 
   // cortex / loki rules
   namespace: string;
