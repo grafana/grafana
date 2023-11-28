@@ -773,6 +773,10 @@
       "title": "Ēχpľőřę"
     },
     "frontend": {
+      "subtitle": "Ğäįŉ řęäľ ūşęř mőŉįŧőřįŉģ įŉşįģĥŧş",
+      "title": "Fřőŉŧęŉđ"
+    },
+    "frontend-app": {
       "title": "Fřőŉŧęŉđ"
     },
     "global-orgs": {
@@ -800,6 +804,10 @@
       "title": "Ĩŉčįđęŉŧş"
     },
     "infrastructure": {
+      "subtitle": "Ůŉđęřşŧäŉđ yőūř įŉƒřäşŧřūčŧūřę'ş ĥęäľŧĥ",
+      "title": "Ĩŉƒřäşŧřūčŧūřę"
+    },
+    "integrations": {
       "title": "Ĩŉŧęģřäŧįőŉş"
     },
     "kubernetes": {
