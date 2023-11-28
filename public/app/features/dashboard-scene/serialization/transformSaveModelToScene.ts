@@ -452,7 +452,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
 
 const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
 
-export function registerDashboardSceneTracking(model: DashboardModel, version?: number) {
+function registerDashboardSceneTracking(model: DashboardModel, version?: number) {
   return () => {
     const unsetEchoMetaExtensions = getEchoSrv().setMetaExtensions({
       scenesView: true,
