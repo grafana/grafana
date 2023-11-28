@@ -13,19 +13,19 @@ import (
 )
 
 func (ss *SocialService) registerSupportBundleCollectors(bundleRegistry supportbundles.Service) {
-	for name := range ss.oAuthProvider {
+	for name := range ss.socialMap {
 		bundleRegistry.RegisterSupportItemCollector(supportbundles.Collector{
 			UID:               "oauth-" + name,
 			DisplayName:       "OAuth " + strings.Title(strings.ReplaceAll(name, "_", " ")),
 			Description:       "OAuth configuration and healthchecks for " + name,
 			IncludedByDefault: false,
 			Default:           false,
-			Fn:                ss.supportBundleCollectorFn(name, ss.socialMap[name], ss.oAuthProvider[name]),
+			Fn:                ss.supportBundleCollectorFn(name, ss.socialMap[name]),
 		})
 	}
 }
 
-func (ss *SocialService) supportBundleCollectorFn(name string, sc SocialConnector, oinfo *OAuthInfo) func(context.Context) (*supportbundles.SupportItem, error) {
+func (ss *SocialService) supportBundleCollectorFn(name string, sc SocialConnector) func(context.Context) (*supportbundles.SupportItem, error) {
 	return func(ctx context.Context) (*supportbundles.SupportItem, error) {
 		bWriter := bytes.NewBuffer(nil)
 
@@ -36,6 +36,8 @@ func (ss *SocialService) supportBundleCollectorFn(name string, sc SocialConnecto
 		if _, err := bWriter.WriteString("## Parsed Configuration\n\n"); err != nil {
 			return nil, err
 		}
+
+		oinfo := sc.GetOAuthInfo()
 
 		bWriter.WriteString("```toml\n")
 		errM := toml.NewEncoder(bWriter).Encode(oinfo)

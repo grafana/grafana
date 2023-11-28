@@ -38,9 +38,8 @@ const (
 type SocialService struct {
 	cfg *setting.Cfg
 
-	socialMap     map[string]SocialConnector
-	oAuthProvider map[string]*OAuthInfo
-	log           log.Logger
+	socialMap map[string]SocialConnector
+	log       log.Logger
 }
 
 type OAuthInfo struct {
@@ -84,10 +83,9 @@ func ProvideService(cfg *setting.Cfg,
 	cache remotecache.CacheStorage,
 ) *SocialService {
 	ss := &SocialService{
-		cfg:           cfg,
-		oAuthProvider: make(map[string]*OAuthInfo),
-		socialMap:     make(map[string]SocialConnector),
-		log:           log.New("login.social"),
+		cfg:       cfg,
+		socialMap: make(map[string]SocialConnector),
+		log:       log.New("login.social"),
 	}
 
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
@@ -116,7 +114,6 @@ func ProvideService(cfg *setting.Cfg,
 		}
 
 		ss.socialMap[name] = conn
-		ss.oAuthProvider[name] = ss.socialMap[name].GetOAuthInfo()
 	}
 
 	ss.registerSupportBundleCollectors(bundleRegistry)
@@ -321,20 +318,8 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 func (ss *SocialService) GetOAuthProviders() map[string]bool {
 	result := map[string]bool{}
 
-	if ss.cfg == nil || ss.cfg.Raw == nil {
-		return result
-	}
-
-	for _, name := range allOauthes {
-		if name == "grafananet" {
-			name = grafanaCom
-		}
-
-		sec := ss.cfg.Raw.Section("auth." + name)
-		if sec == nil {
-			continue
-		}
-		result[name] = sec.Key("enabled").MustBool()
+	for name, conn := range ss.socialMap {
+		result[name] = conn.GetOAuthInfo().Enabled
 	}
 
 	return result
@@ -343,9 +328,14 @@ func (ss *SocialService) GetOAuthProviders() map[string]bool {
 func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	name = strings.TrimPrefix(name, "oauth_")
-	info, ok := ss.oAuthProvider[name]
+	provider, ok := ss.socialMap[name]
 	if !ok {
 		return nil, fmt.Errorf("could not find %q in OAuth Settings", name)
+	}
+
+	info := provider.GetOAuthInfo()
+	if !info.Enabled {
+		return nil, fmt.Errorf("oauth provider %q is not enabled", name)
 	}
 
 	// handle call back
@@ -403,11 +393,23 @@ func (ss *SocialService) GetConnector(name string) (SocialConnector, error) {
 }
 
 func (ss *SocialService) GetOAuthInfoProvider(name string) *OAuthInfo {
-	return ss.oAuthProvider[name]
+	connector, ok := ss.socialMap[name]
+	if !ok {
+		return nil
+	}
+	return connector.GetOAuthInfo()
 }
 
+// GetOAuthInfoProviders returns enabled OAuth providers
 func (ss *SocialService) GetOAuthInfoProviders() map[string]*OAuthInfo {
-	return ss.oAuthProvider
+	result := map[string]*OAuthInfo{}
+	for name, connector := range ss.socialMap {
+		info := connector.GetOAuthInfo()
+		if info.Enabled {
+			result[name] = info
+		}
+	}
+	return result
 }
 
 func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, error) {
