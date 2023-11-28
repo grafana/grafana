@@ -622,7 +622,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     className={styles.visualisationTypeRadio}
                     options={[
                       {
-                        label: 'List',
+                        label: 'Logs',
                         value: 'logs',
                         description: 'Show results in logs visualisation',
                       },
