@@ -132,11 +132,6 @@ export class ShareImage extends PureComponent<Props, State> {
       this.state;
     const isDashboardSaved = Boolean(dashboard.id);
 
-    const timeRangeLabelTranslation = t('share-modal.link.time-range-label', `Lock time range`);
-    const widthTranslation = t('share-modal.image.width', `Image width`);
-    const heightTranslation = t('share-modal.image.height', `Image height`);
-    const usePanelSizeTranslation = t('share-modal.image.use-panel-size', 'Use panel size');
-
     const panelSizeTranslation = t(
       'share-modal.image.use-panel-size-description',
       `Use the same width and height as the panel`
@@ -171,7 +166,7 @@ export class ShareImage extends PureComponent<Props, State> {
             </p>
             <FieldSet>
               <Field
-                label={timeRangeLabelTranslation}
+                label={t('share-modal.link.time-range-label', `Lock time range`)}
                 description={isRelativeTime ? timeRangeDescriptionTranslation : ''}
               >
                 <Switch
@@ -185,12 +180,15 @@ export class ShareImage extends PureComponent<Props, State> {
                 <RadioButtonGroup options={imageFormats} value={selectedFormat} onChange={this.onFormatChange} />
               </Field>
               <FieldSet>
-                <Field label={usePanelSizeTranslation} description={panelSizeTranslation}>
+                <Field
+                  label={t('share-modal.image.use-panel-size', 'Use panel size')}
+                  description={panelSizeTranslation}
+                >
                   <Switch id="image-panel-size" value={usePanelSize} onChange={this.onPanelSizeFlagChange} />
                 </Field>
                 {!usePanelSize && (
                   <>
-                    <Field label={widthTranslation}>
+                    <Field label={t('share-modal.image.width', `Image width`)}>
                       <Input
                         id="image-width-input"
                         type="number"
@@ -199,7 +197,7 @@ export class ShareImage extends PureComponent<Props, State> {
                         onChange={this.onWidthChange}
                       />
                     </Field>
-                    <Field label={heightTranslation}>
+                    <Field label={t('share-modal.image.height', `Image height`)}>
                       <Input id="image-height-input" width={15} value={height} onChange={this.onHeightChange} />
                     </Field>
                   </>
