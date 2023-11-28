@@ -13,7 +13,9 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
+  QueryFixAction,
   SupplementaryQueryType,
+  toDataFrame,
   TimeRange,
   ToggleFilterAction,
 } from '@grafana/data';
@@ -555,6 +557,28 @@ describe('LokiDatasource', () => {
   });
 
   describe('modifyQuery', () => {
+    const frameWithTypes = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [0] },
+        {
+          name: 'Line',
+          type: FieldType.string,
+          values: ['line1'],
+        },
+        { name: 'labelTypes', type: FieldType.other, values: [{ indexed: 'I', parsed: 'P', structured: 'S' }] },
+      ],
+    });
+    const frameWithoutTypes = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [0] },
+        {
+          name: 'Line',
+          type: FieldType.string,
+          values: ['line1'],
+        },
+        { name: 'labels', type: FieldType.other, values: [{ job: 'test' }] },
+      ],
+    });
     describe('when called with ADD_FILTER', () => {
       let ds: LokiDatasource;
       beforeEach(() => {
@@ -590,14 +614,186 @@ describe('LokiDatasource', () => {
           expect(result.expr).toEqual('rate({bar="baz", job="grafana"}[5m])');
         });
 
-        it('then the correct label should be added for non-indexed metadata as LabelFilter', () => {
-          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
-          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
-          ds.languageProvider.labelKeys = ['bar'];
-          const result = ds.modifyQuery(query, action);
+        describe('with a frame with label types', () => {
+          it('then the correct structured metadata label should be added as LabelFilter', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
 
-          expect(result.refId).toEqual('A');
-          expect(result.expr).toEqual('{bar="baz"} | job=`grafana`');
+            const action: QueryFixAction = {
+              options: { key: 'structured', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | structured=`foo`');
+          });
+
+          it('then the correct parsed label should be added as LabelFilter', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+
+            const action: QueryFixAction = {
+              options: { key: 'parsed', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | parsed=`foo`');
+          });
+
+          it('then the correct indexed label should be added as LabelFilter', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+
+            const action: QueryFixAction = {
+              options: { key: 'indexed', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz", indexed="foo"}');
+          });
+
+          it('then the correct structured metadata label should be added as LabelFilter with parser', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | json' };
+
+            const action: QueryFixAction = {
+              options: { key: 'structured', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | json | structured=`foo`');
+          });
+
+          it('then the correct parsed label should be added as LabelFilter with parser', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | json' };
+
+            const action: QueryFixAction = {
+              options: { key: 'parsed', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | json | parsed=`foo`');
+          });
+
+          it('then the correct indexed label should be added as LabelFilter with parser', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | json' };
+
+            const action: QueryFixAction = {
+              options: { key: 'indexed', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz", indexed="foo"} | json');
+          });
+        });
+        describe('with a frame without label types', () => {
+          it('then the correct structured metadata label should be added as LabelFilter', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+
+            const action: QueryFixAction = {
+              options: { key: 'structured', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithoutTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz", structured="foo"}');
+          });
+
+          it('then the correct parsed label should be added to the stream selector', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+
+            const action: QueryFixAction = {
+              options: { key: 'parsed', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithoutTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz", parsed="foo"}');
+          });
+
+          it('then the correct indexed label should be added as LabelFilter', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+
+            const action: QueryFixAction = {
+              options: { key: 'indexed', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithoutTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz", indexed="foo"}');
+          });
+          it('then the correct structured metadata label should be added as LabelFilter with parser', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | json' };
+
+            const action: QueryFixAction = {
+              options: { key: 'structured', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithoutTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | json | structured=`foo`');
+          });
+
+          it('then the correct parsed label should be added as LabelFilter with parser', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | json' };
+
+            const action: QueryFixAction = {
+              options: { key: 'parsed', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithoutTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | json | parsed=`foo`');
+          });
+
+          it('then the correct indexed label should be added as LabelFilter with parser', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | json' };
+
+            const action: QueryFixAction = {
+              options: { key: 'indexed', value: 'foo' },
+              type: 'ADD_FILTER',
+              frame: frameWithoutTypes,
+            };
+            ds.languageProvider.labelKeys = ['bar'];
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | json | indexed=`foo`');
+          });
         });
       });
       describe('and query has parser', () => {
@@ -1395,6 +1591,21 @@ describe('LokiDatasource', () => {
 
       expect(ds.statsMetadataRequest).toHaveBeenCalled();
       expect(result).toEqual({ streams: 2, chunks: 2, bytes: 2, entries: 2 });
+    });
+
+    it('calls statsMetadataRequest with the right properties', async () => {
+      query.expr = 'count_over_time({foo="bar"}[1m])';
+      await ds.getQueryStats(query, mockTimeRange);
+
+      expect(ds.statsMetadataRequest).toHaveBeenCalledWith(
+        `index/stats`,
+        {
+          start: 0,
+          end: 1000000,
+          query: '{foo="bar"}',
+        },
+        { requestId: 'log-stats-A', showErrorAlert: false }
+      );
     });
   });
 
