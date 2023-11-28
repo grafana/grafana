@@ -3,12 +3,10 @@ package apiserver
 import (
 	"fmt"
 	"os"
-	// "context"
 
-	// "github.com/grafana/grafana/pkg/registry/apis/playlist"
-	// "github.com/grafana/grafana/pkg/registry/apis/snapshots"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/spf13/cobra"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
