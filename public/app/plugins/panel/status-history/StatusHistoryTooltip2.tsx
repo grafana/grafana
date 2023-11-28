@@ -95,7 +95,6 @@ export const StatusHistoryTooltip2 = ({
         !field ||
         field === xField ||
         field.type === FieldType.time ||
-        field.type !== FieldType.number ||
         field.config.custom?.hideFrom?.tooltip ||
         field.config.custom?.hideFrom?.viz
       ) {
