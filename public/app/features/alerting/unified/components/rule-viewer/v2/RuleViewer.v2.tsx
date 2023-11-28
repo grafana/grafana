@@ -1,31 +1,15 @@
-import { css } from '@emotion/css';
 import { isEmpty, truncate } from 'lodash';
-import React, { useMemo } from 'react';
+import React from 'react';
 
-import { AppEvents, UrlQueryValue } from '@grafana/data';
-import {
-  Alert,
-  Button,
-  Dropdown,
-  Icon,
-  LinkButton,
-  LoadingPlaceholder,
-  Menu,
-  Stack,
-  Tab,
-  TabContent,
-  TabsBar,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
+import { Alert, Button, Dropdown, LinkButton, Menu, Stack, TabContent, Text } from '@grafana/ui';
+import { PageInfoItem } from 'app/core/components/Page/types';
 import { appEvents, contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { RuleIdentifier } from 'app/types/unified-alerting';
-import { Annotations, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { useRuleViewerPageTitle } from '../../../hooks/alert-details/useRuleViewerPageTitle';
-import { useCombinedRule } from '../../../hooks/useCombinedRule';
+import { defaultPageNav } from '../../../RuleViewer';
 import { useIsRuleEditable } from '../../../hooks/useIsRuleEditable';
 import { getRulesPermissions } from '../../../utils/access-control';
 import { Annotation } from '../../../utils/constants';
@@ -42,11 +26,10 @@ import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../
 import { createUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { AlertStateDot } from '../../AlertStateDot';
+import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 import { Link } from '../../ExternalLink';
-import { MetaText } from '../../MetaText';
 import MoreButton from '../../MoreButton';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
-import { Spacer } from '../../Spacer';
 import { DeclareIncidentMenuItem } from '../../bridges/DeclareIncidentButton';
 import { useCanSilence } from '../../rules/RuleDetailsActionButtons';
 import { Details } from '../tabs/Details';
@@ -57,10 +40,10 @@ import { Routing } from '../tabs/Routing';
 
 import { useDeleteModal } from './DeleteModal';
 
-type RuleViewerProps = GrafanaRouteComponentProps<{
-  id: string;
-  sourceName: string;
-}>;
+type RuleViewerProps = {
+  rule: CombinedRule;
+  identifier: RuleIdentifier;
+};
 
 enum ActiveTab {
   Query = 'query',
@@ -70,23 +53,9 @@ enum ActiveTab {
   Details = 'details',
 }
 
-const RuleViewer = ({ match }: RuleViewerProps) => {
-  const [activeTab, setActiveTab] = useActiveTab();
+const RuleViewer = ({ rule, identifier }: RuleViewerProps) => {
+  const { pageNav, activeTab } = usePageNav(rule);
   const [deleteModal, showDeleteModal] = useDeleteModal();
-
-  const id = ruleId.getRuleIdFromPathname(match.params);
-  const identifier = useMemo(() => {
-    if (!id) {
-      throw new Error('Rule ID is required');
-    }
-
-    return ruleId.parse(id, true);
-  }, [id]);
-
-  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
-
-  // we're setting the document title and the breadcrumb manually
-  useRuleViewerPageTitle(rule);
 
   /**
    * TODO refactor this, very confusing right now
@@ -99,184 +68,118 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   const hasCreateRulePermission = contextSrv.hasPermission(rulesPermissions.create);
   const canSilence = useCanSilence(rule);
 
-  if (loading) {
-    return <LoadingPlaceholder text={'Loading...'} />;
-  }
+  const promRule = rule.promRule;
 
-  // TODO improve error handling here
-  if (error) {
-    if (typeof error === 'string') {
-      return error;
+  const isAlertType = isAlertingRule(promRule);
+  const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
+
+  const isFederatedRule = isFederatedRuleGroup(rule.group);
+  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+
+  const isEditable = allowedToEdit && !isProvisioned && !isFederatedRule;
+  const isRemovable = allowedToRemove && !isProvisioned && !isFederatedRule;
+
+  /**
+   * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
+   * We should show it in development mode
+   */
+  const shouldShowDeclareIncidentButton = !isOpenSourceEdition() || isLocalDevEnv();
+  const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
+
+  const copyShareUrl = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl);
+      appEvents.emit(AppEvents.alertSuccess, ['URL copied to clipboard']);
     }
+  };
 
-    return <Alert title={'Uh-oh'}>Something went wrong loading the rule</Alert>;
-  }
-
-  if (rule) {
-    const summary = rule.annotations[Annotation.summary];
-    const promRule = rule.promRule;
-
-    const isAlertType = isAlertingRule(promRule);
-    const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
-    const numberOfInstance = isAlertType ? (promRule.alerts ?? []).length : undefined;
-
-    const isFederatedRule = isFederatedRuleGroup(rule.group);
-    const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
-
-    const isEditable = allowedToEdit && !isProvisioned && !isFederatedRule;
-    const isRemovable = allowedToRemove && !isProvisioned && !isFederatedRule;
-
-    /**
-     * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
-     * We should show it in development mode
-     */
-    const shouldShowDeclareIncidentButton = !isOpenSourceEdition() || isLocalDevEnv();
-    const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
-
-    const copyShareUrl = () => {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(shareUrl);
-        appEvents.emit(AppEvents.alertSuccess, ['URL copied to clipboard']);
-      }
-    };
-
-    return (
-      <>
+  return (
+    <AlertingPageWrapper
+      pageNav={pageNav}
+      navId="alert-list"
+      isLoading={false}
+      renderTitle={(title) => {
+        return <Title name={title} state={isAlertType ? promRule.state : undefined} />;
+      }}
+      actions={[
+        isEditable && <EditButton key="edit-action" identifier={identifier} />,
+        <Dropdown
+          key="more-actions"
+          overlay={
+            <Menu>
+              {canSilence && (
+                <Menu.Item
+                  label="Silence"
+                  icon="bell-slash"
+                  url={makeRuleBasedSilenceLink(identifier.ruleSourceName, rule)}
+                />
+              )}
+              {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
+              {isGrafanaManagedRule && hasCreateRulePermission && !isFederatedRule && (
+                <Menu.Item label="Duplicate" icon="copy" />
+              )}
+              <Menu.Divider />
+              <Menu.Item label="Copy link" icon="share-alt" onClick={copyShareUrl} />
+              {/* TODO - RBAC check for these actions! */}
+              <Menu.Item
+                label="Export"
+                icon="download-alt"
+                childItems={[
+                  <Menu.Item key="no-modifications" label="Without modifications" icon="file-blank" />,
+                  <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
+                ]}
+              />
+              {isRemovable && (
+                <>
+                  <Menu.Divider />
+                  <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => showDeleteModal(rule)} />
+                </>
+              )}
+            </Menu>
+          }
+        >
+          <MoreButton size="md" />
+        </Dropdown>,
+      ]}
+      info={createMetadata(rule)}
+    >
+      <Stack direction="column" gap={2}>
+        {/* actions */}
         <Stack direction="column" gap={2}>
-          {/* breadcrumb and actions */}
-          <BreadCrumbs folder={rule.namespace.name} evaluationGroup={rule.group.name} />
-
-          <Stack direction="column" gap={2}>
-            {/* header */}
-            <Stack direction="column" gap={1}>
-              <Stack direction="row" alignItems="center">
-                {/* // TODO normalize states from prom to grafana and pass to title */}
-                <Title name={rule.name} state={isAlertType ? promRule.state : undefined} />
-                <Spacer />
-                <Stack gap={1}>
-                  {isEditable && <EditButton identifier={identifier} />}
-                  <Dropdown
-                    overlay={
-                      <Menu>
-                        {/* TODO hook these up to actions and move to separate component */}
-                        {canSilence && (
-                          <Menu.Item
-                            label="Silence"
-                            icon="bell-slash"
-                            url={makeRuleBasedSilenceLink(identifier.ruleSourceName, rule)}
-                          />
-                        )}
-                        {shouldShowDeclareIncidentButton && (
-                          <DeclareIncidentMenuItem title={rule.name} url={shareUrl} />
-                        )}
-                        {isGrafanaManagedRule && hasCreateRulePermission && !isFederatedRule && (
-                          <Menu.Item label="Duplicate" icon="copy" />
-                        )}
-                        <Menu.Divider />
-                        <Menu.Item label="Copy link" icon="share-alt" onClick={copyShareUrl} />
-                        {/* TODO - RBAC check for these actions! */}
-                        <Menu.Item
-                          label="Export"
-                          icon="download-alt"
-                          childItems={[
-                            <Menu.Item key="no-modifications" label="Without modifications" icon="file-blank" />,
-                            <Menu.Item key="with-modifications" label="With modifications" icon="file-alt" />,
-                          ]}
-                        />
-                        {isRemovable && (
-                          <>
-                            <Menu.Divider />
-                            <Menu.Item
-                              label="Delete"
-                              icon="trash-alt"
-                              destructive
-                              onClick={() => showDeleteModal(rule)}
-                            />
-                          </>
-                        )}
-                      </Menu>
-                    }
-                  >
-                    <MoreButton size="md" />
-                  </Dropdown>
-                </Stack>
-              </Stack>
-              {summary && <Summary text={summary} />}
-              {!summary && isEditable && (
-                <Button size="sm" fill="text" variant="secondary" style={{ alignSelf: 'start' }}>
-                  <Text variant="bodySmall" color="secondary" italic>
-                    Click to add a summary <Icon name="pen" />
-                  </Text>
+          {/* alerts and notifications and stuff */}
+          {isFederatedRule && (
+            <Alert severity="info" title="This rule is part of a federated rule group.">
+              <Stack direction="column">
+                Federated rule groups are currently an experimental feature.
+                <Button fill="text" icon="book">
+                  <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
+                    Read documentation
+                  </a>
                 </Button>
-              )}
-            </Stack>
-
-            <Metadata labels={rule.labels} annotations={rule.annotations} interval={rule.group.interval} />
-
-            {/* alerts and notifications and stuff */}
-            {isFederatedRule && (
-              <Alert severity="info" title="This rule is part of a federated rule group.">
-                <Stack direction="column">
-                  Federated rule groups are currently an experimental feature.
-                  <Button fill="text" icon="book">
-                    <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
-                      Read documentation
-                    </a>
-                  </Button>
-                </Stack>
-              </Alert>
-            )}
-            {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
-            {/* tabs and tab content */}
-            {/* TODO persist tab to query params */}
-            <TabsBar>
-              <Tab
-                label="Query and conditions"
-                onChangeTab={() => setActiveTab(ActiveTab.Query)}
-                active={activeTab === ActiveTab.Query}
-              />
-              <Tab
-                label="Instances"
-                counter={numberOfInstance}
-                onChangeTab={() => setActiveTab(ActiveTab.Instances)}
-                active={activeTab === ActiveTab.Instances}
-              />
-              <Tab
-                label="History"
-                onChangeTab={() => setActiveTab(ActiveTab.History)}
-                active={activeTab === ActiveTab.History}
-              />
-              {/* <Tab label="Routing" onChangeTab={() => setActiveTab(Tabs.Routing)} active={activeTab === Tabs.Routing} /> */}
-              <Tab
-                label="Details"
-                onChangeTab={() => setActiveTab(ActiveTab.Details)}
-                active={activeTab === ActiveTab.Details}
-              />
-            </TabsBar>
-            <TabContent>
-              {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
-              {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
-              {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && (
-                <History rule={rule.rulerRule} />
-              )}
-              {activeTab === ActiveTab.Routing && <Routing />}
-              {activeTab === ActiveTab.Details && <Details rule={rule} />}
-            </TabContent>
-          </Stack>
+              </Stack>
+            </Alert>
+          )}
+          {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
+          {/* tabs and tab content */}
+          <TabContent>
+            {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
+            {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
+            {activeTab === ActiveTab.History && isGrafanaRulerRule(rule.rulerRule) && <History rule={rule.rulerRule} />}
+            {activeTab === ActiveTab.Routing && <Routing />}
+            {activeTab === ActiveTab.Details && <Details rule={rule} />}
+          </TabContent>
         </Stack>
-        {deleteModal}
-      </>
-    );
-  }
-
-  return null;
+      </Stack>
+      {deleteModal}
+    </AlertingPageWrapper>
+  );
 };
 
 interface EditButtonProps {
   identifier: RuleIdentifier;
 }
 
-const EditButton = ({ identifier }: EditButtonProps) => {
+export const EditButton = ({ identifier }: EditButtonProps) => {
   const returnTo = location.pathname + location.search;
   const ruleIdentifier = ruleId.stringifyIdentifier(identifier);
   const editURL = createUrl(`/alerting/${encodeURIComponent(ruleIdentifier)}/edit`, { returnTo });
@@ -288,109 +191,74 @@ const EditButton = ({ identifier }: EditButtonProps) => {
   );
 };
 
-interface MetadataProps {
-  labels: Record<string, string>;
-  annotations: Annotations;
-  interval?: string;
-}
+const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
+  const { labels, annotations, group } = rule;
+  const metadata: PageInfoItem[] = [];
 
-const Metadata = ({ labels, annotations, interval }: MetadataProps) => {
   const runbookUrl = annotations[Annotation.runbookURL];
   const dashboardUID = annotations[Annotation.dashboardUID];
   const panelID = annotations[Annotation.panelID];
 
   const hasPanel = dashboardUID && panelID;
-  const hasDashboardNoPanel = dashboardUID && !panelID;
+  const hasDashboardWithoutPanel = dashboardUID && !panelID;
+  const hasLabels = !isEmpty(labels);
 
-  return (
-    <>
-      <Stack direction="row" gap={4}>
-        {runbookUrl && (
-          <MetaText direction="column">
-            Runbook
-            <Link href={runbookUrl} size="sm" external>
-              {/* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */}
-              {truncate(runbookUrl, { length: 42 })}
-            </Link>
-          </MetaText>
-        )}
+  const interval = group.interval;
 
-        {hasPanel && (
-          <MetaText direction="column">
-            Dashboard and panel
-            <Link href={makePanelLink(dashboardUID, panelID)} size="sm" external>
-              View panel
-            </Link>
-          </MetaText>
-        )}
+  if (runbookUrl) {
+    metadata.push({
+      label: 'Runbook',
+      value: (
+        <Link href={runbookUrl} size="sm" external>
+          {/* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */}
+          {truncate(runbookUrl, { length: 42 })}
+        </Link>
+      ),
+    });
+  }
 
-        {hasDashboardNoPanel && (
-          <MetaText direction="column">
-            Dashboard
-            <Link href={makeDashboardLink(dashboardUID)} size="sm" external>
-              View dashboard
-            </Link>
-          </MetaText>
-        )}
+  if (hasPanel) {
+    metadata.push({
+      label: 'Dashboard and panel',
+      value: (
+        <Link href={makePanelLink(dashboardUID, panelID)} size="sm" external>
+          View panel
+        </Link>
+      ),
+    });
+  } else if (hasDashboardWithoutPanel) {
+    metadata.push({
+      label: 'Dashboard',
+      value: (
+        <Link href={makeDashboardLink(dashboardUID)} size="sm" external>
+          View dashboard
+        </Link>
+      ),
+    });
+  }
 
-        {interval && (
-          <MetaText direction="column">
-            Evaluation interval
-            <Text color="primary">Every {interval}</Text>
-          </MetaText>
-        )}
+  if (interval) {
+    metadata.push({
+      label: 'Evaluation interval',
+      value: <Text color="primary">Every {interval}</Text>,
+    });
+  }
 
-        {/* TODO truncate, maybe build in to component? */}
-        {!isEmpty(labels) && (
-          <MetaText direction="column">
-            Labels
-            <AlertLabels labels={labels} size="sm" />
-          </MetaText>
-        )}
-      </Stack>
-    </>
-  );
+  if (hasLabels) {
+    metadata.push({
+      label: 'Labels',
+      /* TODO truncate number of labels, maybe build in to component? */
+      value: <AlertLabels labels={labels} size="sm" />,
+    });
+  }
+
+  return metadata;
 };
 
-interface BreadcrumbProps {
-  folder: string;
-  evaluationGroup: string;
-}
-
-const createListFilterLink = (values: Array<[string, string]>) => {
+// TODO move somewhere else
+export const createListFilterLink = (values: Array<[string, string]>) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
   return createUrl(`/alerting/list?` + params.toString());
-};
-
-const BreadCrumbs = ({ folder, evaluationGroup }: BreadcrumbProps) => {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <Stack alignItems="baseline" gap={0}>
-      <Text color="secondary">
-        <Icon name="folder" />
-      </Text>
-      <LinkButton size="sm" variant="secondary" fill="text" href={createListFilterLink([['namespace', folder]])}>
-        {folder}
-      </LinkButton>
-      <div className={styles.breadCrumbSeparatorFix}>
-        <Text variant="body" color="secondary">
-          <Icon name="angle-right" />
-        </Text>
-      </div>
-      <LinkButton
-        size="sm"
-        variant="secondary"
-        fill="text"
-        href={createListFilterLink([
-          ['namespace', folder],
-          ['group', evaluationGroup],
-        ])}
-      >
-        {evaluationGroup}
-      </LinkButton>
-    </Stack>
-  );
 };
 
 interface TitleProps {
@@ -399,17 +267,15 @@ interface TitleProps {
   state?: PromAlertingRuleState;
 }
 
-const Title = ({ name, state }: TitleProps) => (
-  <header>
-    <Stack alignItems="center" gap={1}>
-      <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
-      <Text element="h1" variant="h2" weight="bold">
-        {name}
-      </Text>
-      {/* recording rules won't have a state */}
-      {state && <StateBadge state={state} />}
-    </Stack>
-  </header>
+export const Title = ({ name, state }: TitleProps) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: '100%' }}>
+    <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
+    <Text element="h1" truncate>
+      {name}
+    </Text>
+    {/* recording rules won't have a state */}
+    {state && <StateBadge state={state} />}
+  </div>
 );
 
 interface StateBadgeProps {
@@ -446,16 +312,6 @@ const StateBadge = ({ state }: StateBadgeProps) => {
   );
 };
 
-interface SummaryProps {
-  text: string;
-}
-
-const Summary = ({ text }: SummaryProps) => (
-  <Text variant="body" color="secondary">
-    {text}
-  </Text>
-);
-
 function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
   const tabFromQuery = queryParams['tab'];
@@ -475,11 +331,67 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
   return isString && Object.values(ActiveTab).includes(tab);
 }
 
-const getStyles = () => ({
-  breadCrumbSeparatorFix: css({
-    marginLeft: -4,
-    width: 12,
-  }),
-});
+function usePageNav(rule: CombinedRule) {
+  const [activeTab, setActiveTab] = useActiveTab();
+
+  const { annotations, promRule } = rule;
+
+  const summary = annotations[Annotation.summary];
+  const isAlertType = isAlertingRule(promRule);
+  const numberOfInstance = isAlertType ? (promRule.alerts ?? []).length : undefined;
+
+  const pageNav: NavModelItem = {
+    ...defaultPageNav,
+    text: rule.name,
+    subTitle: summary,
+    children: [
+      {
+        text: 'Query and conditions',
+        active: activeTab === ActiveTab.Query,
+        onClick: () => {
+          setActiveTab(ActiveTab.Query);
+        },
+      },
+      {
+        text: 'Instances',
+        active: activeTab === ActiveTab.Instances,
+        onClick: () => {
+          setActiveTab(ActiveTab.Instances);
+        },
+        tabCounter: numberOfInstance,
+      },
+      {
+        text: 'History',
+        active: activeTab === ActiveTab.History,
+        onClick: () => {
+          setActiveTab(ActiveTab.History);
+        },
+      },
+      {
+        text: 'Details',
+        active: activeTab === ActiveTab.Details,
+        onClick: () => {
+          setActiveTab(ActiveTab.Details);
+        },
+      },
+    ],
+    parentItem: {
+      text: rule.group.name,
+      url: createListFilterLink([
+        ['namespace', rule.namespace.name],
+        ['group', rule.group.name],
+      ]),
+      parentItem: {
+        text: rule.namespace.name,
+        url: createListFilterLink([['namespace', rule.namespace.name]]),
+      },
+    },
+  };
+
+  return {
+    pageNav,
+    activeTab,
+  };
+}
 
 export default RuleViewer;

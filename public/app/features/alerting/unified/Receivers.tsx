@@ -22,7 +22,7 @@ const newContactPointsListView = config.featureToggles.alertingContactPointsV2 ?
 
 // TODO add pagenav back in – that way we have correct breadcrumbs and page title
 const ContactPoints = (props: GrafanaRouteComponentProps): JSX.Element => (
-  <AlertmanagerPageWrapper pageId="receivers" accessType="notification">
+  <AlertmanagerPageWrapper navId="receivers" accessType="notification">
     {/* TODO do we want a "routes" component for each Alerting entity? */}
     {newContactPointsListView ? (
       <Switch>

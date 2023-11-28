@@ -66,7 +66,7 @@ export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps)
   if (!alertRule && !loading && !loadingBuildInfo) {
     // alert rule does not exist
     return (
-      <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={{ text: 'Modify export' }}>
+      <AlertingPageWrapper isLoading={loading} navId="alert-list" pageNav={{ text: 'Modify export' }}>
         <Alert
           title="Cannot load the rule. The rule does not exist"
           buttonContent="Go back to alert list"
@@ -79,7 +79,7 @@ export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps)
   if (alertRule && !isGrafanaRulerRule(alertRule.rule)) {
     // alert rule exists but is not a grafana-managed rule
     return (
-      <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={{ text: 'Modify export' }}>
+      <AlertingPageWrapper isLoading={loading} navId="alert-list" pageNav={{ text: 'Modify export' }}>
         <Alert
           title="This rule is not a Grafana-managed alert rule"
           buttonContent="Go back to alert list"
@@ -92,7 +92,7 @@ export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps)
   return (
     <AlertingPageWrapper
       isLoading={loading}
-      pageId="alert-list"
+      navId="alert-list"
       pageNav={{
         text: 'Modify export',
         subTitle:

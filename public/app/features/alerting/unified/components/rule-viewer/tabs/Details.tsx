@@ -157,7 +157,7 @@ function AnnotationValue({ value }: AnnotationValueProps) {
 const getStyles = (theme: GrafanaTheme2) => ({
   metadataWrapper: css({
     display: 'grid',
-    gridTemplateColumns: 'max-content max-content',
+    gridTemplateColumns: 'auto auto',
     rowGap: theme.spacing(3),
     columnGap: theme.spacing(12),
   }),
