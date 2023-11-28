@@ -61,11 +61,13 @@ export interface DataTransformerConfig<TOptions = any> extends raw.DataTransform
   options: TOptions;
 }
 
+export interface TimePickerConfig extends raw.TimePickerConfig {}
+
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
 } as VariableModel;
-export const defaultTimePickerConfig = raw.defaultTimePickerConfig as raw.TimePickerConfig;
+export const defaultTimePickerConfig = raw.defaultTimePickerConfig as TimePickerConfig;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultRowPanel: Partial<Panel> = raw.defaultRowPanel;
 export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;

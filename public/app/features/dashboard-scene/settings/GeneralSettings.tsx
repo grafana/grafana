@@ -5,7 +5,7 @@ import {
   SceneComponentProps,
   SceneObjectBase,
   SceneObjectState,
-  SceneRefreshPicker,
+  SceneObjectRef,
   SceneTimePicker,
   sceneGraph,
 } from '@grafana/scenes';
@@ -28,13 +28,15 @@ import { TimePickerSettings } from 'app/features/dashboard/components/DashboardS
 import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
 
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, useDashboardEditPageNav } from './utils';
 
-export interface GeneralSettingsEditViewState extends SceneObjectState {}
+export interface GeneralSettingsEditViewState extends SceneObjectState {
+  dashboardRef: SceneObjectRef<DashboardScene>;
+}
 
 const EDITABLE_OPTIONS = [
   { label: 'Editable', value: true },
@@ -56,7 +58,7 @@ export class GeneralSettingsEditView
   }
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
-    const dashboard = getDashboardSceneFor(model);
+    const dashboard = model.state.dashboardRef?.resolve();
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     const { title, description, tags, meta, editable, graphTooltip, overlay } = dashboard.useState();
     const timeRange = sceneGraph.getTimeRange(dashboard);

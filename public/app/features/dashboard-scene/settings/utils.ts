@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { SceneObject } from '@grafana/scenes';
+import { SceneObject, SceneObjectRef } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types';
@@ -47,7 +47,10 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
   return { navModel, pageNav };
 }
 
-export function createDashboardEditViewFor(editview: string): DashboardEditView {
+export function createDashboardEditViewFor(
+  editview: string,
+  dashboardRef: SceneObjectRef<DashboardScene>
+): DashboardEditView {
   switch (editview) {
     case 'annotations':
       return new AnnotationsEditView({});
@@ -55,6 +58,6 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
       return new VariablesEditView({});
     case 'settings':
     default:
-      return new GeneralSettingsEditView({});
+      return new GeneralSettingsEditView({ dashboardRef });
   }
 }

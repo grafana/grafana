@@ -88,7 +88,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   if (state.controls && state.controls[0] instanceof DashboardControls) {
     const timeControls = state.controls[0].state.timeControls;
     for (const control of timeControls) {
-      if (control instanceof SceneRefreshPicker && refresh_intervals) {
+      if (control instanceof SceneRefreshPicker && control.state.intervals) {
         refresh_intervals = control.state.intervals;
       }
     }
