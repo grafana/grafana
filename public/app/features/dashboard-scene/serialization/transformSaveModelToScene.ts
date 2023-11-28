@@ -25,6 +25,7 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   AdHocFilterSet,
+  TextBoxVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -123,7 +124,13 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
 function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]): SceneGridItemLike {
   if (Boolean(row.collapsed)) {
     if (row.panels) {
-      content = row.panels.map(buildGridItemForPanel);
+      content = row.panels.map((saveModel) => {
+        // Collapsed panels are not actually PanelModel instances
+        if (!(saveModel instanceof PanelModel)) {
+          saveModel = new PanelModel(saveModel);
+        }
+        return buildGridItemForPanel(saveModel);
+      });
     }
   }
 
@@ -335,6 +342,14 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     });
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
+      ...commonProperties,
+      description: variable.description,
+      value: variable.query,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
+  } else if (variable.type === 'textbox') {
+    return new TextBoxVariable({
       ...commonProperties,
       description: variable.description,
       value: variable.query,
