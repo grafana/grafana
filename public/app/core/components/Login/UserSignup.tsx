@@ -12,10 +12,10 @@ export const UserSignup = () => {
     <VerticalGroup>
       <div className={paddingTop}>New to Grafana?</div>
       <LinkButton
-        className={css`
-          width: 100%;
-          justify-content: center;
-        `}
+        className={css({
+          width: '100%',
+          justifyContent: 'center',
+        })}
         href={href}
         variant="secondary"
         fill="outline"

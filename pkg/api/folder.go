@@ -431,8 +431,7 @@ func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.
 	}
 
 	allMetadata := hs.getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
-	metadata := allMetadata[f.UID]
-
+	metadata := map[string]bool{}
 	// Flatten metadata - if any parent has a permission, the child folder inherits it
 	for _, md := range allMetadata {
 		for action := range md {
