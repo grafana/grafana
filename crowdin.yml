@@ -6,4 +6,3 @@ pull_request_title: 'I18n: Crowdin sync'
 pull_request_labels:
   - area/internationalization
   - no-changelog
-  - no-backport
