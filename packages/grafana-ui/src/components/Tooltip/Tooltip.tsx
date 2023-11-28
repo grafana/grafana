@@ -81,15 +81,12 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
       [forwardedRef, setTriggerRef]
     );
 
-    // if the child has an aria-label, this should take precedence over the tooltip content
-    const childHasAriaLabel = 'aria-label' in children.props;
-
     return (
       <>
         {React.cloneElement(children, {
           ref: handleRef,
           tabIndex: 0, // tooltip trigger should be keyboard focusable
-          'aria-describedby': !childHasAriaLabel && visible ? tooltipId : undefined,
+          'aria-describedby': visible ? tooltipId : undefined,
         })}
         {visible && (
           <Portal>
