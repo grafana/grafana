@@ -46,6 +46,7 @@ import { getThemeColor } from 'app/core/utils/colors';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
+import { config } from '@grafana/runtime';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -547,7 +548,8 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
         visibleRangeMs
       )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
     } else {
-      metaLimitValue = `${limit} (${logsModel.rows.length} returned)`;
+      const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
+      metaLimitValue = `${limit} (${logsModel.rows.length} ${description})`;
     }
 
     logsModelMeta[limitIndex] = {
