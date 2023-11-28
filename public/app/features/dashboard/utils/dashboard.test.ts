@@ -10,6 +10,7 @@ jest.mock('app/core/store', () => ({
   exists: jest.fn(),
   getObject: jest.fn(),
   setObject: jest.fn(),
+  get: jest.fn(),
 }));
 
 const store = jest.requireMock('app/core/store');
