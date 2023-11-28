@@ -6,7 +6,7 @@ import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
 
 import { mapFieldsToTypes } from './fields';
-import { buildColumnQuery, buildTableQuery, showDatabases } from './flightsqlMetaQuery';
+import { buildColumnQuery, buildTableQuery } from './flightsqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { quoteLiteral, quoteIdentifierIfNecessary, toRawSql } from './sqlUtil';
 import { FlightSQLOptions } from './types';
@@ -42,8 +42,7 @@ export class FlightSQLDatasource extends SqlDatasource {
   }
 
   async fetchDatasets(): Promise<string[]> {
-    const datasets = await this.runSql<string[]>(showDatabases(), { refId: 'datasets' });
-    return datasets.map((t) => quoteIdentifierIfNecessary(t[0]));
+    return Promise.resolve(['iox']);
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {

@@ -36,6 +36,8 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
   title: string;
+  /** Tags */
+  tags?: string[];
   /** A uid when saved */
   uid?: string;
   /** @deprecated */
