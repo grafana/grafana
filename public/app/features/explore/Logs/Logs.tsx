@@ -918,7 +918,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflow-x: scroll;
       overflow-y: visible;
       width: 100%;
-      max-height: calc(100vh - 650px);
+      max-height: 75vh;
     `,
     logRows: css`
       overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
