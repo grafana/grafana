@@ -28,12 +28,12 @@ interface UserAgentCellProps {
 const UserAgentCell = ({ value }: UserAgentCellProps) => {
   const parts = parseUserAgent(value);
   return (
-  <Tooltip theme="info-alt" content={value} placement="top-end" interactive={true}>
-    <span>
-      {truncatePart(parts.browser, 10)}
-      {truncatePart(parts.computer, 10)}
-    </span>
-  </Tooltip>
+    <Tooltip theme="info-alt" content={value} placement="top-end" interactive={true}>
+      <span>
+        {truncatePart(parts.browser, 10)}
+        {truncatePart(parts.computer, 10)}
+      </span>
+    </Tooltip>
   );
 };
 
