@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -35,7 +35,7 @@ func TestIntegrationMySQL(t *testing.T) {
 	runMySQLTests := false
 	// runMySqlTests := true
 
-	if !(db.IsTestDbMySQL() || runMySQLTests) {
+	if !(isTestDbMySQL() || runMySQLTests) {
 		t.Skip()
 	}
 
@@ -1320,4 +1320,12 @@ func genTimeRangeByInterval(from time.Time, duration time.Duration, interval tim
 	}
 
 	return timeRange
+}
+
+func isTestDbMySQL() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == "mysql"
+	}
+
+	return false
 }
