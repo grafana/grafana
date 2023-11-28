@@ -109,6 +109,17 @@ func TestAPIKey_Authenticate(t *testing.T) {
 			},
 			expectedErr: errAPIKeyRevoked,
 		},
+		{
+			desc: "should fail for api key in another organization",
+			req:  &authn.Request{OrgID: 1, HTTPRequest: &http.Request{Header: map[string][]string{"Authorization": {"Bearer " + secret}}}},
+			expectedKey: &apikey.APIKey{
+				ID:               1,
+				OrgID:            2,
+				Key:              hash,
+				ServiceAccountId: intPtr(1),
+			},
+			expectedErr: errAPIKeyInvalidOrg,
+		},
 	}
 
 	for _, tt := range tests {
