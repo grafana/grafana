@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -25,6 +26,7 @@ func TestFinder_Find(t *testing.T) {
 	testCases := []struct {
 		name            string
 		pluginDirs      []string
+		pluginClass     plugins.Class
 		expectedBundles []*plugins.FoundBundle
 		err             error
 	}{
@@ -245,11 +247,46 @@ func TestFinder_Find(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "Plugin with dist folder (core class)",
+			pluginDirs:  []string{filepath.Join(testData, "plugin-with-dist")},
+			pluginClass: plugins.ClassCore,
+			expectedBundles: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID:   "test-datasource",
+							Type: plugins.TypeDataSource,
+							Name: "Test",
+							Info: plugins.Info{
+								Author: plugins.InfoLink{
+									Name: "Will Browne",
+									URL:  "https://willbrowne.com",
+								},
+								Description: "Test",
+								Version:     "1.0.0",
+							},
+							Dependencies: plugins.Dependencies{
+								GrafanaVersion: "*",
+								Plugins:        []plugins.Dependency{},
+							},
+							State:      plugins.ReleaseStateAlpha,
+							Backend:    true,
+							Executable: "test",
+						},
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "plugin-with-dist/plugin/dist")),
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := NewLocalFinder(false)
+			f := NewLocalFinder(false, featuremgmt.WithFeatures(featuremgmt.FlagExternalCorePlugins))
 			pluginBundles, err := f.Find(context.Background(), &fakes.FakePluginSource{
+				PluginClassFunc: func(ctx context.Context) plugins.Class {
+					return tc.pluginClass
+				},
 				PluginURIsFunc: func(ctx context.Context) []string {
 					return tc.pluginDirs
 				},
@@ -281,7 +318,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false)
+		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
 		paths, err := finder.getAbsPluginJSONPaths("test", true)
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -296,7 +333,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false)
+		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
 		paths, err := finder.getAbsPluginJSONPaths("test", true)
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -311,7 +348,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false)
+		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
 		paths, err := finder.getAbsPluginJSONPaths("test", true)
 		require.Error(t, err)
 		require.Empty(t, paths)
@@ -329,7 +366,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(false)
+		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
 		paths, err := finder.getAbsPluginJSONPaths("test", false)
 		require.ErrorIs(t, err, filepath.SkipDir)
 		require.Empty(t, paths)
@@ -366,7 +403,7 @@ func TestFinder_getAbsPluginJSONPaths_PluginClass(t *testing.T) {
 			},
 		}
 		for _, tc := range tcs {
-			pluginBundles, err := NewLocalFinder(false).getAbsPluginJSONPaths(dir, tc.followDist)
+			pluginBundles, err := NewLocalFinder(false, featuremgmt.WithFeatures()).getAbsPluginJSONPaths(dir, tc.followDist)
 			require.NoError(t, err)
 
 			sort.Strings(pluginBundles)

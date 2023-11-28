@@ -93,12 +93,21 @@ export function OpenTsdbQueryEditor({
   }
 
   function getTextValues(metrics: Array<{ text: string }>) {
-    return metrics.map((value: { text: string }) => {
+    const variables = datasource.getVariables().map((value) => {
+      return {
+        value: textUtil.escapeHtml(value),
+        description: value,
+      };
+    });
+
+    const values = metrics.map((value: { text: string }) => {
       return {
         value: textUtil.escapeHtml(value.text),
         description: value.text,
       };
     });
+
+    return variables.concat(values);
   }
 
   return (

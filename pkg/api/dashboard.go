@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -145,7 +144,11 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	annotationPermissions := &dtos.AnnotationPermission{}
-	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
+	} else {
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+	}
 	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 	meta := dtos.DashboardMeta{
@@ -388,25 +391,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
-	// nolint:staticcheck
-	if cmd.FolderUID != "" || cmd.FolderID != 0 {
-		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID: c.SignedInUser.GetOrgID(),
-			UID:   &cmd.FolderUID,
-			// nolint:staticcheck
-			ID:           &cmd.FolderID,
-			SignedInUser: c.SignedInUser,
-		})
-		if err != nil {
-			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return response.Error(http.StatusBadRequest, "Folder not found", err)
-			}
-			return response.Error(http.StatusInternalServerError, "Error while checking folder ID", err)
-		}
-		// nolint:staticcheck
-		cmd.FolderID = folder.ID
-		cmd.FolderUID = folder.UID
-	}
 
 	dash := cmd.GetDashboardModel()
 	newDashboard := dash.ID == 0

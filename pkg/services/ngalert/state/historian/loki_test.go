@@ -399,7 +399,7 @@ func TestMerge(t *testing.T) {
 func TestRecordStates(t *testing.T) {
 	t.Run("writes state transitions to loki", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -414,7 +414,7 @@ func TestRecordStates(t *testing.T) {
 
 	t.Run("emits expected write metrics", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
-		met := metrics.NewHistorianMetrics(reg)
+		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
 		loki := createTestLokiBackend(NewFakeRequester(), met)
 		errLoki := createTestLokiBackend(NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose
 		rule := createTestRule()
@@ -451,7 +451,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("elides request if nothing to send", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := []state.StateTransition{}
 
@@ -463,7 +463,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("succeeds with special chars in labels", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State: eval.Alerting,
@@ -486,7 +486,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("adds external labels to log lines", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State: eval.Alerting,
