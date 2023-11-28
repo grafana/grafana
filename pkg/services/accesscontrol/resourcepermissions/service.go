@@ -108,13 +108,12 @@ type Service struct {
 	api     *api
 	license licensing.Licensing
 
-	options            Options
-	permissions        []string
-	actions            []string
-	fineGrainedActions []string // defines a set of actions that are allowed to be directly used in a custom set of actions
-	sqlStore           db.DB
-	teamService        team.Service
-	userService        user.Service
+	options     Options
+	permissions []string
+	actions     []string
+	sqlStore    db.DB
+	teamService team.Service
+	userService user.Service
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -325,7 +324,7 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 func (s Service) validateActions(actions []string) error {
 	for _, a := range actions {
 		actionFound := false
-		for _, fgaAction := range s.fineGrainedActions {
+		for _, fgaAction := range s.options.FineGrainedActions {
 			if a == fgaAction {
 				actionFound = true
 			}

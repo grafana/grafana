@@ -26,6 +26,8 @@ type Options struct {
 	// PermissionsToAction is a map of friendly named permissions and what access control actions they should generate.
 	// E.g. Edit permissions should generate dashboards:read, dashboards:write and dashboards:delete
 	PermissionsToActions map[string][]string
+	// FineGrainedActions defines a set of actions that are allowed to be directly used in a custom set of actions
+	FineGrainedActions []string
 	// ReaderRoleName is the display name for the generated fixed reader role
 	ReaderRoleName string
 	// WriterRoleName is the display name for the generated fixed writer role
