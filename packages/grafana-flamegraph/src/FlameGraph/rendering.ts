@@ -1,5 +1,5 @@
 import uFuzzy from '@leeoniya/ufuzzy';
-import { RefObject, useEffect, useMemo, useState } from 'react';
+import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import color from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -79,16 +79,23 @@ export function useFlameRender(options: RenderOptions) {
   // There is a bit of dependency injections here that does not add readability, mainly to prevent recomputing some
   // common stuff for all the nodes in the graph when only once is enough. perf/readability tradeoff.
 
+  const mutedColor = useMemo(() => {
+    const barMutedColor = color(theme.colors.background.secondary);
+    return theme.isLight ? barMutedColor.darken(10).toHexString() : barMutedColor.lighten(10).toHexString();
+  }, [theme]);
+
   const getBarColor = useColorFunction(
     totalColorTicks,
     totalTicksRight,
     colorScheme,
     theme,
+    mutedColor,
     rangeMin,
     rangeMax,
     foundLabels,
     focusedItemData ? focusedItemData.item.level : 0
   );
+
   const renderFunc = useRenderFunc(ctx, data, getBarColor, textAlign, collapsedMap);
 
   useEffect(() => {
@@ -97,73 +104,117 @@ export function useFlameRender(options: RenderOptions) {
     }
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    walkTree(root, direction, data, totalViewTicks, rangeMin, rangeMax, wrapperWidth, collapsedMap, renderFunc);
-  }, [ctx, data, root, wrapperWidth, rangeMin, rangeMax, totalViewTicks, direction, renderFunc, collapsedMap]);
+
+    const mutedPath2D = new Path2D();
+
+    //
+    // Walk the tree and compute the dimensions for each item in the flamegraph.
+    //
+    walkTree(
+      root,
+      direction,
+      data,
+      totalViewTicks,
+      rangeMin,
+      rangeMax,
+      wrapperWidth,
+      collapsedMap,
+      (item, x, y, width, height, label, muted) => {
+        if (muted) {
+          // We do a bit of optimization for muted regions, and we render them all in single fill later on as they don't
+          // have labels and are the same color.
+          mutedPath2D.rect(x, y, width, height);
+        } else {
+          renderFunc(item, x, y, width, height, label);
+        }
+      }
+    );
+
+    // Only fill the muted rects
+    ctx.fillStyle = mutedColor;
+    ctx.fill(mutedPath2D);
+  }, [
+    ctx,
+    data,
+    root,
+    wrapperWidth,
+    rangeMin,
+    rangeMax,
+    totalViewTicks,
+    direction,
+    renderFunc,
+    collapsedMap,
+    mutedColor,
+  ]);
 }
 
-type RenderFunc = (
+type RenderFunc = (item: LevelItem, x: number, y: number, width: number, height: number, label: string) => void;
+
+type RenderFuncWrap = (
   item: LevelItem,
   x: number,
   y: number,
   width: number,
   height: number,
   label: string,
-  // muted means the width is too small, and we just show gray rectangle.
   muted: boolean
 ) => void;
 
+/**
+ * Create a render function with some memoization to prevent excesive repainting of the canvas.
+ * @param ctx
+ * @param data
+ * @param getBarColor
+ * @param textAlign
+ * @param collapsedMap
+ */
 function useRenderFunc(
   ctx: CanvasRenderingContext2D | undefined,
   data: FlameGraphDataContainer,
   getBarColor: (item: LevelItem, label: string, muted: boolean) => string,
   textAlign: TextAlign,
   collapsedMap: CollapsedMap
-): RenderFunc {
+) {
   return useMemo(() => {
     if (!ctx) {
       return () => {};
     }
 
-    return (item, x, y, width, height, label, muted) => {
+    const renderFunc: RenderFunc = (item, x, y, width, height, label) => {
       ctx.beginPath();
-      ctx.rect(x + (muted ? 0 : BAR_BORDER_WIDTH), y, width, height);
-      ctx.fillStyle = getBarColor(item, label, muted);
+      ctx.rect(x + BAR_BORDER_WIDTH, y, width, height);
+      ctx.fillStyle = getBarColor(item, label, false);
+      ctx.stroke();
+      ctx.fill();
 
       const collapsedItemConfig = collapsedMap.get(item);
+      let finalLabel = label;
       if (collapsedItemConfig && collapsedItemConfig.collapsed) {
         const numberOfCollapsedItems = collapsedItemConfig.items.length;
-        label = `(${numberOfCollapsedItems}) ` + label;
+        finalLabel = `(${numberOfCollapsedItems}) ` + label;
       }
 
-      if (muted) {
-        // Only fill the muted rects
-        ctx.fill();
-      } else {
-        ctx.stroke();
-        ctx.fill();
-
+      if (width >= LABEL_THRESHOLD) {
         if (collapsedItemConfig) {
-          if (width >= LABEL_THRESHOLD) {
-            renderLabel(
-              ctx,
-              data,
-              label,
-              item,
-              width,
-              textAlign === 'left' ? x + GROUP_STRIP_MARGIN_LEFT + GROUP_TEXT_OFFSET : x,
-              y,
-              textAlign
-            );
+          renderLabel(
+            ctx,
+            data,
+            finalLabel,
+            item,
+            width,
+            textAlign === 'left' ? x + GROUP_STRIP_MARGIN_LEFT + GROUP_TEXT_OFFSET : x,
+            y,
+            textAlign
+          );
 
-            renderGroupingStrip(ctx, x, y, height, item, collapsedItemConfig);
-          }
+          renderGroupingStrip(ctx, x, y, height, item, collapsedItemConfig);
         } else {
-          if (width >= LABEL_THRESHOLD) {
-            renderLabel(ctx, data, label, item, width, x, y, textAlign);
-          }
+          renderLabel(ctx, data, finalLabel, item, width, x, y, textAlign);
         }
       }
     };
+
+    return renderFunc;
   }, [ctx, getBarColor, textAlign, data, collapsedMap]);
 }
 
@@ -228,7 +279,7 @@ export function walkTree(
   rangeMax: number,
   wrapperWidth: number,
   collapsedMap: CollapsedMap,
-  renderFunc: RenderFunc
+  renderFunc: RenderFuncWrap
 ) {
   // The levelOffset here is to keep track if items that we don't render because they are collapsed into single row.
   // That means we have to render next items with an offset of some rows up in the stack.
@@ -314,24 +365,18 @@ function useColorFunction(
   totalTicksRight: number | undefined,
   colorScheme: ColorScheme | ColorSchemeDiff,
   theme: GrafanaTheme2,
+  mutedColor: string,
   rangeMin: number,
   rangeMax: number,
   foundNames: Set<string> | undefined,
   topLevel: number
 ) {
-  return useMemo(() => {
-    // We use the same color for all muted bars so let's do it just once and reuse the result in the closure of the
-    // returned function.
-    const barMutedColor = color(theme.colors.background.secondary);
-    const barMutedColorHex = theme.isLight
-      ? barMutedColor.darken(10).toHexString()
-      : barMutedColor.lighten(10).toHexString();
-
-    return function getColor(item: LevelItem, label: string, muted: boolean) {
+  return useCallback(
+    function getColor(item: LevelItem, label: string, muted: boolean) {
       // If collapsed and no search we can quickly return the muted color
       if (muted && !foundNames) {
         // Collapsed are always grayed
-        return barMutedColorHex;
+        return mutedColor;
       }
 
       const barColor =
@@ -344,13 +389,14 @@ function useColorFunction(
 
       if (foundNames) {
         // Means we are searching, we use color for matches and gray the rest
-        return foundNames.has(label) ? barColor.toHslString() : barMutedColorHex;
+        return foundNames.has(label) ? barColor.toHslString() : mutedColor;
       }
 
       // Mute if we are above the focused symbol
       return item.level > topLevel - 1 ? barColor.toHslString() : barColor.lighten(15).toHslString();
-    };
-  }, [totalTicks, totalTicksRight, colorScheme, theme, rangeMin, rangeMax, foundNames, topLevel]);
+    },
+    [totalTicks, totalTicksRight, colorScheme, theme, rangeMin, rangeMax, foundNames, topLevel, mutedColor]
+  );
 }
 
 function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {

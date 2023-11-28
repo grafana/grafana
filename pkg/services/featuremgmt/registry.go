@@ -359,10 +359,12 @@ var (
 			AllowSelfServe: falsePtr,
 		},
 		{
-			Name:        "clientTokenRotation",
-			Description: "Replaces the current in-request token rotation so that the client initiates the rotation",
-			Stage:       FeatureStageExperimental,
-			Owner:       identityAccessTeam,
+			Name:           "clientTokenRotation",
+			Description:    "Replaces the current in-request token rotation so that the client initiates the rotation",
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true",
+			Owner:          identityAccessTeam,
+			AllowSelfServe: falsePtr,
 		},
 		{
 			Name:           "prometheusDataplane",
@@ -670,6 +672,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+			Name:         "tracesEmbeddedFlameGraph",
+			Description:  "Enables embedding a flame graph in traces",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
@@ -717,13 +726,11 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:           "dashgpt",
-			Description:    "Enable AI powered features in dashboards",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Owner:          grafanaDashboardsSquad,
-			Expression:     "true", // on by default
-			AllowSelfServe: truePtr,
+			Name:         "dashgpt",
+			Description:  "Enable AI powered features in dashboards",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:            "reportingRetries",
@@ -732,15 +739,6 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaSharingSquad,
 			RequiresRestart: true,
-		},
-		{
-			Name:           "newBrowseDashboards",
-			Description:    "New browse/manage dashboards UI",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaFrontendPlatformSquad,
-			FrontendOnly:   true,
-			Expression:     "true", // on by default
-			AllowSelfServe: truePtr,
 		},
 		{
 			Name:        "sseGroupByDatasource",
@@ -862,7 +860,7 @@ var (
 			Name:         "transformationsVariableSupport",
 			Description:  "Allows using variables in transformations",
 			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaBiSquad,
 		},
 		{
@@ -879,19 +877,19 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:         "navAdminSubsections",
-			Description:  "Splits the administration section of the nav tree into subsections",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:            "recoveryThreshold",
 			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "lokiStructuredMetadata",
+			Description:  "Enables the loki data source to request structured metadata from the Loki server",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "teamHttpHeaders",
@@ -1076,6 +1074,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "regressionTransformation",
+			Description:  "Enables regression analysis transformation",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )

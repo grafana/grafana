@@ -26,6 +26,7 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
+import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE } from './shared';
 import { getUrlForTrail } from './utils';
 
@@ -42,6 +43,10 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
+
+  // Indicates which step in the data trail this is
+  stepIndex: number;
+  parentIndex: number; // If there is no parent, this will be -1
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
@@ -59,6 +64,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       ],
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
+      stepIndex: state.stepIndex ?? 0,
+      parentIndex: state.parentIndex ?? -1,
       ...state,
     });
 
@@ -76,6 +83,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     return () => {
       if (!this.state.embedded) {
         getUrlSyncManager().cleanUp(this);
+        getTrailStore().setRecentTrail(this);
       }
     };
   }

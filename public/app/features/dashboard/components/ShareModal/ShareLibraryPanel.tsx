@@ -24,7 +24,7 @@ export const ShareLibraryPanel = ({ panel, initialFolderUid, onDismiss }: Props)
       <p className="share-modal-info-text">
         <Trans i18nKey="share-modal.library.info">Create library panel.</Trans>
       </p>
-      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={onDismiss!} />
+      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={onDismiss} />
     </>
   );
 };

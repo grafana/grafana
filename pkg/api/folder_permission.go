@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
@@ -94,7 +95,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
 			OrgID:       c.SignedInUser.GetOrgID(),
-			DashboardID: folder.ID,
+			DashboardID: folder.ID, // nolint:staticcheck
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
 			Role:        item.Role,
@@ -118,10 +119,10 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 	return response.Success("Folder permissions updated")
 }
 
-var folderPermissionMap = map[string]dashboards.PermissionType{
-	"View":  dashboards.PERMISSION_VIEW,
-	"Edit":  dashboards.PERMISSION_EDIT,
-	"Admin": dashboards.PERMISSION_ADMIN,
+var folderPermissionMap = map[string]dashboardaccess.PermissionType{
+	"View":  dashboardaccess.PERMISSION_VIEW,
+	"Edit":  dashboardaccess.PERMISSION_EDIT,
+	"Admin": dashboardaccess.PERMISSION_ADMIN,
 }
 
 func (hs *HTTPServer) getFolderACL(ctx context.Context, user identity.Requester, folder *folder.Folder) ([]*dashboards.DashboardACLInfoDTO, error) {
@@ -146,7 +147,7 @@ func (hs *HTTPServer) getFolderACL(ctx context.Context, user identity.Requester,
 
 		acl = append(acl, &dashboards.DashboardACLInfoDTO{
 			OrgID:          folder.OrgID,
-			DashboardID:    folder.ID,
+			DashboardID:    folder.ID, // nolint:staticcheck
 			FolderUID:      folder.ParentUID,
 			Created:        p.Created,
 			Updated:        p.Updated,

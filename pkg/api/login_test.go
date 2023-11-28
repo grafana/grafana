@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -587,7 +588,8 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
-			UserID: 10,
+			UserID:          10,
+			AuthenticatedBy: loginservice.AuthProxyAuthModule,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -626,7 +628,8 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
-			UserID: 10,
+			UserID:          10,
+			AuthenticatedBy: loginservice.AuthProxyAuthModule,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
